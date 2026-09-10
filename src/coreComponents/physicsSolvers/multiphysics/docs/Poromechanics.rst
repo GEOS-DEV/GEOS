@@ -56,7 +56,7 @@ The solid constitutive model used here is PoroLinearElasticIsotropic, which deri
 
 An example of a valid XML block for the constitutive model is given here:
 
-.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_iterative.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
@@ -64,7 +64,7 @@ An example of a valid XML block for the constitutive model is given here:
 Example
 ===========================================
 
-.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_iterative.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->

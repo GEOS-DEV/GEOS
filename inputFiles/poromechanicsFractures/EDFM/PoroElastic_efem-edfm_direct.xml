@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./PoroElastic_efem-edfm_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhasePoromechanicsEmbeddedFractures
+      name="poroSolver"
+      targetRegions="{ Domain, Fracture }"
+      initialDt="1e-3"
+      flowSolverName="flowSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="10"
+        maxTimeStepCuts="4"/>
+      <LinearSolverParameters
+        directParallel="0"
+        solverType="direct"/>
+    </SinglePhasePoromechanicsEmbeddedFractures>
+
+    <SolidMechanicsEmbeddedFractures
+      name="fractureMechSolver"
+      targetRegions="{ Domain, Fracture }"
+      discretization="FE1"
+      contactPenaltyStiffness="4.0e9"/>
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        normType="L2"/>
+    </SinglePhaseFVM>      
+      
+
+    <EmbeddedSurfaceGenerator
+      name="SurfaceGenerator"      
+      targetRegions="{ Domain, Fracture }"
+      discretization="FE1"    
+      fractureRegion="Fracture"
+      targetObjects="{ FracturePlane }"
+      logLevel="1"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+</Problem>
