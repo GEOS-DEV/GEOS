@@ -42,6 +42,16 @@ namespace singlePhaseWellConstraintKernels
 template< integer IS_THERMAL >
 struct ConstraintHelper
 {
+  GEOS_HOST_DEVICE
+  static void setTemperatureDerivative( real64 * const dControlEqn,
+                                        real64 const value )
+  {
+    if constexpr ( IS_THERMAL )
+    {
+      dControlEqn[ singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >::dT ] = value;
+    }
+  }
+
   template< BHPConstraintTypeId I >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
@@ -54,12 +64,10 @@ struct ConstraintHelper
   {
     // subRegion data
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
-    arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
+    arrayView1d< globalIndex const > const wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
     constitutive::SingleFluidBase & fluidSeparator =  wellControls.getSingleFluidSeparator();
-    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & density = fluidSeparator.density();
-    arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDensity = fluidSeparator.dDensity();
+    arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDensity = fluidSeparator.dDensity();
 
     arrayView1d< real64 const > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
 
@@ -68,49 +76,44 @@ struct ConstraintHelper
     using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
     using Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
-    localIndex const eqnRowIndex = wellElemDofNumber[iwelemRef] + ROFFSET_WJ::CONTROL - rankOffset;
-    globalIndex dofColIndices[COFFSET_WJ::nDer]{};
-    for( integer i = 0; i < COFFSET_WJ::nDer; ++i )
-    {
-      dofColIndices[ i ] = wellElemDofNumber[iwelemRef] + i;
-    }
     // constraint data
-    real64 const & targetBHP = constraint.getConstraintValue( time_n );
-    real64 const & refGravCoef = constraint.getReferenceGravityCoef();
+    real64 const targetBHP = constraint.getConstraintValue( time_n );
+    real64 const refGravCoef = constraint.getReferenceGravityCoef();
 
     // current constraint value
-    real64 const & currentBHP =
+    real64 const currentBHP =
       wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
 
-    // residual
-    real64 controlEqn = currentBHP - targetBHP;
-
-    // setup Jacobian terms
-    real64 dControlEqn[2+IS_THERMAL]{};
-
-    // bring everything back to host, capture the scalars by reference
-    forAll< serialPolicy >( 1, [pres,
-                                density,
-                                dDensity,
-                                wellElemGravCoef,
-                                &dControlEqn,
-                                &iwelemRef,
-                                &refGravCoef] ( localIndex const )
+    // The separator is updated on the host. Copy its small set of scalar
+    // derivatives into the device closure and keep the matrix and RHS on device.
+    real64 const dDensity_dP = dDensity[iwelemRef][0][Deriv::dP];
+    real64 dDensity_dT = 0.0;
+    if constexpr ( IS_THERMAL )
     {
-      real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
-      dControlEqn[COFFSET_WJ::dP] =   1.0 + dDensity[iwelemRef][0][Deriv::dP] *diffGravCoef;
-      if constexpr ( IS_THERMAL )
-      {
-        dControlEqn[COFFSET_WJ::dT] =  dDensity[iwelemRef][0][Deriv::dT] * diffGravCoef;
-      }
-    } );
+      dDensity_dT = dDensity[iwelemRef][0][Deriv::dT];
+    }
 
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
+    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const )
+    {
+      globalIndex const dofNumber = wellElemDofNumber[iwelemRef];
+      localIndex const eqnRowIndex = LvArray::integerConversion< localIndex >( dofNumber + ROFFSET_WJ::CONTROL - rankOffset );
+      globalIndex dofColIndices[COFFSET_WJ::nDer]{};
+      for( integer i = 0; i < COFFSET_WJ::nDer; ++i )
+      {
+        dofColIndices[ i ] = dofNumber + i;
+      }
+
+      real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
+      real64 dControlEqn[2+IS_THERMAL]{};
+      dControlEqn[COFFSET_WJ::dP] = 1.0 + dDensity_dP * diffGravCoef;
+      setTemperatureDerivative( dControlEqn, dDensity_dT * diffGravCoef );
+
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], currentBHP - targetBHP );
+      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
+                                                                        dofColIndices,
+                                                                        dControlEqn,
+                                                                        COFFSET_WJ::nDer );
+    } );
   }
   template< template< typename U > class T, typename U=VolumeRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
@@ -125,67 +128,60 @@ struct ConstraintHelper
     // subRegion data
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
-    arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-
+    arrayView1d< globalIndex const > const wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
     // setup row/column indices for constraint equation
     using ROFFSET_WJ = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
     using COFFSET_WJ = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
     using Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
-    localIndex const eqnRowIndex = wellElemDofNumber[iwelemRef] + ROFFSET_WJ::CONTROL - rankOffset;
-    globalIndex dofColIndices[COFFSET_WJ::nDer]{};
-    for( integer i = 0; i < COFFSET_WJ::nDer; ++i )
-    {
-      dofColIndices[ i ] = wellElemDofNumber[iwelemRef] + i;
-    }
-
     // fluid data
     constitutive::SingleFluidBase & fluidSeparator =  wellControls.getSingleFluidSeparator();
-    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & density = fluidSeparator.density();
-    arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDensity = fluidSeparator.dDensity();
+    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const density = fluidSeparator.density();
+    arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDensity = fluidSeparator.dDensity();
 
     // constraint data
-    real64 const & targetVolRate = constraint.getConstraintValue( time_n );
+    real64 const targetVolRate = constraint.getConstraintValue( time_n );
 
     // current constraint value
-    real64 & currentVolRate =
+    real64 const currentVolRate =
       wellControls.getReference< real64 >( WellControls::viewKeyStruct::currentVolRateString() );
 
     integer const useSurfaceConditions = wellControls.useSurfaceConditions();
 
-    // residual
-    real64 controlEqn =  currentVolRate - targetVolRate;
-
-    // setup Jacobian terms
-    real64 dControlEqn[2+IS_THERMAL]{};
-
-    // bring everything back to host, capture the scalars by reference
-    forAll< serialPolicy >( 1, [currentVolRate,
-                                density,
-                                dDensity,
-                                &dControlEqn,
-                                &useSurfaceConditions,
-                                &iwelemRef] ( localIndex const )
+    // The separator is updated on the host. Copy its small set of scalar
+    // properties into the device closure and keep the matrix and RHS on device.
+    real64 const densityRef = density[iwelemRef][0];
+    real64 const dDensity_dP = dDensity[iwelemRef][0][Deriv::dP];
+    real64 dDensity_dT = 0.0;
+    if constexpr ( IS_THERMAL )
     {
-      // compute the inverse of the total density and derivatives
-      real64 const densInv = 1.0 / density[iwelemRef][0];
+      dDensity_dT = dDensity[iwelemRef][0][Deriv::dT];
+    }
 
-      dControlEqn[COFFSET_WJ::dP] = -( useSurfaceConditions ==  0 ) * dDensity[iwelemRef][0][Deriv::dP] * currentVolRate * densInv;
-      dControlEqn[COFFSET_WJ::dQ] = densInv;
-      if constexpr ( IS_THERMAL )
+    forAll< parallelDevicePolicy<> >( 1, [=] GEOS_HOST_DEVICE ( localIndex const )
+    {
+      globalIndex const dofNumber = wellElemDofNumber[iwelemRef];
+      localIndex const eqnRowIndex = LvArray::integerConversion< localIndex >( dofNumber + ROFFSET_WJ::CONTROL - rankOffset );
+      globalIndex dofColIndices[COFFSET_WJ::nDer]{};
+      for( integer i = 0; i < COFFSET_WJ::nDer; ++i )
       {
-        dControlEqn[COFFSET_WJ::dT] = -( useSurfaceConditions ==  0 ) * dDensity[iwelemRef][0][Deriv::dT] * currentVolRate * densInv;
+        dofColIndices[ i ] = dofNumber + i;
       }
 
-    } );
+      real64 const densInv = 1.0 / densityRef;
+      real64 dControlEqn[2+IS_THERMAL]{};
+      dControlEqn[COFFSET_WJ::dP] = -( useSurfaceConditions == 0 ) * dDensity_dP * currentVolRate * densInv;
+      dControlEqn[COFFSET_WJ::dQ] = densInv;
+      setTemperatureDerivative( dControlEqn,
+                                -( useSurfaceConditions == 0 ) * dDensity_dT * currentVolRate * densInv );
 
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], currentVolRate - targetVolRate );
+      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
+                                                                        dofColIndices,
+                                                                        dControlEqn,
+                                                                        COFFSET_WJ::nDer );
+    } );
   }
 };
 

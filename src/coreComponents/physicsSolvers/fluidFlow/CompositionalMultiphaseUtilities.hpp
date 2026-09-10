@@ -173,24 +173,26 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numR
                                                               MATRIX && mat,
                                                               VEC && work )
 {
+
   for( integer k = 0; k < numBlocks; ++k )
   {
-    integer const ind = k * numRowsInBlock + numRowsToShift - 1;
+    integer const firstRow = k * numRowsInBlock;
+    integer const ind = firstRow + numRowsToShift - 1;
     for( integer j = 0; j < numColsInBlock; ++j )
     {
       work[j] = mat[ind][j];
     }
-    for( integer i = ind - 1; i >= k * numRowsInBlock; --i )
+    for( integer i = ind; i > firstRow; --i )
     {
       for( integer j = 0; j < numColsInBlock; ++j )
       {
-        mat[i+1][j] = mat[i][j];
-        work[j] += mat[i][j];
+        mat[i][j] = mat[i-1][j];
+        work[j] += mat[i-1][j];
       }
     }
     for( integer j = 0; j < numColsInBlock; ++j )
     {
-      mat[k*numRowsInBlock][j] = work[j];
+      mat[firstRow][j] = work[j];
     }
   }
 }

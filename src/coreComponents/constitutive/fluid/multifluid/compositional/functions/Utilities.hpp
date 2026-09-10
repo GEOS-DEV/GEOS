@@ -167,9 +167,77 @@ static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
                                arraySlice2d< real64, USD > const & X )
 {
 #if defined(GEOS_DEVICE_COMPILE)
-  GEOS_UNUSED_VAR( A );
-  GEOS_UNUSED_VAR( X );
-  return false;
+  // The derivative systems are small (at most 10 x 10) and are solved once
+  // per fluid state.  The BLAS/LAPACK implementation is host-only, so use an
+  // in-place Gaussian elimination solve for device execution.
+  integer const N = A.size( 0 );
+  integer const M = X.size( 1 );
+  real64 constexpr singularMatrixTolerance = 1.0e2 * LvArray::NumericLimits< real64 >::epsilon;
+
+  for( integer i = 0; i < N; ++i )
+  {
+    integer pivot = i;
+    real64 maxPivot = LvArray::math::abs( A( i, i ) );
+    for( integer k = i + 1; k < N; ++k )
+    {
+      real64 const candidate = LvArray::math::abs( A( k, i ) );
+      if( candidate > maxPivot )
+      {
+        pivot = k;
+        maxPivot = candidate;
+      }
+    }
+
+    if( maxPivot < singularMatrixTolerance )
+    {
+      return false;
+    }
+
+    if( pivot != i )
+    {
+      for( integer j = i; j < N; ++j )
+      {
+        real64 const value = A( i, j );
+        A( i, j ) = A( pivot, j );
+        A( pivot, j ) = value;
+      }
+      for( integer j = 0; j < M; ++j )
+      {
+        real64 const value = X( i, j );
+        X( i, j ) = X( pivot, j );
+        X( pivot, j ) = value;
+      }
+    }
+
+    for( integer k = i + 1; k < N; ++k )
+    {
+      real64 const scaling = A( k, i ) / A( i, i );
+      for( integer j = i; j < N; ++j )
+      {
+        A( k, j ) -= scaling * A( i, j );
+      }
+      for( integer j = 0; j < M; ++j )
+      {
+        X( k, j ) -= scaling * X( i, j );
+      }
+    }
+  }
+
+  for( integer i = N - 1; i >= 0; --i )
+  {
+    real64 const inverseDiagonal = 1.0 / A( i, i );
+    for( integer j = 0; j < M; ++j )
+    {
+      real64 value = X( i, j );
+      for( integer k = i + 1; k < N; ++k )
+      {
+        value -= A( i, k ) * X( k, j );
+      }
+      X( i, j ) = value * inverseDiagonal;
+    }
+  }
+
+  return true;
 #else
   BlasLapackLA::solveLinearSystem( A, X );
   return true;
