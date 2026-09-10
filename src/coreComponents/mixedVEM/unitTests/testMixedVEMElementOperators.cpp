@@ -269,7 +269,7 @@ struct Operators
   array2d< real64 > divReconstruction;
   array2d< real64 > projection;
   array2d< real64 > workspace;
-  array2d< real64 > stiffness;
+  array2d< real64 > complianceMatrix;
 };
 
 Operators computeOperators( ElementData const & data,
@@ -281,7 +281,7 @@ Operators computeOperators( ElementData const & data,
   ops.divReconstruction.resize( NUM_RM_DOF, data.numStressDof );
   ops.projection.resize( NUM_SYM_COMP, data.numStressDof );
   ops.workspace.resize( NUM_SYM_COMP, data.numStressDof );
-  ops.stiffness.resize( data.numStressDof, data.numStressDof );
+  ops.complianceMatrix.resize( data.numStressDof, data.numStressDof );
 
   computeElementOperators( data.faceGeom.data(),
                            data.numFaces,
@@ -294,7 +294,7 @@ Operators computeOperators( ElementData const & data,
                            ops.divReconstruction.toSlice(),
                            ops.projection.toSlice(),
                            ops.workspace.toSlice(),
-                           ops.stiffness.toSlice() );
+                           ops.complianceMatrix.toSlice() );
 
   return ops;
 }
@@ -577,13 +577,13 @@ TEST( MixedVEMElementOperators, constantStressPatchTest )
             EXPECT_NEAR( reconstructionValue, 0.0, 1e-11 * scale ) << entry.first << " mode " << i;
           }
 
-          // the stabilization annihilates sigma, so K_E sigma = |E| P_E^T D sigma
+          // the stabilization annihilates sigma, so M_E sigma = |E| P_E^T D sigma
           for( integer i = 0; i < data.numStressDof; ++i )
           {
             real64 value = 0.0;
             for( integer j = 0; j < data.numStressDof; ++j )
             {
-              value += ops.stiffness( i, j ) * dofs[ static_cast< std::size_t >( j ) ];
+              value += ops.complianceMatrix( i, j ) * dofs[ static_cast< std::size_t >( j ) ];
             }
 
             real64 expected = 0.0;
@@ -604,7 +604,7 @@ TEST( MixedVEMElementOperators, constantStressPatchTest )
   }
 }
 
-TEST( MixedVEMElementOperators, stiffnessIsSymmetricPositiveDefinite )
+TEST( MixedVEMElementOperators, complianceMatrixIsSymmetricPositiveDefinite )
 {
   real64 compliance[NUM_SYM_COMP][NUM_SYM_COMP];
   makeIsotropicCompliance( 3.0, 1.4, compliance );
@@ -619,7 +619,7 @@ TEST( MixedVEMElementOperators, stiffnessIsSymmetricPositiveDefinite )
     {
       for( integer j = 0; j < data.numStressDof; ++j )
       {
-        maxEntry = std::max( maxEntry, std::abs( ops.stiffness( i, j ) ) );
+        maxEntry = std::max( maxEntry, std::abs( ops.complianceMatrix( i, j ) ) );
       }
     }
 
@@ -627,11 +627,11 @@ TEST( MixedVEMElementOperators, stiffnessIsSymmetricPositiveDefinite )
     {
       for( integer j = 0; j < data.numStressDof; ++j )
       {
-        EXPECT_NEAR( ops.stiffness( i, j ), ops.stiffness( j, i ), 1e-12 * maxEntry ) << entry.first;
+        EXPECT_NEAR( ops.complianceMatrix( i, j ), ops.complianceMatrix( j, i ), 1e-12 * maxEntry ) << entry.first;
       }
     }
 
-    EXPECT_TRUE( isPositiveDefinite( ops.stiffness ) ) << entry.first;
+    EXPECT_TRUE( isPositiveDefinite( ops.complianceMatrix ) ) << entry.first;
   }
 }
 
@@ -813,7 +813,7 @@ TEST( MixedVEMElementOperators, matchesDirectQuadrature )
 
         real64 const expected = consistency + stabScale * referenceStabilization( i, j );
 
-        EXPECT_NEAR( ops.stiffness( i, j ), expected, 1e-9 * scale )
+        EXPECT_NEAR( ops.complianceMatrix( i, j ), expected, 1e-9 * scale )
           << entry.first << " K(" << i << "," << j << ")";
       }
     }
@@ -913,7 +913,7 @@ TEST( MixedVEMAssembly, scatterReproducesDenseBlock )
                                       stressDofIndices.data(),
                                       numStressDof,
                                       dispDofIndices,
-                                      ops.stiffness.toSliceConst(),
+                                      ops.complianceMatrix.toSliceConst(),
                                       ops.divergence.toSliceConst(),
                                       rowBuffer.data() );
 
@@ -929,7 +929,7 @@ TEST( MixedVEMAssembly, scatterReproducesDenseBlock )
       real64 expected = 0.0;
       if( i < numStressDof && j < numStressDof )
       {
-        expected = ops.stiffness( i, j );
+        expected = ops.complianceMatrix( i, j );
       }
       else if( i < numStressDof )
       {

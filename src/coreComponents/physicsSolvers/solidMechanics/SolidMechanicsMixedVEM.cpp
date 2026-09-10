@@ -36,6 +36,7 @@
 #include "common/MpiWrapper.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -70,7 +71,7 @@ struct ElementScratch
     divReconstruction.resize( NUM_RM_DOF, numStressDof );
     projection.resize( NUM_SYM_COMP, numStressDof );
     workspace.resize( NUM_SYM_COMP, numStressDof );
-    stiffness.resize( numStressDof, numStressDof );
+    complianceMatrix.resize( numStressDof, numStressDof );
     factorization.resize( numStressDof, numStressDof );
     couplingTranspose.resize( NUM_RM_DOF, numStressDof );
     schur.resize( numStressDof, numStressDof );
@@ -79,6 +80,7 @@ struct ElementScratch
     multiplierDofIndices.resize( static_cast< std::size_t >( numStressDof ) );
     packedColumns.resize( static_cast< std::size_t >( numStressDof ) );
     packedValues.resize( static_cast< std::size_t >( numStressDof ) );
+    packedOrder.resize( static_cast< std::size_t >( numStressDof ) );
     stressRhs.resize( static_cast< std::size_t >( numStressDof ) );
     multiplier.resize( static_cast< std::size_t >( numStressDof ) );
     stress.resize( static_cast< std::size_t >( numStressDof ) );
@@ -94,7 +96,7 @@ struct ElementScratch
   array2d< real64 > divReconstruction;
   array2d< real64 > projection;
   array2d< real64 > workspace;
-  array2d< real64 > stiffness;
+  array2d< real64 > complianceMatrix;
 
   array2d< real64 > factorization;
   array2d< real64 > couplingTranspose;
@@ -105,6 +107,7 @@ struct ElementScratch
   std::vector< globalIndex > multiplierDofIndices;
   std::vector< globalIndex > packedColumns;
   std::vector< real64 > packedValues;
+  std::vector< integer > packedOrder;
   std::vector< real64 > stressRhs;
   std::vector< real64 > multiplier;
   std::vector< real64 > stress;
@@ -549,7 +552,7 @@ void eliminateConstrainedColumns( CRSMatrixView< real64, globalIndex const > con
 
     for( localIndex q = 0; q < localMatrix.numNonZeros( r ); ++q )
     {
-      if( columns[q] == globalRow || entries[q] == 0.0 )
+      if( columns[q] == globalRow || std::fpclassify( entries[q] ) == FP_ZERO )
       {
         continue;
       }
@@ -594,7 +597,7 @@ void buildElementOperators( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                            scratch.divReconstruction.toSlice(),
                            scratch.projection.toSlice(),
                            scratch.workspace.toSlice(),
-                           scratch.stiffness.toSlice() );
+                           scratch.complianceMatrix.toSlice() );
 }
 
 /**
@@ -790,6 +793,7 @@ void SolidMechanicsMixedVEM::classifyFaces( real64 const time, MeshLevel & mesh 
   } );
 }
 
+
 void SolidMechanicsMixedVEM::assembleSystem( real64 const time,
                                              real64 const dt,
                                              DomainPartition & domain,
@@ -901,7 +905,7 @@ void SolidMechanicsMixedVEM::assembleSystem( real64 const time,
                                               scratch.stressDofIndices.data(),
                                               numStressDof,
                                               dispDofIndices,
-                                              scratch.stiffness.toSliceConst(),
+                                              scratch.complianceMatrix.toSliceConst(),
                                               scratch.divergence.toSliceConst(),
                                               scratch.packedValues.data() );
 
@@ -920,7 +924,7 @@ void SolidMechanicsMixedVEM::assembleSystem( real64 const time,
             for( integer j = 0; j < numStressDof; ++j )
             {
               localIndex const face = elemToFaces( k, j / NUM_FACE_DOF );
-              value += scratch.stiffness( i, j ) * faceStress( face, j % NUM_FACE_DOF );
+              value += scratch.complianceMatrix( i, j ) * faceStress( face, j % NUM_FACE_DOF );
             }
             for( integer m = 0; m < NUM_RM_DOF; ++m )
             {
@@ -952,7 +956,7 @@ void SolidMechanicsMixedVEM::assembleSystem( real64 const time,
         }
         else
         {
-          bool const condensed = computeLocalCondensation( scratch.stiffness.toSliceConst(),
+          bool const condensed = computeLocalCondensation( scratch.complianceMatrix.toSliceConst(),
                                                            scratch.divergence.toSliceConst(),
                                                            numFacesPerElement,
                                                            scratch.factorization.toSlice(),
@@ -990,7 +994,8 @@ void SolidMechanicsMixedVEM::assembleSystem( real64 const time,
                                                        numStressDof,
                                                        scratch.schur.toSliceConst(),
                                                        scratch.packedColumns.data(),
-                                                       scratch.packedValues.data() );
+                                                       scratch.packedValues.data(),
+                                                       scratch.packedOrder.data() );
 
           // R = H lambda + C_E sigma_E^0 - q, with q the prescribed traction of a free face
           for( integer i = 0; i < numStressDof; ++i )
@@ -1335,7 +1340,7 @@ void SolidMechanicsMixedVEM::computeCellFields( DomainPartition & domain ) const
           buildElementLoads( displacementTrace, tractionField, boundaryType, displacementMask,
                              elemToFaces[k], density( k, 0 ), gravity, scratch );
 
-          bool const condensed = computeLocalCondensation( scratch.stiffness.toSliceConst(),
+          bool const condensed = computeLocalCondensation( scratch.complianceMatrix.toSliceConst(),
                                                            scratch.divergence.toSliceConst(),
                                                            numFacesPerElement,
                                                            scratch.factorization.toSlice(),

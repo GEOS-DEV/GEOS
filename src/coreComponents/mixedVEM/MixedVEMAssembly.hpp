@@ -110,7 +110,7 @@ void buildElementGeometry( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
  * @param[in] faceDofNumber the first stress degree of freedom of each face
  * @param[out] dofIndices the 6 numFaces global indices, grouped by face
  *
- * The layout matches the column ordering of B_E and K_E, so the scatter below is a
+ * The layout matches the column ordering of B_E and M_E, so the scatter below is a
  * plain index lookup with no permutation.
  */
 GEOS_HOST_DEVICE
@@ -137,11 +137,11 @@ inline void gatherStressDofIndices( arraySlice1d< localIndex const > const & ele
  * @param[in] stressDofIndices the global stress degrees of freedom, grouped by face
  * @param[in] numStressDof the number of stress degrees of freedom, 6 numFaces
  * @param[in] dispDofIndices the six global displacement degrees of freedom
- * @param[in] stiffness the matrix K_E
+ * @param[in] complianceMatrix the matrix M_E
  * @param[in] divergence the matrix B_E
  * @param[out] rowBuffer a scratch buffer of length @p numStressDof
  *
- * Rows of K_E and of B_E are contiguous, so each is scattered with one call per row;
+ * Rows of M_E and of B_E are contiguous, so each is scattered with one call per row;
  * the B_E^T block is the only strided read and is packed into a six entry buffer.
  *
  * The rigid body motion rows carry -B_E rather than B_E, that is the balance is written
@@ -157,7 +157,7 @@ void addElementToMatrix( CRSMatrixView< real64, globalIndex const > const & loca
                          globalIndex const * const stressDofIndices,
                          integer const numStressDof,
                          globalIndex const * const dispDofIndices,
-                         MatrixSliceConst const & stiffness,
+                         MatrixSliceConst const & complianceMatrix,
                          MatrixSliceConst const & divergence,
                          real64 * const rowBuffer )
 {
@@ -171,7 +171,7 @@ void addElementToMatrix( CRSMatrixView< real64, globalIndex const > const & loca
 
     localMatrix.template addToRowBinarySearchUnsorted< ATOMIC >( localRow,
                                                                  stressDofIndices,
-                                                                 &stiffness( i, 0 ),
+                                                                 &complianceMatrix( i, 0 ),
                                                                  numStressDof );
 
     real64 divergenceColumn[NUM_RM_DOF];
@@ -335,6 +335,7 @@ inline void gatherMultiplierDofIndices( arraySlice1d< localIndex const > const &
  * @param[in] numStressDof the number of stress degrees of freedom, 6 numFaces
  * @param[in] contribution the matrix C_E S_E C_E^T
  * @param[out] packedColumns a scratch buffer of length @p numStressDof
+ * @param[out] packedOrder a scratch buffer of length @p numStressDof
  * @param[out] packedValues a scratch buffer of length @p numStressDof
  *
  * H = sum_E C_E S_E C_E^T is symmetric positive semidefinite, and definite once the
@@ -349,8 +350,30 @@ void addElementToInterfaceMatrix( CRSMatrixView< real64, globalIndex const > con
                                   integer const numStressDof,
                                   MatrixSliceConst const & contribution,
                                   globalIndex * const packedColumns,
-                                  real64 * const packedValues )
+                                  real64 * const packedValues,
+                                  integer * const packedOrder )
 {
+  // every row of the block has the same column set, so pack and sort it once
+  integer numPacked = 0;
+  for( integer j = 0; j < numStressDof; ++j )
+  {
+    if( dofIndices[j] < 0 )
+    {
+      continue;
+    }
+
+    globalIndex const column = dofIndices[j];
+    integer p = numPacked++;
+    while( p > 0 && packedColumns[p - 1] > column )
+    {
+      packedColumns[p] = packedColumns[p - 1];
+      packedOrder[p] = packedOrder[p - 1];
+      --p;
+    }
+    packedColumns[p] = column;
+    packedOrder[p] = j;
+  }
+
   for( integer i = 0; i < numStressDof; ++i )
   {
     if( dofIndices[i] < 0 )
@@ -364,21 +387,13 @@ void addElementToInterfaceMatrix( CRSMatrixView< real64, globalIndex const > con
       continue;
     }
 
-    integer numPacked = 0;
-    for( integer j = 0; j < numStressDof; ++j )
+    for( integer p = 0; p < numPacked; ++p )
     {
-      if( dofIndices[j] >= 0 )
-      {
-        packedColumns[numPacked] = dofIndices[j];
-        packedValues[numPacked] = contribution( i, j );
-        ++numPacked;
-      }
+      packedValues[p] = contribution( i, packedOrder[p] );
     }
 
-    localMatrix.template addToRowBinarySearchUnsorted< ATOMIC >( localRow,
-                                                                 packedColumns,
-                                                                 packedValues,
-                                                                 numPacked );
+    // sorted columns let the row be merged in one pass instead of a search per entry
+    localMatrix.template addToRow< ATOMIC >( localRow, packedColumns, packedValues, numPacked );
   }
 }
 

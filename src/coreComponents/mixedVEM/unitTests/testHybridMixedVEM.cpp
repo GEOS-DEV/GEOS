@@ -112,7 +112,7 @@ struct Cell
   array2d< real64 > divReconstruction;
   array2d< real64 > projection;
   array2d< real64 > workspace;
-  array2d< real64 > stiffness;
+  array2d< real64 > complianceMatrix;
 
   array2d< real64 > factorization;
   array2d< real64 > couplingTranspose;
@@ -196,7 +196,7 @@ void buildCell( Mesh const & mesh,
   cell.divReconstruction.resize( NUM_RM_DOF, cell.numStressDof );
   cell.projection.resize( NUM_SYM_COMP, cell.numStressDof );
   cell.workspace.resize( NUM_SYM_COMP, cell.numStressDof );
-  cell.stiffness.resize( cell.numStressDof, cell.numStressDof );
+  cell.complianceMatrix.resize( cell.numStressDof, cell.numStressDof );
 
   computeElementOperators( cell.faceGeom.data(),
                            cell.numFaces,
@@ -209,13 +209,13 @@ void buildCell( Mesh const & mesh,
                            cell.divReconstruction.toSlice(),
                            cell.projection.toSlice(),
                            cell.workspace.toSlice(),
-                           cell.stiffness.toSlice() );
+                           cell.complianceMatrix.toSlice() );
 
   cell.factorization.resize( cell.numStressDof, cell.numStressDof );
   cell.couplingTranspose.resize( NUM_RM_DOF, cell.numStressDof );
   cell.schur.resize( cell.numStressDof, cell.numStressDof );
 
-  bool const success = computeLocalCondensation( cell.stiffness.toSliceConst(),
+  bool const success = computeLocalCondensation( cell.complianceMatrix.toSliceConst(),
                                                  cell.divergence.toSliceConst(),
                                                  cell.numFaces,
                                                  cell.factorization.toSlice(),
@@ -344,13 +344,13 @@ TEST( HybridMixedVEM, localCondensationInvertsTheSaddleBlock )
                           stress.data(),
                           displacement );
 
-  // K_E sigma + B_E^T u = g_E + C_E^T lambda
+  // M_E sigma + B_E^T u = g_E + C_E^T lambda
   for( integer i = 0; i < numStressDof; ++i )
   {
     real64 value = 0.0;
     for( integer j = 0; j < numStressDof; ++j )
     {
-      value += cell.stiffness( i, j ) * stress[ static_cast< std::size_t >( j ) ];
+      value += cell.complianceMatrix( i, j ) * stress[ static_cast< std::size_t >( j ) ];
     }
     for( integer k = 0; k < NUM_RM_DOF; ++k )
     {
@@ -461,7 +461,7 @@ TEST( HybridMixedVEM, hybridReproducesTheMixedSolution )
 
       for( integer j = 0; j < cell.numStressDof; ++j )
       {
-        mixedMatrix( row, stressDof[ static_cast< std::size_t >( j ) ] ) += cell.stiffness( i, j );
+        mixedMatrix( row, stressDof[ static_cast< std::size_t >( j ) ] ) += cell.complianceMatrix( i, j );
       }
 
       for( integer k = 0; k < NUM_RM_DOF; ++k )

@@ -27,13 +27,13 @@
  *
  * The element unknowns are local to E, so they are eliminated through
  *
- *   M_E = [ K_E  B_E^T ],   S_E = ( M_E^{-1} )_{sigma sigma},
+ *   A_E = [ M_E  B_E^T ],   S_E = ( A_E^{-1} )_{sigma sigma},
  *         [ B_E   0    ]
  *
  * leaving the interface problem H lambda = h with H = sum_E C_E S_E C_E^T. Because
- * K_E is symmetric positive definite and B_E has full row rank,
+ * M_E is symmetric positive definite and B_E has full row rank,
  *
- *   S_E = K_E^{-1} - W G^{-1} W^T,   W = K_E^{-1} B_E^T,   G = B_E K_E^{-1} B_E^T,
+ *   S_E = M_E^{-1} - W G^{-1} W^T,   W = M_E^{-1} B_E^T,   G = B_E M_E^{-1} B_E^T,
  *
  * is symmetric positive semidefinite with the six dimensional kernel range(W), so H is
  * symmetric positive semidefinite and becomes definite once the Dirichlet multipliers
@@ -106,6 +106,37 @@ inline bool choleskyFactorize( MatrixSlice const & matrix,
  * @param[in,out] x the right hand side, overwritten by the solution
  */
 GEOS_HOST_DEVICE
+/**
+ * @brief Invert the lower triangular Cholesky factor.
+ * @param factor the factor L
+ * @param n the order of L
+ * @param inverse receives L^{-1}, lower triangular
+ */
+inline void invertCholeskyFactor( MatrixSliceConst const & factor,
+                                  integer const n,
+                                  MatrixSlice const & inverse )
+{
+  for( integer j = 0; j < n; ++j )
+  {
+    for( integer i = 0; i < j; ++i )
+    {
+      inverse( i, j ) = 0.0;
+    }
+
+    inverse( j, j ) = 1.0 / factor( j, j );
+
+    for( integer i = j + 1; i < n; ++i )
+    {
+      real64 sum = 0.0;
+      for( integer k = j; k < i; ++k )
+      {
+        sum += factor( i, k ) * inverse( k, j );
+      }
+      inverse( i, j ) = -sum / factor( i, i );
+    }
+  }
+}
+
 inline void choleskySolve( MatrixSliceConst const & factor,
                            integer const n,
                            real64 * const x )
@@ -201,22 +232,22 @@ inline bool invertRigidMotionGram( real64 (& matrix)[NUM_RM_DOF][NUM_RM_DOF] )
 
 /**
  * @brief Eliminate the element unknowns and form the local Schur complement S_E.
- * @param[in] stiffness the matrix K_E
+ * @param[in] complianceMatrix the matrix M_E
  * @param[in] divergence the matrix B_E
  * @param[in] numFaces the number of faces of the element
  * @param[in,out] factorization a (6 numFaces) x (6 numFaces) scratch block
- * @param[out] couplingTranspose W^T = B_E K_E^{-1}, of size 6 x (6 numFaces)
- * @param[out] inverseDivGram the inverse of the divergence Gram matrix G = B_E K_E^{-1} B_E^T
+ * @param[out] couplingTranspose W^T = B_E M_E^{-1}, of size 6 x (6 numFaces)
+ * @param[out] inverseDivGram the inverse of the divergence Gram matrix G = B_E M_E^{-1} B_E^T
  * @param[out] schur the (6 numFaces) x (6 numFaces) matrix S_E
- * @return false if K_E or G is not positive definite
+ * @return false if M_E or G is not positive definite
  *
- * S_E = K_E^{-1} - W G^{-1} W^T is the stress-stress block of M_E^{-1}. It is symmetric
+ * S_E = M_E^{-1} - W G^{-1} W^T is the stress-stress block of A_E^{-1}. It is symmetric
  * positive semidefinite and annihilates range(W), the six dimensional space conjugate to
  * the rigid body motions. Every triangular solve runs along a contiguous row, using the
- * symmetry of K_E^{-1} to write columns as rows.
+ * symmetry of M_E^{-1} to write columns as rows.
  */
 GEOS_HOST_DEVICE
-inline bool computeLocalCondensation( MatrixSliceConst const & stiffness,
+inline bool computeLocalCondensation( MatrixSliceConst const & complianceMatrix,
                                       MatrixSliceConst const & divergence,
                                       integer const numFaces,
                                       MatrixSlice const & factorization,
@@ -230,7 +261,7 @@ inline bool computeLocalCondensation( MatrixSliceConst const & stiffness,
   {
     for( integer j = 0; j < numStressDof; ++j )
     {
-      factorization( i, j ) = stiffness( i, j );
+      factorization( i, j ) = complianceMatrix( i, j );
     }
   }
 
@@ -239,26 +270,36 @@ inline bool computeLocalCondensation( MatrixSliceConst const & stiffness,
     return false;
   }
 
-  MatrixSliceConst const factor = factorization.toSliceConst();
+  // T = L^{-1} in schur, then M_E^{-1} = T^T T into factorization, n^3/3 against the n^3
+  // of one triangular solve per column
+  invertCholeskyFactor( factorization.toSliceConst(), numStressDof, schur );
 
-  // K_E^{-1} is symmetric, so solving for column j and storing it in row j is the same
-  for( integer j = 0; j < numStressDof; ++j )
+  for( integer i = 0; i < numStressDof; ++i )
   {
-    for( integer i = 0; i < numStressDof; ++i )
+    for( integer j = 0; j <= i; ++j )
     {
-      schur( j, i ) = ( i == j ) ? 1.0 : 0.0;
+      real64 sum = 0.0;
+      for( integer k = i; k < numStressDof; ++k )
+      {
+        sum += schur( k, i ) * schur( k, j );
+      }
+      factorization( i, j ) = sum;
+      factorization( j, i ) = sum;
     }
-    choleskySolve( factor, numStressDof, &schur( j, 0 ) );
   }
 
-  // W^T = B_E K_E^{-1}, one row per rigid body motion
+  // W^T = B_E M_E^{-1}, one row per rigid body motion
   for( integer k = 0; k < NUM_RM_DOF; ++k )
   {
     for( integer i = 0; i < numStressDof; ++i )
     {
-      couplingTranspose( k, i ) = divergence( k, i );
+      real64 sum = 0.0;
+      for( integer j = 0; j < numStressDof; ++j )
+      {
+        sum += divergence( k, j ) * factorization( j, i );
+      }
+      couplingTranspose( k, i ) = sum;
     }
-    choleskySolve( factor, numStressDof, &couplingTranspose( k, 0 ) );
   }
 
   // G = B_E W, inverted in place
@@ -280,7 +321,7 @@ inline bool computeLocalCondensation( MatrixSliceConst const & stiffness,
     return false;
   }
 
-  // S_E = K_E^{-1} - W G^{-1} W^T, written into the lower triangle and mirrored
+  // S_E = M_E^{-1} - W G^{-1} W^T, written into the lower triangle and mirrored
   for( integer i = 0; i < numStressDof; ++i )
   {
     real64 row[NUM_RM_DOF];
@@ -302,7 +343,7 @@ inline bool computeLocalCondensation( MatrixSliceConst const & stiffness,
         correction += row[k] * couplingTranspose( k, j );
       }
 
-      real64 const value = 0.5 * ( schur( i, j ) + schur( j, i ) ) - correction;
+      real64 const value = factorization( i, j ) - correction;
       schur( i, j ) = value;
       schur( j, i ) = value;
     }
@@ -341,7 +382,7 @@ inline void applyContinuityOperator( FaceGeometry const * const faceGeom,
 /**
  * @brief Recover the element stress and displacement from the interface multiplier.
  * @param[in] schur the matrix S_E, before the continuity scaling
- * @param[in] couplingTranspose the block W^T = B_E K_E^{-1}
+ * @param[in] couplingTranspose the block W^T = B_E M_E^{-1}
  * @param[in] inverseDivGram the inverse of the divergence Gram matrix G
  * @param[in] faceGeom the geometry of the faces of the element
  * @param[in] numFaces the number of faces of the element
@@ -351,7 +392,7 @@ inline void applyContinuityOperator( FaceGeometry const * const faceGeom,
  * @param[out] stress the 6 numFaces stress degrees of freedom sigma_E
  * @param[out] displacement the six rigid body motion coefficients u_E
  *
- * [ sigma_E ; u_E ] = M_E^{-1} [ g_E + C_E^T lambda ; -f_E ], which is elementwise
+ * [ sigma_E ; u_E ] = A_E^{-1} [ g_E + C_E^T lambda ; -f_E ], which is elementwise
  * independent, so the recovery is a perfectly parallel pass over the mesh.
  */
 GEOS_HOST_DEVICE

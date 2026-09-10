@@ -21,17 +21,17 @@
  * With {phi_j}_{j=1}^{6 nf} the local virtual stress basis and {R_i}_{i=1}^{6} the
  * rigid body motions, the element contributes the saddle-point block
  *
- *   [ K_E  B_E^T ] [ sigma_E ]   [  g_E ]
+ *   [ M_E  B_E^T ] [ sigma_E ]   [  g_E ]
  *   [ B_E   0    ] [   u_E   ] = [ -f_E ],
  *
  *   (B_E)_ij = (div phi_j, R_i)_E,
- *   (K_E)_ij = a_E(Pi_E phi_j, Pi_E phi_i) + s_E((I-Pi_E) phi_j, (I-Pi_E) phi_i).
+ *   (M_E)_ij = a_E(Pi_E phi_j, Pi_E phi_i) + s_E((I-Pi_E) phi_j, (I-Pi_E) phi_i).
  *
  * phi_j is virtual, but its face traction lies in T_h(f) and its divergence lies in
  * RM(E), and both operators are built from those two representations alone.
  *
  * All integrals are polynomial moments of the mesh entities and are evaluated in
- * closed form, so B_E and K_E are exact and no quadrature loop appears below. The
+ * closed form, so B_E and M_E are exact and no quadrature loop appears below. The
  * outputs are contiguous row-major blocks already expressed in the face-intrinsic
  * degree of freedom convention, so assembly is a plain index scatter.
  */
@@ -120,7 +120,7 @@ inline void computeDivergenceReconstruction( MatrixSliceConst const & divergence
 
   real64 const (&m1)[3] = moments.firstMoment;
   real64 const invVolume = 1.0 / moments.volume;
-  real64 const m1Squared = LvArray::tensorOps::AiBi< 3 >( m1, m1 );
+  real64 const m1Squared = LvArray::tensorOps::l2NormSquared< 3 >( m1 );
 
   real64 schur[3][3];
   for( integer i = 0; i < 3; ++i )
@@ -321,7 +321,7 @@ inline void computeTractionMap( real64 const (&normal)[3],
 }
 
 /**
- * @brief Build the element stiffness K_E, consistency plus stabilization.
+ * @brief Build the element compliance matrix M_E, consistency plus stabilization.
  * @param[in] faceGeom the geometry of the faces of the element
  * @param[in] numFaces the number of faces
  * @param[in] volume the element volume |E|
@@ -329,19 +329,19 @@ inline void computeTractionMap( real64 const (&normal)[3],
  * @param[in] compliance the 6x6 matrix of D = C^{-1}
  * @param[in] projection the matrix P_E
  * @param[in,out] workspace a 6 x (6 numFaces) scratch block
- * @param[out] stiffness the (6 numFaces) x (6 numFaces) matrix K_E
+ * @param[out] complianceMatrix the (6 numFaces) x (6 numFaces) matrix M_E
  *
  * a_E^h(sigma,tau) = a_E(Pi_E sigma, Pi_E tau) + s_E((I-Pi_E) sigma, (I-Pi_E) tau)
  * with the boundary stabilization s_E(sigma,tau) = kappa_E h_E int_{dE} (sigma n).(tau n).
  * Expanding the residual (I-Pi_E) phi_j n on a face into the projected traction minus
  * phi_j collects every quadratic term into a single 6x6 weight,
  *   W = |E| D + kappa_E h_E sum_f |f| Lambda_{n_f}^T Lambda_{n_f},
- * so the dense part of K_E is the one product P_E^T W P_E; the remaining cross and
+ * so the dense part of M_E is the one product P_E^T W P_E; the remaining cross and
  * Gram terms only touch the six columns of each face. The outward sign appears twice
  * in the stabilization and cancels.
  */
 GEOS_HOST_DEVICE
-inline void computeStiffness( FaceGeometry const * const faceGeom,
+inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
                               integer const numFaces,
                               real64 const volume,
                               real64 const diameter,
@@ -349,7 +349,7 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
                               real64 const (&compliance)[NUM_SYM_COMP][NUM_SYM_COMP],
                               MatrixSliceConst const & projection,
                               MatrixSlice const & workspace,
-                              MatrixSlice const & stiffness )
+                              MatrixSlice const & complianceMatrix )
 {
   integer const numStressDof = NUM_FACE_DOF * numFaces;
 
@@ -402,7 +402,7 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
     }
   }
 
-  // workspace = W P_E, then K_E = P_E^T workspace with a contiguous inner loop
+  // workspace = W P_E, then M_E = P_E^T workspace with a contiguous inner loop
   for( integer a = 0; a < NUM_SYM_COMP; ++a )
   {
     for( integer j = 0; j < numStressDof; ++j )
@@ -416,6 +416,7 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
     }
   }
 
+  // P_E^T W P_E is symmetric, so only its lower triangle is formed
   for( integer i = 0; i < numStressDof; ++i )
   {
     real64 column[NUM_SYM_COMP];
@@ -424,18 +425,26 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
       column[a] = projection( a, i );
     }
 
-    for( integer j = 0; j < numStressDof; ++j )
+    for( integer j = 0; j <= i; ++j )
     {
-      stiffness( i, j ) = 0.0;
+      complianceMatrix( i, j ) = 0.0;
     }
 
     for( integer a = 0; a < NUM_SYM_COMP; ++a )
     {
       real64 const c = column[a];
-      for( integer j = 0; j < numStressDof; ++j )
+      for( integer j = 0; j <= i; ++j )
       {
-        stiffness( i, j ) += c * workspace( a, j );
+        complianceMatrix( i, j ) += c * workspace( a, j );
       }
+    }
+  }
+
+  for( integer i = 0; i < numStressDof; ++i )
+  {
+    for( integer j = 0; j < i; ++j )
+    {
+      complianceMatrix( j, i ) = complianceMatrix( i, j );
     }
   }
 
@@ -472,15 +481,22 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
 
     for( integer i = 0; i < numStressDof; ++i )
     {
+      // the projection column is read once instead of once per face mode
+      real64 column[NUM_SYM_COMP];
+      for( integer a = 0; a < NUM_SYM_COMP; ++a )
+      {
+        column[a] = projection( a, i );
+      }
+
       for( integer k = 0; k < NUM_FACE_DOF; ++k )
       {
         real64 value = 0.0;
         for( integer a = 0; a < NUM_SYM_COMP; ++a )
         {
-          value += projection( a, i ) * cross[a][k];
+          value += column[a] * cross[a][k];
         }
-        stiffness( i, offset + k ) -= value;
-        stiffness( offset + k, i ) -= value;
+        complianceMatrix( i, offset + k ) -= value;
+        complianceMatrix( offset + k, i ) -= value;
       }
     }
 
@@ -488,7 +504,7 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
     {
       for( integer l = 0; l < NUM_FACE_DOF; ++l )
       {
-        stiffness( offset + k, offset + l ) += stabScale * gram[k][l];
+        complianceMatrix( offset + k, offset + l ) += stabScale * gram[k][l];
       }
     }
   }
@@ -506,7 +522,7 @@ inline void computeStiffness( FaceGeometry const * const faceGeom,
  * @param[out] divReconstruction the 6 x (6 numFaces) matrix D_E
  * @param[out] projection the 6 x (6 numFaces) matrix P_E
  * @param[in,out] workspace a 6 x (6 numFaces) scratch block, reusable across elements
- * @param[out] stiffness the (6 numFaces) x (6 numFaces) matrix K_E
+ * @param[out] complianceMatrix the (6 numFaces) x (6 numFaces) matrix M_E
  */
 GEOS_HOST_DEVICE
 inline void computeElementOperators( FaceGeometry const * const faceGeom,
@@ -520,7 +536,7 @@ inline void computeElementOperators( FaceGeometry const * const faceGeom,
                                      MatrixSlice const & divReconstruction,
                                      MatrixSlice const & projection,
                                      MatrixSlice const & workspace,
-                                     MatrixSlice const & stiffness )
+                                     MatrixSlice const & complianceMatrix )
 {
   computeDivergenceOperator( faceGeom, numFaces, elemCenter, divergence );
 
@@ -529,8 +545,8 @@ inline void computeElementOperators( FaceGeometry const * const faceGeom,
   computeProjectionOperator( faceGeom, numFaces, elemCenter, moments,
                              divReconstruction.toSliceConst(), projection );
 
-  computeStiffness( faceGeom, numFaces, moments.volume, diameter, stabilizationLength, compliance,
-                    projection.toSliceConst(), workspace, stiffness );
+  computeComplianceMatrix( faceGeom, numFaces, moments.volume, diameter, stabilizationLength, compliance,
+                    projection.toSliceConst(), workspace, complianceMatrix );
 }
 
 } // namespace mixedVEM

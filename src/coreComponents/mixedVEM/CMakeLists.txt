@@ -16,7 +16,7 @@ Package: mixedVEM
 
 Lowest-order mixed virtual element discretization of linear elasticity on polyhedral
 meshes, based on the Hellinger-Reissner principle. The package provides the element
-level operators B_E and K_E and the helpers that scatter them into the global
+level operators B_E and M_E and the helpers that scatter them into the global
 saddle-point system.
 #]]
 

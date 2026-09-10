@@ -31,7 +31,7 @@ namespace geos
  *
  * Input object of the lowest-order mixed virtual element discretization of elasticity.
  *
- * The element operators K_E and B_E are the same either way. What the hybridization flag
+ * The element operators M_E and B_E are the same either way. What the hybridization flag
  * selects is how the global problem is formed and solved: the mixed form assembles the
  * indefinite saddle point system in the face tractions and the element displacements,
  * whereas the hybridized form breaks the stress space, condenses both element unknowns
