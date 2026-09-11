@@ -14,6 +14,14 @@ decks = [
         check_step=11,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="co2_thermal_2d_iterative",
+        description=
+        "hypre MGR variant (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=9,
+        check_step=11,
+        restartcheck_params=RestartcheckParameters(atol=1e-6, rtol=1e-5)),
+    TestDeck(
         name="co2_thermal_obl_3d",
         description=
         'Smoke test for a co2-brine test (3D displacement, 2-phase co2-brine, thermal, OBL)',
