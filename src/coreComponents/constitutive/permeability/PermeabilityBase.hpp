@@ -57,6 +57,14 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  virtual void updateFromPorosityAndStrain( localIndex const k,
+                                            real64 const & currentPorosity,
+                                            real64 const & referencePorosity ) const
+  {
+    GEOS_UNUSED_VAR( k, currentPorosity, referencePorosity );
+  }
+
+  GEOS_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,

@@ -61,6 +61,17 @@
         "PorousSolid<DuvautLionsSolid<DruckerPrager>, CarmanKozenyPermeability>",
         "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, CarmanKozenyPermeability>",
         "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>",
+        "PorousSolid<DruckerPragerExtended, StrainDependentPermeability>",
+        "PorousSolid<ModifiedCamClay, StrainDependentPermeability>",
+        "PorousSolid<DelftEgg, StrainDependentPermeability>",
+        "PorousSolid<DruckerPrager, StrainDependentPermeability>",
+        "PorousSolid<ElasticIsotropic, StrainDependentPermeability>",
+        "PorousSolid<ElasticTransverseIsotropic, StrainDependentPermeability>",
+        "PorousSolid<ElasticIsotropicPressureDependent, StrainDependentPermeability>",
+        "PorousSolid<ElasticOrthotropic, StrainDependentPermeability>",
+        "PorousSolid<DuvautLionsSolid<DruckerPrager>, StrainDependentPermeability>",
+        "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, StrainDependentPermeability>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, StrainDependentPermeability>",
         "PorousDamageSolid<Damage<ElasticIsotropic>>",
         "PorousDamageSolid<DamageSpectral<ElasticIsotropic>>",
         "PorousDamageSolid<DamageVolDev<ElasticIsotropic>>"
@@ -100,7 +111,8 @@
       ],
       "CONSTITUTIVE_TYPE": [
         "PorousSolid<ElasticIsotropic, ConstantPermeability>",
-        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>"
+        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticIsotropic, StrainDependentPermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
@@ -136,7 +148,11 @@
         "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
         "PorousSolid<DruckerPrager, CarmanKozenyPermeability>",
         "PorousSolid<DruckerPragerExtended, CarmanKozenyPermeability>",
-        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>"
+        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticIsotropic, StrainDependentPermeability>",
+        "PorousSolid<DruckerPrager, StrainDependentPermeability>",
+        "PorousSolid<DruckerPragerExtended, StrainDependentPermeability>",
+        "PorousSolid<ModifiedCamClay, StrainDependentPermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",

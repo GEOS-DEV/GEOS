@@ -63,6 +63,19 @@ public:
              m_dPerm_dPorosity[k][q] );
   }
 
+  GEOS_HOST_DEVICE
+  virtual void updateFromPorosityAndStrain( localIndex const k,
+                                            real64 const & currentPorosity,
+                                            real64 const & referencePorosity ) const override
+  {
+    GEOS_UNUSED_VAR( referencePorosity );
+
+    // PorousSolid stores permeability cell-centered with one quadrature point.
+    compute( currentPorosity,
+             m_permeability[k][0],
+             m_dPerm_dPorosity[k][0] );
+  }
+
 private:
 
   /// dPermeability_dPorosity
