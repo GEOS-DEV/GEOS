@@ -72,8 +72,8 @@
     <!-- SPHINX_MaterialContact -->
     <Coulomb
       name="fractureContact"
-      cohesion="0"
-      frictionCoefficient="0.5"/>
+      defaultCohesion="0"
+      defaultFrictionCoefficient="0.5"/>
     <!-- SPHINX_MaterialContactEnd --> 
   
     <ElasticIsotropic

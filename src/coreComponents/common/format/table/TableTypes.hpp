@@ -82,7 +82,7 @@ public:
    * @brief Append a vector of string to the errors vector.
    * @param errors A vector of string to append
    */
-  void appendErrors( stdVector< string > & errors )
+  void appendErrors( stdVector< string > const & errors )
   { m_errorList.insert( m_errorList.end(), errors.begin(), errors.end() );}
 
   /**

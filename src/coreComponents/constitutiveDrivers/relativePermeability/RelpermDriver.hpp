@@ -13,111 +13,75 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_RELPERMDRIVER_HPP_
-#define GEOS_RELPERMDRIVER_HPP_
+#ifndef GEOS_CONSTITUTIVEDRIVERS_RELATIVEPERMEABILITY_RELPERMDRIVER_HPP
+#define GEOS_CONSTITUTIVEDRIVERS_RELATIVEPERMEABILITY_RELPERMDRIVER_HPP
 
-#include "events/tasks/TaskBase.hpp"
-#include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
+#include "constitutiveDrivers/ConstitutiveDriver.hpp"
 
 namespace geos
 {
 
-class RelpermDriver : public TaskBase
+namespace constitutive
 {
+class RelativePermeabilityBase;
+}
 
+/**
+ * @class RelpermDriver
+ *
+ * Class to allow for testing Relative permeability models without the
+ * complexity of setting up a full simulation.
+ */
+class RelpermDriver : public ConstitutiveDriver
+{
 public:
-  RelpermDriver( const string & name,
-                 Group * const parent );
+  RelpermDriver( const string & name, Group * const parent );
 
-  static string catalogName()
-  { return "RelpermDriver"; }
+  static string catalogName() { return "RelpermDriver"; }
 
   void postInputInitialization() override;
 
-  virtual bool execute( real64 const GEOS_UNUSED_PARAM( time_n ),
-                        real64 const GEOS_UNUSED_PARAM( dt ),
-                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOS_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                        DomainPartition &
-                        GEOS_UNUSED_PARAM( domain ) ) override;
+  using ConstitutiveDriver::execute;
+
+  bool execute() override;
+
+  void getColumnNames( string_array & columnNames ) const override;
 
   /**
    * @brief Run test using loading protocol in table
-   * @param i Relperm constitutive model
+   * @param relperm Relperm constitutive model
    * @param table Table with input/output time history
    */
   template< typename RELPERM_TYPE >
-  std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-  runTest( RELPERM_TYPE & relperm,
-           const arrayView2d< real64, 1 > & table );
-
-  template< typename RELPERM_TYPE >
-  std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-  runTest( RELPERM_TYPE & relperm,
-           const arrayView2d< real64, 1 > & table );
-
-  /**
-   * @brief Ouput table to file for easy plotting
-   */
-  void outputResults();
-
-  /**
-   * @brief Read in a baseline table from file and compare with computed one (for unit testing purposes)
-   */
-  void compareWithBaseline();
+  void runTest( RELPERM_TYPE & relperm, const arrayView2d< real64, 1 > & table );
 
 private:
+  /**
+   * @brief Get the relative permeability model from the catalog
+   */
+  constitutive::RelativePermeabilityBase & getRelperm();
+  constitutive::RelativePermeabilityBase const & getRelperm() const;
 
-  template< typename RELPERM_TYPE >
-  void resizeTables();
-
-  template< typename RELPERM_TYPE >
-  std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-  resizeTable();
-
-  template< typename RELPERM_TYPE >
-  std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-  resizeTable();
+  /**
+   * @brief Initialises the table by filling in primary variables
+   */
+  void initializeTable( constitutive::RelativePermeabilityBase const & baseRelperm );
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
   struct viewKeyStruct
   {
-    constexpr static char const * relpermNameString()
-    { return "relperm"; }
-
-    constexpr static char const * numStepsString()
-    { return "steps"; }
-
-    constexpr static char const * outputString()
-    { return "output"; }
-
-    constexpr static char const * baselineString()
-    { return "baseline"; }
+    constexpr static char const * relpermNameString() { return "relperm"; }
+    constexpr static char const * phaseNamesString() { return "phaseNames"; }
+    constexpr static char const * saturationFunctionsString() { return "saturationControls"; }
   };
 
-  integer m_numSteps;      ///< Number of load steps
-  integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
-  integer m_numPhases;     ///< Number of fluid phases
-
   string m_relpermName;               ///< relPermType identifier
-  string m_outputFile;              ///< Output file (optional, no output if not specified)
-
-  array2d< real64 > m_table; ///< Table storing time-history of input/output
-
-  Path m_baselineFile; ///< Baseline file (optional, for unit testing of solid models)
-
-  enum columnKeys
-  {
-    TIME
-  }; ///< Enumeration of "input" column keys for readability
-
-  static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
+  string_array m_phaseNames;
+  string_array m_saturationFunctionNames;
 };
-
 
 }
 
-#endif //GEOS_RELPERMDRIVER_HPP_
+#endif //GEOS_CONSTITUTIVEDRIVERS_RELATIVEPERMEABILITY_RELPERMDRIVER_HPP

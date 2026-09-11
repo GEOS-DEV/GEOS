@@ -53,4 +53,5 @@ set( MPIEXEC_EXECUTABLE mpiexec CACHE PATH "" FORCE )
 #########################################################################
 # OTHER OPTIONS                                                                                                                                                            
 #########################################################################
+set( ENABLE_HYPREDRV ON CACHE BOOL "" )
 add_third_party_libraries()

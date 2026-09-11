@@ -8,7 +8,7 @@ Validating KGD Hydraulic Fracture with Experiment
 
 **Context**
 
-In this example, we use GEOS to model a planar hydraulic fracture propagating in a finite domain subject to traction-free external boundaries. Contrary to the classic KGD problems, we do not assume an infinite rock domain. Existing analytical solutions cannot model fracture behavior in this scenario, so this problem is solved using the hydrofracture solver in GEOS. We validate the simulation results against a benchmark experiment `(Rubin, 1983)  <http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=BBFD63D08B444221B5546F7AAC3FC159?doi=10.1.1.1052.2551&rep=rep1&type=pdf>`__. 
+In this example, we use GEOS to model a planar hydraulic fracture propagating in a finite domain subject to traction-free external boundaries. Contrary to the classic KGD problems, we do not assume an infinite rock domain. Existing analytical solutions cannot model fracture behavior in this scenario, so this problem is solved using the hydrofracture solver in GEOS. We validate the simulation results against a benchmark experiment `(Rubin, 1983)  <https://asmedigitalcollection.asme.org/energyresources/article-abstract/105/2/116/405848/Experimental-Study-of-Hydraulic-Fracturing-in-an?redirectedFrom=fulltext>`__. 
 
 
 **Input file**

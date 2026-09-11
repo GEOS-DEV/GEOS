@@ -65,10 +65,24 @@
       name="displacementTimeHistoryOutput"
       beginTime="10001"
       endTime="100001"
-      targetExactTimestep="0"      
+      targetExactTimestep="0"
       timeFrequency="10000"
       target="/Outputs/displacementHistoryOutput"/>
-    
+    <PeriodicEvent
+      name="stressHistoryCollection"
+      beginTime="10001"
+      endTime="100001"
+      targetExactTimestep="0"
+      timeFrequency="10000"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput"
+      beginTime="10001"
+      endTime="100001"
+      targetExactTimestep="0"
+      timeFrequency="10000"
+      target="/Outputs/stressHistoryOutput"/>
+
     <PeriodicEvent
       name="solverApplication0"
       endTime="1e-2"

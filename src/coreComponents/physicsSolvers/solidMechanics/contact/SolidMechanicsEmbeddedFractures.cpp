@@ -62,6 +62,13 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
 
 void SolidMechanicsEmbeddedFractures::postInputInitialization()
 {
+  // Assign the MGR strategy before the base class checks it: the base implementation
+  // downgrades preconditionerType from `mgr` when no strategy has been set.
+  if( !m_useStaticCondensation )
+  {
+    setMGRStrategy();
+  }
+
   ContactSolverBase::postInputInitialization();
 
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
@@ -71,10 +78,6 @@ void SolidMechanicsEmbeddedFractures::postInputInitialization()
     linearSolverParameters.isSymmetric = true;
     linearSolverParameters.amg.separateComponents = true;
     linearSolverParameters.dofsPerNode = 3;
-  }
-  else
-  {
-    setMGRStrategy();
   }
 }
 
@@ -801,7 +804,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
-            frictionWrapper.updateFractureState( dispJump[kfe], traction[kfe], fractureState[kfe] );
+            frictionWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe] );
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
           }
         } );

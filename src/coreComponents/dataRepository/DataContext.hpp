@@ -78,7 +78,7 @@ public:
   /**
    * @return Get the target object name
    */
-  string getTargetName() const
+  string const & getTargetName() const
   { return m_targetName; }
   /**
    * @brief Insert contextual information in the provided stream.
@@ -179,13 +179,13 @@ public:
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
    */
-  string getTypeName() const
+  string const & getTypeName() const
   { return m_typeName; }
 
   /**
    * @return the source file path where the target object has been declared.
    */
-  string getFilePath() const
+  string const & getFilePath() const
   { return m_filePath; }
 
   /**

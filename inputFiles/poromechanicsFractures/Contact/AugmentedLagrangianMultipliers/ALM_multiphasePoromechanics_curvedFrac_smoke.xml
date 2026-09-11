@@ -121,8 +121,10 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ ../../MULTIPHASE_TABLES/pvtgas_curvedFrac.txt, ../../MULTIPHASE_TABLES/pvtwat.txt }"
-      flashModelParaFile="../../MULTIPHASE_TABLES/co2flash.txt" />
+      pressureCoordinates="{1.0e5, 1.0e8}"
+      pressureInterval="1.0e5"
+      temperatureCoordinates="{288.15, 369.15}"
+      temperatureInterval="2.0" />
 
     <BiotPorosity
       name="rockPorosity"
@@ -150,8 +152,8 @@
 
     <Coulomb
       name="frictionLaw"
-      cohesion="0.0"
-      frictionCoefficient="0.577350269189626"/>
+      defaultCohesion="0.0"
+      defaultFrictionCoefficient="0.577350269189626"/>
 
     <HydraulicApertureTable
       name="hApertureModel"

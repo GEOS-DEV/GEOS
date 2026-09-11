@@ -191,7 +191,7 @@ makeSeededPartition( ArrayOfSetsView< localIndex const > const & connectivity,
     newPart.setValues< parallelHostPolicy >( -1 );
 
     // 2. Assign partitions to the front nodes based on majority among neighbors
-    RAJA::ReduceSum< parallelHostReduce, localIndex > numAssigned = 0;
+    RAJA::ReduceSum< parallelHostReduce, localIndex > numAssigned( 0 );
     forAll< parallelHostPolicy >( front.size(), [connectivity, supports, numAssigned,
                                                  front = front.toViewConst(),
                                                  part = part.toViewConst(),

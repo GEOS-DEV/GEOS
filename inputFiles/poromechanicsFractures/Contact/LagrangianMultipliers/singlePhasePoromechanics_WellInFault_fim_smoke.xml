@@ -1,14 +1,16 @@
+<?xml version="1.0" ?>
+
 <Problem>
   <Included>
-    <File name="./singlePhasePoromechanics_WellInFault_base.xml"/>
+    <File
+      name="./singlePhasePoromechanics_WellInFault_base.xml"/>
   </Included>
 
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-
     <SinglePhasePoromechanicsConformingFracturesReservoir
       name="reservoirSolver"
-      targetRegions="{ Region, Fault, wellRegion1, wellRegion2 }" 
+      targetRegions="{ Region, Fault, wellRegion1, wellRegion2 }"
       initialDt="1e-3"
       poromechanicsConformingFracturesSolverName="poroFractureSolver"
       wellSolverName="singlePhaseWellSolver"
@@ -21,73 +23,79 @@
         maxAllowedResidualNorm="1e+25"/>
       <LinearSolverParameters
         solverType="direct"
-        directParallel="1"/> 
+        directParallel="1"/>
     </SinglePhasePoromechanicsConformingFracturesReservoir>
 
     <SinglePhasePoromechanicsConformingFractures
       name="poroFractureSolver"
-      targetRegions="{ Region, Fault }" 
+      targetRegions="{ Region, Fault }"
       flowSolverName="singlePhaseFlowSolver"
       solidSolverName="fractureMechSolver"
-      logLevel="1">
-    </SinglePhasePoromechanicsConformingFractures>
+      logLevel="1"/>
 
     <SolidMechanicsLagrangeContact
       name="fractureMechSolver"
       stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
-      targetRegions="{ Region, Fault }" 
-      discretization="FE1"/>  
+      targetRegions="{ Region, Fault }"
+      discretization="FE1"/>
 
-    <SinglePhaseFVM 
+    <SinglePhaseFVM
       name="singlePhaseFlowSolver"
       logLevel="1"
       allowNegativePressure="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Region, Fault}" />
+      targetRegions="{ Region, Fault }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="singlePhaseWellSolver"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
         logLevel="2"
         type="producer"
-        control="BHP"
-        referenceElevation="-2500"
-        targetBHP="1e7"
-        targetTotalRate="1e-3" />
-      <WellControls
+        control="BHP">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="1e7"
+          referenceElevation="-2500"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          volumeRate="1e-3"/>
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         logLevel="2"
         type="injector"
-        control="BHP"
-        referenceElevation="-2500"
-        targetBHP="10e7"
-        targetTotalRate="1e-3" />
-    </SinglePhaseWell>
+        control="BHP">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="10e7"
+          referenceElevation="-2500"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e-3"/>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Tasks>
-      <SinglePhasePoromechanicsConformingFracturesInitialization 
-        logLevel="1" 
-        name="SinglePhasePoroelasticityPreEquilibrationStep"  
-        poromechanicsSolverName="poroFractureSolver"/>
+    <SinglePhasePoromechanicsConformingFracturesInitialization
+      logLevel="1"
+      name="SinglePhasePoroelasticityPreEquilibrationStep"
+      poromechanicsSolverName="poroFractureSolver"/>
   </Tasks>
 
   <Events
     minTime="-1e11"
     maxTime="3.0e7">
+    <SoloEvent
+      name="SinglePhasePoroelasticityPreEquilibrationStep"
+      targetTime="-1e11"
+      beginTime="-1e11"
+      target="/Tasks/SinglePhasePoroelasticityPreEquilibrationStep"/>
 
-    <!-- Initialization -->
-    <SoloEvent 
-      name="SinglePhasePoroelasticityPreEquilibrationStep" 
-      targetTime="-1e11" 
-      beginTime="-1e11" 
-      target="/Tasks/SinglePhasePoroelasticityPreEquilibrationStep"
-    />
-    <!-- Injection -->
     <SoloEvent
       name="outputPostEquilibrationStep1"
       targetTime="0"

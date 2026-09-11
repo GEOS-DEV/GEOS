@@ -19,6 +19,7 @@
 
 #include "HypreSolver.hpp"
 
+#include "common/MpiWrapper.hpp"
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -27,6 +28,8 @@
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
 #include <HYPRE_krylov.h>
+
+#include <algorithm>
 
 namespace geos
 {
@@ -53,6 +56,11 @@ struct HypreSolverWrapper : public HyprePrecWrapper
   SetPrecondFunc setPrecond{}; ///< pointer to set preconditioner function
   GetNumIter getNumIter{};     ///< pointer to get number of iterations function
   GetFinalNorm getFinalNorm{}; ///< pointer to get final residual norm function
+
+  /// DoF-component labels used by hypre's tagged Krylov reductions.
+  array1d< HYPRE_Int > krylovDofTags;
+  HYPRE_Int numKrylovDofTags = 1;
+  HypreVector setupVector;
 };
 
 HypreSolver::HypreSolver( LinearSolverParameters parameters )
@@ -192,6 +200,57 @@ void createHypreKrylovSolver( LinearSolverParameters const & params,
   }
 }
 
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
+bool hasMatchingKrylovDofTags( HYPRE_IJVector const vector,
+                               HYPRE_Int const numTags,
+                               HYPRE_Int const * const tags )
+{
+  if( vector == nullptr || hypre_IJVectorObjectType( vector ) != HYPRE_PARCSR )
+  {
+    return false;
+  }
+
+  hypre_ParVector * const parVector = static_cast< hypre_ParVector * >( hypre_IJVectorObject( vector ) );
+  if( parVector == nullptr )
+  {
+    return false;
+  }
+
+  hypre_Vector * const localVector = hypre_ParVectorLocalVector( parVector );
+  if( localVector == nullptr || hypre_VectorNumTags( localVector ) != numTags )
+  {
+    return false;
+  }
+
+  HYPRE_Int const localSize = hypre_VectorSize( localVector );
+  return localSize == 0 || (tags != nullptr &&
+                            std::equal( tags, tags + localSize, hypre_VectorTags( localVector ) ));
+}
+
+void tagKrylovDofVector( HypreSolverWrapper & solver,
+                         HypreVector const & vec )
+{
+  if( solver.numKrylovDofTags <= 1 )
+  {
+    return;
+  }
+
+  HYPRE_IJVector const ijVector = vec.unwrappedIJ();
+  bool const tagsChanged = !hasMatchingKrylovDofTags( ijVector,
+                                                      solver.numKrylovDofTags,
+                                                      solver.krylovDofTags.data() );
+  if( tagsChanged )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorSetTags( ijVector, 1, solver.numKrylovDofTags,
+                                                 solver.krylovDofTags.data() ) );
+  }
+  if( MpiWrapper::max( tagsChanged ? 1 : 0, vec.comm() ) > 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorAssemble( ijVector ) );
+  }
+}
+#endif
+
 } // namespace
 
 void HypreSolver::setup( HypreMatrix const & mat )
@@ -212,13 +271,32 @@ void HypreSolver::setup( HypreMatrix const & mat )
                                               hypre::dummySetup,
                                               m_precond.unwrapped().ptr ) );
 
-  // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup)
-  HypreVector dummy;
-  dummy.create( mat.numLocalRows(), mat.comm() );
+  // Setup the solver (need a setup vector for rhs/sol to avoid hypre segfaulting in setup).
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
+  array1d< int > labels;
+  hypre::fillKrylovDofLabels( mat, labels );
+  hypre::assignKrylovDofTags( labels.toViewConst(),
+                              mat.comm(),
+                              m_solver->krylovDofTags,
+                              m_solver->numKrylovDofTags );
+#endif
+  // hypre's Krylov work vectors borrow the setup vector's tag array, so keep
+  // the tagged setup vector alive for the lifetime of the solver.
+  m_solver->setupVector.create( mat.numLocalRows(), mat.comm() );
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
+  if( m_solver->numKrylovDofTags > 1 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorSetTags( m_solver->setupVector.unwrappedIJ(),
+                                                 0,
+                                                 m_solver->numKrylovDofTags,
+                                                 m_solver->krylovDofTags.data() ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_IJVectorAssemble( m_solver->setupVector.unwrappedIJ() ) );
+  }
+#endif
   GEOS_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
                                          mat.unwrapped(),
-                                         dummy.unwrapped(),
-                                         dummy.unwrapped() ) );
+                                         m_solver->setupVector.unwrapped(),
+                                         m_solver->setupVector.unwrapped() ) );
 }
 
 int HypreSolver::doSolve( HypreVector const & rhs,
@@ -227,6 +305,10 @@ int HypreSolver::doSolve( HypreVector const & rhs,
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( sol.ready() );
   GEOS_LAI_ASSERT( rhs.ready() );
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
+  tagKrylovDofVector( *m_solver, rhs );
+  tagKrylovDofVector( *m_solver, sol );
+#endif
   HYPRE_Int const result = m_solver->solve( m_solver->ptr, matrix().unwrapped(), rhs.unwrapped(), sol.unwrapped() );
   sol.touch();
   return result;
@@ -295,7 +377,6 @@ void HypreSolver::clear()
   if( m_solver )
   {
     GEOS_LAI_CHECK_ERROR( m_solver->destroy( m_solver->ptr ) );
-    m_solver = nullptr;
   }
   m_solver.reset();
 }

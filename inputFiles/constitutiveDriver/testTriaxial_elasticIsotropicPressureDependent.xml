@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <TriaxialDriver
+      name="triaxialDriver"
+      material="elasticIPD"
+      mode="strainControl"
+      axialControl="strainFunction"
+      radialControl="strainFunction"
+      initialStress="-1.0"
+      steps="20"
+      logLevel="1"
+      output="testTriaxial_elasticIsotropicPressureDependent.txt"/>
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="triaxialDriver"
+      target="/Tasks/triaxialDriver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>  
+  </Events>
+
+  <Constitutive>
+    <ElasticIsotropicPressureDependent
+      name="elasticIPD"
+      defaultDensity="2700"
+      defaultRefPressure="-1.0"
+      defaultRefStrainVol="0"
+      defaultRecompressionIndex="0.003"
+      defaultShearModulus="200"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="strainFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0, -0.02 }"/>
+  </Functions>
+</Problem>

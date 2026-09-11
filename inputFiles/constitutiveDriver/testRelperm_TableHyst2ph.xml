@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="testRelperm"
+      relperm="relperm"
+      steps="100" 
+      phaseNames="{ gas }"
+      saturationControls="{ gasSaturation }"
+      output="testRelperm_TableHyst2ph.txt"
+      logLevel="1" />  
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    
+    <SoloEvent name="event_testRelperm" target="/Tasks/testRelperm" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />         
+  </Events>
+
+  <Constitutive>
+    <TableRelativePermeabilityHysteresis
+      name="relperm"
+      phaseNames="{ water, gas }"
+      drainageWettingNonWettingRelPermTableNames="{ drainageWaterRelativePermeabilityTable,
+                                                    drainageGasRelativePermeabilityTable }"
+      imbibitionNonWettingRelPermTableName="imbibitionGasRelativePermeabilityTable"      
+      imbibitionWettingRelPermTableName="imbibitionWaterRelativePermeabilityTable"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="drainageWaterRelativePermeabilityTable"
+      coordinateFiles="{ testRelperm_data/drainagePhaseVolFraction_water.txt }"
+      voxelFile="testRelperm_data/drainageRelPerm_water.txt"/>
+    <TableFunction
+      name="drainageGasRelativePermeabilityTable"
+      coordinateFiles="{ testRelperm_data/drainagePhaseVolFraction_gas.txt }"
+      voxelFile="testRelperm_data/drainageRelPerm_gas.txt"/>
+    <TableFunction
+      name="imbibitionWaterRelativePermeabilityTable"
+      coordinateFiles="{ testRelperm_data/imbibitionPhaseVolFraction_water.txt }"
+      voxelFile="testRelperm_data/imbibitionRelPerm_water.txt"/>
+    <TableFunction
+      name="imbibitionGasRelativePermeabilityTable"
+      coordinateFiles="{ testRelperm_data/imbibitionPhaseVolFraction_gas.txt }"
+      voxelFile="testRelperm_data/imbibitionRelPerm_gas.txt"/>
+
+    <TableFunction
+      name="gasSaturation"
+      coordinates="{ 0.0, 1.0, 2.0 }"
+      values="{ 0.0, 1.0, 0.2 }"
+      interpolation="linear" />
+  </Functions>
+</Problem>

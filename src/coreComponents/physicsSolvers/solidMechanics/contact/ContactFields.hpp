@@ -252,6 +252,22 @@ DECLARE_FIELD( relaxationFactor1,
                WRITE_AND_READ,
                "New relaxation factor" );
 
+DECLARE_FIELD( cohesion,
+               "cohesion",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Cohesion for each element" );
+
+DECLARE_FIELD( frictionCoefficient,
+               "frictionCoefficient",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Friction coefficient for each element" );
+
 }
 
 }

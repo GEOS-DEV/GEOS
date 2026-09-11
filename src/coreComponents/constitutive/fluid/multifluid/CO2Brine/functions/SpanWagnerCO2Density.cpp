@@ -208,7 +208,7 @@ real64 spanWagnerCO2DensityFunction( string const & name,
 }
 
 
-TableFunction const * makeDensityTable( string_array const & inputParams,
+TableFunction const * makeDensityTable( constitutive::PVTProps::BrineFluidParameters const & brineFluidParameters,
                                         string const & functionName,
                                         FunctionManager & functionManager )
 {
@@ -225,20 +225,9 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   else
   {
     PTTableCoordinates tableCoords;
-    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+    constitutive::PVTProps::BrineFluidParameters::initializePropertyTable( brineFluidParameters, tableCoords );
 
-    real64 tolerance = 1e-10;
-    try
-    {
-      if( inputParams.size() >= 9 )
-      {
-        tolerance = stod( inputParams[8] );
-      }
-    }
-    catch( const std::invalid_argument & e )
-    {
-      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-    }
+    real64 const tolerance = brineFluidParameters.m_tolerance;
 
     array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
     SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
@@ -276,7 +265,7 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
 }
 
 SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
-                                            string_array const & inputParams,
+                                            BrineFluidParameters const & brineFluidParameters,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight,
                                             TableFunction::OutputOptions const pvtOutputOpts ):
@@ -287,7 +276,7 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
-  m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_CO2DensityTable = makeDensityTable( brineFluidParameters, m_functionName, FunctionManager::getInstance() );
 
   m_CO2DensityTable->outputTableData( pvtOutputOpts );
 }
