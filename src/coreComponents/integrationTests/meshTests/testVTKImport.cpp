@@ -23,17 +23,25 @@
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 
 // special CMake-generated include
 #include "tests/meshDirName.hpp"
 
 // TPL includes
+#include <vtkAbstractArray.h>
 #include <vtkCellData.h>
+#include <vtkCellType.h>
+#include <vtkDoubleArray.h>
+#include <vtkFieldData.h>
+#include <vtkIntArray.h>
 #include <vtkInformation.h>
 #include <vtkMultiBlockDataSet.h>
+#include <vtkPartitionedDataSet.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
+#include <vtkStringArray.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLMultiBlockDataWriter.h>
 #include <vtkVersionMacros.h>
@@ -49,6 +57,86 @@
 using namespace geos;
 using namespace geos::testing;
 using namespace geos::dataRepository;
+
+
+namespace
+{
+
+template< typename ARRAY_TYPE >
+void addEmptyArray( vtkFieldData & data, char const * name, int const numComponents )
+{
+  vtkNew< ARRAY_TYPE > array;
+  array->SetName( name );
+  array->SetNumberOfComponents( numComponents );
+  array->SetNumberOfTuples( 0 );
+  data.AddArray( array );
+}
+
+vtkSmartPointer< vtkUnstructuredGrid > makeRedistributionGrid( bool const withCell )
+{
+  vtkSmartPointer< vtkUnstructuredGrid > grid = vtkSmartPointer< vtkUnstructuredGrid >::New();
+  if( withCell )
+  {
+    vtkNew< vtkPoints > points;
+    vtkIdType const point = points->InsertNextPoint( 0.0, 0.0, 0.0 );
+    grid->SetPoints( points );
+    grid->Allocate( 1 );
+    grid->InsertNextCell( VTK_VERTEX, 1, &point );
+
+    vtkNew< vtkIntArray > cellValues;
+    cellValues->SetName( "redistributeCellValues" );
+    cellValues->SetNumberOfComponents( 3 );
+    cellValues->SetNumberOfTuples( 1 );
+    cellValues->SetTuple3( 0, 1, 2, 3 );
+    grid->GetCellData()->AddArray( cellValues );
+
+    vtkNew< vtkDoubleArray > pointValues;
+    pointValues->SetName( "redistributePointValues" );
+    pointValues->SetNumberOfComponents( 4 );
+    pointValues->SetNumberOfTuples( 1 );
+    pointValues->SetTuple4( 0, 1.0, 2.0, 3.0, 4.0 );
+    grid->GetPointData()->AddArray( pointValues );
+
+    vtkNew< vtkIntArray > fieldValues;
+    fieldValues->SetName( "redistributeFieldValues" );
+    fieldValues->SetNumberOfComponents( 3 );
+    fieldValues->SetNumberOfTuples( 1 );
+    fieldValues->SetTuple3( 0, 5, 6, 7 );
+    grid->GetFieldData()->AddArray( fieldValues );
+  }
+  else
+  {
+    addEmptyArray< vtkStringArray >( *grid->GetCellData(), "redistributeCellLabels", 2 );
+    addEmptyArray< vtkIntArray >( *grid->GetCellData(), "redistributeCellValues", 3 );
+    addEmptyArray< vtkStringArray >( *grid->GetPointData(), "redistributePointLabels", 2 );
+    addEmptyArray< vtkDoubleArray >( *grid->GetPointData(), "redistributePointValues", 4 );
+    addEmptyArray< vtkStringArray >( *grid->GetFieldData(), "redistributeFieldLabels", 2 );
+    addEmptyArray< vtkIntArray >( *grid->GetFieldData(), "redistributeFieldValues", 3 );
+  }
+  return grid;
+}
+
+struct ExpectedArray
+{
+  char const * name;
+  int dataType;
+  int numComponents;
+};
+
+void expectEmptyArrayMetadata( vtkFieldData & data, std::initializer_list< ExpectedArray > const expectedArrays )
+{
+  ASSERT_EQ( data.GetNumberOfArrays(), static_cast< int >( expectedArrays.size() ) );
+  for( ExpectedArray const & expected: expectedArrays )
+  {
+    vtkAbstractArray * const array = data.GetAbstractArray( expected.name );
+    ASSERT_NE( array, nullptr ) << expected.name;
+    EXPECT_EQ( array->GetDataType(), expected.dataType );
+    EXPECT_EQ( array->GetNumberOfComponents(), expected.numComponents );
+    EXPECT_EQ( array->GetNumberOfTuples(), 0 );
+  }
+}
+
+} // namespace
 
 
 template< class V >
@@ -364,6 +452,47 @@ TEST_F( TestFractureImport, fracture )
   };
 
   TestMeshImport( m_vtkFile, validate, "fracture" );
+}
+
+TEST( VTKImport, redistribute )
+{
+  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+  int const commRank = MpiWrapper::commRank( MPI_COMM_GEOS );
+
+  vtkNew< vtkPartitionedDataSet > localParts;
+  localParts->SetNumberOfPartitions( commSize );
+  for( int destinationRank = 0; destinationRank < commSize; ++destinationRank )
+  {
+    // With one rank, use an empty destination to exercise the metadata
+    // recreation directly. In parallel, rank zero receives cells while the
+    // remaining destinations receive empty partitions.
+    bool const withCell = commSize > 1 && destinationRank == 0;
+    localParts->SetPartition( destinationRank, makeRedistributionGrid( withCell ) );
+  }
+
+  vtkSmartPointer< vtkUnstructuredGrid > result = geos::vtk::redistribute( *localParts, MPI_COMM_GEOS );
+  ASSERT_NE( result, nullptr );
+  if( commSize > 1 && commRank == 0 )
+  {
+    EXPECT_EQ( result->GetNumberOfCells(), commSize );
+    vtkAbstractArray * const cellValues = result->GetCellData()->GetAbstractArray( "redistributeCellValues" );
+    ASSERT_NE( cellValues, nullptr );
+    EXPECT_EQ( cellValues->GetDataType(), VTK_INT );
+    EXPECT_EQ( cellValues->GetNumberOfComponents(), 3 );
+  }
+  else
+  {
+    EXPECT_EQ( result->GetNumberOfCells(), 0 );
+    expectEmptyArrayMetadata( *result->GetCellData(),
+                               { { "redistributeCellLabels", VTK_STRING, 2 },
+                                 { "redistributeCellValues", VTK_INT, 3 } } );
+    expectEmptyArrayMetadata( *result->GetPointData(),
+                               { { "redistributePointLabels", VTK_STRING, 2 },
+                                 { "redistributePointValues", VTK_DOUBLE, 4 } } );
+    expectEmptyArrayMetadata( *result->GetFieldData(),
+                               { { "redistributeFieldLabels", VTK_STRING, 2 },
+                                 { "redistributeFieldValues", VTK_INT, 3 } } );
+  }
 }
 
 TEST( VTKImport, cube )

@@ -149,17 +149,17 @@ redistribute( vtkPartitionedDataSet & localParts,
       }
       for( int c = 0; c < ug->GetCellData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetCellData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetCellData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::CELL } );
       }
       for( int c = 0; c < ug->GetPointData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetPointData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetPointData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::POINT } );
       }
       for( int c = 0; c < ug->GetFieldData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetFieldData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetFieldData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::FIELD } );
       }
     }
