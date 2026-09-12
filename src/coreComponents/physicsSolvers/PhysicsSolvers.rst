@@ -25,5 +25,7 @@ physics solvers to be included in the simulation.
 
    multiphysics/docs/Poromechanics
 
+   multiphysics/docs/PhaseFieldFracture
+
    fluidFlow/docs/ProppantTransport
 
