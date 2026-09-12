@@ -20,8 +20,8 @@
         subcycling="1"
         newtonTol="1e-4"
         lineSearchAction="None"
-        newtonMaxIter="20"
-        maxAllowedResidualNorm="1e40"/>
+        maxTimeStepCuts="4"
+        newtonMaxIter="20"/>
     </SinglePhaseReservoirPoromechanics>
 
     <SolidMechanicsLagrangianFEM
@@ -131,7 +131,7 @@
                               { 186.55914209, 261.233222046, 404.910875391 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.11"
-        numElementsPerSegment="100">
+        numElementsPerSegment="2">
         <Perforation
           name="producer1_Stage1_perf1"
           distanceFromHead="304.5"
@@ -146,7 +146,7 @@
                               { 186.90553262, 251.16100728, 302.01191758 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.11"
-        numElementsPerSegment="100">
+        numElementsPerSegment="2">
         <Perforation
           name="injector1_Stage3_perf1"
           distanceFromHead="269.6"
@@ -172,7 +172,7 @@
 
   <Events
     minTime="-1e10"
-    maxTime="24e5">
+    maxTime="1e5">
     <PeriodicEvent
       name="outputs1"
       endTime="10000.0"
@@ -208,14 +208,7 @@
     <PeriodicEvent
       name="solverApplications1"
       beginTime="10000.0"
-      endTime="1e5"
-      maxEventDt="1000.0"
-      target="/Solvers/reservoirPoromechanics"/>
-
-    <PeriodicEvent
-      name="solverApplications2"
-      beginTime="1e5"
-      maxEventDt="5000.0"
+      maxEventDt="500.0"
       target="/Solvers/reservoirPoromechanics"/>
 
     <PeriodicEvent
