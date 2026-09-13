@@ -175,7 +175,14 @@ public:
     Base::computeAccumulation( ei, stack );
     if( Base::m_mass_n[ei] > 1.1 * m_creationMass[ei] )
     {
-      stack.localResidual[0] += m_creationMass[ei] * 0.25;
+      real64 const dMassCreated = m_creationMass[ei] * 0.25;
+      stack.localResidual[0] += dMassCreated;
+
+      // The mass removed above has to take its internal energy with it.
+      if( !isZero( Base::m_mass_n[ei] ) )
+      {
+        stack.localResidual[Base::numEqn-1] += dMassCreated * Base::m_energy_n[ei] / Base::m_mass_n[ei];
+      }
     }
   }
 
