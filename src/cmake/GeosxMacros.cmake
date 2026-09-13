@@ -301,6 +301,17 @@ function(generateKernels)
       configure_file(${ARG_TEMPLATE} ${generatedFileName} @ONLY)
       list(APPEND generatedSourcesList ${generatedFileName})
 
+      # ROCm 7.2/amdclang currently reports an invalid register class while
+      # compiling some large solid-mechanics HIP instantiations for gfx10/gfx11
+      # when inlining is enabled. Keep the workaround limited to the generated
+      # solid/poro-mechanics kernels so regular libraries and tests retain
+      # their normal optimization settings.
+      if( ENABLE_HIP AND CMAKE_HIP_ARCHITECTURES MATCHES "(^|;)gfx(10|11)"
+          AND generatedFileName MATCHES "(SolidMechanics.*Kernels|PoromechanicsKernels|ThermoPoromechanicsKernels)" )
+        set_source_files_properties( "${generatedFileName}"
+                                     PROPERTIES COMPILE_OPTIONS "-fno-inline" )
+      endif()
+
       string(REPLACE "${ARG_SPLIT}" ", " typeCombination ${instantiation})
       set(typeCombinationList "${typeCombinationList},
   types::TypeList< ${typeCombination} >")
