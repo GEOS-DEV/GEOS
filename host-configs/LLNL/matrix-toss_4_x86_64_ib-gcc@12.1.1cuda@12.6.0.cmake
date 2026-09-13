@@ -57,25 +57,25 @@ set(ENABLE_HIP OFF CACHE BOOL "")
 #--------------------------------------------------------------------------------
 
 set(ENABLE_CHAI ON CACHE BOOL "")
-set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/chai-2026.07.0-dt5uf237mguwwpfzgobxoulsajv5i67d" CACHE PATH "")
-set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/raja-2026.07.0-j7hljeen2kw5evqiiuqj6cmhkyayrlxr" CACHE PATH "")
+set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/chai-2026.07.0-dt5uf237mguwwpfzgobxoulsajv5i67d" CACHE PATH "")
+set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/raja-2026.07.0-j7hljeen2kw5evqiiuqj6cmhkyayrlxr" CACHE PATH "")
 set(ENABLE_UMPIRE ON CACHE BOOL "")
-set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/umpire-2026.07.1-hpgi52yh3v4mkqnj5djoauosejo3cofm" CACHE PATH "")
-set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/camp-2026.07.1-nikd7y3ysthgf6ruutvevspdccxi2xdw" CACHE PATH "")
+set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/umpire-2026.07.1-hpgi52yh3v4mkqnj5djoauosejo3cofm" CACHE PATH "")
+set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/camp-2026.07.1-nikd7y3ysthgf6ruutvevspdccxi2xdw" CACHE PATH "")
 #--------------------------------------------------------------------------------
 # IO TPLs
 #--------------------------------------------------------------------------------
 
 set(ENABLE_CALIPER ON CACHE BOOL "")
-set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/caliper-2.14.0-wafnkyyvt3d6bpcgybrvxz5ihymutmm2" CACHE PATH "")
-set(ADIAK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/adiak-0.4.0-burrsvbtmzww3jfh2konwvbt3xzctddz" CACHE PATH "")
+set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/caliper-2.14.0-wafnkyyvt3d6bpcgybrvxz5ihymutmm2" CACHE PATH "")
+set(ADIAK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/adiak-0.4.0-burrsvbtmzww3jfh2konwvbt3xzctddz" CACHE PATH "")
 set(ZLIB_DIR "/usr" CACHE PATH "")
-set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/hdf5-1.14.6-4z7uyydq22vfjhcu3te3p4a7lpzkvs62" CACHE PATH "")
-set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/conduit-0.9.5-oebbjwcq2klhalpbbsvesgpba6egkxsb" CACHE PATH "")
-set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/silo-4.12.0-mwsrjsnnd4tqnukagvjj7ujc7djwk6tc" CACHE PATH "")
-set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/pugixml-1.13-5qhtoeyb5yfogjqvjnl5dpuxtl6dllkk" CACHE PATH "")
-set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/vtk-9.7.0-23skvwl7s3xxsehpxqj7nsytdi53ujrp" CACHE PATH "")
-set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/fmt-12.1.0-gtzebp3hnmzxf2kvqucafutphmhnnjod" CACHE PATH "")
+set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/hdf5-1.14.6-4z7uyydq22vfjhcu3te3p4a7lpzkvs62" CACHE PATH "")
+set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/conduit-0.9.5-oebbjwcq2klhalpbbsvesgpba6egkxsb" CACHE PATH "")
+set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/silo-4.12.0-mwsrjsnnd4tqnukagvjj7ujc7djwk6tc" CACHE PATH "")
+set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/pugixml-1.13-5qhtoeyb5yfogjqvjnl5dpuxtl6dllkk" CACHE PATH "")
+set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/vtk-9.7.0-23skvwl7s3xxsehpxqj7nsytdi53ujrp" CACHE PATH "")
+set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/fmt-12.1.0-gtzebp3hnmzxf2kvqucafutphmhnnjod" CACHE PATH "")
 #--------------------------------------------------------------------------------
 # System Math Libraries
 #--------------------------------------------------------------------------------
@@ -88,16 +88,16 @@ set(LAPACK_LIBRARIES /usr/lib64/libopenblas.so CACHE STRING "")
 # Math TPLs
 #--------------------------------------------------------------------------------
 
-set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/metis-5.1.0-znhibjpryqyq2pp5kjsx7e6xwvnezemr" CACHE PATH "")
-set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/parmetis-4.0.3-imhjqrmgovranp6v6ebenueucxoa6sw4" CACHE PATH "")
-set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/scotch-7.0.8-fp4wqafwsmtktisjoo5ahgkd3mpybt7d" CACHE PATH "")
-set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/superlu-dist-9.2.1-rzggmzby7tx2ow5vxzf2cwt3kwi23sd3" CACHE PATH "")
-set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/suite-sparse-5.10.1-fm6efx2e5yjn23talubodykqxvxc25xu" CACHE PATH "")
+set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/metis-5.1.0-znhibjpryqyq2pp5kjsx7e6xwvnezemr" CACHE PATH "")
+set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/parmetis-4.0.3-imhjqrmgovranp6v6ebenueucxoa6sw4" CACHE PATH "")
+set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/scotch-7.0.8-fp4wqafwsmtktisjoo5ahgkd3mpybt7d" CACHE PATH "")
+set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/superlu-dist-9.2.1-rzggmzby7tx2ow5vxzf2cwt3kwi23sd3" CACHE PATH "")
+set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/suite-sparse-5.10.1-fm6efx2e5yjn23talubodykqxvxc25xu" CACHE PATH "")
 set(ENABLE_TRILINOS OFF CACHE BOOL "")
-set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/hypre-git.f1374fb6182c9e730abaa82f865a87b36f9ad50a_master-sqrmoilfx7kxyfp5yoq4ixoimfyos65d" CACHE PATH "")
+set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/hypre-git.f1374fb6182c9e730abaa82f865a87b36f9ad50a_master-sqrmoilfx7kxyfp5yoq4ixoimfyos65d" CACHE PATH "")
 set(ENABLE_HYPRE_DEVICE "CUDA" CACHE STRING "")
 set(ENABLE_HYPREDRV ON CACHE BOOL "")
-set(HYPREDRV_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/hypredrive-git.98989bef31e865d738c1b678ee058bb0e5dd635e_master-ewbi473wgv4yon37qro3rd6lefy6rz3i" CACHE PATH "")
+set(HYPREDRV_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/hypredrive-git.98989bef31e865d738c1b678ee058bb0e5dd635e_master-ewbi473wgv4yon37qro3rd6lefy6rz3i" CACHE PATH "")
 set(ENABLE_PETSC OFF CACHE BOOL "")
 set(ENABLE_CALIPER_HYPRE ON CACHE BOOL "")
 set(GEOS_LA_INTERFACE "Hypre" CACHE STRING "")
@@ -121,11 +121,17 @@ set(ENABLE_SPHINX OFF CACHE BOOL "")
 
 set(ENABLE_UNCRUSTIFY OFF CACHE BOOL "")
 #--------------------------------------------------------------------------------
+# addr2line
+#--------------------------------------------------------------------------------
+
+set(ENABLE_ADDR2LINE ON CACHE BOOL "")
+set(ADDR2LINE_EXEC "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/binutils-2.47-evocozvongo5tzv2tvjg7hbqsh5vnoma/bin/addr2line" CACHE PATH "")
+#--------------------------------------------------------------------------------
 # Other
 #--------------------------------------------------------------------------------
 
 set(ENABLE_MATHPRESSO ON CACHE BOOL "")
-set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-08-25/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/mathpresso-geos-exvyulsbndfdllbs46fw6ga6vric6ki7" CACHE PATH "")
+set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-09-04/matrix-gcc-12-cuda-12.6_tpls/gcc-12.1.1/mathpresso-geos-exvyulsbndfdllbs46fw6ga6vric6ki7" CACHE PATH "")
 set(ENABLE_XML_UPDATES ON CACHE BOOL "")
 set(ENABLE_GRPC OFF CACHE BOOL "")
 set(GEOS_BUILD_SHARED_LIBS ON CACHE BOOL "")
