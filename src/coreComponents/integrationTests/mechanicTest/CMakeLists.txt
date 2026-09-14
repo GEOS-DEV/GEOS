@@ -60,6 +60,18 @@ geos_add_test( NAME ${test_name}
 set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
 target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
 
+# --- mixed VEM output convention: serial, no mesh files ---
+set( test "testMixedVEMOutputConvention.cpp" )
+get_filename_component( test_name ${test} NAME_WE )
+
+blt_add_executable( NAME ${test_name}
+                    SOURCES ${test}
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+geos_add_test( NAME ${test_name}
+               COMMAND ${test_name} )
+
 # --- MPI variant (CPU-only MPI builds) ---
 if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
     set( test "testFEMConsistency_mpi.cpp" )

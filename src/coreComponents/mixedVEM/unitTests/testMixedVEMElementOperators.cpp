@@ -1020,29 +1020,57 @@ TEST( MixedVEMAssembly, meshAdaptorMatchesDirectGeometry )
   }
 }
 
-TEST( MixedVEMCellOutput, cellFieldsAreWritable )
+TEST( MixedVEMCellOutput, cellStressMatchesFiniteElementVoigtOrder )
 {
   real64 compliance[NUM_SYM_COMP][NUM_SYM_COMP];
   makeIsotropicCompliance( 1.0, 1.0, compliance );
 
-  real64 const sigma[NUM_SYM_COMP] = { 0.4, -1.1, 0.7, 0.3, -0.6, 0.9 };
+  // six distinct entries, so a swapped component, a sign or a sqrt(2) changes the result
+  real64 const sigma[3][3] = { {  0.4,  0.9, -0.6 },
+                               {  0.9, -1.1,  0.3 },
+                               { -0.6,  0.3,  0.7 } };
 
+  // the finite element solver writes its stress in this order
+  real64 expected[NUM_SYM_COMP];
+  LvArray::tensorOps::denseToSymmetric< 3 >( expected, sigma );
+
+  for( bool const flipNormals : { false, true } )
+  {
+    for( auto const & entry : testElements() )
+    {
+      real64 const noOffset[3] = { 0.0, 0.0, 0.0 };
+      ElementData const data = buildElement( entry.second, noOffset, flipNormals );
+      Operators const ops = computeOperators( data, compliance );
+
+      // exact degrees of freedom of the physical tensor: its traction on the reference normal
+      std::vector< real64 > dofs( static_cast< std::size_t >( data.numStressDof ), 0.0 );
+      for( integer lf = 0; lf < data.numFaces; ++lf )
+      {
+        FaceGeometry const & geom = data.faceGeom[ static_cast< std::size_t >( lf ) ];
+        for( integer i = 0; i < 3; ++i )
+        {
+          dofs[ static_cast< std::size_t >( NUM_FACE_DOF * lf + i ) ] =
+            geom.area * LvArray::tensorOps::AiBi< 3 >( sigma[i], geom.normal );
+        }
+      }
+
+      real64 stress[NUM_SYM_COMP];
+      computeCellStress( ops.projection.toSliceConst(), data.numFaces, dofs.data(), stress );
+
+      for( integer a = 0; a < NUM_SYM_COMP; ++a )
+      {
+        EXPECT_NEAR( stress[a], expected[a], 1e-11 )
+          << entry.first << ( flipNormals ? " with flipped normals" : "" ) << " component " << a;
+      }
+    }
+  }
+}
+
+TEST( MixedVEMCellOutput, cellFieldsAreWritable )
+{
   for( auto const & entry : testElements() )
   {
     ElementData const data = buildElement( entry.second );
-    Operators const ops = computeOperators( data, compliance );
-
-    std::vector< real64 > const dofs = constantStressDofs( data, sigma );
-
-    // the cell stress is the plain tensor, the orthonormal sqrt(2) removed
-    real64 stress[NUM_SYM_COMP];
-    computeCellStress( ops.projection.toSliceConst(), data.numFaces, dofs.data(), stress );
-
-    for( integer a = 0; a < NUM_SYM_COMP; ++a )
-    {
-      real64 const expected = ( a < 3 ) ? sigma[a] : INV_SQRT_2 * sigma[a];
-      EXPECT_NEAR( stress[a], expected, 1e-11 ) << entry.first << " component " << a;
-    }
 
     // the cell displacement is u_h(x_E), the rotation is omega
     real64 const rigidMotion[NUM_RM_DOF] = { 0.3, -0.2, 0.5, 0.1, 0.4, -0.3 };
