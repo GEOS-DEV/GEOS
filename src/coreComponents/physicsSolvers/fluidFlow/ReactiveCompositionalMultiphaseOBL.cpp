@@ -540,7 +540,7 @@ void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGr
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

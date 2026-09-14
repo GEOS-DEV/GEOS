@@ -26,6 +26,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -161,7 +162,8 @@ public:
                              this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) ),
                    InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
-    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+    using namespace dataRepository;
+    DomainPartition & domain = ProblemRepository::template getManager< DomainPartition >( *this );
 
     this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
                                                                                    MeshLevel & mesh,

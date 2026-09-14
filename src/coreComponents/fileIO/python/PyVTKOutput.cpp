@@ -13,6 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include "dataRepository/ProblemRepository.hpp"
+#include "mesh/DomainPartition.hpp"
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
@@ -93,7 +95,7 @@ static PyObject * output( PyVTKOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = dataRepository::ProblemRepository::getManager< DomainPartition >( *self->group );
 
   try
   {

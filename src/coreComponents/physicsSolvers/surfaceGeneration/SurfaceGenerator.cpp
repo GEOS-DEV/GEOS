@@ -19,6 +19,7 @@
 
 #include "SurfaceGenerator.hpp"
 
+#include "dataRepository/ProblemRepository.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -286,8 +287,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     // TODO: handle this in registerField().
     faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
 
-    Group & problemManager = this->getGroupByPath( "/Problem" );
-    FieldSpecificationManager & fsm =  problemManager.getGroup< FieldSpecificationManager >( "FieldSpecifications" );
+    FieldSpecificationManager & fsm = ProblemRepository::get( *this ).getManager< FieldSpecificationManager >();
     fsm.setIsSurfaceGenerationCase( true );
   } );
 
@@ -296,7 +296,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
 void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
@@ -427,7 +427,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
 
 void SurfaceGenerator::postRestartInitialization()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -481,7 +481,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
   {
-    SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
+    SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getPartitionManager() );
     int const tileColor=partition.getColor();
     int const numTileColorsLocal=partition.numColor();
     int const numTileColors = MpiWrapper::allReduce( numTileColorsLocal, MpiWrapper::Reduction::Max );

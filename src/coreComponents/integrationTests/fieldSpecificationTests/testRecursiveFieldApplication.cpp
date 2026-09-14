@@ -82,7 +82,8 @@ TEST( FieldSpecification, Recursive )
   // Cell blocks should only be used to define the sub regions.
   // This scope protection is there to make them disappear from the rest of the test.
   {
-    CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
+    CellBlockManager & cellBlockManager =
+      domain.registerGroup< CellBlockManager >( MeshBody::groupStructKeys::cellManagerString() );
 
     CellBlock & reg0Hex = cellBlockManager.registerCellBlock( "reg0hex" );
     reg0Hex.setElementType( geos::ElementType::Hexahedron );
@@ -111,7 +112,7 @@ TEST( FieldSpecification, Recursive )
     reg1.generateMesh( cellBlocks );
 
     // The cell block manager should not be used anymore.
-    domain.deregisterGroup( keys::cellManager );
+    domain.deregisterGroup( MeshBody::groupStructKeys::cellManagerString() );
   }
 
   /// Field Definition

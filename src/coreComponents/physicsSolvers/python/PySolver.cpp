@@ -92,7 +92,7 @@ static PyObject * execute( PySolver * self, PyObject * args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getDomainPartition();
 
   self->group->execute( time, dt, cycleNumber, 0, 0, domain );
 
@@ -123,7 +123,7 @@ static PyObject * cleanup( PySolver * self, PyObject *args )
     return nullptr;
   }
 
-  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getDomainPartition();
   self->group->cleanup( time, 0, 0, 0.0, domain );
 
   Py_RETURN_NONE;

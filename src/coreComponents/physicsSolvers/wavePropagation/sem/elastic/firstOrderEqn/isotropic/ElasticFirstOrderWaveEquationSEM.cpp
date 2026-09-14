@@ -325,7 +325,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );

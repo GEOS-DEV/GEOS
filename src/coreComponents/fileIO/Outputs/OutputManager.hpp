@@ -21,6 +21,7 @@
 #define GEOS_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 
 
 namespace geos
@@ -60,6 +61,13 @@ public:
   /// @endcond
 };
 
+// OutputManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline OutputManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< OutputManager >( m_gks.outputManager ); }
+
+// OutputManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline OutputManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< OutputManager >( m_gks.outputManager ); }
 
 } /* namespace geos */
 

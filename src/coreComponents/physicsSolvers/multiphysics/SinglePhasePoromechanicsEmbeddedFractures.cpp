@@ -92,7 +92,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsP
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
-  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
+  updateState( getDomainPartition() );
+
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::setupCoupling( DomainPartition const & domain,

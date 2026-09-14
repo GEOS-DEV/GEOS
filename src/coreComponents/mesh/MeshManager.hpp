@@ -100,6 +100,14 @@ private:
 
 };
 
+// MeshManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline MeshManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< MeshManager >( m_gks.meshManager ); }
+
+// MeshManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline MeshManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< MeshManager >( m_gks.meshManager ); }
+
 } /* namespace geos */
 
 #endif /* GEOS_MESH_MESHMANAGER_HPP_ */

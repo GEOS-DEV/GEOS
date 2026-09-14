@@ -23,6 +23,7 @@
 #include "FunctionBase.hpp"
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 
 namespace geos
 {
@@ -71,6 +72,14 @@ public:
 private:
   static FunctionManager * m_instance;
 };
+
+// FunctionManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline FunctionManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< FunctionManager >( m_gks.functionManager ); }
+
+// FunctionManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline FunctionManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< FunctionManager >( m_gks.functionManager ); }
 
 } /* namespace geos */
 

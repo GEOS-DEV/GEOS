@@ -282,17 +282,16 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
     GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
-  xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( dataRepository::keys::ProblemManager );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 
   ProblemManager & problemManager = state.getProblemManager();
+  xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( problemManager.getName());
   problemManager.processInputFileRecursive( inputFile, xmlProblemNode );
 
   // Open mesh levels
   DomainPartition & domain  = problemManager.getDomainPartition();
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys
-                                                                        .meshManager );
+  MeshManager & meshManager = problemManager.getMeshManager();
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();
@@ -335,17 +334,16 @@ TEST( ConformingVirtualElementOrder1, wedges )
     GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
-  xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( dataRepository::keys::ProblemManager );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
 
   ProblemManager & problemManager = state.getProblemManager();
+  xmlWrapper::xmlNode xmlProblemNode = inputFile.getChild( problemManager.getName() );
   problemManager.processInputFileRecursive( inputFile, xmlProblemNode );
 
   // Open mesh levels
   DomainPartition & domain  = problemManager.getDomainPartition();
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >
-                                ( problemManager.groupKeys.meshManager );
+  MeshManager & meshManager = problemManager.getMeshManager();
   meshManager.generateMeshLevels( domain );
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elementManager = mesh.getElemManager();

@@ -23,6 +23,7 @@
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
@@ -31,15 +32,6 @@ namespace geos
 {
 
 class SiloFile;
-namespace dataRepository
-{
-namespace keys
-{
-/// @return PartitionManager string key
-string const partitionManager( "partitionManager" );
-}
-}
-
 class ObjectManagerBase;
 class PartitionBase;
 
@@ -124,24 +116,23 @@ public:
 
   ///@}
 
+  /**
+   * @brief struct to serve as a container for wrapper accesses
+   */
+  struct viewKeyStruct
+  {
+    dataRepository::ViewKey partitionManager = { "partitionManager" };
+  } m_vks;
 
   /**
-   * @brief struct to serve as a container for group strings and keys
-   * @struct groupKeysStruct
+   * @brief struct to serve as a container for group accesses
    */
   struct groupKeysStruct
   {
-    /// @return String key to the Group holding the MeshBodies
-    static constexpr char const * meshBodiesString() { return "MeshBodies"; }
-    /// @return String key to the Group holding the ConstitutiveManager
-    static constexpr char const * constitutiveManagerString() { return "Constitutive"; }
-
     /// View key to the Group holding the MeshBodies
-    dataRepository::GroupKey meshBodies = { meshBodiesString() };
+    dataRepository::GroupKey meshBodies = { "MeshBodies" };
     /// View key to the Group holding the ConstitutiveManager
-    dataRepository::GroupKey constitutiveManager = { constitutiveManagerString() };
-    /// View key to the Group holding the CommunicationManager
-    dataRepository::GroupKey communicationManager = { "communicationManager" };
+    dataRepository::GroupKey::index_type constitutiveManager;
   }
   /// groupKey struct for the DomainPartition class
   groupKeys;
@@ -164,13 +155,23 @@ public:
    * @brief @return Return a reference to const NumericalMethodsManager from ProblemManager
    */
   NumericalMethodsManager const & getNumericalMethodManager() const
-  { return this->getParent().getGroup< NumericalMethodsManager >( "NumericalMethods" ); }
+  { return dataRepository::ProblemRepository::getManager< NumericalMethodsManager >( *this ); }
 
   /**
    * @brief @return Return a reference to NumericalMethodsManager from ProblemManager
    */
   NumericalMethodsManager & getNumericalMethodManager()
-  { return this->getParent().getGroup< NumericalMethodsManager >( "NumericalMethods" ); }
+  { return dataRepository::ProblemRepository::getManager< NumericalMethodsManager >( *this ); }
+
+  /**
+   * @return Get the global partition.
+   */
+  PartitionBase & getPartitionManager();
+
+  /**
+   * @return Get the global partition.
+   */
+  PartitionBase const & getPartitionManager() const;
 
   /**
    * @brief Get the mesh bodies, const version.
@@ -296,6 +297,14 @@ private:
    */
   stdVector< NeighborCommunicator > m_neighbors;
 };
+
+// DomainPartition Group is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline DomainPartition & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< DomainPartition >( m_gks.domain ); }
+
+// DomainPartition Group is available through the ProblemRepository as a const problem-unique manager.
+template<> inline DomainPartition const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< DomainPartition >( m_gks.domain ); }
 
 } /* namespace geos */
 
