@@ -30,7 +30,9 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellNewtonSolver.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPropWriter.hpp"
 
+#include <map>
 namespace geos
 {
 namespace dataRepository
@@ -740,6 +742,8 @@ public:
     static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
 
     // control data (not registered on the mesh)
+    static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
+
     static constexpr char const * massDensityString() { return "massDensity";}
 
     static constexpr char const * currentBHPString() { return "currentBHP"; }
@@ -839,6 +843,17 @@ public:
                              ElementRegionManager & elemManager,
                              WellElementSubRegion & subRegion,
                              DofManager const & dofManager );
+
+  virtual void outputSingleWellDebug( real64 const time,
+                                      real64 const dt,
+                                      NonlinearSolverParameters const & nonlinearParams,
+                                      IterationsStatistics const & iterationsStatistics,
+                                      integer current_newton_iteration,
+                                      MeshLevel & mesh,
+                                      WellElementSubRegion & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                      arrayView1d< const real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
 protected:
   virtual void postRestartInitialization( )override;
@@ -1006,6 +1021,10 @@ protected:
   /// @note This DofManager is used in the assembly of the estimators linear system
   DofManager m_estimatorDoFManager;
   bool m_dofManagerInitialized;
+
+  /// flag to write detailed segment properties
+  integer m_writeSegDebug;
+  std::map< std::string, WellPropWriter > m_wellPropWriter;
 };
 
 

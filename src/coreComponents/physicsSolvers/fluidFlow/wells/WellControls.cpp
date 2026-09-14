@@ -75,7 +75,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   /// Nonlinear solver parameters
   m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
-  m_dofManagerInitialized( false )
+  m_dofManagerInitialized( false ),
+  m_writeSegDebug(2)
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 

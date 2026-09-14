@@ -419,6 +419,16 @@ void WellManager::assembleSystem( real64 const time,
         // assemble the flux terms in the mass balance equations
         wellControls.assembleWellFluxTerms( time, dt, subRegion, dofManager, localMatrix, localRhs );
       }
+      wellControls.outputSingleWellDebug( time,
+                                          dt,
+                                          nonlinearParams,
+                                          iterationsStatistics,
+                                          nonlinearParams.m_numNewtonIterations,
+                                          meshLevel,
+                                          subRegion,
+                                          dofManager,
+                                          localMatrix,
+                                          localRhs );
     } );
   } );
 
