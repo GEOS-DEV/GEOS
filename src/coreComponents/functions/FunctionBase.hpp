@@ -225,7 +225,7 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
                                   getDataContext() ) );
 
   arrayView1d< real64 const > const scale = m_inputVarScale.toViewConst();
-  forAll< POLICY >( set.size(), [=]( localIndex const i )
+  forAll< POLICY >( set.size(), [=, this]( localIndex const i )
   {
     localIndex const index = set[i];
     real64 input[MAX_VARS]{};

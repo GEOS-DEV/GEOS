@@ -661,6 +661,7 @@ public:
                        numQuadraturePoints )
   {}
 
+  GEOS_HOST_DEVICE
   virtual ~H1_Pyramid_Lagrange1_Gauss5() override final = default;
 
   /**

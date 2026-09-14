@@ -24,11 +24,15 @@ At the end of this example you will know:
 **Input file**
 
 This example uses no external input files and everything required is
-contained within two GEOS input files located at:
+contained within three GEOS input files located at:
 
 .. code-block:: console
 
-  inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
+  inputFiles/poromechanics/PoroElastic_Terzaghi_base.xml
+
+.. code-block:: console
+
+  inputFiles/poromechanics/PoroElastic_Terzaghi_direct.xml
 
 .. code-block:: console
 
@@ -121,7 +125,7 @@ the discretization method (``FE1``, defined further in the input file),
 and the target regions (here, we only have one, ``Domain``).
 
 
-.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_direct.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -143,7 +147,7 @@ please see the dedicated :ref:`FiniteElement <FiniteElement>` section.
 The finite volume method requires the specification of a discretization scheme.
 Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolume <FiniteVolume>`).
 
-.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->

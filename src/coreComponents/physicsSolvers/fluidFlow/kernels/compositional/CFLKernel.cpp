@@ -270,8 +270,11 @@ CFLKernel::
                    real64 & phaseCFLNumber )
 {
   // first, check which phases are mobile in the cell
-  real64 mob[NP]{};
-  localIndex mobilePhases[NP]{};
+  // The three-phase branch below is instantiated alongside the two-phase
+  // branch. Keep the work arrays large enough for either regime.
+  constexpr integer MAX_PHASES = NP < 3 ? 3 : NP;
+  real64 mob[MAX_PHASES]{};
+  localIndex mobilePhases[MAX_PHASES]{};
   localIndex numMobilePhases = 0;
   for( localIndex ip = 0; ip < NP; ++ip )
   {
