@@ -42,6 +42,9 @@ public:
   using Base::m_solution;
   using Base::m_maxFaceNodes;
 
+  using Base::m_derivativeFluxResidual_dAperture;
+  using Base::m_derivativeFluxResidual_dApertureOffsets;
+
   /// True when the flow solver carries well degrees of freedom.
   static constexpr bool hasWells = std::is_same_v< FLOW_SOLVER, SinglePhaseReservoirAndWells<> >;
 
@@ -210,9 +213,9 @@ private:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param rowLenghts the nnz in each row
    */
-  void addTransmissibilityCouplingNNZ( DomainPartition const & domain,
-                                       DofManager const & dofManager,
-                                       arrayView1d< localIndex > const & rowLengths ) const;
+  // void addTransmissibilityCouplingNNZ( DomainPartition const & domain,
+  //                                      DofManager const & dofManager,
+  //                                      arrayView1d< localIndex > const & rowLengths ) const;
 
   /**
    * @Brief add the sparsity pattern induced by the flux-aperture coupling
@@ -220,9 +223,9 @@ private:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
    */
-  void addTransmissibilityCouplingPattern( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           SparsityPatternView< globalIndex > const & pattern ) const;
+  // void addTransmissibilityCouplingPattern( DomainPartition const & domain,
+  //                                          DofManager const & dofManager,
+  //                                          SparsityPatternView< globalIndex > const & pattern ) const;
 
   /**
    * @Brief add the nnz induced by the pressure-force coupling (Aup, Abp)
@@ -230,9 +233,9 @@ private:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param rowLenghts the nnz in each row
    */
-  void addPressureForceCouplingNNZ( DomainPartition const & domain,
-                                    DofManager const & dofManager,
-                                    arrayView1d< localIndex > const & rowLengths ) const;
+  // void addPressureForceCouplingNNZ( DomainPartition const & domain,
+  //                                   DofManager const & dofManager,
+  //                                   arrayView1d< localIndex > const & rowLengths ) const;
 
   /**
    * @Brief add the sparsity pattern induced by the pressure-force coupling (Aup, Abp)
@@ -240,9 +243,9 @@ private:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
    */
-  void addPressureForceCouplingPattern( DomainPartition const & domain,
-                                        DofManager const & dofManager,
-                                        SparsityPatternView< globalIndex > const & pattern ) const;
+  // void addPressureForceCouplingPattern( DomainPartition const & domain,
+  //                                       DofManager const & dofManager,
+  //                                       SparsityPatternView< globalIndex > const & pattern ) const;
 
   /**
    * @Brief add the nnz induced by the matrix pressure-bubble coupling (Abp_matrix)
@@ -251,9 +254,9 @@ private:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param rowLengths the nnz in each row
    */
-  void addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           arrayView1d< localIndex > const & rowLengths ) const;
+  // void addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
+  //                                          DofManager const & dofManager,
+  //                                          arrayView1d< localIndex > const & rowLengths ) const;
 
   /**
    * @Brief add the sparsity pattern induced by the matrix pressure-bubble coupling
@@ -261,9 +264,9 @@ private:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param pattern the sparsity pattern
    */
-  void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
-                                               DofManager const & dofManager,
-                                               SparsityPatternView< globalIndex > const & pattern ) const;
+  // void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
+  //                                              DofManager const & dofManager,
+  //                                              SparsityPatternView< globalIndex > const & pattern ) const;
 
 
   void assembleMatrixPressureBubbleContribution( real64 const dt,
@@ -272,12 +275,12 @@ private:
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs ) override;
 
-  /**
-   * @brief Set up the Dflux_dApertureMatrix object
-   *
-   * @param domain
-   */
-  void setUpDflux_dApertureMatrix( DomainPartition & domain );
+  // /**
+  //  * @brief Set up the Dflux_dApertureMatrix object
+  //  *
+  //  * @param domain
+  //  */
+  // void setUpDflux_dApertureMatrix( DomainPartition & domain );
 
 
   // virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
@@ -285,26 +288,26 @@ private:
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
-  {
-    return m_derivativeFluxResidual_dAperture;
-  }
+  // std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
+  // {
+  //   return m_derivativeFluxResidual_dAperture;
+  // }
 
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
-  }
+  // CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
+  // {
+  //   return m_derivativeFluxResidual_dAperture->toViewConstSizes();
+  // }
 
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConst();
-  }
+  // CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
+  // {
+  //   return m_derivativeFluxResidual_dAperture->toViewConst();
+  // }
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
+  // std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
-  stdMap< string, localIndex > m_derivativeFluxResidual_dApertureOffsets;
+  // stdMap< string, localIndex > m_derivativeFluxResidual_dApertureOffsets;
 
-  string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
+  // string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 
 protected:
 

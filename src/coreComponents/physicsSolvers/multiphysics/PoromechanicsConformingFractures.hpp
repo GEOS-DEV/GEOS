@@ -129,6 +129,7 @@ void addPressureForceCouplingNNZ( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  integer const numComp = this->flowSolver()->numFluidComponents();
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
@@ -164,7 +165,7 @@ void addPressureForceCouplingNNZ( DomainPartition const & domain,
           globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
           if( rowNumber >= 0 && rowNumber < rowLengths.size() )
           {
-            rowLengths[rowNumber] += 1;  // One pressure column
+            rowLengths[rowNumber] += numComp;  // One pressure column
           }
         }
       }
@@ -178,6 +179,7 @@ void addPressureForceCouplingPattern( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  integer const numComp = this->flowSolver()->numFluidComponents();
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
@@ -218,7 +220,8 @@ void addPressureForceCouplingPattern( DomainPartition const & domain,
           globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
           if( rowIndex >= 0 && rowIndex < pattern.numRows() )
           {
-            pattern.insertNonZero( rowIndex, pressureColIndex );
+            for(integer ic = 0; ic < numComp; ++ic)
+              pattern.insertNonZero( rowIndex, pressureColIndex + ic );
           }
         }
       }
@@ -232,6 +235,7 @@ void addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  integer const numComp = this->flowSolver()->numFluidComponents();
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
                                                                       string_array const & regionNames )
@@ -264,7 +268,7 @@ void addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
           globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
           if( rowNumber >= 0 && rowNumber < rowLengths.size() )
           {
-            rowLengths[rowNumber] += 1;  // One pressure DOF from matrix cell
+            rowLengths[rowNumber] += numComp;  // One pressure DOF from matrix cell
           }
         }
 
@@ -272,7 +276,8 @@ void addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
         globalIndex const pRow = pressureDofNumber[k] - rankOffset;
         if( pRow >= 0 && pRow < rowLengths.size() )
         {
-          rowLengths[pRow] += 3;  // Three bubble DOFs
+          for( integer ic = 0; ic<numComp; ++ic)
+            rowLengths[pRow + ic] += 3;  // Three bubble DOFs
         }
       } );
     } );
@@ -285,6 +290,7 @@ void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  integer const numComp = this->flowSolver()->numFluidComponents();
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
@@ -320,7 +326,8 @@ void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
           globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
           if( rowIndex >= 0 && rowIndex < pattern.numRows() )
           {
-            pattern.insertNonZero( rowIndex, pressureColIndex );
+            for( integer ic = 0; ic < numComp; ++ic )
+              pattern.insertNonZero( rowIndex, pressureColIndex + ic);
           }
         }
 
@@ -330,7 +337,8 @@ void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
         {
           for( localIndex i = 0; i < 3; ++i )
           {
-            pattern.insertNonZero( pRow, bubbleDofNumber[faceIndex] + i );
+            for( integer ic = 0; ic < numComp; ++ic )
+              pattern.insertNonZero( pRow + ic, bubbleDofNumber[faceIndex] + i );
           }
         }
       } );
@@ -427,7 +435,7 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    integer const numComp = numFluidComponents();
+    integer const numComp = this->flowSolver()->numFluidComponents();
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                         MeshLevel const & mesh,
@@ -443,7 +451,7 @@ protected:
       FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
       
       //TODO (jafranc) - remove once ALM-bubble is frame as a stab method - tmp runtime is fine as it is tmp
-      if(this->solidMechanicsSolver()->hasStabilization())
+      if(this->solidMechanicsSolver()->hasStabilization())//why is this not done in SolidMech ?
       {
 
       FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
@@ -482,7 +490,53 @@ protected:
                   for( integer ic = 0; ic < numComp; ic++ )
                   {
                     rowLengths[rowNumber + ic] += 3*numNodesPerElement;
-                    if constexpr (CONTACT_SOLVER::hasContactStabilization)
+                  }
+                }
+              }
+            }
+          }
+        }
+      } );
+      }
+      //to decide -- reduce duplication -- can we have both ?
+      if constexpr (CONTACT_SOLVER::hasContactStabilization) {
+
+      FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
+
+      stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+      {
+        for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+        {
+          localIndex const numFluxElems = stencil.stencilSize( iconn );
+          typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+          typename SurfaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+          typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+          FaceElementSubRegion const & elementSubRegion =
+            elemManager.getRegion( seri[iconn][0] ).getSubRegion< FaceElementSubRegion >( sesri[iconn][0] );
+
+          ArrayOfArraysView< localIndex const > const elemsToNodes = elementSubRegion.nodeList().toViewConst();
+
+          arrayView1d< globalIndex const > const faceElementDofNumber =
+            elementSubRegion.getReference< array1d< globalIndex > >( flowDofKey );
+
+          for( localIndex k0=0; k0<numFluxElems; ++k0 )
+          {
+            globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
+            globalIndex const rowNumber = activeFlowDOF - rankOffset;
+
+            if( rowNumber >= 0 && rowNumber < rowLengths.size() )
+            {
+              for( localIndex k1=0; k1<numFluxElems; ++k1 )
+              {
+                // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
+                // so we only add the coupling with the nodal displacements of the neighbors.
+                if( k1 != k0 )
+                {
+                  for( integer ic = 0; ic < numComp; ic++ )
+                  {
+                      localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
+                      rowLengths[rowNumber + ic] += 3*numNodesPerElement;
                       rowLengths[rowNumber + ic] += 6;
                   }
                 }
@@ -491,8 +545,9 @@ protected:
           }
         }
       } );
-    }
-    } );
+      
+      }
+    } );//end forAll
   }
 
   /**
@@ -624,98 +679,132 @@ protected:
    */
   void setUpDflux_dApertureMatrix( DomainPartition & domain )
   {
-    integer const numComp = numFluidComponents();
+    integer const numComp = this->flowSolver()->numFluidComponents();
+    localIndex numCols = 0.;//number of outerloop pass (not considering innermost component loop)
+    
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
-
-    localIndex numMeshTargets = 0;
+  
+    string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
+   // Build the global row offsets and the row capacities together, so that each
+    // target is visited only once before the matrix is allocated.
+    m_derivativeFluxResidual_dApertureOffsets.clear();
+   stdVector< localIndex > rowCapacities;
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
-                                                                        MeshLevel const & mesh,
-                                                                        string_array const & regionNames )
+                                                                      MeshLevel const & mesh,
+                                                                      string_array const & regionNames )
+  {
+    GEOS_UNUSED_VAR( regionNames );
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    
+    // These offsets are consumed by the flow sub-solver, which walks its own
+    // mesh targets and therefore resolves the discretization level with its own
+    // discretization name. The mesh body name is the only part of a target both
+    // solvers are guaranteed to agree on, so it is the key; that in turn
+    // requires each body to appear exactly once here.
+    GEOS_ERROR_IF( m_derivativeFluxResidual_dApertureOffsets.find( meshName ) !=
+                   m_derivativeFluxResidual_dApertureOffsets.end(),
+                   GEOS_FMT( "{}: mesh body '{}' is targeted at more than one discretization level. The augmented "
+                             "Lagrangian contact formulation supports a single level per mesh body.",
+                             this->getName(), meshName ) );
+    
+    
+    localIndex const rowOffset = rowCapacities.size();
+    m_derivativeFluxResidual_dApertureOffsets.get_inserted( meshName ) = rowOffset;
+
+    // The stencil sweeps below index rows by the raw surface-element index, so
+    // the contact fracture must be the only face-element region on this target:
+    // a second one would alias into its rows. Embedded-surface regions hold a
+    // different subregion type and contribute no SurfaceElementStencil here, so
+    // they are left alone. The region is required rather than optional because
+    // every consumer of this matrix (assembleCouplingTerms,
+    // assembleFluidMassResidualDerivativeWrtDisplacement) looks it up
+    // unconditionally on every target; skipping a target here would also leave
+    // its offset pointing at the next target's rows.
+    localIndex numFractureRegions = 0;
+    elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
     {
-      std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
-
-      // The matrix is re-created per target and the flux kernel indexes it by
-      // the raw per-target surface element index, so only the last target would
-      // survive and the others would write into its rows.
-      ++numMeshTargets;
-      GEOS_ERROR_IF_GT_MSG( numMeshTargets, 1,
-                            GEOS_FMT( "{}: this solver supports a single mesh target; '{}' is the second.",
-                                      this->getName(), meshName ) );
-
-      localIndex numRows = 0;
-      localIndex numCol = 0;
+      if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
       {
-        // calculate number of fracture elements
-        mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                                            [&]( localIndex const, FaceElementSubRegion const & subRegion )
-        {
-          numRows += subRegion.size();
-        } );
-        // number of columns (derivatives) = number of fracture elements
-        numCol = numRows;
-        // number of rows (equations) = number of fracture elements * number of components
-        numRows *= numComp;
-
-        derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numCol );
-        derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+        ++numFractureRegions;
       }
-
-      // array1d's sized constructor value-initializes, so no explicit zero().
-      array1d< localIndex > rowCapacities( numRows );
-      fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-      {
-        for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-        {
-          localIndex const numFluxElems = stencil.stencilSize( iconn );
-          typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-
-          for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-          {
-            // The stencil sweep covers every SurfaceElementStencil on the mesh,
-            // while numRows only counts the subregions found in regionNames.
-            GEOS_ERROR_IF_GE_MSG( sei[iconn][k0] * numComp + numComp - 1, numRows,
-                                  "Surface stencil index exceeds the fracture derivative matrix size." );
-            for( integer ic = 0; ic < numComp; ic++ )
-            {
-              rowCapacities[sei[iconn][k0] * numComp + ic] += numFluxElems;
-            }
-          }
-        }
-      } );
-
-      if( numRows > 0 )
-      {
-        derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
-                                                                                         numCol,
-                                                                                         rowCapacities.data() );
-      }
-
-      fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-      {
-        for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-        {
-          localIndex const numFluxElems = stencil.stencilSize( iconn );
-          typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-
-          for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-          {
-            GEOS_ERROR_IF_GE_MSG( sei[iconn][k0] * numComp + numComp - 1, numRows,
-                                  "Surface stencil index exceeds the fracture derivative matrix size." );
-            for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
-            {
-              for( integer ic = 0; ic < numComp; ++ic )
-              {
-                derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic,
-                                                                 sei[iconn][k1],
-                                                                 0.0 );
-              }
-            }
-          }
-        }
-      } );
     } );
+    GEOS_ERROR_IF_NE_MSG( numFractureRegions, 1,
+                          GEOS_FMT( "{}: mesh target '{}' holds {} face-element regions. The augmented Lagrangian "
+                                    "contact formulation requires exactly one, named '{}'.",
+                                    this->getName(), meshName, numFractureRegions, fractureRegionName ) );
+    GEOS_ERROR_IF( !elemManager.hasRegion( fractureRegionName ),
+                   GEOS_FMT( "{}: mesh target '{}' does not hold the fracture region '{}' of the contact solver.",
+                             this->getName(), meshName, fractureRegionName ) );
+  
+    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
+    FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+    rowCapacities.resize( rowOffset + fractureSubRegion.size() * numComp, 0 );
+    numCols += fractureSubRegion.size();
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+    {
+      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+      {
+        localIndex const numFluxElems = stencil.stencilSize( iconn );
+        typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+        for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+        {
+          for( integer ic = 0; ic < numComp; ++ic){
+            localIndex const row = rowOffset + sei[iconn][k0] * numComp;
+            GEOS_ERROR_IF_GE_MSG( row,
+                                  LvArray::integerConversion< localIndex >( rowCapacities.size() ),
+                                  "Surface stencil index exceeds the fracture derivative matrix size." );
+            rowCapacities[ row + ic ] += numFluxElems;
+          }
+        }
+      }
+    } );
+  } );
+
+  //write real data in structure
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
+  localIndex const numRows = rowCapacities.size();
+  derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numCols );
+  derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+  if( numRows > 0 )
+  {
+    derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
+                                                                                     numCols,
+                                                                                     rowCapacities.data() );
+  }
+ 
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+                                                                      MeshLevel const & mesh,
+                                                                      string_array const & regionNames )
+  {
+    GEOS_UNUSED_VAR( regionNames );
+    localIndex const rowOffset = m_derivativeFluxResidual_dApertureOffsets.at( meshName );
+
+    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+    {
+      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+      {
+        localIndex const numFluxElems = stencil.stencilSize( iconn );
+        typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+        for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+        {
+          for(integer ic = 0 ; ic<numComp; ++ic){
+          localIndex const row = rowOffset + sei[iconn][k0] * numComp + ic;
+          GEOS_ERROR_IF_GE_MSG( row, numRows, "Surface stencil index exceeds the fracture derivative matrix size." );
+          for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+          {
+            derivativeFluxResidual_dAperture->insertNonZero( row,
+                                                             rowOffset/numComp + sei[iconn][k1], //as component-independent indexing
+                                                             0.0 );
+          }
+        }
+        }
+      }
+    } );
+  } );
   }
 
   void assembleElementBasedContributions( real64 const time_n,
@@ -1004,6 +1093,7 @@ protected:
   static const localIndex m_maxFaceNodes = 11; // Maximum number of nodes on a contact face
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
+  stdMap< string, localIndex > m_derivativeFluxResidual_dApertureOffsets;
 
 };
 

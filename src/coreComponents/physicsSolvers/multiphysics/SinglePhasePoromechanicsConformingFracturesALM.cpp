@@ -329,127 +329,127 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::updateState(
   this->flowSolver()->updateStencilWeights( domain );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-setUpDflux_dApertureMatrix( DomainPartition & domain )
-{
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
-  string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
+// setUpDflux_dApertureMatrix( DomainPartition & domain )
+// {
+//   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+//   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+//   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
+//   string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
 
-  // Build the global row offsets and the row capacities together, so that each
-  // target is visited only once before the matrix is allocated.
-  m_derivativeFluxResidual_dApertureOffsets.clear();
-  stdVector< localIndex > rowCapacities;
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & regionNames )
-  {
-    GEOS_UNUSED_VAR( regionNames );
-    ElementRegionManager const & elemManager = mesh.getElemManager();
+//   // Build the global row offsets and the row capacities together, so that each
+//   // target is visited only once before the matrix is allocated.
+//   m_derivativeFluxResidual_dApertureOffsets.clear();
+//   stdVector< localIndex > rowCapacities;
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & regionNames )
+//   {
+//     GEOS_UNUSED_VAR( regionNames );
+//     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    // These offsets are consumed by the flow sub-solver, which walks its own
-    // mesh targets and therefore resolves the discretization level with its own
-    // discretization name. The mesh body name is the only part of a target both
-    // solvers are guaranteed to agree on, so it is the key; that in turn
-    // requires each body to appear exactly once here.
-    GEOS_ERROR_IF( m_derivativeFluxResidual_dApertureOffsets.find( meshName ) !=
-                   m_derivativeFluxResidual_dApertureOffsets.end(),
-                   GEOS_FMT( "{}: mesh body '{}' is targeted at more than one discretization level. The augmented "
-                             "Lagrangian contact formulation supports a single level per mesh body.",
-                             this->getName(), meshName ) );
+//     // These offsets are consumed by the flow sub-solver, which walks its own
+//     // mesh targets and therefore resolves the discretization level with its own
+//     // discretization name. The mesh body name is the only part of a target both
+//     // solvers are guaranteed to agree on, so it is the key; that in turn
+//     // requires each body to appear exactly once here.
+//     GEOS_ERROR_IF( m_derivativeFluxResidual_dApertureOffsets.find( meshName ) !=
+//                    m_derivativeFluxResidual_dApertureOffsets.end(),
+//                    GEOS_FMT( "{}: mesh body '{}' is targeted at more than one discretization level. The augmented "
+//                              "Lagrangian contact formulation supports a single level per mesh body.",
+//                              this->getName(), meshName ) );
 
-    localIndex const rowOffset = rowCapacities.size();
-    m_derivativeFluxResidual_dApertureOffsets.get_inserted( meshName ) = rowOffset;
+//     localIndex const rowOffset = rowCapacities.size();
+//     m_derivativeFluxResidual_dApertureOffsets.get_inserted( meshName ) = rowOffset;
 
-    // The stencil sweeps below index rows by the raw surface-element index, so
-    // the contact fracture must be the only face-element region on this target:
-    // a second one would alias into its rows. Embedded-surface regions hold a
-    // different subregion type and contribute no SurfaceElementStencil here, so
-    // they are left alone. The region is required rather than optional because
-    // every consumer of this matrix (assembleCouplingTerms,
-    // assembleFluidMassResidualDerivativeWrtDisplacement) looks it up
-    // unconditionally on every target; skipping a target here would also leave
-    // its offset pointing at the next target's rows.
-    localIndex numFractureRegions = 0;
-    elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
-    {
-      if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
-      {
-        ++numFractureRegions;
-      }
-    } );
-    GEOS_ERROR_IF_NE_MSG( numFractureRegions, 1,
-                          GEOS_FMT( "{}: mesh target '{}' holds {} face-element regions. The augmented Lagrangian "
-                                    "contact formulation requires exactly one, named '{}'.",
-                                    this->getName(), meshName, numFractureRegions, fractureRegionName ) );
-    GEOS_ERROR_IF( !elemManager.hasRegion( fractureRegionName ),
-                   GEOS_FMT( "{}: mesh target '{}' does not hold the fracture region '{}' of the contact solver.",
-                             this->getName(), meshName, fractureRegionName ) );
+//     // The stencil sweeps below index rows by the raw surface-element index, so
+//     // the contact fracture must be the only face-element region on this target:
+//     // a second one would alias into its rows. Embedded-surface regions hold a
+//     // different subregion type and contribute no SurfaceElementStencil here, so
+//     // they are left alone. The region is required rather than optional because
+//     // every consumer of this matrix (assembleCouplingTerms,
+//     // assembleFluidMassResidualDerivativeWrtDisplacement) looks it up
+//     // unconditionally on every target; skipping a target here would also leave
+//     // its offset pointing at the next target's rows.
+//     localIndex numFractureRegions = 0;
+//     elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
+//     {
+//       if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+//       {
+//         ++numFractureRegions;
+//       }
+//     } );
+//     GEOS_ERROR_IF_NE_MSG( numFractureRegions, 1,
+//                           GEOS_FMT( "{}: mesh target '{}' holds {} face-element regions. The augmented Lagrangian "
+//                                     "contact formulation requires exactly one, named '{}'.",
+//                                     this->getName(), meshName, numFractureRegions, fractureRegionName ) );
+//     GEOS_ERROR_IF( !elemManager.hasRegion( fractureRegionName ),
+//                    GEOS_FMT( "{}: mesh target '{}' does not hold the fracture region '{}' of the contact solver.",
+//                              this->getName(), meshName, fractureRegionName ) );
 
-    SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
-    FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    rowCapacities.resize( rowOffset + fractureSubRegion.size(), 0 );
+//     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
+//     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+//     rowCapacities.resize( rowOffset + fractureSubRegion.size(), 0 );
 
-    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-    {
-      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-      {
-        localIndex const numFluxElems = stencil.stencilSize( iconn );
-        typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-        for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-        {
-          localIndex const row = rowOffset + sei[iconn][k0];
-          GEOS_ERROR_IF_GE_MSG( row,
-                                LvArray::integerConversion< localIndex >( rowCapacities.size() ),
-                                "Surface stencil index exceeds the fracture derivative matrix size." );
-          rowCapacities[row] += numFluxElems;
-        }
-      }
-    } );
-  } );
+//     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+//     {
+//       for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+//       {
+//         localIndex const numFluxElems = stencil.stencilSize( iconn );
+//         typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+//         for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+//         {
+//           localIndex const row = rowOffset + sei[iconn][k0];
+//           GEOS_ERROR_IF_GE_MSG( row,
+//                                 LvArray::integerConversion< localIndex >( rowCapacities.size() ),
+//                                 "Surface stencil index exceeds the fracture derivative matrix size." );
+//           rowCapacities[row] += numFluxElems;
+//         }
+//       }
+//     } );
+//   } );
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
-  localIndex const numRows = rowCapacities.size();
-  derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
-  derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-  if( numRows > 0 )
-  {
-    derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
-                                                                                     numRows,
-                                                                                     rowCapacities.data() );
-  }
+//   std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
+//   localIndex const numRows = rowCapacities.size();
+//   derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+//   derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+//   if( numRows > 0 )
+//   {
+//     derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
+//                                                                                      numRows,
+//                                                                                      rowCapacities.data() );
+//   }
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & regionNames )
-  {
-    GEOS_UNUSED_VAR( regionNames );
-    localIndex const rowOffset = m_derivativeFluxResidual_dApertureOffsets.at( meshName );
+//   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+//                                                                       MeshLevel const & mesh,
+//                                                                       string_array const & regionNames )
+//   {
+//     GEOS_UNUSED_VAR( regionNames );
+//     localIndex const rowOffset = m_derivativeFluxResidual_dApertureOffsets.at( meshName );
 
-    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-    {
-      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-      {
-        localIndex const numFluxElems = stencil.stencilSize( iconn );
-        typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+//     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+//     {
+//       for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+//       {
+//         localIndex const numFluxElems = stencil.stencilSize( iconn );
+//         typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-        for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-        {
-          localIndex const row = rowOffset + sei[iconn][k0];
-          GEOS_ERROR_IF_GE_MSG( row, numRows, "Surface stencil index exceeds the fracture derivative matrix size." );
-          for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
-          {
-            derivativeFluxResidual_dAperture->insertNonZero( row,
-                                                             rowOffset + sei[iconn][k1],
-                                                             0.0 );
-          }
-        }
-      }
-    } );
-  } );
-}
+//         for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+//         {
+//           localIndex const row = rowOffset + sei[iconn][k0];
+//           GEOS_ERROR_IF_GE_MSG( row, numRows, "Surface stencil index exceeds the fracture derivative matrix size." );
+//           for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+//           {
+//             derivativeFluxResidual_dAperture->insertNonZero( row,
+//                                                              rowOffset + sei[iconn][k1],
+//                                                              0.0 );
+//           }
+//         }
+//       }
+//     } );
+//   } );
+// }
 
 // template< typename FLOW_SOLVER >
 // void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
