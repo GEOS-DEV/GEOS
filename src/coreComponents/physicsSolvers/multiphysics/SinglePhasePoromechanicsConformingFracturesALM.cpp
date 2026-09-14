@@ -62,19 +62,22 @@ SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::SinglePhasePorome
 // }
 
 
-// template< typename FLOW_SOLVER >
-// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityPattern( DomainPartition & domain,
-//                                                                                         DofManager & dofManager,
-//                                                                                         CRSMatrix< real64, globalIndex > & localMatrix,
-//                                                                                         SparsityPattern< globalIndex > & pattern )
-// {
-//   GEOS_MARK_FUNCTION;
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityPattern( DomainPartition & domain,
+                                                                                        DofManager & dofManager,
+                                                                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                                        SparsityPattern< globalIndex > & pattern )
+{
+  GEOS_MARK_FUNCTION;
 
-//   // Initialize ALM contact solver internal data structures
-//   // These must be called before assembling the contact-dependent pattern.
-//   this->solidMechanicsSolver()->createFaceTypeList( domain );
-//   this->solidMechanicsSolver()->updateStickSlipList( domain );
-//   this->solidMechanicsSolver()->createBubbleCellList( domain );
+  // Initialize ALM contact solver internal data structures
+  // These must be called before assembling the contact-dependent pattern.
+  this->solidMechanicsSolver()->createFaceTypeList( domain );
+  this->solidMechanicsSolver()->updateStickSlipList( domain );
+  this->solidMechanicsSolver()->createBubbleCellList( domain );
+
+  Base::setSparsityPattern(domain,dofManager,localMatrix, pattern);
+}
 
 //   // Start from both subsolver patterns. The flow pattern may contain well and
 //   // flux couplings, while the mechanics pattern contains the nodal-bubble couplings.
@@ -197,34 +200,34 @@ SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::SinglePhasePorome
 
 // }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElementBasedContributions( real64 const time_n,
-                                                                                                       real64 const dt,
-                                                                                                       DomainPartition & domain,
-                                                                                                       DofManager const & dofManager,
-                                                                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                                       arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElementBasedContributions( real64 const time_n,
+//                                                                                                        real64 const dt,
+//                                                                                                        DomainPartition & domain,
+//                                                                                                        DofManager const & dofManager,
+//                                                                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+//                                                                                                        arrayView1d< real64 > const & localRhs )
+// {
+//   GEOS_MARK_FUNCTION;
 
-  // Assemble poromechanics terms (from base class)
-  Base::assembleElementBasedTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+//   // Assemble poromechanics terms (from base class)
+//   Base::assembleElementBasedTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
-  // Flow accumulation for fractures
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                      MeshLevel & mesh,
-                                                                      string_array const & regionNames )
-  {
-    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          FaceElementSubRegion const & subRegion )
-    {
-      this->flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
-    } );
-  } );
+//   // Flow accumulation for fractures
+//   // this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+//   //                                                                     MeshLevel & mesh,
+//   //                                                                     string_array const & regionNames )
+//   // {
+//   //   mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+//   //                                                                                         FaceElementSubRegion const & subRegion )
+//   //   {
+//   //     this->flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+//   //   } );
+//   // } );
 
-  // Assemble contact terms (ALM) - note: assembleContact requires time and dt
-  this->solidMechanicsSolver()->assembleContact( time_n, dt, domain, dofManager, localMatrix, localRhs );
-}
+//   // Assemble contact terms (ALM) - note: assembleContact requires time and dt
+//   this->solidMechanicsSolver()->assembleContact( time_n, dt, domain, dofManager, localMatrix, localRhs );
+// }
 
 // template< typename FLOW_SOLVER >
 // void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleCouplingTerms( real64 const time_n,
