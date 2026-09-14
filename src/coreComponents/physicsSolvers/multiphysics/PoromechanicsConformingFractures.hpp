@@ -57,13 +57,10 @@ public:
                               DofManager & dofManager ) const override
   {
     /// We need to add 2 coupling terms:
-    // 1. Poromechanical coupling in the bulk
+    // 1. Poromechanical coupling in the bulk (p<->disp)
     Base::setupCoupling( domain, dofManager );
 
-    // 2. Traction - pressure coupling in the fracture
-    dofManager.addCoupling( this->getFlowDofKey(),
-                            fields::contact::traction::key(),
-                            DofManager::Connector::Elem );
+   
     
     if constexpr (CONTACT_SOLVER::hasContactStabilization) {
         // 2. Pressure - bubble displacement coupling in the fracture
@@ -71,6 +68,12 @@ public:
                           fields::contact::totalBubbleDisplacement::key(),
                           DofManager::Connector::Elem );
     
+    }
+    else {
+     // 2. Traction - pressure coupling in the fracture //TODO check ??
+    dofManager.addCoupling( this->getFlowDofKey(),
+                            fields::contact::traction::key(),
+                            DofManager::Connector::Elem );
     }
   }
 
@@ -567,18 +570,23 @@ protected:
                                                                         MeshLevel const & mesh,
                                                                         string_array const & )
     {
-      FaceManager const & faceManager = mesh.getFaceManager();
-      ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-      string const flowDofKey = dofManager.getKey( this->getFlowDofKey() );
-      addTransmissibilityCouplingPattern(domain,mesh, dofManager, pattern, fields::solidMechanics::totalDisplacement::key(), 
-          [&faceToNodeMap](localIndex const& faceIndex, localIndex const& a ){ return faceToNodeMap(faceIndex,a);},
-          [&faceToNodeMap](localIndex const& faceIndex){ return faceToNodeMap.sizeOfArray(faceIndex);});
-      if constexpr (CONTACT_SOLVER::hasContactStabilization) {
-        addTransmissibilityCouplingPattern(domain,mesh, dofManager, pattern, fields::contact::totalBubbleDisplacement::key(), 
-          [](localIndex const & faceIndex, localIndex const& GEOS_UNUSED_PARAM(a)){ return faceIndex;},
-          [](localIndex const & GEOS_UNUSED_PARAM(faceIndex)){return 1;});
-      }
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+
+    addTransmissibilityCouplingPattern( domain, mesh, dofManager, pattern,
+        nodeManager.getReference< globalIndex_array >( dofManager.getKey( fields::solidMechanics::totalDisplacement::key() ) ),
+        [&faceToNodeMap](localIndex const& faceIndex, localIndex const& a){ return faceToNodeMap(faceIndex,a); },
+        [&faceToNodeMap](localIndex const& faceIndex){ return faceToNodeMap.sizeOfArray(faceIndex); } );
+
+    if constexpr (CONTACT_SOLVER::hasContactStabilization)
+    {
+      addTransmissibilityCouplingPattern( domain, mesh, dofManager, pattern,
+          faceManager.getReference< globalIndex_array >( dofManager.getKey( fields::contact::totalBubbleDisplacement::key() ) ),
+          [](localIndex const & faceIndex, localIndex const& GEOS_UNUSED_PARAM(a)){ return faceIndex; },
+          [](localIndex const & GEOS_UNUSED_PARAM(faceIndex)){ return 1; } );
+    }
      
     } );
   }
@@ -588,14 +596,11 @@ protected:
                                            MeshLevel const & mesh,
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern,
-                                           string const & coupledDisplacementDofKey,
+                                           arrayView1d< globalIndex const > const & coupledDisplacementDofNumber,
                                            NODE_INDEX_MAP && dofIndirectionCb,
                                            NNODE_PER_FACE && numNodesPerFace
                                             ) const
   {
-
-     arrayView1d< globalIndex const > const &
-      coupledDisplacementDofNumber = mesh.getNodeManager().getReference< globalIndex_array >( coupledDisplacementDofKey );
 
       // Get the finite volume method used to compute the stabilization
       NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -607,13 +612,13 @@ protected:
       FaceElementSubRegion const & fractureSubRegion =
         fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-      GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( fields::flow::pressure::key() ),//TODO check getFlowDofKey() ?
+      GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( fields::flow::pressure::key() ),
                      "The fracture subregion must contain pressure field.", this->getDataContext() );
 
       arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
       arrayView1d< globalIndex const > const &
-      flowDofNumber = fractureSubRegion.getReference< globalIndex_array >( this->getFlowDofKey() );
+      flowDofNumber = fractureSubRegion.getReference< globalIndex_array >( dofManager.getKey(this->getFlowDofKey()) );
 
       globalIndex const rankOffset = dofManager.rankOffset();
 
