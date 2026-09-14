@@ -203,6 +203,8 @@ void SolidMechanicsMixedVEM::registerDataOnMesh( Group & meshBodies )
 {
   PhysicsSolverBase::registerDataOnMesh( meshBodies );
 
+  string const voigtLabels[NUM_SYM_COMP] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     string_array const & regionNames )
@@ -238,7 +240,9 @@ void SolidMechanicsMixedVEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::mixedVEM::rotation >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
+      // same component names and order as the averageStress of the finite element solver
       subRegion.registerField< fields::mixedVEM::stress >( getName() ).
+        setDimLabels( 1, voigtLabels ).
         reference().resizeDimension< 1 >( NUM_SYM_COMP );
     } );
   } );
