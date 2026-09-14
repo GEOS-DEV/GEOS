@@ -62,86 +62,86 @@ SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::SinglePhasePorome
 // }
 
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityPattern( DomainPartition & domain,
-                                                                                        DofManager & dofManager,
-                                                                                        CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                                        SparsityPattern< globalIndex > & pattern )
-{
-  GEOS_MARK_FUNCTION;
+// template< typename FLOW_SOLVER >
+// void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityPattern( DomainPartition & domain,
+//                                                                                         DofManager & dofManager,
+//                                                                                         CRSMatrix< real64, globalIndex > & localMatrix,
+//                                                                                         SparsityPattern< globalIndex > & pattern )
+// {
+//   GEOS_MARK_FUNCTION;
 
-  // Initialize ALM contact solver internal data structures
-  // These must be called before assembling the contact-dependent pattern.
-  this->solidMechanicsSolver()->createFaceTypeList( domain );
-  this->solidMechanicsSolver()->updateStickSlipList( domain );
-  this->solidMechanicsSolver()->createBubbleCellList( domain );
+//   // Initialize ALM contact solver internal data structures
+//   // These must be called before assembling the contact-dependent pattern.
+//   this->solidMechanicsSolver()->createFaceTypeList( domain );
+//   this->solidMechanicsSolver()->updateStickSlipList( domain );
+//   this->solidMechanicsSolver()->createBubbleCellList( domain );
 
-  // Start from both subsolver patterns. The flow pattern may contain well and
-  // flux couplings, while the mechanics pattern contains the nodal-bubble couplings.
-  SparsityPattern< globalIndex > flowPattern;
-  this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, flowPattern );
+//   // Start from both subsolver patterns. The flow pattern may contain well and
+//   // flux couplings, while the mechanics pattern contains the nodal-bubble couplings.
+//   SparsityPattern< globalIndex > flowPattern;
+//   this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, flowPattern );
 
-  SparsityPattern< globalIndex > mechanicsPattern;
-  this->solidMechanicsSolver()->setSparsityPattern( domain, dofManager, localMatrix, mechanicsPattern );
-  GEOS_ERROR_IF_NE( flowPattern.numRows(), mechanicsPattern.numRows() );
-  GEOS_ERROR_IF_NE( flowPattern.numColumns(), mechanicsPattern.numColumns() );
+//   SparsityPattern< globalIndex > mechanicsPattern;
+//   this->solidMechanicsSolver()->setSparsityPattern( domain, dofManager, localMatrix, mechanicsPattern );
+//   GEOS_ERROR_IF_NE( flowPattern.numRows(), mechanicsPattern.numRows() );
+//   GEOS_ERROR_IF_NE( flowPattern.numColumns(), mechanicsPattern.numColumns() );
 
-  // Count the union of the two sorted row sets. This avoids double-counting
-  // shared diagonal entries without assuming either pattern contains the
-  // other.
-  array1d< localIndex > rowLengths( flowPattern.numRows() );
-  rowLengths.zero();
-  for( localIndex localRow = 0; localRow < flowPattern.numRows(); ++localRow )
-  {
-    arraySlice1d< globalIndex const > const flowColumns = flowPattern.getColumns( localRow );
-    arraySlice1d< globalIndex const > const mechanicsColumns = mechanicsPattern.getColumns( localRow );
-    localIndex flowColumn = 0;
-    localIndex mechanicsColumn = 0;
-    while( flowColumn < flowColumns.size() || mechanicsColumn < mechanicsColumns.size() )
-    {
-      if( mechanicsColumn == mechanicsColumns.size() ||
-          ( flowColumn < flowColumns.size() && flowColumns[flowColumn] < mechanicsColumns[mechanicsColumn] ) )
-      {
-        ++flowColumn;
-      }
-      else if( flowColumn == flowColumns.size() || mechanicsColumns[mechanicsColumn] < flowColumns[flowColumn] )
-      {
-        ++mechanicsColumn;
-      }
-      else
-      {
-        ++flowColumn;
-        ++mechanicsColumn;
-      }
-      ++rowLengths[localRow];
-    }
-  }
+//   // Count the union of the two sorted row sets. This avoids double-counting
+//   // shared diagonal entries without assuming either pattern contains the
+//   // other.
+//   array1d< localIndex > rowLengths( flowPattern.numRows() );
+//   rowLengths.zero();
+//   for( localIndex localRow = 0; localRow < flowPattern.numRows(); ++localRow )
+//   {
+//     arraySlice1d< globalIndex const > const flowColumns = flowPattern.getColumns( localRow );
+//     arraySlice1d< globalIndex const > const mechanicsColumns = mechanicsPattern.getColumns( localRow );
+//     localIndex flowColumn = 0;
+//     localIndex mechanicsColumn = 0;
+//     while( flowColumn < flowColumns.size() || mechanicsColumn < mechanicsColumns.size() )
+//     {
+//       if( mechanicsColumn == mechanicsColumns.size() ||
+//           ( flowColumn < flowColumns.size() && flowColumns[flowColumn] < mechanicsColumns[mechanicsColumn] ) )
+//       {
+//         ++flowColumn;
+//       }
+//       else if( flowColumn == flowColumns.size() || mechanicsColumns[mechanicsColumn] < flowColumns[flowColumn] )
+//       {
+//         ++mechanicsColumn;
+//       }
+//       else
+//       {
+//         ++flowColumn;
+//         ++mechanicsColumn;
+//       }
+//       ++rowLengths[localRow];
+//     }
+//   }
 
-  // Add the number of nonzeros induced by coupling
-  addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView() );
-  addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
-  addMatrixPressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by CONTACT::STABILIZATION
+//   // Add the number of nonzeros induced by coupling
+//   addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView() );
+//   addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
+//   addMatrixPressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by CONTACT::STABILIZATION
 
-  // Allocate the coupled pattern in one pass. Growing an already populated
-  // pattern row by row would shift every subsequent row of the contiguous
-  // column buffer on each call, which is quadratic in the number of rows.
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( flowPattern.numRows(),
-                                                         flowPattern.numColumns(),
-                                                         rowLengths.data() );
+//   // Allocate the coupled pattern in one pass. Growing an already populated
+//   // pattern row by row would shift every subsequent row of the contiguous
+//   // column buffer on each call, which is quadratic in the number of rows.
+//   pattern.resizeFromRowCapacities< parallelHostPolicy >( flowPattern.numRows(),
+//                                                          flowPattern.numColumns(),
+//                                                          rowLengths.data() );
 
-  // Copy both subsolver patterns in. insertNonZeros discards entries that are
-  // already present, so what remains is the union counted above.
-  appendSparsityPattern( pattern, flowPattern );
-  appendSparsityPattern( pattern, mechanicsPattern );
+//   // Copy both subsolver patterns in. insertNonZeros discards entries that are
+//   // already present, so what remains is the union counted above.
+//   appendSparsityPattern( pattern, flowPattern );
+//   appendSparsityPattern( pattern, mechanicsPattern );
 
-  // Add the nonzeros from coupling
-  addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
-  addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
-  addMatrixPressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
+//   // Add the nonzeros from coupling
+//   addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
+//   addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
+//   addMatrixPressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
 
-  // Set up the derivative flux residual matrix
-  setUpDflux_dApertureMatrix( domain );
-}
+//   // Set up the derivative flux residual matrix
+//   setUpDflux_dApertureMatrix( domain );
+// }
 
 // template< typename FLOW_SOLVER >
 // void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSystem( real64 const time_n,
@@ -796,7 +796,7 @@ assembleForceResidualDerivativeWrtPressure( string const & meshName,
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   string const & bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
-  string const & flowDofKey = dofManager.getKey( m_pressureKey );
+  string const & flowDofKey = dofManager.getKey( this->getFlowDofKey() );
 
   arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
@@ -865,7 +865,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   // assembleSystem has already brought this matrix to the host after the flux
   // assembly; the traversal below only reads it.
   CRSMatrixView< real64 const, localIndex const > const &
-  dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
+  dFluxResidual_dNormalJump = this->getDerivativeFluxResidual_dNormalJump().toViewConst();
   auto const derivativeOffsetIt = m_derivativeFluxResidual_dApertureOffsets.find( meshName );
   GEOS_ERROR_IF( derivativeOffsetIt == m_derivativeFluxResidual_dApertureOffsets.end(),
                  GEOS_FMT( "No dR/dAperture row offset is available for mesh body '{}'", meshName ) );
@@ -873,7 +873,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   string const & bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
-  string const & presDofKey = dofManager.getKey( m_pressureKey );
+  string const & presDofKey = dofManager.getKey( this->getFlowDofKey() );
 
   arrayView1d< globalIndex const > const &
   dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -1266,7 +1266,7 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
 
   using namespace contact;
 
-  string const flowDofKey = dofManager.getKey( m_pressureKey );
+  string const flowDofKey = dofManager.getKey( this->getFlowDofKey() );
   string const mechanicsDiscretizationName = this->solidMechanicsSolver()->getDiscretizationName();
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

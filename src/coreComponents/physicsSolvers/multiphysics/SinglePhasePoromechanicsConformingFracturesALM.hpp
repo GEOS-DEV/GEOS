@@ -97,13 +97,13 @@ public:
    */
   /**@{*/
 
-  virtual void setupCoupling( DomainPartition const & domain,
-                              DofManager & dofManager ) const override final;
+  // virtual void setupCoupling( DomainPartition const & domain,
+  //                             DofManager & dofManager ) const override final;
 
-  virtual void setSparsityPattern( DomainPartition & domain,
-                                   DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
-                                   SparsityPattern< globalIndex > & pattern ) override final;
+  // virtual void setSparsityPattern( DomainPartition & domain,
+  //                                  DofManager & dofManager,
+  //                                  CRSMatrix< real64, globalIndex > & localMatrix,
+  //                                  SparsityPattern< globalIndex > & pattern ) override final;
 
   // virtual void assembleSystem( real64 const time,
   //                              real64 const dt,
