@@ -3334,215 +3334,406 @@ class czCylindricalPrill(Geometry):
 #############################################
 class czPrill(Geometry):
     """
-    Geometry object for creating a prill (box) with voronoi crystals bound by cohesive zones and defined by minimum corner, maximum corner, and grain size
+    Geometry object for creating a prill (box) with Voronoi crystals bound by
+    cohesive zones.
 
-    Applies to 2D and 3D prills with cohesive zones defined between neighboring grains
+    porosityDistribution may be:
+      * "uniform": constant porosity probability throughout the prill interior.
+      * "spherical": probability is biased by distance from the prill center.
+      * "cylindrical": probability is biased by radial distance perpendicular
+        to cylinderAxis, which is specified as a nonzero 3D direction vector.
 
-    # TODO should take a flag to assign as single group or group offset to avoid including grains with previously defined geometry objects
+    radialBias = 0 gives a flat probability inside the selected radial region;
+    increasing radialBias concentrates pores toward the center/axis.
+
+    If assignCellVelocityGroups is True, ``group`` is used as the first
+    velocity-group ID and neighboring Voronoi cells are assigned different
+    IDs.  Non-neighboring cells reuse IDs to keep the group count small.
     """
+
     def __init__(self,
                  name,
                  xmin,
                  xmax,
                  grainDiameter,
-                 porosity,
-                 radialBias,
                  seed,
+                 porosity=0.0,
+                 radialBias=1.0,
                  vel=_defaultVelocity,
                  mat=_defaultMat,
                  group=_defaultGroup,
                  particleType=_defaultParticleType,
                  bondedSurfaceFraction=1.0,
                  neatSurfaceFraction=0.0,
-                 dim: int=3):
+                 dim: int=3,
+                 porosityDistribution="spherical",
+                 cylinderAxis=(0.0, 0.0, 1.0),
+                 assignCellVelocityGroups: bool=False):
         super().__init__(name,
-                         vel = vel,
-                         mat = mat,
-                         group = group,
-                         particleType = particleType)
+                         vel=vel,
+                         mat=mat,
+                         group=group,
+                         particleType=particleType)
+
         self.dim = dim
-        self.xmin = np.asarray(xmin[:self.dim])
-        self.xmax = np.asarray(xmax[:self.dim])
+        self.xmin = np.asarray(xmin[:self.dim], dtype=float)
+        self.xmax = np.asarray(xmax[:self.dim], dtype=float)
         self.dx = self.xmax - self.xmin
-        self.center = 0.5 * ( self.xmin + self.xmax )
+        self.center = 0.5 * (self.xmin + self.xmax)
         self.grainDiameter = grainDiameter
         self.porosity = porosity
         self.radialBias = radialBias
         self.seed = seed
+        self.porosityDistribution = str(porosityDistribution).lower()
+        self.cylinderAxis = np.asarray(cylinderAxis, dtype=float)
+        self.assignCellVelocityGroups = bool(assignCellVelocityGroups)
+
+        if self.dim not in (2, 3):
+            raise ValueError(f"czPrill only supports dim=2 or dim=3; received {self.dim}")
+        if not 0.0 <= self.porosity <= 1.0:
+            raise ValueError(f"porosity must be in [0, 1]; received {self.porosity}")
+        if self.radialBias < 0.0:
+            raise ValueError(f"radialBias must be nonnegative; received {self.radialBias}")
+
+        distributionAliases = {
+            "uniform": "uniform",
+            "spherical": "spherical",
+            "sphere": "spherical",
+            "cylindrical": "cylindrical",
+            "cylinder": "cylindrical",
+            "radial": "cylindrical",
+            "radially_biased": "cylindrical",
+        }
+        if self.porosityDistribution not in distributionAliases:
+            valid = ", ".join(sorted(set(distributionAliases.values())))
+            raise ValueError(
+                f"Unknown porosityDistribution '{porosityDistribution}'. "
+                f"Expected one of: {valid}."
+            )
+        self.porosityDistribution = distributionAliases[self.porosityDistribution]
+
+        if self.cylinderAxis.shape != (3,):
+            raise ValueError(
+                "cylinderAxis must be a three-component direction vector; "
+                f"received shape {self.cylinderAxis.shape}"
+            )
+        if not np.all(np.isfinite(self.cylinderAxis)):
+            raise ValueError("cylinderAxis must contain only finite values")
+
+        cylinderAxisNorm = np.linalg.norm(self.cylinderAxis)
+        if cylinderAxisNorm <= 1e-14:
+            raise ValueError("cylinderAxis must be a nonzero vector")
+        self.cylinderAxis = self.cylinderAxis / cylinderAxisNorm
+
+        if self.porosityDistribution == "cylindrical" and self.dim != 3:
+            raise ValueError(
+                "cylindrical porosity requires dim=3 because cylinderAxis is "
+                "defined as a 3D vector"
+            )
 
         self.bondedSurfaceFraction = bondedSurfaceFraction
         self.neatSurfaceFraction = neatSurfaceFraction
 
-        # Create evenly distributed densely packed pts to generate voronoi cells that represent grains
-        self.vpts = poisson(self.grainDiameter, x0=self.xmin, dx=self.dx, seed=self.seed, dim=self.dim)
-        self.vpts = self.vpts[:,0:self.dim] # Remove spacing from points
+        # Use a local generator so the phase and interface selections are
+        # reproducible without changing NumPy's process-global random state.
+        self.rng = np.random.default_rng(self.seed)
+
+        # Create evenly distributed densely packed points used as Voronoi seeds.
+        self.vpts = poisson(
+            self.grainDiameter,
+            x0=self.xmin,
+            dx=self.dx,
+            seed=self.seed,
+            dim=self.dim,
+        )
+        self.vpts = self.vpts[:, 0:self.dim]
         self.npts = self.vpts.shape[0]
-        self.kdt = KDTree(self.vpts, leaf_size=int(np.ceil(len(self.vpts) / 2)), metric='euclidean')
+        self.kdt = KDTree(
+            self.vpts,
+            leaf_size=int(np.ceil(len(self.vpts) / 2)),
+            metric="euclidean",
+        )
         self.voronoi = Voronoi(self.vpts)
 
-        # Associate a group and phase (e.g. porosity (0) or crystal (1))
+        # Optionally treat the Voronoi-cell adjacency as a graph-coloring
+        # problem.  Each color is a velocity group, so cells that share a
+        # ridge must have different colors while non-neighboring cells can
+        # reuse the same color.  Welsh-Powell processes cells from highest to
+        # lowest degree and assigns the lowest available color, keeping the
+        # result within the general maxVoronoiNeighbors + 1 greedy bound.
+        self.voronoiNeighbors = self._buildVoronoiNeighborList()
+        self.maxVoronoiNeighbors = max(
+            (len(neighbors) for neighbors in self.voronoiNeighbors),
+            default=0,
+        )
+
+        if self.assignCellVelocityGroups:
+            if not isinstance(self.group, (int, np.integer)):
+                raise TypeError(
+                    "group must be an integer when "
+                    "assignCellVelocityGroups=True; "
+                    f"received {self.group!r}"
+                )
+
+            velocityGroupColors = self._colorVoronoiCells()
+            self.cellVelocityGroups = (
+                np.asarray(velocityGroupColors, dtype=int) + int(self.group)
+            )
+            self.numVelocityGroups = (
+                int(np.max(velocityGroupColors)) + 1
+                if len(velocityGroupColors) > 0
+                else 0
+            )
+        else:
+            self.cellVelocityGroups = None
+            self.numVelocityGroups = 1 if self.npts > 0 else 0
+
+        # Associate a phase: porosity (0) or crystal (1).
         self.phase = []
         self.matDirs = []
-        radius = np.min((self.xmax-self.xmin)*0.5)
         for i in range(self.npts):
-            r = np.linalg.norm(self.vpts[i, :] - self.center)
-
-            # Discourage porosity near the prill surface to be consistent with CT imagery
-            probability = 0.5 * porosity * (radialBias + 1.0) * (radialBias + 2.0) * max(0.0, (1. - r / radius) ** radialBias)
-            p = (0 if (np.random.uniform(0.0, 1.0) < probability and r < radius - grainDiameter) else 1)
-            self.phase.append(p)
+            probability, canBePore = self._porosityProbability(self.vpts[i, :])
+            isPore = canBePore and self.rng.random() < probability
+            self.phase.append(0 if isPore else 1)
 
             d = random_direction(dim=self.dim)
             if self.dim == 2:
-              d = np.append(d, 0.0)
+                d = np.append(d, 0.0)
 
-            if abs(np.dot(d, np.array([0.0,0.0,1.0]))-1) < 1e-12:
-              m2 = np.cross(np.array([0.0,1.0,0.0]),d)
+            if abs(np.dot(d, np.array([0.0, 0.0, 1.0])) - 1) < 1e-12:
+                m2 = np.cross(np.array([0.0, 1.0, 0.0]), d)
             else:
-              m2 = np.cross(np.array([0.0,0.0,1.0]),d)
+                m2 = np.cross(np.array([0.0, 0.0, 1.0]), d)
             m2 = m2 / np.linalg.norm(m2)
-            m3 = np.cross(d,m2)
-
+            m3 = np.cross(d, m2)
             self.matDirs.append(np.vstack((d, m2, m3)))
 
-        # This should define a surface flag for each cell face based on the specified fraction of bonded surfaces.
+        # Define a surface flag for each cell face based on the specified
+        # fraction of bonded surfaces.
         self.ridgePtFlags = []
         self.neatPtFlags = []
         for r in self.voronoi.ridge_points:
-          p0 = r[0]
-          p1 = r[1]
-          
-          rFlag = 2 
-          if self.phase[p0] != 0 and self.phase[p1] != 0:
-            rFlag = (3 if ( np.random.random() <= self.bondedSurfaceFraction ) else 2 )
-          self.ridgePtFlags.append(rFlag)
+            p0 = r[0]
+            p1 = r[1]
 
-          if rFlag == 2:
-            self.neatPtFlags.append(_defaultCZTag)
-          else:
-            self.neatPtFlags.append( 1 if ( np.random.random() <= self.bondedSurfaceFraction * self.neatSurfaceFraction ) else 2 )
-        
-        # midpoints = []
-        # for p in self.voronoi.ridge_points:
-        #   midpoints.append(0.5*(self.vpts[p[0]] + self.vpts[p[1]]))
-        # midpoints = np.vstack(midpoints) 
-        # self.interface_kdt = KDTree(midpoints, leaf_size=int(np.ceil(len(self.vpts) / 2)), metric='euclidean')
+            rFlag = 2
+            if self.phase[p0] != 0 and self.phase[p1] != 0:
+                rFlag = 3 if self.rng.random() <= self.bondedSurfaceFraction else 2
+            self.ridgePtFlags.append(rFlag)
+
+            if rFlag == 2:
+                self.neatPtFlags.append(_defaultCZTag)
+            else:
+                bondedNeatProbability = (
+                    self.bondedSurfaceFraction * self.neatSurfaceFraction
+                )
+                self.neatPtFlags.append(
+                    10 if self.rng.random() <= bondedNeatProbability else 20
+                )
+
+    def _buildVoronoiNeighborList(self):
+        """Return the cells that share a Voronoi ridge with each cell."""
+        neighbors = [set() for _ in range(self.npts)]
+        for p0, p1 in self.voronoi.ridge_points:
+            p0 = int(p0)
+            p1 = int(p1)
+            neighbors[p0].add(p1)
+            neighbors[p1].add(p0)
+        return neighbors
+
+    def _colorVoronoiCells(self):
+        """
+        Color the Voronoi adjacency graph using Welsh-Powell.
+
+        Cells are processed in descending order of neighbor count.  Ties favor
+        the lower cell index, and the lowest color not already used by a
+        colored neighbor is selected.  Consequently, neighboring cells never
+        share a color and the result is deterministic for a fixed Voronoi
+        tessellation.
+        """
+        colors = [-1] * self.npts
+        cellOrder = sorted(
+            range(self.npts),
+            key=lambda i: (-len(self.voronoiNeighbors[i]), i),
+        )
+
+        for cell in cellOrder:
+            unavailableColors = {
+                colors[neighbor]
+                for neighbor in self.voronoiNeighbors[cell]
+                if colors[neighbor] >= 0
+            }
+            color = 0
+            while color in unavailableColors:
+                color += 1
+
+            colors[cell] = color
+
+        return colors
+
+    @staticmethod
+    def _radialProfileNormalization(radialDimensions, radialBias):
+        """Normalize (1-r/R)^b over an n-dimensional ball."""
+        normalization = 1.0
+        for j in range(1, radialDimensions + 1):
+            normalization *= (radialBias + j) / j
+        return normalization
+
+    def _porosityProbability(self, point):
+        """Return (pore probability, pore-placement eligibility)."""
+        point = np.asarray(point[:self.dim], dtype=float)
+
+        # All distributions retain a pore-free skin one grain thick. For the
+        # uniform and cylindrical cases this includes the cylinder end faces.
+        distanceToBoxSurface = np.min(
+            np.minimum(point - self.xmin, self.xmax - point)
+        )
+        insideBoxSkin = distanceToBoxSurface >= self.grainDiameter
+
+        if self.porosityDistribution == "uniform":
+            return self.porosity, insideBoxSkin
+
+        offset = point - self.center
+        if self.porosityDistribution == "spherical":
+            radialCoordinates = offset
+            radialHalfWidths = 0.5 * self.dx
+            radius = np.min(radialHalfWidths)
+            radialDistance = np.linalg.norm(radialCoordinates)
+            radialDimensions = len(radialCoordinates)
+        else:  # cylindrical
+            # Remove the component parallel to the cylinder axis. The norm of
+            # the remainder is the shortest distance to the cylinder axis.
+            axialOffset = np.dot(offset, self.cylinderAxis)
+            radialCoordinates = offset - axialOffset * self.cylinderAxis
+            radialDistance = np.linalg.norm(radialCoordinates)
+            radialDimensions = 2
+
+            # Radius of the largest circular cross-section, centered in the
+            # axis-aligned bounding box, whose plane is normal to cylinderAxis.
+            # For a coordinate-aligned axis this reduces to the minimum of the
+            # two perpendicular box half-widths.
+            halfWidths = 0.5 * self.dx
+            perpendicularComponents = np.sqrt(
+                np.maximum(0.0, 1.0 - self.cylinderAxis**2)
+            )
+            intersectedFaces = perpendicularComponents > 1e-14
+            radius = np.min(
+                halfWidths[intersectedFaces]
+                / perpendicularComponents[intersectedFaces]
+            )
+
+        usableRadius = radius - self.grainDiameter
+
+        if usableRadius <= 0.0 or radialDistance >= usableRadius:
+            return 0.0, False
+
+        normalizedRadius = radialDistance / radius
+        normalization = self._radialProfileNormalization(
+            radialDimensions, self.radialBias
+        )
+        probability = (
+            self.porosity
+            * normalization
+            * max(0.0, 1.0 - normalizedRadius) ** self.radialBias
+        )
+
+        # A strongly biased profile can exceed one near the center/axis.
+        probability = float(np.clip(probability, 0.0, 1.0))
+        return probability, insideBoxSkin
 
     def isInterior(self, pt, skinDepth):
-        # is the point within the object
         x = np.asarray(pt[:self.dim])
 
-        # Check if point is inside bounding
-        if inside_box(x, self.xmin, self.dx, [False for d in range(self.dim)]):
-          # Find voronoi cell closest to point
-          _, index = self.kdt.query(x.reshape(1, -1), k=1)
-          index = index[0,0]
-          
-          # If voronoi cell is not porosity
-          if self.phase[index] != 0:
-            # Iterate over all ridge points and check if it is skinDepth distance from voronoi face
-            minSurfaceDist = np.inf
-            ridgePts = self.voronoi.ridge_points
-            for i in range(len(ridgePts)):
-              p1 = ridgePts[i][0]
-              p2 = ridgePts[i][1]
-              if index == p1 or index == p2:
-                if index == p1:
-                  p = p2
-                else:
-                  p = p1
+        if inside_box(x, self.xmin, self.dx, [False for _ in range(self.dim)]):
+            _, index = self.kdt.query(x.reshape(1, -1), k=1)
+            index = index[0, 0]
 
-                n = self.vpts[p, :] - self.vpts[index, :]
-                n = n / 2
-                d = np.linalg.norm(n)
-                n = n / d
+            if self.phase[index] != 0:
+                ridgePts = self.voronoi.ridge_points
+                for i in range(len(ridgePts)):
+                    p1 = ridgePts[i][0]
+                    p2 = ridgePts[i][1]
+                    if index == p1 or index == p2:
+                        p = p2 if index == p1 else p1
+                        n = (self.vpts[p, :] - self.vpts[index, :]) / 2
+                        d = np.linalg.norm(n)
+                        n = n / d
 
-                dv = x - self.vpts[index, :]
-                dvc = np.dot(n, dv)  # component of points along voronoi face normal
-                if dvc > 0.0 and dvc > d - skinDepth:
-                        return self.ridgePtFlags[i]
-            return 0
+                        dv = x - self.vpts[index, :]
+                        dvc = np.dot(n, dv)
+                        if dvc > 0.0 and dvc > d - skinDepth:
+                            return self.ridgePtFlags[i]
+                return 0
 
         return -1
-       
 
     def getSurfaceNormal(self, pt):
-        # assumes the point is interior and a surface
         x = np.asarray(pt[:self.dim])
-
         _, index = self.kdt.query(x.reshape(1, -1), k=1)
-        index = index[0,0]
+        index = index[0, 0]
 
         minSurfaceDist = np.inf
-        surfaceNormal = np.inf*np.ones((1,self.dim))
+        surfaceNormal = np.inf * np.ones((1, self.dim))
         ridgePts = self.voronoi.ridge_points
         for i in range(len(ridgePts)):
             p1 = ridgePts[i][0]
             p2 = ridgePts[i][1]
             if index == p1 or index == p2:
-                if index == p1:
-                    p = p2
-                else:
-                    p = p1
-                n = self.vpts[p, :] - self.vpts[index, :]
-                n = n / 2
+                p = p2 if index == p1 else p1
+                n = (self.vpts[p, :] - self.vpts[index, :]) / 2
                 d = np.linalg.norm(n)
                 n = n / d
 
-                dv = (x - self.vpts[index, :])
-                surfaceDistance = (d - np.dot(dv, n))
+                dv = x - self.vpts[index, :]
+                surfaceDistance = d - np.dot(dv, n)
                 if minSurfaceDist > surfaceDistance:
                     minSurfaceDist = surfaceDistance
                     surfaceNormal = n
 
         if self.dim == 2:
-          surfaceNormal = np.append(surfaceNormal, np.array([0.0]))
-
+            surfaceNormal = np.append(surfaceNormal, np.array([0.0]))
         return surfaceNormal
 
     def getSurfacePosition(self, pt):
-        # assumes the point is interior and a surface
         x = np.asarray(pt[:self.dim])
-
         _, index = self.kdt.query(x.reshape(1, -1), k=1)
-        index = index[0,0]
+        index = index[0, 0]
 
         minSurfaceDist = np.inf
-        surfacePosition = np.inf*np.ones((1,self.dim))
+        surfacePosition = np.inf * np.ones((1, self.dim))
         ridgePts = self.voronoi.ridge_points
         for i in range(len(ridgePts)):
             p1 = ridgePts[i][0]
             p2 = ridgePts[i][1]
             if index == p1 or index == p2:
-                if index == p1:
-                    p = p2
-                else:
-                    p = p1
-                n = self.vpts[p, :] - self.vpts[index, :]
-                n = n / 2
+                p = p2 if index == p1 else p1
+                n = (self.vpts[p, :] - self.vpts[index, :]) / 2
                 d = np.linalg.norm(n)
                 n = n / d
 
-                dv = (x - self.vpts[index, :])
-                surfaceDistance = (d - np.dot(dv, n))
+                dv = x - self.vpts[index, :]
+                surfaceDistance = d - np.dot(dv, n)
                 if minSurfaceDist > surfaceDistance:
                     minSurfaceDist = surfaceDistance
                     surfacePosition = surfaceDistance * n
 
         if self.dim == 2:
-          surfacePosition = np.append(surfacePosition, np.array([0.0]))
-
+            surfacePosition = np.append(surfacePosition, np.array([0.0]))
         return surfacePosition
 
     def getGroup(self, pt):
-        return  self.group
+        if not self.assignCellVelocityGroups:
+            return self.group
+
+        x = np.asarray(pt[:self.dim])
+        _, index = self.kdt.query(x.reshape(1, -1), k=1)
+        index = index[0, 0]
+        return int(self.cellVelocityGroups[index])
 
     def getMatDir(self, pt):
         x = np.asarray(pt[:self.dim])
-
         _, index = self.kdt.query(x.reshape(1, -1), k=1)
-        index = index[0,0]
-
+        index = index[0, 0]
         return self.matDirs[index]
 
     def xMin(self):
@@ -3552,16 +3743,9 @@ class czPrill(Geometry):
         return self.xmax[0]
 
     def getCZTag(self, pt):
-        # x = np.asarray(pt[:self.dim])
-        # _, index = self.interface_kdt.query(x.reshape(1, -1), k=1)
-        # index = index[0,0]
-        # return self.neatPtFlags[index]
-
-        # assumes the point is interior and a surface
         x = np.asarray(pt[:self.dim])
-
         _, index = self.kdt.query(x.reshape(1, -1), k=1)
-        index = index[0,0]
+        index = index[0, 0]
 
         minSurfaceDist = np.inf
         czTag = _defaultCZTag
@@ -3570,17 +3754,13 @@ class czPrill(Geometry):
             p1 = ridgePts[i][0]
             p2 = ridgePts[i][1]
             if index == p1 or index == p2:
-                if index == p1:
-                    p = p2
-                else:
-                    p = p1
-                n = self.vpts[p, :] - self.vpts[index, :]
-                n = n / 2
+                p = p2 if index == p1 else p1
+                n = (self.vpts[p, :] - self.vpts[index, :]) / 2
                 d = np.linalg.norm(n)
                 n = n / d
 
-                dv = (x - self.vpts[index, :])
-                surfaceDistance = (d - np.dot(dv, n))
+                dv = x - self.vpts[index, :]
+                surfaceDistance = d - np.dot(dv, n)
                 if minSurfaceDist > surfaceDistance:
                     minSurfaceDist = surfaceDistance
                     czTag = self.neatPtFlags[i]
@@ -11453,7 +11633,7 @@ class intersection(SetOperation):
       return sA
     else:
       return sB
-  
+
   def getCZTag(self, pt):
     return self.subObjA.getCZTag(pt) # Temporarily hardcoded
 

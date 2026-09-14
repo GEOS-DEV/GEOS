@@ -393,6 +393,7 @@ class MPMJob:
       self.sampleWidth = job.sampleWidth if hasattr( job, 'sampleWidth' ) else self.domainX0
       self.sampleHeight = job.sampleHeight if hasattr( job, 'sampleHeight' ) else self.domainY0
       self.sampleLength = job.sampleLength if hasattr( job, 'sampleLength' ) else self.domainZ0
+      self.sampleArea = job.sampleArea if hasattr( job, 'sampleArea' ) else self.domainX0*self.domainZ0
 
       self.sampleX = job.sampleX if hasattr( job, 'sampleX' ) else self.domainX0
       self.sampleY = job.sampleY if hasattr( job, 'sampleY' ) else self.domainY0

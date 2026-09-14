@@ -23722,9 +23722,9 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
   real64 maxFrictionCoefficient = 0.0;
-  for( int i = 0; i < numContactGroups; ++i )
+  for( integer i = 0; i < numContactGroups; ++i )
   {
-    for( int j = 0; j < numContactGroups; ++j )
+    for( integer j = 0; j < numContactGroups; ++j )
     {
       frictionCoefficientTableCopy[i][j] = m_frictionCoefficientTable[i][j];
       maxFrictionCoefficient = LvArray::math::max( maxFrictionCoefficient, m_frictionCoefficientTable[i][j] );
@@ -23750,7 +23750,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   arrayView3d< real64 > const gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
   arrayView2d< int > const gridWeakInterfaceTraceContactSuppressed = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() );
   arrayView3d< real64 const > const gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
-  arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+  arrayView3d< real64 const > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
   arrayView3d< real64 const > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
 
@@ -24093,11 +24093,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
           // Normalize the effective surface normal
           // Tensor equations:
           //   nAB = 1 / norm * (nAB).
-          //   gridSurfaceNormal[g][A] = 1 / norm * (nAB).
-          //   gridSurfaceNormal[g][B] = -(1 / norm * (nAB)).
           LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
-          LvArray::tensorOps::copy< 3 >( gridSurfaceNormal[g][A], nAB );
-          LvArray::tensorOps::scaledCopy< 3 >( gridSurfaceNormal[g][B], nAB, -1.0 );
 
           real64 contactPenetration = 0.0;
           computePairwiseNodalContactForce( contactGapCorrection,
@@ -24232,7 +24228,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   arrayView2d< real64 const > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
   arrayView2d< real64 const > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
   arrayView3d< real64 const > const gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
-  arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+  arrayView3d< real64 const > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
 
   // Particle Accessors
@@ -24551,11 +24547,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
           // Normalize the effective surface normal
           // Tensor equations:
           //   nAB = 1 / norm * (nAB).
-          //   gridSurfaceNormal[g][A] = 1 / norm * (nAB).
-          //   gridSurfaceNormal[g][B] = -(1 / norm * (nAB)).
           LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
-          LvArray::tensorOps::copy< 3 >( gridSurfaceNormal[g][A], nAB );
-          LvArray::tensorOps::scaledCopy< 3 >( gridSurfaceNormal[g][B], nAB, -1.0 );
 
           real64 contactPenetration = 0.0;
           computePairwiseNodalContactImpulse( contactGapCorrection,
