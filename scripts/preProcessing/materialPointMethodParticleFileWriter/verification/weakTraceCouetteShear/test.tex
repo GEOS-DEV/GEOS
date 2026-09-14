@@ -1,14 +1,14 @@
 \paragraph{Problem.}
-This verification problem shears two elastic layers between parallel plates in a
-periodic-in-$x$ plane-strain domain.  The lower and upper plates move with equal
-and opposite tangential velocities, and the horizontal material interface is the
-only explicit weak-trace or cohesive-zone surface.
+This verification problem shears a viscous fluid layer between elastic platens
+in a periodic-in-$x$ plane-strain domain.  The lower platen is fixed and the
+upper platen is driven with a prescribed tangential velocity; the two
+platen-fluid interfaces are the explicit weak-trace or cohesive-zone surfaces.
 
 \paragraph{Expected response.}
-For bonded no-slip Couette shear the tangential displacement is continuous at
-the interface and the shear traction is continuous across the two materials.
-The layer shear strains are inversely proportional to their shear moduli.  The
-weak-trace variant should reproduce the stiff elastic cohesive-zone reference
-without interface slip or opening.
+For bonded no-slip Couette shear the tangential velocity is continuous at each
+platen-fluid interface.  The fluid velocity should approach the linear Couette
+profile between the fixed lower platen and moving upper platen, and the weak
+trace variant should transfer tangential motion without interface slip or
+opening.
 
 \IfFileExists{\CaseOutputDir/weakTraceCouetteShear_results.tex}{\input{\CaseOutputDir/weakTraceCouetteShear_results.tex}}{\emph{Run this folder to generate weakTraceCouetteShear results.}}

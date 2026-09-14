@@ -389,6 +389,10 @@ def _array_decompose_candidate(path, index):
     return "array_decompose({0},{1})".format(_quote_visit_var(path), int(index))
 
 
+def _tensor_component_candidate(path, row, col):
+    return "{0}[{1}][{2}]".format(_quote_visit_var(path), int(row), int(col))
+
+
 def _particle_region_meshes(meshes, all_names):
     """Return ParticleRegion*_ParticleDomains meshes in deterministic order."""
     candidates = []
@@ -526,11 +530,11 @@ def _define_particle_region_deformation_gradient_component_candidates(name, part
         if not region:
             continue
         base = "{0}_ParticleFields/particleDeformationGradient".format(mesh)
+        expr_name = "{0}_{1}".format(name, region)
+        _define_scalar_expression(expr_name, _tensor_component_candidate(base, row, col))
+        names.append(expr_name)
         for leaf in (label, label.lower(), "{0}{1}".format(row, col), "{0}_{1}".format(row, col), str(legacy_index)):
             names.append("{0}/{1}".format(base, leaf))
-        expr_name = "{0}_{1}".format(name, region)
-        _define_scalar_expression(expr_name, _array_decompose_candidate(base, legacy_index))
-        names.append(expr_name)
     return _unique_keep_order(names)
 
 
@@ -555,6 +559,7 @@ def _derive_particle_deformation_gradient_component(all_names, requested, partic
         )
         expressions = []
         for base in _deformation_gradient_base_candidates(all_names, particle_meshes=particle_meshes):
+            expressions.append(_tensor_component_candidate(base, row, col))
             expressions.append(_array_decompose_candidate(base, legacy_index))
         for leaf in _deformation_gradient_leaf_candidates(all_names, label.upper(), row, col, legacy_index, particle_meshes=particle_meshes):
             expressions.append(_indexed_candidate(leaf, 0))
@@ -1160,6 +1165,9 @@ def try_add_pseudocolor(
 def particle_region_for_variable(name):
     text = str(name)
     match = re.search(r"^particleStress[A-Z]+_(ParticleRegion[0-9]+)$", text)
+    if match:
+        return match.group(1)
+    match = re.search(r"^particleDeformationGradient[A-Z]+_(ParticleRegion[0-9]+)$", text)
     if match:
         return match.group(1)
     match = re.search(r"^particleDisplacement[A-Z]+_(ParticleRegion[0-9]+)$", text)

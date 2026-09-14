@@ -10,9 +10,9 @@ The folder dispatches three variants:
 - `falseElasticCZ` - a stiff elastic cohesive-zone tie used as a reference.
 
 The domain is plane strain and periodic only in the flow direction (`x`). The
-geometry is a three-layer stack: a lower platen, a viscous liquid layer, and an
-upper platen. The top and bottom boundaries receive opposite tangential
-velocities. The `traceContactGroups` variant places both platen-fluid surfaces
+geometry is a three-layer stack: a fixed lower platen, a viscous liquid layer,
+and an upper platen driven in the tangential direction. The `traceContactGroups`
+variant places both platen-fluid surfaces
 in the C0 mortar pair `{0, 1}` so the test exercises no-slip transfer across
 the weak discontinuity instead of tying two elastic layers.
 
@@ -20,9 +20,9 @@ The diagnostic goal is to compare the final fluid shear rate and stress against
 the single-field baseline. In the baseline, platen and fluid momentum should be
 smeared across the mixed cells near both interfaces. With the C0 interface, the
 fluid velocity gradient should be closer to the Couette value
-`2 * plate_velocity / fluid_gap`, and the Liquid-model shear stress should be
-approximately `fluid_viscosity * plate_velocity / fluid_gap` with the current
-GEOS symmetric-gradient convention.
+`top_plate_velocity / fluid_gap`, and the Liquid-model shear stress should be
+approximately `fluid_viscosity * top_plate_velocity / fluid_gap` with the
+current GEOS symmetric-gradient convention.
 
 The input requests particle material type, surface flag, owning particle rank,
 velocity, stress, and deformation gradient in the Silo output so the interface

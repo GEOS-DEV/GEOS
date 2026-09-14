@@ -87,7 +87,7 @@ fluid_ymax = pfw["ymax"] - platen_thickness
 fluid_gap = fluid_ymax - fluid_ymin
 
 stop_time = float(os.environ.get("WEAK_TRACE_STOP_TIME", "5.0"))
-plate_velocity = float(os.environ.get("WEAK_TRACE_COUETTE_VELOCITY", "0.002"))
+top_plate_velocity = float(os.environ.get("WEAK_TRACE_COUETTE_VELOCITY", "0.002"))
 pfw["endTime"] = stop_time
 pfw["plotInterval"] = stop_time / 80.0
 pfw["restartInterval"] = 10.0 * stop_time
@@ -183,7 +183,8 @@ if VARIANT == "falseElasticCZ":
     pfw["particleFileFields"].insert(pfw["particleFileFields"].index("RVector"), "CZTag")
 
 # Boundary face order is x-, x+, y-, y+, z-, z+.  With planeStrain enabled,
-# the second transverse entry on y-faces controls the x velocity.
+# the second transverse entry on y-faces controls the x velocity.  This is a
+# standard Couette setup: fixed lower platen and moving upper platen.
 pfw["prescribedBcTable"] = 0
 pfw["boundaryConditionTypes"] = [0, 0, 2, 2, 1, 1]
 pfw["prescribedBoundaryFTable"] = 1
@@ -193,8 +194,8 @@ pfw["enablePrescribedBoundaryTransverseVelocities"] = [0, 0, 1, 1, 0, 0]
 pfw["prescribedBoundaryTransverseVelocities"] = [
     [0.0, 0.0],
     [0.0, 0.0],
-    [0.0, -plate_velocity],
-    [0.0, plate_velocity],
+    [0.0, 0.0],
+    [0.0, top_plate_velocity],
     [0.0, 0.0],
     [0.0, 0.0],
 ]
@@ -333,13 +334,13 @@ tracers.set_tracers(
 pfw_expected = {
     "case_id": CASE_ID,
     "variant_label": VARIANT_LABEL,
-    "plate_velocity_x": plate_velocity,
+    "top_plate_velocity_x": top_plate_velocity,
     "domain_width": domain_width,
     "domain_height": domain_height,
     "platen_thickness": platen_thickness,
     "fluid_gap": fluid_gap,
-    "expected_fluid_shear_rate": 2.0 * plate_velocity / fluid_gap,
-    "expected_fluid_shear_stress_xy": fluid_viscosity * plate_velocity / fluid_gap,
+    "expected_fluid_shear_rate": top_plate_velocity / fluid_gap,
+    "expected_fluid_shear_stress_xy": fluid_viscosity * top_plate_velocity / fluid_gap,
     "platen_young": platen_young,
     "platen_poisson": platen_poisson,
     "platen_density": platen_density,

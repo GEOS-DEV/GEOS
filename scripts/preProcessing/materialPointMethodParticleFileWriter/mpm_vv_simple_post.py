@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -257,11 +258,13 @@ def render_visit_frames(
         if getattr(args, dedupe_attr, False) and not getattr(args, "visit_all_variants", False):
             return []
     visit = detect_visit(args.visit_cmd)
-    script = run_dir / "pfw_visit_render.py"
+    source_script = Path(__file__).resolve().parent / "pfw_visit_render.py"
+    script = source_script if source_script.is_file() else run_dir / "pfw_visit_render.py"
     if not visit or not script.is_file():
         return []
     frame_dir = output_dir / "visit_frames"
     frame_dir.mkdir(parents=True, exist_ok=True)
+    render_start = time.time()
     cmd = [
         visit, "-nowin", "-cli", "-s", str(script),
         "--run-dir", str(run_dir),
@@ -313,6 +316,13 @@ def render_visit_frames(
     except Exception as exc:
         log_path.write_text(f"VisIt render failed before completion: {exc}\nNumerical post-processing continues.\nreturncode=1\n")
         return []
+    fresh_frames = [
+        p
+        for p in sorted(frame_dir.glob(f"{case_name}_*.png"))
+        if p.stat().st_mtime >= render_start - 1.0
+    ]
+    if fresh_frames:
+        return [str(p) for p in fresh_frames]
     return [str(p) for p in sorted(frame_dir.glob(f"{case_name}_*.png"))]
 
 

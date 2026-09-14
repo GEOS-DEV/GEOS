@@ -488,6 +488,20 @@ def _dynamic_wave_profile_diagnostics(
     return out
 
 
+def _couette_profile_diagnostics(
+    run_dir: Path,
+    variant: str,
+    label: str,
+    direction: str = "y",
+) -> dict:
+    out = {"variant": variant, "label": label, "profiles": {}}
+    for component in ("velocityX", "stressXY"):
+        profile = _read_profile(run_dir / f"profile_{direction}_{component}.csv")
+        if profile is not None:
+            out["profiles"][component] = profile
+    return out
+
+
 def _dynamic_wave_profile_error_summary(profile_diagnostics: dict, params: dict) -> dict:
     out: dict[str, float] = {}
     target_times = _dynamic_wave_profile_target_times(params)
@@ -526,6 +540,163 @@ def _select_profile_times(diagnostics: list[dict], component: str, params: dict)
                 selected.append(actual_time)
         return selected
     return target_times
+
+
+def _select_common_profile_times(
+    diagnostics: list[dict],
+    component: str,
+    fractions: tuple[float, ...] = (0.25, 0.50, 0.75, 1.0),
+) -> list[float]:
+    row_sets: list[list[dict]] = []
+    for diag in diagnostics:
+        profile = diag.get("profiles", {}).get(component)
+        rows = profile.get("rows", []) if profile else []
+        if rows:
+            row_sets.append(rows)
+    if not row_sets:
+        return []
+    final_time = min(float(rows[-1]["time"]) for rows in row_sets)
+    if final_time <= 0.0:
+        candidates = [0.0]
+    else:
+        candidates = [max(0.0, final_time * fraction) for fraction in fractions]
+    selected: list[float] = []
+    for target_time in candidates:
+        row = _nearest_profile_row(row_sets[0], target_time)
+        if row is None:
+            continue
+        actual_time = float(row["time"])
+        if all(abs(actual_time - previous) > 1.0e-12 for previous in selected):
+            selected.append(actual_time)
+    return selected
+
+
+def _couette_expected_value(y: float, component: str, params: dict) -> float:
+    fluid_ymin = float(params["fluid_ymin"])
+    fluid_ymax = float(params["fluid_ymax"])
+    gap = fluid_ymax - fluid_ymin
+    if gap <= 0.0:
+        return math.nan
+    top_velocity = float(params["top_plate_velocity"])
+    if component == "velocityX":
+        if y <= fluid_ymin:
+            return 0.0
+        if y >= fluid_ymax:
+            return top_velocity
+        return top_velocity * (y - fluid_ymin) / gap
+    if component == "stressXY":
+        if y < fluid_ymin or y > fluid_ymax:
+            return math.nan
+        return float(params["fluid_viscosity"]) * top_velocity / gap
+    return math.nan
+
+
+def _couette_profile_error_summary(profile_diagnostics: dict, params: dict) -> dict:
+    out: dict[str, float] = {}
+    target_times = _select_common_profile_times([profile_diagnostics], "velocityX")
+    for component, profile in profile_diagnostics.get("profiles", {}).items():
+        max_abs_error = 0.0
+        used = False
+        for target_time in target_times:
+            row = _nearest_profile_row(profile.get("rows", []), target_time)
+            if row is None:
+                continue
+            for y, value in zip(profile.get("x", []), row.get("values", [])):
+                expected = _couette_expected_value(y, component, params)
+                if not math.isfinite(y) or not math.isfinite(value) or not math.isfinite(expected):
+                    continue
+                max_abs_error = max(max_abs_error, abs(value - expected))
+                used = True
+        if used:
+            out[f"profile_{component}_max_abs_selected_time_error"] = max_abs_error
+    return out
+
+
+def _plot_couette_profile_component(
+    output_dir: Path,
+    file_name: str,
+    title: str,
+    diagnostics: list[dict],
+    component: str,
+    xlabel: str,
+    params: dict,
+) -> str | None:
+    diagnostics = [diag for diag in diagnostics if diag.get("profiles", {}).get(component)]
+    if not diagnostics:
+        return None
+
+    selected_times = _select_common_profile_times(diagnostics, component)
+    if not selected_times:
+        return None
+
+    all_y: list[float] = []
+    for diag in diagnostics:
+        all_y.extend(diag["profiles"][component]["x"])
+    if not all_y:
+        return None
+
+    y_min = min(all_y)
+    y_max = max(all_y)
+    sample_count = 500
+    analytical_y = [y_min + (y_max - y_min) * i / float(sample_count - 1) for i in range(sample_count)]
+    fluid_ymin = float(params["fluid_ymin"])
+    fluid_ymax = float(params["fluid_ymax"])
+
+    plt = matplotlib()
+    ncols = 2 if len(selected_times) > 1 else 1
+    nrows = int(math.ceil(len(selected_times) / ncols))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(7.4, 2.9 * nrows), squeeze=False)
+    flat_axes = [ax for row in axes for ax in row]
+
+    for index, target_time in enumerate(selected_times):
+        ax = flat_axes[index]
+        for diag in diagnostics:
+            profile = diag["profiles"][component]
+            row = _nearest_profile_row(profile["rows"], target_time)
+            if row is None:
+                continue
+            y_values = profile["x"]
+            component_values = row["values"]
+            finite_y: list[float] = []
+            finite_component: list[float] = []
+            for y, value in zip(y_values, component_values):
+                if math.isfinite(y) and math.isfinite(value):
+                    finite_y.append(y)
+                    finite_component.append(value)
+            if finite_y:
+                ax.plot(finite_component, finite_y, label=str(diag.get("label", diag.get("variant", ""))), **_variant_line_style(diag))
+        analytical = [_couette_expected_value(y, component, params) for y in analytical_y]
+        finite_pairs = [(value, y) for value, y in zip(analytical, analytical_y) if math.isfinite(value)]
+        if finite_pairs:
+            ax.plot(
+                [value for value, _ in finite_pairs],
+                [y for _, y in finite_pairs],
+                color="k",
+                linestyle="-",
+                linewidth=0.9,
+                label="steady analytical",
+                zorder=4.0,
+            )
+        ax.axhline(fluid_ymin, color="0.55", linestyle=":", linewidth=1.0, label="interface", zorder=0.8)
+        ax.axhline(fluid_ymax, color="0.55", linestyle=":", linewidth=1.0, zorder=0.8)
+        ax.set_title(f"t = {compact_float(target_time, 5)}")
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("y")
+        ax.grid(True, alpha=0.35)
+
+    for ax in flat_axes[len(selected_times) :]:
+        ax.axis("off")
+    handles, labels = _deduplicated_legend(flat_axes)
+    if handles:
+        fig.legend(handles, labels, loc="lower center", ncol=min(4, len(handles)), fontsize=8)
+        fig.tight_layout(rect=(0.0, 0.08, 1.0, 0.94))
+    else:
+        fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
+    fig.suptitle(title, y=0.995)
+    out = output_dir / file_name
+    fig.savefig(out, dpi=180)
+    plt.close(fig)
+    return str(out)
 
 
 def _plot_dynamic_wave_profile_component(
@@ -1040,6 +1211,7 @@ def postprocess(
     description: str | None = None,
     dynamic_wave: dict | None = None,
     circular_inclusion: dict | None = None,
+    couette_shear: dict | None = None,
     visit_plots: list[dict] | None = None,
 ) -> int:
     args = parse_common_args(description or f"Post-process {default_case_id}")
@@ -1060,6 +1232,7 @@ def postprocess(
     dynamic_profile_diagnostics: list[dict] = []
     dynamic_params = _dynamic_wave_parameters(dynamic_wave) if dynamic_wave else None
     circular_diagnostics: list[dict] = []
+    couette_diagnostics: list[dict] = []
     analytical_mean_velocity_added = False
     visit_tex: list[str] = []
     visit_plot_specs = visit_plots if visit_plots is not None else [
@@ -1179,6 +1352,17 @@ def postprocess(
             else:
                 summary["status"] = "missing-profile-output"
                 summary["missing_profile_components"] = ["velocityX", "stressXX"]
+        if couette_shear is not None:
+            couette_profile_diagnostics = _couette_profile_diagnostics(run_dir, name, label)
+            if couette_profile_diagnostics.get("profiles"):
+                couette_diagnostics.append(couette_profile_diagnostics)
+                for component, profile in couette_profile_diagnostics["profiles"].items():
+                    summary[f"profile_{component}_samples"] = len(profile.get("rows", []))
+                    summary[f"profile_{component}_slices"] = len(profile.get("x", []))
+                summary.update(_couette_profile_error_summary(couette_profile_diagnostics, couette_shear))
+            else:
+                summary["status"] = "missing-profile-output"
+                summary["missing_profile_components"] = ["velocityX", "stressXY"]
         if circular_inclusion is not None:
             circular_diag = _circular_inclusion_tracer_diagnostics(
                 run_dir,
@@ -1242,6 +1426,8 @@ def postprocess(
     dynamic_stress_profile_plot = None
     dynamic_velocity_profile_error_plot = None
     dynamic_stress_profile_error_plot = None
+    couette_velocity_profile_plot = None
+    couette_stress_profile_plot = None
     circular_plots: list[str] = []
     circular_ring_plots: list[str] = []
     try:
@@ -1301,6 +1487,25 @@ def postprocess(
                 "stressXX - analytical",
                 dynamic_params,
                 error_mode=True,
+            )
+        if couette_shear is not None:
+            couette_velocity_profile_plot = _plot_couette_profile_component(
+                output_dir,
+                f"{result_prefix}_profile_velocity_couette.png",
+                title + ": velocity profiles",
+                couette_diagnostics,
+                "velocityX",
+                "velocityX",
+                couette_shear,
+            )
+            couette_stress_profile_plot = _plot_couette_profile_component(
+                output_dir,
+                f"{result_prefix}_profile_stress_couette.png",
+                title + ": shear-stress profiles",
+                couette_diagnostics,
+                "stressXY",
+                "stressXY",
+                couette_shear,
             )
         if circular_inclusion is not None:
             mode = str(circular_inclusion.get("mode", "")).strip().lower()
@@ -1393,6 +1598,8 @@ def postprocess(
         summary_doc["analytical_solution"] = {key: dynamic_params[key] for key in analytical_keys if key in dynamic_params}
     if circular_inclusion is not None:
         summary_doc["circular_inclusion_reference"] = dict(circular_inclusion)
+    if couette_shear is not None:
+        summary_doc["couette_reference"] = dict(couette_shear)
     write_json(output_dir / f"{result_prefix}_summary.json", summary_doc)
 
     tex: list[str] = [
@@ -1532,6 +1739,26 @@ def postprocess(
                     + r" \\"
                 )
             tex.append(r"\bottomrule\end{tabular}}")
+    if couette_shear is not None:
+        tex.extend(
+            [
+                r"\paragraph{Couette profile reference.}",
+                "The profile plots compare Eulerian $y$-profiles at common output times across the available variants.  The black curve is the steady no-slip Couette target for a fixed lower platen and moving upper platen; departures from it show either transient viscous development or interface-transfer error.",
+                r"{\scriptsize\begin{tabular}{lrr}\toprule Variant & max $|v_x-v_x^{ss}|$ & max $|\sigma_{xy}-\sigma_{xy}^{ss}|$ \\\midrule",
+            ]
+        )
+        for summary in summaries:
+            if summary.get("variant") == "postprocess":
+                continue
+            tex.append(
+                latex_escape(summary.get("label", summary.get("variant", "")))
+                + " & "
+                + compact_float(summary.get("profile_velocityX_max_abs_selected_time_error"))
+                + " & "
+                + compact_float(summary.get("profile_stressXY_max_abs_selected_time_error"))
+                + r" \\"
+            )
+        tex.append(r"\bottomrule\end{tabular}}")
 
     plots = [p for p in (stress_plot, velocity_plot) if p]
     if plots:
@@ -1569,6 +1796,18 @@ def postprocess(
             ]
         )
         for plot_path in profile_error_plots:
+            tex.append(r"\includegraphics[width=0.95\linewidth]{\CaseOutputDir/" + Path(plot_path).name + r"}")
+        tex.append(r"\end{center}")
+    couette_profile_plots = [p for p in (couette_velocity_profile_plot, couette_stress_profile_plot) if p]
+    if couette_profile_plots:
+        tex.extend(
+            [
+                r"\paragraph{Couette profiles.}",
+                "The profile plots use the same selected times for all variants.  The dotted horizontal lines mark the two platen-fluid interfaces.",
+                r"\begin{center}",
+            ]
+        )
+        for plot_path in couette_profile_plots:
             tex.append(r"\includegraphics[width=0.95\linewidth]{\CaseOutputDir/" + Path(plot_path).name + r"}")
         tex.append(r"\end{center}")
     if circular_plots:

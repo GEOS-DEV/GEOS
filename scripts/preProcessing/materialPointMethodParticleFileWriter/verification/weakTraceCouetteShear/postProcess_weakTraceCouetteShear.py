@@ -119,6 +119,14 @@ VISIT_PLOTS = [
 ]
 
 
+COUETTE_REFERENCE = {
+    "fluid_ymin": -0.20,
+    "fluid_ymax": 0.20,
+    "top_plate_velocity": 0.002,
+    "fluid_viscosity": 0.1,
+}
+
+
 if __name__ == "__main__":
     raise SystemExit(
         postprocess(
@@ -126,6 +134,7 @@ if __name__ == "__main__":
             default_case_id="weakTraceCouetteShear",
             title="Weak Trace Couette Shear",
             result_prefix="weakTraceCouetteShear",
+            couette_shear=COUETTE_REFERENCE,
             visit_plots=VISIT_PLOTS,
         )
     )
