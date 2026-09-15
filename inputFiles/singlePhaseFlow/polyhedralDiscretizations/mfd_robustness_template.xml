@@ -85,7 +85,7 @@
   </Events>
 
   <Outputs>
-    <VTK name="vtk" plotFileRoot="robustness" format="ascii" fieldNames="{ pressure, mfdFlag }"/>
+    <VTK name="vtk" plotFileRoot="robustness" format="ascii" onlyPlotSpecifiedFieldNames="1" fieldNames="{ pressure, elementCenter }"/>
   </Outputs>
 
 </Problem>

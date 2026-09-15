@@ -58,13 +58,13 @@ ConsistencyAdaptation::Report ConsistencyAdaptation::classify( MeshLevel & mesh,
                          ? applyConsistencyLayer( mesh, regionNames, regionFilter, permeability, params, neighbors )
                          : report.numCells;
 
-  std::pair< localIndex, localIndex > const prescribed = applyPrescription( mesh, regionNames, neighbors );
-  report.numPrescribed0 = prescribed.first;
-  report.numPrescribed1 = prescribed.second;
+  std::pair< localIndex, localIndex > const prescribedCounts = applyPrescription( mesh, regionNames, neighbors );
+  report.numPrescribed0 = prescribedCounts.first;
+  report.numPrescribed1 = prescribedCounts.second;
 
-  std::pair< localIndex, localIndex > const degenerate = applyDegeneracyLayer( mesh, regionNames, params.degeneracyTolerance, neighbors );
-  report.numDegenerate = degenerate.first;
-  report.numPrescribedDegenerate = degenerate.second;
+  std::pair< localIndex, localIndex > const degenerateCounts = applyDegeneracyLayer( mesh, regionNames, params.degeneracyTolerance, neighbors );
+  report.numDegenerate = degenerateCounts.first;
+  report.numPrescribedDegenerate = degenerateCounts.second;
 
   // final count, and the invariant of the layers: a prescribed cell is never altered
   elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,

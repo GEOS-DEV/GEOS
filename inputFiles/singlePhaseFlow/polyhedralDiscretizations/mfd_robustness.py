@@ -10,7 +10,7 @@ with geosx, and parsed from the log and the ASCII VTK output.
   python3 mfd_robustness.py --geosx geosx --mesh tet --mfd-percents 0,25,50,75,100 --level 8   # prescribed MFD fraction
   python3 mfd_robustness.py --geosx geosx --mfd-percent 50                                     # sweeps at a fixed 50 % MFD
   python3 mfd_robustness.py --geosx geosx --table                                              # mesh x mfd% x n x contrast table, n up to 64
-  python3 mfd_robustness.py --geosx geosx --table --np 8 --table-levels 32,64                  # the large levels on 8 MPI ranks
+  python3 mfd_robustness.py --geosx geosx --table --np 8 --table-levels 32,64 --no-output      # the large levels on 8 MPI ranks, iterations only
 
 Exact solution used for the convergence check (homogeneous permeability k, injection rate density q):
   p(x) = p0 + q mu / (2 rho k) x (1 - x)
@@ -68,12 +68,15 @@ def prescription(edges, percent):
                           for i in range(len(boxes))))
     return box_xml, spec_xml
 
-def write_case(template, workdir, mesh, n, pattern, contrast, state, rate, p0, percent=None):
+def write_case(template, workdir, mesh, n, pattern, contrast, state, rate, p0, percent=None, output=True):
     tokens, edges = mesh_params(mesh, n, pattern)
     tokens["prescriptionBoxes"], tokens["prescription"] = prescription(edges, percent)
     write_case.cells = tuple(len(e) - 1 for e in edges)      # cells per axis, for the MPI partitioning
     tokens.update(consistencyTolerance=STATES[state], permA=f"{K_REF:.6e}", permB=f"{K_REF / contrast:.6e}", sourceRate=f"{rate:.6e}", p0=f"{p0:.6e}")
     text = open(template).read()
+    if not output:
+        text = re.sub(r'\s*<PeriodicEvent name="output"[^>]*/>', "", text)
+        text = re.sub(r'\s*<Outputs>.*?</Outputs>', "", text, flags=re.S)
     for k, v in tokens.items():
         text = text.replace(f"@{k}@", v)
     assert "@" not in text, "unreplaced token in the template"
@@ -182,6 +185,7 @@ def main():
     ap.add_argument("--mfd-percents", default=None, help="extra sweep over prescribed MFD percentages at --level, e.g. 0,25,50,75,100")
     ap.add_argument("--table", action="store_true", help="4-D table mesh x mfd%% x n x contrast (layers in series), entries 'rel L2 error / iterations'")
     ap.add_argument("--table-percents", default="0,25,75,100"); ap.add_argument("--table-levels", default="2,4,8,16,32,64"); ap.add_argument("--table-contrasts", default="1,1e4,1e7")
+    ap.add_argument("--no-output", action="store_true", help="no VTK output: iterations only, no pressure error (use for the large levels)")
     ap.add_argument("--np", type=int, default=1, help="number of MPI ranks (1 = run geosx directly)")
     ap.add_argument("--mpirun", default="mpirun", help="MPI launcher used when --np > 1")
     ap.add_argument("--timeout", type=int, default=3600)
@@ -205,7 +209,7 @@ def main():
     def do(mesh, n, pattern, contrast, state, percent=None):
         tag = state if percent is None else f"mfd{percent:g}pct"
         d = os.path.join(a.workdir, f"{mesh}_n{n}_{pattern}_c{contrast:g}_{tag}")
-        write_case(a.template, d, mesh, n, pattern, contrast, state, a.rate, a.p0, percent)
+        write_case(a.template, d, mesh, n, pattern, contrast, state, a.rate, a.p0, percent, not a.no_output)
         if a.write_only:
             return None
         r = run_case(a.geosx, d, a.timeout, a.np, a.mpirun, write_case.cells)
