@@ -25,6 +25,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/AdaptiveInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mixedMimetic/MixedMimeticDispatch.hpp"
@@ -33,7 +34,6 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 
 namespace geos
 {
@@ -598,39 +598,25 @@ public:
       tmp = ei[0]; ei[0] = ei[1]; ei[1] = tmp;
     }
 
-    // face geometry (same construction as TPFAInnerProduct::computeM)
+    // the same one-sided conductance and floor as the diagonal entries of TPFAInnerProduct::computeM
     real64 const areaTolerance = m_lengthTolerance * m_lengthTolerance;
     real64 const weightTolerance = 1e-30 * m_lengthTolerance;
-
-    real64 faceCenter[3], faceNormalRef[3];
-    real64 const faceArea =
-      computationalGeometry::centroid_3DPolygon( m_faceToNodes[kf],
-                                                 m_nodePosition,
-                                                 faceCenter,
-                                                 faceNormalRef,
-                                                 areaTolerance );
 
     // per-side one-sided coefficients: a_K = invMob_K / t_K and gravity terms
     real64 a[2]{}, dA_dp[2]{}, grav[2]{}, dGrav_dp[2]{};
     for( integer k = 0; k < numElems; ++k )
     {
-      real64 faceNormal[3] = { faceNormalRef[0], faceNormalRef[1], faceNormalRef[2] };
-      real64 cellToFaceVec[3];
-      mimeticInnerProduct::MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec,
-                                                                                 faceCenter,
-                                                                                 m_elemCenter[er[k]][esr[k]][ei[k]] );
-      mimeticInnerProduct::MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
-      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
-
       real64 const perm[3] = { m_elemPerm[er[k]][esr[k]][ei[k]][0][0],
                                m_elemPerm[er[k]][esr[k]][ei[k]][0][1],
                                m_elemPerm[er[k]][esr[k]][ei[k]][0][2] };
-      real64 faceConormal[3];
-      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, perm, faceNormal );
 
-      real64 Tii = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea / c2fDistance;
-      Tii = LvArray::math::max( Tii, weightTolerance );
-      real64 const t = LvArray::math::abs( Tii );
+      real64 const t = LvArray::math::max( mimeticInnerProduct::TPFAInnerProduct::computeOneSidedTrans( m_nodePosition,
+                                                                                                         m_faceToNodes,
+                                                                                                         kf,
+                                                                                                         m_elemCenter[er[k]][esr[k]][ei[k]],
+                                                                                                         perm,
+                                                                                                         areaTolerance ),
+                                           weightTolerance );
 
       real64 const mob = m_mob[er[k]][esr[k]][ei[k]];
       real64 const invMob = 1.0 / mob;
@@ -811,155 +797,6 @@ public:
                                     regionFilter, dt, localMatrix, localRhs );
 
     TpfaCondensedFluxKernel::launch< POLICY >( faceManager.size(), kernel );
-  }
-
-};
-
-/******************************** ResidualNormKernel ********************************/
-
-/**
- * @class ResidualNormKernel
- * @brief Computes the norm of the face-based constitutive residuals, normalized by a
- *        pressure scale built from the adjacent cell pressures at the previous converged step.
- */
-class ResidualNormKernel : public physicsSolverBaseKernels::ResidualNormKernelBase< 1 >
-{
-public:
-
-  using Base = physicsSolverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::m_minNormalizer;
-  using Base::m_rankOffset;
-  using Base::m_localResidual;
-  using Base::m_dofNumber;
-
-  template< typename VIEWTYPE >
-  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
-  using SinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::pressure_n >;
-
-  ResidualNormKernel( globalIndex const rankOffset,
-                      arrayView1d< real64 const > const & localResidual,
-                      arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< localIndex const > const & ghostRank,
-                      SortedArrayView< localIndex const > const & regionFilter,
-                      FaceManager const & faceManager,
-                      SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                      real64 const minNormalizer )
-    : Base( rankOffset,
-            localResidual,
-            dofNumber,
-            ghostRank,
-            minNormalizer ),
-    m_regionFilter( regionFilter ),
-    m_elemRegionList( faceManager.elementRegionList() ),
-    m_elemSubRegionList( faceManager.elementSubRegionList() ),
-    m_elemList( faceManager.elementList() ),
-    m_pres_n( singlePhaseFlowAccessors.get( fields::flow::pressure_n {} ) )
-  {}
-
-  GEOS_HOST_DEVICE
-  void computePressureNormalizer( localIndex const kf,
-                                  real64 & pressureNormalizer ) const
-  {
-    integer elemCounter = 0;
-    for( integer k = 0; k < m_elemRegionList.size( 1 ); ++k )
-    {
-      localIndex const er  = m_elemRegionList[kf][k];
-      localIndex const esr = m_elemSubRegionList[kf][k];
-      localIndex const ei  = m_elemList[kf][k];
-      bool const onBoundary = (er == -1 || esr == -1 || ei == -1);
-
-      if( !onBoundary && m_regionFilter.contains( er ) )
-      {
-        pressureNormalizer = pressureNormalizer + LvArray::math::abs( m_pres_n[er][esr][ei] );
-        elemCounter++;
-      }
-    }
-    pressureNormalizer /= elemCounter;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual void computeLinf( localIndex const kf,
-                            LinfStackVariables & stack ) const override
-  {
-    if( m_dofNumber[kf] >= 0 )
-    {
-      real64 pressureNormalizer = 0.0;
-      computePressureNormalizer( kf, pressureNormalizer );
-
-      stack.localValue[0] = stack.localValue[0]
-                            + LvArray::math::abs( m_localResidual[stack.localRow] ) / LvArray::math::max( m_minNormalizer, pressureNormalizer );
-    }
-  }
-
-  GEOS_HOST_DEVICE
-  virtual void computeL2( localIndex const kf,
-                          L2StackVariables & stack ) const override
-  {
-    if( m_dofNumber[kf] >= 0 )
-    {
-      real64 pressureNormalizer = 0.0;
-      computePressureNormalizer( kf, pressureNormalizer );
-
-      real64 const val = m_localResidual[stack.localRow];
-      stack.localValue[0] += val * val;
-      stack.localNormalizer[0] += LvArray::math::max( m_minNormalizer, pressureNormalizer );
-    }
-  }
-
-protected:
-
-  /// Filter to identify the target regions of the solver
-  SortedArrayView< localIndex const > const m_regionFilter;
-
-  /// Views on the maps face to elements
-  arrayView2d< localIndex const > const m_elemRegionList;
-  arrayView2d< localIndex const > const m_elemSubRegionList;
-  arrayView2d< localIndex const > const m_elemList;
-
-  /// View on pressure at the previous converged time step
-  ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
-
-};
-
-/**
- * @class ResidualNormKernelFactory
- */
-class ResidualNormKernelFactory
-{
-public:
-
-  template< typename POLICY >
-  static void
-  createAndLaunch( physicsSolverBaseKernels::NormType const normType,
-                   globalIndex const rankOffset,
-                   string const & dofKey,
-                   arrayView1d< real64 const > const & localResidual,
-                   SortedArrayView< localIndex const > const & regionFilter,
-                   string const & solverName,
-                   ElementRegionManager const & elemManager,
-                   FaceManager const & faceManager,
-                   real64 const minNormalizer,
-                   real64 (& residualNorm)[1],
-                   real64 (& residualNormalizer)[1] )
-  {
-    arrayView1d< globalIndex const > const dofNumber = faceManager.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const ghostRank = faceManager.ghostRank();
-
-    using kernelType = ResidualNormKernel;
-    typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
-
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               regionFilter, faceManager, flowAccessors, minNormalizer );
-    if( normType == physicsSolverBaseKernels::NormType::Linf )
-    {
-      ResidualNormKernel::launchLinf< POLICY >( faceManager.size(), kernel, residualNorm );
-    }
-    else // L2 norm
-    {
-      ResidualNormKernel::launchL2< POLICY >( faceManager.size(), kernel, residualNorm, residualNormalizer );
-    }
   }
 
 };

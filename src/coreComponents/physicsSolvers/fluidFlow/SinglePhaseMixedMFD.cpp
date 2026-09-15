@@ -296,13 +296,6 @@ void SinglePhaseMixedMFD::implicitStepSetup( real64 const & time_n,
   applyFacePressureBCValues( time_n + dt, domain );
 }
 
-void SinglePhaseMixedMFD::implicitStepComplete( real64 const & time,
-                                                real64 const & dt,
-                                                DomainPartition & domain )
-{
-  SinglePhaseBase::implicitStepComplete( time, dt, domain );
-}
-
 namespace
 {
 char const faceBcLogMessage[] =

@@ -418,15 +418,14 @@ protected:
    * @param mgrData auxiliary MGR data
    */
   void setReduction( HyprePrecWrapper & precond,
-                     HypreMGRData & mgrData,
-                     HYPRE_Int const numActiveLevels = numLevels )
+                     HypreMGRData & mgrData )
 
   {
     normalizeReductionParameters();
     MGRParameters const mgrParameters = defaultMGRParameters();
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
-                                                                 m_numBlocks, numActiveLevels,
+                                                                 m_numBlocks, numLevels,
                                                                  m_numLabels, m_ptrLabels,
                                                                  mgrData.pointMarkers.data() ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ) );
