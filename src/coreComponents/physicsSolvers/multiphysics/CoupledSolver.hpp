@@ -275,6 +275,52 @@ public:
 
   }
 
+  real64
+  nonlinearImplicitStep( real64 const & time_n,
+                         real64 const & dt,
+                         integer const cycleNumber,
+                         DomainPartition & domain ) override final
+  {
+    GEOS_MARK_FUNCTION;
+
+    if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit )
+    {
+      return PhysicsSolverBase::nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+    }
+    else if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      return sequentiallyNonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+    }
+    else
+    {
+      GEOS_ERROR( getDataContext() << ": Invalid coupling type option." );
+      return 0;
+    }
+  }
+
+  virtual void
+  setupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               ParallelVector & rhs,
+               ParallelVector & solution,
+               bool const setSparsity = true ) override
+  {
+    GEOS_MARK_FUNCTION;
+
+    if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit )
+    {
+      PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+    }
+    else if( getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      sequentiallySetupSystem( domain );
+    }
+    else
+    {
+      GEOS_ERROR( getDataContext() << ": Invalid coupling type option." );
+    }
+  }
 
   virtual void
   updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
@@ -474,6 +520,21 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
+    sequentiallySetupSystem( domain );
+
+    implicitStepSetup( time_n, dt, domain );
+
+    real64 const stepDt = sequentiallyNonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+
+    implicitStepComplete( time_n, stepDt, domain );
+
+    return stepDt;
+  }
+
+  virtual void sequentiallySetupSystem( DomainPartition & domain )
+  {
+    GEOS_MARK_FUNCTION;
+
     // Only build the sparsity pattern if the mesh has changed
     Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
@@ -488,9 +549,23 @@ protected:
         solver->setSystemSetupTimestamp( meshModificationTimestamp );
       }
     } );
+  }
 
-    implicitStepSetup( time_n, dt, domain );
-
+  /**
+   * @brief Nonlinear implicit step for sequentially coupled solver. It solves a nonlinear system of
+   * equations using a sequential approach.
+   *
+   * @param time_n the current time
+   * @param dt timestep size
+   * @param cycleNumber
+   * @param domain the domain partition
+   * @return real64 size of the accepted timestep
+   */
+  virtual real64 sequentiallyNonlinearImplicitStep( real64 const & time_n,
+                                                    real64 const & dt,
+                                                    integer const cycleNumber,
+                                                    DomainPartition & domain )
+  {
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer const maxNumberDtCuts = solverParams.m_maxTimeStepCuts;
     real64 const dtCutFactor = solverParams.m_timeStepCutFactor;
@@ -541,7 +616,7 @@ protected:
             solver->saveSequentialIterationState( domain );
           }
 
-          mapSolutionBetweenSolvers( domain, idx() );
+          mapSolutionBetweenSolvers( stepDt, domain, idx() );
 
           if( solverDt < stepDt ) // subsolver had to cut the time step
           {
@@ -610,21 +685,21 @@ protected:
       }
     }
 
-    implicitStepComplete( time_n, stepDt, domain );
-
     return stepDt;
   }
 
   /**
    * @brief Maps the solution obtained from one solver to the fields used by the other solver(s)
    *
+   * @param dt timestep size
    * @param domain the domain partition
    * @param solverType the index of the solver withing this coupled solver.
    */
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
+  virtual void mapSolutionBetweenSolvers( real64 const & dt,
+                                          DomainPartition & domain,
                                           integer const solverType )
   {
-    GEOS_UNUSED_VAR( domain, solverType );
+    GEOS_UNUSED_VAR( dt, domain, solverType );
   }
 
   virtual bool checkSequentialConvergence( integer const cycleNumber,

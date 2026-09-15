@@ -1,0 +1,132 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ChemoMechanicsPoroelastic_UltramaficSystem_base.xml" />
+    <File name="./ChemoMechanics_UltramaficSystem_varyingSurfaceArea.xml" />
+    <File name="./ChemoMechanics_UltramaficSystem_initialAggregate.xml" />
+    <File name="./ChemoMechanics_UltramaficSystem_initialPrimaryConc.xml" />
+    <File name="./ChemoMechanics_UltramaficSystem_logConc.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -0.002, 0.0, 0.2, 1.0 }"
+      yCoords="{ 0.0, 0.5}"
+      zCoords="{ 0.0, 0.005 }"
+      nx="{ 1, 48, 160}"
+      ny="{ 100 }"
+      nz="{ 1 }"
+      xBias="{ 0, -0.2, 0 }"
+      cellBlockNames="{ cb1, cb2, cb3 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ cb1 }"
+      materialList="{ water, reactiveRock, diffusion }"/>
+
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ cb2, cb3 }"
+      materialList="{ water, reactiveRock, diffusion }"/>
+  </ElementRegions>
+
+  <Events
+    maxTime="100">
+    <PeriodicEvent
+      name="outputs1"
+      beginTime="0.0"
+      endTime="10.0"
+      timeFrequency="0.5"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs2"
+      beginTime="10.0"
+      timeFrequency="10.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="0.5"
+      target="/Solvers/chemomechSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="1000"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <FieldSpecifications>    
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ xneg, xpos }"/>
+    
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ zneg, zpos  }"/>
+
+    <FieldSpecification
+      name="PorosityRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="PorositySource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="initialPressureRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="pressure"
+      scale="10e6"/>
+
+    <FieldSpecification
+      name="initialPressureSource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="pressure"
+      scale="10e6"/>
+
+    <FieldSpecification
+      name="bcPressure"
+      setNames="{ xpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="10e6"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      scale="-1.0"/>
+  </FieldSpecifications>
+
+</Problem>

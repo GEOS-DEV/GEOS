@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ChemoMechanics_CarbonateSystem_base.xml"/>
+    <File name="./ChemoMechanics_CarbonateSystem_initialAggregate.xml" />
+    <File name="./ChemoMechanics_CarbonateSystem_initialPrimaryConc.xml" />
+  </Included>  
+
+  <Events
+    maxTime="1.0">
+  
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="1"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      maxEventDt="0.1"
+      target="/Solvers/chemomechSolve"/> 
+  </Events>
+
+  <Constitutive>
+    <EigenStrainReactiveElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockReactivePorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <EigenStrainReactiveElasticIsotropic
+      name="reactiveRock"
+      solidModelName="rockSolid"
+      porosityModelName="rockReactivePorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="0"
+      defaultBulkModulus="6.6667e7"
+      defaultShearModulus="4.0e7"/>
+
+    <ReactivePorosity
+      name="rockReactivePorosity"
+      defaultReferencePorosity="0.1"
+      defaultInitialVolumeFractions="{ 0.1 }"
+      molarWeights="{ 0.100087 }"
+      mineralDensities="{ 2710 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1e-20, 1e-20, 1e-20 }"/>
+
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      viscosibility="0.0"
+      chemicalSystemType="carbonate"/>
+  </Constitutive>
+ 
+</Problem>

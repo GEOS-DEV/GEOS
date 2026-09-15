@@ -31,6 +31,9 @@ namespace reactivefluid
 {
 
 using namespace hpcReact::bulkGeneric;
+using namespace hpcReact::geochemistry;
+using namespace hpcReact::ChainGeneric;
+using namespace hpcReact::MoMasBenchmark;
 
 template< typename BASE >
 ReactiveSinglePhaseFluid< BASE >::
@@ -42,6 +45,13 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
+
+  this->registerWrapper( viewKeyStruct::solventMassPerSolutionVolumeString(), &m_solventMassPerSolutionVolume ).
+    setApplyDefaultValue( 1000.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Mass of solvent per unit volume of solution [kg/m^3], used to convert species "
+                    "molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 "
+                    "approximates an aqueous solution by the density of pure water." );
 
   this->template registerField< fields::reactivefluid::initialPrimarySpeciesConcentration >( &m_initialPrimarySpeciesConcentration );
   this->template registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
@@ -69,6 +79,7 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies;
   newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies;
   newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
+  newConstitutiveRelation.m_solventMassPerSolutionVolume = m_solventMassPerSolutionVolume;
 
   return clone;
 }
@@ -81,7 +92,7 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
   switch( m_chemicalSystemType )
   {
     case ChemicalSystemType::ultramafic:
-      m_numPrimarySpecies = 9;
+      m_numPrimarySpecies = 4;
       m_numSecondarySpecies = 16;
       m_numKineticReactions = 5;
       break;
@@ -96,6 +107,18 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numPrimarySpecies = 7;
       m_numSecondarySpecies = 11;
       m_numKineticReactions = 0;
+      break;
+
+    case ChemicalSystemType::serpentinization:
+      m_numPrimarySpecies = 3;
+      m_numSecondarySpecies = 0;
+      m_numKineticReactions = 3;
+      break;
+
+    case ChemicalSystemType::kineticCarbonate:
+      m_numPrimarySpecies = 3;
+      m_numSecondarySpecies = 0;
+      m_numKineticReactions = 1;
       break;
 
     case ChemicalSystemType::chainSerialAllKinetic:
@@ -116,6 +139,11 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numKineticReactions = 0;
       break;
   }
+
+  GEOS_THROW_IF_LE_MSG( m_solventMassPerSolutionVolume, 0.0,
+                        GEOS_FMT( "invalid value of attribute '{}'",
+                                  viewKeyStruct::solventMassPerSolutionVolumeString() ),
+                        InputError, this->getDataContext() );
 }
 
 template< typename BASE >

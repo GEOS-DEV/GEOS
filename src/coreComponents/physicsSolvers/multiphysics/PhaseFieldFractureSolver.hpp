@@ -92,7 +92,7 @@ public:
     return std::get< toUnderlying( SolverType::Damage ) >( m_solvers );
   }
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override final;
+  virtual void mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType ) override final;
 
 protected:
 

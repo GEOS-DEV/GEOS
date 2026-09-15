@@ -193,6 +193,9 @@ public:
   real64 defaultDensity() const override final { return m_defaultDensity; }
   real64 defaultViscosity() const override final { return m_defaultViscosity; }
 
+  /// @return the (constant) fluid compressibility [1/Pa]
+  real64 compressibility() const { return m_compressibility; }
+
 protected:
 
   virtual void postInputInitialization() override;
