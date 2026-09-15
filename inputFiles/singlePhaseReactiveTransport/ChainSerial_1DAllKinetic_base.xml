@@ -7,7 +7,7 @@
       name="SinglePhaseReactiveFlow"
       discretization="singlePhaseTPFA"
       targetRegions="{ Medium, Source }"
-      initialDt="1e-5"
+      initialDt="1e-10"
       writeLinearSystem="0"
       logLevel="1">
       <NonlinearSolverParameters
@@ -18,7 +18,7 @@
         lineSearchAction="None"
         timeStepIncreaseFactor="2"
         logLevel="1"
-        maxAllowedResidualNorm="1e100"/>
+        maxAllowedResidualNorm="1e10"/>
       <LinearSolverParameters
         directParallel="1"/>
     </SinglePhaseReactiveTransport>
