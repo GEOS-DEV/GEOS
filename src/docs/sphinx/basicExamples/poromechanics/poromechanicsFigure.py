@@ -108,7 +108,7 @@ def main():
 
     # File path
     hdf5FilePath = outputDir + "/pressure_history.hdf5"
-    xmlBaseFilePath = geosDir + "/inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml"
+    xmlBaseFilePath = geosDir + "/inputFiles/poromechanics/PoroElastic_Terzaghi_base.xml"
     xmlSmokeFilePath = geosDir + "/inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml"
 
     # Read HDF5
