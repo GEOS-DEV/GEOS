@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """h-robustness, contrast-robustness and convergence of SinglePhaseMixedMFD on regular hexahedral and tetrahedral meshes.
 
-Standard library only. Each case is a deck generated from mfd_robustness_template.xml, run serially
+Standard library only. Each case is a deck generated from mfd_robustness_template.xml.in, run serially
 with geosx, and parsed from the log and the ASCII VTK output.
 
   python3 mfd_robustness.py --geosx /path/to/geosx                 # everything: h-sweep + contrast sweep, hex and tet
@@ -171,7 +171,7 @@ def pressure_error(workdir, rate, contrast, p0, pattern):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--geosx", default=os.environ.get("GEOSX", shutil.which("geosx") or ""), help="geosx executable")
-    ap.add_argument("--template", default=os.path.join(HERE, "mfd_robustness_template.xml"))
+    ap.add_argument("--template", default=os.path.join(HERE, "mfd_robustness_template.xml.in"))
     ap.add_argument("--workdir", default="mfd_robustness_runs")
     ap.add_argument("--mesh", default="hex,tet", help="hex, tet or both (comma separated)")
     ap.add_argument("--levels", default="4,8,16,32", help="cells per unit length for the h-sweep (even numbers)")
