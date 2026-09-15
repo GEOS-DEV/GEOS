@@ -21,6 +21,7 @@
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/RTInnerProduct.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mesh/FaceManager.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -42,6 +43,7 @@ struct InnerProductType
   static constexpr integer SIMPLE_WITH_MULTIPLIERS = 4;
   static constexpr integer BDVLM = 5;
   static constexpr integer BDVLM_WITH_MULTIPLIERS = 6;
+  static constexpr integer RT = 7;
 };
 
 static constexpr real64 consistency_tol = 1e-14;
@@ -1818,6 +1820,11 @@ static void computeM_dispatch( int ipKind,
     BdVLMInnerProduct::computeM< NF >( node.toViewConst(), faceTonode.toViewConst(), elemToface.toSliceConst(),
                                        center, vol, Kvec, ltol, M );
   }
+  else if( ipKind == InnerProductType::RT )
+  {
+    RTInnerProduct::computeM< NF >( node.toViewConst(), faceTonode.toViewConst(), elemToface.toSliceConst(),
+                                    center, vol, Kvec, ltol, M );
+  }
 }
 
 // solve a small dense linear system A x = b by Gaussian elimination with partial pivoting
@@ -1989,6 +1996,12 @@ TEST( MimeticIP_MixedLinear, UnitCube_LinearPressure_BdVLM )
   EXPECT_LT( err, mixed_consistency_tol );
 }
 
+TEST( MimeticIP_MixedLinear, UnitCube_LinearPressure_RT )
+{
+  double err = computeLinearPressureMixed_error< 6 >( InnerProductType::RT );
+  EXPECT_LT( err, mixed_consistency_tol );
+}
+
 // =================== mixed form, case 1: with distortion (planar) ===========================
 TEST( MimeticIP_MixedLinear, Distortion_Planar_LinearPressure )
 {
@@ -2011,6 +2024,9 @@ TEST( MimeticIP_MixedLinear, Distortion_Planar_LinearPressure )
 
     double errBDVLM = computeLinearPressureMixed_error< 6 >( InnerProductType::BDVLM, DistortionMode::Planar, eps );
     EXPECT_LT( errBDVLM, mixed_consistency_tol );
+
+    double errRT = computeLinearPressureMixed_error< 6 >( InnerProductType::RT, DistortionMode::Planar, eps );
+    EXPECT_LT( errRT, mixed_consistency_tol );
   }
 
   for( int i = 0; i < neps; ++i )
@@ -2040,6 +2056,8 @@ TEST( MimeticIP_MixedLinear, Distortion_PlanarFunnel_LinearPressure )
     EXPECT_LT( computeLinearPressureMixed_error< 6 >( InnerProductType::SIMPLE, DistortionMode::PlanarFunnel, eps ),
                mixed_consistency_tol ) << "eps = " << eps;
     EXPECT_LT( computeLinearPressureMixed_error< 6 >( InnerProductType::BDVLM, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeLinearPressureMixed_error< 6 >( InnerProductType::RT, DistortionMode::PlanarFunnel, eps ),
                mixed_consistency_tol ) << "eps = " << eps;
 
     EXPECT_GT( computeLinearPressureMixed_error< 6 >( InnerProductType::TPFA, DistortionMode::PlanarFunnel, eps ),
@@ -2071,6 +2089,9 @@ TEST( MimeticIP_MixedLinear, Distortion_NonPlanar_LinearPressure )
 
     double errBDVLM = computeLinearPressureMixed_error< 6 >( InnerProductType::BDVLM, DistortionMode::NonPlanar, eps );
     EXPECT_GT( errBDVLM, mixed_consistency_tol );
+
+    double errRT = computeLinearPressureMixed_error< 6 >( InnerProductType::RT, DistortionMode::NonPlanar, eps );
+    EXPECT_GT( errRT, mixed_consistency_tol );
   }
 }
 
@@ -2078,6 +2099,49 @@ TEST( MimeticIP_MixedLinear, Distortion_NonPlanar_LinearPressure )
 // Direct check of the mimetic consistency condition M (N K) = C on the element matrix
 // (stronger than the pressure recovery above, where a defect can hide in the fluxes).
 // Valid only on cells where C^T N = vol * I holds with vertex-averaged face centers.
+
+// err = max | ( M ( |f| n_f K ) - c_f )_fd |, with the geometry convention of computeM (centroid_3DPolygon)
+template< int NF >
+static double mixedIPConsistencyError( array2d< real64, nodes::REFERENCE_POSITION_PERM > const & node,
+                                       FaceManager::NodeMapType const & faceTonode,
+                                       real64 const (&center)[3],
+                                       real64 const (&Kvec)[3],
+                                       arraySlice2d< real64 const > const & M )
+{
+  real64 NK[NF][3];
+  real64 C[NF][3];
+  for( int f = 0; f < NF; ++f )
+  {
+    real64 fc[3], fn[3];
+    real64 const area = centroid_3DPolygon( faceTonode[f], node.toViewConst(), fc, fn );
+    real64 c2f[3] = { fc[0] - center[0], fc[1] - center[1], fc[2] - center[2] };
+    if( LvArray::tensorOps::AiBi< 3 >( c2f, fn ) < 0.0 )
+    {
+      LvArray::tensorOps::scale< 3 >( fn, -1.0 );
+    }
+    for( int d = 0; d < 3; ++d )
+    {
+      NK[f][d] = area * fn[d] * Kvec[d];  // (|f| n_f) K for diagonal K
+      C[f][d] = c2f[d];
+    }
+  }
+
+  // err = max | ( M NK - C )_fd |
+  double err = 0.0;
+  for( int f = 0; f < NF; ++f )
+  {
+    for( int d = 0; d < 3; ++d )
+    {
+      real64 s = 0.0;
+      for( int k = 0; k < NF; ++k )
+      {
+        s += M( f, k ) * NK[k][d];
+      }
+      err = std::max( err, std::abs( s - C[f][d] ) );
+    }
+  }
+  return err;
+}
 
 template< int NF >
 static double computeMixedIPConsistency_error( int ipKind,
@@ -2123,47 +2187,14 @@ static double computeMixedIPConsistency_error( int ipKind,
   M.template setValues< parallelHostPolicy >( 0.0 );
   computeM_dispatch< NF >( ipKind, node_L, faceTonode_L, elemToface_L, cLc.toSliceConst(), vol_L, Kvec, ltol, M.toSlice() );
 
-  // assemble N (area-weighted outward normals, times K) and C (cell-to-face vectors),
-  // using the same geometry convention as computeM (centroid_3DPolygon)
-  real64 NK[NF][3];
-  real64 C[NF][3];
-  for( int f = 0; f < NF; ++f )
-  {
-    real64 fc[3], fn[3];
-    real64 const area = centroid_3DPolygon( faceTonode_L[f], node_L.toViewConst(), fc, fn );
-    real64 c2f[3] = { fc[0] - center_L[0], fc[1] - center_L[1], fc[2] - center_L[2] };
-    if( LvArray::tensorOps::AiBi< 3 >( c2f, fn ) < 0.0 )
-    {
-      LvArray::tensorOps::scale< 3 >( fn, -1.0 );
-    }
-    for( int d = 0; d < 3; ++d )
-    {
-      NK[f][d] = area * fn[d] * Kvec[d];  // (|f| n_f) K for diagonal K
-      C[f][d] = c2f[d];
-    }
-  }
-
-  // err = max | ( M NK - C )_fd |
-  double err = 0.0;
-  for( int f = 0; f < NF; ++f )
-  {
-    for( int d = 0; d < 3; ++d )
-    {
-      real64 s = 0.0;
-      for( int k = 0; k < NF; ++k )
-      {
-        s += M( f, k ) * NK[k][d];
-      }
-      err = std::max( err, std::abs( s - C[f][d] ) );
-    }
-  }
-  return err;
+  return mixedIPConsistencyError< NF >( node_L, faceTonode_L, center_L, Kvec, M.toSliceConst() );
 }
 
 TEST( MimeticIP_MixedConsistency, UnitCube )
 {
   for( int ip : { InnerProductType::TPFA, InnerProductType::QUASI_TPFA,
-                  InnerProductType::SIMPLE, InnerProductType::BDVLM } )
+                  InnerProductType::SIMPLE, InnerProductType::BDVLM,
+                  InnerProductType::RT } )
   {
     EXPECT_LT( computeMixedIPConsistency_error< 6 >( ip ), mixed_consistency_tol ) << "ipKind = " << ip;
   }
@@ -2179,6 +2210,8 @@ TEST( MimeticIP_MixedConsistency, Distortion_Planar )
     EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::SIMPLE, DistortionMode::Planar, eps ),
                mixed_consistency_tol ) << "eps = " << eps;
     EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::BDVLM, DistortionMode::Planar, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::RT, DistortionMode::Planar, eps ),
                mixed_consistency_tol ) << "eps = " << eps;
 
     // TPFA is inconsistent on non K-orthogonal cells
@@ -2196,6 +2229,8 @@ TEST( MimeticIP_MixedConsistency, Distortion_PlanarFunnel )
     EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::SIMPLE, DistortionMode::PlanarFunnel, eps ),
                mixed_consistency_tol ) << "eps = " << eps;
     EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::BDVLM, DistortionMode::PlanarFunnel, eps ),
+               mixed_consistency_tol ) << "eps = " << eps;
+    EXPECT_LT( computeMixedIPConsistency_error< 6 >( InnerProductType::RT, DistortionMode::PlanarFunnel, eps ),
                mixed_consistency_tol ) << "eps = " << eps;
 
     EXPECT_GT( computeMixedIPConsistency_error< 6 >( InnerProductType::TPFA, DistortionMode::PlanarFunnel, eps ),
@@ -2354,6 +2389,11 @@ static double computeHybridMixedDuality_error( int ipKind, real64 h )
     BdVLMInnerProduct::compute< NF >( node.toViewConst(), mult.toViewConst(), faceTonode.toViewConst(),
                                       elemToface.toSliceConst(), cc, vol, Kvec, ltol, T.toSlice() );
   }
+  else if( ipKind == InnerProductType::RT )
+  {
+    RTInnerProduct::compute< NF >( node.toViewConst(), mult.toViewConst(), faceTonode.toViewConst(),
+                                   elemToface.toSliceConst(), cc, vol, Kvec, ltol, T.toSlice() );
+  }
 
   computeM_dispatch< NF >( ipKind, node, faceTonode, elemToface, cc.toSliceConst(), vol, Kvec, ltol, M.toSlice() );
 
@@ -2398,6 +2438,169 @@ TEST( MimeticIP_MixedDuality, BdVLM )
 {
   EXPECT_LT( computeHybridMixedDuality_error< 6 >( InnerProductType::BDVLM, 1.0 ), duality_tol );
   EXPECT_LT( computeHybridMixedDuality_error< 6 >( InnerProductType::BDVLM, 0.2 ), duality_tol );
+}
+
+TEST( MimeticIP_MixedDuality, RT )
+{
+  // compute() returns the exact inverse of computeM(), so duality holds to roundoff on any cell
+  EXPECT_LT( computeHybridMixedDuality_error< 6 >( InnerProductType::RT, 1.0 ), duality_tol );
+  EXPECT_LT( computeHybridMixedDuality_error< 6 >( InnerProductType::RT, 0.2 ), duality_tol );
+}
+
+//======================== RT0 Exactness Test =============================
+// The RT inner product must reproduce the conforming lowest-order Raviart-Thomas mass matrix
+// exactly on simplices. Reference element and dof conventions: DefElement, degree-1 Raviart-Thomas,
+// https://defelement.org/elements/raviart-thomas.html (facet normal integral moments, H(div));
+// dofs expressed here as outward-normal fluxes, matrices computed exactly with sympy.
+
+static constexpr real64 rt0_exactness_tol = 1e-14;
+
+TEST( MimeticIP_RT0Exactness, Tetrahedron )
+{
+  // reference tetrahedron (0,0,0)-(1,0,0)-(0,1,0)-(0,0,1); face f opposite vertex f
+  localIndex constexpr numNodes = 4;
+  localIndex constexpr numFaces = 4;
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+  nodePosition.resize( numNodes, 3 );
+  nodePosition( 0, 0 ) = 0; nodePosition( 0, 1 ) = 0; nodePosition( 0, 2 ) = 0;
+  nodePosition( 1, 0 ) = 1; nodePosition( 1, 1 ) = 0; nodePosition( 1, 2 ) = 0;
+  nodePosition( 2, 0 ) = 0; nodePosition( 2, 1 ) = 1; nodePosition( 2, 2 ) = 0;
+  nodePosition( 3, 0 ) = 0; nodePosition( 3, 1 ) = 0; nodePosition( 3, 2 ) = 1;
+
+  FaceManager::NodeMapType faceToNodes;
+  faceToNodes.resize( numFaces );
+  for( localIndex f = 0; f < numFaces; ++f )
+    faceToNodes.resizeArray( f, 3 );
+  faceToNodes( 0, 0 ) = 1; faceToNodes( 0, 1 ) = 2; faceToNodes( 0, 2 ) = 3;
+  faceToNodes( 1, 0 ) = 0; faceToNodes( 1, 1 ) = 2; faceToNodes( 1, 2 ) = 3;
+  faceToNodes( 2, 0 ) = 0; faceToNodes( 2, 1 ) = 1; faceToNodes( 2, 2 ) = 3;
+  faceToNodes( 3, 0 ) = 0; faceToNodes( 3, 1 ) = 1; faceToNodes( 3, 2 ) = 2;
+
+  array1d< localIndex > elemToFaces;
+  elemToFaces.resize( numFaces );
+  for( localIndex f = 0; f < numFaces; ++f )
+    elemToFaces( f ) = f;
+
+  stackArray1d< real64, 3 > center( 3 );
+  center[0] = 0.25; center[1] = 0.25; center[2] = 0.25;
+  real64 const vol = 1.0 / 6.0;
+  real64 constexpr ltol = 1e-12;
+
+  // exact RT0 mass matrices in outward-flux dofs (sympy, exact rational integration)
+  real64 const refIso[4][4] =
+  { { 1.0/5.0, 1.0/30.0, 1.0/30.0, 1.0/30.0 },
+    { 1.0/30.0, 8.0/15.0, -2.0/15.0, -2.0/15.0 },
+    { 1.0/30.0, -2.0/15.0, 8.0/15.0, -2.0/15.0 },
+    { 1.0/30.0, -2.0/15.0, -2.0/15.0, 8.0/15.0 } };
+  real64 const refAniso[4][4] =
+  { { 7.0/60.0, -1.0/20.0, 1.0/30.0, 3.0/40.0 },
+    { -1.0/20.0, 9.0/20.0, -2.0/15.0, -11.0/120.0 },
+    { 1.0/30.0, -2.0/15.0, 17.0/60.0, -1.0/120.0 },
+    { 3.0/40.0, -11.0/120.0, -1.0/120.0, 1.0/5.0 } };
+
+  real64 const permIso[3] = { 1.0, 1.0, 1.0 };
+  real64 const permAniso[3] = { 1.0, 2.0, 4.0 };
+
+  stackArray2d< real64, 16 > M( 4, 4 );
+  for( int c = 0; c < 2; ++c )
+  {
+    real64 const (&perm)[3] = ( c == 0 ) ? permIso : permAniso;
+    real64 const (&ref)[4][4] = ( c == 0 ) ? refIso : refAniso;
+
+    M.template setValues< parallelHostPolicy >( 0.0 );
+    RTInnerProduct::computeM< 4 >( nodePosition.toViewConst(),
+                                   faceToNodes.toViewConst(),
+                                   elemToFaces.toSliceConst(),
+                                   center.toSliceConst(),
+                                   vol, perm, ltol, M.toSlice() );
+
+    for( int i = 0; i < 4; ++i )
+    {
+      for( int j = 0; j < 4; ++j )
+      {
+        EXPECT_NEAR( M( i, j ), ref[i][j], rt0_exactness_tol ) << "K case " << c << " entry " << i << "," << j;
+      }
+    }
+  }
+}
+
+TEST( MimeticIP_RT0Exactness, Triangle2D )
+{
+  // The stabilization rule s = tr(M1)/(d+2) is dimension generic; computeM() hard-codes d = 3,
+  // so the d = 2 instance is built directly here on the reference triangle (0,0)-(1,0)-(0,1),
+  // edge f opposite vertex f, and compared with the exact 2D RT0 mass matrix.
+  real64 const verts[3][2] = { { 0.0, 0.0 }, { 1.0, 0.0 }, { 0.0, 1.0 } };
+  real64 const area = 0.5;
+  real64 const xc[2] = { 1.0/3.0, 1.0/3.0 };
+
+  real64 const refIso[3][3] =
+  { { 1.0/6.0, 0.0, 0.0 },
+    { 0.0, 1.0/3.0, -1.0/6.0 },
+    { 0.0, -1.0/6.0, 1.0/3.0 } };
+  real64 const refAniso[3][3] =
+  { { 1.0/9.0, -1.0/18.0, 1.0/18.0 },
+    { -1.0/18.0, 5.0/18.0, -1.0/9.0 },
+    { 1.0/18.0, -1.0/9.0, 1.0/6.0 } };
+
+  real64 const permIso[2] = { 1.0, 1.0 };
+  real64 const permAniso[2] = { 1.0, 3.0 };
+
+  for( int c = 0; c < 2; ++c )
+  {
+    real64 const (&perm)[2] = ( c == 0 ) ? permIso : permAniso;
+    real64 const (&ref)[3][3] = ( c == 0 ) ? refIso : refAniso;
+
+    // C rows: edge midpoint - cell centroid; N rows: |e| K n_e with outward unit normal
+    real64 C[3][2], N[3][2];
+    for( int f = 0; f < 3; ++f )
+    {
+      int const a = ( f + 1 ) % 3, b = ( f + 2 ) % 3;
+      real64 const ex = verts[b][0] - verts[a][0], ey = verts[b][1] - verts[a][1];
+      real64 const len = std::sqrt( ex * ex + ey * ey );
+      real64 const mid[2] = { 0.5 * ( verts[a][0] + verts[b][0] ), 0.5 * ( verts[a][1] + verts[b][1] ) };
+      real64 n[2] = { ey / len, -ex / len };
+      if( n[0] * ( mid[0] - xc[0] ) + n[1] * ( mid[1] - xc[1] ) < 0.0 )
+      {
+        n[0] = -n[0]; n[1] = -n[1];
+      }
+      for( int d = 0; d < 2; ++d )
+      {
+        C[f][d] = mid[d] - xc[d];
+        N[f][d] = len * perm[d] * n[d];
+      }
+    }
+
+    // M1 = C (A K)^{-1} C^T
+    real64 M1[3][3];
+    for( int i = 0; i < 3; ++i )
+      for( int j = 0; j < 3; ++j )
+        M1[i][j] = ( C[i][0] * C[j][0] / perm[0] + C[i][1] * C[j][1] / perm[1] ) / area;
+
+    // Q = Gram-Schmidt of the two columns of N; P = I - Q Q^T
+    real64 q0[3] = { N[0][0], N[1][0], N[2][0] };
+    real64 q1[3] = { N[0][1], N[1][1], N[2][1] };
+    real64 nrm = std::sqrt( q0[0]*q0[0] + q0[1]*q0[1] + q0[2]*q0[2] );
+    for( int i = 0; i < 3; ++i )
+      q0[i] /= nrm;
+    real64 const dot = q0[0]*q1[0] + q0[1]*q1[1] + q0[2]*q1[2];
+    for( int i = 0; i < 3; ++i )
+      q1[i] -= dot * q0[i];
+    nrm = std::sqrt( q1[0]*q1[0] + q1[1]*q1[1] + q1[2]*q1[2] );
+    for( int i = 0; i < 3; ++i )
+      q1[i] /= nrm;
+
+    real64 const s = ( M1[0][0] + M1[1][1] + M1[2][2] ) / 4.0;   // tr(M1)/(d+2), d = 2
+
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        real64 const Pij = ( i == j ? 1.0 : 0.0 ) - q0[i]*q0[j] - q1[i]*q1[j];
+        EXPECT_NEAR( M1[i][j] + s * Pij, ref[i][j], rt0_exactness_tol ) << "K case " << c << " entry " << i << "," << j;
+      }
+    }
+  }
 }
 
 //======================== TPFA Reduction Test =============================
@@ -2790,6 +2993,12 @@ TEST( Hydrostatic, GravityConsistency_NoDistortion_BdVLM )
   EXPECT_LE( err, consistency_tol );
 }
 
+TEST( Hydrostatic, GravityConsistency_NoDistortion_RT )
+{
+  double err = computeGravityConsistency_error< 6 >( InnerProductType::RT, DistortionMode::None, 0.0, 1.0, 1.0, 1.0 );
+  EXPECT_LE( err, consistency_tol );
+}
+
 // =================== case 1: with distortion (planar) ===========================
 TEST( Hydrostatic, GravityConsistency_Distortion_Planar )
 {
@@ -2843,6 +3052,162 @@ TEST( Hydrostatic, GravityConsistency_Distortion_NonPlanar )
     EXPECT_LE( errBDVLM, consistency_tol );
   }
 }
+
+// tetrahedron A B C D with a K-obtuse face BCD: c . ( K n ) < 0 for K = diag( k, k, 1 ), k < 1/4
+static void makeKObtuseTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
+                              FaceManager::NodeMapType & faceToNodes,
+                              array1d< localIndex > & elemToFaces,
+                              real64 ( & elemCenter )[3],
+                              real64 & elemVolume )
+{
+  real64 const xyz[4][3] = { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 1, 1, 1 } };
+  localIndex const f2n[4][3] = { { 0, 1, 2 }, { 0, 1, 3 }, { 1, 2, 3 }, { 0, 2, 3 } };
+
+  nodePosition.resize( 4, 3 );
+  faceToNodes.resize( 4 );
+  elemToFaces.resize( 4 );
+  array1d< localIndex > toNodes( 4 );
+  for( localIndex i = 0; i < 4; ++i )
+  {
+    faceToNodes.resizeArray( i, 3 );
+    elemToFaces( i ) = i;
+    toNodes( i ) = i;
+    for( localIndex d = 0; d < 3; ++d )
+    {
+      nodePosition( i, d ) = xyz[i][d];
+      faceToNodes( i, d ) = f2n[i][d];
+    }
+  }
+  computeVolumeAndCenter( nodePosition, toNodes, elemCenter, elemVolume );
+}
+
+// reference one-sided transmissibility of a triangle: |f|/d c.(K n), replaced by |f|/d c.(K c) when c.(K n) <= 0
+static real64 referenceOneSidedTrans( real64 const (&x)[3][3],
+                                      real64 const (&center)[3],
+                                      real64 const (&K)[3],
+                                      real64 & rawWeight )
+{
+  real64 e1[3], e2[3], n[3], c[3], Kn[3], Kc[3];
+  for( int d = 0; d < 3; ++d )
+  {
+    e1[d] = x[1][d] - x[0][d];
+    e2[d] = x[2][d] - x[0][d];
+    c[d] = ( x[0][d] + x[1][d] + x[2][d] ) / 3.0 - center[d];
+  }
+  LvArray::tensorOps::crossProduct( n, e1, e2 );
+  real64 const area = 0.5 * LvArray::tensorOps::normalize< 3 >( n );
+  real64 const dist = LvArray::tensorOps::normalize< 3 >( c );
+  if( LvArray::tensorOps::AiBi< 3 >( c, n ) < 0.0 )
+  {
+    LvArray::tensorOps::scale< 3 >( n, -1.0 );
+  }
+  LvArray::tensorOps::hadamardProduct< 3 >( Kn, K, n );
+  LvArray::tensorOps::hadamardProduct< 3 >( Kc, K, c );
+  rawWeight = LvArray::tensorOps::AiBi< 3 >( c, Kn );
+  return area / dist * ( rawWeight > 0.0 ? rawWeight : LvArray::tensorOps::AiBi< 3 >( c, Kc ) );
+}
+
+TEST( testMimeticInnerProducts, TPFA_KObtuseFallback )
+{
+  localIndex constexpr NF = 4;
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+  FaceManager::NodeMapType faceToNodes;
+  array1d< localIndex > elemToFaces;
+  real64 elemCenter[3] = { 0.0 };
+  real64 elemVolume = 0;
+  makeKObtuseTetra( nodePosition, faceToNodes, elemToFaces, elemCenter, elemVolume );
+
+  real64 const perm[3] = { 1e-13, 1e-13, 1e-12 };
+  real64 const lengthTolerance = 1e-8;
+  stackArray1d< real64, 3 > center( 3 );
+  for( int d = 0; d < 3; ++d )
+  {
+    center[d] = elemCenter[d];
+  }
+
+  real64 trans[NF];
+  for( localIndex f = 0; f < NF; ++f )
+  {
+    real64 x[3][3];
+    for( localIndex k = 0; k < 3; ++k )
+    {
+      for( int d = 0; d < 3; ++d )
+      {
+        x[k][d] = nodePosition( faceToNodes( f, k ), d );
+      }
+    }
+    real64 rawWeight = 0.0;
+    real64 const ref = referenceOneSidedTrans( x, elemCenter, perm, rawWeight );
+    // only the face BCD is K-obtuse
+    if( f == 2 )
+    {
+      EXPECT_LT( rawWeight, 0.0 );
+    }
+    else
+    {
+      EXPECT_GT( rawWeight, 0.0 );
+    }
+    trans[f] = TPFAInnerProduct::computeOneSidedTrans( nodePosition.toViewConst(), faceToNodes.toViewConst(), f,
+                                                       center.toSliceConst(), perm, lengthTolerance * lengthTolerance );
+    EXPECT_GT( trans[f], 0.0 );
+    checkRelativeError( trans[f], ref, 1e-12 );
+  }
+
+  // M = diag( 1 / T_f ) stays positive and finite on the K-obtuse face
+  stackArray2d< real64, NF * NF > M( NF, NF );
+  TPFAInnerProduct::computeM< NF >( nodePosition.toViewConst(), faceToNodes.toViewConst(), elemToFaces.toSliceConst(),
+                                    center, elemVolume, perm, lengthTolerance, M.toSlice() );
+  for( localIndex f = 0; f < NF; ++f )
+  {
+    checkRelativeError( M( f, f ), 1.0 / trans[f], 1e-12 );
+    for( localIndex g = 0; g < NF; ++g )
+    {
+      if( g != f )
+      {
+        EXPECT_DOUBLE_EQ( M( f, g ), 0.0 );
+      }
+    }
+  }
+}
+
+TEST( MimeticIP_MixedConsistency, Tetra )
+{
+  localIndex constexpr NF = 4;
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+  FaceManager::NodeMapType faceToNodes;
+  array1d< localIndex > elemToFaces;
+  real64 elemCenter[3] = { 0.0 };
+  real64 elemPerm[3] = { 0.0 };
+  real64 elemVolume = 0;
+  real64 lengthTolerance = 0;
+  stackArray2d< real64, NF * NF > Mref( NF, NF );
+  makeTetra( nodePosition, faceToNodes, elemToFaces, elemCenter, elemVolume, elemPerm, lengthTolerance,
+             InnerProductType::TPFA, Mref.toSlice() );
+
+  stackArray1d< real64, 3 > center( 3 );
+  for( int d = 0; d < 3; ++d )
+  {
+    center[d] = elemCenter[d];
+  }
+
+  // the RT product is the exact Raviart-Thomas product on a simplex: M ( N K ) = C
+  stackArray2d< real64, NF * NF > M( NF, NF );
+  M.setValues< parallelHostPolicy >( 0.0 );
+  computeM_dispatch< NF >( InnerProductType::RT, nodePosition, faceToNodes, elemToFaces, center.toSliceConst(),
+                           elemVolume, elemPerm, lengthTolerance, M.toSlice() );
+  EXPECT_LT( mixedIPConsistencyError< NF >( nodePosition, faceToNodes, elemCenter, elemPerm, M.toSliceConst() ),
+             mixed_consistency_tol );
+
+  // the two-point product is not consistent on a simplex
+  M.setValues< parallelHostPolicy >( 0.0 );
+  computeM_dispatch< NF >( InnerProductType::TPFA, nodePosition, faceToNodes, elemToFaces, center.toSliceConst(),
+                           elemVolume, elemPerm, lengthTolerance, M.toSlice() );
+  EXPECT_GT( mixedIPConsistencyError< NF >( nodePosition, faceToNodes, elemCenter, elemPerm, M.toSliceConst() ),
+             mixed_consistency_tol );
+}
+
 
 int main( int argc, char * * argv )
 {

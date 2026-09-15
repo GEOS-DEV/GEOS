@@ -36,6 +36,8 @@
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
+#include "mixedMimetic/MixedMimeticDiscretization.hpp"
+#include "mixedMimetic/MixedMimeticDiscretizationManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "fileIO/Outputs/OutputManager.hpp"
@@ -910,6 +912,9 @@ ProblemManager::getDiscretizations() const
   FiniteVolumeManager const &
   fvDiscretizationManager = numericalMethodManager.getFiniteVolumeManager();
 
+  MixedMimeticDiscretizationManager const &
+  mixedMimeticDiscretizationManager = numericalMethodManager.getMixedMimeticDiscretizationManager();
+
   DomainPartition const & domain  = getDomainPartition();
   Group const & meshBodies = domain.getMeshBodies();
 
@@ -927,6 +932,11 @@ ProblemManager::getDiscretizations() const
     if( discretization==nullptr )
     {
       discretization = fvDiscretizationManager.getGroupPointer( discretizationName );
+    }
+
+    if( discretization==nullptr )
+    {
+      discretization = mixedMimeticDiscretizationManager.getGroupPointer( discretizationName );
     }
 
     if( discretization!=nullptr )
@@ -961,7 +971,10 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     auto const * const
     fvhDisc = dynamic_cast< HybridMimeticDiscretization const * >(discretization);
 
-    if( feDisc==nullptr && fvsDisc==nullptr && fvhDisc==nullptr )
+    auto const * const
+    mmDisc = dynamic_cast< MixedMimeticDiscretization const * >(discretization);
+
+    if( feDisc==nullptr && fvsDisc==nullptr && fvhDisc==nullptr && mmDisc==nullptr )
     {
       GEOS_ERROR( "Group expected to cast to a discretization object." );
     }
