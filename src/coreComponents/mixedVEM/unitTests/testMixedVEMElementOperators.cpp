@@ -262,6 +262,11 @@ void evaluateRigidMotion( integer const i,
   }
 }
 
+/// Every stabilization the element operators accept.
+constexpr StabilizationLength const allStabilizations[] = { StabilizationLength::elementDiameter,
+                                                            StabilizationLength::hydraulicRadius,
+                                                            StabilizationLength::hydraulicRadiusWeighted };
+
 /// Element operators plus their storage, so that a test can hold on to all of them.
 struct Operators
 {
@@ -273,7 +278,8 @@ struct Operators
 };
 
 Operators computeOperators( ElementData const & data,
-                            real64 const (&compliance)[NUM_SYM_COMP][NUM_SYM_COMP] )
+                            real64 const (&compliance)[NUM_SYM_COMP][NUM_SYM_COMP],
+                            StabilizationLength const stabilization = StabilizationLength::elementDiameter )
 {
   Operators ops;
 
@@ -287,7 +293,7 @@ Operators computeOperators( ElementData const & data,
                            data.numFaces,
                            data.center,
                            data.diameter,
-                           StabilizationLength::elementDiameter,
+                           stabilization,
                            data.moments,
                            compliance,
                            ops.divergence.toSlice(),
@@ -541,62 +547,65 @@ TEST( MixedVEMElementOperators, constantStressPatchTest )
   {
     for( auto const & offset : offsets )
     {
-      for( bool const flipNormals : { false, true } )
+      for( auto const stabilization : allStabilizations )
       {
-        ElementData const data = buildElement( entry.second, offset, flipNormals );
-        Operators const ops = computeOperators( data, compliance );
-
-        real64 const scale = data.moments.volume + data.diameter;
-
-        for( auto const & sigma : stresses )
+        for( bool const flipNormals : { false, true } )
         {
-          std::vector< real64 > const dofs = constantStressDofs( data, sigma );
+          ElementData const data = buildElement( entry.second, offset, flipNormals );
+          Operators const ops = computeOperators( data, compliance, stabilization );
 
-          // Pi_E reproduces constant symmetric stresses exactly
-          for( integer a = 0; a < NUM_SYM_COMP; ++a )
+          real64 const scale = data.moments.volume + data.diameter;
+
+          for( auto const & sigma : stresses )
           {
-            real64 value = 0.0;
-            for( integer j = 0; j < data.numStressDof; ++j )
-            {
-              value += ops.projection( a, j ) * dofs[ static_cast< std::size_t >( j ) ];
-            }
-            EXPECT_NEAR( value, sigma[a], 1e-11 ) << entry.first << " component " << a;
-          }
+            std::vector< real64 > const dofs = constantStressDofs( data, sigma );
 
-          // div of a constant stress vanishes, hence B_E sigma = 0 and D_E sigma = 0
-          for( integer i = 0; i < NUM_RM_DOF; ++i )
-          {
-            real64 divergenceValue = 0.0;
-            real64 reconstructionValue = 0.0;
-            for( integer j = 0; j < data.numStressDof; ++j )
-            {
-              divergenceValue += ops.divergence( i, j ) * dofs[ static_cast< std::size_t >( j ) ];
-              reconstructionValue += ops.divReconstruction( i, j ) * dofs[ static_cast< std::size_t >( j ) ];
-            }
-            EXPECT_NEAR( divergenceValue, 0.0, 1e-11 * scale ) << entry.first << " mode " << i;
-            EXPECT_NEAR( reconstructionValue, 0.0, 1e-11 * scale ) << entry.first << " mode " << i;
-          }
-
-          // the stabilization annihilates sigma, so M_E sigma = |E| P_E^T D sigma
-          for( integer i = 0; i < data.numStressDof; ++i )
-          {
-            real64 value = 0.0;
-            for( integer j = 0; j < data.numStressDof; ++j )
-            {
-              value += ops.complianceMatrix( i, j ) * dofs[ static_cast< std::size_t >( j ) ];
-            }
-
-            real64 expected = 0.0;
+            // Pi_E reproduces constant symmetric stresses exactly
             for( integer a = 0; a < NUM_SYM_COMP; ++a )
             {
-              for( integer b = 0; b < NUM_SYM_COMP; ++b )
+              real64 value = 0.0;
+              for( integer j = 0; j < data.numStressDof; ++j )
               {
-                expected += ops.projection( a, i ) * compliance[a][b] * sigma[b];
+                value += ops.projection( a, j ) * dofs[ static_cast< std::size_t >( j ) ];
               }
+              EXPECT_NEAR( value, sigma[a], 1e-11 ) << entry.first << " component " << a;
             }
-            expected *= data.moments.volume;
 
-            EXPECT_NEAR( value, expected, 1e-10 * scale ) << entry.first << " row " << i;
+            // div of a constant stress vanishes, hence B_E sigma = 0 and D_E sigma = 0
+            for( integer i = 0; i < NUM_RM_DOF; ++i )
+            {
+              real64 divergenceValue = 0.0;
+              real64 reconstructionValue = 0.0;
+              for( integer j = 0; j < data.numStressDof; ++j )
+              {
+                divergenceValue += ops.divergence( i, j ) * dofs[ static_cast< std::size_t >( j ) ];
+                reconstructionValue += ops.divReconstruction( i, j ) * dofs[ static_cast< std::size_t >( j ) ];
+              }
+              EXPECT_NEAR( divergenceValue, 0.0, 1e-11 * scale ) << entry.first << " mode " << i;
+              EXPECT_NEAR( reconstructionValue, 0.0, 1e-11 * scale ) << entry.first << " mode " << i;
+            }
+
+            // the stabilization annihilates sigma, so M_E sigma = |E| P_E^T D sigma
+            for( integer i = 0; i < data.numStressDof; ++i )
+            {
+              real64 value = 0.0;
+              for( integer j = 0; j < data.numStressDof; ++j )
+              {
+                value += ops.complianceMatrix( i, j ) * dofs[ static_cast< std::size_t >( j ) ];
+              }
+
+              real64 expected = 0.0;
+              for( integer a = 0; a < NUM_SYM_COMP; ++a )
+              {
+                for( integer b = 0; b < NUM_SYM_COMP; ++b )
+                {
+                  expected += ops.projection( a, i ) * compliance[a][b] * sigma[b];
+                }
+              }
+              expected *= data.moments.volume;
+
+              EXPECT_NEAR( value, expected, 1e-10 * scale ) << entry.first << " row " << i;
+            }
           }
         }
       }
@@ -611,27 +620,125 @@ TEST( MixedVEMElementOperators, complianceMatrixIsSymmetricPositiveDefinite )
 
   for( auto const & entry : testElements() )
   {
-    ElementData const data = buildElement( entry.second );
-    Operators const ops = computeOperators( data, compliance );
-
-    real64 maxEntry = 0.0;
-    for( integer i = 0; i < data.numStressDof; ++i )
+    for( auto const stabilization : allStabilizations )
     {
-      for( integer j = 0; j < data.numStressDof; ++j )
+      ElementData const data = buildElement( entry.second );
+      Operators const ops = computeOperators( data, compliance, stabilization );
+
+      real64 maxEntry = 0.0;
+      for( integer i = 0; i < data.numStressDof; ++i )
       {
-        maxEntry = std::max( maxEntry, std::abs( ops.complianceMatrix( i, j ) ) );
+        for( integer j = 0; j < data.numStressDof; ++j )
+        {
+          maxEntry = std::max( maxEntry, std::abs( ops.complianceMatrix( i, j ) ) );
+        }
+      }
+
+      for( integer i = 0; i < data.numStressDof; ++i )
+      {
+        for( integer j = 0; j < data.numStressDof; ++j )
+        {
+          EXPECT_NEAR( ops.complianceMatrix( i, j ), ops.complianceMatrix( j, i ), 1e-12 * maxEntry ) << entry.first;
+        }
+      }
+
+      EXPECT_TRUE( isPositiveDefinite( ops.complianceMatrix ) ) << entry.first;
+    }
+  }
+}
+
+TEST( MixedVEMElementOperators, weightedStabilizationMatchesDenseDefinition )
+{
+  real64 compliance[NUM_SYM_COMP][NUM_SYM_COMP];
+  makeIsotropicCompliance( 3.0, 1.4, compliance );
+
+  for( auto const & entry : testElements() )
+  {
+    for( bool const flipNormals : { false, true } )
+    {
+      ElementData const data = buildElement( entry.second, { 0.0, 0.0, 0.0 }, flipNormals );
+      Operators const base = computeOperators( data, compliance, StabilizationLength::hydraulicRadius );
+      Operators const weighted = computeOperators( data, compliance, StabilizationLength::hydraulicRadiusWeighted );
+
+      integer const n = data.numStressDof;
+      std::size_t const un = static_cast< std::size_t >( n );
+      auto at = [un]( integer i, integer j ) { return static_cast< std::size_t >( i ) * un + static_cast< std::size_t >( j ); };
+
+      // C = |E| kappa P^T P, T the unknowns of a constant stress, R_c = I - T P^c
+      std::vector< real64 > C( un * un, 0.0 ), T( un * 6, 0.0 ), Rc( un * un, 0.0 ), S( un * un, 0.0 );
+      for( integer i = 0; i < n; ++i )
+      {
+        for( integer j = 0; j < n; ++j )
+        {
+          for( integer a = 0; a < NUM_SYM_COMP; ++a )
+          {
+            C[at( i, j )] += data.moments.volume * compliance[3][3] * base.projection( a, i ) * base.projection( a, j );
+          }
+        }
+      }
+      for( integer lf = 0; lf < data.numFaces; ++lf )
+      {
+        FaceGeometry const & geom = data.faceGeom[ static_cast< std::size_t >( lf ) ];
+        real64 tractionMap[3][NUM_SYM_COMP];
+        computeTractionMap( geom.normal, tractionMap );
+        for( integer k = 0; k < 3; ++k )
+        {
+          for( integer a = 0; a < NUM_SYM_COMP; ++a )
+          {
+            T[static_cast< std::size_t >( ( 6 * lf + k ) * 6 + a )] = geom.area * tractionMap[k][a];
+          }
+        }
+      }
+      for( integer i = 0; i < n; ++i )
+      {
+        Rc[at( i, i )] = 1.0;
+        for( integer j = 0; j < n; ++j )
+        {
+          if( j % 6 < 3 )
+          {
+            for( integer a = 0; a < NUM_SYM_COMP; ++a )
+            {
+              Rc[at( i, j )] -= T[static_cast< std::size_t >( i * 6 + a )] * base.projection( a, j );
+            }
+          }
+          bool const sameFace = ( i / 6 == j / 6 );
+          if( sameFace && i % 6 < 3 && j % 6 < 3 )
+          {
+            S[at( i, j )] = C[at( i, j )];
+          }
+        }
+      }
+
+      real64 maxEntry = 0.0;
+      for( integer i = 0; i < n; ++i )
+      {
+        for( integer j = 0; j < n; ++j )
+        {
+          maxEntry = std::max( maxEntry, std::abs( weighted.complianceMatrix( i, j ) ) );
+        }
+      }
+
+      for( integer i = 0; i < n; ++i )
+      {
+        for( integer j = 0; j < n; ++j )
+        {
+          real64 expected = 0.0;
+          if( i / 6 == j / 6 && i % 6 >= 3 && j % 6 >= 3 )
+          {
+            expected += C[at( i, j )];
+          }
+          for( integer k = 0; k < n; ++k )
+          {
+            for( integer l = 0; l < n; ++l )
+            {
+              expected += Rc[at( k, i )] * S[at( k, l )] * Rc[at( l, j )];
+            }
+          }
+          EXPECT_NEAR( weighted.complianceMatrix( i, j ) - base.complianceMatrix( i, j ), expected, 1e-11 * maxEntry )
+            << entry.first << " entry " << i << " " << j;
+        }
       }
     }
-
-    for( integer i = 0; i < data.numStressDof; ++i )
-    {
-      for( integer j = 0; j < data.numStressDof; ++j )
-      {
-        EXPECT_NEAR( ops.complianceMatrix( i, j ), ops.complianceMatrix( j, i ), 1e-12 * maxEntry ) << entry.first;
-      }
-    }
-
-    EXPECT_TRUE( isPositiveDefinite( ops.complianceMatrix ) ) << entry.first;
   }
 }
 

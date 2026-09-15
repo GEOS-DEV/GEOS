@@ -17,7 +17,7 @@
       zCoords="{ -1, 1 }"
       nr="{ 100 }"
       nt="{ 100 }"
-      nz="{ 1 }"
+      nz="{ 3 }"
       trajectory="{ { 0.0, 0.0, -1.0 },
                     { 0.0, 0.0, 1.0 } }"
       autoSpaceRadialElems="{ 2.0 }"

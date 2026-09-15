@@ -339,6 +339,11 @@ inline void computeTractionMap( real64 const (&normal)[3],
  * so the dense part of M_E is the one product P_E^T W P_E; the remaining cross and
  * Gram terms only touch the six columns of each face. The outward sign appears twice
  * in the stabilization and cancels.
+ *
+ * The weighted option adds, with C = |E| kappa_E P_E^T P_E and T_E the unknowns of a constant
+ * stress (P_E T_E = I, zero first moments), R_c = I - T_E P_E^c and P_E^c the constant columns,
+ *   sum_f sigma_{f,m}^T C_{f,mm} sigma_{f,m} + (R_c sigma)^T blkdiag_f(C_{f,cc}) (R_c sigma).
+ * Both terms vanish on constant stresses, so consistency holds.
  */
 GEOS_HOST_DEVICE
 inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
@@ -366,7 +371,7 @@ inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
   {
     surfaceArea += faceGeom[lf].area;
   }
-  real64 const length = ( stabilizationLength == StabilizationLength::hydraulicRadius )
+  real64 const length = ( stabilizationLength != StabilizationLength::elementDiameter )
                         ? volume / surfaceArea
                         : diameter;
   real64 const stabScale = compliance[3][3] * length;
@@ -506,6 +511,105 @@ inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
       {
         complianceMatrix( offset + k, offset + l ) += stabScale * gram[k][l];
       }
+    }
+  }
+
+  if( stabilizationLength != StabilizationLength::hydraulicRadiusWeighted )
+  {
+    return;
+  }
+
+  // C = |E| kappa_E P_E^T P_E, only its face blocks enter
+  real64 const consistencyScale = volume * compliance[3][3];
+
+  // C_{f,mm} on sigma, and C_{f,cc}, the identity part of R_c^T C_cc R_c
+  for( integer lf = 0; lf < numFaces; ++lf )
+  {
+    integer const offset = NUM_FACE_DOF * lf;
+    for( integer k = 0; k < NUM_FACE_DOF; ++k )
+    {
+      for( integer l = 0; l < NUM_FACE_DOF; ++l )
+      {
+        if( ( k < 3 ) != ( l < 3 ) )
+        {
+          continue;
+        }
+        real64 value = 0.0;
+        for( integer a = 0; a < NUM_SYM_COMP; ++a )
+        {
+          value += projection( a, offset + k ) * projection( a, offset + l );
+        }
+        complianceMatrix( offset + k, offset + l ) += consistencyScale * value;
+      }
+    }
+  }
+
+  // workspace = T_E^T C_cc on the constant columns, K = T_E^T C_cc T_E
+  real64 K[NUM_SYM_COMP][NUM_SYM_COMP] = {};
+  for( integer lf = 0; lf < numFaces; ++lf )
+  {
+    FaceGeometry const & geom = faceGeom[lf];
+    integer const offset = NUM_FACE_DOF * lf;
+
+    real64 tractionMap[3][NUM_SYM_COMP];
+    computeTractionMap( geom.normal, tractionMap );
+
+    for( integer l = 0; l < 3; ++l )
+    {
+      for( integer a = 0; a < NUM_SYM_COMP; ++a )
+      {
+        real64 value = 0.0;
+        for( integer k = 0; k < 3; ++k )
+        {
+          real64 c = 0.0;
+          for( integer b = 0; b < NUM_SYM_COMP; ++b )
+          {
+            c += projection( b, offset + k ) * projection( b, offset + l );
+          }
+          value += geom.area * tractionMap[k][a] * consistencyScale * c;
+        }
+        workspace( a, offset + l ) = value;
+      }
+      for( integer a = 0; a < NUM_SYM_COMP; ++a )
+      {
+        for( integer b = 0; b < NUM_SYM_COMP; ++b )
+        {
+          K[a][b] += workspace( a, offset + l ) * geom.area * tractionMap[l][b];
+        }
+      }
+    }
+  }
+
+  // the rest of R_c^T C_cc R_c, -C_cc T_E P^c - (P^c)^T T_E^T C_cc + (P^c)^T K P^c, on constant tractions
+  for( integer j = 0; j < numStressDof; ++j )
+  {
+    if( j % NUM_FACE_DOF >= 3 )
+    {
+      continue;
+    }
+
+    real64 kp[NUM_SYM_COMP];
+    for( integer a = 0; a < NUM_SYM_COMP; ++a )
+    {
+      kp[a] = -workspace( a, j );
+      for( integer b = 0; b < NUM_SYM_COMP; ++b )
+      {
+        kp[a] += K[a][b] * projection( b, j );
+      }
+    }
+
+    for( integer i = 0; i < numStressDof; ++i )
+    {
+      if( i % NUM_FACE_DOF >= 3 )
+      {
+        continue;
+      }
+      real64 value = 0.0;
+      for( integer a = 0; a < NUM_SYM_COMP; ++a )
+      {
+        value += projection( a, i ) * kp[a] - workspace( a, i ) * projection( a, j );
+      }
+      complianceMatrix( i, j ) += value;
     }
   }
 }

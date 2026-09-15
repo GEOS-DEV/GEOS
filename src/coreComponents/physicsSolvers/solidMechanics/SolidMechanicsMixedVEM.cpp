@@ -176,7 +176,7 @@ void SolidMechanicsMixedVEM::initializePreSubGroups()
         params.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsMixedVEM;
       }
 
-      // one V-cycle coarse solve makes the cycle a fixed linear operator, so GMRES suffices
+      // a fixed number of coarse V-cycles keeps the cycle a fixed linear operator, so GMRES suffices
       params.solverType = LinearSolverParameters::SolverType::gmres;
       params.krylov.maxRestart = 50;
     }

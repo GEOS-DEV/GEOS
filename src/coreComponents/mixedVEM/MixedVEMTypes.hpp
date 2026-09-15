@@ -49,12 +49,13 @@ constexpr real64 INV_SQRT_2 = 0.7071067811865475244;
 /// Row-major dense block, the layout every element operator is written into.
 /**
  * @enum StabilizationLength
- * @brief The length h of the stabilization, equation (15).
+ * @brief The length h of the stabilization, equation (15), and its weighting.
  */
 enum class StabilizationLength : integer
 {
-  elementDiameter, ///< h_E, the largest distance between two nodes of the element
-  hydraulicRadius  ///< |E| / |dE|, the only length whose sum_f h |f| is |E| for every shape
+  elementDiameter,        ///< h_E, the largest distance between two nodes of the element
+  hydraulicRadius,        ///< |E| / |dE|, the only length whose sum_f h |f| is |E| for every shape
+  hydraulicRadiusWeighted ///< |E| / |dE| plus the face blocks of |E| kappa_E P_E^T P_E as weights
 };
 
 using MatrixSlice = arraySlice2d< real64, MatrixLayout::ROW_MAJOR >;

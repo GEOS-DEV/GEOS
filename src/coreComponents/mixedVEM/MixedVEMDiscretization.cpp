@@ -53,7 +53,11 @@ MixedVEMDiscretization::MixedVEMDiscretization( string const & name,
                     "stabilization keeps its balance against the consistency term on flattened or "
                     "stretched cells, where h_E is the long diagonal of every face. It is more "
                     "accurate on such meshes and costs iterations, the stabilization being "
-                    "smaller." );
+                    "smaller.\n"
+                    "If 2, the hydraulic radius plus the face blocks of |E| kappa P_E^T P_E, which "
+                    "weight the face first moments and the constant tractions of sigma minus those of "
+                    "its constant part. The lever arm of a first moment is the face size, which no "
+                    "single length balances on a flattened cell." );
 }
 
 MixedVEMDiscretization::CatalogInterface::CatalogType &

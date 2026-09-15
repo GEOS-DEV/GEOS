@@ -57,11 +57,11 @@ namespace mgr
  * A_C is an interior penalty form: on interior faces (A_C u, u) = sum_f w_f |[u]_f|^2 with
  * w_f ~ 2 mu |f| / h_E, plus boundary traces, and cond(A_C) = O(h^-2).
  *
- * F-relaxation is Jacobi. The lambda degenerate direction is a constant hydrostatic stress,
- * which lies in ker B and is annihilated by the coarse correction, so a point smoother is
- * lambda uniform here.
+ * F-relaxation is one Jacobi sweep. P_E^T W P_E couples all faces of an element, so A_FF is not
+ * diagonally dominant; repeated unweighted sweeps diverge in practice. The lambda degenerate direction is
+ * a constant hydrostatic stress, which lies in ker B, so a point smoother is lambda uniform here.
  *
- * The coarse solve is one BoomerAMG V-cycle with Chebyshev relaxation and unknown based
+ * The coarse solve is two BoomerAMG V-cycles with Chebyshev relaxation and unknown based
  * coarsening on the six RM(E) functions. The near null space of A_C is the jump free
  * fields, which classical interpolation does not reproduce, so the coarse cycle is not
  * h-uniform and the iteration count grows slowly under refinement.
@@ -73,7 +73,10 @@ class SolidMechanicsMixedVEM : public MGRStrategyBase< 1 >
 public:
 
   /// Number of Jacobi F-relaxation sweeps
-  static constexpr HYPRE_Int numFRelaxSweeps = 3;
+  static constexpr HYPRE_Int numFRelaxSweeps = 1;
+
+  /// Number of BoomerAMG V-cycles of the coarse solve
+  static constexpr HYPRE_Int numCoarseCycles = 2;
 
   /// Number of unknowns of RM(E) carried by the coarse operator
   static constexpr HYPRE_Int numCoarseFunctions = 6;
@@ -116,10 +119,10 @@ public:
     // the equation (15) face Gram matrices are the block diagonal of A_FF
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetBlockJacobiBlockSize( precond.ptr, numFaceMoments ) );
 
-    // one V-cycle on A_C, which carries six unknowns per element
+    // numCoarseCycles V-cycles on A_C, six RM(E) unknowns per element
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, numCoarseCycles ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.coarseSolver.ptr, numCoarseFunctions ) );
     // error operator I - p(A) A is partition independent, unlike hybrid Gauss-Seidel's rank local splitting
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, 16 ) );
