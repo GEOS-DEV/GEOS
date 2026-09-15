@@ -16,24 +16,12 @@
 /**
  * @file MixedVEMElementOperators.hpp
  *
- * Element operators of the lowest-order mixed VEM for linear elasticity.
+ * Element operators of Dassi, Lovadina, Visinoni (2020). With tau_j the basis of Sigma_h(E), dual to
+ * the face moments (5)-(6), and r_i the basis of RM(E), equation (2),
  *
- * With {phi_j}_{j=1}^{6 nf} the local virtual stress basis and {R_i}_{i=1}^{6} the
- * rigid body motions, the element contributes the saddle-point block
+ *   (B_E)_ij = (div tau_j, r_i)_E,   (M_E)_ij = a_E^h(tau_j, tau_i), equation (14).
  *
- *   [ M_E  B_E^T ] [ sigma_E ]   [  g_E ]
- *   [ B_E   0    ] [   u_E   ] = [ -f_E ],
- *
- *   (B_E)_ij = (div phi_j, R_i)_E,
- *   (M_E)_ij = a_E(Pi_E phi_j, Pi_E phi_i) + s_E((I-Pi_E) phi_j, (I-Pi_E) phi_i).
- *
- * phi_j is virtual, but its face traction lies in T_h(f) and its divergence lies in
- * RM(E), and both operators are built from those two representations alone.
- *
- * All integrals are polynomial moments of the mesh entities and are evaluated in
- * closed form, so B_E and M_E are exact and no quadrature loop appears below. The
- * outputs are contiguous row-major blocks already expressed in the face-intrinsic
- * degree of freedom convention, so assembly is a plain index scatter.
+ * Every integral is a closed-form moment, so B_E and M_E are exact.
  */
 
 #ifndef GEOS_MIXEDVEM_MIXEDVEMELEMENTOPERATORS_HPP_
@@ -54,9 +42,8 @@ namespace mixedVEM
  * @param[in] elemCenter the point x_E
  * @param[out] divergence the 6 x (6 numFaces) matrix B_E
  *
- * (B_E)_ij = (div phi_j, R_i)_E = int_{dE} (phi_j n_E) . R_i df by parts, so with
- * R_i = e_i the rows carry the zeroth face moments and with R_{3+i} = e_i ^ (x - x_E)
- * they carry the rotational moments int_f (x - x_E) ^ phi_j.
+ * (B_E)_ij = int_{dE} (tau_j n) . r_i df, equation (9): zeroth face moments for r_i = e_i,
+ * rotational moments int_f (x - x_E) ^ psi_k for r_{3+i} = e_i ^ (x - x_E).
  */
 GEOS_HOST_DEVICE
 inline void computeDivergenceOperator( FaceGeometry const * const faceGeom,
@@ -81,7 +68,7 @@ inline void computeDivergenceOperator( FaceGeometry const * const faceGeom,
       real64 b[3];
       faceBasisRotationalMoment( N[j], b );
 
-      // the outward sign turns the face-intrinsic traction into phi_j n_E
+      // s_{E,f} turns the face unknown into the outward traction tau_j n
       for( integer i = 0; i < 3; ++i )
       {
         divergence( i, col ) = geom.outwardSign * mean[j][i];
@@ -92,22 +79,14 @@ inline void computeDivergenceOperator( FaceGeometry const * const faceGeom,
 }
 
 /**
- * @brief Build the divergence reconstruction D_E, the RM(E) coefficients of div phi_j.
+ * @brief Coefficients (alpha_E, omega_E) of div tau_j = alpha_E + omega_E ^ (x - x_E), Proposition 3.1.
  * @param[in] divergence the matrix B_E
  * @param[in] numFaces the number of faces
  * @param[in] moments the element moments
- * @param[out] divReconstruction the 6 x (6 numFaces) matrix D_E
+ * @param[out] divReconstruction the 6 x (6 n_f^E) matrix, rows (alpha_E, omega_E)
  *
- * div phi_j = alpha_j + omega_j ^ (x - x_E) lies in RM(E), so B_E = W D_E with W the
- * Gram matrix W_ik = (R_i, R_k)_E of the rigid body motions,
- *
- *   W = [ |E| I   C  ],   C = -[m1]_x,   A_E = tr(M) I - M,
- *       [  C^T   A_E ]
- *
- * with m1 and M the first and second element moments. Eliminating alpha leaves the
- * 3x3 Schur complement S = A_E - (|m1|^2 I - m1 @ m1)/|E|, which reduces to the
- * system (8) of Proposition 3.1 when x_E is the exact barycenter and m1 vanishes.
- * Keeping C makes the reconstruction exact for any choice of x_E.
+ * B_E = W_RM (alpha_E, omega_E) with W_RM = (r_i, r_k)_E. The first moment m1 of x_E is kept,
+ * so this reduces to (7)-(8) when x_E is the barycenter and holds for any x_E otherwise.
  */
 GEOS_HOST_DEVICE
 inline void computeDivergenceReconstruction( MatrixSliceConst const & divergence,
@@ -174,13 +153,9 @@ inline void computeDivergenceReconstruction( MatrixSliceConst const & divergence
 }
 
 /**
- * @brief Moments of the rigid body motions against the projection basis.
+ * @brief G_ai = int_E p_a . r_i dE, with p_a(x) = pi_a (x - x_E) so that eps(p_a) = pi_a.
  * @param[in] moments the element moments
- * @param[out] rmMoments the 6x6 matrix G with G_ai = int_E p_a . R_i dE
- *
- * p_a is the linear field with eps(p_a) = pi_a, and because pi_a is symmetric
- * p_a(x) = pi_a (x - x_E). Hence G_ai = pi_a : int_E R_i @ (x - x_E) dE, which the
- * first and second element moments give exactly.
+ * @param[out] rmMoments the 6x6 matrix G
  */
 GEOS_HOST_DEVICE
 inline void computeRigidMotionMoments( ElementMoments const & moments,
@@ -224,18 +199,15 @@ inline void computeRigidMotionMoments( ElementMoments const & moments,
 }
 
 /**
- * @brief Build the constant stress projection P_E of Pi_E.
+ * @brief Matrix P_E of Pi_E, equation (13).
  * @param[in] faceGeom the geometry of the faces of the element
  * @param[in] numFaces the number of faces
  * @param[in] elemCenter the point x_E
  * @param[in] moments the element moments
- * @param[in] divReconstruction the matrix D_E
- * @param[out] projection the 6 x (6 numFaces) matrix P_E
+ * @param[in] divReconstruction the coefficients (alpha_E, omega_E)
+ * @param[out] projection the 6 x (6 n_f^E) matrix P_E
  *
- * Integrating (13) by parts gives
- *   |E| (Pi_E phi_j)_a = -int_E div phi_j . p_a dE + int_f (phi_j n_E) . p_a df,
- * the first term being -G D_E because div phi_j expands on RM(E), and the second
- * being the symmetric part of the face moment N_j because p_a(x) = pi_a (x - x_E).
+ * |E| (Pi_E tau_j)_a = -int_E div tau_j . p_a dE + int_{dE} (tau_j n) . p_a df.
  */
 GEOS_HOST_DEVICE
 inline void computeProjectionOperator( FaceGeometry const * const faceGeom,
@@ -251,7 +223,7 @@ inline void computeProjectionOperator( FaceGeometry const * const faceGeom,
   real64 const invVolume = 1.0 / moments.volume;
   integer const numStressDof = NUM_FACE_DOF * numFaces;
 
-  // volume term: -G D_E
+  // volume term: -G (alpha_E, omega_E)
   for( integer a = 0; a < NUM_SYM_COMP; ++a )
   {
     for( integer j = 0; j < numStressDof; ++j )
@@ -286,7 +258,7 @@ inline void computeProjectionOperator( FaceGeometry const * const faceGeom,
     }
   }
 
-  // M_E = |E| I because the projection basis is orthonormal for ":"
+  // int_E pi_a : pi_b dE = |E| delta_ab
   for( integer a = 0; a < NUM_SYM_COMP; ++a )
   {
     for( integer j = 0; j < numStressDof; ++j )
@@ -321,29 +293,25 @@ inline void computeTractionMap( real64 const (&normal)[3],
 }
 
 /**
- * @brief Build the element compliance matrix M_E, consistency plus stabilization.
+ * @brief Element matrix M_E of a_E^h, equation (14).
  * @param[in] faceGeom the geometry of the faces of the element
  * @param[in] numFaces the number of faces
  * @param[in] volume the element volume |E|
  * @param[in] diameter the element diameter h_E
+ * @param[in] stabilizationLength h_E, or |E| / |dE| with consistency weights
  * @param[in] compliance the 6x6 matrix of D = C^{-1}
  * @param[in] projection the matrix P_E
- * @param[in,out] workspace a 6 x (6 numFaces) scratch block
- * @param[out] complianceMatrix the (6 numFaces) x (6 numFaces) matrix M_E
+ * @param[in,out] workspace a 6 x (6 n_f^E) scratch block
+ * @param[out] complianceMatrix the (6 n_f^E) x (6 n_f^E) matrix M_E
  *
- * a_E^h(sigma,tau) = a_E(Pi_E sigma, Pi_E tau) + s_E((I-Pi_E) sigma, (I-Pi_E) tau)
- * with the boundary stabilization s_E(sigma,tau) = kappa_E h_E int_{dE} (sigma n).(tau n).
- * Expanding the residual (I-Pi_E) phi_j n on a face into the projected traction minus
- * phi_j collects every quadratic term into a single 6x6 weight,
- *   W = |E| D + kappa_E h_E sum_f |f| Lambda_{n_f}^T Lambda_{n_f},
- * so the dense part of M_E is the one product P_E^T W P_E; the remaining cross and
- * Gram terms only touch the six columns of each face. The outward sign appears twice
- * in the stabilization and cancels.
+ * s_E is (15) with kappa_E = 1/(2 mu). Expanding (I - Pi_E) tau n gathers the quadratic terms in
+ *   W = |E| D + kappa_E h sum_f |f| Lambda_{n_f}^T Lambda_{n_f},
+ * so M_E = P_E^T W P_E plus cross and G_f terms local to each face.
  *
- * The weighted option adds, with C = |E| kappa_E P_E^T P_E and T_E the unknowns of a constant
- * stress (P_E T_E = I, zero first moments), R_c = I - T_E P_E^c and P_E^c the constant columns,
- *   sum_f sigma_{f,m}^T C_{f,mm} sigma_{f,m} + (R_c sigma)^T blkdiag_f(C_{f,cc}) (R_c sigma).
- * Both terms vanish on constant stresses, so consistency holds.
+ * Option |E| / |dE| adds, with C = |E| kappa_E P_E^T P_E, T_E the unknowns of a constant stress and
+ * R_c = I - T_E P_E^c (P_E^c the constant columns),
+ *   sum_f sigma_{f,m}^T C_{f,mm} sigma_{f,m} + (R_c sigma)^T blkdiag_f(C_{f,cc}) (R_c sigma),
+ * which vanishes on constant stresses.
  */
 GEOS_HOST_DEVICE
 inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
@@ -358,14 +326,7 @@ inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
 {
   integer const numStressDof = NUM_FACE_DOF * numFaces;
 
-  // kappa_E is the spectral norm of D, equation (15): its eigenvalues are 1/(2 mu) on the
-  // deviatoric subspace and 1/(2 mu + 3 lambda) on the hydrostatic one, so for lambda > 0
-  // the largest is 1/(2 mu), which is the shear diagonal of the orthonormal basis
-  //
-  // The length of equation (15). h_E is the choice of the paper. The hydraulic radius is
-  // the only length whose sum_f h |f| is |E| for every shape and element type: h_E gives
-  // h_E |dE|, unbounded on a flattened cell, and a per face |E| / |f| gives n_f |E|, which
-  // drifts across a mesh of mixed element types.
+  // kappa_E = 1/(2 mu); h is h_E, equation (15), or |E| / |dE|
   real64 surfaceArea = 0.0;
   for( integer lf = 0; lf < numFaces; ++lf )
   {
@@ -467,7 +428,7 @@ inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
     real64 gram[NUM_FACE_DOF][NUM_FACE_DOF];
     computeFaceBasisGram( geom, gram );
 
-    // cross weight Lambda_n^T int_f phi_k df
+    // cross weight Lambda_n^T int_f psi_k df
     real64 cross[NUM_SYM_COMP][NUM_FACE_DOF];
     for( integer a = 0; a < NUM_SYM_COMP; ++a )
     {
@@ -514,7 +475,7 @@ inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
     }
   }
 
-  if( stabilizationLength != StabilizationLength::hydraulicRadiusWeighted )
+  if( stabilizationLength != StabilizationLength::hydraulicRadius )
   {
     return;
   }
@@ -623,9 +584,9 @@ inline void computeComplianceMatrix( FaceGeometry const * const faceGeom,
  * @param[in] moments the element moments
  * @param[in] compliance the 6x6 matrix of D = C^{-1}
  * @param[out] divergence the 6 x (6 numFaces) matrix B_E
- * @param[out] divReconstruction the 6 x (6 numFaces) matrix D_E
- * @param[out] projection the 6 x (6 numFaces) matrix P_E
- * @param[in,out] workspace a 6 x (6 numFaces) scratch block, reusable across elements
+ * @param[out] divReconstruction the coefficients (alpha_E, omega_E) of Proposition 3.1
+ * @param[out] projection the 6 x (6 n_f^E) matrix P_E
+ * @param[in,out] workspace a 6 x (6 n_f^E) scratch block
  * @param[out] complianceMatrix the (6 numFaces) x (6 numFaces) matrix M_E
  */
 GEOS_HOST_DEVICE

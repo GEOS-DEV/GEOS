@@ -244,7 +244,7 @@ std::vector< real64 > constantStressDofs( ElementData const & data,
   return dofs;
 }
 
-/// Rigid body motion R_i evaluated at a point.
+/// Rigid body motion r_i evaluated at a point.
 void evaluateRigidMotion( integer const i,
                           real64 const (&r)[3],
                           real64 (& value)[3] )
@@ -264,8 +264,7 @@ void evaluateRigidMotion( integer const i,
 
 /// Every stabilization the element operators accept.
 constexpr StabilizationLength const allStabilizations[] = { StabilizationLength::elementDiameter,
-                                                            StabilizationLength::hydraulicRadius,
-                                                            StabilizationLength::hydraulicRadiusWeighted };
+                                                            StabilizationLength::hydraulicRadius };
 
 /// Element operators plus their storage, so that a test can hold on to all of them.
 struct Operators
@@ -571,7 +570,7 @@ TEST( MixedVEMElementOperators, constantStressPatchTest )
               EXPECT_NEAR( value, sigma[a], 1e-11 ) << entry.first << " component " << a;
             }
 
-            // div of a constant stress vanishes, hence B_E sigma = 0 and D_E sigma = 0
+            // div of a constant stress vanishes, hence B_E sigma = 0 and (alpha_E, omega_E) = 0
             for( integer i = 0; i < NUM_RM_DOF; ++i )
             {
               real64 divergenceValue = 0.0;
@@ -657,12 +656,36 @@ TEST( MixedVEMElementOperators, weightedStabilizationMatchesDenseDefinition )
     for( bool const flipNormals : { false, true } )
     {
       ElementData const data = buildElement( entry.second, { 0.0, 0.0, 0.0 }, flipNormals );
-      Operators const base = computeOperators( data, compliance, StabilizationLength::hydraulicRadius );
-      Operators const weighted = computeOperators( data, compliance, StabilizationLength::hydraulicRadiusWeighted );
+      Operators const diameter = computeOperators( data, compliance, StabilizationLength::elementDiameter );
+      Operators const weighted = computeOperators( data, compliance, StabilizationLength::hydraulicRadius );
 
       integer const n = data.numStressDof;
       std::size_t const un = static_cast< std::size_t >( n );
       auto at = [un]( integer i, integer j ) { return static_cast< std::size_t >( i ) * un + static_cast< std::size_t >( j ); };
+
+      // the unweighted part scales linearly with the length: |E| P^T D P + (l / h_E) (M_{h_E} - |E| P^T D P)
+      real64 surfaceArea = 0.0;
+      for( integer lf = 0; lf < data.numFaces; ++lf )
+      {
+        surfaceArea += data.faceGeom[ static_cast< std::size_t >( lf ) ].area;
+      }
+      real64 const lengthRatio = data.moments.volume / surfaceArea / data.diameter;
+      array2d< real64 > base( n, n );
+      for( integer i = 0; i < n; ++i )
+      {
+        for( integer j = 0; j < n; ++j )
+        {
+          real64 consistency = 0.0;
+          for( integer a = 0; a < NUM_SYM_COMP; ++a )
+          {
+            for( integer b = 0; b < NUM_SYM_COMP; ++b )
+            {
+              consistency += data.moments.volume * diameter.projection( a, i ) * compliance[a][b] * diameter.projection( b, j );
+            }
+          }
+          base( i, j ) = consistency + lengthRatio * ( diameter.complianceMatrix( i, j ) - consistency );
+        }
+      }
 
       // C = |E| kappa P^T P, T the unknowns of a constant stress, R_c = I - T P^c
       std::vector< real64 > C( un * un, 0.0 ), T( un * 6, 0.0 ), Rc( un * un, 0.0 ), S( un * un, 0.0 );
@@ -672,7 +695,7 @@ TEST( MixedVEMElementOperators, weightedStabilizationMatchesDenseDefinition )
         {
           for( integer a = 0; a < NUM_SYM_COMP; ++a )
           {
-            C[at( i, j )] += data.moments.volume * compliance[3][3] * base.projection( a, i ) * base.projection( a, j );
+            C[at( i, j )] += data.moments.volume * compliance[3][3] * diameter.projection( a, i ) * diameter.projection( a, j );
           }
         }
       }
@@ -698,7 +721,7 @@ TEST( MixedVEMElementOperators, weightedStabilizationMatchesDenseDefinition )
           {
             for( integer a = 0; a < NUM_SYM_COMP; ++a )
             {
-              Rc[at( i, j )] -= T[static_cast< std::size_t >( i * 6 + a )] * base.projection( a, j );
+              Rc[at( i, j )] -= T[static_cast< std::size_t >( i * 6 + a )] * diameter.projection( a, j );
             }
           }
           bool const sameFace = ( i / 6 == j / 6 );
@@ -734,7 +757,7 @@ TEST( MixedVEMElementOperators, weightedStabilizationMatchesDenseDefinition )
               expected += Rc[at( k, i )] * S[at( k, l )] * Rc[at( l, j )];
             }
           }
-          EXPECT_NEAR( weighted.complianceMatrix( i, j ) - base.complianceMatrix( i, j ), expected, 1e-11 * maxEntry )
+          EXPECT_NEAR( weighted.complianceMatrix( i, j ) - base( i, j ), expected, 1e-11 * maxEntry )
             << entry.first << " entry " << i << " " << j;
         }
       }
@@ -757,7 +780,7 @@ TEST( MixedVEMElementOperators, matchesDirectQuadrature )
     integer const numStressDof = data.numStressDof;
     real64 const scale = data.moments.volume + data.diameter;
 
-    // B_E from face quadrature of (phi_j n_E) . R_i
+    // B_E from face quadrature of (tau_j n) . r_i
     array2d< real64 > referenceDivergence( NUM_RM_DOF, numStressDof );
     referenceDivergence.zero();
 
@@ -806,7 +829,7 @@ TEST( MixedVEMElementOperators, matchesDirectQuadrature )
           }
         }
 
-        // residual (I - Pi_E) phi_i n on this face, for every element degree of freedom
+        // residual (I - Pi_E) tau_i n on this face, for every element degree of freedom
         std::vector< std::array< real64, 3 > > residual( static_cast< std::size_t >( numStressDof ) );
 
         for( integer i = 0; i < numStressDof; ++i )
@@ -850,7 +873,7 @@ TEST( MixedVEMElementOperators, matchesDirectQuadrature )
       } );
     }
 
-    // volume part of |E| P_E: -int_E div phi_j . p_a dE, with div phi_j read from D_E
+    // volume part of |E| P_E: -int_E div tau_j . p_a dE, with div tau_j from (alpha_E, omega_E)
     forEachVolumeQuadraturePoint( poly, data,
                                   [&]( real64 const (&point)[3], real64 const weight )
     {

@@ -369,13 +369,13 @@ void SolidMechanicsMixedVEM::computeNearNullSpace( DomainPartition & domain ) co
 
         for( integer j = 0; j < NUM_FACE_DOF; ++j )
         {
-          // translation e_k: lambda_j = e_k . int_f phi_j, which is one on its own mode
+          // translation e_k: lambda_j = e_k . int_f psi_j
           if( j < 3 )
           {
             values[j][localDof + j] = 1.0;
           }
 
-          // rotation e_k ^ x: lambda_j = e_k . int_f x ^ phi_j
+          // rotation e_k ^ x: lambda_j = e_k . int_f x ^ psi_j
           real64 b[3];
           faceBasisRotationalMoment( N[j], b );
 
@@ -650,7 +650,7 @@ void buildElementLoads( arrayView2d< real64 const > const & displacementTrace,
     }
   }
 
-  // (f_E)_i = int_E rho g . R_i, whose rotational part follows the first moment
+  // (f_E)_i = int_E rho g . r_i dE
   real64 rotational[3];
   LvArray::tensorOps::crossProduct( rotational, scratch.moments.firstMoment, gravityVector );
 

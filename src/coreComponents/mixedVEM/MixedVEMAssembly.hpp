@@ -18,11 +18,8 @@
  *
  * Mesh adaptors and scatter helpers for the mixed VEM element operators.
  *
- * The six stress degrees of freedom of a face are defined by the traction in the
- * face-intrinsic frame, (tau n)|_f = sum_j sigma_j phi_j, so the two elements sharing
- * an interior face already write into the same unknowns and H(div) conformity needs no
- * per-element sign transformation: the outward orientation is folded into B_E and P_E
- * at construction, and cancels identically in the stabilization.
+ * The face unknowns are the moments (5)-(6) in the frame of f, shared by both neighbours; the
+ * outward sign s_{E,f} is folded into B_E and P_E.
  */
 
 #ifndef GEOS_MIXEDVEM_MIXEDVEMASSEMBLY_HPP_
@@ -144,11 +141,8 @@ inline void gatherStressDofIndices( arraySlice1d< localIndex const > const & ele
  * Rows of M_E and of B_E are contiguous, so each is scattered with one call per row;
  * the B_E^T block is the only strided read and is packed into a six entry buffer.
  *
- * The rigid body motion rows carry -B_E rather than B_E, that is the balance is written
- * as -(div sigma, v) = (f, v), which is the strong form as it stands. The pair is then no
- * longer symmetric, but eliminating the stress leaves the Schur complement
- * +B D^{-1} B^T instead of its negative, and a positive definite reduced operator is what
- * an algebraic multigrid coarse solver can actually work with.
+ * The RM(E) rows carry -B_E, the second equation of (19), so the Schur complement B M^{-1} B^T is
+ * positive definite.
  */
 template< typename ATOMIC >
 GEOS_HOST_DEVICE
@@ -230,23 +224,9 @@ struct FaceConstraint
  * @param[in] traction the prescribed traction, components that are masked are ignored
  * @param[out] constraint the resulting per mode roles and data
  *
- * The six modes split into three constant ones, which are the global Cartesian directions
- * e_x, e_y, e_z, and three first moment ones: mode 3 is tangential, being n ^ (x - x_f), and
- * modes 4 and 5 are normal, varying linearly across the face.
- *
- * The constant modes follow the requested component directly. A prescribed displacement is
- * natural, so mode k stays free and only loads the right hand side with int_f g . phi_k; a
- * prescribed traction is essential, so mode k is fixed at |f| s psi_k.
- *
- * The first moment modes cannot follow a Cartesian component, because they follow the frame
- * of the face: mode 3 belongs to the tangent plane and modes 4 and 5 to the normal. Each is
- * essential exactly when its own direction carries a prescribed traction, that is when the
- * direction lies in the span of the unmasked axes. On a face whose normal is an axis this
- * reproduces both limits exactly: a free surface fixes all six modes, and a roller with the
- * normal displacement prescribed and the tangential traction released fixes the two
- * tangential constants and the tangential first moment while leaving the normal ones free.
- * On a face whose normal is oblique to every axis neither direction lies in the span and the
- * first moment modes are left free, which weakens the condition to its constant part.
+ * Constant modes psi_k follow component k: a prescribed displacement is natural and loads the right
+ * hand side, a prescribed traction psi is essential and fixes the mode at |f| s_{E,f} psi_k.
+ * Rotational mode 3+k is essential when e_k ^ span{t1, t2} carries no prescribed displacement.
  */
 GEOS_HOST_DEVICE
 inline void computeFaceConstraint( FaceGeometry const & geom,

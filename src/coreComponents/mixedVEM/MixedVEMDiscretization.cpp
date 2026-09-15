@@ -48,16 +48,18 @@ MixedVEMDiscretization::MixedVEMDiscretization( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Length h of the stabilization term, equation (15) of the reference.\n"
                     "If 0, the element diameter h_E is used, which is the choice of the paper.\n"
-                    "If 1, the hydraulic radius |E| / |dE| is used. It is the only length whose "
-                    "sum over the faces of h |f| is |E| for every shape and element type, so the "
-                    "stabilization keeps its balance against the consistency term on flattened or "
-                    "stretched cells, where h_E is the long diagonal of every face. It is more "
-                    "accurate on such meshes and costs iterations, the stabilization being "
-                    "smaller.\n"
-                    "If 2, the hydraulic radius plus the face blocks of |E| kappa P_E^T P_E, which "
+                    "If 1, the hydraulic radius |E| / |dE|, the only length whose sum over the faces of "
+                    "h |f| is |E| for every shape, plus the face blocks of |E| kappa P_E^T P_E, which "
                     "weight the face first moments and the constant tractions of sigma minus those of "
                     "its constant part. The lever arm of a first moment is the face size, which no "
                     "single length balances on a flattened cell." );
+}
+
+void MixedVEMDiscretization::postInputInitialization()
+{
+  GEOS_THROW_IF( m_stabilizationLength < 0 || m_stabilizationLength > 1,
+                 GEOS_FMT( "{} must be 0 or 1, got {}", viewKeyStruct::stabilizationLengthString(), m_stabilizationLength ),
+                 InputError, getDataContext() );
 }
 
 MixedVEMDiscretization::CatalogInterface::CatalogType &

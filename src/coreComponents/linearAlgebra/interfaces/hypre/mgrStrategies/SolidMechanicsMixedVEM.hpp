@@ -45,7 +45,7 @@ namespace mgr
  * One reduction with F = {sigma}, C = {u} and A_CC = 0: div Sigma_h(E) is fixed by the
  * traction moments, so every F unknown couples to C and a single level suffices.
  *
- * A_FF = blkdiag_f(D) + C_E, with D the equation (15) face Gram matrices and C_E element
+ * A_FF = blkdiag_f(kappa_E h G_f) + C_E, with G_f the face Gram matrices and C_E element
  * local of rank at most 2 rank(Pi_E). Block Jacobi interpolation takes that face blocking
  * as the surrogate, Ahat_FF = blkdiag_f(A_FF); with restriction by injection
  *
@@ -57,9 +57,8 @@ namespace mgr
  * A_C is an interior penalty form: on interior faces (A_C u, u) = sum_f w_f |[u]_f|^2 with
  * w_f ~ 2 mu |f| / h_E, plus boundary traces, and cond(A_C) = O(h^-2).
  *
- * F-relaxation is one Jacobi sweep. P_E^T W P_E couples all faces of an element, so A_FF is not
- * diagonally dominant; repeated unweighted sweeps diverge in practice. The lambda degenerate direction is
- * a constant hydrostatic stress, which lies in ker B, so a point smoother is lambda uniform here.
+ * F-relaxation is one Jacobi sweep: P_E^T W P_E couples the faces of E, so A_FF is not diagonally
+ * dominant and repeated unweighted sweeps diverge in practice. The hydrostatic constant lies in ker B.
  *
  * The coarse solve is two BoomerAMG V-cycles with Chebyshev relaxation and unknown based
  * coarsening on the six RM(E) functions. The near null space of A_C is the jump free
@@ -116,7 +115,7 @@ public:
 
     setReduction( precond, mgrData );
 
-    // the equation (15) face Gram matrices are the block diagonal of A_FF
+    // one 6x6 block per face
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetBlockJacobiBlockSize( precond.ptr, numFaceMoments ) );
 
     // numCoarseCycles V-cycles on A_C, six RM(E) unknowns per element

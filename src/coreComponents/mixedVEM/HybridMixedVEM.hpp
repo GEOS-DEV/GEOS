@@ -18,31 +18,13 @@
  *
  * Static condensation of the element saddle point block onto the interface multiplier.
  *
- * Breaking the stress space elementwise and restoring traction continuity with a
- * multiplier lambda on the mesh skeleton turns the global problem into
+ * Static condensation of (19) with Sigma_h broken elementwise and traction continuity imposed
+ * by a multiplier lambda. With
  *
- *   [ K^  B^T  -C^T ] [ sigma^ ]   [  g ]
- *   [ B^   0     0  ] [   u    ] = [ -f ]
- *   [ C    0     0  ] [ lambda ]   [  0 ].
+ *   A_E = [ M_E  B_E^T ; B_E  0 ],   S_E = ( A_E^{-1} )_{sigma sigma} = M_E^{-1} - W G^{-1} W^T,
+ *   W = M_E^{-1} B_E^T,   G = B_E M_E^{-1} B_E^T,
  *
- * The element unknowns are local to E, so they are eliminated through
- *
- *   A_E = [ M_E  B_E^T ],   S_E = ( A_E^{-1} )_{sigma sigma},
- *         [ B_E   0    ]
- *
- * leaving the interface problem H lambda = h with H = sum_E C_E S_E C_E^T. Because
- * M_E is symmetric positive definite and B_E has full row rank,
- *
- *   S_E = M_E^{-1} - W G^{-1} W^T,   W = M_E^{-1} B_E^T,   G = B_E M_E^{-1} B_E^T,
- *
- * is symmetric positive semidefinite with the six dimensional kernel range(W), so H is
- * symmetric positive semidefinite and becomes definite once the Dirichlet multipliers
- * are eliminated. That is the whole point of the option: a conjugate gradient solve on
- * 6 N_f^int unknowns replaces an indefinite solve on 6 N_f + 6 N_c.
- *
- * With the degree of freedom convention of this package the traction of E on f is
- * s_{E,f} sum_j sigma_j phi_j, and lambda_j = int_f u . phi_j df is the matching moment
- * of the displacement trace, so the continuity operator is simply C_{E,f} = s_{E,f} I_6.
+ * the interface problem is H lambda = h, H = sum_E C_E S_E C_E^T, C_{E,f} = s_{E,f} I_6.
  */
 
 #ifndef GEOS_MIXEDVEM_HYBRIDMIXEDVEM_HPP_

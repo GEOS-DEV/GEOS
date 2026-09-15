@@ -16,23 +16,12 @@
 /**
  * @file MixedVEMFaceBasis.hpp
  *
- * The six traction modes spanning T_h(f) and the face moments they generate.
+ * Basis of T_h(f), equation (3), and its face moments:
  *
- * T_h(f) is the trace of the rigid body motions on the face, so with r = x - x_f and
- * L = sqrt(m20+m02) the polar radius of gyration, the basis is written directly in the
- * global frame as
+ *   psi_k = e_k / |f|,  psi_{3+k} = e_k ^ (x - x_f) / (|f| L),  L^2 = m20 + m02,  k = 0, 1, 2.
  *
- *   phi_k = e_k/|f|,  phi_{3+k} = (e_k ^ r)/(|f| L),   k = 0, 1, 2.
- *
- * The three rotational modes span the same space as the local {n ^ r, xt n, yt n} used
- * elsewhere in the literature, since e_k ^ r resolves into an in plane rotation about n
- * and a normal component varying linearly across the face.
- *
- * Writing all six in the global frame removes the arbitrary choice of t1, turns a
- * prescribed traction or displacement into its plain Cartesian components, and makes a
- * global rigid motion produce the same rotational multiplier values on every face. That
- * last property is what lets an unknown-based algebraic multigrid reproduce the whole
- * near null space from its own per-unknown constants, on a mesh of any orientation.
+ * It spans (3): e_k ^ (x - x_f) splits into the rotation a n_f ^ (x - x_f) and the normal part
+ * p_1 n_f. The global frame gives both neighbours of f the same unknowns.
  */
 
 #ifndef GEOS_MIXEDVEM_MIXEDVEMFACEBASIS_HPP_
@@ -86,10 +75,10 @@ inline void computeFaceSecondMoment( FaceGeometry const & geom,
 }
 
 /**
- * @brief Evaluate the six traction modes of T_h(f) at a point of the face.
+ * @brief Evaluate psi_k at a point of the face.
  * @param[in] geom the face geometry
  * @param[in] x the evaluation point, assumed to lie in the plane of the face
- * @param[out] phi the six vector values, phi[j][i]
+ * @param[out] phi the six vector values, phi[k][i] = (psi_k)_i
  */
 GEOS_HOST_DEVICE
 inline void evaluateFaceBasis( FaceGeometry const & geom,
@@ -124,12 +113,9 @@ inline void evaluateFaceBasis( FaceGeometry const & geom,
 }
 
 /**
- * @brief Zeroth moments int_f phi_j df of the traction modes.
+ * @brief Zeroth moments int_f psi_k df = (e_x, e_y, e_z, 0, 0, 0), since x_f is the centroid.
  * @param[in] geom the face geometry
- * @param[out] mean the six vectors, mean[j][i]
- *
- * The three linear modes integrate to zero because x_f is the exact centroid,
- * so only the constant modes survive: int_f phi_j = (e_x, e_y, e_z, 0, 0, 0).
+ * @param[out] mean the six vectors, mean[k][i]
  */
 GEOS_HOST_DEVICE
 inline void computeFaceBasisMeans( FaceGeometry const & geom,
@@ -150,15 +136,12 @@ inline void computeFaceBasisMeans( FaceGeometry const & geom,
 }
 
 /**
- * @brief First moments N_j = int_f phi_j @ (x - x_E) df of the traction modes.
+ * @brief First moments N_k = int_f psi_k @ (x - x_E) df.
  * @param[in] geom the face geometry
  * @param[in] elemCenter the point x_E
- * @param[out] N the six tensors, N[j][p][q]
+ * @param[out] N the six tensors, N[k][p][q]
  *
- * Writing x - x_E = df + xt t1 + yt t2 with df = x_f - x_E and using
- * int_f xt = int_f yt = 0, every entry reduces to the second moments of the face.
- * N_j carries both element operators: its skew part gives the rotational rows of
- * B_E, its symmetric part gives the face contribution to the projection.
+ * The skew part of N_k gives the rotational rows of B_E, the symmetric part the face term of Pi_E.
  */
 GEOS_HOST_DEVICE
 inline void computeFaceBasisMoments( FaceGeometry const & geom,
@@ -178,14 +161,14 @@ inline void computeFaceBasisMoments( FaceGeometry const & geom,
   {
     for( integer q = 0; q < 3; ++q )
     {
-      // constant modes: only the offset df survives
+      // constant modes: only x_f - x_E survives
       N[0][p][q] = ( p == 0 ) ? df[q] : 0.0;
       N[1][p][q] = ( p == 1 ) ? df[q] : 0.0;
       N[2][p][q] = ( p == 2 ) ? df[q] : 0.0;
     }
   }
 
-  // rotational modes: df drops out with int_f r, leaving sL (e_k ^ M_q) on each column
+  // rotational modes: int_f (x - x_f) = 0 leaves (e_k ^ M_q) / L
   for( integer q = 0; q < 3; ++q )
   {
     real64 const column[3] = { M[0][q], M[1][q], M[2][q] };
@@ -204,11 +187,9 @@ inline void computeFaceBasisMoments( FaceGeometry const & geom,
 }
 
 /**
- * @brief Rotational moment int_f (x - x_E) ^ phi_j df obtained from N_j.
+ * @brief Rotational moment int_f (x - x_E) ^ psi_k df = -axial(N_k).
  * @param[in] N the first moment tensor of one mode
  * @param[out] b the resulting vector
- *
- * int_f (x - x_E) ^ phi_j = -axial(N_j), the skew part of N_j read as a vector.
  */
 GEOS_HOST_DEVICE
 inline void faceBasisRotationalMoment( real64 const (&N)[3][3],
@@ -220,14 +201,9 @@ inline void faceBasisRotationalMoment( real64 const (&N)[3][3],
 }
 
 /**
- * @brief Gram matrix int_f phi_i . phi_j df of the traction modes.
+ * @brief Face Gram matrix G_f = int_f psi_k . psi_l df.
  * @param[in] geom the face geometry
- * @param[out] gram the 6x6 matrix
- *
- * The constant block is |f|^{-1} I and the two blocks do not mix, because x_f is the
- * centroid and int_f r vanishes. The rotational block follows from
- * (e_i ^ r) . (e_j ^ r) = delta_ij |r|^2 - r_i r_j averaged over the face, the second
- * moments carried by the geometry already being normalized by |f|.
+ * @param[out] gram the 6x6 matrix: I / |f| on the constants, (tr(M) I - M) / (|f| L^2) on the rotations
  */
 GEOS_HOST_DEVICE
 inline void computeFaceBasisGram( FaceGeometry const & geom,

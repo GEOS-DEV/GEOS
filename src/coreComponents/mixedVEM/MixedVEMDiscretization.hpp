@@ -88,21 +88,21 @@ public:
    */
   mixedVEM::StabilizationLength stabilizationLength() const
   {
-    if( m_stabilizationLength >= 2 )
-    {
-      return mixedVEM::StabilizationLength::hydraulicRadiusWeighted;
-    }
     return ( m_stabilizationLength > 0 )
            ? mixedVEM::StabilizationLength::hydraulicRadius
            : mixedVEM::StabilizationLength::elementDiameter;
   }
+
+protected:
+
+  virtual void postInputInitialization() override;
 
 private:
 
   /// flag selecting the hybridized form instead of the mixed saddle point form
   integer m_hybridization;
 
-  /// 0 selects h_E, 1 selects |E| / |dE|, 2 selects |E| / |dE| with consistency weights
+  /// 0 selects h_E, 1 selects |E| / |dE| with consistency weights
   integer m_stabilizationLength;
 
 };

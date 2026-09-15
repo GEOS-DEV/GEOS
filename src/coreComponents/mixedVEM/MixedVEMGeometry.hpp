@@ -73,7 +73,7 @@ struct FaceGeometry
   /// +-1: orientation of the node loop relative to n, right-handed with {t1, t2}.
   real64 loopOrientation;
 
-  /// s_{E,f} = sign( n . (x_f - x_E) ): orientation of n relative to the outward normal.
+  /// s_{E,f} = sign( n . (x_f - x_E) ), so s_{E,f} n = n_f, the outward normal of (3).
   real64 outwardSign;
 };
 
@@ -128,12 +128,7 @@ void computeFaceGeometry( COORDS const & X,
   LvArray::tensorOps::copy< 3 >( geom.normal, referenceNormal );
   LvArray::tensorOps::normalize< 3 >( geom.normal );
 
-  // The two elements sharing f must agree on the frame, otherwise their stress degrees of
-  // freedom mean different things. A mesh face normal is only oriented with respect to one
-  // of the two, and in parallel each rank may orient it its own way, so both the sign and
-  // the tangent are fixed here from the direction alone: the sign makes the dominant
-  // component positive, and t1 comes from the global axis least aligned with n. Both are
-  // pure functions of n, hence identical on every rank and independent of the node loop.
+  // n and t1 depend on the direction alone, so both neighbours and every rank agree on them
   integer dominant = 0;
   integer weakest = 0;
   for( integer i = 1; i < 3; ++i )
@@ -339,12 +334,9 @@ void accumulateElementMoments( COORDS const & X,
 }
 
 /**
- * @brief Inertia matrix A_E of the rotational part of the divergence reconstruction.
- * @param[in] moments the element moments
- * @param[out] inertia the symmetric positive definite matrix A_E
- *
- * A_E omega = int_E (x - x_E) ^ [ omega ^ (x - x_E) ] dE = [ tr(M) I - M ] omega,
- * with M the second moment; this is the 3x3 system (8) of Proposition 3.1.
+ * @brief Matrix of system (8), omega -> int_E (x - x_E) ^ [ omega ^ (x - x_E) ] dE = [ tr(M) I - M ] omega.
+ * @param[in] moments the element moments, M = int_E (x - x_E) @ (x - x_E) dE
+ * @param[out] inertia the symmetric positive definite 3x3 matrix
  */
 GEOS_HOST_DEVICE
 inline void computeInertia( ElementMoments const & moments,

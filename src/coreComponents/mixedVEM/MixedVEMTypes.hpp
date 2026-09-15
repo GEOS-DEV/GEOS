@@ -53,9 +53,8 @@ constexpr real64 INV_SQRT_2 = 0.7071067811865475244;
  */
 enum class StabilizationLength : integer
 {
-  elementDiameter,        ///< h_E, the largest distance between two nodes of the element
-  hydraulicRadius,        ///< |E| / |dE|, the only length whose sum_f h |f| is |E| for every shape
-  hydraulicRadiusWeighted ///< |E| / |dE| plus the face blocks of |E| kappa_E P_E^T P_E as weights
+  elementDiameter, ///< h_E, the largest distance between two nodes of the element
+  hydraulicRadius  ///< |E| / |dE| plus the face blocks of |E| kappa_E P_E^T P_E as weights
 };
 
 using MatrixSlice = arraySlice2d< real64, MatrixLayout::ROW_MAJOR >;

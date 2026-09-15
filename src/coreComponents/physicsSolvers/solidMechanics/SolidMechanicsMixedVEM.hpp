@@ -29,19 +29,9 @@ namespace geos
 /**
  * @class SolidMechanicsMixedVEM
  *
- * Lowest-order mixed virtual element solver for linear elasticity on polyhedral meshes.
- *
- * The unknowns are the six traction modes of each face and the six rigid body motions of
- * each cell. Which global system is formed depends on the hybridization flag of the
- * MixedVEMDiscretization named by @p discretization:
- *
- *   hybridization = 0   the indefinite saddle point system in (sigma, u),
- *   hybridization = 1   the symmetric positive definite interface system H lambda = h,
- *                       after which (sigma_E, u_E) are recovered cell by cell.
- *
- * Boundary conditions swap roles relative to a displacement formulation: a prescribed
- * traction is essential and constrains the stress degrees of freedom of the face, while a
- * prescribed displacement is natural and only enters the right hand side.
+ * Mixed VEM of Dassi, Lovadina, Visinoni (2020) for linear elasticity, unknowns in Sigma_h x U_h.
+ * hybridization = 0 solves (19); hybridization = 1 solves H lambda = h and recovers (sigma_E, u_E).
+ * A prescribed traction is essential, a prescribed displacement natural (Remark 1).
  */
 class SolidMechanicsMixedVEM : public PhysicsSolverBase
 {
@@ -183,18 +173,14 @@ private:
    * @brief Build the near null space of the interface operator.
    * @param domain the domain partition
    *
-   * H annihilates the multiplier traces of the global rigid body motions exactly: for
-   * such a lambda the element problem is solved by sigma_E = 0 and u_E the restriction of
-   * that motion, so C_E S_E C_E^T lambda vanishes elementwise. Handing those six vectors
-   * to the algebraic multigrid is what keeps its coarse spaces from losing the modes the
-   * smoother cannot damp, and what makes the iteration count mesh independent.
+   * The multiplier traces of the six global rigid body motions span ker H.
    */
   void computeNearNullSpace( DomainPartition & domain ) const;
 
   /// hybridization flag, read from the MixedVEMDiscretization named by m_discretizationName
   bool m_useHybridization;
 
-  /// length used by the stabilization, equation (15)
+  /// length h of s_E, equation (15)
   mixedVEM::StabilizationLength m_stabilizationLength;
 
   /// multiplier traces of the six global rigid body motions, the near null space of H

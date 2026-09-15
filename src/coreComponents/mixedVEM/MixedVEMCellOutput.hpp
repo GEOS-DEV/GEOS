@@ -16,14 +16,7 @@
 /**
  * @file MixedVEMCellOutput.hpp
  *
- * Projection of the mixed VEM unknowns onto writable cell arrays.
- *
- * sigma_h is virtual inside E and its degrees of freedom sit on the faces, while u_h|_E
- * is a rigid body motion rather than a single vector, so neither unknown is a cell array
- * as it stands. The two computable cell representatives are Pi_E sigma_h, the constant
- * stress that the consistency term already reproduces exactly, and the value of u_h at
- * x_E, which is the translation part of the rigid motion. Both are what a finite element
- * run reports per cell, so they are the quantities to compare against.
+ * Cell representatives of the unknowns: Pi_E sigma_h, equation (13), and u_h(x_E).
  */
 
 #ifndef GEOS_MIXEDVEM_MIXEDVEMCELLOUTPUT_HPP_
@@ -39,7 +32,7 @@ namespace mixedVEM
 
 /**
  * @brief Split the rigid motion coefficients into a displacement and a rotation.
- * @param[in] rigidMotion the six coefficients of u_h|_E on the basis {R_i}
+ * @param[in] rigidMotion the six coefficients of u_h|_E on the basis {r_i}
  * @param[out] displacement u_h(x_E), the translation part
  * @param[out] rotation the infinitesimal rotation omega
  *
@@ -59,7 +52,7 @@ inline void computeCellDisplacement( real64 const * const rigidMotion,
 
 /**
  * @brief Evaluate u_h|_E at an arbitrary point of the cell.
- * @param[in] rigidMotion the six coefficients of u_h|_E on the basis {R_i}
+ * @param[in] rigidMotion the six coefficients of u_h|_E on the basis {r_i}
  * @param[in] elemCenter the point x_E
  * @param[in] point the evaluation point
  * @param[out] value the displacement at @p point
