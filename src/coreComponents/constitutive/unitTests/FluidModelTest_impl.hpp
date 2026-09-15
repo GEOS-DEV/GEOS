@@ -115,7 +115,7 @@ testValuesAgainstPreviousImplementation( FluidModel * fluid,
                                    "\n{} failed.\n"
                                    "Pressure: {}, Temperature: {} Composition: {}.\n"
                                    "Calculated: {}.\n"
-                                   "Expacted: {}\n"
+                                   "Expected: {}\n"
                                    "Difference: {}",
                                    name,
                                    pressure, temperature, toString( compositionView[0].toSliceConst() ),

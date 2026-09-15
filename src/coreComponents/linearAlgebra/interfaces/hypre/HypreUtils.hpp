@@ -38,6 +38,9 @@
 namespace geos
 {
 
+class HypreMatrix;
+class HypreVector;
+
 /**
  * @brief Container for hypre preconditioner function pointers.
  *
@@ -226,6 +229,35 @@ HYPRE_Int dummySetup( HYPRE_Solver,
                       HYPRE_ParCSRMatrix,
                       HYPRE_ParVector,
                       HYPRE_ParVector );
+
+/**
+ * @brief Copy DoF-component labels used to tag hypre Krylov vectors.
+ * @param mat Matrix whose DofManager (when present) provides the labels.
+ * @param labels Output local DoF-component labels; emptied when none are available.
+ *
+ * Prefers `mat.dofManager()` when present. A testing override is used only when
+ * the matrix has no DofManager, so unit tests can exercise tagged GMRES without
+ * building a mesh.
+ */
+void fillKrylovDofLabels( HypreMatrix const & mat,
+                          array1d< int > & labels );
+
+namespace testing
+{
+
+/**
+ * @brief Install fallback Krylov DoF labels for unit tests without a DofManager.
+ * @param labels Local labels; copied and used by fillKrylovDofLabels when the
+ *   matrix has no DofManager and `labels.size()` matches the local row count.
+ */
+void setKrylovDofLabels( arrayView1d< int const > const & labels );
+
+/**
+ * @brief Clear fallback Krylov DoF labels installed by setKrylovDofLabels().
+ */
+void clearKrylovDofLabels();
+
+}
 
 /**
  * @brief The missing wrapper compatible with hypre solver solve signature.
@@ -590,6 +622,7 @@ enum class MGRFRelaxationType : HYPRE_Int
   l1forwardGaussSeidel = 13,        //!< \f$\ell_1\f$ Gauss-Seidel, forward solve
   l1backwardGaussSeidel = 14,       //!< \f$\ell_1\f$ Gauss-Seidel, backward solve
   l1jacobi = 18,                    //!< \f$\ell_1\f$-scaled Jacobi
+  ilu = 32,                         //!< incomplete LU factorization
   gsElimWPivoting = 99,             //!< Gaussian Elimination with pivoting direct solver (for small systems)
   gsElimWInverse = 199              //!< Direct Inversion with Gaussian Elimination (OK for larger systems)
 };

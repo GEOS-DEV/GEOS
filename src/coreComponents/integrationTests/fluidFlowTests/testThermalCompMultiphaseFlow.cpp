@@ -34,16 +34,6 @@ CommandLineOptions g_commandLineOptions;
 
 // Sphinx start after input XML
 
-char const * pvtLiquid = "DensityFun PhillipsBrineDensity 1e6 7.5e7 5e5 295.15 370.15 25 0\n"
-                         "ViscosityFun PhillipsBrineViscosity 0\n"
-                         "EnthalpyFun BrineEnthalpy 1e6 7.5e7 5e5 295.15 370.15 25 0\n";
-
-char const * pvtGas = "DensityFun SpanWagnerCO2Density 1e6 7.5e7 5e5 295.15 370.15 25\n"
-                      "ViscosityFun FenghourCO2Viscosity 1e6 7.5e7 5e5 295.15 370.15 25\n"
-                      "EnthalpyFun CO2Enthalpy 1e6 7.5e7 5e5 295.15 370.15 25\n";
-
-char const * co2flash = "FlashModel CO2Solubility  1e6 7.5e7 5e5 295.15 370.15 25 0";
-
 char const * xmlInput =
   R"xml(
   <Problem>
@@ -119,8 +109,10 @@ char const * xmlInput =
                                     phaseNames="{ gas, water }"
                                     componentNames="{ co2, water }"
                                     componentMolarWeight="{ 44e-3, 18e-3 }"
-                                    phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-                                    flashModelParaFile="co2flash.txt" />
+                                    pressureCoordinates="{1e6, 7.5e7}"
+                                    pressureInterval="5e5"
+                                    temperatureCoordinates="{295.15, 370.15}"
+                                    temperatureInterval="25" />
       <BrooksCoreyRelativePermeability name="relperm"
                                        phaseNames="{ gas, water }"
                                        phaseMinVolumeFraction="{ 0.0, 0.0 }"
@@ -255,38 +247,15 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol, 1e-6 );
 }
 
-void writeTableToFile( string const & filename, char const * str )
-{
-  std::ofstream os( filename );
-  ASSERT_TRUE( os.is_open() );
-  os << str;
-  os.close();
-}
-
-void removeFile( string const & filename )
-{
-  int const ret = std::remove( filename.c_str() );
-  ASSERT_TRUE( ret == 0 );
-}
-
 class ThermalCompositionalMultiphaseFlowTest : public ::testing::Test
 {
 public:
 
   ThermalCompositionalMultiphaseFlowTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
-  {
-    writeTableToFile( pvtLiquidFilename, pvtLiquid );
-    writeTableToFile( pvtGasFilename, pvtGas );
-    writeTableToFile( co2flashFilename, co2flash );
-  }
+  {}
 
-  ~ThermalCompositionalMultiphaseFlowTest() override
-  {
-    removeFile( pvtLiquidFilename );
-    removeFile( pvtGasFilename );
-    removeFile( co2flashFilename );
-  }
+  ~ThermalCompositionalMultiphaseFlowTest() override = default;
 
 protected:
 
@@ -313,10 +282,6 @@ protected:
 
   GeosxState state;
   CompositionalMultiphaseFVM * solver;
-
-  string const pvtLiquidFilename = "pvtliquid.txt";
-  string const pvtGasFilename = "pvtgas.txt";
-  string const co2flashFilename = "co2flash.txt";
 };
 
 real64 constexpr ThermalCompositionalMultiphaseFlowTest::time;

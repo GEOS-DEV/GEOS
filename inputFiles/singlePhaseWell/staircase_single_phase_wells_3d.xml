@@ -16,29 +16,39 @@
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="1"	
+      logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Channel }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="SinglePhaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
         type="producer"
-        control="totalVolRate"
-        referenceElevation="12"
-        targetBHP="5e4"
-        targetTotalRate="1e-7"/>
-      <WellControls
+        control="totalVolRate">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="5e4"
+          referenceElevation="12"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          volumeRate="1e-7"/>
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         type="injector"
-        control="totalVolRate"
-        referenceElevation="12"
-        targetBHP="1e7"
-        targetTotalRateTableName="rateTable"/>
-    </SinglePhaseWell>
+        control="totalVolRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e7"
+          referenceElevation="12"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="rateTable"/>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>
@@ -51,11 +61,7 @@
       nx="{ 5, 5 }"
       ny="{ 5, 5 }"
       nz="{ 3, 3, 3, 3 }"
-      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0,
-                        cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1,
-                        cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2,
-                        cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }">
-
+      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0, cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1, cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2, cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }">
       <InternalWell
         name="well_producer1"
         wellRegionName="wellRegion1"
@@ -69,7 +75,6 @@
           name="producer1_perf1"
           distanceFromHead="11.95"/>
       </InternalWell>
-
       <InternalWell
         name="well_injector1"
         wellRegionName="wellRegion2"
@@ -164,7 +169,7 @@
   <FieldSpecifications>
     <HydrostaticEquilibrium
       name="equil"
-      objectPath="ElementRegions/Channel"      
+      objectPath="ElementRegions/Channel"
       datumElevation="5"
       datumPressure="1e6"/>
   </FieldSpecifications>
@@ -172,9 +177,9 @@
   <Functions>
     <TableFunction
       name="rateTable"
-      inputVarNames="{time}"
-      coordinates="{0, 2.51e4, 3.01e4,  5e4}"
-      values="{0, 1.2e-6, 0, 0}" 
+      inputVarNames="{ time }"
+      coordinates="{ 0, 2.51e4, 3.01e4, 5e4 }"
+      values="{ 0, 1.2e-6, 0, 0 }"
       interpolation="lower"/>
   </Functions>
 

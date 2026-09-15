@@ -143,9 +143,9 @@ option( GEOS_ENABLE_WAVEPROPAGATION "Enables wave propagation physics package" O
 #message( "SPHINX_FOUND = ${SPHINX_FOUND}" )
 #message( "SPHINX_EXECUTABLE = ${SPHINX_EXECUTABLE}" )
 
-if( NOT BLT_CXX_STD STREQUAL c++17 )
-    MESSAGE( FATAL_ERROR "c++17 is NOT enabled. GEOSX requires c++17" )
-endif( NOT BLT_CXX_STD STREQUAL c++17 )
+if( NOT BLT_CXX_STD STREQUAL c++20 )
+    MESSAGE( FATAL_ERROR "c++20 is NOT enabled. GEOS requires c++20" )
+endif( NOT BLT_CXX_STD STREQUAL c++20 )
 
 message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
@@ -154,6 +154,13 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  GNU   "-Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
                                  CLANG "-Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual"
                                )
+
+if( ENABLE_HIP )
+  # amdclang compiles C++ sources through the HIP driver.  GEOS has existing
+  # [=] lambdas that implicitly capture this; C++20 diagnoses that pattern.
+  blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
+                                   CLANG "-Wno-deprecated-this-capture -Wno-unused-parameter -Wno-unused-variable -Wno-unused-lambda-capture -Wno-gpu-maybe-wrong-side" )
+endif()
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
                                  GNU "-Wno-unused-parameter -Wno-unused-variable"
@@ -169,18 +176,29 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOS_NINJA_FLAGS
 # clang-13 and gcc complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
+# clang-22 reports google-benchmark's use of __COUNTER__ inside a #if directive as a
+# C2y extension. The check keeps the flag off compilers that do not know it, where
+# an unrecognized -Wno-* would itself become an error under ENABLE_WARNINGS_AS_ERRORS.
+CHECK_CXX_COMPILER_FLAG("-Wc2y-extensions" CXX_C2Y_EXTENSIONS)
 if (ENABLE_GBENCHMARK)
     blt_add_target_compile_flags(TO benchmark
                                 FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
+                                      $<$<AND:$<BOOL:${CXX_C2Y_EXTENSIONS}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-c2y-extensions>
                                 )
 endif()
 
 if( GEOS_ENABLE_FPE )
-  check_cxx_compiler_flag( "-ffp-exception-behavior=strict" GEOS_CXX_HAS_FP_EXCEPTION_BEHAVIOR_STRICT)
-  if( GEOS_CXX_HAS_FP_EXCEPTION_BEHAVIOR_STRICT )
-    blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS CLANG "-ffp-exception-behavior=strict" )
+  # amdclang compiles HIP sources through the CXX driver.  The host-only
+  # floating-point exception flag is rejected for the device compilation.
+  if( ENABLE_HIP )
+    message( STATUS "GEOS_ENABLE_FPE is ON, but HIP builds do not support -ffp-exception-behavior=strict; skipping the flag." )
   else()
-    message( WARNING "GEOS_ENABLE_FPE is ON, but ${CMAKE_CXX_COMPILER_ID} does not support -ffp-exception-behavior=strict." )
+    check_cxx_compiler_flag( "-ffp-exception-behavior=strict" GEOS_CXX_HAS_FP_EXCEPTION_BEHAVIOR_STRICT)
+    if( GEOS_CXX_HAS_FP_EXCEPTION_BEHAVIOR_STRICT )
+      blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS CLANG "-ffp-exception-behavior=strict" )
+    else()
+      message( WARNING "GEOS_ENABLE_FPE is ON, but ${CMAKE_CXX_COMPILER_ID} does not support -ffp-exception-behavior=strict." )
+    endif()
   endif()
 endif()
 

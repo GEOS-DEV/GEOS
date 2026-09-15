@@ -57,10 +57,10 @@ uncrustify_   401a409    :code:`ENABLE_UNCRUSTIFY`   :code:`UNCRUSTIFY_EXECUTABL
 .. _conduit: https://github.com/LLNL/conduit
 .. _CHAI : https://github.com/LLNL/CHAI
 .. _RAJA : https://github.com/LLNL/RAJA
-.. _hdf5 : https://portal.hdfgroup.org/display/HDF5/HDF5
+.. _hdf5 : https://www.hdfgroup.org/solutions/hdf5
 .. _mathpresso : https://github.com/kobalicek/mathpresso
 .. _pugixml : https://pugixml.org
-.. _parmetis : http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview
+.. _parmetis : https://github.com/KarypisLab/ParMETIS
 .. _silo : https://wci.llnl.gov/simulation/computer-codes/silo
 .. _VTK : https://vtk.org/
 .. _suitesparse : https://people.engr.tamu.edu/davis/suitesparse.html

@@ -100,7 +100,8 @@ public:
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
-                                CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                localIndex const dR_dAperOffset )
     : Base( rankOffset,
             stencilWrapper,
             flowDofNumberAccessor,
@@ -111,7 +112,8 @@ public:
             dt,
             localMatrix,
             localRhs,
-            dR_dAper ),
+            dR_dAper,
+            dR_dAperOffset ),
     m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
@@ -351,7 +353,8 @@ public:
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
-                   CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                   CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                   localIndex const dR_dAperOffset = 0 )
   {
     integer constexpr NUM_DOF = 2;   // pressure + temperature
     integer constexpr NUM_EQN = 2;   // mass balance + energy balance
@@ -376,7 +379,7 @@ public:
                        flowDofNumberAccessor,
                        flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
                        permAccessors, edfmPermAccessors, thermalConductivityAccessors,
-                       dt, localMatrix, localRhs, dR_dAper );
+                       dt, localMatrix, localRhs, dR_dAper, dR_dAperOffset );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }

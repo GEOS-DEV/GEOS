@@ -1,0 +1,13 @@
+diff --git a/src/parcsr_ls/par_mgr_interp.c b/src/parcsr_ls/par_mgr_interp.c
+index 649151450b892a7995f762c5a6d87a54588791bc..68de431fa0f6c437575e43c63a9d716c58bb991b 100644
+--- a/src/parcsr_ls/par_mgr_interp.c
++++ b/src/parcsr_ls/par_mgr_interp.c
+@@ -2548,6 +2548,8 @@
+                                  block_dim, block_dim,
+                                  hypre_DenseBlockMatrixNumNonzeros(B_CF),
+                                  hypre_DenseBlockMatrixData(B_CF));
++      hypre_DenseBlockMatrixDestroy(B_CF);
++      B_CF = NULL;
+    }
+    else
+    {

@@ -60,27 +60,40 @@ char const * PreXmlInput =
                                discretization="singlePhaseTPFA"
                                targetRegions="{Region1}">
       </SinglePhaseFVM>
-      <SinglePhaseWell name="singlePhaseWell"
+      <WellManager name="singlePhaseWell"
                        logLevel="1"
                        isThermal="1"
                        targetRegions="{wellRegion1,wellRegion2}">
-          <WellControls name="wellControls1"
-                        type="producer"
-                        referenceElevation="2"
-                        control="BHP"
-                        targetBHP="5e5"
-                        targetTotalRate="1e-3"/>
-          <WellControls name="wellControls2"
-                        type="injector"
-                        referenceElevation="2"
-                        control="totalVolRate"
-                        surfacePressure="1.45e7"
-                        surfaceTemperature="300.15"
-                        injectionTemperature="323"
-                        injectionStream="{1.0}"
-                        targetBHP="2e7"
-                        targetTotalRate="1e-4"/>
-      </SinglePhaseWell>
+    <SinglePhaseWell
+      name="wellControls1"
+      control="BHP"
+      type="producer">
+      <MinimumBHPConstraint
+        name="minbhp"
+        targetBHP="5e5"
+        referenceElevation="2"/>
+      <ProductionVolumeRateConstraint
+        name="maxvolrateprod"
+        volumeRate="1e-3"/>
+    </SinglePhaseWell>
+
+    <SinglePhaseWell
+      name="wellControls2"
+      type="injector"
+      control="totalVolRate"
+      surfacePressure="1.45e7"
+      surfaceTemperature="300.15">
+      <MaximumBHPConstraint
+        name="maxbhp"
+        targetBHP="2e7"
+        referenceElevation="2"/>
+      <InjectionVolumeRateConstraint
+        name="maxvolrateinj"
+        volumeRate="1e-4"
+        injectionStream="{ 1.0 }"
+        injectionTemperature="323"/>
+    </SinglePhaseWell>
+      </WellManager>
     </Solvers>
     <Mesh>
       <InternalMesh name="mesh1"
@@ -222,7 +235,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
                             LAMBDA && assembleFunction )
 {
   GEOS_UNUSED_VAR( testName );
-  SinglePhaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
   SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.reservoirSolver() );
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
@@ -513,6 +526,23 @@ protected:
                          solver->getSystemSolution() );
 
     solver->implicitStepSetup( TIME, DT, domain );
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.initializeWell( domain, domain.getMeshBodies(), meshBodyName, meshLevel, subRegion, TIME );
+      } );
+    } );
   }
 
   void TestAssembleCouplingTerms()
@@ -545,7 +575,23 @@ protected:
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
-      solver->wellSolver()->assembleFluxTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+      WellManager & wellSolver = *solver->wellSolver();
+      wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                              MeshLevel & meshLevel,
+                                                                              string_array const & regionNames )
+      {
+        GEOS_UNUSED_VAR( meshBodyName );
+        ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+        elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          WellElementRegion & region )
+        {
+          WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                               .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+          WellControls & wellControls = wellSolver.getWellControls( subRegion );
+          wellControls.assembleWellFluxTerms( TIME, DT, subRegion, solver->getDofManager(), localMatrix, localRhs );
+        } );
+      } );
     } );
   }
 
@@ -559,7 +605,23 @@ protected:
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
-      solver->wellSolver()->assemblePressureRelations( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+      WellManager & wellSolver = *solver->wellSolver();
+      wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                              MeshLevel & meshLevel,
+                                                                              string_array const & regionNames )
+      {
+        GEOS_UNUSED_VAR( meshBodyName );
+        ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+        elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          WellElementRegion & region )
+        {
+          WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                               .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+          WellControls & wellControls = wellSolver.getWellControls( subRegion );
+          wellControls.assembleWellPressureRelations( TIME, DT, subRegion, solver->getDofManager(), localMatrix, localRhs );
+        } );
+      } );
     } );
   }
 
@@ -574,7 +636,23 @@ protected:
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
-      solver->wellSolver()->assembleAccumulationTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+      WellManager & wellSolver = *solver->wellSolver();
+      wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                              MeshLevel & meshLevel,
+                                                                              string_array const & regionNames )
+      {
+        GEOS_UNUSED_VAR( meshBodyName );
+        ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+        elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          WellElementRegion & region )
+        {
+          WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                               .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+          WellControls & wellControls = wellSolver.getWellControls( subRegion );
+          wellControls.assembleWellAccumulationTerms( TIME, DT, subRegion, solver->getDofManager(), localMatrix, localRhs );
+        } );
+      } );
     } );
   }
 
@@ -656,7 +734,24 @@ TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Flux 
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->wellSolver()->assembleFluxTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.assembleWellFluxTerms( TIME, DT, subRegion, solver->getDofManager(), localMatrix, localRhs );
+      } );
+    } );
   } );
 }
 

@@ -81,7 +81,7 @@ void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager 
                                                                     FaceManager const & GEOS_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
-  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=, this] ( localIndex const k )
   {
     m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
   } );
