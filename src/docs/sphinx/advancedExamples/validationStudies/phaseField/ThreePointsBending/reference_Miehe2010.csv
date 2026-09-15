@@ -1,12 +1,12 @@
 # Symmetric three-point bending: reference load-deflection curve
 # Source: C. Miehe, M. Hofacker, F. Welschinger, Computer Methods in Applied Mechanics
-# and Engineering 199:2765-2778, 2010, Fig. 12b: length scale l2 = 0.03 mm, eta = 0.
-# Digitized from refcurve_threepointbending.jpg by extracting the curve pixels of the
-# right-hand panel and calibrating on the axis frame (u = 0 to 0.10 mm, F = 0 to 0.04 kN).
-# Caveat: the eta = 0 curve is only distinguishable from the two others between
-# u = 0.0395 and u = 0.0506 mm. Elsewhere the three curves of the panel are drawn on top
-# of each other, so those samples follow the visible (green) curve, which coincides with
-# the eta = 0 one on the elastic branch and merges with it again in the tail.
+# and Engineering 199:2765-2778, 2010, Fig. 12b: length scale l2 = 0.03 mm,
+# eta = 1e-6 (the green curve of the panel, i.e. the viscously regularized response).
+# Digitized from refcurve_threepointbending.jpg by extracting the green curve pixels of
+# the panel and calibrating on the axis frame (u = 0 to 0.10 mm, F = 0 to 0.04 kN).
+# Note: the eta = 0 curve (red) is drawn underneath and only separates from the green one
+# over the post-peak snap-back, between u = 0.039 and u = 0.049 mm; everywhere else the
+# two coincide to within the pixel resolution, about 4e-4 mm on u and 3e-4 kN on F.
 # deflection [mm],load [kN per mm of thickness]
 4.291845e-04,5.614035e-04
 8.583691e-04,9.824561e-04
@@ -99,35 +99,37 @@
 3.819742e-02,3.536842e-02
 3.862661e-02,3.592982e-02
 3.905579e-02,3.607018e-02
-3.948498e-02,1.950877e-02
-3.948498e-02,2.989474e-02
-3.991416e-02,1.445614e-02
-3.991416e-02,2.989474e-02
-4.034335e-02,1.389474e-02
-4.077253e-02,1.333333e-02
-4.120172e-02,1.305263e-02
-4.163090e-02,1.263158e-02
-4.206009e-02,1.235088e-02
-4.248927e-02,1.207018e-02
-4.291845e-02,1.136842e-02
-4.334764e-02,1.122807e-02
-4.377682e-02,1.080702e-02
-4.420601e-02,1.080702e-02
-4.463519e-02,1.038596e-02
-4.506438e-02,1.024561e-02
-4.549356e-02,9.964912e-03
-4.592275e-02,9.684211e-03
-4.635193e-02,9.263158e-03
-4.678112e-02,9.122807e-03
-4.721030e-02,8.842105e-03
+4.034335e-02,2.764912e-02
+4.034335e-02,2.989474e-02
+4.077253e-02,2.231579e-02
+4.077253e-02,2.989474e-02
+4.120172e-02,1.670175e-02
+4.120172e-02,2.484211e-02
+4.163090e-02,1.585965e-02
+4.163090e-02,2.175439e-02
+4.206009e-02,1.333333e-02
+4.206009e-02,1.642105e-02
+4.248927e-02,1.277193e-02
+4.248927e-02,1.557895e-02
+4.291845e-02,1.277193e-02
+4.334764e-02,1.249123e-02
+4.377682e-02,1.164912e-02
+4.420601e-02,1.164912e-02
+4.463519e-02,1.108772e-02
+4.506438e-02,1.094737e-02
+4.549356e-02,1.052632e-02
+4.592275e-02,1.038596e-02
+4.635193e-02,9.964912e-03
+4.678112e-02,9.824561e-03
+4.721030e-02,9.403509e-03
 4.763948e-02,9.263158e-03
 4.806867e-02,8.982456e-03
 4.849785e-02,8.842105e-03
-4.892704e-02,8.000000e-03
+4.892704e-02,8.701754e-03
 4.935622e-02,8.421053e-03
 4.978541e-02,8.140351e-03
 5.021459e-02,8.140351e-03
-5.064378e-02,7.438596e-03
+5.064378e-02,8.000000e-03
 5.107296e-02,7.859649e-03
 5.150215e-02,7.578947e-03
 5.193133e-02,7.578947e-03

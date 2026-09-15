@@ -68,9 +68,11 @@ The phase-field formulation and the model options available in GEOS are describe
 :ref:`PhaseFieldFractureSolver`. This benchmark uses the brittle fracture model
 (``fractureModelType="Brittle"``), the quadratic AT2 local dissipation
 (``localDissipationOption="Quadratic"``) and the spectral split of the strain energy
-(``DamageSpectralElasticIsotropic``). With :math:`L` = 0.03 mm and a vanishing viscosity, it
-corresponds to the length scale :math:`l_2` and to the curve :math:`\eta` = 0 of the reference
-load-deflection figure.
+(``DamageSpectralElasticIsotropic``). The length scale :math:`L` = 0.03 mm matches the length
+scale :math:`l_2` of the reference. GEOS applies no viscous regularization, whereas the
+digitized reference curve is the one obtained with :math:`\eta = 1 \times 10^{-6}`: the two
+published curves are indistinguishable up to and beyond the peak load and separate only over
+the post-peak snap-back.
 
 
 ------------------------------------------------------------------
