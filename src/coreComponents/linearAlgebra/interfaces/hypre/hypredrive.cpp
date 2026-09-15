@@ -1400,14 +1400,9 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   strategy.configure( params.mgr );
   strategy.normalizeReductionParameters();
 
-  // strategies driven by solver-provided custom point markers use more blocks than there are
-  // dof fields; those labels have no field-name representation, so skip the YAML preview
+  // custom point markers use more blocks than dof fields: no field-name representation, skip the YAML
   if( strategy.m_numBlocks > LvArray::integerConversion< HYPRE_Int >( labelNames.size() ) )
   {
-    destroyWrapper( mgrData.coarseSolver );
-    destroyWrapper( mgrData.mechSolver );
-    destroyWrapper( mgrData.nestedSolver );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRDestroy( precond.ptr ) );
     return false;
   }
 
@@ -1520,74 +1515,13 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
 
   switch( params.mgr.strategy )
   {
-<<<<<<< HEAD
-    case StrategyType::singlePhaseReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalSinglePhaseReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::ThermalSinglePhaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhaseHybridFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhaseHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhaseMixedMFD:
-      return buildStrategyYaml< hypre::mgr::SinglePhaseMixedMFD >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhaseReservoirHybridFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhaseReservoirHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalSinglePhasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::ThermalSinglePhasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::hybridSinglePhasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::HybridSinglePhasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsEmbeddedFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsConformingFractures:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsConformingFracturesALM:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFracturesALM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFracturesALMReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::singlePhasePoromechanicsReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::ThermalSinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::compositionalMultiphaseFVM:
-      return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::compositionalMultiphaseHybridFVM:
-      return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::compositionalMultiphaseReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::compositionalMultiphaseReservoirHybridFVM:
-      return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseReservoirHybridFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::immiscibleMultiphaseFVM:
-      return buildStrategyYaml< hypre::mgr::ImmiscibleMultiphaseFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::reactiveCompositionalMultiphaseOBL:
-      return buildStrategyYaml< hypre::mgr::ReactiveCompositionalMultiphaseOBL >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalCompositionalMultiphaseFVM:
-      return buildStrategyYaml< hypre::mgr::ThermalCompositionalMultiphaseFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalCompositionalMultiphaseReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::ThermalCompositionalMultiphaseReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::multiphasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::MultiphasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::multiphasePoromechanicsReservoirFVM:
-      return buildStrategyYaml< hypre::mgr::MultiphasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::thermalMultiphasePoromechanics:
-      return buildStrategyYaml< hypre::mgr::ThermalMultiphasePoromechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::hydrofracture:
-      return buildStrategyYaml< hypre::mgr::Hydrofracture >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::lagrangianContactMechanics:
-      return buildStrategyYaml< hypre::mgr::LagrangianContactMechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::augmentedLagrangianContactMechanics:
-      return buildStrategyYaml< hypre::mgr::AugmentedLagrangianContactMechanics >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::lagrangianContactMechanicsBubbleStab:
-      return buildStrategyYaml< hypre::mgr::LagrangianContactMechanicsBubbleStabilization >( params, labelNames, numComponentsPerField, preconditionerYaml );
-    case StrategyType::solidMechanicsEmbeddedFractures:
-      return buildStrategyYaml< hypre::mgr::SolidMechanicsEmbeddedFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
-=======
     #define GEOS_HYPREDRIVE_MGR_CASE( enumName, typeName ) \
       case StrategyType::enumName: \
         return buildStrategyYaml< hypre::mgr::typeName >( params, labelNames, numComponentsPerField, preconditionerYaml )
     GEOS_HYPREDRIVE_MGR_CASE( singlePhaseReservoirFVM, SinglePhaseReservoirFVM );
     GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhaseReservoirFVM, ThermalSinglePhaseReservoirFVM );
     GEOS_HYPREDRIVE_MGR_CASE( singlePhaseHybridFVM, SinglePhaseHybridFVM );
+    GEOS_HYPREDRIVE_MGR_CASE( singlePhaseMixedMFD, SinglePhaseMixedMFD );
     GEOS_HYPREDRIVE_MGR_CASE( singlePhaseReservoirHybridFVM, SinglePhaseReservoirHybridFVM );
     GEOS_HYPREDRIVE_MGR_CASE( singlePhasePoromechanics, SinglePhasePoromechanics );
     GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhasePoromechanics, ThermalSinglePhasePoromechanics );
@@ -1615,7 +1549,6 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
     GEOS_HYPREDRIVE_MGR_CASE( lagrangianContactMechanicsBubbleStab, LagrangianContactMechanicsBubbleStabilization );
     GEOS_HYPREDRIVE_MGR_CASE( solidMechanicsEmbeddedFractures, SolidMechanicsEmbeddedFractures );
 #undef GEOS_HYPREDRIVE_MGR_CASE
->>>>>>> develop
     case StrategyType::invalid:
       return false;
   }
