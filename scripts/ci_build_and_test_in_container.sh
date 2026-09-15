@@ -605,7 +605,7 @@ fi
 # Documentation check
 if [[ "${TEST_DOCUMENTATION}" = true ]]; then
   phase_start "Documentation check"
-  or_die ctest --output-on-failure -R "testDoxygenCheck"
+  or_die ctest --output-on-failure --no-tests=error -R '^testDoxygenCheck$'
   phase_finish 0
   exit 0
 fi
