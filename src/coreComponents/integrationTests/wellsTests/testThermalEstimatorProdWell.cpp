@@ -280,11 +280,14 @@ template< typename T, typename COL_INDEX >
 void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
                                 CRSMatrixView< T const, COL_INDEX const > const & matrix2, std::string const & testName )
 {
+  matrix1.move( hostMemorySpace, false );
+  matrix2.move( hostMemorySpace, false );
+
   std::ofstream omat1( testName+".csv" );
 
 
-  std::vector< std::vector< double > > fmat1( matrix1.numRows(), std::vector< double >( matrix1.numRows(), 0.0 ));
-  std::vector< std::vector< double > > fmat2( matrix2.numRows(), std::vector< double >( matrix2.numRows(), 0.0 ));
+  std::vector< std::vector< double > > fmat1( matrix1.numRows(), std::vector< double >( matrix1.numColumns(), 0.0 ));
+  std::vector< std::vector< double > > fmat2( matrix2.numRows(), std::vector< double >( matrix2.numColumns(), 0.0 ));
 
   for( localIndex i = 0; i < matrix1.numRows(); ++i )
   {
