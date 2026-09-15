@@ -7,8 +7,11 @@ ratio, K = 2 G (1 + nu) / (3 (1 - 2 nu)). The plane strain Kirsch stresses do no
 constants, so a stress error that grows with nu belongs to the discretization.
 
 For each Poisson ratio the committed decks are copied into the work directory with the new bulk modulus,
-geosx is run for both methods when their output is missing, and a profile figure is written, followed by a
-summary of the errors against nu. The committed decks are never modified.
+geosx is run for both methods when their output is missing, and a profile figure is written. The summary
+figure shows against nu the stress and displacement errors, max_E |sigma_h,ij(E)| / ||sigma_inf||_max for
+ij in {yz, xz}, which is zero analytically (see kirschWellboreComparison.py), and the total number of
+linear solver iterations. The committed decks are
+never modified.
 
 Usage, from the bin directory of a build:
     python3 ../../inputFiles/solidMechanics/polyhedral/kirschWellborePoissonSweep.py --geosx ./geosx --np 8
@@ -88,7 +91,7 @@ def main():
     args = parser.parse_args()
 
     workDir = os.path.abspath(args.workDir)
-    errors, solves = {}, {}
+    errors, shears, iterations, solves = {}, {}, {}, {}
 
     for nu in args.nu:
         caseDir = os.path.join(workDir, f"nu_{nu:g}")
@@ -110,35 +113,37 @@ def main():
             print(f"  {label:10s} {summary}")
             if not converged:
                 print(f"  {label:10s} did not converge, its errors mix the solver and the discretization")
-            runs.append((label, outputDir))
+            runs.append((label, outputDir, logPath))
 
         params = comparison.readParameters(basePath, decks["FEM"])
-        errors[nu] = comparison.compareRuns(runs, params, args.theta, args.band, args.bins,
+        errors[nu], shears[nu], iterations[nu] = comparison.compareRuns(runs, params, args.theta, args.band, args.bins,
                                             os.path.join(caseDir, "kirschWellboreComparison.png"),
                                             title=rf"Kirsch wellbore, $\nu$ = {nu:g}, $\theta$ = {args.theta:g}$^\circ$")
 
-    writeSummary(args.nu, errors, solves, os.path.join(workDir, "kirschWellborePoissonSweep.png"))
+    writeSummary(args.nu, errors, shears, iterations, solves, os.path.join(workDir, "kirschWellborePoissonSweep.png"))
 
 
-def writeSummary(nus, errors, solves, save):
+def writeSummary(nus, errors, shears, iterations, solves, save):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    names = ["s_rr", "s_tt", "s_rt", "u_r", "u_t"]
-    print("\nrelative L2 error against nu")
-    print(f"{'nu':>8s} {'method':10s} " + " ".join(f"{n:>9s}" for n in names) + "   linear solve")
+    names = ["s_rr", "s_tt", "s_rt", "u_r", "u_t", "s_yz", "s_xz"]
+    print("\nrelative L2 error and max out of plane shear / |sigma_inf| against nu")
+    print(f"{'nu':>8s} {'method':10s} " + " ".join(f"{n:>9s}" for n in names) + f" {'lin its':>8s}   last linear solve")
     for nu in nus:
         for label in comparison.METHODS:
-            print(f"{nu:8g} {label:10s} " + " ".join(f"{e:9.2e}" for e in errors[nu][label]) +
-                  f"   {solves[(nu, label)]}")
+            its = iterations[nu][label]
+            print(f"{nu:8g} {label:10s} " + " ".join(f"{e:9.2e}" for e in list(errors[nu][label]) + list(shears[nu][label])) +
+                  f" {'-' if its is None else its:>8}   {solves[(nu, label)]}")
 
     fsize = 18
     cmap = plt.get_cmap("tab10")
     styles = {"FEM": ("-", "o"), "mixed VEM": ("--", "s")}
     # distance to the incompressible limit, so the four ratios spread evenly
     x = 0.5 - np.array(nus)
-    fig, axes = plt.subplots(1, 2, figsize=(22, 9))
+    fig, axes = plt.subplots(2, 2, figsize=(22, 18))
+    axes = axes.ravel()
 
     for label in comparison.METHODS:
         line, marker = styles[label]
@@ -149,14 +154,24 @@ def writeSummary(nus, errors, solves, save):
         for c in range(2):
             axes[1].loglog(x, table[:, 3 + c], line + marker, lw=2.5, ms=10, mfc="none", mew=2, color=cmap(c),
                            label=comparison.DISP_NAMES[c] + " " + label)
+        shear = np.array([shears[nu][label] for nu in nus])
+        for c in range(2):
+            axes[2].loglog(x, shear[:, c], line + marker, lw=2.5, ms=10, mfc="none", mew=2, color=cmap(3 + c),
+                           label=comparison.SHEAR_NAMES[c] + " " + label)
+        its = [iterations[nu][label] for nu in nus]
+        if all(i is not None for i in its):
+            axes[3].semilogx(x, its, line + marker, lw=2.5, ms=10, mfc="none", mew=2, color="k", label=label)
 
-    for a, title in zip(axes, ["stress", "induced displacement"]):
+    ylabels = ["relative L2 error", "relative L2 error", r"$\max_E |\sigma_{h,ij}(E)| \, / \, \|\sigma_\infty\|_{\max}$",
+               "total linear solver iterations"]
+    for a, title, ylabel in zip(axes, ["stress", "induced displacement", r"$\sigma_{h,ij}$, $ij \in \{yz, xz\}$ (exactly zero)",
+                                       "linear solver"], ylabels):
         a.set_xticks(x)
         a.set_xticklabels([f"{nu:g}" for nu in nus])
         a.minorticks_off()
         a.invert_xaxis()
         a.set_xlabel(r"Poisson ratio $\nu$", size=fsize)
-        a.set_ylabel("relative L2 error", size=fsize)
+        a.set_ylabel(ylabel, size=fsize)
         a.set_title(title, size=fsize)
         a.grid(True, which="both", alpha=0.3)
         a.tick_params(labelsize=fsize * 0.8)

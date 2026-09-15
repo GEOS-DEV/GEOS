@@ -9,14 +9,21 @@ so stresses are total and compare directly, while the displacement also carries 
 plane strain field of the far field. That field is subtracted, leaving the displacement induced by
 the hole and the well pressure, which is what the analytical solution describes.
 
+The out of plane shears vanish exactly, so their size is numerical error alone. With sigma_h(E) the cell
+stress (Pi_E sigma_h for the mixed VEM, the cell average for FEM), x_E the cell center and the log spaced
+radial bins T_k = {E : |x_E| in [r_k, r_{k+1})}, the third column plots max_{E in T_k} |sigma_h,ij(E)| for
+ij in {yz, xz}. Tables and titles report max_E |sigma_h,ij(E)| / ||sigma_inf||_max, with ||sigma_inf||_max
+the largest absolute component of the far field stress, and the total number of linear solver iterations.
+
 Usage, from the directory holding the output folders:
-    python3 kirschWellboreComparison.py --fem kirsch_fem --mixedVEM kirsch_vem
+    python3 kirschWellboreComparison.py --fem kirsch_fem --femLog fem.log --mixedVEM kirsch_vem --mixedVEMLog vem.log
 """
 
 import argparse
 import glob
 import importlib.util
 import os
+import re
 import sys
 import types
 import xml.etree.ElementTree as ElementTree
@@ -34,6 +41,7 @@ METHODS = ("FEM", "mixed VEM")
 MARKERS = {"FEM": "o", "mixed VEM": "s"}
 STRESS_NAMES = [r"$\sigma_{rr}$", r"$\sigma_{\theta\theta}$", r"$\sigma_{r\theta}$"]
 DISP_NAMES = [r"$u_r$", r"$u_\theta$"]
+SHEAR_NAMES = [r"$\sigma_{h,yz}$", r"$\sigma_{h,xz}$"]
 
 
 def loadDocumentationScript():
@@ -100,6 +108,29 @@ def readLastStep(outputDir, plotFileRoot):
 
     return ({k: np.concatenate(v) for k, v in cells.items()},
             {k: np.concatenate(v) for k, v in points.items()})
+
+
+def totalLinearIterations(logPath):
+    """Sum of the iterations of every linear solve in a geosx log, None without a log."""
+    if not logPath or not os.path.exists(logPath):
+        return None
+    lines = [l for l in open(logPath, errors="replace") if "Linear Solver |" in l]
+    return sum(int(re.search(r"Iterations: (\d+)", l).group(1)) for l in lines)
+
+
+def outOfPlaneShear(outputDir, params):
+    """Radius and |sigma_yz|, |sigma_xz| of every owned cell; both shears are zero analytically."""
+    cells, _ = readLastStep(outputDir, params["plotFileRoot"])
+    stress = cells["averageStress"] if "averageStress" in cells else cells["stress"]
+    r = np.hypot(cells["elementCenter"][:, 0], cells["elementCenter"][:, 1])
+    return r, np.abs(stress[:, 3:5])
+
+
+def binnedMax(r, values, edges):
+    index = np.digitize(r, edges) - 1
+    keep = [b for b in range(len(edges) - 1) if np.any(index == b)]
+    return (np.array([np.mean(r[index == b]) for b in keep]),
+            np.array([values[index == b].max(axis=0) for b in keep]))
 
 
 def polarStress(voigt, theta, rotate):
@@ -190,7 +221,11 @@ def extractProfile(documentation, params, exact, outputDir, theta0, band):
 
 
 def compareRuns(runs, params, theta, band, bins, save, show=False, title=None):
-    """Plot one row per method, stress left and displacement right, and return the errors per method."""
+    """
+    One row per method: stress, induced displacement and out of plane shear. A run is (label, outputDir) or
+    (label, outputDir, logPath). Returns the errors, max |sigma_yz|, |sigma_xz| over |sigma_inf| and total
+    linear iterations per method.
+    """
     import matplotlib
     if not show:
         matplotlib.use("Agg")
@@ -206,31 +241,39 @@ def compareRuns(runs, params, theta, band, bins, save, show=False, title=None):
 
     fsize, msize = 18, 9
     cmap = plt.get_cmap("tab10")
-    fig, axes = plt.subplots(len(runs), 2, figsize=(22, 8 * len(runs)), sharex=True, sharey="col", squeeze=False)
+    fig, axes = plt.subplots(len(runs), 3, figsize=(31, 8 * len(runs)), sharex=True, sharey="col", squeeze=False)
+    farField = np.abs(params["stress"]).max()
 
     print(f"profile at theta = {theta} deg, cells within +/- {band} deg")
-    print(f"{'method':12s} {'points':>7s} {'s_rr':>9s} {'s_tt':>9s} {'s_rt':>9s} {'u_r':>9s} {'u_t':>9s}   relative L2 error")
+    print(f"{'method':12s} {'points':>7s} {'s_rr':>9s} {'s_tt':>9s} {'s_rt':>9s} {'u_r':>9s} {'u_t':>9s}"
+          f" {'s_yz':>9s} {'s_xz':>9s} {'lin its':>8s}   (L2 errors; max out of plane shear / |sigma_inf|)")
 
-    allErrors = {}
-    for row, (label, outputDir) in enumerate(runs):
+    allErrors, allShear, allIterations = {}, {}, {}
+    for row, run in enumerate(runs):
+        label, outputDir = run[0], run[1]
+        iterations = totalLinearIterations(run[2] if len(run) > 2 else None)
         profile = extractProfile(documentation, params, exact, outputDir, theta0, band)
         errors = profile["errors"]
-        allErrors[label] = errors
-        print(f"{label:12s} {len(profile['rS']):7d} " + " ".join(f"{e:9.2e}" for e in errors))
+        rCells, shear = outOfPlaneShear(outputDir, params)
+        maxShear = shear.max(axis=0) / farField
+        allErrors[label], allShear[label], allIterations[label] = errors, maxShear, iterations
+        itsText = "-" if iterations is None else str(iterations)
+        print(f"{label:12s} {len(profile['rS']):7d} " + " ".join(f"{e:9.2e}" for e in errors) +
+              " " + " ".join(f"{m:9.2e}" for m in maxShear) + f" {itsText:>8s}")
 
         rSb, numSb = binned(profile["rS"], profile["numS"], edges)
         rUb, numUb = binned(profile["rU"], profile["numU"], edges)
-        axStress, axDisp = axes[row]
+        axStress, axDisp, axShear = axes[row]
 
         for c in range(3):
             axStress.semilogx(rLine, curve[:, c] / 1e6, lw=3, alpha=0.6, color=cmap(c),
                               label=STRESS_NAMES[c] + " analytical")
-            axStress.semilogx(rSb, numSb[:, c] / 1e6, MARKERS[label], ms=msize, mfc="none", mew=1.8, color=cmap(c),
+            axStress.semilogx(rSb, numSb[:, c] / 1e6, MARKERS.get(label, "o"), ms=msize, mfc="none", mew=1.8, color=cmap(c),
                               label=STRESS_NAMES[c] + " " + label)
         for c in range(2):
             axDisp.semilogx(rLine, curve[:, 3 + c] * 1e3, lw=3, alpha=0.6, color=cmap(c),
                             label=DISP_NAMES[c] + " analytical")
-            axDisp.semilogx(rUb, numUb[:, c] * 1e3, MARKERS[label], ms=msize, mfc="none", mew=1.8, color=cmap(c),
+            axDisp.semilogx(rUb, numUb[:, c] * 1e3, MARKERS.get(label, "o"), ms=msize, mfc="none", mew=1.8, color=cmap(c),
                             label=DISP_NAMES[c] + " " + label)
 
         axStress.set_title(label + "   relative L2 error: " +
@@ -239,6 +282,16 @@ def compareRuns(runs, params, theta, band, bins, save, show=False, title=None):
                          ", ".join(f"{n} {e:.1e}" for n, e in zip(DISP_NAMES, errors[3:])), size=fsize * 0.85)
         axStress.set_ylabel(r"$\sigma$ (MPa)", size=fsize)
         axDisp.set_ylabel("induced displacement (mm)", size=fsize)
+
+        # every cell, all angles: the largest value per radial bin
+        rSh, maxSh = binnedMax(rCells, shear, edges)
+        for c in range(2):
+            axShear.loglog(rSh, np.maximum(maxSh[:, c], 1e-300), MARKERS.get(label, "o") + "-", ms=msize, mfc="none",
+                           mew=1.8, color=cmap(3 + c), label=SHEAR_NAMES[c] + " " + label)
+        axShear.set_title(label + f"   linear iterations: {itsText}   " +
+                          ", ".join(rf"$\max_E |${n}$| / \|\sigma_\infty\|_{{\max}}$ = {m:.1e}"
+                                    for n, m in zip(SHEAR_NAMES, maxShear)), size=fsize * 0.85)
+        axShear.set_ylabel(r"$\max_{E \in T_k} |\sigma_{h,ij}(E)|$ (Pa)", size=fsize)
 
     for a in axes.ravel():
         a.set_xlim(params["rw"], params["rout"])
@@ -255,13 +308,15 @@ def compareRuns(runs, params, theta, band, bins, save, show=False, title=None):
     if show:
         plt.show()
     plt.close(fig)
-    return allErrors
+    return allErrors, allShear, allIterations
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--fem", help="output directory of kirschWellbore_fem.xml")
+    parser.add_argument("--femLog", help="geosx log of the FEM run, for the linear iterations")
     parser.add_argument("--mixedVEM", help="output directory of kirschWellbore_mixedVEM.xml")
+    parser.add_argument("--mixedVEMLog", help="geosx log of the mixed VEM run, for the linear iterations")
     parser.add_argument("--base", default=os.path.join(scriptDir, "kirschWellbore_base.xml"),
                         help="deck holding the material, the mesh and the output")
     parser.add_argument("--loads", default=os.path.join(scriptDir, "kirschWellbore_fem.xml"),
@@ -273,7 +328,8 @@ def main():
     parser.add_argument("--show", action="store_true", help="also open the figure")
     args = parser.parse_args()
 
-    runs = [(label, path) for label, path in zip(METHODS, (args.fem, args.mixedVEM)) if path]
+    runs = [(label, path, log) for label, path, log in
+            zip(METHODS, (args.fem, args.mixedVEM), (args.femLog, args.mixedVEMLog)) if path]
     if not runs:
         parser.error("give at least one of --fem, --mixedVEM")
 
