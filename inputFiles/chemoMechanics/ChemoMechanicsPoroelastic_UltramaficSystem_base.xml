@@ -73,7 +73,8 @@
       name="reactiveRock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      fluidModelName="water"/>
 
     <ElasticIsotropic
       name="rockSolid"

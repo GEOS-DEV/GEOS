@@ -43,7 +43,6 @@
 
 #include "common/format/EnumStrings.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "DamageSpectralUtilities.hpp"
 #include "InvariantDecompositions.hpp"
 #include "ElasticIsotropic.hpp"
 
@@ -142,7 +141,6 @@ public:
 
   using UPDATE_BASE::m_disableInelasticity;
   using UPDATE_BASE::m_bulkModulus;
-  using UPDATE_BASE::m_shearModulus;
 
   //Degradation functions: quadratic (Brittle/Nucleation) or Lorentz-type rational (Cohesive,
   //Geelen et al., 2019, CMAME; AT1-only, validated at input-parsing time).
@@ -305,42 +303,9 @@ public:
     m_volStrain( k, q ) = traceOfStrain;
 
     // update crack driving force history variable before stress is degraded below
-    // real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
+    real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
 
-    // m_crackDrivingForce( k, q ) = fmax( sed, m_oldCrackDrivingForce( k, q ) );
-
-    // compute strain energy density only (HARDCODED FOR NOW, TO REMOVE)
-    {
-      real64 mu = m_shearModulus[k];
-      real64 lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
-
-      real64 tracePlus = LvArray::math::max( traceOfStrain, 0.0 );
-
-      // get eigenvalues and eigenvectors
-      real64 eigenValues[3] = {};
-      real64 eigenVectors[3][3] = {};
-      LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectors, strain );
-
-      // tranpose eigenVectors matrix
-      real64 temp[3][3] = {};
-      LvArray::tensorOps::transpose< 3, 3 >( temp, eigenVectors );
-      LvArray::tensorOps::copy< 3, 3 >( eigenVectors, temp );
-
-      // build symmetric matrices of positive and negative eigenvalues
-      real64 eigenPlus[6] = {};
-
-      for( int i = 0; i < 3; i++ )
-      {
-        eigenPlus[i] = LvArray::math::max( eigenValues[i], 0.0 );
-      }
-
-      real64 positivePartOfStrain[6] = {};
-      LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( positivePartOfStrain, eigenVectors, eigenPlus );
-
-      real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * doubleContraction( positivePartOfStrain, positivePartOfStrain );
-
-      m_crackDrivingForce( k, q ) = fmax( sed, m_oldCrackDrivingForce( k, q ) );
-    }
+    m_crackDrivingForce( k, q ) = fmax( sed, m_oldCrackDrivingForce( k, q ) );
 
     if( m_fractureModelType == FractureModelType::Nucleation )
     {

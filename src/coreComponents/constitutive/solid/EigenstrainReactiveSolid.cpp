@@ -63,7 +63,7 @@ typedef EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability > Eigen
 typedef EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > EigenStrainReactiveElasticIsotropicCK;
 
 typedef EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageDamagePermeability;
-// typedef EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageSpectralDamagePermeability;
+typedef EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageSpectralDamagePermeability;
 typedef EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageVolDevDamagePermeability;
 
 // Damage solid + damage permeability + damage diffusion
@@ -73,7 +73,7 @@ typedef EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageDamagePermeability, string const &, Group * const )
-// REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageSpectralDamagePermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageSpectralDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageVolDevDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageDamagePermeabilityDamageDiffusion, string const &, Group * const )
 

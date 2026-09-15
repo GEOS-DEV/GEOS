@@ -25,6 +25,7 @@
 #include "constitutive/solid/Damage.hpp"
 #include "constitutive/solid/porosity/BiotReactivePorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/solid/SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/DamagePermeability.hpp"
 #include "constitutive/diffusion/DamageDiffusion.hpp"
@@ -329,8 +330,17 @@ private:
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
+    real64 bulkModulus = 0.0;
+    if constexpr ( std::is_same_v< DiscretizationOps, SolidModelDiscretizationOpsFullyAnisotropic > )
+    {
+      bulkModulus = m_solidUpdate.getBulkModulus( k );
+    }
+    else
+    {
+      bulkModulus = stiffness.m_bulkModulus;
+    }
+
     // Compute effective stress increment for the porosity update
-    real64 const bulkModulus = stiffness.m_bulkModulus;
     real64 const meanEffectiveStressIncrement = bulkModulus * ( mechanicsStrainIncrement[0] + mechanicsStrainIncrement[1] + mechanicsStrainIncrement[2] );
 
     m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
@@ -349,8 +359,22 @@ private:
     // Add the contributions of pressure to the total stress
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * totalPorePressure );
 
-    // Add the contributions of mineral pressure to the stiffness
-    stiffness.m_bulkModulus = bulkModulus - damagedBiotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
+    // Add the contributions of mineral pressure to the volumetric part of the stiffness
+    real64 const dTotalStress_dVolStrain = damagedBiotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
+    if constexpr ( std::is_same_v< DiscretizationOps, SolidModelDiscretizationOpsFullyAnisotropic > )
+    {
+      for( int i = 0; i < 3; ++i )
+      {
+        for( int j = 0; j < 3; ++j )
+        {
+          stiffness.m_c[i][j] -= dTotalStress_dVolStrain;
+        }
+      }
+    }
+    else
+    {
+      stiffness.m_bulkModulus = bulkModulus - dTotalStress_dVolStrain;
+    }
   }
 
 };
