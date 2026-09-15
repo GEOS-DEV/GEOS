@@ -117,6 +117,10 @@ def run_case(geosx, workdir, timeout, np=1, mpirun="mpirun", cells=(1, 1, 1)):
     if s:
         r["status"], r["unknowns"], r["iterations"] = s[0][0], int(s[0][1].replace(",", "")), int(s[0][2])
         r["numSolves"] = len(s)
+    else:
+        r["error"] = True
+        lines = [l for l in text.splitlines() if l.strip() and not l.startswith("-")]
+        print(f"  no linear solve in {os.path.join(workdir, 'run.log')}: {lines[-1][:120] if lines else 'empty log'}", file=sys.stderr, flush=True)
     return r
 
 def read_vtu_arrays(path, names):
@@ -183,8 +187,20 @@ def main():
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--write-only", action="store_true", help="generate the decks without running")
     a = ap.parse_args()
-    if not a.geosx and not a.write_only:
-        sys.exit("geosx executable not found: pass --geosx or set GEOSX")
+    # geosx runs with the case directory as working directory: resolve the paths given on the command line now
+    if not a.write_only:
+        geosx = os.path.abspath(a.geosx) if os.path.exists(a.geosx) else shutil.which(a.geosx or "geosx")
+        if not geosx or not os.access(geosx, os.X_OK):
+            sys.exit(f"geosx executable not found or not executable: '{a.geosx}' (pass --geosx with a valid path or set GEOSX)")
+        a.geosx = geosx
+        if a.np > 1:
+            mpirun = os.path.abspath(a.mpirun) if os.path.exists(a.mpirun) else shutil.which(a.mpirun)
+            if not mpirun:
+                sys.exit(f"MPI launcher not found: '{a.mpirun}' (pass --mpirun)")
+            a.mpirun = mpirun
+    a.template = os.path.abspath(a.template)
+    if not os.path.exists(a.template):
+        sys.exit(f"template not found: {a.template}")
 
     def do(mesh, n, pattern, contrast, state, percent=None):
         tag = state if percent is None else f"mfd{percent:g}pct"
