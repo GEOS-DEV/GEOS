@@ -2,15 +2,15 @@
 
 <Problem>
   <FieldSpecifications>
-  <!-- AGGREGATE CONCENTRATIONS -->
+  <!-- CONSTRAINT VALUES: pH FOR H+, AGGREGATE CONCENTRATIONS FOR THE REST -->
     <FieldSpecification
-      name="initialAggregate_H_all"
+      name="initialpH_H_all"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="water_primarySpeciesConstraintValue"
       component="0"
-      scale="1.585e-7"/>
+      scale="8.0"/>
 
     <FieldSpecification
       name="initialAggregate_HCO3_all"
@@ -66,15 +66,15 @@
       component="6"
       scale="7.817e-4"/>
 
-    <!-- AGGREGATE CONCENTRATIONS AT SOURCE -->
+    <!-- CONSTRAINT VALUES AT SOURCE -->
     <FieldSpecification
-      name="initialAggregate_H_source"
+      name="initialpH_H_source"
       initialCondition="1"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="water_primarySpeciesConstraintValue"
       component="0"
-      scale="1.585e-7"/>
+      scale="8.0"/>
 
     <FieldSpecification
       name="initialAggregate_HCO3_source"

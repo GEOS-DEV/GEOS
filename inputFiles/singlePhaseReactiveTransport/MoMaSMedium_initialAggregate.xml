@@ -8,7 +8,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="0"
       scale="1e-8"/>
 
@@ -17,7 +17,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="1"
       scale="-3.0"/>
 
@@ -26,7 +26,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="2"
       scale="1e-8"/>
 
@@ -35,7 +35,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="3"
       scale="1.0"/>
 
@@ -44,7 +44,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumA"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="4"
       scale="1.0"/>
 
@@ -54,7 +54,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumB"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="0"
       scale="1e-8"/>
 
@@ -63,7 +63,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumB"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="1"
       scale="-9.0"/>
 
@@ -72,7 +72,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumB"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="2"
       scale="1e-8"/>
 
@@ -81,7 +81,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumB"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="3"
       scale="3.0"/>
 
@@ -90,7 +90,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/MediumB"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="4"
       scale="10.0"/>
 
@@ -100,7 +100,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="0"
       scale="0.3"/>
 
@@ -109,7 +109,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="1"
       scale="0.3"/>
 
@@ -118,7 +118,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="2"
       scale="0.3"/>
 
@@ -127,7 +127,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="3"
       scale="1e-8"/>
 
@@ -136,7 +136,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="water_primarySpeciesAggregateConcentration"
+      fieldName="water_primarySpeciesConstraintValue"
       component="4"
       scale="1e-8"/>
   </FieldSpecifications>

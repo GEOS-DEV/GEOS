@@ -43,6 +43,14 @@ DECLARE_FIELD( initialPrimarySpeciesConcentration,
                WRITE_AND_READ,
                "initialPrimarySpeciesConcentration" );
 
+DECLARE_FIELD( primarySpeciesConstraintValue,
+               "primarySpeciesConstraintValue",
+               array3dLayoutSpecies,
+               1e-16,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Value of the constraint closing each primary species' row of the initial equilibrium solve" );
+
 DECLARE_FIELD( primarySpeciesAggregateConcentration,
                "primarySpeciesAggregateConcentration",
                array3dLayoutSpecies,

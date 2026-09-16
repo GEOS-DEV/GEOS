@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- LOG CONCENTRATIONS AT SOURCE, FROM THE CHARGE-BALANCED SOURCE SPECIATION -->
+    <FieldSpecification
+      name="log_H_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-18.541056915"/>
+
+    <FieldSpecification
+      name="log_HCO3_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-2.691824324"/>
+
+    <FieldSpecification
+      name="log_Ca_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-4.466850040"/>
+
+    <FieldSpecification
+      name="log_SO4_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="3"
+      scale="-13.649043683"/>
+
+    <FieldSpecification
+      name="log_Cl_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="4"
+      scale="-10.476800697"/>
+
+    <FieldSpecification
+      name="log_Mg_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="5"
+      scale="-6.434685299"/>
+    
+    <FieldSpecification
+      name="log_Na_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="6"
+      scale="-3.227632388"/>
+  </FieldSpecifications>
+</Problem>

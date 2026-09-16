@@ -67,6 +67,9 @@ public:
   static constexpr integer MAX_NUM_SPECIES = 20;
   static constexpr integer MAX_NUM_KINETIC_REACTIONS = 10;
 
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > primarySpeciesConstraintValue() const
+  { return m_primarySpeciesConstraintValue; }
+
   arrayView3d< real64 const, reactivefluid::USD_SPECIES > primarySpeciesAggregateConcentration() const
   { return m_primarySpeciesAggregateConcentration; }
 
@@ -122,16 +125,19 @@ public:
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & primarySpeciesMobileAggregateConcentration,
                            arrayView4d< real64, reactivefluid::USD_SPECIES_DC > const & dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                            arrayView4d< real64, reactivefluid::USD_SPECIES_DC > const & dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                           arrayView3d< real64 const, reactivefluid::USD_SPECIES > const & primarySpeciesConstraintValue,
                            arrayView3d< real64 const, reactivefluid::USD_SPECIES > const & initialPrimarySpeciesConcentration,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & secondarySpeciesConcentration,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & kineticReactionRates,
                            arrayView3d< real64, reactivefluid::USD_SPECIES > const & aggregateSpeciesRates,
                            arrayView4d< real64, reactivefluid::USD_SPECIES_DC > const & dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                           arrayView1d< integer const > const & primarySpeciesConstraintType,
                            integer const numPrimarySpecies,
                            integer const numSecondarySpecies,
                            integer const numKineticReactions,
                            REACTION_PARAMS_TYPE params,
                            typename ACTIVITY_MODEL::Params activityParams ):
+      m_primarySpeciesConstraintType( primarySpeciesConstraintType ),
       m_numPrimarySpecies( numPrimarySpecies ),
       m_numSecondarySpecies( numSecondarySpecies ),
       m_numKineticReactions( numKineticReactions ),
@@ -139,6 +145,7 @@ public:
       m_primarySpeciesMobileAggregateConcentration( primarySpeciesMobileAggregateConcentration ),
       m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations( dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations ),
       m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations( dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations ),
+      m_primarySpeciesConstraintValue( primarySpeciesConstraintValue ),
       m_initialPrimarySpeciesConcentration( initialPrimarySpeciesConcentration ),
       m_secondarySpeciesConcentration( secondarySpeciesConcentration ),
       m_kineticReactionRates( kineticReactionRates ),
@@ -174,10 +181,11 @@ public:
     GEOS_HOST_DEVICE
     bool enforceEquilibrium( real64 const pressure,
                              real64 const temperature,
-                             arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & targetPrimarySpeciesAggregateConcentration,
+                             arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesConstraintValue,
                              arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & initialPrimarySpeciesConcentration,
                              arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
-                             arraySlice1d< real64 > const & logSecondarySpeciesConcentration ) const;
+                             arraySlice1d< real64 > const & logSecondarySpeciesConcentration,
+                             arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesAggregateConcentration ) const;
 
     GEOS_HOST_DEVICE
     void updateMixedReactionSystem( localIndex const k,
@@ -203,6 +211,8 @@ public:
 
 protected:
 
+    arrayView1d< integer const > m_primarySpeciesConstraintType;
+
     integer m_numPrimarySpecies;
 
     integer m_numSecondarySpecies;
@@ -216,6 +226,8 @@ protected:
     arrayView4d< real64, reactivefluid::USD_SPECIES_DC >  m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations;
 
     arrayView4d< real64, reactivefluid::USD_SPECIES_DC >  m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations;
+
+    arrayView3d< real64 const, reactivefluid::USD_SPECIES > const m_primarySpeciesConstraintValue;
 
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const m_initialPrimarySpeciesConcentration;
 
@@ -278,11 +290,19 @@ protected:
     static constexpr char const * chemicalSystemNameString() { return "chemicalSystemType"; }
     static constexpr char const * activityModelNameString() { return "activityModelType"; }
     static constexpr char const * solventMassPerSolutionVolumeString() { return "solventMassPerSolutionVolume"; }
+    static constexpr char const * primarySpeciesConstraintTypesString() { return "primarySpeciesConstraintTypes"; }
   };
 
 protected:
 
   virtual void postInputInitialization() override;
+
+  /**
+   * @brief Check the input constraint types and store them in the array the solve takes.
+   * @details Rejects a length that does not match the species count, mineralEquilibrium, and more
+   *          than one chargeBalance.
+   */
+  void checkPrimarySpeciesConstraints();
 
   virtual void resizeFields( localIndex const size, localIndex const numPts );
 
@@ -297,11 +317,13 @@ protected:
                          m_primarySpeciesMobileAggregateConcentration,
                          m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
                          m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                         m_primarySpeciesConstraintValue,
                          m_initialPrimarySpeciesConcentration,
                          m_secondarySpeciesConcentration,
                          m_kineticReactionRates,
                          m_aggregateSpeciesRates,
                          m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                         m_primarySpeciesConstraintType.toViewConst(),
                          m_numPrimarySpecies,
                          m_numSecondarySpecies,
                          m_numKineticReactions,
@@ -316,6 +338,9 @@ protected:
   integer m_numKineticReactions;
 
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_initialPrimarySpeciesConcentration;
+
+  /// Value of the constraint each primary species carries, in the units its constraint type reads.
+  array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_primarySpeciesConstraintValue;
 
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_secondarySpeciesConcentration;
 
@@ -338,6 +363,15 @@ protected:
   ChemicalSystemType m_chemicalSystemType;
 
   ActivityModelType m_activityModelType;
+
+  /// Constraint closing each primary species' row of the initial equilibrium solve, as named in the
+  /// input file, in the species order of the chemical system. Empty means every species is
+  /// constrained by its total concentration.
+  string_array m_primarySpeciesConstraintTypeInput;
+
+  /// m_primarySpeciesConstraintTypeInput resolved to PrimarySpeciesConstraintType values, always
+  /// numPrimarySpecies long. Not an input.
+  array1d< integer > m_primarySpeciesConstraintType;
 
   /// TODO: prescribed as a constant for now. The exact factor is
   ///
@@ -367,27 +401,22 @@ updateEquilibriumReaction( localIndex const k,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration ) const
 {
   constexpr integer numSecondarySpecies = REACTION_PARAMS_TYPE::numSecondarySpecies();
+  // A stack array needs a capacity of at least one, even when there are no secondary species.
+  constexpr integer numSecondarySpeciesStorage = numSecondarySpecies > 0 ? numSecondarySpecies : 1;
 
-  if constexpr ( numSecondarySpecies > 0 )
+  stackArray1d< real64, numSecondarySpeciesStorage > logSecondarySpeciesConcentration( numSecondarySpecies );
+
+  bool const converged = enforceEquilibrium( pressure, temperature, m_primarySpeciesConstraintValue[k][0],
+                                             m_initialPrimarySpeciesConcentration[k][0], logPrimarySpeciesConcentration,
+                                             logSecondarySpeciesConcentration.toSlice(),
+                                             m_primarySpeciesAggregateConcentration[k][0] );
+
+  for( integer i=0; i < numSecondarySpecies; ++i )
   {
-    stackArray1d< real64, numSecondarySpecies > logSecondarySpeciesConcentration( numSecondarySpecies );
-
-    bool const converged = enforceEquilibrium( pressure, temperature, m_primarySpeciesAggregateConcentration[k][0],
-                                               m_initialPrimarySpeciesConcentration[k][0], logPrimarySpeciesConcentration,
-                                               logSecondarySpeciesConcentration.toSlice() );
-
-    for( integer i=0; i < numSecondarySpecies; ++i )
-    {
-      m_secondarySpeciesConcentration[k][0][i] =  LvArray::math::exp( logSecondarySpeciesConcentration[i] );
-    }
-
-    return converged;
+    m_secondarySpeciesConcentration[k][0][i] =  LvArray::math::exp( logSecondarySpeciesConcentration[i] );
   }
-  else
-  {
-    GEOS_UNUSED_VAR( k, pressure, temperature, logPrimarySpeciesConcentration );
-    return true;
-  }
+
+  return converged;
 
 }
 
@@ -398,32 +427,39 @@ inline bool
 ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE, ACTIVITY_MODEL >::
 enforceEquilibrium( real64 const pressure,
                     real64 const temperature,
-                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & targetPrimarySpeciesAggregateConcentration,
+                    arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesConstraintValue,
                     arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & initialPrimarySpeciesConcentration,
                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
-                    arraySlice1d< real64 > const & logSecondarySpeciesConcentration ) const
+                    arraySlice1d< real64 > const & logSecondarySpeciesConcentration,
+                    arraySlice1d< real64, reactivefluid::USD_SPECIES - 2 > const & primarySpeciesAggregateConcentration ) const
 {
   GEOS_UNUSED_VAR( pressure );
 
   integer const numPrimarySpecies = m_numPrimarySpecies;
 
   stackArray1d< real64, MAX_NUM_SPECIES > logPrimarySpeciesConcentration0( numPrimarySpecies );
-  stackArray1d< real64, MAX_NUM_SPECIES > targetPrimarySpeciesAggregateConc( numPrimarySpecies );
+  stackArray1d< real64, MAX_NUM_SPECIES > constraintValue( numPrimarySpecies );
+
+  using ConstraintType = PrimarySpeciesConstraintType;
+  stackArray1d< ConstraintType, MAX_NUM_SPECIES > constraintType( numPrimarySpecies );
 
   for( integer i=0; i < numPrimarySpecies; ++i )
   {
-    targetPrimarySpeciesAggregateConc[i] = targetPrimarySpeciesAggregateConcentration[i];
+    constraintValue[i] = primarySpeciesConstraintValue[i];
     logPrimarySpeciesConcentration0[i] = LvArray::math::log( initialPrimarySpeciesConcentration[i] );
+    constraintType[i] = static_cast< ConstraintType >( m_primarySpeciesConstraintType[i] );
   }
 
-  // Solve for the primary and secondary concentrations with equilibrium enforced at the target aggregates
-  return EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature,
-                                                                 m_params,
-                                                                 m_activityParams,
-                                                                 targetPrimarySpeciesAggregateConc,
-                                                                 logPrimarySpeciesConcentration0,
-                                                                 logPrimarySpeciesConcentration,
-                                                                 logSecondarySpeciesConcentration );
+  // Solve for the primary and secondary concentrations under the constraint each species carries.
+  return EquilibriumReactionsType::enforceEquilibrium_PrimaryConcentrations( temperature,
+                                                                             m_params,
+                                                                             m_activityParams,
+                                                                             constraintType,
+                                                                             constraintValue,
+                                                                             logPrimarySpeciesConcentration0,
+                                                                             logPrimarySpeciesConcentration,
+                                                                             logSecondarySpeciesConcentration,
+                                                                             primarySpeciesAggregateConcentration );
 }
 
 template< typename BASE >
@@ -437,12 +473,15 @@ updateMixedReactionSystem( localIndex const k,
                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea ) const
 {
-  integer const numPrimarySpecies = m_numPrimarySpecies;
-  integer const numSecondarySpecies = m_numSecondarySpecies;
-  integer const numKineticReactions = m_numKineticReactions;
+  constexpr integer numPrimarySpecies = REACTION_PARAMS_TYPE::numPrimarySpecies();
+  constexpr integer numSecondarySpecies = REACTION_PARAMS_TYPE::numSecondarySpecies();
+  constexpr integer numKineticReactions = REACTION_PARAMS_TYPE::numKineticReactions();
+  // A stack array needs a capacity of at least one, even when the system has none of these.
+  constexpr integer numSecondarySpeciesStorage = numSecondarySpecies > 0 ? numSecondarySpecies : 1;
+  constexpr integer dReactionRatesStorage = numKineticReactions * numPrimarySpecies > 0 ? numKineticReactions * numPrimarySpecies : 1;
 
-  stackArray1d< real64, MAX_NUM_SPECIES > logSecondarySpeciesConcentration( numSecondarySpecies );
-  stackArray2d< real64, MAX_NUM_KINETIC_REACTIONS * MAX_NUM_SPECIES > dReactionRates_dLogPrimarySpeciesConcentrations( numKineticReactions, numPrimarySpecies );
+  stackArray1d< real64, numSecondarySpeciesStorage > logSecondarySpeciesConcentration( numSecondarySpecies );
+  stackArray2d< real64, dReactionRatesStorage > dReactionRates_dLogPrimarySpeciesConcentrations( numKineticReactions, numPrimarySpecies );
 
   computeAggregateConcentrationsAndRates( pressure,
                                           temperature,

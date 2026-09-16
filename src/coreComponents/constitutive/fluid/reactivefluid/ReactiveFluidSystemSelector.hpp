@@ -36,6 +36,23 @@
 #include <utility>
 #include <variant>
 
+namespace hpcReact
+{
+namespace reactionsSystems
+{
+
+using geos::EnumStrings;
+using geos::string;
+
+ENUM_STRINGS( PrimarySpeciesConstraintType,
+              "aggregateConcentration",
+              "pX",
+              "chargeBalance",
+              "mineralEquilibrium" );
+
+} // namespace reactionsSystems
+} // namespace hpcReact
+
 namespace geos
 {
 
@@ -80,6 +97,17 @@ ENUM_STRINGS( ChemicalSystemType,
 ENUM_STRINGS( ActivityModelType,
               "identity",
               "bdot" );
+
+/**
+ * @brief The constraint that closes one primary species' row of the initial equilibrium solve.
+ * @details XML names:
+ *   - ``aggregateConcentration`` (default): the aggregate concentration supplied by the input.
+ *   - ``pX``: the negative log of the species' activity, i.e. pH when the species is H+.
+ *   - ``chargeBalance``: replaces the aggregate concentration with electroneutrality. At most
+ *     one species may carry it.
+ *   - ``mineralEquilibrium``: reserved and rejected, HPCReact does not implement it for now.
+ */
+using PrimarySpeciesConstraintType = hpcReact::reactionsSystems::PrimarySpeciesConstraintType;
 
 /**
  * @brief What every entry below shares: the two HPCReact types, and the two enum values the XML
