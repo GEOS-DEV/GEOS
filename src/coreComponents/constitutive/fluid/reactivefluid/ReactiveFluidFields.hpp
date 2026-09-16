@@ -43,6 +43,14 @@ DECLARE_FIELD( initialPrimarySpeciesConcentration,
                WRITE_AND_READ,
                "initialPrimarySpeciesConcentration" );
 
+DECLARE_FIELD( primarySpeciesConstraintValue,
+               "primarySpeciesConstraintValue",
+               array3dLayoutSpecies,
+               1e-16,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Value of the constraint closing each primary species' row of the initial equilibrium solve" );
+
 DECLARE_FIELD( primarySpeciesAggregateConcentration,
                "primarySpeciesAggregateConcentration",
                array3dLayoutSpecies,
@@ -55,7 +63,7 @@ DECLARE_FIELD( primarySpeciesAggregateConcentration_n,
                "primarySpeciesAggregateConcentration_n",
                array3dLayoutSpecies,
                1e-16,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "primarySpeciesAggregateConcentration at the previous timestep" );
 
@@ -71,7 +79,7 @@ DECLARE_FIELD( dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentra
                "dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations",
                array4dLayoutSpecies_dC,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Deivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration" );
 
@@ -79,7 +87,7 @@ DECLARE_FIELD( dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesCon
                "dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations",
                array4dLayoutSpecies_dC,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Deivatives of primarySpeciesMobileAggregateConcentration w.r.t log primary species concentration" );
 
@@ -111,7 +119,7 @@ DECLARE_FIELD( dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
                "dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations",
                array4dLayoutSpecies_dC,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Deivatives of aggregate concentration rates w.r.t log primary species concentration" );
 }

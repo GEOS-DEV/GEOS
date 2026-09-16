@@ -363,6 +363,7 @@ if (ENABLE_HPCREACT)
     set( constitutive_headers
         ${constitutive_headers}
         fluid/reactivefluid/ReactiveFluidSelector.hpp 
+        fluid/reactivefluid/ReactiveFluidSystemSelector.hpp 
         )
 
     set( constitutive_headers

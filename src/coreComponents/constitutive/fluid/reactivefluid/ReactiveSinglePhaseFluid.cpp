@@ -31,6 +31,9 @@ namespace reactivefluid
 {
 
 using namespace hpcReact::bulkGeneric;
+using namespace hpcReact::geochemistry;
+using namespace hpcReact::ChainGeneric;
+using namespace hpcReact::MoMasBenchmark;
 
 template< typename BASE >
 ReactiveSinglePhaseFluid< BASE >::
@@ -43,6 +46,33 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
 
+  this->registerWrapper( viewKeyStruct::activityModelNameString(), &m_activityModelType ).
+    setApplyDefaultValue( ActivityModelType::identity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Activity model applied to the chemical system. Available options are: "
+                    "``" + EnumStrings< ActivityModelType >::concat( "|" ) +
+                    ". ``bdot`` requires ion size and b-dot parameters, which only the geochemical "
+                    "systems carry." );
+
+  this->registerWrapper( viewKeyStruct::solventMassPerSolutionVolumeString(), &m_solventMassPerSolutionVolume ).
+    setApplyDefaultValue( 1000.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Mass of solvent per unit volume of solution [kg/m^3], used to convert species "
+                    "molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 "
+                    "approximates an aqueous solution by the density of pure water." );
+
+  this->registerWrapper( viewKeyStruct::primarySpeciesConstraintTypesString(), &m_primarySpeciesConstraintTypeInput ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Constraint closing each primary species' row of the initial equilibrium solve, "
+                    "one entry per primary species in declaration order. Available options are: "
+                    "``" + EnumStrings< PrimarySpeciesConstraintType >::concat( "|" ) +
+                    "``. Defaults to ``aggregateConcentration`` for every species when unset. Each "
+                    "species reads its entry of the ``primarySpeciesConstraintValue`` field, set as "
+                    "``<fluidName>_primarySpeciesConstraintValue``, in the units its constraint type "
+                    "implies, and the solve reports the aggregate concentration of every species "
+                    "not constrained by one." );
+
+  this->template registerField< fields::reactivefluid::primarySpeciesConstraintValue >( &m_primarySpeciesConstraintValue );
   this->template registerField< fields::reactivefluid::initialPrimarySpeciesConcentration >( &m_initialPrimarySpeciesConcentration );
   this->template registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
   this->template registerField< fields::reactivefluid::primarySpeciesAggregateConcentration >( &m_primarySpeciesAggregateConcentration );
@@ -66,9 +96,13 @@ deliverClone( string const & name, Group * const parent ) const
   ReactiveSinglePhaseFluid & newConstitutiveRelation = dynamicCast< ReactiveSinglePhaseFluid & >( *clone );
 
   newConstitutiveRelation.m_chemicalSystemType = m_chemicalSystemType;
+  newConstitutiveRelation.m_activityModelType = m_activityModelType;
   newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies;
   newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies;
   newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
+  newConstitutiveRelation.m_solventMassPerSolutionVolume = m_solventMassPerSolutionVolume;
+  newConstitutiveRelation.m_primarySpeciesConstraintTypeInput = m_primarySpeciesConstraintTypeInput;
+  newConstitutiveRelation.m_primarySpeciesConstraintType = m_primarySpeciesConstraintType;
 
   return clone;
 }
@@ -78,44 +112,105 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
 {
   BASE::postInputInitialization();
 
-  switch( m_chemicalSystemType )
+  GEOS_THROW_IF( !isSupportedReactionSystem( m_chemicalSystemType, m_activityModelType ),
+                 GEOS_FMT( "{}: chemical system '{}' has no '{}' activity model.",
+                           this->getDataContext(),
+                           EnumStrings< ChemicalSystemType >::toString( m_chemicalSystemType ),
+                           EnumStrings< ActivityModelType >::toString( m_activityModelType ) ),
+                 InputError );
+
+  // taken from the reaction system itself
+  forEachReactionSystem( [&]( auto system )
   {
-    case ChemicalSystemType::ultramafic:
-      m_numPrimarySpecies = 9;
-      m_numSecondarySpecies = 16;
-      m_numKineticReactions = 5;
-      break;
+    using System = decltype( system );
+    if( System::chemicalSystem == m_chemicalSystemType && System::activityModel == m_activityModelType )
+    {
+      using ReactionParams = typename System::ReactionParamsType;
+      m_numPrimarySpecies = ReactionParams::numPrimarySpecies();
+      m_numSecondarySpecies = ReactionParams::numSecondarySpecies();
+      m_numKineticReactions = ReactionParams::numKineticReactions();
+    }
+  } );
 
-    case ChemicalSystemType::carbonate:
-      m_numPrimarySpecies = 7;
-      m_numSecondarySpecies = 10;
-      m_numKineticReactions = 1;
-      break;
+  GEOS_THROW_IF_LE_MSG( m_solventMassPerSolutionVolume, 0.0,
+                        GEOS_FMT( "invalid value of attribute '{}'",
+                                  viewKeyStruct::solventMassPerSolutionVolumeString() ),
+                        InputError, this->getDataContext() );
 
-    case ChemicalSystemType::carbonateAllEquilibrium:
-      m_numPrimarySpecies = 7;
-      m_numSecondarySpecies = 11;
-      m_numKineticReactions = 0;
-      break;
+  checkPrimarySpeciesConstraints();
+}
 
-    case ChemicalSystemType::chainSerialAllKinetic:
-      m_numPrimarySpecies = 3;
-      m_numSecondarySpecies = 0;
-      m_numKineticReactions = 3;
-      break;
+template< typename BASE >
+void ReactiveSinglePhaseFluid< BASE >::checkPrimarySpeciesConstraints()
+{
+  string const constraintKey = viewKeyStruct::primarySpeciesConstraintTypesString();
 
-    case ChemicalSystemType::momasMedium:
-      m_numPrimarySpecies = 5;
-      m_numSecondarySpecies = 9;
-      m_numKineticReactions = 1;
-      break;
+  m_primarySpeciesConstraintType.resize( m_numPrimarySpecies );
 
-    default:
-      m_numPrimarySpecies = 5;
-      m_numSecondarySpecies = 7;
-      m_numKineticReactions = 0;
-      break;
+  // If no constraint types are given, constrain every species by its aggregate concentration.
+  if( m_primarySpeciesConstraintTypeInput.empty() )
+  {
+    for( integer i = 0; i < m_numPrimarySpecies; ++i )
+    {
+      m_primarySpeciesConstraintType[i] = static_cast< integer >( PrimarySpeciesConstraintType::AggregateConcentration );
+    }
+    return;
   }
+
+  GEOS_THROW_IF_NE_MSG( LvArray::integerConversion< integer >( m_primarySpeciesConstraintTypeInput.size() ),
+                        m_numPrimarySpecies,
+                        GEOS_FMT( "{}: '{}' must have one entry per primary species. Chemical system "
+                                  "'{}' has {} of them.",
+                                  this->getDataContext(), constraintKey,
+                                  EnumStrings< ChemicalSystemType >::toString( m_chemicalSystemType ),
+                                  m_numPrimarySpecies ),
+                        InputError );
+
+  integer chargeBalanceCount = 0;
+
+  for( integer i = 0; i < m_numPrimarySpecies; ++i )
+  {
+    PrimarySpeciesConstraintType const type =
+      EnumStrings< PrimarySpeciesConstraintType >::fromString( m_primarySpeciesConstraintTypeInput[i] );
+
+    GEOS_THROW_IF( type == PrimarySpeciesConstraintType::MineralEquilibrium,
+                   GEOS_FMT( "{}: '{}' entry {} requests '{}', which is not implemented yet.",
+                             this->getDataContext(), constraintKey, i,
+                             EnumStrings< PrimarySpeciesConstraintType >::toString( type ) ),
+                   InputError );
+
+    if( type == PrimarySpeciesConstraintType::ChargeBalance )
+    {
+      // A neutral species does not appear in the charge balance, so it cannot be solved for by it.
+      real64 charge = 0.0;
+      forEachReactionSystem( [&]( auto system )
+      {
+        using System = decltype( system );
+        if( System::chemicalSystem == m_chemicalSystemType && System::activityModel == m_activityModelType )
+        {
+          charge = System::activityParams().m_speciesCharge[i + m_numSecondarySpecies];
+        }
+      } );
+
+      GEOS_THROW_IF( charge == 0.0,
+                     GEOS_FMT( "{}: '{}' entry {} requests '{}' on a neutral species.",
+                               this->getDataContext(), constraintKey, i,
+                               EnumStrings< PrimarySpeciesConstraintType >::toString( type ) ),
+                     InputError );
+
+      ++chargeBalanceCount;
+    }
+
+    m_primarySpeciesConstraintType[i] = static_cast< integer >( type );
+  }
+
+  // Electroneutrality is one equation; more than one species carrying it makes the solve singular.
+  GEOS_THROW_IF_GT_MSG( chargeBalanceCount, 1,
+                        GEOS_FMT( "{}: {} primary species request '{}'. At most one species may carry it.",
+                                  this->getDataContext(), chargeBalanceCount,
+                                  EnumStrings< PrimarySpeciesConstraintType >::toString(
+                                    PrimarySpeciesConstraintType::ChargeBalance ) ),
+                        InputError );
 }
 
 template< typename BASE >
@@ -133,6 +228,7 @@ void ReactiveSinglePhaseFluid< BASE >::resizeFields( localIndex const size, loca
   integer const numSecondarySpecies = this->numSecondarySpecies();
   integer const numKineticReactions = this->numKineticReactions();
 
+  m_primarySpeciesConstraintValue.resize( size, numPts, numPrimarySpecies );
   m_initialPrimarySpeciesConcentration.resize( size, numPts, numPrimarySpecies );
   m_secondarySpeciesConcentration.resize( size, numPts, numSecondarySpecies );
   m_primarySpeciesAggregateConcentration.resize( size, numPts, numPrimarySpecies );

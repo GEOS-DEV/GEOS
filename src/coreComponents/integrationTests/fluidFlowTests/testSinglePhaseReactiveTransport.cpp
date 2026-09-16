@@ -147,7 +147,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="0"
         scale="1.585e-7"/>
 
@@ -156,7 +156,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="1"
         scale="8.293e-3"/>
 
@@ -165,7 +165,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="2"
         scale="2.171e-3"/>
 
@@ -174,7 +174,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="3"
         scale="1.666e-6"/>
 
@@ -183,7 +183,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="4"
         scale="2.821e-5"/>
 
@@ -192,7 +192,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="5"
         scale="1.605e-3"/>
       
@@ -201,7 +201,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ all }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="6"
         scale="7.817e-4"/>
       
@@ -210,7 +210,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="0"
         scale="1.585e-7"/>
 
@@ -219,7 +219,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="1"
         scale="7.317e-2"/>
 
@@ -228,7 +228,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="2"
         scale="1.517e-2"/>
 
@@ -237,7 +237,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="3"
         scale="1.666e-6"/>
 
@@ -246,7 +246,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="4"
         scale="2.821e-5"/>
 
@@ -255,7 +255,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="5"
         scale="1.605e-3"/>
       
@@ -264,7 +264,7 @@ char const * xmlInputCarbonate =
         initialCondition="1"
         setNames="{ source }"
         objectPath="ElementRegions/region/cb"
-        fieldName="water_primarySpeciesAggregateConcentration"
+        fieldName="water_primarySpeciesConstraintValue"
         component="6"
         scale="7.817e-4"/>
 
@@ -562,13 +562,15 @@ TEST_F( SinglePhaseReactiveTransportTest, jacobianNumericalCheck_accumulationBal
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-6; // 1% error margin
 
+  real64 const accumulationDt = 1e-4;
+
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->assembleAccumulationTermsInMassBalanceAndSpeciesAmountEqs( dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleAccumulationTermsInMassBalanceAndSpeciesAmountEqs( accumulationDt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

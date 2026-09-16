@@ -13,40 +13,30 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -1e-4, 0, 100.0 }"
+      xCoords="{ -1e-4, 0, 40.0 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 1, 400 }"
+      nx="{ 1, 40 }"
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb-0_0_0, cb-1_0_0 }"/>
   </Mesh>
 
   <Events
-    maxTime="400">
+    maxTime="20">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="20"
+      timeFrequency="5"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="logPrimarySpeciesHistoryCollection"
-      timeFrequency="1"
-      target="/Tasks/logPrimarySpeciesCollection"/>
-
-    <PeriodicEvent
-      name="logPrimarySpeciesTimeHistoryOutput"
-      timeFrequency="1"
-      target="/Outputs/logPrimarySpeciesHistoryOutput"/>
-
-    <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1.0"
+      maxEventDt="1"
       target="/Solvers/SinglePhaseReactiveFlow"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="100"
+      cycleFrequency="20"
       target="/Outputs/restartOutput"/>
   </Events>
 
