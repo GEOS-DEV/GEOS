@@ -102,8 +102,6 @@ protected:
                                                    arrayView1d< real64 > const & localRhs ) override final;     
 
 
-  virtual integer numFluidComponents() const override { return this->flowSolver()->numFluidComponents(); }
-
   virtual string getFlowDofKey() const override { return SinglePhaseBase::viewKeyStruct::elemDofFieldString(); }
 
 };

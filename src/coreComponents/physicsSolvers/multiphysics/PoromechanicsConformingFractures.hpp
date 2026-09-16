@@ -1150,8 +1150,6 @@ protected:
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
-  virtual integer numFluidComponents() const = 0;
-
   struct viewKeyStruct : public Base::viewKeyStruct
   {};
 

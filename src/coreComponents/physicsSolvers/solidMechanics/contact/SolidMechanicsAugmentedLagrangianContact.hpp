@@ -218,6 +218,17 @@ public:
    */
   void createBubbleCellList( DomainPartition & domain ) const;
 
+  /**
+   * @brief Recompute face and element geometric quantities (normals, areas, centers, volumes) after mesh
+   * topology changes, and reorder kf1 fracture nodes to match kf0 for the conforming contact kernels.
+   * @param domain The physical domain object
+   *
+   * This is called from setupSystem() for the standalone contact solver. Coupled solvers built on top of this
+   * contact solver (e.g. poromechanics conforming fractures) that do not route through setupSystem() must call
+   * this explicitly before assembling contact-dependent sparsity/terms.
+   */
+  void updateFractureGeometry( DomainPartition & domain );
+
 private:
 
   /**

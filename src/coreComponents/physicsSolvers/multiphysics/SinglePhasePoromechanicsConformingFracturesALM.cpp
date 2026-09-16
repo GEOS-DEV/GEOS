@@ -70,12 +70,12 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityP
 {
   GEOS_MARK_FUNCTION;
 
-  // Initialize ALM contact solver internal data structures
-  // These must be called before assembling the contact-dependent pattern.
-  this->solidMechanicsSolver()->createFaceTypeList( domain );
-  this->solidMechanicsSolver()->updateStickSlipList( domain );
-  this->solidMechanicsSolver()->createBubbleCellList( domain );
-  
+  // Recompute fracture face/element geometry and rebuild the ALM contact solver's internal lists.
+  // These must happen before assembling the contact-dependent pattern; setSparsityPattern() is the
+  // only place this coupled solver hooks into for that, since it does not route through the contact
+  // sub-solver's own setupSystem().
+  this->solidMechanicsSolver()->updateFractureGeometry( domain );
+
   Base::setSparsityPattern(domain,dofManager,localMatrix, pattern);
 }
 
