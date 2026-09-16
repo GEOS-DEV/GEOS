@@ -205,6 +205,33 @@ public:
     return m_mineralDensities[r];
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  integer getNumKineticReactions() const
+  {
+    return m_numKineticReactions;
+  }
+
+  /**
+   * @brief Fraction of the pre-precipitation pore space filled by precipitated minerals
+   * @details theta = dPhi_m / (phi + dPhi_m), with dPhi_m the mineral volume fraction gained since the
+   *          initial state. Only growth counts, so a cell that has dissolved below its initial mineral
+   *          content is not treated as clogged.
+   */
+  GEOS_HOST_DEVICE
+  inline
+  real64 getCloggedPoreFraction( localIndex const k, localIndex const q ) const
+  {
+    real64 precipitatedVolumeFraction = 0.0;
+    for( integer r=0; r < m_numKineticReactions; ++r )
+    {
+      precipitatedVolumeFraction += fmax( getVolumeFractionForMineral( k, q, r )
+                                          - getInitialVolumeFractionForMineral( k, q, r ), 0.0 );
+    }
+    real64 const openPoreVolumeFraction = getPorosity( k, q ) + precipitatedVolumeFraction;
+    return openPoreVolumeFraction > 0.0 ? fmin( precipitatedVolumeFraction / openPoreVolumeFraction, 1.0 ) : 0.0;
+  }
+
 protected:
 
   arrayView3d< real64, reactivefluid::USD_SPECIES > m_volumeFractions;

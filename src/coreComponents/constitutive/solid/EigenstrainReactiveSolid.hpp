@@ -27,6 +27,7 @@
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/DamagePermeability.hpp"
+#include "constitutive/permeability/DamageCloggingPermeability.hpp"
 #include "constitutive/diffusion/DamageDiffusion.hpp"
 
 #include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
@@ -59,8 +60,10 @@ public:
   EigenstrainReactiveSolidUpdates( SOLID_TYPE const & solidModel,
                                    ReactivePorosityBase const & porosityModel,
                                    PERM_TYPE const & permModel,
+                                   real64 const surfaceAreaDamageExponent,
                                    DIFF_TYPE const * diffModel = nullptr ):
     CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( solidModel, porosityModel, permModel ),
+    m_surfaceAreaDamageExponent( surfaceAreaDamageExponent ),
     m_diffUpdate( initDiffUpdate( diffModel ) )
   {}
 
@@ -128,6 +131,24 @@ public:
 
       m_permUpdate.updateDamagePermeability( k, damageAvg );
     }
+    else if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< PERM_TYPE, DamageCloggingPermeability > )
+    {
+      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
+
+      real64 damageAvg = 0.0;
+      real64 cloggedPoreFractionAvg = 0.0;
+
+      for( localIndex i=0; i<quadSize; ++i )
+      {
+        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
+        cloggedPoreFractionAvg += m_porosityUpdate.getCloggedPoreFraction( k, i );
+      }
+
+      damageAvg = damageAvg/quadSize;
+      cloggedPoreFractionAvg = cloggedPoreFractionAvg/quadSize;
+
+      m_permUpdate.updateDamageCloggingPermeability( k, damageAvg, cloggedPoreFractionAvg );
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -156,15 +177,36 @@ public:
                                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
                                   arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const override final
   {
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
-    real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
-
-    for( integer r=0; r < initialSurfaceArea.size(); ++r )
+    if constexpr ( std::is_same_v< PERM_TYPE, DamageCloggingPermeability > )
     {
-      real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
-      real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
-      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
-                       * pow( porosity / initialPorosity, 2.0/3.0 );
+      // Pore-lining growth: crystals nucleate on and coat the pore walls, so the reacting surface is the
+      // wall area given as input and shrinks as the coating fills the pore. It does not scale with the
+      // mineral present, so a rock holding no mineral to start with is valid input.
+      real64 const cloggingFactor = pow( fmax( 1.0 - m_porosityUpdate.getCloggedPoreFraction( k, q ), 0.0 ), 2.0/3.0 );
+
+      // Confine the reaction to the fractured rock, where the injected fluid actually is. The exponent
+      // defaults to zero, which leaves the area ungated since d^0 = 1 even for an intact cell.
+      real64 const damageGate = pow( fmax( fmin( 1.0, getDamage( k, q ) ), 0.0 ), m_surfaceAreaDamageExponent );
+
+      for( integer r=0; r < initialSurfaceArea.size(); ++r )
+      {
+        surfaceArea[r] = initialSurfaceArea[r] * cloggingFactor * damageGate;
+      }
+    }
+    else
+    {
+      // Dispersed-crystal growth: the surface follows the mineral already present, so the input state
+      // has to be seeded with a non-zero volume fraction
+      real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+      real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
+
+      for( integer r=0; r < initialSurfaceArea.size(); ++r )
+      {
+        real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
+        real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
+        surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
+                         * pow( porosity / initialPorosity, 2.0/3.0 );
+      }
     }
   }
 
@@ -244,6 +286,9 @@ private:
   using CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::m_porosityUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::m_permUpdate;
 
+  /// Exponent confining the reactive surface area to damaged cells; 0 leaves the area ungated
+  real64 m_surfaceAreaDamageExponent;
+  
   /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
   typename DIFF_TYPE::KernelWrapper m_diffUpdate;
 
@@ -394,13 +439,15 @@ public:
     {
       return KernelWrapper( getSolidModel(),
                             getPorosityModel(),
-                            getPermModel() );
+                            getPermModel(),
+                            m_surfaceAreaDamageExponent );
     }
     else
     {
       return KernelWrapper( getSolidModel(),
                             getPorosityModel(),
                             getPermModel(),
+                            m_surfaceAreaDamageExponent,
                             &getDiffModel() );
     }
   }
@@ -430,6 +477,9 @@ private:
   }
 
   string m_diffusionModelName;
+
+  /// Exponent confining the reactive surface area to damaged cells; 0 leaves the area ungated
+  real64 m_surfaceAreaDamageExponent;
 };
 
 

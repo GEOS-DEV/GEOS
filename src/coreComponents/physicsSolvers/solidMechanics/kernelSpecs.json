@@ -176,6 +176,8 @@
         "EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >",
         "EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >",
         "EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >",
+        "EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability >",
+        "EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability >",
         "EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >",
         "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability>",
         "PorousReactiveSolid< Damage< ElasticIsotropic >, ConstantPermeability >",
@@ -185,6 +187,8 @@
         "PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >",
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, ConstantPermeability >",
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >",
+        "PorousReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability >",
+        "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability >",
         "PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >"
       ],
       "FE_TYPE": [

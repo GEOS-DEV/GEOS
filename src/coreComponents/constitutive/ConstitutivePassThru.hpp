@@ -54,6 +54,7 @@
 #include "permeability/PressurePermeability.hpp"
 #include "permeability/ProppantPermeability.hpp"
 #include "permeability/DamagePermeability.hpp"
+#include "permeability/DamageCloggingPermeability.hpp"
 #include "permeability/SlipDependentPermeability.hpp"
 #include "permeability/WillisRichardsPermeability.hpp"
 #include "contact/CoulombFriction.hpp"
@@ -379,6 +380,8 @@ struct ConstitutivePassThru< EigenstrainReactiveSolidBase >
                                  EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >,
                                  EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >,
                                  EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >,
+                                 EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability >,
+                                 EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability >,
                                  EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion > >::execute( constitutiveRelation,
                                                                                                                                          std::forward< LAMBDA >( lambda ) );
   }
@@ -401,6 +404,8 @@ struct ConstitutivePassThru< PorousReactiveSolidBase >
                                  PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >,
                                  PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >,
                                  PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >,
+                                 PorousReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability >,
+                                 PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability >,
                                  PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion > >::execute( constitutiveRelation,
                                                                                                                                     std::forward< LAMBDA >( lambda ) );
   }
@@ -514,6 +519,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >,
                                  EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >,
                                  EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >,
+                                 EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability >,
+                                 EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability >,
                                  EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >,
                                  PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
@@ -548,6 +555,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >,
                                  PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >,
                                  PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >,
+                                 PorousReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability >,
+                                 PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability >,
                                  PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >,
                                  ReactiveSolid< ReactivePorosityBase, ConstantPermeability >,
                                  ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability >,
@@ -570,6 +579,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >,
                                  EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >,
                                  EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >,
+                                 EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability >,
+                                 EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability >,
                                  EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >,
                                  PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
@@ -604,6 +615,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >,
                                  PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >,
                                  PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >,
+                                 PorousReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability >,
+                                 PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability >,
                                  PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >,
                                  ReactiveSolid< ReactivePorosityBase, ConstantPermeability >,
                                  ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability >,

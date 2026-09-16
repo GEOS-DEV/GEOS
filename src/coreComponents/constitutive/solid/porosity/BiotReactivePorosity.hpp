@@ -127,7 +127,17 @@ public:
                + reactionPorosityIncrement;  
 
     dPorosity_dPressure = biotSkeletonModulusInverse * poreFluidMineralBulkModRatio * porosityMultiplierInverse;
+
+    // Keep a minimal pore volume so a fully clogged cell stays well posed in the flow solver
+    if( porosity < minPorosity )
+    {
+      porosity = minPorosity;
+      dPorosity_dPressure = 0.0;
+    }
   }
+
+  /// Lower bound on porosity [-]
+  static constexpr real64 minPorosity = 1.0e-6;
 
   GEOS_HOST_DEVICE
   void computePoreMineralPressure( real64 const & mineralPressure_n,

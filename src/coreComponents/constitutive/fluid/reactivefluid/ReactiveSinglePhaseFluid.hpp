@@ -56,7 +56,8 @@ enum class ChemicalSystemType : integer
   kineticCarbonate,
   momasEasy,
   momasMedium,
-  chainSerialAllKinetic
+  chainSerialAllKinetic,
+  ammoniumSulfate
 };
 
 template< typename BASE >
@@ -242,7 +243,8 @@ protected:
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::ChainGeneric::serialAllKineticType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::mediumCaseType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::easyCaseType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::kineticCarbonateSystemType > >
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::kineticCarbonateSystemType >,
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::ammoniumSulfateSystemType > >
   createReactionKernelWrapper() const
   {
     using namespace hpcReact::geochemistry;
@@ -322,6 +324,20 @@ protected:
                                                                      m_numSecondarySpecies,
                                                                      m_numKineticReactions,
                                                                      kineticCarbonateSystem );
+      case ChemicalSystemType::ammoniumSulfate:
+        return ReactionKernelWrapper< ammoniumSulfateSystemType >( m_primarySpeciesAggregateConcentration,
+                                                                   m_primarySpeciesMobileAggregateConcentration,
+                                                                   m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                   m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                                   m_initialPrimarySpeciesConcentration,
+                                                                   m_secondarySpeciesConcentration,
+                                                                   m_kineticReactionRates,
+                                                                   m_aggregateSpeciesRates,
+                                                                   m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                                   m_numPrimarySpecies,
+                                                                   m_numSecondarySpecies,
+                                                                   m_numKineticReactions,
+                                                                   ammoniumSulfateSystem );
       case ChemicalSystemType::chainSerialAllKinetic:
         return ReactionKernelWrapper< serialAllKineticType >( m_primarySpeciesAggregateConcentration,
                                                               m_primarySpeciesMobileAggregateConcentration,
@@ -572,7 +588,8 @@ ENUM_STRINGS( ChemicalSystemType,
               "kineticCarbonate",
               "momasEasy",
               "momasMedium",
-              "chainSerialAllKinetic" );
+              "chainSerialAllKinetic",
+              "ammoniumSulfate" );
 
 } // namespace reactivefluid
 

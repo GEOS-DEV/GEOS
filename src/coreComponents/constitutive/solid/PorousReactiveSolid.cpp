@@ -26,6 +26,7 @@
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
 #include "constitutive/permeability/DamagePermeability.hpp"
+#include "constitutive/permeability/DamageCloggingPermeability.hpp"
 #include "constitutive/diffusion/DamageDiffusion.hpp"
 
 namespace geos
@@ -49,6 +50,12 @@ PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::PorousReactiveSolid( st
       setDescription( "Name of the diffusion constitutive model" );
   }
   
+  this->registerWrapper( "surfaceAreaDamageExponent", &m_surfaceAreaDamageExponent ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. "
+                    "The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell." );
+
   this->registerWrapper( "fluidModelName", &m_fluidModelName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid constitutive model. Its (constant) compressibility "
@@ -71,7 +78,9 @@ void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::initializePreSubGr
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializePreSubGroups();
 
   // Read the fluid's (constant) compressibility and hand it to the porosity model, which needs the
-  // fluid bulk modulus for the pore-mineral-pressure / porosity coupling.
+  // fluid bulk modulus for the pore-mineral-pressure / porosity coupling but has no direct handle on
+  // the fluid. The fluid is looked up through its CompressibleSinglePhaseFluid base, which also covers
+  // the reactive and thermal variants.
   CompressibleSinglePhaseFluid const & fluid =
     this->getParent().template getGroup< CompressibleSinglePhaseFluid >( m_fluidModelName );
   GEOS_THROW_IF_LE_MSG( fluid.compressibility(), 0.0,
@@ -96,6 +105,10 @@ typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability > Po
 typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageSpectralDamagePermeability;
 typedef PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageVolDevDamagePermeability;
 
+// Damage solid + mineral-clogging damage permeability
+typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamageCloggingPermeability > PorousReactiveDamageDamageCloggingPermeability;
+typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamageCloggingPermeability > PorousReactiveDamageSpectralDamageCloggingPermeability;
+
 // Damage solid + damage permeability + damage diffusion
 typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion > PorousReactiveDamageDamagePermeabilityDamageDiffusion;
 
@@ -107,6 +120,8 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevConstant, st
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralDamagePermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamageCloggingPermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralDamageCloggingPermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeabilityDamageDiffusion, string const &, Group * const )
 

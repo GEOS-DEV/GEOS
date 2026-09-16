@@ -121,6 +121,12 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numKineticReactions = 1;
       break;
 
+    case ChemicalSystemType::ammoniumSulfate:
+      m_numPrimarySpecies = 2;
+      m_numSecondarySpecies = 0;
+      m_numKineticReactions = 1;
+      break;
+
     case ChemicalSystemType::chainSerialAllKinetic:
       m_numPrimarySpecies = 3;
       m_numSecondarySpecies = 0;

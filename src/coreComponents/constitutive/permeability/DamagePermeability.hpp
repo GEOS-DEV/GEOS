@@ -53,7 +53,7 @@ public:
     }
   }
 
-private:
+protected:
 
   /// Permeability of the intact bulk material
   real64 m_bulkPermeability;
@@ -96,7 +96,7 @@ public:
     static constexpr char const * damageDependenceConstantString() { return "damageDependenceConstant"; }
   };
 
-private:
+protected:
 
   /// Permeability of the intact bulk material
   real64 m_bulkPermeability;
