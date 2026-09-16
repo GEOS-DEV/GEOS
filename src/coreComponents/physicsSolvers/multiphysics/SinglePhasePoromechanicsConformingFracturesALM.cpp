@@ -75,7 +75,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityP
   this->solidMechanicsSolver()->createFaceTypeList( domain );
   this->solidMechanicsSolver()->updateStickSlipList( domain );
   this->solidMechanicsSolver()->createBubbleCellList( domain );
-
+  
   Base::setSparsityPattern(domain,dofManager,localMatrix, pattern);
 }
 

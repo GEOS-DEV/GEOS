@@ -21,6 +21,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 #define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 
+#include "common/format/Format.hpp"
+#include "common/logger/Logger.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
 
 namespace geos
@@ -156,6 +158,7 @@ public:
 
     bool const isStickState = true;
 
+    GEOS_LOG_RANK_0(GEOS_FMT("[debug] \t \t fetching list stick at {}",meshName));
     stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
 

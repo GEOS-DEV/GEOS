@@ -179,12 +179,12 @@ private:
    * @param localMatrix the local system matrix
    * @param localRhs the local system right-hand side vector
    */
-  void assembleElementBasedContributions( real64 const time_n,
-                                          real64 const dt,
-                                          DomainPartition & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs );
+  // void assembleElementBasedContributions( real64 const time_n,
+  //                                         real64 const dt,
+  //                                         DomainPartition & domain,
+  //                                         DofManager const & dofManager,
+  //                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  //                                         arrayView1d< real64 > const & localRhs );
 
   // virtual void assembleCouplingTerms( real64 const time_n,
   //                                     real64 const dt,
