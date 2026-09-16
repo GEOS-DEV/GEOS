@@ -37,8 +37,8 @@
       xCoords="{ 0, 1 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1, 2 }"
-      nx="{ 3 }"
-      ny="{ 3 }"
+      nx="{ 32 }"
+      ny="{ 32 }"
       nz="{ 32, 32 }"
       cellBlockNames="{ cbLower, cbUpper }"/>
   </Mesh>

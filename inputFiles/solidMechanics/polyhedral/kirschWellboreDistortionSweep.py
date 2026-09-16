@@ -104,7 +104,8 @@ def main():
                                               outputEvent="" if a.no_vtk else OUTPUT_EVENT,
                                               outputs="" if a.no_vtk else OUTPUTS))
             log = os.path.join(case, "log.txt")
-            if not os.path.exists(log):
+            # a log older than the executable is stale
+            if not os.path.exists(log) or os.path.getmtime(log) < os.path.getmtime(geosx):
                 cmd = ([geosx] if a.np == 1 else ["mpirun", "-np", str(a.np), geosx]) + ["-i", deck, "-o", case]
                 with open(log, "w") as f:
                     subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, check=False)

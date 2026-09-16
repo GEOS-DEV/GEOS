@@ -32,7 +32,7 @@
       <MixedVEMDiscretization
         name="mixedVEM1"
         hybridization="0"
-        stabilizationLength="0"/>
+        stabilizationLength="1"/>
     </MixedVEM>
   </NumericalMethods>
 
