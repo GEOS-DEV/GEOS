@@ -268,6 +268,18 @@ public:
                             DofManager::Connector::Elem );
   }
 
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override
+  {
+    // Delegate to the flow solver so well-reservoir perforation couplings are included
+    // when FLOW_SOLVER is a ReservoirAndWells type. DofManager cannot represent that
+    // off-diagonal coupling (see CoupledReservoirAndWellsBase::setSparsityPattern).
+    // For a standalone flow solver this is equivalent to PhysicsSolverBase::setSparsityPattern.
+    flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, pattern );
+  }
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,

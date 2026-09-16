@@ -55,11 +55,11 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 50e-18, 50e-18, 50e-18 }"/>
+      permeabilityComponents="{ 1e-15, 1e-15, 1e-15 }"/>
     
     <SinglePhaseThermalConductivity
       name="thermalCond"
-      defaultThermalConductivityComponents="{ 4.0, 4.0, 4.0 }"/>
+      defaultThermalConductivityComponents="{ 100.0, 100.0, 100.0 }"/>
     
   </Constitutive>
 
