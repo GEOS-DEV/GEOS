@@ -243,6 +243,14 @@ if( ENABLE_CUDA AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_SYSTEM_PROCESSOR MATCH
   target_compile_options( fluidFlowSolvers PRIVATE
                           $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-mcmodel=large>
                           $<$<COMPILE_LANGUAGE:CXX>:-mcmodel=large> )
+  if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+    # Clang's large code model emits uniquely named .ltext.* sections. GNU ld
+    # has no .ltext linker-script rule, so each name becomes an output section
+    # and overflows the 16-bit ELF section index (SHN_LORESERVE == 65280).
+    target_compile_options( fluidFlowSolvers PRIVATE
+                            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fno-unique-section-names>
+                            $<$<COMPILE_LANGUAGE:CXX>:-fno-unique-section-names> )
+  endif()
 endif()
 
 target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
