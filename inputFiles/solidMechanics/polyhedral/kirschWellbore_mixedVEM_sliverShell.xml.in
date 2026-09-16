@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Mesh>
+    <InternalWellbore name="mesh1" elementTypes="{ C3D4 }" radius="{ 0.1, 5.0 }" theta="{ 0, 90 }"
+      zCoords="{ -0.1, 0.1 }" nr="{ 9 }" nt="{ 8 }" nz="{ 2 }"
+      hardRadialCoords="{ 0.1, 0.100196349541, 0.163068940895, 0.265914794847, 0.433624439641, 0.707106781187, 1.15307153908, 1.88030154654, 3.06618781759, 5 }"
+      trajectory="{ { 0.0, 0.0, -0.1 }, { 0.0, 0.0, 0.1 } }"
+      useCartesianOuterBoundary="0" cellBlockNames="{ cb1 }"/>
+  </Mesh>
+  <ElementRegions>
+    <CellElementRegion name="Omega" cellBlocks="{ * }" materialList="{ rock }"/>
+  </ElementRegions>
+  <Constitutive>
+    <ElasticIsotropic name="rock" defaultDensity="2700" defaultBulkModulus="5.0e8" defaultShearModulus="3.0e8"/>
+  </Constitutive>
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsMixedVEM name="wellboreSolver" discretization="mixedVEM1" targetRegions="{ Omega }" logLevel="1">
+      <NonlinearSolverParameters newtonTol="1.0e-3" newtonMaxIter="5"/>
+      <LinearSolverParameters solverType="gmres" preconditionerType="mgr" krylovTol="1.0e-5" krylovMaxIter="2000"/>
+    </SolidMechanicsMixedVEM>
+  </Solvers>
+  <NumericalMethods>
+    <MixedVEM>
+      <MixedVEMDiscretization name="mixedVEM1" hybridization="0" stabilizationLength="1"/>
+    </MixedVEM>
+  </NumericalMethods>
+  <Events maxTime="1.0">
+    <PeriodicEvent name="solverApplications" forceDt="1" target="/Solvers/wellboreSolver"/>
+    <PeriodicEvent name="outputs" timeFrequency="1" target="/Outputs/vtkOutput"/>
+  </Events>
+  <Outputs>
+    <VTK name="vtkOutput" plotFileRoot="plot"/>
+  </Outputs>
+  <FieldSpecifications>
+    <Traction name="farField" objectPath="faceManager" setNames="{ rpos }" tractionType="stress" scale="1.0"
+      inputStress="{ -11.25e6, -9.0e6, -15.0e6, 0.0, 0.0, 0.0 }"/>
+    <Traction name="wellLoad" objectPath="faceManager" setNames="{ rneg }" tractionType="normal" scale="-2.0e6"/>
+    <FieldSpecification name="symmetryY" objectPath="faceManager" fieldName="displacementTrace" component="1" scale="0.0" setNames="{ tneg }"/>
+    <FieldSpecification name="symmetryX" objectPath="faceManager" fieldName="displacementTrace" component="0" scale="0.0" setNames="{ tpos }"/>
+    <FieldSpecification name="planeStrain" objectPath="faceManager" fieldName="displacementTrace" component="2" scale="0.0" setNames="{ zneg, zpos }"/>
+  </FieldSpecifications>
+</Problem>
