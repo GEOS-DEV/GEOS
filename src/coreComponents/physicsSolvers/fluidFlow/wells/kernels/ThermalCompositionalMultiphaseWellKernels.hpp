@@ -268,8 +268,11 @@ public:
       {
         if( m_isProducer )   // only PHASEVOLRATE is supported for now
         {
-          // the residual is in mass units
-          normalizer = m_dt * LvArray::math::abs( m_constraintValue ) * m_phaseDens_n[iwelem][0][m_targetPhaseIndex];
+          if( m_currentControl == ConstraintTypeId::PHASEVOLRATE )
+          {
+            // the residual is in mass units
+            normalizer = m_dt * LvArray::math::abs( m_constraintValue ) * m_phaseDens_n[iwelem][0][m_targetPhaseIndex];
+          }
         }
         else   // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
