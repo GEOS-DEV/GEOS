@@ -161,7 +161,7 @@ public:
     // Step 3: assemble the derivatives of the species amount balance equation w.r.t temperature
     for( integer is = 0; is < numSpecies; ++is )
     {
-      // Drivative of primary species amount in pore volume wrt temperature
+      // Derivative of primary species amount in pore volume wrt temperature
       stack.localJacobian[is+numEqn-numSpecies][numDof-numSpecies-1] += stack.dPoreVolume_dTemp * m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventMassPerSolutionVolume
                                                                         /* + stack.poreVolume *
                                                                            m_dPrimarySpeciesAggregateConcentration_dTemp[ei][is] *
