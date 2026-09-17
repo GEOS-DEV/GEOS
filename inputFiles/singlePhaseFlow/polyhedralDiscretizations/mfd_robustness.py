@@ -231,7 +231,9 @@ def main():
               f" krylovTol = {tol.group(1) if tol else '?'}")
         print(f"isotropic permeability in series along the flow (x): k = {K_REF:g} m^2 on x < 0.5, k = {K_REF:g} / contrast on x > 0.5,"
               f" interface on mesh faces; p = p0 on x = 0 and x = 1, uniform source")
-        print(f"{'mesh':>4} {'mfd%':>5} {'n':>3} {'cells':>8} | " + " | ".join(f"{'contrast ' + format(c, 'g'):>32}" for c in contrasts) + " | wall")
+        print("unknowns = cells + faces of the assembled matrix; reduced = cells + non-condensed flux dofs, the coupled system after the"
+              " condensation (a condensed flux is a one-way closure row)")
+        print(f"{'mesh':>4} {'mfd%':>5} {'n':>3} {'cells':>8} {'unknowns':>9} {'reduced':>9} | " + " | ".join(f"{'contrast ' + format(c, 'g'):>32}" for c in contrasts) + " | wall")
         for mesh in a.mesh.split(","):
             for percent in [float(x) for x in a.table_percents.split(",")]:
                 for n in [int(x) for x in a.table_levels.split(",")]:
@@ -247,7 +249,9 @@ def main():
                         walls.append(r["wall"])
                     if not cells:
                         continue
-                    print(f"{mesh:>4} {percent:>5g} {n:>3} {r.get('cells', '-'):>8} | " + " | ".join(f"{c:>32}" for c in cells) + f" | {sum(walls):6.0f} s", flush=True)
+                    reduced = r["cells"] + r["live"] if "cells" in r and "live" in r else "-"
+                    print(f"{mesh:>4} {percent:>5g} {n:>3} {r.get('cells', '-'):>8} {r.get('unknowns', '-'):>9} {reduced:>9} | "
+                          + " | ".join(f"{c:>32}" for c in cells) + f" | {sum(walls):6.0f} s", flush=True)
         return
 
     for mesh in a.mesh.split(","):
