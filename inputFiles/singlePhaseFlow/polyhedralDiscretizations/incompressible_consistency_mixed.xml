@@ -11,8 +11,8 @@
       <MixedMimeticDiscretization
         name="singlePhaseMixedMFD"
         innerProductType="quasiTPFA"
-        adaptive="1"
-        residualTolerance="1.0e-3"
+        adaptiveConsistency="1"
+        consistencyTolerance="1.0e-3"
         nominalGradient="{ 1.0, 1.0, 1.0 }"/>
     </MixedMimetic>
   </NumericalMethods>
