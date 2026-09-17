@@ -611,11 +611,11 @@ public:
                                m_elemPerm[er[k]][esr[k]][ei[k]][0][2] };
 
       real64 const t = LvArray::math::max( mimeticInnerProduct::TPFAInnerProduct::computeOneSidedTrans( m_nodePosition,
-                                                                                                         m_faceToNodes,
-                                                                                                         kf,
-                                                                                                         m_elemCenter[er[k]][esr[k]][ei[k]],
-                                                                                                         perm,
-                                                                                                         areaTolerance ),
+                                                                                                        m_faceToNodes,
+                                                                                                        kf,
+                                                                                                        m_elemCenter[er[k]][esr[k]][ei[k]],
+                                                                                                        perm,
+                                                                                                        areaTolerance ),
                                            weightTolerance );
 
       real64 const mob = m_mob[er[k]][esr[k]][ei[k]];
