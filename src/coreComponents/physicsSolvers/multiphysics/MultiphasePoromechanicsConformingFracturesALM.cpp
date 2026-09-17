@@ -19,7 +19,6 @@
 
 #include "MultiphasePoromechanicsConformingFracturesALM.hpp"
 
-
 namespace geos
 {
 
@@ -29,150 +28,55 @@ using namespace fields;
 
 template< typename FLOW_SOLVER >
 MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::MultiphasePoromechanicsConformingFracturesALM( const string & name,
-                                                                                                             Group * const parent )
+                                                                                                               Group * const parent )
   : Base( name, parent )
 {}
 
 template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupCoupling( DomainPartition const & domain,
-                                                                                  DofManager & dofManager ) const
+void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityPattern( DomainPartition & domain,
+                                                                                        DofManager & dofManager,
+                                                                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                                        SparsityPattern< globalIndex > & pattern )
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_UNUSED_VAR( domain, dofManager );
+  // Recompute fracture face/element geometry and rebuild the ALM contact solver's internal lists.
+  // These must happen before assembling the contact-dependent pattern; setSparsityPattern() is the
+  // only place this coupled solver hooks into for that, since it does not route through the contact
+  // sub-solver's own setupSystem().
+  this->solidMechanicsSolver()->updateFractureGeometry( domain );
 
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-
-}
-
-
-template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
-                                                                                DofManager & dofManager,
-                                                                                CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                                ParallelVector & rhs,
-                                                                                ParallelVector & solution,
-                                                                                bool const setSparsity )
-{
-
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-
-}
-
-template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSystem( real64 const time_n,
-                                                                                   real64 const dt,
-                                                                                   DomainPartition & domain,
-                                                                                   DofManager const & dofManager,
-                                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                   arrayView1d< real64 > const & localRhs )
-{
-
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs );
-
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-}
-
-template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElementBasedContributions( real64 const time_n,
-                                                                                                      real64 const dt,
-                                                                                                      DomainPartition & domain,
-                                                                                                      DofManager const & dofManager,
-                                                                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                                      arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs );
-
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-
-}
-
-template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleCouplingTerms( real64 const time_n,
-                                                                                          real64 const dt,
-                                                                                          DomainPartition const & domain,
-                                                                                          DofManager const & dofManager,
-                                                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                          arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-  GEOS_UNUSED_VAR( domain, dofManager, localMatrix, localRhs, time_n, dt );
-
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-}
-
-template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::updateState( DomainPartition & domain )
-{
-  GEOS_MARK_FUNCTION;
-  GEOS_UNUSED_VAR( domain );
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-}
-
-
-template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-addTransmissibilityCouplingNNZ( DomainPartition const & domain,
-                                DofManager const & dofManager,
-                                arrayView1d< localIndex > const & rowLengths ) const
-{
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( domain, dofManager, rowLengths );
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-
+  Base::setSparsityPattern( domain, dofManager, localMatrix, pattern );
 }
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-addTransmissibilityCouplingPattern( DomainPartition const & domain,
-                                    DofManager const & dofManager,
-                                    SparsityPatternView< globalIndex > const & pattern ) const
+assembleForceResidualDerivativeWrtPressure( string const & GEOS_UNUSED_PARAM( meshName ),
+                                            MeshLevel const & GEOS_UNUSED_PARAM( mesh ),
+                                            string_array const & GEOS_UNUSED_PARAM( regionNames ),
+                                            DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                            CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                            arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( domain, dofManager, pattern );
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
+  // Only reached through the monolithic assembleSystem(), which is exercised by FullyImplicit
+  // coupling. The compositional-flow ALM force/pressure coupling kernels are not implemented yet;
+  // this solver is sequential-only for now (see postInputInitialization/couplingType checks upstream).
+  GEOS_ERROR( GEOS_FMT( "{}: FullyImplicit coupling is not supported by {}", this->getName(), this->getCatalogName() ) );
 }
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-assembleForceResidualDerivativeWrtPressure( string const & meshName,
-                                            MeshLevel const & mesh,
-                                            arrayView1d< string const > const & regionNames,
-                                            DofManager const & dofManager,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-}
-
-template< typename FLOW_SOLVER >
-void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
-assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
-                                                    arrayView1d< string const > const & regionNames,
-                                                    DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_PARAM( meshName ),
+                                                    MeshLevel const & GEOS_UNUSED_PARAM( mesh ),
+                                                    string_array const & GEOS_UNUSED_PARAM( regionNames ),
+                                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                                    CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                                     arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
-  GEOS_MARK_FUNCTION;
-
-  GEOS_UNUSED_VAR( mesh, regionNames, dofManager, localMatrix );
-  GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
-
+  // See assembleForceResidualDerivativeWrtPressure: FullyImplicit-only path, not implemented for
+  // compositional flow yet.
+  GEOS_ERROR( GEOS_FMT( "{}: FullyImplicit coupling is not supported by {}", this->getName(), this->getCatalogName() ) );
 }
-
 
 template class MultiphasePoromechanicsConformingFracturesALM<>;
 template class MultiphasePoromechanicsConformingFracturesALM< CompositionalMultiphaseReservoirAndWells<> >;
