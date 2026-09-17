@@ -117,7 +117,7 @@ public:
                               ReactiveSinglePhaseFluidAccessors const & reactiveSinglePhaseFluidAccessors,
                               PermeabilityAccessors const & permeabilityAccessors,
                               arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
-                              real64 const & solventMassPerSolutionVolume,
+                              real64 const & solventMassFraction,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
@@ -137,7 +137,7 @@ public:
     m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get(
                                                             fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
     m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags ),
-    m_solventMassPerSolutionVolume( solventMassPerSolutionVolume )
+    m_solventMassFraction( solventMassFraction )
   {}
 
   /**
@@ -188,25 +188,24 @@ public:
                                            real64 const & dens_up,
                                            real64 const & dDens_dP_up )
     {
-      GEOS_UNUSED_VAR( kf );
+      GEOS_UNUSED_VAR( kf, dens_up, dDens_dP_up );
 
       real64 speciesFlux[numSpecies]{};
       real64 dSpeciesFlux_dP[numSpecies]{};
       real64 dSpeciesFlux_dLogConc[numSpecies][numSpecies]{};
 
+      // the mass flux carries molality * solvent mass fraction moles per kg of solution
       for( integer is = 0; is < numSpecies; ++is )
       {
-        real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[seri][sesri][sei][0][is] * m_solventMassPerSolutionVolume;
-        speciesFlux[is] = aggregateConcMolarity_i / dens_up * fluxVal * mobility_up;
+        real64 const aggregateConcPerMass_i = m_primarySpeciesMobileAggregateConc[seri][sesri][sei][0][is] * m_solventMassFraction;
+        speciesFlux[is] = aggregateConcPerMass_i * fluxVal * mobility_up;
 
-        dSpeciesFlux_dP[is] = aggregateConcMolarity_i / dens_up * dFlux_dP * mobility_up
-                              + aggregateConcMolarity_i / dens_up * fluxVal * dMobility_dP_up
-                              - aggregateConcMolarity_i * fluxVal * mobility_up * dDens_dP_up / (dens_up * dens_up);
+        dSpeciesFlux_dP[is] = aggregateConcPerMass_i * ( dFlux_dP * mobility_up + fluxVal * dMobility_dP_up );
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[seri][sesri][sei][0][is][js] * m_solventMassPerSolutionVolume;
-          dSpeciesFlux_dLogConc[is][js] += dAggregateConcMolarity_i_dLogConc_j / dens_up * fluxVal * mobility_up;
+          real64 const dAggregateConcPerMass_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[seri][sesri][sei][0][is][js] * m_solventMassFraction;
+          dSpeciesFlux_dLogConc[is][js] += dAggregateConcPerMass_i_dLogConc_j * fluxVal * mobility_up;
         }
       }
 
@@ -269,8 +268,8 @@ protected:
   /// Array of flags to indicate mobile primary species
   arrayView1d< integer const > const m_mobilePrimarySpeciesFlags;
 
-  /// Mass of solvent per unit volume of solution [kg/m³], converting molality [mol/kg] to molarity [mol/m³]
-  real64 const m_solventMassPerSolutionVolume;
+  /// Mass fraction of solvent in the solution [-]; molality times this fraction is the amount per kg of solution
+  real64 const m_solventMassFraction;
 
 };
 
@@ -349,7 +348,7 @@ public:
                            reactiveFluidAccessors,
                            permeabilityAccessors,
                            mobilePrimarySpeciesFlags,
-                           reactiveFluid.solventMassPerSolutionVolume(),
+                           reactiveFluid.solventMassFraction(),
                            dt,
                            localMatrix,
                            localRhs );

@@ -472,9 +472,9 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
   }
 
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
-  real64 const solventMassPerSolutionVolume =
-    m_isThermal ? cm.getConstitutiveRelation< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( m_reactiveFluidModelName ).solventMassPerSolutionVolume()
-                : cm.getConstitutiveRelation< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( m_reactiveFluidModelName ).solventMassPerSolutionVolume();
+  real64 const solventMassFraction =
+    m_isThermal ? cm.getConstitutiveRelation< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( m_reactiveFluidModelName ).solventMassFraction()
+                : cm.getConstitutiveRelation< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( m_reactiveFluidModelName ).solventMassFraction();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -496,7 +496,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
                                                                                mobilePrimarySpeciesFlags.toViewConst(),
-                                                                               solventMassPerSolutionVolume,
+                                                                               solventMassFraction,
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -512,7 +512,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
                                                                                mobilePrimarySpeciesFlags.toViewConst(),
-                                                                               solventMassPerSolutionVolume,
+                                                                               solventMassFraction,
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -569,16 +569,20 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
       getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
-    real64 const solventMassPerSolutionVolume = fluid.solventMassPerSolutionVolume();
+    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const density = fluid.density();
+    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const density_n = fluid.density_n();
+    real64 const solventMassFraction = fluid.solventMassFraction();
 
+    // moles in the pore volume: molality * solvent mass fraction * density * pore volume
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer is = 0; is < numPrimarySpecies; ++is )
       {
-        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventMassPerSolutionVolume;
+        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventMassFraction * density[ei][0];
 
+        // the previous amount is not written to restart files and is rebuilt here after a restart
         if( isZero( primarySpeciesAggregateMole_n[ei][is] ) )
-          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventMassPerSolutionVolume;
+          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventMassFraction * density_n[ei][0];
       }
     } );
   }
@@ -588,16 +592,20 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
       getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
-    real64 const solventMassPerSolutionVolume = fluid.solventMassPerSolutionVolume();
+    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const density = fluid.density();
+    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const density_n = fluid.density_n();
+    real64 const solventMassFraction = fluid.solventMassFraction();
 
+    // moles in the pore volume: molality * solvent mass fraction * density * pore volume
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer is = 0; is < numPrimarySpecies; ++is )
       {
-        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventMassPerSolutionVolume;
+        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventMassFraction * density[ei][0];
 
+        // the previous amount is not written to restart files and is rebuilt here after a restart
         if( isZero( primarySpeciesAggregateMole_n[ei][is] ) )
-          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventMassPerSolutionVolume;
+          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventMassFraction * density_n[ei][0];
       }
     } );
   }
