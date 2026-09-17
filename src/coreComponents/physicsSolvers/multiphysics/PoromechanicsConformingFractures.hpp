@@ -613,11 +613,21 @@ protected:
     FaceManager const & faceManager = mesh.getFaceManager();
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    GEOS_LOG_RANK_0(GEOS_FMT( "[debug] \t \t Offset tables: {}({}) flow \n {}({}) ut \n {}({}) ub",
-      dofManager.rankOffset(this->getFlowDofKey()), dofManager.numLocalDofs(this->getFlowDofKey()),
-      dofManager.rankOffset(fields::solidMechanics::totalDisplacement::key()), dofManager.numLocalDofs(fields::solidMechanics::totalDisplacement::key()),
-      dofManager.rankOffset(fields::contact::totalBubbleDisplacement::key()), dofManager.numLocalDofs(fields::contact::totalBubbleDisplacement::key())
-    ));
+    if constexpr (CONTACT_SOLVER::hasContactStabilization)
+    {
+      GEOS_LOG_RANK_0(GEOS_FMT( "[debug] \t \t Offset tables: {}({}) flow \n {}({}) ut \n {}({}) ub",
+        dofManager.rankOffset(this->getFlowDofKey()), dofManager.numLocalDofs(this->getFlowDofKey()),
+        dofManager.rankOffset(fields::solidMechanics::totalDisplacement::key()), dofManager.numLocalDofs(fields::solidMechanics::totalDisplacement::key()),
+        dofManager.rankOffset(fields::contact::totalBubbleDisplacement::key()), dofManager.numLocalDofs(fields::contact::totalBubbleDisplacement::key())
+      ));
+    }
+    else
+    {
+      GEOS_LOG_RANK_0(GEOS_FMT( "[debug] \t \t Offset tables: {}({}) flow \n {}({}) ut",
+        dofManager.rankOffset(this->getFlowDofKey()), dofManager.numLocalDofs(this->getFlowDofKey()),
+        dofManager.rankOffset(fields::solidMechanics::totalDisplacement::key()), dofManager.numLocalDofs(fields::solidMechanics::totalDisplacement::key())
+      ));
+    }
 
 
     GEOS_LOG_RANK_0("[debug] \t \t Adding T-pattern [flow -> utot]\n");
