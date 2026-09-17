@@ -85,7 +85,8 @@ def write_case(template, workdir, mesh, n, pattern, contrast, state, rate, p0, p
     with open(os.path.join(workdir, "deck.xml"), "w") as f:
         f.write(text)
 
-SOLVE = re.compile(r"Linear Solver \| (\w+) \| Unknowns: ([\d,]+) \| Nonzeros: [\d,]+ \| Iterations: (\d+)")
+SOLVE = re.compile(r"Linear Solver \| (\w+) \| Unknowns: ([\d,]+) \| Nonzeros: [\d,]+ \| Iterations: (\d+)"
+                   r" \| Final Rel Res: \S+ \| Setup Time: ([\d.eE+-]+) s \| Solve Time: ([\d.eE+-]+) s")
 
 def partition(np, cells):
     """split np ranks over the three axes of the internal mesh, each prime factor going to the axis
@@ -123,6 +124,7 @@ def run_case(geosx, workdir, timeout, np=1, launcher=None, cells=(1, 1, 1)):
     s = SOLVE.findall(text)
     if s:
         r["status"], r["unknowns"], r["iterations"] = s[0][0], int(s[0][1].replace(",", "")), int(s[0][2])
+        r["setupTime"], r["solveTime"] = float(s[0][3]), float(s[0][4])
         r["numSolves"] = len(s)
     else:
         r["error"] = True
@@ -224,8 +226,12 @@ def main():
 
     if a.table:
         contrasts = [float(x) for x in a.table_contrasts.split(",")]
-        print(f"\nrelative L2 pressure error / GMRES iterations of the first solve; permeability layers in series along the flow")
-        print(f"{'mesh':>4} {'mfd%':>5} {'n':>3} {'cells':>8} | " + " | ".join(f"{'contrast ' + format(c, 'g'):>20}" for c in contrasts) + " | wall")
+        tol = re.search(r'krylovTol="([^"]+)"', open(a.template).read())
+        print(f"\nrelative L2 pressure error / GMRES iterations / linear solve time [s] (setup excluded) of the first solve;"
+              f" krylovTol = {tol.group(1) if tol else '?'}")
+        print(f"isotropic permeability in series along the flow (x): k = {K_REF:g} m^2 on x < 0.5, k = {K_REF:g} / contrast on x > 0.5,"
+              f" interface on mesh faces; p = p0 on x = 0 and x = 1, uniform source")
+        print(f"{'mesh':>4} {'mfd%':>5} {'n':>3} {'cells':>8} | " + " | ".join(f"{'contrast ' + format(c, 'g'):>32}" for c in contrasts) + " | wall")
         for mesh in a.mesh.split(","):
             for percent in [float(x) for x in a.table_percents.split(",")]:
                 for n in [int(x) for x in a.table_levels.split(",")]:
@@ -236,11 +242,12 @@ def main():
                             continue
                         got = 100.0 * r.get("mfdCells", 0) / max(r.get("cells", 1), 1)
                         err = f"{r['l2']:.2e}" if r["l2"] is not None else "   n/a  "
-                        cells.append(f"{err} / {r.get('iterations', '-'):>3}" + ("!" if r["error"] else " ") + (f"({got:.0f}%)" if abs(got - percent) > 0.5 else "    "))
+                        solve = f"{r['solveTime']:9.3f}" if "solveTime" in r else "      n/a"
+                        cells.append(f"{err} / {r.get('iterations', '-'):>3} / {solve}" + ("!" if r["error"] else " ") + (f"({got:.0f}%)" if abs(got - percent) > 0.5 else "    "))
                         walls.append(r["wall"])
                     if not cells:
                         continue
-                    print(f"{mesh:>4} {percent:>5g} {n:>3} {r.get('cells', '-'):>8} | " + " | ".join(f"{c:>20}" for c in cells) + f" | {sum(walls):6.0f} s", flush=True)
+                    print(f"{mesh:>4} {percent:>5g} {n:>3} {r.get('cells', '-'):>8} | " + " | ".join(f"{c:>32}" for c in cells) + f" | {sum(walls):6.0f} s", flush=True)
         return
 
     for mesh in a.mesh.split(","):
