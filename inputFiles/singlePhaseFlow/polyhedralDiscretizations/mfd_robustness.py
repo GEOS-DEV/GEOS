@@ -11,11 +11,12 @@ with geosx, and parsed from the log and the ASCII VTK output.
   python3 mfd_robustness.py --geosx geosx --mfd-percent 50                                     # sweeps at a fixed 50 % MFD
   python3 mfd_robustness.py --geosx geosx --table                                              # mesh x mfd% x n x contrast table, n up to 64
   python3 mfd_robustness.py --geosx geosx --table --np 8 --table-levels 32,64 --no-output      # the large levels on 8 MPI ranks, iterations only
+  python3 mfd_robustness.py --geosx geosx --table --mpirun "srun --overlap"                    # inside a Slurm step: every run through srun, serial included
 
 Exact solution used for the convergence check (homogeneous permeability k, injection rate density q):
   p(x) = p0 + q mu / (2 rho k) x (1 - x)
 """
-import argparse, glob, math, os, re, shutil, subprocess, sys, time
+import argparse, glob, math, os, re, shlex, shutil, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STATES = {"tpfa": "1.0e+20", "mixed": "0.1", "mfd": "1.0e-20"}
@@ -99,12 +100,15 @@ def partition(np, cells):
         p[axis] *= f
     return p
 
-def run_case(geosx, workdir, timeout, np=1, mpirun="mpirun", cells=(1, 1, 1)):
+def run_case(geosx, workdir, timeout, np=1, launcher=None, cells=(1, 1, 1)):
     t0 = time.time()
     cmd = [geosx, "-i", "deck.xml"]
     if np > 1:
         px, py, pz = partition(np, cells)
-        cmd = [mpirun, "-np", str(np), geosx, "-i", "deck.xml", "-x", str(px), "-y", str(py), "-z", str(pz)]
+        cmd += ["-x", str(px), "-y", str(py), "-z", str(pz)]
+    if launcher:
+        # "-n" is understood by mpirun, mpiexec and srun
+        cmd = launcher + ["-n", str(np)] + cmd
     with open(os.path.join(workdir, "run.log"), "w") as log:
         try:
             subprocess.run(cmd, cwd=workdir, stdout=log, stderr=subprocess.STDOUT, timeout=timeout)
@@ -186,8 +190,9 @@ def main():
     ap.add_argument("--table", action="store_true", help="4-D table mesh x mfd%% x n x contrast (layers in series), entries 'rel L2 error / iterations'")
     ap.add_argument("--table-percents", default="0,25,75,100"); ap.add_argument("--table-levels", default="2,4,8,16,32,64"); ap.add_argument("--table-contrasts", default="1,1e4,1e7")
     ap.add_argument("--no-output", action="store_true", help="no VTK output: iterations only, no pressure error (use for the large levels)")
-    ap.add_argument("--np", type=int, default=1, help="number of MPI ranks (1 = run geosx directly)")
-    ap.add_argument("--mpirun", default="mpirun", help="MPI launcher used when --np > 1")
+    ap.add_argument("--np", type=int, default=1, help="number of MPI ranks (1 = run geosx directly unless --mpirun is given)")
+    ap.add_argument("--mpirun", default=None, help="MPI launcher, options allowed, e.g. 'srun --overlap'; default: mpirun when --np > 1, "
+                                                   "none when --np 1. Give it explicitly to launch the serial runs too (needed inside a Slurm step)")
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--write-only", action="store_true", help="generate the decks without running")
     a = ap.parse_args()
@@ -197,11 +202,12 @@ def main():
         if not geosx or not os.access(geosx, os.X_OK):
             sys.exit(f"geosx executable not found or not executable: '{a.geosx}' (pass --geosx with a valid path or set GEOSX)")
         a.geosx = geosx
-        if a.np > 1:
-            mpirun = os.path.abspath(a.mpirun) if os.path.exists(a.mpirun) else shutil.which(a.mpirun)
-            if not mpirun:
-                sys.exit(f"MPI launcher not found: '{a.mpirun}' (pass --mpirun)")
-            a.mpirun = mpirun
+        if a.np > 1 or a.mpirun:
+            words = shlex.split(a.mpirun or "mpirun")
+            exe = os.path.abspath(words[0]) if os.path.exists(words[0]) else shutil.which(words[0])
+            if not exe:
+                sys.exit(f"MPI launcher not found: '{words[0]}' (pass --mpirun)")
+            a.mpirun = [exe] + words[1:]
     a.template = os.path.abspath(a.template)
     if not os.path.exists(a.template):
         sys.exit(f"template not found: {a.template}")
