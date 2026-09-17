@@ -20,6 +20,7 @@
 #include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "LvArray/src/math.hpp"
+#include "LvArray/src/system.hpp"
 
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
@@ -33,6 +34,12 @@
 #include <vtkPoints.h>
 #include <vtkRedistributeDataSetFilter.h>
 #include <vtkMultiProcessController.h>
+#include <vtkVersionMacros.h>
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+#include <vtkBoundingBox.h>
+#include <vtkCellCenters.h>
+#include <vtkDIYKdTreeUtilities.h>
+#endif
 #ifdef GEOS_USE_MPI
 #include <vtkMPIController.h>
 #include <vtkMPI.h>
@@ -849,7 +856,55 @@ scatterMesh( ScatterMethod method,
     vtkNew< vtkRedistributeDataSetFilter > rdsf;
     rdsf->SetInputDataObject( &mesh );
     rdsf->SetNumberOfPartitions( size );
-    rdsf->Update();
+    rdsf->SetController( controller );
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+    // VTK 9.7 computes its cuts from dataset bounds but balances cell centers.
+    // Some valid GEOS meshes have cell centers outside those bounds, which makes
+    // VTK's DIY KdTree abort while building its local histogram. Extend VTK's
+    // normal inflated domain to include those centers before generating cuts.
+    vtkNew< vtkCellCenters > cellCenters;
+    cellCenters->SetInputData( &mesh );
+    cellCenters->Update();
+    double cellCenterBounds[6];
+    cellCenters->GetOutput()->GetBounds( cellCenterBounds );
+    vtkBoundingBox localBounds;
+    localBounds.AddBounds( mesh.GetBounds() );
+    if( localBounds.IsValid() )
+    {
+      double constexpr boundingBoxLengthTolerance = 0.01;
+      double constexpr boundingBoxInflationRatio = 0.01;
+      double const xInflate = localBounds.GetLength( 0 ) < boundingBoxLengthTolerance
+                              ? boundingBoxLengthTolerance
+                              : boundingBoxInflationRatio * localBounds.GetLength( 0 );
+      double const yInflate = localBounds.GetLength( 1 ) < boundingBoxLengthTolerance
+                              ? boundingBoxLengthTolerance
+                              : boundingBoxInflationRatio * localBounds.GetLength( 1 );
+      double const zInflate = localBounds.GetLength( 2 ) < boundingBoxLengthTolerance
+                              ? boundingBoxLengthTolerance
+                              : boundingBoxInflationRatio * localBounds.GetLength( 2 );
+      localBounds.Inflate( xInflate, yInflate, zInflate );
+    }
+    localBounds.AddBounds( cellCenterBounds );
+    double correctedBounds[6];
+    double const * correctedBoundsPtr = nullptr;
+    if( localBounds.IsValid() )
+    {
+      localBounds.GetBounds( correctedBounds );
+      correctedBoundsPtr = correctedBounds;
+    }
+    auto const cuts = vtkDIYKdTreeUtilities::GenerateCuts(
+      &mesh, size, true, controller, correctedBoundsPtr );
+    rdsf->SetUseExplicitCuts( true );
+    rdsf->SetExplicitCuts( cuts );
+#endif
+    {
+      // vtkRedistributeDataSetFilter uses VTK's XML writer internally to
+      // serialize datasets exchanged by DIY. The writer may raise floating-point
+      // exceptions while calculating progress for empty arrays. These exceptions
+      // are harmless to VTK, but GEOS' enabled FPE traps turn them into SIGFPE.
+      LvArray::system::FloatingPointExceptionGuard guard;
+      rdsf->Update();
+    }
 
     vtkSmartPointer< vtkDataSet > kdResult = vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
 

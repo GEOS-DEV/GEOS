@@ -19,6 +19,8 @@
 
 #include "VTKMeshGeneratorTools.hpp"
 
+#include "LvArray/src/system.hpp"
+
 #include <vtkAppendFilter.h>
 #include <vtkDIYGhostUtilities.h>
 #include <vtkDIYUtilities.h>
@@ -33,6 +35,11 @@ vtkSmartPointer< vtkUnstructuredGrid >
 redistribute( vtkPartitionedDataSet & localParts,
               MPI_Comm mpiComm )
 {
+  // VTK's XML writer, used by DIY to serialize the exchanged grids, can
+  // evaluate empty arrays while reporting progress. Do not let those
+  // internal operations trip GEOS' floating-point exception handler.
+  LvArray::system::FloatingPointExceptionGuard guard;
+
   // The code below is modified from vtkDIYKdTreeUtilities::Exchange():
   // https://gitlab.kitware.com/vtk/vtk/-/blob/7037a148605bf9628710d8b729c22f27dd0ede93/Filters/ParallelDIY2/vtkDIYKdTreeUtilities.cxx#L289
   // We cannot call that function directly because vtkDIYKdTreeUtilities.hpp is a private header in VTK.
