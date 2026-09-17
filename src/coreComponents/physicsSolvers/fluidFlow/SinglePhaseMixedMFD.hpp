@@ -192,6 +192,24 @@ private:
   void computeMgrPointMarkers( DomainPartition const & domain,
                                DofManager const & dofManager );
 
+  /**
+   * @brief Build the sorted list of the ghost dofs, the off-rank columns of the local rows.
+   * @param domain the domain
+   * @param dofManager the dof manager
+   */
+  void computeGhostDofs( DomainPartition const & domain,
+                         DofManager const & dofManager );
+
+  /**
+   * @brief Compute the residual-norm weights w_i = max_j |A_ij| s_j, s_j the characteristic scale of unknown j.
+   * @param domain the domain
+   * @param dofManager the dof manager
+   * @param localMatrix the assembled local matrix
+   */
+  void computeResidualWeights( DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64 const, globalIndex const > const & localMatrix );
+
   /// relative tolerance used in the mass matrix computations
   real64 m_areaRelTol;
 
@@ -204,6 +222,12 @@ private:
 
   /// characteristic scale s_j of unknown x_j: s_p = |p_n|, s_m = p_scale / |M_ff|
   array1d< real64 > m_dofScale;
+
+  /// sorted global indices of the ghost dofs, the off-rank columns of the local rows
+  SortedArray< globalIndex > m_ghostDofs;
+
+  /// characteristic scale of the ghost dofs, in the order of m_ghostDofs
+  array1d< real64 > m_ghostDofScale;
 
 };
 

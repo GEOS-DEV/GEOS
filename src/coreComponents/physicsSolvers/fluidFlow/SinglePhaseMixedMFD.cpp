@@ -19,7 +19,7 @@
 
 #include "SinglePhaseMixedMFD.hpp"
 
-#include <unordered_map>
+#include <algorithm>
 
 #include "common/logger/Logger.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
@@ -358,6 +358,9 @@ void SinglePhaseMixedMFD::setupSystem( DomainPartition & domain,
 
   // with the dof numbering finalized, build the per-dof labels of the MGR reduction
   computeMgrPointMarkers( domain, dofManager );
+
+  // and the sorted list of the ghost dofs, the off-rank columns of the local rows
+  computeGhostDofs( domain, dofManager );
 }
 
 void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain,
@@ -590,6 +593,60 @@ void SinglePhaseMixedMFD::applyBoundaryConditions( real64 const time_n,
   // only the cell-centered boundary conditions (Dirichlet cells, source fluxes) remain to be applied here
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
+  // the matrix is final: the residual-norm weights are a function of it and are recomputed with it
+  computeResidualWeights( domain, dofManager, localMatrix.toViewConst() );
+}
+
+void SinglePhaseMixedMFD::computeGhostDofs( DomainPartition const & domain,
+                                            DofManager const & dofManager )
+{
+  GEOS_MARK_FUNCTION;
+
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  string const faceDofKey = dofManager.getKey( mixedMimetic::faceMassFlux::key() );
+
+  array1d< globalIndex > dofs;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               string_array const & regionNames )
+  {
+    FaceManager const & faceManager = mesh.getFaceManager();
+    arrayView1d< globalIndex const > const faceDofNumber = faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
+    for( localIndex kf = 0; kf < faceManager.size(); ++kf )
+    {
+      if( faceGhostRank[kf] >= 0 && faceDofNumber[kf] >= 0 )
+      {
+        dofs.emplace_back( faceDofNumber[kf] );
+      }
+    }
+    mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             ElementSubRegionBase const & subRegion )
+    {
+      arrayView1d< globalIndex const > const elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+      {
+        if( elemGhostRank[ei] >= 0 && elemDofNumber[ei] >= 0 )
+        {
+          dofs.emplace_back( elemDofNumber[ei] );
+        }
+      }
+    } );
+  } );
+
+  std::sort( dofs.begin(), dofs.end() );
+  m_ghostDofs.clear();
+  m_ghostDofs.insert( dofs.begin(), std::unique( dofs.begin(), dofs.end() ) );
+}
+
+void SinglePhaseMixedMFD::computeResidualWeights( DomainPartition & domain,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64 const, globalIndex const > const & localMatrix )
+{
+  GEOS_MARK_FUNCTION;
+
   // residual-norm weights w_i = ||A_i S||_inf = max_j |A_ij| s_j, S = diag(s_j) the
   // characteristic scales of the unknowns: each term |A_ij| s_j has the units of r_i,
   // and w_i is invariant under row rescaling and under the TPFA-face condensation
@@ -681,9 +738,13 @@ void SinglePhaseMixedMFD::applyBoundaryConditions( real64 const time_n,
     } );
   } );
 
-  // the scales of the ghost dofs: a cell may own none of its faces, so the face scales of its
-  // owners are synchronized; the pressure scale of a ghost cell is its synchronized |p_n|
-  std::unordered_map< globalIndex, real64 > ghostScale;
+  // s_j of the ghost dofs: a cell may own none of its faces, so the face scales come from their owners;
+  // the pressure scale of a ghost cell is its synchronized |p_n|
+  m_ghostDofScale.resize( m_ghostDofs.size() );
+  arrayView1d< real64 > const ghostDofScale = m_ghostDofScale.toView();
+  ghostDofScale.zero();
+  SortedArrayView< globalIndex const > const ghostDofs = m_ghostDofs.toViewConst();
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -696,13 +757,15 @@ void SinglePhaseMixedMFD::applyBoundaryConditions( real64 const time_n,
     arrayView1d< globalIndex const > const faceDofNumber = faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
     arrayView1d< real64 const > const faceScale = faceManager.getField< mixedMimetic::faceDofScale >();
-    for( localIndex kf = 0; kf < faceManager.size(); ++kf )
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
     {
       if( faceGhostRank[kf] >= 0 && faceDofNumber[kf] >= 0 )
       {
-        ghostScale[faceDofNumber[kf]] = faceScale[kf];
+        localIndex const slot = LvArray::sortedArrayManipulation::find( ghostDofs.begin(), ghostDofs.size(), faceDofNumber[kf] );
+        ghostDofScale[slot] = faceScale[kf];
       }
-    }
+    } );
+
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                                         [&]( localIndex const,
                                                                              ElementSubRegionBase const & subRegion )
@@ -710,18 +773,21 @@ void SinglePhaseMixedMFD::applyBoundaryConditions( real64 const time_n,
       arrayView1d< globalIndex const > const elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const presN = subRegion.getField< fields::flow::pressure_n >();
-      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( elemGhostRank[ei] >= 0 && elemDofNumber[ei] >= 0 )
         {
-          ghostScale[elemDofNumber[ei]] = LvArray::math::abs( presN[ei] );
+          localIndex const slot = LvArray::sortedArrayManipulation::find( ghostDofs.begin(), ghostDofs.size(), elemDofNumber[ei] );
+          ghostDofScale[slot] = LvArray::math::abs( presN[ei] );
         }
-      }
+      } );
     } );
   } );
 
   // w_i = max_j |A_ij| s_j over every column of row i
-  forAll< serialPolicy >( numRows, [&]( localIndex const i )
+  arrayView1d< real64 const > const ghostScale = m_ghostDofScale.toViewConst();
+  arrayView1d< real64 const > const localScale = m_dofScale.toViewConst();
+  forAll< parallelDevicePolicy<> >( numRows, [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     real64 w = 0.0;
     arraySlice1d< globalIndex const > const columns = localMatrix.getColumns( i );
@@ -732,12 +798,12 @@ void SinglePhaseMixedMFD::applyBoundaryConditions( real64 const time_n,
       real64 scale = 0.0;
       if( localCol >= 0 && localCol < numRows )
       {
-        scale = dofScale[localCol];
+        scale = localScale[localCol];
       }
       else
       {
-        auto const it = ghostScale.find( columns[k] );
-        scale = it != ghostScale.end() ? it->second : 0.0;
+        localIndex const slot = LvArray::sortedArrayManipulation::find( ghostDofs.begin(), ghostDofs.size(), columns[k] );
+        scale = ( slot < ghostDofs.size() && ghostDofs[slot] == columns[k] ) ? ghostScale[slot] : 0.0;
       }
       w = LvArray::math::max( w, LvArray::math::abs( entries[k] ) * scale );
     }
