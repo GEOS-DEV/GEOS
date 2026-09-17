@@ -1,0 +1,200 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="../../../thermoPoromechanicsFractures/ThermoPoroElastic_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhasePoromechanicsConformingFracturesALM
+      name="poroSolver"
+      targetRegions="{ RockMatrix, Fracture }"
+      initialDt="1e-3"
+      flowSolverName="flowSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1"
+      isThermal="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="20"
+        maxTimeStepCuts="4"/>
+      <LinearSolverParameters
+        directParallel="0"
+        solverType="direct"/>
+    </SinglePhasePoromechanicsConformingFracturesALM>
+
+    <SolidMechanicsAugmentedLagrangianContact
+      name="fractureMechSolver"
+      logLevel="1"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="10.0"
+      iterPenaltyT="10.0"
+      tolJumpN="1.e-05"
+      tolJumpT="1.e-04"
+      tolTauLimit="1.e-02"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ RockMatrix, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        logLevel="1"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        directParallel="0"
+        solverType="direct"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ RockMatrix, Fracture }"
+      isThermal="1">
+      <NonlinearSolverParameters
+        normType="L2"/>
+    </SinglePhaseFVM>
+
+    <SurfaceGenerator
+      logLevel="0"
+      name="SurfaceGenerator"
+      targetRegions="{ RockMatrix }"
+      fractureRegion="Fracture"
+      initialRockToughness="1e6"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="RockMatrix"
+      cellBlocks="{ * }"
+      materialList="{ porousRock, water, thermalCond }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      materialList="{ water, fractureFilling, fractureContact, thermalCond, hApertureModel }"
+      defaultAperture="1.e-4"/>
+  </ElementRegions>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialPressureFracture"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="1.0e5"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="temperature"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialTemperatureFracture"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="temperature"
+      scale="300"/>
+
+    <FieldSpecification
+      name="xnegconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yposconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ ypos, yneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <FieldSpecification
+      name="facePressure"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="faceTemperature"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="ThermoPoroElastic_ALM_conforming"
+      plotLevel="2"
+      format="binary"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

@@ -58,10 +58,13 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
-  
+
 //TODO refactor with contact browser and kernel
 
   GEOS_MARK_FUNCTION;
+
+  // TODO(thermal): getDerivativeFluxResidual_dNormalJump() below is sized/indexed one row per
+  // fracture element (mass-only) regardless of m_isThermal, should be 2 rows per fracture element for energy balance if m_isThermal 
 
   using namespace contact;
 

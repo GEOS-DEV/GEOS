@@ -97,20 +97,12 @@ public:
    */
   /**@{*/
 
-  // virtual void setupCoupling( DomainPartition const & domain,
-  //                             DofManager & dofManager ) const override final;
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override final;
 
-  // virtual void assembleSystem( real64 const time,
-  //                              real64 const dt,
-  //                              DomainPartition & domain,
-  //                              DofManager const & dofManager,
-  //                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-  //                              arrayView1d< real64 > const & localRhs ) override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -125,6 +117,12 @@ public:
     // Wells contribute their own dof labels and need an extra reduction level
     // to keep the well block out of the coarse grid, so they get a separate
     // strategy.
+    if (this->m_isThermal)
+    {
+      if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName() ) );
+    }
+
     if constexpr ( hasWells )
     {
       linearSolverParameters.mgr.strategy =
@@ -135,6 +133,7 @@ public:
       linearSolverParameters.mgr.strategy =
         LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM;
     }
+  
     linearSolverParameters.mgr.separateComponents = true;
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
@@ -149,19 +148,6 @@ protected:
   virtual void initializePreSubGroups() override
   {
     Base::initializePreSubGroups();
-
-    // The ALM fracture assembly carries a single flow dof per fracture element:
-    // the dR/dAperture matrix is sized numElements x numElements and the contact
-    // kernels have no temperature block. Reject the thermal input rather than
-    // silently assembling an incomplete Jacobian.
-    // Checking the flow sub-solver too: PoromechanicsSolver only rejects the
-    // opposite direction (thermal coupled solver over a non-thermal flow
-    // solver), so a thermal SinglePhaseFVM under a non-thermal ALM solver would
-    // otherwise reach the two-equation thermal connector kernel.
-    GEOS_THROW_IF( this->m_isThermal || this->flowSolver()->isThermal(),
-                   GEOS_FMT( "{}: thermal coupling is not supported by {}",
-                             this->getName(), this->getCatalogName() ),
-                   InputError, this->getDataContext() );
   }
 
 private:
@@ -170,28 +156,7 @@ private:
   {};
 
 
-  /**
-   * @Brief assemble the element-based contributions
-   * @param time_n the current time
-   * @param dt the time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localMatrix the local system matrix
-   * @param localRhs the local system right-hand side vector
-   */
-  // void assembleElementBasedContributions( real64 const time_n,
-  //                                         real64 const dt,
-  //                                         DomainPartition & domain,
-  //                                         DofManager const & dofManager,
-  //                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-  //                                         arrayView1d< real64 > const & localRhs );
-
-  // virtual void assembleCouplingTerms( real64 const time_n,
-  //                                     real64 const dt,
-  //                                     DomainPartition const & domain,
-  //                                     DofManager const & dofManager,
-  //                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-  //                                     arrayView1d< real64 > const & localRhs ) override final;
+ 
 
   void assembleForceResidualDerivativeWrtPressure( string const & meshName,
                                                    MeshLevel const & mesh,
@@ -207,66 +172,7 @@ private:
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs ) override final;
 
-  /**
-   * @Brief add the nnz induced by the flux-aperture coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param rowLenghts the nnz in each row
-   */
-  // void addTransmissibilityCouplingNNZ( DomainPartition const & domain,
-  //                                      DofManager const & dofManager,
-  //                                      arrayView1d< localIndex > const & rowLengths ) const;
 
-  /**
-   * @Brief add the sparsity pattern induced by the flux-aperture coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  // void addTransmissibilityCouplingPattern( DomainPartition const & domain,
-  //                                          DofManager const & dofManager,
-  //                                          SparsityPatternView< globalIndex > const & pattern ) const;
-
-  /**
-   * @Brief add the nnz induced by the pressure-force coupling (Aup, Abp)
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param rowLenghts the nnz in each row
-   */
-  // void addPressureForceCouplingNNZ( DomainPartition const & domain,
-  //                                   DofManager const & dofManager,
-  //                                   arrayView1d< localIndex > const & rowLengths ) const;
-
-  /**
-   * @Brief add the sparsity pattern induced by the pressure-force coupling (Aup, Abp)
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  // void addPressureForceCouplingPattern( DomainPartition const & domain,
-  //                                       DofManager const & dofManager,
-  //                                       SparsityPatternView< globalIndex > const & pattern ) const;
-
-  /**
-   * @Brief add the nnz induced by the matrix pressure-bubble coupling (Abp_matrix)
-   * This handles the contribution of matrix cell pressure on bubble DOFs.
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param rowLengths the nnz in each row
-   */
-  // void addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
-  //                                          DofManager const & dofManager,
-  //                                          arrayView1d< localIndex > const & rowLengths ) const;
-
-  /**
-   * @Brief add the sparsity pattern induced by the matrix pressure-bubble coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  // void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
-  //                                              DofManager const & dofManager,
-  //                                              SparsityPatternView< globalIndex > const & pattern ) const;
 
 
   void assembleMatrixPressureBubbleContribution( real64 const dt,
@@ -275,49 +181,8 @@ private:
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs ) override;
 
-  // /**
-  //  * @brief Set up the Dflux_dApertureMatrix object
-  //  *
-  //  * @param domain
-  //  */
-  // void setUpDflux_dApertureMatrix( DomainPartition & domain );
-
-
-  // virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
-  //                                         integer const solverType ) override;
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
-
-  // std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
-  // {
-  //   return m_derivativeFluxResidual_dAperture;
-  // }
-
-  // CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
-  // {
-  //   return m_derivativeFluxResidual_dAperture->toViewConstSizes();
-  // }
-
-  // CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
-  // {
-  //   return m_derivativeFluxResidual_dAperture->toViewConst();
-  // }
-
-  // std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
-
-  // stdMap< string, localIndex > m_derivativeFluxResidual_dApertureOffsets;
-
-  // string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
-
-protected:
-
-  // virtual void postInputInitialization() override final;
-
-  // virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
-  //                                                                 string_array const & regionNames,
-  //                                                                 DofManager const & dofManager,
-  //                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-  //                                                                 arrayView1d< real64 > const & localRhs ) override;
 
 };
 

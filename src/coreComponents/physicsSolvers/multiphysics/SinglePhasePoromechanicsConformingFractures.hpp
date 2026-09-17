@@ -26,6 +26,7 @@
 namespace geos
 {
 
+
 template< typename FLOW_SOLVER = SinglePhaseBase >
 class SinglePhasePoromechanicsConformingFractures : public PoromechanicsConformingFractures< SinglePhasePoromechanics, FLOW_SOLVER >
 {
@@ -81,7 +82,7 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  GEOS_MGR_STRATEGY_NOT_SUPPORTED()//TODO should we keep ?
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
 
   /**@}*/
 
