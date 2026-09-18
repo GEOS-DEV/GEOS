@@ -72,6 +72,18 @@ struct SolidModelDiscretizationOpsOrthotropic : public SolidModelDiscretizationO
     m_c66 *= scale;
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  void computeTemperatureDerivative( real64 const thermalExpansionCoefficient, real64 ( & dStress_dT )[6] ) const
+  {
+    dStress_dT[0] = -thermalExpansionCoefficient * ( m_c11 + m_c12 + m_c13 );
+    dStress_dT[1] = -thermalExpansionCoefficient * ( m_c12 + m_c22 + m_c23 );
+    dStress_dT[2] = -thermalExpansionCoefficient * ( m_c13 + m_c23 + m_c33 );
+    dStress_dT[3] = 0;
+    dStress_dT[4] = 0;
+    dStress_dT[5] = 0;
+  }
+
   real64 m_c11;
   real64 m_c12;
   real64 m_c13;

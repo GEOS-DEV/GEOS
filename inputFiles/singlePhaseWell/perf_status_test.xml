@@ -6,7 +6,6 @@
       name="reservoirSystem"
       flowSolverName="singlePhaseFlow"
       wellSolverName="singlePhaseWell"
-      writeLinearSystem="2"
       logLevel="1"
       targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
       <NonlinearSolverParameters

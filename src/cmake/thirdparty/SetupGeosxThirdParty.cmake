@@ -122,6 +122,21 @@ macro(mandatory_tpl_doesnt_exist
 
 endmacro(mandatory_tpl_doesnt_exist)
 
+macro( hypredrv_install_not_found extra_detail )
+    message( FATAL_ERROR
+             "A valid hypredrive installation is required because ENABLE_HYPREDRV is ON "
+             "(this is the default when ENABLE_HYPRE is ON).\n"
+             "  ${extra_detail}\n"
+             "  ENABLE_HYPRE    = ${ENABLE_HYPRE}\n"
+             "  ENABLE_HYPREDRV = ${ENABLE_HYPREDRV}\n"
+             "  HYPREDRV_DIR    = \"${HYPREDRV_DIR}\"\n"
+             "  GEOS_TPL_DIR    = \"${GEOS_TPL_DIR}\"\n"
+             "hypredrive was not found in the current third-party library (TPL) bundle. "
+             "Update your TPLs to a version that includes hypredrive, then set HYPREDRV_DIR "
+             "to that installation (or ensure \"${GEOS_TPL_DIR}/hypredrive\" exists).\n"
+             "To build with HYPRE but without hypredrive, reconfigure with -DENABLE_HYPREDRV=OFF." )
+endmacro()
+
 
 set(thirdPartyLibs "")
 
@@ -390,7 +405,7 @@ if(DEFINED UMPIRE_DIR)
     message( " ----> umpire_VERSION = ${umpire_VERSION}")
 
     set(ENABLE_UMPIRE ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} umpire)
+    set(thirdPartyLibs ${thirdPartyLibs} umpire::umpire)
 else()
     mandatory_tpl_doesnt_exist("Umpire" UMPIRE_DIR)
 endif()
@@ -680,7 +695,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         get_filename_component( HYPRE_INSTALL_DIR "${HYPRE_DIR}/../../.." ABSOLUTE )
     endif()
 
-    set( HYPRE_DEPENDS blas lapack umpire )
+    set( HYPRE_DEPENDS blas lapack umpire::umpire )
     if( ENABLE_SUPERLU_DIST )
         list( APPEND HYPRE_DEPENDS superlu_dist )
     endif()
@@ -753,7 +768,21 @@ if( ENABLE_HYPREDRV AND NOT ENABLE_HYPRE )
     message( FATAL_ERROR "ENABLE_HYPREDRV requires ENABLE_HYPRE." )
 endif()
 
-if( DEFINED HYPREDRV_DIR AND ENABLE_HYPREDRV )
+if( ENABLE_HYPREDRV )
+    # Host-configs and -DHYPREDRV_DIR win. Otherwise look in the TPL bundle.
+    if( NOT HYPREDRV_DIR AND DEFINED GEOS_TPL_DIR AND EXISTS "${GEOS_TPL_DIR}/hypredrive" )
+        set( HYPREDRV_DIR "${GEOS_TPL_DIR}/hypredrive" CACHE PATH
+             "Path to a HYPREDRV installation prefix or package config directory" FORCE )
+    endif()
+
+    if( NOT HYPREDRV_DIR )
+        hypredrv_install_not_found( "HYPREDRV_DIR is not set." )
+    endif()
+
+    if( NOT EXISTS "${HYPREDRV_DIR}" )
+        hypredrv_install_not_found( "HYPREDRV_DIR does not exist on disk." )
+    endif()
+
     message( STATUS "HYPREDRV_DIR = ${HYPREDRV_DIR}" )
 
     list( PREPEND CMAKE_PREFIX_PATH "${HYPREDRV_DIR}" )
@@ -761,11 +790,17 @@ if( DEFINED HYPREDRV_DIR AND ENABLE_HYPREDRV )
         list( PREPEND CMAKE_PREFIX_PATH "${HYPRE_DIR}" )
     endif()
 
-    find_package( HYPREDRV REQUIRED CONFIG
+    find_package( HYPREDRV CONFIG QUIET
                   PATHS ${HYPREDRV_DIR}
                         ${HYPREDRV_DIR}/lib/cmake/HYPREDRV
+                        ${HYPREDRV_DIR}/lib64/cmake/HYPREDRV
                         ${HYPREDRV_DIR}/cmake/HYPREDRV
                   NO_DEFAULT_PATH )
+
+    if( NOT HYPREDRV_FOUND )
+        hypredrv_install_not_found(
+            "No HYPREDRV CMake package was found under HYPREDRV_DIR (looked for HYPREDRVConfig.cmake)." )
+    endif()
 
     blt_convert_to_system_includes( TARGET HYPREDRV::HYPREDRV )
 
@@ -813,11 +848,6 @@ if( DEFINED HYPREDRV_DIR AND ENABLE_HYPREDRV )
     set( ENABLE_HYPREDRV ON CACHE BOOL "" FORCE )
     set( thirdPartyLibs ${thirdPartyLibs} HYPREDRV::HYPREDRV )
 else()
-    if( ENABLE_HYPREDRV )
-        message( WARNING "ENABLE_HYPREDRV is ON but HYPREDRV_DIR isn't defined." )
-    endif()
-
-    set( ENABLE_HYPREDRV OFF CACHE BOOL "" FORCE )
     message( STATUS "Not using HYPREDRV." )
 endif()
 

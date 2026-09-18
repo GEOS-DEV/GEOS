@@ -212,9 +212,7 @@ protected:
                                                SparsityPatternView< globalIndex > const & pattern ) const;
 
 
-  void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                   DofManager const & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix );
+  void setUpDflux_dApertureMatrix( DomainPartition & domain );
 
   virtual void setMGRStrategy() override;
 

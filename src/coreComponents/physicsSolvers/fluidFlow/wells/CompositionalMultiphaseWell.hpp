@@ -29,6 +29,8 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 namespace geos
 {
 
@@ -389,6 +391,7 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   void saveState( WellElementSubRegion & subRegion );
+  virtual void resetShutInControlState() override;
   virtual void postRestartInitialization( ) override;
 
 
