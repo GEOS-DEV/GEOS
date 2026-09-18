@@ -561,15 +561,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
 
-    GEOS_LOG_RANK_0("[debug] \t \t Inside contact reaching for dof keys");
     string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
     string const & bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
 
-    GEOS_LOG_RANK_0("[debug] \t \t Inside contact reaching for dof num");
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
-    GEOS_LOG_RANK_0(GEOS_FMT("[debug] \t \t Inside contact reaching unique fract reg: {}", m_fractureRegionNames[0]));
     string const & fractureRegionName = getUniqueFractureRegionName();
 
     forFiniteElementOnStickFractureSubRegions( meshName, [&] ( string const &,
@@ -580,7 +577,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
       if( m_simultaneous )
       {
-        GEOS_LOG_RANK_0("[debug] \t \t Inside contact reaching for simultaneous-stick kernels");
         solidMechanicsALMKernels::ALMSimultaneousFactory kernelFactory( dispDofNumber,
                                                                         bubbleDofNumber,
                                                                         dofManager.rankOffset(),
@@ -589,7 +585,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                                         dt,
                                                                         faceElementList );
 
-        GEOS_LOG_RANK_0("[debug] \t \t Inside contact reaching for Coulomb kernels");
         real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >, CoulombFriction >( mesh,
                                                                                                                          fractureRegionName,
                                                                                                                          faceElementList,
@@ -634,7 +629,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
       if( m_simultaneous )
       {
-        GEOS_LOG_RANK_0("[debug] \t \t Inside contact reaching for simultaneous-slip kernels");
         solidMechanicsALMKernels::ALMSimultaneousFactory kernelFactory( dispDofNumber,
                                                                         bubbleDofNumber,
                                                                         dofManager.rankOffset(),
@@ -698,7 +692,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
 
-    GEOS_LOG_RANK_0("[debug] \t \t Filling in bubble matrices");
     solidMechanicsConformingContactKernels::FaceBubbleFactory kernelFactory( dispDofNumber,
                                                                              bubbleDofNumber,
                                                                              dofManager.rankOffset(),

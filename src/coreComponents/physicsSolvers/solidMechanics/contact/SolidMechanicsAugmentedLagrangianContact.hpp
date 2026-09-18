@@ -158,7 +158,6 @@ public:
 
     bool const isStickState = true;
 
-    GEOS_LOG_RANK_0(GEOS_FMT("[debug] \t \t fetching list stick at {}",meshName));
     stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
 
