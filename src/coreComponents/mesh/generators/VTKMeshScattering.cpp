@@ -26,6 +26,7 @@
 #include <vtkCellData.h>
 #include <vtkCellType.h>
 #include <vtkDataArray.h>
+#include <vtkDoubleArray.h>
 #include <vtkExtractCells.h>
 #include <vtkIdList.h>
 #include <vtkIdTypeArray.h>
@@ -296,7 +297,8 @@ void packGrid( vtkUnstructuredGrid * grid,
     vtkPoints * points = grid->GetPoints();
     if( points->GetDataType() == VTK_DOUBLE )
     {
-      appendBytes( buf, points->GetVoidPointer( 0 ), nPoints * 3 * sizeof( real64 ) );
+      vtkDoubleArray * const coords = vtkDoubleArray::SafeDownCast( points->GetData() );
+      appendBytes( buf, coords->GetPointer( 0 ), nPoints * 3 * sizeof( real64 ) );
     }
     else
     {
@@ -312,8 +314,24 @@ void packGrid( vtkUnstructuredGrid * grid,
   // Cell types, offsets, connectivity
   if( nCells > 0 )
   {
-    vtkUnsignedCharArray * types = grid->GetCellTypesArray();
-    appendBytes( buf, types->GetVoidPointer( 0 ), nCells * sizeof( unsigned char ) );
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 6, 0 )
+    vtkUnsignedCharArray * const types = vtkUnsignedCharArray::SafeDownCast( grid->GetCellTypes() );
+#else
+    vtkUnsignedCharArray * const types = grid->GetCellTypesArray();
+#endif
+    if( types != nullptr )
+    {
+      appendBytes( buf, types->GetPointer( 0 ), nCells * sizeof( unsigned char ) );
+    }
+    else
+    {
+      stdVector< unsigned char > cellTypes( nCells );
+      for( int64_t i = 0; i < nCells; ++i )
+      {
+        cellTypes[i] = static_cast< unsigned char >( grid->GetCellType( i ) );
+      }
+      appendBytes( buf, cellTypes.data(), nCells * sizeof( unsigned char ) );
+    }
 
     appendCellArray( buf, grid->GetCells() );
 
@@ -354,7 +372,8 @@ unpackGrid( stdVector< char > const & buf )
     vtkNew< vtkPoints > points;
     points->SetDataTypeToDouble();
     points->SetNumberOfPoints( nPoints );
-    std::memcpy( points->GetVoidPointer( 0 ), ptr, nPoints * 3 * sizeof( real64 ) );
+    vtkDoubleArray * const coords = vtkDoubleArray::SafeDownCast( points->GetData() );
+    std::memcpy( coords->GetPointer( 0 ), ptr, nPoints * 3 * sizeof( real64 ) );
     ptr += nPoints * 3 * sizeof( real64 );
     grid->SetPoints( points );
   }

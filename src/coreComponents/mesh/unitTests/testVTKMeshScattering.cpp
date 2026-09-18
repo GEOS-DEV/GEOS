@@ -31,6 +31,7 @@
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkVersionMacros.h>
 
 #include <gtest/gtest.h>
 
@@ -70,7 +71,11 @@ vtkSmartPointer< vtkUnstructuredGrid > buildTestMesh( MPI_Comm comm, bool const 
   // Points: (NP)^3 = 125 points
   vtkNew< vtkPoints > points;
   points->SetDataTypeToDouble();
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 7, 0 )
+  points->Reserve( NP * NP * NP );
+#else
   points->Allocate( NP * NP * NP );
+#endif
 
   for( integer k = 0; k <= N; ++k )
   {
