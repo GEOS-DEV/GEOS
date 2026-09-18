@@ -21,7 +21,6 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 
 #include "common/logger/Logger.hpp"
-// #include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFracturesALM.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
@@ -50,7 +49,7 @@ public:
 
   static_assert( hasWells || std::is_same_v< FLOW_SOLVER, SinglePhaseBase >,
                  "SinglePhasePoromechanicsConformingFracturesALM supports only the SinglePhaseBase and "
-                 "SinglePhaseReservoirAndWells<> flow solvers. Both setMGRStrategy and assembleSystem branch "
+                 "SinglePhaseReservoirAndWells<> flow solvers. Both setMGRStrategy and parent's assembleSystem branch "
                  "on hasWells, so a new instantiation must be handled in both places." );
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -104,8 +103,6 @@ public:
                                    SparsityPattern< globalIndex > & pattern ) override final;
 
 
-  virtual void updateState( DomainPartition & domain ) override final;
-
   virtual void setMGRStrategy() override final
   {
     LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
@@ -143,13 +140,6 @@ public:
 
   /**@}*/
 
-protected:
-
-  virtual void initializePreSubGroups() override
-  {
-    Base::initializePreSubGroups();
-  }
-
 private:
 
   struct viewKeyStruct : public Base::viewKeyStruct
@@ -158,14 +148,14 @@ private:
 
  
 
-  void assembleForceResidualDerivativeWrtPressure( string const & meshName,
+  virtual void assembleForceResidualDerivativeWrtPressure( string const & meshName,
                                                    MeshLevel const & mesh,
                                                    string_array const & regionNames,
                                                    DofManager const & dofManager,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
+                                                   arrayView1d< real64 > const & localRhs ) override final;
 
-  void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
                                                            MeshLevel const & mesh,
                                                            string_array const & regionNames,
                                                            DofManager const & dofManager,
@@ -175,14 +165,13 @@ private:
 
 
 
-  void assembleMatrixPressureBubbleContribution( real64 const dt,
+  virtual void assembleMatrixPressureBubbleContribution( real64 const dt,
                                                  DomainPartition & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs ) override;
 
 
-  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
 };
 
