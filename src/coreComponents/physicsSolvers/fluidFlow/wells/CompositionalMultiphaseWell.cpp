@@ -19,6 +19,7 @@
 
 #include "CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "LvArray/src/system.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
@@ -41,7 +42,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+
 
 #include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
@@ -64,14 +65,17 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
 
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/WellWHPConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/ProdPipeFlowTableFunction.hpp"
+#include "physicsSolvers/fluidFlow/wells/InjPipeFlowTableFunction.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp"
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
 
-
+#include "functions/FunctionManager.hpp"
+#include "events/EventManager.hpp"
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
 #endif
@@ -215,7 +219,7 @@ void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & s
 void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
 
-
+  WellControls::registerWellDataOnMesh( subRegion );
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
   setConstitutiveNames ( subRegion );
@@ -325,7 +329,11 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
     makeDirsForPath( m_ratesOutputDir );
     GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
     std::ofstream outputFile( fileName );
-    outputFile << "Time [s],dt[s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+    outputFile << "Time [s],dt[s],BHP [Pa]";
+
+    if( hasMinimumWHPConstraint() || hasMaximumWHPConstraint() )
+      outputFile << ",WHP [Pa]";
+    outputFile << ",Total rate [" << massUnit << "/s],Total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
     for( integer ip = 0; ip < numPhase; ++ip )
     {
       outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
@@ -458,15 +466,32 @@ void CompositionalMultiphaseWell::initializeWellPostInitialConditionsPreSubGroup
   constitutive::MultiFluidBase & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
   fluid.setMassFlag( m_useMass );
   createSeparator( subRegion );
+
+  // Wellhead pressure constraints
+  if( hasMinimumWHPConstraint())
+  {
+    createMinBHPConstraintForWHP();
+    createMaxLiquidConstraintForWHP();
+  }
+  if( hasMaximumWHPConstraint())
+  {
+    createMaxBHPConstraintForWHP();
+    createMaxVolumeInjConstraintForWHP();
+  }
+
 }
 void CompositionalMultiphaseWell::postRestartInitialization( )
 {
-
   // setup fluid separator
   constitutive::MultiFluidBase & fluidSeparator =   getMultiFluidSeparator();
   fluidSeparator.allocateConstitutiveData( *this, 1 );
   fluidSeparator.resize( 1 );
-
+  // Wellhead pressure constraints
+  if( hasMinimumWHPConstraint())
+  {
+    createMinBHPConstraintForWHP();
+    createMaxLiquidConstraintForWHP();
+  }
 }
 
 void CompositionalMultiphaseWell::createSeparator( WellElementSubRegion & subRegion )
@@ -931,7 +956,6 @@ void CompositionalMultiphaseWell::updateSeparator( real64 const time_n,
 
   constitutive::constitutiveUpdatePassThru( fluidSeparator, [&] ( auto & castedFluidSeparator )
   {
-    // typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     typename TYPEOFREF( castedFluidSeparator ) ::KernelWrapper fluidSeparatorWrapper = castedFluidSeparator.createKernelWrapper();
     // bring everything back to host, capture the scalars by reference
     forAll< serialPolicy >( 1, [fluidSeparatorWrapper,
@@ -1064,7 +1088,6 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( real64 const time_n,
     {
       getReference< array1d< real64 > >(
         CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) =currentPhaseVolRate;
-
     }
 
     WellConstraintBase * constraint = getCurrentConstraint();
@@ -1090,8 +1113,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
   integer const numComp = m_numComponents;
   integer const numPhase = m_numPhases;
 
-
-  // TODO: change the way we access the flowSolver here
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   compositionalMultiphaseWellKernels::PresTempCompFracInitializationKernel::CompFlowAccessors
@@ -1103,7 +1124,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
   arrayView2d< real64 const > const compPerfRate = perforationData.getField< fields::well::compPerforationRate >();
 
   bool const hasNonZeroRate = MpiWrapper::max< integer >( hasNonZero( compPerfRate ));
-
   if( time_n <= 0.0  || (  isWellOpen(  ) && !hasNonZeroRate ) )
   {
     setWellState( true );
@@ -1116,7 +1136,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
         forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
                       ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          if( constraint.getControl() == inputControl )
+          if( constraint.getControl() == inputControl && constraint.isConstraintActive())
           {
             setCurrentConstraint( &constraint );
           }
@@ -1124,17 +1144,18 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
       }
       else
       {
-
         forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >,
                       InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          if( constraint.getControl() == inputControl )
+          if( constraint.getControl() == inputControl && constraint.isConstraintActive())
           {
             setCurrentConstraint( &constraint );
           }
         } );
       }
     }
+
+    GEOS_ERROR_IF( getCurrentConstraint() == nullptr, GEOS_FMT( "No active constraint found for well {} with input control {}", getName(), getInputControl() ) );
     // get well primary variables on well elements
     arrayView1d< real64 > const & wellElemPressure = subRegion.getField< well::pressure >();
     arrayView1d< real64 > const & wellElemTemp = subRegion.getField< well::temperature >();
@@ -1251,7 +1272,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
                       ProductionConstraint< MassRateConstraint >,
                       ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          if( ConstraintTypeId( getControl()) == constraint.getControl()  )
+          if( ConstraintTypeId( getControl()) == constraint.getControl() && constraint.isConstraintActive() )
           {
             setCurrentConstraint( &constraint );
           }
@@ -1264,7 +1285,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Grou
                       InjectionConstraint< MassRateConstraint >,
                       InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          if( ConstraintTypeId( getControl()) == constraint.getControl()  )
+          if( ConstraintTypeId( getControl()) == constraint.getControl() && constraint.isConstraintActive() )
           {
             setCurrentConstraint( &constraint );
           }
@@ -1930,7 +1951,7 @@ CompositionalMultiphaseWell::applyWellBoundaryConditions( real64 const time_n,
   // therefore, we do not want to compute perforation rates and we simply assume they are zero
 
   //bool const detectCrossflow =
-  //  ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
+  //  ( isInjector() ) && isCrossflowEnabled() &&
   //  getLogLevel() >= 1;     // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
 
   if( !isWellOpen( ) )
@@ -2027,7 +2048,7 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
-  if( m_allowCompDensChopping )
+  //if( m_allowCompDensChopping )
   {
     chopNegativeDensities( subRegion );
   }
@@ -2146,7 +2167,8 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
 
   if( isProducer() )
   {
-    forSubGroups< MinimumBHPConstraint, ProductionConstraint< PhaseVolumeRateConstraint >, ProductionConstraint< MassRateConstraint >, ProductionConstraint< VolumeRateConstraint >
+    forSubGroups< MinimumBHPConstraint, ProductionConstraint< PhaseVolumeRateConstraint >, ProductionConstraint< MassRateConstraint >, ProductionConstraint< VolumeRateConstraint >,
+                  ProductionConstraint< LiquidRateConstraint >
                   >( [&]( auto & constraint )
     {
       // Need to use name since there could be multiple constraints of the same type
@@ -2176,7 +2198,8 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
   else
   {
     forSubGroups< MaximumBHPConstraint, InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< MassRateConstraint >,
-                  InjectionConstraint< VolumeRateConstraint >
+                  InjectionConstraint< VolumeRateConstraint >,
+                  InjectionConstraint< LiquidRateConstraint >
                   >( [&]( auto & constraint )
     {
       if( constraint.getName() ==  getCurrentConstraint()->getName())
@@ -2437,6 +2460,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
     if( outputFile.is_open())
     {
       // print all zeros in the rates file
+      if( hasMinimumWHPConstraint() || hasMaximumWHPConstraint() )
+        outputFile << ",0.0";
       outputFile << ",0.0,0.0,0.0";
       for( integer ip = 0; ip < numPhase; ++ip )
       {
@@ -2464,22 +2489,27 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 
   real64 const & currentBHP =
     getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+  real64 const & currentWHP =
+    getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentWHPString() );
   arrayView1d< real64 const > const & currentPhaseVolRate =
     getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
   real64 const & currentTotalVolRate =
     getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
 
+  integer const hasWHP =  hasMinimumWHPConstraint()||hasMaximumWHPConstraint();
   // bring everything back to host, capture the scalars by reference
   forAll< serialPolicy >( 1, [&numPhase,
                               &numComp,
                               &useSurfaceCond,
                               &currentBHP,
+                              &currentWHP,
                               connRate,
                               &currentTotalVolRate,
                               currentPhaseVolRate,
                               &compRate,
                               &iwelemRef,
                               &wellControlsName,
+                              &hasWHP,
                               &massUnit,
                               &outputFile] ( localIndex const )
   {
@@ -2489,6 +2519,10 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
     real64 const currentTotalRate = connRate[iwelemRef];
     GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                         wellControlsName, currentBHP ) );
+    if( hasWHP )
+      GEOS_LOG( GEOS_FMT( "{}: WHP (at the well head): {} Pa",
+                          wellControlsName, currentWHP ) );
+
     GEOS_LOG( GEOS_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
                         wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
     for( integer ip = 0; ip < numPhase; ++ip )
@@ -2497,6 +2531,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
     if( outputFile.is_open())
     {
       outputFile << "," << currentBHP;
+      if( hasWHP )
+        outputFile << "," << currentWHP;
       outputFile << "," << currentTotalRate << "," << currentTotalVolRate;
       for( integer ip = 0; ip < numPhase; ++ip )
       {
@@ -2510,6 +2546,588 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       outputFile.close();
     }
   } );
+
+}
+
+bool CompositionalMultiphaseWell::solveMinWHPConstraint( real64 const & time_n,
+                                                         real64 const & dt,
+                                                         integer const cycleNumber,
+                                                         integer const coupledIterationNumber,
+                                                         DomainPartition & domain,
+                                                         MeshLevel & mesh,
+                                                         ElementRegionManager & elemManager,
+                                                         WellElementSubRegion & subRegion )
+{
+  GEOS_UNUSED_VAR( coupledIterationNumber );
+  bool whpLimiting = false;
+
+  WHPConstraint * whpConstraint = getWHPConstraint();
+  if( whpConstraint == nullptr || !whpConstraint->isConstraintActive() )
+    return whpLimiting;
+
+  real64 & currentBHP =   getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+  array1d< real64 > & currentPhaseVolRate =
+    getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
+  real64 & currentTotalVolRate =
+    getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
+
+  real64 currentBHP_local = currentBHP;
+  array1d< real64 > currentPhaseVolRate_local = currentPhaseVolRate;
+  real64 currentTotalVolRate_local = currentTotalVolRate;
+  // Turn off BHP for WHP constraint if active, will be reset if WHP is limiting
+  bool checkActiveStatus = false;
+  BHPConstraint< BHPConstraintTypeId::MIN > * bhpConstraint=  dynamic_cast< BHPConstraint< BHPConstraintTypeId::MIN > * >(getBHPConstraint( ConstraintSourceId::WHP, checkActiveStatus ));
+  bhpConstraint->setConstraintActive( false );
+  real64 constraintWHP = whpConstraint->getConstraintValue( time_n );
+  real64 currentWHP = constraintWHP;
+  integer owner = -1;
+
+  // Get the flow table function
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  const ProdPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< ProdPipeFlowTableFunction const >( whpConstraint->getFlowTableName());
+  //m_flowTable.writeTable();
+  integer flowTableSolveState;
+
+  // this will be deleted with next merge
+  if( subRegion.isLocallyOwned() )
+  {
+    owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+  }
+  owner = MpiWrapper::max( owner );
+
+  MpiWrapper::broadcast( currentWHP,
+                         owner );
+
+  // get current WHP from flow table
+  m_flowTable.calculateWHP( getName(), currentBHP, currentPhaseVolRate, currentWHP, flowTableSolveState );
+  getReference< real64 >( viewKeyStruct::currentWHPString() ) = currentWHP;
+
+  // check stability
+  bool stabCheck = false;
+  if( stabCheck )
+  {
+
+    real64 ql0, ql1, bhp0, bhp1;
+    real64 dP_dQ_table = m_flowTable.calculatedPdQ( currentPhaseVolRate, currentWHP, ql0, ql1, bhp0, bhp1 );
+
+    if( dP_dQ_table < 0.0 )
+    {
+      //ProductionConstraint< LiquidRateConstraint > *  liqConstraint=  getProductionRateConstraintgetMaxLiquidConstraintForWHP();
+      checkActiveStatus = false;
+      LiquidRateConstraint *  liqConstraint=  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP, checkActiveStatus );
+      setCurrentConstraint( liqConstraint );
+      liqConstraint->setConstraintActive( true );
+      ConstraintTypeId wellControl = getControl();
+      MpiWrapper::broadcast( wellControl, owner );
+      setControl( wellControl );
+
+      // lower bracker IPR solve
+      liqConstraint->setConstraintValue( -ql0 );
+      m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                               dt,
+                                               cycleNumber,
+                                               domain,
+                                               mesh,
+                                               elemManager,
+                                               subRegion );
+      real64 iprBHP0 = currentBHP;
+      // upper bracket IPR solve
+      liqConstraint->setConstraintValue( -ql1 );
+      m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                               dt,
+                                               cycleNumber,
+                                               domain,
+                                               mesh,
+                                               elemManager,
+                                               subRegion );
+      real64 iprBHP1 = currentBHP;
+      liqConstraint->setConstraintActive( false );
+      real64 dP_dQ_ipr = ( iprBHP1 - iprBHP0 ) / ( -ql1 - (-ql0) );
+      if( dP_dQ_ipr > dP_dQ_table )
+      {
+        dP_dQ_table = dP_dQ_ipr;
+        whpLimiting = currentWHP < constraintWHP;
+      }
+      else
+      {
+        // set so well operates at minwhp
+        currentWHP = constraintWHP;
+        whpLimiting = true;
+      }
+      currentBHP = currentBHP_local;
+      currentPhaseVolRate = currentPhaseVolRate_local;
+      currentTotalVolRate = currentTotalVolRate_local;
+    }
+    else
+    {
+      // currentWHP is stable value
+      whpLimiting = currentWHP < constraintWHP;
+    }
+
+  }
+  else
+  {
+    // no stab check
+    whpLimiting = currentWHP < constraintWHP;
+  }
+
+  if( whpLimiting )
+  {
+    // WHP is limiting  set WHP to constraint value
+    currentWHP = constraintWHP;
+
+    checkActiveStatus = false;
+    LiquidRateConstraint *  liqConstraint=  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP, checkActiveStatus );
+    setCurrentConstraint( liqConstraint );
+    liqConstraint->setConstraintActive( true );
+    ConstraintTypeId wellControl = getControl();
+    MpiWrapper::broadcast( wellControl, owner );
+    setControl( wellControl );
+
+    // Liquid constraint is used to find intersection of IPR and VLP
+    const array1d< real64 > & liquidRates = m_flowTable.getRates();
+    integer numRates = liquidRates.size();
+
+    bool cSolve=false;
+    integer currentRateIndex=numRates;
+    while( !cSolve && currentRateIndex > 0 )
+    {
+      currentRateIndex--;
+      liqConstraint->setConstraintValue( liquidRates[currentRateIndex] );
+      cSolve = m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                                        dt,
+                                                        cycleNumber,
+                                                        domain,
+                                                        mesh,
+                                                        elemManager,
+                                                        subRegion );
+
+    }
+    if( !cSolve )
+    {
+      throw("ft solve ");
+    }
+    real64 bhp1 = currentBHP;
+    real64 tableBHP1;
+    m_flowTable.calculateBHP( currentPhaseVolRate, currentWHP, tableBHP1,
+                              flowTableSolveState );
+
+    setCurrentConstraint( bhpConstraint );
+    setControl( static_cast< ConstraintTypeId >(bhpConstraint->getControl()) );
+
+    integer const maxIters=100;
+    real64 const tol = 1;
+    integer iter = 0;
+
+    bhpConstraint->setConstraintActive( true );
+    while( iter < maxIters && std::abs( tableBHP1 - bhp1 )  > tol )
+    {
+      // update whp
+      bhp1=bhp1+0.50*(tableBHP1-bhp1);
+
+      bhpConstraint->setConstraintValue( bhp1 );
+      m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                               dt,
+                                               cycleNumber,
+                                               domain,
+                                               mesh,
+                                               elemManager,
+                                               subRegion );
+      m_flowTable.calculateBHP( currentPhaseVolRate, currentWHP, tableBHP1,
+                                flowTableSolveState );
+      bhpConstraint->setConstraintValue( bhp1 );
+      ++iter;
+    }
+
+    bhpConstraint->setConstraintActive( false );
+    liqConstraint->setConstraintValue( -currentPhaseVolRate[0]- currentPhaseVolRate[2] );
+    liqConstraint->setConstraintActive( true );
+    setCurrentConstraint( liqConstraint );
+    setControl( static_cast< ConstraintTypeId >(liqConstraint->getControl()) );         // tjb old
+    liqConstraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+    liqConstraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                           CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+    liqConstraint->setTotalVolumeRate ( getReference< real64 >(
+                                          CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+    liqConstraint->setMassRate( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+
+
+
+  }
+  return whpLimiting;
+}
+bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
+                                                         real64 const & dt,
+                                                         integer const cycleNumber,
+                                                         integer const coupledIterationNumber,
+                                                         DomainPartition & domain,
+                                                         MeshLevel & mesh,
+                                                         ElementRegionManager & elemManager,
+                                                         WellElementSubRegion & subRegion )
+{
+  GEOS_UNUSED_VAR( coupledIterationNumber );
+  bool whpLimiting = false;
+
+  MaximumWHPConstraint * whpConstraint = dynamic_cast< MaximumWHPConstraint * >( getWHPConstraint() );
+  if( whpConstraint == nullptr || !whpConstraint->isConstraintActive() )
+    return whpLimiting;
+
+  real64 & currentBHP =   getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+  array1d< real64 > & currentPhaseVolRate =
+    getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
+  real64 & currentTotalVolRate =
+    getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
+
+  real64 currentBHP_local = currentBHP;
+  array1d< real64 > currentPhaseVolRate_local = currentPhaseVolRate;
+  real64 currentTotalVolRate_local = currentTotalVolRate;
+
+  // Turn off BHP for WHP constraint if active, will be reset if WHP is limiting
+  bool checkActiveStatus = false;
+  MaximumBHPConstraint * bhpConstraint=  dynamic_cast< MaximumBHPConstraint * >( getBHPConstraint( ConstraintSourceId::WHP, checkActiveStatus ) );
+  bhpConstraint->setConstraintActive( false );
+  real64 constraintWHP = whpConstraint->getConstraintValue( time_n );
+  real64 currentWHP = constraintWHP;
+  integer owner = -1;
+
+  // Get the flow table function
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  const InjPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< InjPipeFlowTableFunction const >( whpConstraint->getFlowTableName());
+  //m_flowTable.writeTable();
+  integer flowTableSolveState;
+
+  // this will be deleted with next merge
+  if( subRegion.isLocallyOwned() )
+  {
+    owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+  }
+  owner = MpiWrapper::max( owner );
+
+  MpiWrapper::broadcast( currentWHP,
+                         owner );
+
+  // get current WHP from flow table
+  m_flowTable.calculateWHP( getName(), currentBHP, currentTotalVolRate, currentWHP, flowTableSolveState );
+  getReference< real64 >( viewKeyStruct::currentWHPString() ) = currentWHP;
+
+  // check stability
+  bool stabCheck = false;
+  if( stabCheck )
+  {
+
+    real64 ql0, ql1, bhp0, bhp1;
+    real64 dP_dQ_table = m_flowTable.calculatedPdQ( currentTotalVolRate, currentWHP, ql0, ql1, bhp0, bhp1 );
+
+    if( dP_dQ_table < 0.0 )
+    {
+      PhaseVolumeRateConstraint *  volConstraint=  getInjectionRateConstraint< PhaseVolumeRateConstraint >( ConstraintSourceId::WHP );
+      setCurrentConstraint( volConstraint );
+      volConstraint->setConstraintActive( true );
+
+      setControl( static_cast< ConstraintTypeId >(volConstraint->getControl()) );        // tjb old
+      ConstraintTypeId wellControl = getControl();
+      MpiWrapper::broadcast( wellControl, owner );
+      setControl( wellControl );
+
+      // lower bracker IPR solve
+      volConstraint->setConstraintValue( -ql0 );
+      m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                               dt,
+                                               cycleNumber,
+                                               domain,
+                                               mesh,
+                                               elemManager,
+                                               subRegion );
+      real64 iprBHP0 = currentBHP;
+      // upper bracket IPR solve
+      volConstraint->setConstraintValue( -ql1 );
+      m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                               dt,
+                                               cycleNumber,
+                                               domain,
+                                               mesh,
+                                               elemManager,
+                                               subRegion );
+      real64 iprBHP1 = currentBHP;
+      volConstraint->setConstraintActive( false );
+      real64 dP_dQ_ipr = ( iprBHP1 - iprBHP0 ) / ( -ql1 - (-ql0) );
+      if( dP_dQ_ipr > dP_dQ_table )
+      {
+        dP_dQ_table = dP_dQ_ipr;
+        whpLimiting = currentWHP < constraintWHP;
+      }
+      else
+      {
+        // set so well operates at minwhp
+        currentWHP = constraintWHP;
+        whpLimiting = true;
+      }
+      currentBHP = currentBHP_local;
+      currentPhaseVolRate = currentPhaseVolRate_local;
+      currentTotalVolRate = currentTotalVolRate_local;
+    }
+    else
+    {
+      // currentWHP is stable value
+      whpLimiting = currentWHP > constraintWHP;
+    }
+
+  }
+  else
+  {
+    // no stab check
+    whpLimiting = currentWHP > constraintWHP;
+  }
+
+  if( whpLimiting )
+  {
+    // WHP is limiting  set WHP to constraint value
+    currentWHP = constraintWHP;
+
+    // sets. tjb cleanup
+    PhaseVolumeRateConstraint *  volConstraint=  getInjectionRateConstraint< PhaseVolumeRateConstraint >( ConstraintSourceId::WHP );
+    setCurrentConstraint( volConstraint );
+    volConstraint->setConstraintActive( true );
+    setControl( static_cast< ConstraintTypeId >(volConstraint->getControl()) );         // tjb old
+    ConstraintTypeId wellControl = getControl();
+    MpiWrapper::broadcast( wellControl, owner );
+    setControl( wellControl );
+    std::ofstream of;
+    of.open( "fl.csv" );
+    of << "liq ,bhp ,tablebhp"<< std::endl;
+    // Liquid constraint is used to find intersection of IPR and VLP
+    const array1d< real64 > & tableRates = m_flowTable.getRates();
+    std::cout << tableRates << std::endl;
+    integer numRates = tableRates.size();
+
+    bool cSolve=false;
+    integer currentRateIndex=numRates;
+    while( !cSolve && currentRateIndex > 0 )
+    {
+      currentRateIndex--;
+      volConstraint->setConstraintValue( tableRates[currentRateIndex] );
+      cSolve = m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                                        dt,
+                                                        cycleNumber,
+                                                        domain,
+                                                        mesh,
+                                                        elemManager,
+                                                        subRegion );
+
+    }
+    if( !cSolve )
+    {
+      throw("ft solve ");
+    }
+    real64 bhp1 = currentBHP;
+    real64 tableBHP1;
+    m_flowTable.calculateBHP( currentTotalVolRate, currentWHP, tableBHP1,
+                              flowTableSolveState );
+
+    setCurrentConstraint( bhpConstraint );
+    setControl( static_cast< ConstraintTypeId >(bhpConstraint->getControl()) );
+
+    integer const maxIters=100;
+    real64 const tol = 1;
+    integer iter = 0;
+
+    bhpConstraint->setConstraintActive( true );
+    while( iter < maxIters && std::abs( tableBHP1 - bhp1 )  > tol )
+    {
+      // update bhp
+      bhp1=bhp1+0.50*(tableBHP1-bhp1);
+
+      bhpConstraint->setConstraintValue( bhp1 );
+      m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                               dt,
+                                               cycleNumber,
+                                               domain,
+                                               mesh,
+                                               elemManager,
+                                               subRegion );
+      // current(s) were updated in solveNonlinearSystem
+      m_flowTable.calculateBHP( currentTotalVolRate, currentWHP, tableBHP1,
+                                flowTableSolveState );
+
+      bhpConstraint->setConstraintValue( bhp1 );
+
+      ++iter;
+    }
+
+
+    bhpConstraint->setConstraintActive( false );
+    volConstraint->setConstraintValue( currentTotalVolRate );
+    volConstraint->setConstraintActive( true );
+    setCurrentConstraint( volConstraint );
+    setControl( static_cast< ConstraintTypeId >(volConstraint->getControl()) );         // tjb old
+    volConstraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+    volConstraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                           CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+    volConstraint->setTotalVolumeRate ( getReference< real64 >(
+                                          CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+    volConstraint->setMassRate( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+
+  }
+  return whpLimiting;
+}
+
+void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
+                                                         real64 const dt,
+                                                         integer current_newton_iteration,
+                                                         MeshLevel & mesh,
+                                                         WellElementSubRegion & subRegion,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< const real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( time );
+  GEOS_UNUSED_VAR( dofManager );
+  GEOS_UNUSED_VAR( localMatrix );
+  GEOS_UNUSED_VAR( localRhs );
+
+  integer num_timestep_cuts  =0;
+  if( m_writeSegDebug > 1 )
+  {
+    // CompositionalMultiphaseBase const & flowSolver = .getParent().getParent().getGroup< CompositionalMultiphaseBase >(
+    // getFlowSolverName() );
+    // auto solver_names = getParent().getSubGroupsNames();
+//integer n = solver_names.size();
+// Bit of a hack, cases with > 3 solvers we need to find the base solver for wells
+// Assume that solver definition order follows coupledreswell, res, and then well
+//std::string coupled_solver_name = solver_names[n-3];
+
+//GeosxState & gs = getGlobalState();
+
+//CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > * solver =
+//  &(gs.getProblemManager().getPhysicsSolverManager().getGroup< geos::CompositionalMultiphaseReservoirAndWells<
+// geos::CompositionalMultiphaseBase > >( coupled_solver_name ));
+
+    EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+    //  real64 const & ctime = event.getReference< real64 >( EventManager::viewKeyStruct::timeString() );
+//real64 const  dt = event.getReference< real64 >( EventManager::viewKeyStruct::dtString() );
+    integer const & cycle = event.getReference< integer >( EventManager::viewKeyStruct::cycleString() );
+    integer const & subevent = event.getReference< integer >( EventManager::viewKeyStruct::currentSubEventString() );
+
+
+// std::cout << "tjbtime1 " << ctime <<  " " << m_globalNumTimeSteps <<  " " << dt << " " << cycle << " " << subevent
+// << " "  << m_numTimeStepCuts << " " << m_currentNewtonIteration << std::endl;
+    if( true ) // need to fix for restarts cycle >= m_writeSegDebug   )
+    {
+//SolverStatistics & solver_stat = solver->getSolverStatistics();
+//integer num_timesteps = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepsString());
+//integer current_newton_iteration = solver_stat.getReference< integer >(
+// SolverStatistics::viewKeyStruct::numCurrentNonlinearIterationsString());
+//integer num_timestep_cuts = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepCutsString());
+//std::cout << "tjbtime2 " << ctime <<  " " << m_globalNumTimeSteps <<  " " << dt << " " << cycle << " " << subevent
+//<< " "  << m_numTimeStepCuts << " " << m_currentNewtonIteration << std::endl;
+      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
+
+
+
+      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+      PerforationData & perforationData = *subRegion.getPerforationData();
+      using CompFlowAccessors =
+        StencilAccessors< fields::flow::pressure,
+                          fields::flow::temperature,
+                          fields::flow::phaseVolumeFraction,
+
+
+
+                          fields::flow::dPhaseVolumeFraction,
+                          fields::flow::globalCompDensity,
+                          fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
+
+      CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getFlowSolverName() );
+
+      using MultiFluidAccessors =
+        StencilMaterialAccessors< MultiFluidBase,
+                                  fields::multifluid::phaseEnthalpy,
+                                  fields::multifluid::phaseDensity,
+                                  fields::multifluid::phaseViscosity,
+                                  fields::multifluid::dPhaseDensity,
+                                  fields::multifluid::phaseViscosity,
+                                  fields::multifluid::phaseInternalEnergy,
+                                  fields::multifluid::dPhaseViscosity,
+                                  fields::multifluid::phaseCompFraction,
+                                  fields::multifluid::dPhaseCompFraction >;
+      MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getFlowSolverName() );
+
+      using RelPermAccessors =
+        StencilMaterialAccessors< RelativePermeabilityBase,
+                                  fields::relperm::phaseRelPerm,
+                                  fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
+
+      RelPermAccessors relPermAccessors( mesh.getElemManager(), getFlowSolverName() );
+
+
+      string const srn = subRegion.getName();
+
+      std::vector< string > cp_der {"dP", "dT"};
+      for( integer i=0; i<m_numComponents; i++ )
+      {
+        cp_der.push_back( "dRho"+std::to_string( i+1 ));
+      }
+      if( !m_wellPropWriter[srn].initialized() )
+      {
+        integer my_rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+        m_wellPropWriter[srn].initialize_perf( my_rank, m_ratesOutputDir, getName(), perforationData );
+        m_wellPropWriter[srn].initialize_seg( my_rank, m_ratesOutputDir, getName(), fluid.phaseNames(), fluid.componentNames(), subRegion );
+        m_wellDebugInit=true;
+      }
+      m_wellPropWriter[srn].registerSeg2dProp( {"X", "Y", "Z"}, subRegion.getElementCenter());
+      m_wellPropWriter[srn].registerSegProp( "Pressure", subRegion.getField< fields::well::pressure >());
+      if( isThermal() )
+      {
+        m_wellPropWriter[srn].registerSegProp( "Temperature", subRegion.getField< fields::well::temperature >());
+      }
+      m_wellPropWriter[srn].registerSegComponentProp( "ComponentDensity", subRegion.getField< fields::well::globalCompDensity >());
+
+      m_wellPropWriter[srn].registerSegProp( "TotalRate", subRegion.getField< fields::well::connectionRate >());
+
+      m_wellPropWriter[srn].registerSegProp( "MassDensity", subRegion.getField< fields::well::totalMassDensity >());
+
+      m_wellPropWriter[srn].registerSegComponentProp( "CompFraction", subRegion.getField< fields::well::globalCompFraction >());
+
+      m_wellPropWriter[srn].registerSegPhasePropf( "PhaseDensity", fluid.phaseMassDensity());
+      m_wellPropWriter[srn].registerSegPhasePropf( "PhaseViscosity", fluid.phaseViscosity());
+      m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseDensity", cp_der, fluid.dPhaseMassDensity());
+      m_wellPropWriter[srn].registerSegPhaseProp( "PhaseVolumeFraction", subRegion.getField< fields::well::phaseVolumeFraction >());
+      m_wellPropWriter[srn].registerSegPhasePropDer( "dPhaseVolume", cp_der, subRegion.getField< fields::well::dPhaseVolumeFraction >());
+      if( isThermal() )
+      {
+        m_wellPropWriter[srn].registerSegPhasePropf( "InternalEnergy", fluid.phaseInternalEnergy());
+        m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseEnthalpy", cp_der, fluid.dPhaseEnthalpy());
+
+        m_wellPropWriter[srn].registerSegPhasePropf( "PhaseEnthalpy", fluid.phaseEnthalpy());
+        m_wellPropWriter[srn].registerSegPhasePropDerf( "dPhaseInternalEnergy", cp_der, fluid.dPhaseInternalEnergy());
+      }
+      m_wellPropWriter[srn].registerSegPhaseComponentPropf( "PhaseCompFrac", fluid.phaseCompFraction());
+
+// Perforation properties
+      m_wellPropWriter[srn].registerPerf2dProp( {"X", "Y", "Z"}, perforationData.getLocation());
+      m_wellPropWriter[srn].registerPerf1dProp( {"Trans"}, perforationData.getWellTransmissibility());
+      m_wellPropWriter[srn].registerPerfResProp( "Pressure", compFlowAccessors.get( fields::flow::pressure {} ));
+      if( isThermal() )
+      {
+        m_wellPropWriter[srn].registerPerfResProp( "Temperature", compFlowAccessors.get( fields::flow::temperature{} ));
+        m_wellPropWriter[srn].registerPerfResPhasePropf( "PhaseEnthalpy", multiFluidAccessors.get( fields::multifluid::phaseEnthalpy{} ));
+        m_wellPropWriter[srn].registerPerfResPhasePropf( "PhaseInternalEnergy", multiFluidAccessors.get( fields::multifluid::phaseInternalEnergy{} ));
+      }
+      m_wellPropWriter[srn].registerPerfComponentProp( "CompPerfRate", perforationData.getField< fields::well::compPerforationRate >());
+      //m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
+      m_wellPropWriter[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
+      m_wellPropWriter[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
+      m_wellPropWriter[srn].registerPerfResPhasePropf( "Viscosity", multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ));
+      m_wellPropWriter[srn].registerPerfResPhasePropf( "RelPerm", relPermAccessors.get( fields::relperm::phaseRelPerm{} ));
+
+      m_wellPropWriter[srn].write( m_numTimesteps, dt, cycle, subevent, m_numTimesteps,
+                                   current_newton_iteration,
+                                   num_timestep_cuts );
+    }
+
+  }
+
 
 }
 

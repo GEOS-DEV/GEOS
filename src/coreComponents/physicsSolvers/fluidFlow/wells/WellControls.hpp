@@ -30,7 +30,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellNewtonSolver.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/WellPropWriter.hpp"
 namespace geos
 {
 namespace dataRepository
@@ -42,7 +42,7 @@ static constexpr auto wellControls = "WellControls";
 }
 
 class ElementsReporterBuffer;
-
+class WHPConstraint;
 
 /**
  * @class WellControls
@@ -671,6 +671,25 @@ public:
    * @return a Status
    */
   WellControls::Status getWellStatus () const { return m_wellStatus; }
+
+  /**
+   * @brief getter for presence of production WHP constraint
+   * @return True if constraint exists
+   */
+  bool hasMinimumWHPConstraint() const
+  {
+    return m_hasMinWHPConstraint;
+  }
+
+  /**
+   * @brief getter for presence of production WHP constraint
+   * @return True if constraint exists
+   */
+  bool hasMaximumWHPConstraint() const
+  {
+    return m_hasMaxWHPConstraint;
+  }
+
   ///@}
 
   virtual string wellElementDofName() const = 0;
@@ -734,16 +753,21 @@ public:
     /// string key for the initial pressure coefficient
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
 
+    /// string key for the minimum BHP presssure for a producer
+    static constexpr char const * wellNewtonSolverString() { return "WellNewtonSolver"; }
+
     /// string key for the estimate well solution flag
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
     /// string key for the enable iso thermal estimator flag
     static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
 
     // control data (not registered on the mesh)
+    static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
+
     static constexpr char const * massDensityString() { return "massDensity";}
 
     static constexpr char const * currentBHPString() { return "currentBHP"; }
-
+    static constexpr char const * currentWHPString() { return "currentWHP"; }
     static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
     static constexpr char const * currentVolRateString() { return "currentVolRate"; }
 
@@ -779,17 +803,39 @@ public:
    */
   template< typename ConstraintType > void createConstraint ( string const & constraintName );
 
+  /**
+   * @brief Creates for internal constraints used by WHP constraints
+   */
+  void createMinBHPConstraintForWHP();
+  void createMaxLiquidConstraintForWHP();
+  void createMaxBHPConstraintForWHP();
+  void createMaxVolumeInjConstraintForWHP();
 
   /**
-   * @brief Gets the defined BHP constraint
-   * @details Returns the BHP constraint if one is defined for the WellControl. For a producer
-   * well this will be a minimum BHP constraint and for an injector well this will be a maximum
-   * BHP constraint. This will possibly return null if no BHP constraint is set. Validation is
-   * in place to enforce the setting of at least one BHp constraint.
-   * @return A BHP constraint object of one is defined
+   * @brief Gets the defined pressure constraint
+   * @details Returns the pressure constraint if one is defined for the WellControl. For a producer
+   * well this will be a minimum pressure constraint and for an injector well this will be a maximum
+   * pressure constraint. This will possibly return null if no pressure constraint is set. Validation is
+   * in place to enforce the setting of at least one pressure constraint.
+   * @return A pressure constraint object if one is defined
    */
-  WellConstraintBase const * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER ) const;
-  WellConstraintBase * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
+  WellConstraintBase const * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER, bool checkActiveStatus = true ) const;
+  WellConstraintBase * getBHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER, bool checkActiveStatus = true );
+  WHPConstraint const * getWHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER ) const;
+  WHPConstraint * getWHPConstraint( const ConstraintSourceId source = ConstraintSourceId::USER );
+
+  template< typename T >
+  T *  getProductionRateConstraint( const ConstraintSourceId source = ConstraintSourceId::USER, bool checkActiveStatus = true );
+
+  template< typename T >
+  T *  getInjectionRateConstraint( const ConstraintSourceId source = ConstraintSourceId::USER, bool checkActiveStatus = true );
+
+  //ProductionConstraint< LiquidRateConstraint > * getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
+  //BHPConstraint< BHPConstraintTypeId::MIN > * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
+
+  //InjectionConstraint< PhaseVolumeRateConstraint > * getMaxPhaseVolumeConstraintForWHP() { return m_maxPhaseVolumeConstraintForWHP; };
+  //BHPConstraint< BHPConstraintTypeId::MAX > * getMaximumBHPConstraintForWHP() { return m_maxBHPConstraintForWHP; };
+
 
   /**
    * @brief Gets a list of rate constraints
@@ -840,7 +886,34 @@ public:
                              WellElementSubRegion & subRegion,
                              DofManager const & dofManager );
 
+  virtual bool solveMinWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion ) = 0;
+
+  virtual bool solveMaxWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion ) = 0;
+  virtual void outputSingleWellDebug( real64 const time,
+                                      real64 const dt,
+                                      integer current_newton_iteration,
+                                      MeshLevel & mesh,
+                                      WellElementSubRegion & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                      arrayView1d< const real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
+
 protected:
+
   virtual void postRestartInitialization( )override;
 
   void updateNumDofPerElement();
@@ -1012,6 +1085,8 @@ protected:
   integer m_enableIsoThermalEstimator;
   bool m_thermalEffectsEnabled;
 
+  bool m_hasMinWHPConstraint;
+  bool m_hasMaxWHPConstraint;
   WellNewtonSolver m_wellNewtonSolver;
 
 
@@ -1020,6 +1095,21 @@ protected:
   /// @note This DofManager is used in the assembly of the estimators linear system
   DofManager m_estimatorDoFManager;
   bool m_dofManagerInitialized;
+
+  /// flag to write detailed segment properties
+  integer m_writeSegDebug;
+
+
+  integer m_numTimeStepCuts;
+  integer m_currentNewtonIteration;
+
+  std::map< std::string, WellPropWriter > m_wellPropWriter;
+  std::map< std::string, WellPropWriter > m_wellPropWriter_eot;
+
+  integer m_numTimesteps;
+  bool m_wellDebugInit;
+
+
 };
 
 
@@ -1035,6 +1125,8 @@ ENUM_STRINGS( WellControls_Control,
               "phaseVolRate",
               "totalVolRate",
               "massRate",
+              "liquidRate",
+              "WHP",
               "uninitialized" );
 
 
