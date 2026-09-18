@@ -89,9 +89,83 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      materialList="{ water, fractureFilling, fractureContact, thermalCond, hApertureModel }"
+      materialList="{ water, fractureFilling, almFractureContact, thermalCond, hApertureModel }"
       defaultAperture="1.e-4"/>
   </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="1"
+      defaultYoungModulus="10.0e9"
+      defaultPoissonRatio="0.2"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>
+
+    <ThermalCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="1.0e-10"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="1.672e2"
+      referenceInternalEnergy="0.001"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 1, 1, 1 }"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="1.672e5"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="2.2222e27"
+      defaultReferencePorosity="0.2"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <Coulomb
+      name="almFractureContact"
+      defaultCohesion="0.0"
+      defaultFrictionCoefficient="0.577350269189626"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>
+  </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification

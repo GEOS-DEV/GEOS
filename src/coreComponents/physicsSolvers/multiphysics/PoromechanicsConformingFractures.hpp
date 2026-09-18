@@ -397,7 +397,8 @@ void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
                                                     localMatrix,
                                                     localRhs,
                                                     getDerivativeFluxResidual_dNormalJump(),
-                                                    nullptr );
+                                                    nullptr,
+                                                    &m_derivativeFluxResidual_dApertureEnergyOffsets );
 
     m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
 
@@ -450,6 +451,8 @@ protected:
 
 
     integer const numComp = this->flowSolver()->numFluidComponents();
+    // When thermal, the flow field packs an extra temperature DOF right after the numComp mass
+    integer const numRowsPerElem = numComp + ( this->m_isThermal ? 1 : 0 );
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                         MeshLevel const & mesh,
@@ -501,7 +504,7 @@ protected:
                 if( k1 != k0 )
                 {
                   localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-                  for( integer ic = 0; ic < numComp; ic++ )
+                  for( integer ic = 0; ic < numRowsPerElem; ic++ )
                   {
                     rowLengths[rowNumber + ic] += 3*numNodesPerElement;
                   }
@@ -547,7 +550,7 @@ protected:
                 // so we only add the coupling with the nodal displacements of the neighbors.
                 if( k1 != k0 )
                 {
-                  for( integer ic = 0; ic < numComp; ic++ )
+                  for( integer ic = 0; ic < numRowsPerElem; ic++ )
                   {
                       localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
                       rowLengths[rowNumber + ic] += 3*numNodesPerElement;
@@ -674,7 +677,11 @@ protected:
                     for( localIndex i = 0; i < 3; ++i )
                     {
                       globalIndex const colIndex = coupledDisplacementDofNumber[dofIndirectionCb( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
-                      for( integer ic = 0; ic < this->flowSolver()->numFluidComponents(); ic++ )
+                      // See addTransmissibilityCouplingNNZ's numRowsPerElem: when thermal, also
+                      // reserve the temperature row (right after the numComp mass rows) for the
+                      // same displacement/bubble coupling as the mass rows.
+                      integer const numRowsPerElem = this->flowSolver()->numFluidComponents() + ( this->m_isThermal ? 1 : 0 );
+                      for( integer ic = 0; ic < numRowsPerElem; ic++ )
                       {
                         pattern.insertNonZero( rowIndex + ic, colIndex );
                       }
@@ -699,15 +706,16 @@ protected:
   {
     integer const numComp = this->flowSolver()->numFluidComponents();
     localIndex numCols = 0.;//number of outerloop pass (not considering innermost component loop)
-    
+
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
-  
+
     string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
    // Build the global row offsets and the row capacities together, so that each
     // target is visited only once before the matrix is allocated.
     m_derivativeFluxResidual_dApertureOffsets.clear();
+    m_derivativeFluxResidual_dApertureEnergyOffsets.clear();
    stdVector< localIndex > rowCapacities;
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                       MeshLevel const & mesh,
@@ -781,6 +789,44 @@ protected:
     } );
   } );
 
+  // Pass 2: energy-balance rows, appended as a second block after all mass rows not interleaved
+  // Only the advective (enthalpy-carried) contribution is assembled here; the conductive term's
+  // sensitivity is not modeled (no dConductivity/dDispJump constitutive derivative exists yet) 
+  if( this->m_isThermal )
+  {
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+                                                                        MeshLevel const & mesh,
+                                                                        string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( regionNames );
+      ElementRegionManager const & elemManager = mesh.getElemManager();
+
+      localIndex const rowOffset = rowCapacities.size();
+      m_derivativeFluxResidual_dApertureEnergyOffsets.get_inserted( meshName ) = rowOffset;
+
+      SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
+      FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+      rowCapacities.resize( rowOffset + fractureSubRegion.size(), 0 );
+
+      fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+      {
+        for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+        {
+          localIndex const numFluxElems = stencil.stencilSize( iconn );
+          typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+          for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+          {
+            localIndex const row = rowOffset + sei[iconn][k0];
+            GEOS_ERROR_IF_GE_MSG( row,
+                                  LvArray::integerConversion< localIndex >( rowCapacities.size() ),
+                                  "Surface stencil index exceeds the fracture derivative matrix size." );
+            rowCapacities[ row ] += numFluxElems;
+          }
+        }
+      } );
+    } );
+  }
+
   //write real data in structure
   std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
   localIndex const numRows = rowCapacities.size();
@@ -799,6 +845,7 @@ protected:
   {
     GEOS_UNUSED_VAR( regionNames );
     localIndex const rowOffset = m_derivativeFluxResidual_dApertureOffsets.at( meshName );
+    localIndex const columnOffset = rowOffset/numComp; //as component-independent indexing
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
@@ -815,13 +862,39 @@ protected:
           for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
           {
             derivativeFluxResidual_dAperture->insertNonZero( row,
-                                                             rowOffset/numComp + sei[iconn][k1], //as component-independent indexing
+                                                             columnOffset + sei[iconn][k1],
                                                              0.0 );
           }
         }
         }
       }
     } );
+
+    // Energy block: same connectivity/columns as the mass block above, appended rows.
+    if( this->m_isThermal )
+    {
+      localIndex const energyRowOffset = m_derivativeFluxResidual_dApertureEnergyOffsets.at( meshName );
+      fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
+      {
+        for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+        {
+          localIndex const numFluxElems = stencil.stencilSize( iconn );
+          typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+          for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
+          {
+            localIndex const row = energyRowOffset + sei[iconn][k0];
+            GEOS_ERROR_IF_GE_MSG( row, numRows, "Surface stencil index exceeds the fracture derivative matrix size." );
+            for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+            {
+              derivativeFluxResidual_dAperture->insertNonZero( row,
+                                                               columnOffset + sei[iconn][k1],
+                                                               0.0 );
+            }
+          }
+        }
+      } );
+    }
   } );
   }
 
@@ -1004,6 +1077,16 @@ protected:
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
+  /**
+   * @brief Row offset, per mesh body, of the energy-balance block appended after all
+   * mass-balance rows in getDerivativeFluxResidual_dNormalJump(). Only populated when
+   * m_isThermal; empty otherwise.
+   */
+  stdMap< string, localIndex > const & getDerivativeFluxResidual_dApertureEnergyOffsets() const
+  {
+    return m_derivativeFluxResidual_dApertureEnergyOffsets;
+  }
+
   struct viewKeyStruct : public Base::viewKeyStruct
   {};
 
@@ -1011,6 +1094,7 @@ protected:
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
   stdMap< string, localIndex > m_derivativeFluxResidual_dApertureOffsets;
+  stdMap< string, localIndex > m_derivativeFluxResidual_dApertureEnergyOffsets;
 
 };
 

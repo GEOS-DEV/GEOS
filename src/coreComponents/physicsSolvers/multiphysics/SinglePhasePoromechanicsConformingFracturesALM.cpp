@@ -138,8 +138,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( regionNames );
 
-  // TODO(thermal): getDerivativeFluxResidual_dNormalJump() below is sized/indexed one row per
-  // fracture element (mass-only) regardless of m_isThermal -- extend to 2 rows per fracture element for energy balance if m_isThermal
+  // The mass-balance block of getDerivativeFluxResidual_dNormalJump() below is one row per
+  // fracture element, as always. When m_isThermal, a second (advective-only) block for the
+  // energy balance is appended after it - see setUpDflux_dApertureMatrix and
+  // getDerivativeFluxResidual_dApertureEnergyOffsets(), scattered further down (Part 3).
   using namespace contact;
 
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -411,6 +413,108 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
                                                                   bubbleDOF2,
                                                                   dRdB2,
                                                                   numBdofs );
+      }
+    }
+
+    // ==== Part 3: Energy-balance flux derivative (advective contribution only) ====
+    // Mirrors Parts 1/2 above but reads the energy block appended after all mass rows in
+    // dFluxResidual_dNormalJump, reuses the same dAperturedU/dAperturedB chain-rule factors
+    // (aperture -> nodal/bubble DOF is equation-agnostic, so the pre-computed derivatives from
+    // ComputeApertureDerivativesFactory above apply unchanged), and scatters into the
+    // temperature/energy residual row (packed right after pressure) instead of the mass row.
+    // The conductive term's aperture sensitivity is not modeled - see
+    // setUpDflux_dApertureMatrix and ThermalSinglePhasePoromechanicsConformingFractures.hpp.
+    if( this->m_isThermal )
+    {
+      stdMap< string, localIndex > const & energyOffsets = this->getDerivativeFluxResidual_dApertureEnergyOffsets();
+      auto const energyOffsetIt = energyOffsets.find( meshName );
+      if( energyOffsetIt != energyOffsets.end() )
+      {
+        localIndex const energyOffset = energyOffsetIt->second;
+        globalIndex elemDOFEnergy[1];
+        elemDOFEnergy[0] = presDofNumber[kfe] + 1; // temperature/energy dof, packed right after pressure
+        localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( elemDOFEnergy[0] - rankOffset );
+
+        localIndex const numEnergyColumns = dFluxResidual_dNormalJump.numNonZeros( energyOffset + kfe );
+        arraySlice1d< localIndex const > const & energyColumns = dFluxResidual_dNormalJump.getColumns( energyOffset + kfe );
+        arraySlice1d< real64 const > const & energyValues = dFluxResidual_dNormalJump.getEntries( energyOffset + kfe );
+
+        // Nodal (Apu-energy) contribution
+        for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
+        {
+          real64 const dREnergy_dAper = energyValues[kfe1];
+          localIndex const kfe2 = energyColumns[kfe1] - derivativeOffset;
+
+          bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
+          if( !isOpen && !isFractureOpen )
+            continue;
+
+          localIndex const kf0_2 = elemsToFaces[kfe2][0];
+          localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
+          localIndex const numUdofs2 = 2 * 3 * numNodesPerFace2;
+
+          globalIndex nodeDOF2Energy[maxNumUdofs];
+          for( localIndex kf = 0; kf < 2; ++kf )
+          {
+            for( localIndex a = 0; a < numNodesPerFace2; ++a )
+            {
+              for( localIndex i = 0; i < 3; ++i )
+              {
+                nodeDOF2Energy[kf * 3 * numNodesPerFace2 + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
+                                                                        + LvArray::integerConversion< globalIndex >( i );
+              }
+            }
+          }
+
+          stackArray1d< real64, maxNumUdofs > dRdUEnergy( maxNumUdofs );
+          for( localIndex j = 0; j < numUdofs2; ++j )
+          {
+            dRdUEnergy( j ) = dREnergy_dAper * dAperturedU( kfe2, j );
+          }
+
+          if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
+                                                                      nodeDOF2Energy,
+                                                                      dRdUEnergy.data(),
+                                                                      numUdofs2 );
+          }
+        }
+
+        // Bubble (Apb-energy) contribution
+        for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
+        {
+          real64 const dREnergy_dAper = energyValues[kfe1];
+          localIndex const kfe2 = energyColumns[kfe1] - derivativeOffset;
+
+          bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
+          if( !isOpen && !isFractureOpen )
+            continue;
+
+          globalIndex bubbleDOF2Energy[numBdofs];
+          for( localIndex kf = 0; kf < 2; ++kf )
+          {
+            localIndex const faceIndex = elemsToFaces[kfe2][kf];
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              bubbleDOF2Energy[kf * 3 + i] = bubbleDofNumber[faceIndex] + LvArray::integerConversion< globalIndex >( i );
+            }
+          }
+
+          real64 dRdBEnergy[numBdofs];
+          for( localIndex j = 0; j < numBdofs; ++j )
+          {
+            dRdBEnergy[j] = dREnergy_dAper * dAperturedB( kfe2, j );
+          }
+
+          if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
+                                                                      bubbleDOF2Energy,
+                                                                      dRdBEnergy,
+                                                                      numBdofs );
+          }
+        }
       }
     }
   } );
