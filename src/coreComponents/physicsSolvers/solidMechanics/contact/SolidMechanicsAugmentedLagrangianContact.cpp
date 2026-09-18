@@ -19,6 +19,7 @@
 
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
+#include "common/logger/Logger.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -284,6 +285,15 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
   GEOS_MARK_FUNCTION;
 
+  updateFractureGeometry( domain );
+
+  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+}
+
+void SolidMechanicsAugmentedLagrangianContact::updateFractureGeometry( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
   // Recompute geometric quantities (face normals, areas) after mesh topology changes.
   // This is critical for distorted/non-axis-aligned meshes and after fracture events.
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -327,8 +337,6 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
   // Create the list of cell elements that they are enriched with bubble functions.
   createBubbleCellList( domain );
-
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()

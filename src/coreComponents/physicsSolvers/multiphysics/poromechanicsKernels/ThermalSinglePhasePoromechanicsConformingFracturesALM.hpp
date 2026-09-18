@@ -14,23 +14,23 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsConformingFractures.hpp
+ * @file SinglePhasePoromechanicsConformingFracturesALM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
-#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFracturesALM.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernelBase.hpp"
 
 namespace geos
 {
 
-namespace thermalSinglePhasePoromechanicsConformingFracturesKernels
+namespace thermalSinglePhasePoromechanicsConformingFracturesALMKernels
 {
 
 template< integer NUM_EQN, integer NUM_DOF >
-class ConnectorBasedAssemblyKernel : public singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >
+class ConnectorBasedAssemblyKernel : public singlePhasePoromechanicsConformingFracturesALMKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >
 {
 public:
 
@@ -71,7 +71,7 @@ public:
   using SinglePhaseFVMBase::m_sei;
   using SinglePhaseFVMBase::m_ghostRank;
 
-  using Base = singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
+  using Base = singlePhasePoromechanicsConformingFracturesALMKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
 
   using ThermalSinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::temperature >;
@@ -100,9 +100,7 @@ public:
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
-                                CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                localIndex const dR_dAperOffset,
-                                localIndex const dR_dAperEnergyOffset )
+                                CRSMatrixView< real64, localIndex const > const & dR_dAper )
     : Base( rankOffset,
             stencilWrapper,
             flowDofNumberAccessor,
@@ -113,14 +111,11 @@ public:
             dt,
             localMatrix,
             localRhs,
-            dR_dAper,
-            dR_dAperOffset ),
+            dR_dAper ),
     m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
-    m_dR_dAper( dR_dAper ),
-    m_dR_dAperEnergyOffset( dR_dAperEnergyOffset )
+    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
   {}
 
 
@@ -144,7 +139,7 @@ public:
       dEnergyFlux_dTrans( 0.0 ),
       dEnergyFlux_dP( size ),
       dEnergyFlux_dT( size ),
-      dEnergyFlux_dAperture( numElems, size )
+      dEnergyFlux_dDispJump( size, 3 )
     {}
     using SinglePhaseFVMBase::StackVariables::stencilSize;
     using SinglePhaseFVMBase::StackVariables::numFluxElems;
@@ -153,7 +148,6 @@ public:
     using SinglePhaseFVMBase::StackVariables::dofColIndices;
     using SinglePhaseFVMBase::StackVariables::localFlux;
     using SinglePhaseFVMBase::StackVariables::localFluxJacobian;
-    using Base::StackVariables::dFlux_dAperture;
 
     // Thermal transmissibility (for now, no derivatives)
 
@@ -169,9 +163,8 @@ public:
     stackArray1d< real64, maxStencilSize > dEnergyFlux_dP;
     /// Derivatives of energy fluxes wrt temperature
     stackArray1d< real64, maxStencilSize > dEnergyFlux_dT;
-    /// Derivatives of the (advective, enthalpy-carried) energy flux wrt aperture, same shape/
-    /// convention as dFlux_dAperture.
-    stackArray2d< real64, maxNumElems *maxStencilSize > dEnergyFlux_dAperture;
+    /// Derivatives of energy fluxes wrt dispJump
+    stackArray2d< real64, maxStencilSize *3 > dEnergyFlux_dDispJump{};
 
   };
 
@@ -227,30 +220,6 @@ public:
                                                          stack.dEnergyFlux_dTrans,
                                                          stack.dEnergyFlux_dP,
                                                          stack.dEnergyFlux_dT );
-
-      // Advective (enthalpy-carried) contribution to dEnergyFlux/dAperture: energyFlux =
-      // massFlux * enthalpyTimesMobWeight, and enthalpy does not depend on aperture (for now)
-      {
-        real64 enthalpyTimesMobWeight = 0.0;
-        if( alpha <= 0.0 || alpha >= 1.0 )
-        {
-          localIndex const k_up = 1 - localIndex( fmax( fmin( alpha, 1.0 ), 0.0 ) );
-          enthalpyTimesMobWeight = m_enthalpy[seri[k_up]][sesri[k_up]][sei[k_up]][0];
-        }
-        else
-        {
-          real64 const mobWeights[2] = { alpha, 1.0 - alpha };
-          for( integer ke = 0; ke < 2; ++ke )
-          {
-            enthalpyTimesMobWeight += mobWeights[ke] * m_enthalpy[seri[ke]][sesri[ke]][sei[ke]][0];
-          }
-        }
-
-        stack.dEnergyFlux_dAperture[k[0]][k[0]] += stack.dFlux_dAperture[k[0]][k[0]] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[0]][k[1]] += stack.dFlux_dAperture[k[0]][k[1]] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[1]][k[0]] += stack.dFlux_dAperture[k[1]][k[0]] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[1]][k[1]] += stack.dFlux_dAperture[k[1]][k[1]] * enthalpyTimesMobWeight;
-      }
 
       // add dMassFlux_dT to localFluxJacobian
       for( integer ke = 0; ke < 2; ++ke )
@@ -330,17 +299,6 @@ public:
                                                                                                       stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
                                                                                                       stack.stencilSize * numDof );
 
-      // Advective dEnergyFlux/dAperture -> energy-balance block of dR_dAper, appended after
-      // all mass-balance rows 
-      if( m_dR_dAperEnergyOffset >= 0 )
-      {
-        localIndex const energyRow = m_dR_dAperEnergyOffset + LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
-        m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( energyRow,
-                                                                  stack.localColIndices.data(),
-                                                                  stack.dEnergyFlux_dAperture[i].dataIfContiguous(),
-                                                                  stack.stencilSize );
-      }
-
     } );
   }
 
@@ -358,13 +316,6 @@ private:
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
-
-  /// View on dR_dAper 
-  CRSMatrixView< real64, localIndex const > m_dR_dAper;
-
-  /// Row offset, in m_dR_dAper, of the energy-balance block for this mesh target.
-  //  Negative(sentinel) means the caller did not build one - skip the energy-row write in complete().
-  localIndex const m_dR_dAperEnergyOffset;
 
 };
 
@@ -400,9 +351,7 @@ public:
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
-                   CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                   localIndex const dR_dAperOffset = 0,
-                   localIndex const dR_dAperEnergyOffset = -1 )
+                   CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {
     integer constexpr NUM_DOF = 2;   // pressure + temperature
     integer constexpr NUM_EQN = 2;   // mass balance + energy balance
@@ -427,7 +376,7 @@ public:
                        flowDofNumberAccessor,
                        flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
                        permAccessors, edfmPermAccessors, thermalConductivityAccessors,
-                       dt, localMatrix, localRhs, dR_dAper, dR_dAperOffset, dR_dAperEnergyOffset );
+                       dt, localMatrix, localRhs, dR_dAper );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
@@ -439,4 +388,4 @@ public:
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP

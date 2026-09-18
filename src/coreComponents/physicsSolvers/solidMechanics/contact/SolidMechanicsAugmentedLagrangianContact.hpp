@@ -21,6 +21,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 #define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 
+#include "common/format/Format.hpp"
+#include "common/logger/Logger.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
 
 namespace geos
@@ -29,6 +31,8 @@ namespace geos
 class SolidMechanicsAugmentedLagrangianContact : public ContactSolverBase
 {
 public:
+  static constexpr bool hasContactStabilization = true;
+  
   SolidMechanicsAugmentedLagrangianContact( const string & name,
                                             Group * const parent );
 
@@ -113,6 +117,10 @@ public:
   virtual bool updateConfiguration( DomainPartition & domain,
                                     integer configurationLoopIter ) override final;
 
+
+  //TODO (jafranc) - bubble should be reframe as a stabilization
+  string getStabilizationName() const { return "TODO:bubble"; }
+  bool hasStabilization() const { return false;}
 
   /**
    * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.
@@ -208,6 +216,17 @@ public:
    * @param domain The physical domain object
    */
   void createBubbleCellList( DomainPartition & domain ) const;
+
+  /**
+   * @brief Recompute face and element geometric quantities (normals, areas, centers, volumes) after mesh
+   * topology changes, and reorder kf1 fracture nodes to match kf0 for the conforming contact kernels.
+   * @param domain The physical domain object
+   *
+   * This is called from setupSystem() for the standalone contact solver. Coupled solvers built on top of this
+   * contact solver (e.g. poromechanics conforming fractures) that do not route through setupSystem() must call
+   * this explicitly before assembling contact-dependent sparsity/terms.
+   */
+  void updateFractureGeometry( DomainPartition & domain );
 
 private:
 

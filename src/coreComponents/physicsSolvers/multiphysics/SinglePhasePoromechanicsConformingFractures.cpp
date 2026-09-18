@@ -39,7 +39,10 @@ void SinglePhasePoromechanicsConformingFractures<>::setMGRStrategy()
 
   if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
     return;
-
+  
+  if( this->m_isThermal )
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for thermal {}", getName(), getCatalogName() ) );
+  
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;
 
@@ -51,13 +54,20 @@ void SinglePhasePoromechanicsConformingFractures<>::setMGRStrategy()
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
-assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+                                                    MeshLevel const & mesh,
                                                     string_array const & regionNames,
                                                     DofManager const & dofManager,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
+
+//TODO refactor with contact browser and kernel
+
   GEOS_MARK_FUNCTION;
+
+  // The mass-balance block of getDerivativeFluxResidual_dNormalJump() below is one row per
+  // fracture element. When m_isThermal, a second (advective-only) block is appended after it 
 
   using namespace contact;
 
@@ -221,27 +231,184 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
           }
         }
       }
+
+      // Energy-balance flux derivative (advective contribution only; the conductive term's not modeled yet
+      if( this->m_isThermal )
+      {
+        stdMap< string, localIndex > const & energyOffsets = this->getDerivativeFluxResidual_dApertureEnergyOffsets();
+        auto const energyOffsetIt = energyOffsets.find( meshName );
+        if( energyOffsetIt != energyOffsets.end() )
+        {
+          localIndex const energyRow = energyOffsetIt->second + kfe;
+          localIndex const numEnergyColumns = dFluxResidual_dNormalJump.numNonZeros( energyRow );
+          arraySlice1d< localIndex const > const & energyColumns = dFluxResidual_dNormalJump.getColumns( energyRow );
+          arraySlice1d< real64 const > const & energyValues = dFluxResidual_dNormalJump.getEntries( energyRow );
+
+          globalIndex elemDOFEnergy[1];
+          elemDOFEnergy[0] = presDofNumber[kfe] + 1; // temperature/energy dof, packed right after pressure
+
+          bool skipEnergyAssembly = !isFractureOpen;
+
+          for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
+          {
+            real64 const dREnergy_dAper = energyValues[kfe1];
+            localIndex const kfe2 = energyColumns[kfe1];
+
+            bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
+            skipEnergyAssembly &= !isOpen;
+
+            for( localIndex kf=0; kf<2; ++kf )
+            {
+              stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
+              this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
+                                                                  nodePosition,
+                                                                  faceToNodeMap,
+                                                                  faceToEdgeMap,
+                                                                  edgeToNodeMap,
+                                                                  faceCenters,
+                                                                  faceNormal,
+                                                                  faceAreas,
+                                                                  nodalArea );
+
+              for( localIndex a=0; a<numNodesPerFace; ++a )
+              {
+                for( localIndex i=0; i<3; ++i )
+                {
+                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
+                                                            + LvArray::integerConversion< globalIndex >( i );
+                  real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
+                  dRdU( kf*3*numNodesPerFace + 3*a+i ) = dREnergy_dAper * dAper_dU;
+                }
+              }
+            }
+
+            if( !skipEnergyAssembly )
+            {
+              localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( elemDOFEnergy[0] - rankOffset );
+
+              if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
+              {
+                localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
+                                                                          nodeDOF,
+                                                                          dRdU.data(),
+                                                                          2 * 3 * numNodesPerFace );
+              }
+            }
+          }
+        }
+      }
     } );
   } );
 }
 
-template<>
-void SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >::
-assembleSystem( real64 const time_n,
-                real64 const dt,
-                DomainPartition & domain,
-                DofManager const & dofManager,
-                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanicsConformingFractures<FLOW_SOLVER>::assembleForceResidualDerivativeWrtPressure( string const & GEOS_UNUSED_PARAM(meshName),
+                                                   MeshLevel const & mesh,
+                                                   string_array const & regionNames,
+                                                   DofManager const & dofManager,
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs )
+  {
+    GEOS_MARK_FUNCTION;
 
-  Base::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    FaceManager const & faceManager = mesh.getFaceManager();
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    EdgeManager const & edgeManager = mesh.getEdgeManager();
+    ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  // assemble well contributions
-  flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
-}
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+    ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+    arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+    arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+    arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+    arrayView1d< real64 const > faceAreas = faceManager.faceArea();
+
+    string const & dispDofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
+    string const & flowDofKey = dofManager.getKey( this->getFlowDofKey() );
+
+    arrayView1d< globalIndex const > const &
+    dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    // Get the coordinates for all nodes
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   FaceElementSubRegion const & subRegion )
+    {
+      arrayView1d< globalIndex const > const &
+      flowDofNumber = subRegion.getReference< globalIndex_array >( flowDofKey );
+      arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+
+      forAll< serialPolicy >( subRegion.size(), [=, this]( localIndex const kfe )
+      {
+        localIndex const kf0 = elemsToFaces[kfe][0];
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+
+        real64 Nbar[3];
+        Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+        Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+        Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+        LvArray::tensorOps::normalize< 3 >( Nbar );
+        globalIndex rowDOF[3 * m_maxFaceNodes]; // this needs to be changed when dealing with arbitrary element types
+        real64 nodeRHS[3 * m_maxFaceNodes];
+        stackArray1d< real64, 3 * m_maxFaceNodes > dRdP( 3*m_maxFaceNodes );
+        globalIndex colDOF[1];
+        colDOF[0] = flowDofNumber[kfe]; // pressure is always first
+
+        for( localIndex kf=0; kf<2; ++kf )
+        {
+          localIndex const faceIndex = elemsToFaces[kfe][kf];
+
+          // Compute local area contribution for each node
+          stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
+          this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe][kf],
+                                                              nodePosition,
+                                                              faceToNodeMap,
+                                                              faceToEdgeMap,
+                                                              edgeToNodeMap,
+                                                              faceCenters,
+                                                              faceNormal,
+                                                              faceAreas,
+                                                              nodalArea );
+          for( localIndex a=0; a<numNodesPerFace; ++a )
+          {
+            real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
+            real64 globalNodalForce[ 3 ];
+            LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
+
+            for( localIndex i=0; i<3; ++i )
+            {
+              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+              // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+              nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
+
+              // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+              dRdP( 3*a+i ) = -nodalArea[a] * Nbar[i] * pow( -1, kf );
+            }
+          }
+
+          for( localIndex idof = 0; idof < numNodesPerFace * 3; ++idof )
+          {
+            localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
+
+            if( localRow >= 0 && localRow < localMatrix.numRows() )
+            {
+              localMatrix.addToRow< parallelHostAtomic >( localRow,
+                                                          colDOF,
+                                                          &dRdP[idof],
+                                                          1 );
+              RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
+            }
+          }
+        }
+      } );
+    } );
+  }
+
+
 
 template class SinglePhasePoromechanicsConformingFractures<>;
 template class SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >;

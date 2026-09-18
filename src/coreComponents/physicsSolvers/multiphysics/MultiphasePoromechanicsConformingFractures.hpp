@@ -74,6 +74,8 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()//TODO should we keep ?
+
   void assembleSystem( real64 const time_n,
                        real64 const dt,
                        DomainPartition & domain,
@@ -85,13 +87,19 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
-  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+  virtual void assembleForceResidualDerivativeWrtPressure( string const & meshName,
+                                                            MeshLevel const & mesh,
+                                                            string_array const & regionNames,
+                                                            DofManager const & dofManager,
+                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                            arrayView1d< real64 > const & localRhs ) override final;
+
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+                                                                   MeshLevel const & mesh,
                                                                    string_array const & regionNames,
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) override;
-
-  virtual integer numFluidComponents() const override { return this->flowSolver()->numFluidComponents(); }
 
   virtual string getFlowDofKey() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); }
 
