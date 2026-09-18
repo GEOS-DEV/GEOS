@@ -40,10 +40,9 @@ void SinglePhasePoromechanicsConformingFractures<>::setMGRStrategy()
   if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
     return;
   
-    if( this->m_isThermal )
-    {
+  if( this->m_isThermal )
       GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for thermal {}", getName(), getCatalogName() ) );
-    }
+  
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;
 

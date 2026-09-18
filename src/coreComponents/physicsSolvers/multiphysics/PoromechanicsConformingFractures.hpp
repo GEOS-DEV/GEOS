@@ -59,23 +59,16 @@ public:
   {
     /// We need to add 2 coupling terms:
     // 1. Poromechanical coupling in the bulk (p<->disp)
-      GEOS_LOG_RANK_0("[debug] \t \t Coupling flow to displacement (call super from poromeca)\n");
     Base::setupCoupling( domain, dofManager );
 
-   
-    
     if constexpr (CONTACT_SOLVER::hasContactStabilization) {
-
-      GEOS_LOG_RANK_0("[debug] \t \t Coupling flow to bubble\n");
         // 2. Pressure - bubble displacement coupling in the fracture
         dofManager.addCoupling( this->getFlowDofKey(),
                           fields::contact::totalBubbleDisplacement::key(),
                           DofManager::Connector::Elem );
-    
     }
     else {
-     // 2. Traction - pressure coupling in the fracture 
-      GEOS_LOG_RANK_0("[debug] \t \t Coupling flow to traction\n");
+     // 2. Traction - pressure coupling in the fracture
     dofManager.addCoupling( this->getFlowDofKey(),
                             fields::contact::traction::key(),
                             DofManager::Connector::Elem );
@@ -112,7 +105,6 @@ public:
     addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView());
     if constexpr (CONTACT_SOLVER::hasContactStabilization) {
       //bubble to displacement coupling
-      GEOS_LOG_RANK_0("[debug] \t \t ALM nnz sizing"); 
       addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
       addMatrixPressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by CONTACT::STABILIZATION
     }
@@ -134,21 +126,11 @@ public:
     //displacement (and opt. bubble) to flow coupling
     addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
     if constexpr (CONTACT_SOLVER::hasContactStabilization) {
-      GEOS_LOG_RANK_0("[debug] \t \t ALM coupling patterns"); 
       addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
       addMatrixPressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
     }
 
-    GEOS_LOG_RANK_0("[debug] \t \t Setting Apperture derivatives");
     setUpDflux_dApertureMatrix( domain );
-
-
-//     for( localIndex row = 0; row < pattern.numRows(); ++row )
-// {
-//   GEOS_LOG_RANK( GEOS_FMT( "row {} nnz {} cols {}", row, pattern.numNonZeros( row ),
-//                            stringutilities::join( pattern.getColumns( row ).begin(), pattern.getColumns( row ).end(), "," ) ) );
-// }
-
   }
 
   //Stabilization specific
@@ -395,13 +377,11 @@ void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
 
     if( !m_derivativeFluxResidual_dAperture )
     {
-      GEOS_LOG_RANK_0("[debug] \t \t Assembling dFluxdAperture if not already");
       setUpDflux_dApertureMatrix( domain );
     }
     m_derivativeFluxResidual_dAperture->move( parallelDeviceMemorySpace, false );
     m_derivativeFluxResidual_dAperture->zero();
 
-    GEOS_LOG_RANK_0("[debug] \t \t Assembling element based");
     assembleElementBasedContributions( time_n,
                                        dt,
                                        domain,
@@ -410,7 +390,6 @@ void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
                                        localRhs );
 
     // Assemble fluxes 3D/2D and get dFluidResidualDAperture
-    GEOS_LOG_RANK_0("[debug] \t \t Assembling hydrofrac flux terms");
     this->flowSolver()->assembleHydrofracFluxTerms( time_n,
                                                     dt,
                                                     domain,
@@ -423,7 +402,6 @@ void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
     m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
 
     // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
-    GEOS_LOG_RANK_0("[debug] \t \t Assembling coupling terms");
     assembleCouplingTerms( time_n,
                            dt,
                            domain,
@@ -490,7 +468,6 @@ protected:
       if(this->solidMechanicsSolver()->hasStabilization())//why is this not done in SolidMech ?
       {
 
-      GEOS_LOG_RANK_0("[debug] \t \t Fetching stabilization from meca\n");
       FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
 
       stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
@@ -537,8 +514,6 @@ protected:
       }
       //to decide -- reduce duplication -- can we have both ?
       if constexpr (CONTACT_SOLVER::hasContactStabilization) {
-
-        GEOS_LOG_RANK_0("[debug] \t \t Fetching fv for bubbles\n");
 
       FluxApproximationBase const & fvMethod = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
@@ -611,24 +586,6 @@ protected:
     FaceManager const & faceManager = mesh.getFaceManager();
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    if constexpr (CONTACT_SOLVER::hasContactStabilization)
-    {
-      GEOS_LOG_RANK_0(GEOS_FMT( "[debug] \t \t Offset tables: {}({}) flow \n {}({}) ut \n {}({}) ub",
-        dofManager.rankOffset(this->getFlowDofKey()), dofManager.numLocalDofs(this->getFlowDofKey()),
-        dofManager.rankOffset(fields::solidMechanics::totalDisplacement::key()), dofManager.numLocalDofs(fields::solidMechanics::totalDisplacement::key()),
-        dofManager.rankOffset(fields::contact::totalBubbleDisplacement::key()), dofManager.numLocalDofs(fields::contact::totalBubbleDisplacement::key())
-      ));
-    }
-    else
-    {
-      GEOS_LOG_RANK_0(GEOS_FMT( "[debug] \t \t Offset tables: {}({}) flow \n {}({}) ut",
-        dofManager.rankOffset(this->getFlowDofKey()), dofManager.numLocalDofs(this->getFlowDofKey()),
-        dofManager.rankOffset(fields::solidMechanics::totalDisplacement::key()), dofManager.numLocalDofs(fields::solidMechanics::totalDisplacement::key())
-      ));
-    }
-
-
-    GEOS_LOG_RANK_0("[debug] \t \t Adding T-pattern [flow -> utot]\n");
     addTransmissibilityCouplingPattern( domain, mesh, dofManager, pattern,
         nodeManager.getReference< globalIndex_array >( dofManager.getKey( fields::solidMechanics::totalDisplacement::key() ) ),
         [&faceToNodeMap](localIndex const& faceIndex, localIndex const& a){ return faceToNodeMap(faceIndex,a); },
@@ -636,7 +593,6 @@ protected:
 
     if constexpr (CONTACT_SOLVER::hasContactStabilization)
     {
-      GEOS_LOG_RANK_0("[debug] \t \t Adding T-pattern [flow -> btot]\n");
       addTransmissibilityCouplingPattern( domain, mesh, dofManager, pattern,
           faceManager.getReference< globalIndex_array >( dofManager.getKey( fields::contact::totalBubbleDisplacement::key() ) ),
           [](localIndex const & faceIndex, localIndex const& GEOS_UNUSED_PARAM(a)){ return faceIndex; },
@@ -880,7 +836,6 @@ protected:
 
     /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
 
-    GEOS_LOG_RANK_0("[debug] \t \t Assembling Poromecha");
     Base::assembleElementBasedTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
     // Flow accumulation for fractures
@@ -891,12 +846,10 @@ protected:
       mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             FaceElementSubRegion const & subRegion )
       {
-      GEOS_LOG_RANK_0("[debug] \t \t Assembling Flow accumulation on Fractures");
         this->flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
       } );
     } );
 
-    GEOS_LOG_RANK_0("[debug] \t \t Assembling contact");
     this->solidMechanicsSolver()->assembleContact( time_n, dt, domain, dofManager, localMatrix, localRhs );
   }
 
