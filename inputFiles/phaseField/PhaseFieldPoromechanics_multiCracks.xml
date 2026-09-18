@@ -35,8 +35,6 @@
       name="damageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
-      localDissipation="Linear"
       irreversibilityFlag="1"
       damageUpperBound="1.0"
       fracturePressureTermFlag="1"
@@ -140,6 +138,8 @@
       lengthScale="0.5"
       defaultCriticalFractureEnergy="12e-3"
       criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
+      localDissipationOption="Linear"
       degradationLowerLimit="1e-6"/>
 
     <BiotPorosity
@@ -164,13 +164,6 @@
   </Constitutive>
 
   <FieldSpecifications>    
-    <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="graniteSolid_criticalFractureEnergy"
-       scale="12e-3"/>
        
     <FieldSpecification 
       name="xconstraint"    
@@ -223,14 +216,14 @@
 
     <FieldSpecification
       name="noDamage"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="0.0"
       setNames="{ intact }"/> 
 
     <FieldSpecification
       name="initialDamage"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="1.0"
       setNames="{ fracture1, fracture2, fracture3 }"/> 

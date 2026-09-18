@@ -7,7 +7,6 @@
     <SolidMechanicsLagrangeContactBubbleStab
       name="contactSolver"
       logLevel="2"
-      writeLinearSystem="2"
       discretization="FE1"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters

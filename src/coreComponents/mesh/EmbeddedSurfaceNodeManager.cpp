@@ -90,7 +90,7 @@ void EmbeddedSurfaceNodeManager::setElementMaps( ElementRegionManager const & el
   array1d< localIndex > elemsPerNode( numNodes );
 
   // The total number of elements, the sum of elemsPerNode.
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
+  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems( 0 );
 
   elementRegionManager.
     forElementSubRegions< EmbeddedSurfaceSubRegion >( [&elemsPerNode, &totalNodeElems]( EmbeddedSurfaceSubRegion const & subRegion )

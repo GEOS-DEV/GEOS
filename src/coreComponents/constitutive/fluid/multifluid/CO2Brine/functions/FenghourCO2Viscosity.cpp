@@ -88,7 +88,7 @@ void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
   }
 }
 
-TableFunction const * makeViscosityTable( string_array const & inputParams,
+TableFunction const * makeViscosityTable( constitutive::PVTProps::BrineFluidParameters const & brineFluidParameters,
                                           string const & functionName,
                                           FunctionManager & functionManager )
 {
@@ -105,20 +105,9 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   else
   {
     PTTableCoordinates tableCoords;
-    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+    constitutive::PVTProps::BrineFluidParameters::initializePropertyTable( brineFluidParameters, tableCoords );
 
-    real64 tolerance = 1e-10;
-    try
-    {
-      if( inputParams.size() >= 9 )
-      {
-        tolerance = stod( inputParams[8] );
-      }
-    }
-    catch( const std::invalid_argument & e )
-    {
-      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-    }
+    real64 const tolerance = brineFluidParameters.m_tolerance;
 
     localIndex const nP = tableCoords.nPressures();
     localIndex const nT = tableCoords.nTemperatures();
@@ -139,7 +128,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
 } // namespace
 
 FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
-                                            string_array const & inputParams,
+                                            BrineFluidParameters const & brineFluidParameters,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight,
                                             TableFunction::OutputOptions const pvtOutputOpts )
@@ -147,7 +136,7 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
                      componentNames,
                      componentMolarWeight )
 {
-  m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_CO2ViscosityTable = makeViscosityTable( brineFluidParameters, m_functionName, FunctionManager::getInstance() );
 
   m_CO2ViscosityTable->outputTableData( pvtOutputOpts );
 }

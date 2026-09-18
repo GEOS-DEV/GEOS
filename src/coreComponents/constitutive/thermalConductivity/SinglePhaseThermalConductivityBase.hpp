@@ -157,6 +157,9 @@ public:
    */
   virtual void initializeState() const;
 
+  struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
+  {};
+
 protected:
 
   /// cell-wise reference conductivities in the subregion

@@ -43,6 +43,7 @@ set( dataRepository_headers
      Wrapper.hpp
      WrapperBase.hpp
      wrapperHelpers.hpp
+     WrapperLimits.hpp
      xmlWrapper.hpp
      DataContext.hpp
      GroupContext.hpp
