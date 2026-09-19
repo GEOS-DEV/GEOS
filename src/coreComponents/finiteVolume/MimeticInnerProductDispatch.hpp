@@ -26,6 +26,7 @@
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/RTInnerProduct.hpp"
 #include "LvArray/src/system.hpp"
 
 namespace geos
@@ -49,6 +50,8 @@ struct MimeticInnerProductTypeStrings
   static constexpr auto Simple    = "simple";
   /// string for the inner product of Beirao da Veiga, Lipnikov, Manzini
   static constexpr auto BdVLM     = "beiraoDaVeigaLipnikovManzini";
+  /// string for the Raviart-Thomas inner product (exact RT0 on simplices)
+  static constexpr auto RT        = "RT";
 };
 
 /**
@@ -81,6 +84,10 @@ mimeticInnerProductDispatch( MimeticInnerProductBase const & input,
   else if( auto const * const ptr5 = dynamic_cast< BdVLMInnerProduct const * >(&input) )
   {
     lambda( *ptr5 );
+  }
+  else if( auto const * const ptr6 = dynamic_cast< RTInnerProduct const * >(&input) )
+  {
+    lambda( *ptr6 );
   }
   else
   {
@@ -119,6 +126,10 @@ mimeticInnerProductDispatch( MimeticInnerProductBase & input,
   else if( auto * const ptr5 = dynamic_cast< BdVLMInnerProduct * >(&input) )
   {
     lambda( *ptr5 );
+  }
+  else if( auto * const ptr6 = dynamic_cast< RTInnerProduct * >(&input) )
+  {
+    lambda( *ptr6 );
   }
   else
   {
