@@ -89,9 +89,12 @@ public:
   {
     setReduction( precond, mgrData );
 
-    // one BoomerAMG V-cycle on the pressure-temperature Schur complement, without aggressive coarsening
+    // one BoomerAMG V-cycle on the pressure-temperature Schur complement, without aggressive coarsening.
+    // C/F Jacobi relaxation: independent of the partition, unlike the hybrid Gauss-Seidel default
     BoomerAMGParameters amgParameters = pressureTemperatureAMGParameters();
     amgParameters.aggressiveNumLevels = 0;
+    amgParameters.relaxType = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi );
+    amgParameters.numSweeps = 2;
     configureBoomerAMG( mgrData.coarseSolver, amgParameters );
     mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
     mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
