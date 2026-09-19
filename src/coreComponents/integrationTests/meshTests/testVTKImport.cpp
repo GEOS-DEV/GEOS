@@ -63,13 +63,20 @@ namespace
 {
 
 template< typename ARRAY_TYPE >
-void addEmptyArray( vtkFieldData & data, char const * name, int const numComponents )
+void addArray( vtkFieldData & data, char const * name, int const numComponents, vtkIdType const numTuples )
 {
   vtkNew< ARRAY_TYPE > array;
   array->SetName( name );
   array->SetNumberOfComponents( numComponents );
-  array->SetNumberOfTuples( 0 );
+  array->SetNumberOfTuples( numTuples );
   data.AddArray( array );
+}
+
+void addRedistributionMetadata( vtkUnstructuredGrid & grid, vtkIdType const numTuples )
+{
+  addArray< vtkStringArray >( *grid.GetCellData(), "redistributeCellLabels", 2, numTuples );
+  addArray< vtkStringArray >( *grid.GetPointData(), "redistributePointLabels", 2, numTuples );
+  addArray< vtkStringArray >( *grid.GetFieldData(), "redistributeFieldLabels", 2, numTuples );
 }
 
 vtkSmartPointer< vtkUnstructuredGrid > makeRedistributionGrid( bool const withCell )
@@ -103,15 +110,15 @@ vtkSmartPointer< vtkUnstructuredGrid > makeRedistributionGrid( bool const withCe
     fieldValues->SetNumberOfTuples( 1 );
     fieldValues->SetTuple3( 0, 5, 6, 7 );
     grid->GetFieldData()->AddArray( fieldValues );
+
+    addRedistributionMetadata( *grid, 1 );
   }
   else
   {
-    addEmptyArray< vtkStringArray >( *grid->GetCellData(), "redistributeCellLabels", 2 );
-    addEmptyArray< vtkIntArray >( *grid->GetCellData(), "redistributeCellValues", 3 );
-    addEmptyArray< vtkStringArray >( *grid->GetPointData(), "redistributePointLabels", 2 );
-    addEmptyArray< vtkDoubleArray >( *grid->GetPointData(), "redistributePointValues", 4 );
-    addEmptyArray< vtkStringArray >( *grid->GetFieldData(), "redistributeFieldLabels", 2 );
-    addEmptyArray< vtkIntArray >( *grid->GetFieldData(), "redistributeFieldValues", 3 );
+    addArray< vtkIntArray >( *grid->GetCellData(), "redistributeCellValues", 3, 0 );
+    addArray< vtkDoubleArray >( *grid->GetPointData(), "redistributePointValues", 4, 0 );
+    addArray< vtkIntArray >( *grid->GetFieldData(), "redistributeFieldValues", 3, 0 );
+    addRedistributionMetadata( *grid, 0 );
   }
   return grid;
 }
@@ -140,7 +147,8 @@ void expectEmptyArrayMetadata( vtkFieldData & data, std::initializer_list< Expec
 
 
 template< class V >
-void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="" )
+void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="",
+                     int const partitionRefinement=0 )
 {
   // Automatically use global IDs when fractures are present
   string const useGlobalIdsStr = fractureName.empty() ? "0" : "1";
@@ -150,12 +158,12 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
       <VTKMesh
         name="mesh"
         file="{}"
-        partitionRefinement="0"
+        partitionRefinement="{}"
         useGlobalIds="{}"
         {} />
     </Mesh>
   )xml";
-  string const meshNode = GEOS_FMT_RUNTIME( pattern, meshFilePath, useGlobalIdsStr,
+  string const meshNode = GEOS_FMT_RUNTIME( pattern, meshFilePath, partitionRefinement, useGlobalIdsStr,
                                             fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
 
   xmlWrapper::xmlDocument xmlDocument;
@@ -465,7 +473,8 @@ TEST( VTKImport, redistribute )
   {
     // With one rank, use an empty destination to exercise the metadata
     // recreation directly. In parallel, rank zero receives cells while the
-    // remaining destinations receive empty partitions.
+    // remaining destinations receive empty partitions. Both nonempty and
+    // empty partitions carry string and numeric metadata.
     bool const withCell = commSize > 1 && destinationRank == 0;
     localParts->SetPartition( destinationRank, makeRedistributionGrid( withCell ) );
   }
@@ -493,6 +502,29 @@ TEST( VTKImport, redistribute )
                                { { "redistributeFieldLabels", VTK_STRING, 2 },
                                  { "redistributeFieldValues", VTK_INT, 3 } } );
   }
+}
+
+TEST( VTKImport, structuredPointsStringField )
+{
+  // Original #2821 inline VTK: STRUCTURED_POINTS plus FIELD CellLabels string,
+  // imported through VTKMesh with the default partitionRefinement=1 path.
+  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
+  {
+    localIndex localCells = 0;
+    stdVector< string > const names{ geos::vtk::buildCellBlockName( ElementType::Hexahedron, 0 ),
+                                     geos::vtk::buildCellBlockName( ElementType::Hexahedron, 1 ),
+                                     geos::vtk::buildCellBlockName( ElementType::Hexahedron, 2 ) };
+    for( string const & name: names )
+    {
+      if( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( name ) )
+      {
+        localCells += cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( name ).size();
+      }
+    }
+    ASSERT_EQ( MpiWrapper::sum( localCells ), 25 );
+  };
+
+  TestMeshImport( testMeshDir + "/stringFieldStructuredPoints.vtk", validate, "", 1 );
 }
 
 TEST( VTKImport, cube )

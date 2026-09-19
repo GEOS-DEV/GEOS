@@ -147,6 +147,9 @@ redistribute( vtkPartitionedDataSet & localParts,
       {
         break;
       }
+      // vtkFieldData::GetArray() returns nullptr for vtkStringArray and other
+      // non-vtkDataArray objects. Empty-rank reconstruction uses CreateArray
+      // on the stored VTK type, so the scan must use GetAbstractArray().
       for( int c = 0; c < ug->GetCellData()->GetNumberOfArrays(); ++c )
       {
         vtkAbstractArray * array = ug->GetCellData()->GetAbstractArray( c );
