@@ -136,6 +136,9 @@ public:
   virtual void initializeState() const
   {}
 
+  struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
+  {};
+
 protected:
 
   /// Vector of absolute permeability

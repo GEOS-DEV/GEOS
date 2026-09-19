@@ -36,6 +36,7 @@
 #include <vtkPoints.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLMultiBlockDataWriter.h>
+#include <vtkVersionMacros.h>
 
 #include <gtest/gtest.h>
 #include <conduit.hpp>
@@ -66,8 +67,8 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
         {} />
     </Mesh>
   )xml";
-  string const meshNode = GEOS_FMT( pattern, meshFilePath, useGlobalIdsStr,
-                                    fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
+  string const meshNode = GEOS_FMT_RUNTIME( pattern, meshFilePath, useGlobalIdsStr,
+                                            fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.loadString( meshNode );
@@ -188,7 +189,11 @@ private:
       };
 
       vtkNew< vtkPoints > points;
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 7, 0 )
+      points->Reserve( numPoints );
+#else
       points->Allocate( numPoints );
+#endif
       for( double const * pointsCoord: pointsCoords )
       {
         points->InsertNextPoint( pointsCoord );
@@ -239,7 +244,11 @@ private:
       };
 
       vtkNew< vtkPoints > points;
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 7, 0 )
+      points->Reserve( numPoints );
+#else
       points->Allocate( numPoints );
+#endif
       for( double const * pointsCoord: pointsCoords )
       {
         points->InsertNextPoint( pointsCoord );

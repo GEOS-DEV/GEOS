@@ -544,6 +544,10 @@ TEST( FunctionTests, 4DTable_derivatives )
 
 TEST( FunctionTests, 4DTable_symbolic )
 {
+#if defined(__APPLE__) && defined(__aarch64__)
+  GTEST_SKIP() << "MathPresso JIT is not supported on Apple arm64.";
+#endif
+
   FunctionManager * functionManager = &FunctionManager::getInstance();
 
   // Symbolic function with four inputs

@@ -37,27 +37,6 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-void writeTableToFile( string const & filename, char const * str )
-{
-  std::ofstream os( filename );
-  ASSERT_TRUE( os.is_open() );
-  os << str;
-  os.close();
-}
-
-void removeFile( string const & filename )
-{
-  int const ret = std::remove( filename.c_str() );
-  ASSERT_TRUE( ret == 0 );
-}
-char const * co2flash = "FlashModel CO2Solubility   1e5 7.5e7 5e5 283.15 414.15 10 0\n";
-char const * pvtLiquid = "DensityFun PhillipsBrineDensity 1e5 7.5e7 5e5 283.15 414.15 10 0\n"
-                         "ViscosityFun PhillipsBrineViscosity 0\n"
-                         "EnthalpyFun BrineEnthalpy 1e5 7.5e7 5e5 283.15 414.15 10 0\n";
-
-char const * pvtGas = "DensityFun SpanWagnerCO2Density 1e5 7.5e7 5e5 283.15 414.15 10\n"
-                      "ViscosityFun FenghourCO2Viscosity 1e5 7.5e7 5e5 283.15 414.15 10\n"
-                      "EnthalpyFun CO2Enthalpy 1e5 7.5e7 5e5 283.15 414.15 10\n";
 char const * xmlInput =
   R"xml(
 <?xml version="1.0" ?>
@@ -216,9 +195,10 @@ char const * xmlInput =
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{  testThermalInjWell_pvtgas.txt,  testThermalInjWell_pvtliquid.txt }"
-      flashModelParaFile="testThermalInjWell_co2flash.txt">
-    </CO2BrinePhillipsThermalFluid>
+      pressureCoordinates="{1e5, 7.5e7}"
+      pressureInterval="5e5"
+      temperatureCoordinates="{283.15, 414.15}"
+      temperatureInterval="10.0" />
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
@@ -877,16 +857,10 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
 #endif
 int main( int argc, char * * argv )
 {
-  writeTableToFile( "testThermalInjWell_co2flash.txt", co2flash );
-  writeTableToFile( "testThermalInjWell_pvtliquid.txt", pvtLiquid );
-  writeTableToFile( "testThermalInjWell_pvtgas.txt", pvtGas );
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geos::basicCleanup();
-  removeFile( "testThermalInjWell_co2flash.txt" );
-  removeFile( "testThermalInjWell_pvtliquid.txt" );
-  removeFile( "testThermalInjWell_pvtgas.txt" );
 
   return result;
 }
