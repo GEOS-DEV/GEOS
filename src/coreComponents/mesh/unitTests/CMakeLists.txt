@@ -61,4 +61,14 @@ set( nranks 4 )
       target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
     endif ()
   endforeach()
+
+  # VTKMeshScattering test — 4 MPI ranks
+  blt_add_executable( NAME testVTKMeshScattering_mpi
+                      SOURCES testVTKMeshScattering.cpp
+                      OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                      DEPENDS_ON ${dependencyList} ${tplDependencyList} )
+
+  geos_add_test( NAME testVTKMeshScattering_mpi
+                 COMMAND testVTKMeshScattering_mpi
+                 NUM_MPI_TASKS 4 )
 endif()

@@ -80,7 +80,16 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
 
   registerWrapper( viewKeyStruct::partitionMethodString(), &m_partitionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Method (library) used to partition the mesh" );
+    setDescription( "Method (library) used to refine mesh partitioning" );
+
+  registerWrapper( viewKeyStruct::scatterMethodString(), &m_scatterMethod ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( vtk::ScatterMethod::kdtree ).
+    setDescription( "Method for initial mesh scatter from rank 0 to all ranks: "
+                    "contiguous (cell ID ranges, no geometry), "
+                    "cartesian (regular grid using -x/-y/-z partitions), "
+                    "rcb (recursive coordinate bisection), "
+                    "kdtree (VTK built-in kd-tree, default; automatically falls back to rcb when fractures are present)" );
 
   registerWrapper( viewKeyStruct::partitionFractureWeightString(), &m_partitionFractureWeight ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -140,7 +149,17 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
 
-  int const numPartZ = m_structuredIndexAttributeName.empty() ? 1 : partition.getPartitions()[2];
+  array1d< int > const & partitions = partition.getPartitions();
+
+  if( m_scatterMethod == vtk::ScatterMethod::cartesian )
+  {
+    int const product = partitions[0] * partitions[1] * partitions[2];
+    GEOS_ERROR_IF( product != MpiWrapper::commSize( comm ),
+                   GEOS_FMT( "scatterMethod=\"cartesian\" requires -x * -y * -z = MPI size. "
+                             "Got {}x{}x{} = {} but MPI size is {}.",
+                             partitions[0], partitions[1], partitions[2],
+                             product, MpiWrapper::commSize( comm ) ) );
+  }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, "  redistributing mesh..." );
   {
@@ -157,7 +176,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     {
       if( MpiWrapper::commRank() == 0 )
       {
-        stdVector< vtkSmartPointer< vtkPartitionedDataSet > > partitions;
+        stdVector< vtkSmartPointer< vtkPartitionedDataSet > > vtkPartitions;
         vtkNew< vtkAppendFilter > appender;
         appender->MergePointsOn();
         for( auto & [key, value] : getSubGroups())
@@ -210,12 +229,13 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
                                                                   allMeshes.getMainMesh(),
                                                                   allMeshes.getFaceBlocks(),
                                                                   comm,
+                                                                  m_scatterMethod,
+                                                                  partitions.toViewConst(),
                                                                   m_partitionMethod,
                                                                   m_partitionRefinement,
                                                                   m_partitionFractureWeight,
                                                                   m_useGlobalIds,
-                                                                  m_structuredIndexAttributeName,
-                                                                  numPartZ );
+                                                                  m_structuredIndexAttributeName );
     m_vtkMesh = redistributedMeshes.getMainMesh();
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
