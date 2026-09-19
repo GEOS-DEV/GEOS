@@ -82,6 +82,9 @@ public:
                       arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, localMatrix, localRhs ),
     m_dt( dt ),
+    m_solventMassFraction( fluid.solventMassFraction() ),
+    m_density( fluid.density() ),
+    m_dDensity( fluid.dDensity() ),
     m_volume( subRegion.getElementVolume() ),
     m_deltaVolume( subRegion.template getField< fields::flow::deltaVolume >() ),
     m_porosity( solid.getPorosity() ),
@@ -160,8 +163,9 @@ public:
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
-    // Residual[is] += (primarySpeciesAggregateConcentration[is] * stack.poreVolume - primarySpeciesAggregateMole_n[is])
-    //                 - dt * m_volume * primarySpeciesKineticRate[is] // To Check: what's the unit of the kinetic rate
+    // Residual[is] += (primarySpeciesAggregateConcentration[is] * solventMassFraction * density * stack.poreVolume -
+    // primarySpeciesAggregateMole_n[is])
+    //                 - dt * m_volume * primarySpeciesKineticRate[is]
 
     Base::computeAccumulation( ei, stack );
 
@@ -183,14 +187,17 @@ public:
       // Step 2.1: residual
       // Primary species mole amount in pore volume
       stack.localResidual[is+numEqn-numSpecies] -= m_primarySpeciesAggregateMole_n[ei][is];
-      stack.localResidual[is+numEqn-numSpecies] += m_primarySpeciesAggregateConcentration[ei][0][is] * stack.poreVolume;
+      // moles of species per m^3 of solution: molality * solvent mass fraction * density
+      real64 const aggregateConcMolarity = m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventMassFraction * m_density[ei][0];
+      stack.localResidual[is+numEqn-numSpecies] += aggregateConcMolarity * stack.poreVolume;
 
       // Reaction term
       stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_primarySpeciesAggregateKineticRate[ei][0][is];
 
       // Step 2.1: jacobian
-      // Drivative of primary species amount in pore volume wrt pressure
-      stack.localJacobian[is+numEqn-numSpecies][0] += stack.dPoreVolume_dPres * m_primarySpeciesAggregateConcentration[ei][0][is]
+      // Derivative of primary species amount in pore volume wrt pressure
+      stack.localJacobian[is+numEqn-numSpecies][0] += stack.dPoreVolume_dPres * aggregateConcMolarity
+                                                      + stack.poreVolume * m_primarySpeciesAggregateConcentration[ei][0][is] * m_solventMassFraction * m_dDensity[ei][0][DerivOffset::dP]
                                                       /* + stack.poreVolume * m_dTotalPrimarySpeciesConcentration_dPres[ei][is] */;
       // // Derivative of reaction term wrt pressure
       // stack.localJacobian[is+numEqn-numSpecies][0] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) *
@@ -201,13 +208,8 @@ public:
       {
         stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] = /* stack.dPoreVolume_dLogPrimaryConc[js] *
                                                                               m_primarySpeciesAggregateConcentration[ei][0][is]
-                                                                           + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js];  // To
-        // check
-        // if
-        // the
-        // permutation
-        // is
-        // consistent
+                                                                           + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js] *
+                                                                          m_solventMassFraction * m_density[ei][0];
 
         stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc[is][js];
       }
@@ -244,6 +246,13 @@ protected:
 
   /// Time step size
   real64 const m_dt;
+
+  /// Mass fraction of solvent in the solution [-]; molality times this fraction times density is the molarity
+  real64 const m_solventMassFraction;
+
+  /// View on the fluid density and its derivatives
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_density;
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const m_dDensity;
 
   /// View on the element volumes
   arrayView1d< real64 const > const m_volume;
