@@ -76,6 +76,20 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  void updateStateFromPressureApertureAndNormal( localIndex const k,
+                                           localIndex const q,
+                                           real64 const & pressure,
+                                           real64 const & oldHydraulicAperture,
+                                           real64 const & newHydraulicAperture,
+                                           array1d< real64 > const & normal ) const
+  {
+    real64 const temperature = 0;
+    real64 const dHydraulicAperture_dNormalJump = 1.0;
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
+    m_permUpdate.updateFromPressureApertureAndNormal( k, q, pressure, oldHydraulicAperture, newHydraulicAperture, normal, dHydraulicAperture_dNormalJump);
+  }
+
+  GEOS_HOST_DEVICE
   void updateStateFromPressureApertureJumpAndTraction( localIndex const k,
                                                        localIndex const q,
                                                        real64 const & pressure,
