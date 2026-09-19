@@ -24,6 +24,7 @@
 #include "common/logger/Logger.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -33,9 +34,11 @@
 #include "mixedMimetic/MixedMimeticDiscretization.hpp"
 #include "mixedMimetic/MixedMimeticDiscretizationManager.hpp"
 #include "mixedMimetic/MixedMimeticFields.hpp"
+#include "mixedMimetic/MixedMimeticBoundaryConditions.hpp"
 #include "mixedMimetic/consistency/ConsistencyAdaptation.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseMixedMFDKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSinglePhaseMixedMFDKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp"
 
 namespace geos
@@ -45,6 +48,8 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
 using namespace mimeticInnerProduct;
+using BoundaryType = mixedMimeticBoundary::BoundaryType;
+using CellDof = thermalSinglePhaseMixedMFDKernels::CellDof;
 
 SinglePhaseMixedMFD::SinglePhaseMixedMFD( const string & name,
                                           Group * const parent ):
@@ -74,6 +79,11 @@ void SinglePhaseMixedMFD::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< mixedMimetic::prescribedMfdFlag >( getName() );
       subRegion.registerField< mixedMimetic::consistencyIndicator >( getName() );
       subRegion.registerField< mixedMimetic::degeneracyIndicator >( getName() );
+      if( m_isThermal )
+      {
+        subRegion.registerField< mixedMimetic::enthalpy >( getName() );
+        subRegion.registerField< mixedMimetic::enthalpy_n >( getName() );
+      }
     } );
 
     // 2) Register the face data
@@ -83,9 +93,12 @@ void SinglePhaseMixedMFD::registerDataOnMesh( Group & meshBodies )
       faceManager.registerField< mixedMimetic::faceMassFlux >( getName() );
       faceManager.registerField< mixedMimetic::faceMassFlux_n >( getName() );
 
-      // boundary condition data
+      // boundary conditions of the flow operator: the user values and the per-face condition
       faceManager.registerField< flow::bcPressure >( getName() );
-      faceManager.registerField< flow::isBoundaryFace >( getName() );
+      faceManager.registerField< mixedMimetic::bcMassFlux >( getName() );
+      faceManager.registerField< mixedMimetic::flowBoundaryType >( getName() );
+      faceManager.registerField< mixedMimetic::flowBoundaryValue >( getName() );
+      faceManager.registerField< mixedMimetic::flowBoundaryCoefficient >( getName() );
 
       // face residual of the consistency layer
       faceManager.registerField< mixedMimetic::faceResidual >( getName() );
@@ -94,6 +107,23 @@ void SinglePhaseMixedMFD::registerDataOnMesh( Group & meshBodies )
       faceManager.registerField< mixedMimetic::faceStencilLabel >( getName() );
       faceManager.registerField< mixedMimetic::faceOrientationCell >( getName() );
       faceManager.registerField< mixedMimetic::faceDofScale >( getName() );
+
+      if( m_isThermal )
+      {
+        // energy module: face heat flux unknown and the thermal boundary data
+        faceManager.registerField< mixedMimetic::faceHeatFlux >( getName() );
+        faceManager.registerField< mixedMimetic::faceHeatFlux_n >( getName() );
+        faceManager.registerField< flow::bcTemperature >( getName() );
+        faceManager.registerField< mixedMimetic::bcEnthalpy >( getName() );
+        faceManager.registerField< mixedMimetic::bcHeatFlux >( getName() );
+        faceManager.registerField< mixedMimetic::bcHeatTransferCoefficient >( getName() );
+        faceManager.registerField< mixedMimetic::bcAmbientTemperature >( getName() );
+        faceManager.registerField< mixedMimetic::heatBoundaryType >( getName() );
+        faceManager.registerField< mixedMimetic::heatBoundaryValue >( getName() );
+        faceManager.registerField< mixedMimetic::heatBoundaryCoefficient >( getName() );
+        faceManager.registerField< mixedMimetic::isEnthalpyBcFace >( getName() );
+        faceManager.registerField< mixedMimetic::faceHeatDofScale >( getName() );
+      }
     }
   } );
 }
@@ -102,9 +132,10 @@ void SinglePhaseMixedMFD::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
-  GEOS_THROW_IF( m_isThermal,
-                 "The thermal option is not supported by SinglePhaseMixedMFD",
-                 InputError, getDataContext() );
+  if( m_isThermal )
+  {
+    m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalSinglePhaseMixedMFD;
+  }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -139,26 +170,6 @@ void SinglePhaseMixedMFD::initializePostInitialConditionsPreSubGroups()
       m_regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
     }
 
-    // flag the faces on which a pressure boundary condition is imposed:
-    // all the remaining domain-boundary faces are treated as no-flow faces
-    FaceManager & faceManager = mesh.getFaceManager();
-    arrayView1d< integer > const isPresBcFace = faceManager.getField< flow::isBoundaryFace >();
-
-    fsManager.apply< FaceManager >( 0.0,
-                                    mesh,
-                                    flow::bcPressure::key(),
-                                    [&] ( FieldSpecification const &,
-                                          string const &,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager &,
-                                          string const & )
-    {
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-        isPresBcFace[targetSet[a]] = 1;
-      } );
-    } );
-
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
       GEOS_UNUSED_VAR( bc );
@@ -168,9 +179,98 @@ void SinglePhaseMixedMFD::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
+  markBoundaryFaces( domain );
+  if( m_isThermal )
+  {
+    initializeEnthalpy( domain );
+  }
+
   computeFaceOrientation( domain );
 
   classifyCells( domain );
+}
+
+void SinglePhaseMixedMFD::markBoundaryFaces( DomainPartition & domain )
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+    arrayView2d< localIndex const > const elemRegionList = faceManager.elementRegionList();
+    arrayView2d< localIndex const > const elemSubRegionList = faceManager.elementSubRegionList();
+    arrayView2d< localIndex const > const elemList = faceManager.elementList();
+    SortedArrayView< localIndex const > const regionFilter = m_regionFilter.toViewConst();
+
+    // the field specifications define the type of the condition on a face; a boundary face without specification
+    // has the homogeneous Neumann condition (impervious, adiabatic), an interior face has no condition
+    auto const initialize = [&]( arrayView1d< integer > const & type )
+    {
+      forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+      {
+        integer numTargetCells = 0;
+        for( integer k = 0; k < elemRegionList.size( 1 ); ++k )
+        {
+          localIndex const er = elemRegionList[kf][k];
+          numTargetCells += ( er >= 0 && elemSubRegionList[kf][k] >= 0 && elemList[kf][k] >= 0 && regionFilter.contains( er ) ) ? 1 : 0;
+        }
+        type[kf] = ( numTargetCells == 1 ) ? BoundaryType::neumann : BoundaryType::interior;
+      } );
+    };
+    auto const mark = [&]( string const & key, arrayView1d< integer > const & flag, integer const value )
+    {
+      fsManager.apply< FaceManager >( 0.0, mesh, key,
+                                      [&] ( FieldSpecification const &, string const &,
+                                            SortedArrayView< localIndex const > const & targetSet, FaceManager &, string const & )
+      {
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          flag[targetSet[a]] = value;
+        } );
+      } );
+    };
+
+    arrayView1d< integer > const flowType = faceManager.getField< mixedMimetic::flowBoundaryType >();
+    initialize( flowType );
+    mark( flow::bcPressure::key(), flowType, BoundaryType::dirichlet );
+    mark( mixedMimetic::bcMassFlux::key(), flowType, BoundaryType::neumann );
+
+    if( m_isThermal )
+    {
+      arrayView1d< integer > const heatType = faceManager.getField< mixedMimetic::heatBoundaryType >();
+      initialize( heatType );
+      mark( flow::bcTemperature::key(), heatType, BoundaryType::dirichlet );
+      mark( mixedMimetic::bcHeatFlux::key(), heatType, BoundaryType::neumann );
+      mark( mixedMimetic::bcHeatTransferCoefficient::key(), heatType, BoundaryType::robin );
+      mark( mixedMimetic::bcEnthalpy::key(), faceManager.getField< mixedMimetic::isEnthalpyBcFace >(), 1 );
+    }
+  } );
+}
+
+void SinglePhaseMixedMFD::initializeEnthalpy( DomainPartition & domain )
+{
+  // h = h_eos( p, T ) at the initial state
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             ElementSubRegionBase & subRegion )
+    {
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+      arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const eosEnthalpy = fluid.enthalpy();
+      arrayView1d< real64 > const enthalpy = subRegion.getField< mixedMimetic::enthalpy >();
+      arrayView1d< real64 > const enthalpy_n = subRegion.getField< mixedMimetic::enthalpy_n >();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        enthalpy[ei] = eosEnthalpy[ei][0];
+        enthalpy_n[ei] = eosEnthalpy[ei][0];
+      } );
+    } );
+  } );
 }
 
 void SinglePhaseMixedMFD::computeFaceOrientation( DomainPartition & domain )
@@ -281,7 +381,7 @@ void SinglePhaseMixedMFD::implicitStepSetup( real64 const & time_n,
   // setup the face fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                string_array const & )
+                                                                string_array const & regionNames )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -290,10 +390,23 @@ void SinglePhaseMixedMFD::implicitStepSetup( real64 const & time_n,
     arrayView1d< real64 > const & faceFlux_n =
       faceManager.getField< mixedMimetic::faceMassFlux_n >();
     faceFlux_n.setValues< parallelDevicePolicy<> >( faceFlux );
+
+    if( m_isThermal )
+    {
+      faceManager.getField< mixedMimetic::faceHeatFlux_n >().setValues< parallelDevicePolicy<> >(
+        faceManager.getField< mixedMimetic::faceHeatFlux >().toViewConst() );
+      mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                          [&]( localIndex const,
+                                                                               ElementSubRegionBase & subRegion )
+      {
+        subRegion.getField< mixedMimetic::enthalpy_n >().setValues< parallelDevicePolicy<> >(
+          subRegion.getField< mixedMimetic::enthalpy >().toViewConst() );
+      } );
+    }
   } );
 
-  // evaluate the boundary face pressure values used in the constitutive rows
-  applyFacePressureBCValues( time_n + dt, domain );
+  // evaluate the boundary face values used in the constitutive rows
+  applyFaceBoundaryValues( time_n + dt, domain );
 }
 
 namespace
@@ -305,45 +418,90 @@ char const faceBcLogMessage[] =
   "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
 }
 
-void SinglePhaseMixedMFD::applyFacePressureBCValues( real64 const time,
-                                                     DomainPartition & domain )
+void SinglePhaseMixedMFD::applyFaceBoundaryValues( real64 const time,
+                                                   DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
+  stdVector< string > keys = { flow::bcPressure::key(), mixedMimetic::bcMassFlux::key() };
+  if( m_isThermal )
+  {
+    for( string const & key : { flow::bcTemperature::key(), mixedMimetic::bcHeatFlux::key(), mixedMimetic::bcHeatTransferCoefficient::key(),
+                                mixedMimetic::bcAmbientTemperature::key(), mixedMimetic::bcEnthalpy::key() } )
+    {
+      keys.push_back( key );
+    }
+  }
+
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,
                                                                       string_array const & )
   {
-    fsManager.apply< FaceManager >( time,
-                                    mesh,
-                                    flow::bcPressure::key(),
-                                    [&] ( FieldSpecification const & fs,
-                                          string const & setName,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager & targetGroup,
-                                          string const & )
+    // 1) the user values of the face specifications
+    for( string const & key : keys )
     {
-      // provide some logging at the first nonlinear iteration
-      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      fsManager.apply< FaceManager >( time,
+                                      mesh,
+                                      key,
+                                      [&] ( FieldSpecification const & fs,
+                                            string const & setName,
+                                            SortedArrayView< localIndex const > const & targetSet,
+                                            FaceManager & targetGroup,
+                                            string const & )
       {
-        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT_RUNTIME( faceBcLogMessage,
-                                                          this->getName(), time, fs.getCatalogName(), fs.getName(),
-                                                          setName, targetGroup.getName(), numTargetFaces ),
-                                        fs );
-      }
+        // provide some logging at the first nonlinear iteration
+        if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+        {
+          globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
+                                          GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                            this->getName(), time, fs.getCatalogName(), fs.getName(),
+                                                            setName, targetGroup.getName(), numTargetFaces ),
+                                          fs );
+        }
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                                 parallelDevicePolicy<> >( fs, targetSet, time, targetGroup, key );
+      } );
+    }
 
-      // populate the boundary face pressure values: they enter the residual directly during assembly
-      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
-                                               parallelDevicePolicy<> >( fs,
-                                                                         targetSet,
-                                                                         time,
-                                                                         targetGroup,
-                                                                         flow::bcPressure::key() );
-    } );
+    // 2) the condition of each operator on each face: (g, alpha) from the user values according to the type
+    FaceManager & faceManager = mesh.getFaceManager();
+    auto const fill = [&]( arrayView1d< integer const > const & type, arrayView1d< real64 > const & value, arrayView1d< real64 > const & coefficient,
+                           arrayView1d< real64 const > const & dirichletValue, arrayView1d< real64 const > const & neumannValue,
+                           arrayView1d< real64 const > const & robinValue, arrayView1d< real64 const > const & robinCoefficient )
+    {
+      forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+      {
+        value[kf] = ( type[kf] == BoundaryType::dirichlet ) ? dirichletValue[kf]
+                    : ( type[kf] == BoundaryType::neumann ) ? neumannValue[kf]
+                    : ( type[kf] == BoundaryType::robin ) ? robinValue[kf] : 0.0;
+        coefficient[kf] = ( type[kf] == BoundaryType::robin ) ? robinCoefficient[kf] : 0.0;
+      } );
+    };
+    // TODO: Robin data of the flow operator from the Carter-Tracy aquifer. Over a time step the influx rate is
+    // q = a - b ( p_f - p_f^n ), with a, b functions of the dimensionless time and of the cumulative influx W^n.
+    // With f_A the fraction of the aquifer area on the face, sigma m_f = - rho f_A q = alpha |f| ( p_f - g ),
+    // alpha |f| = rho f_A b, g = p_f^n + a / b. ( g, alpha ) is evaluated once per step; at convergence
+    // W^{n+1} = W^n + dt q( p_f^{n+1} ). Until then no face of the flow operator has the Robin type
+    arrayView1d< real64 const > const zero = faceManager.getField< mixedMimetic::flowBoundaryCoefficient >();
+    fill( faceManager.getField< mixedMimetic::flowBoundaryType >(),
+          faceManager.getField< mixedMimetic::flowBoundaryValue >(),
+          faceManager.getField< mixedMimetic::flowBoundaryCoefficient >(),
+          faceManager.getField< flow::bcPressure >(),
+          faceManager.getField< mixedMimetic::bcMassFlux >(),
+          zero, zero );
+    if( m_isThermal )
+    {
+      fill( faceManager.getField< mixedMimetic::heatBoundaryType >(),
+            faceManager.getField< mixedMimetic::heatBoundaryValue >(),
+            faceManager.getField< mixedMimetic::heatBoundaryCoefficient >(),
+            faceManager.getField< flow::bcTemperature >(),
+            faceManager.getField< mixedMimetic::bcHeatFlux >(),
+            faceManager.getField< mixedMimetic::bcAmbientTemperature >(),
+            faceManager.getField< mixedMimetic::bcHeatTransferCoefficient >() );
+    }
   } );
 }
 
@@ -427,7 +585,23 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
       markers[faceDofNumber[kf] - rankOffset] = faceStencilLabel[kf];
     } );
 
-    // cell-pressure dofs: label 2
+    // heat-flux dofs: labels 5 (condensed) and 6 (saddle point)
+    if( m_isThermal )
+    {
+      arrayView1d< globalIndex const > const faceHeatDofNumber =
+        faceManager.getReference< array1d< globalIndex > >( dofManager.getKey( mixedMimetic::faceHeatFlux::key() ) );
+      forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const kf )
+      {
+        if( faceGhostRank[kf] >= 0 || faceHeatDofNumber[kf] < 0 )
+        {
+          return;
+        }
+        markers[faceHeatDofNumber[kf] - rankOffset] = 5 + faceStencilLabel[kf];
+      } );
+    }
+
+    // cell dofs: pressure 2, temperature 3, enthalpy 4
+    integer const numCellDofs = numCellDofComponents();
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase const & subRegion )
@@ -435,12 +609,14 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
       arrayView1d< globalIndex const > const elemDofNumber =
         subRegion.getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-
       forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const ei )
       {
         if( elemGhostRank[ei] < 0 )
         {
-          markers[elemDofNumber[ei] - rankOffset] = 2;
+          for( integer c = 0; c < numCellDofs; ++c )
+          {
+            markers[elemDofNumber[ei] - rankOffset + c] = 2 + c;
+          }
         }
       } );
     } );
@@ -461,22 +637,40 @@ void SinglePhaseMixedMFD::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( 
                           mixedMimetic::faceMassFlux::key(),
                           DofManager::Connector::Elem );
 
-  // cell pressure unknowns: the TPFA-face condensation writes two-point stencil
-  // entries directly into the mass conservation rows, so cell-to-cell coupling
-  // through the faces is required
+  // face heat flux unknowns, with the same structure as the mass fluxes
+  if( m_isThermal )
+  {
+    dofManager.addField( mixedMimetic::faceHeatFlux::key(),
+                         FieldLocation::Face,
+                         1,
+                         getMeshTargets() );
+    dofManager.addCoupling( mixedMimetic::faceHeatFlux::key(),
+                            mixedMimetic::faceHeatFlux::key(),
+                            DofManager::Connector::Elem );
+  }
+
+  // cell unknowns (pressure, and temperature and enthalpy when thermal): the TPFA-face
+  // condensation writes two-point stencil entries directly into the conservation rows,
+  // so cell-to-cell coupling through the faces is required
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
                        FieldLocation::Elem,
-                       1,
+                       numCellDofComponents(),
                        getMeshTargets() );
 
   dofManager.addCoupling( viewKeyStruct::elemDofFieldString(),
                           viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Face );
 
-  // coupling between the face fluxes and the cell pressures
+  // coupling between the face fluxes and the cell unknowns
   dofManager.addCoupling( mixedMimetic::faceMassFlux::key(),
                           viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Elem );
+  if( m_isThermal )
+  {
+    dofManager.addCoupling( mixedMimetic::faceHeatFlux::key(),
+                            viewKeyStruct::elemDofFieldString(),
+                            DofManager::Connector::Elem );
+  }
 }
 
 void SinglePhaseMixedMFD::assembleFluxTerms( real64 const dt,
@@ -516,39 +710,93 @@ void SinglePhaseMixedMFD::assembleFluxTerms( real64 const dt,
       string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
       PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
 
-      singlePhaseMixedMFDKernels::
-        ElementBasedAssemblyKernelFactory::
+      if( m_isThermal )
+      {
+        string const & condName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
+        SinglePhaseThermalConductivityBase const & conductivity = getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, condName );
+        string const faceHeatDofKey = dofManager.getKey( mixedMimetic::faceHeatFlux::key() );
+
+        thermalSinglePhaseMixedMFDKernels::
+          ElementBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                     lengthTolerance,
+                                                     elemDofKey,
+                                                     faceDofKey,
+                                                     faceHeatDofKey,
+                                                     nodeManager,
+                                                     faceManager,
+                                                     mesh.getElemManager(),
+                                                     subRegion,
+                                                     mimeticInnerProductBase,
+                                                     fluid,
+                                                     permeability,
+                                                     conductivity,
+                                                     m_regionFilter.toViewConst(),
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
+
+        // cell closure of the enthalpy unknown
+        thermalSinglePhaseMixedMFDKernels::
+          EnthalpyClosureKernel::launch< parallelDevicePolicy<> >( dofManager.rankOffset(), elemDofKey, subRegion, fluid, localMatrix, localRhs );
+      }
+      else
+      {
+        singlePhaseMixedMFDKernels::
+          ElementBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                     lengthTolerance,
+                                                     elemDofKey,
+                                                     faceDofKey,
+                                                     nodeManager,
+                                                     faceManager,
+                                                     subRegion,
+                                                     mimeticInnerProductBase,
+                                                     fluid,
+                                                     permeability,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
+      }
+    } );
+
+    // condensed (label-0) faces: two-point flux contributions to the conservation
+    // rows and one-way closure rows, assembled in a single face-based sweep
+    if( m_isThermal )
+    {
+      thermalSinglePhaseMixedMFDKernels::
+        TpfaCondensedFluxKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                    lengthTolerance,
                                                    elemDofKey,
                                                    faceDofKey,
+                                                   dofManager.getKey( mixedMimetic::faceHeatFlux::key() ),
+                                                   getName(),
                                                    nodeManager,
                                                    faceManager,
-                                                   subRegion,
-                                                   mimeticInnerProductBase,
-                                                   fluid,
-                                                   permeability,
+                                                   mesh.getElemManager(),
+                                                   m_regionFilter.toViewConst(),
                                                    dt,
                                                    localMatrix,
                                                    localRhs );
-    } );
-
-    // condensed (label-0) faces: two-point flux contributions to the mass conservation
-    // rows and one-way closure rows, assembled in a single face-based sweep
-    singlePhaseMixedMFDKernels::
-      TpfaCondensedFluxKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                 lengthTolerance,
-                                                 elemDofKey,
-                                                 faceDofKey,
-                                                 getName(),
-                                                 nodeManager,
-                                                 faceManager,
-                                                 mesh.getElemManager(),
-                                                 m_regionFilter.toViewConst(),
-                                                 dt,
-                                                 localMatrix,
-                                                 localRhs );
+    }
+    else
+    {
+      singlePhaseMixedMFDKernels::
+        TpfaCondensedFluxKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                   lengthTolerance,
+                                                   elemDofKey,
+                                                   faceDofKey,
+                                                   getName(),
+                                                   nodeManager,
+                                                   faceManager,
+                                                   mesh.getElemManager(),
+                                                   m_regionFilter.toViewConst(),
+                                                   dt,
+                                                   localMatrix,
+                                                   localRhs );
+    }
   } );
 }
 
@@ -593,8 +841,78 @@ void SinglePhaseMixedMFD::applyBoundaryConditions( real64 const time_n,
   // only the cell-centered boundary conditions (Dirichlet cells, source fluxes) remain to be applied here
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
+  if( m_isThermal )
+  {
+    removeEnthalpyReference( domain, dofManager, localMatrix, localRhs );
+  }
+
   // the matrix is final: the residual-norm weights are a function of it and are recomputed with it
   computeResidualWeights( domain, dofManager, localMatrix.toViewConst() );
+}
+
+void SinglePhaseMixedMFD::removeEnthalpyReference( DomainPartition & domain,
+                                                   DofManager const & dofManager,
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  // energy row <- energy row - h_K * mass row. A shift h_0 of the enthalpy reference adds h_0 * (mass row) to the
+  // energy row: the reduced system is invariant under that shift, and the Newton update is unchanged
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             ElementSubRegionBase const & subRegion )
+    {
+      arrayView1d< globalIndex const > const elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const enthalpy = subRegion.getField< mixedMimetic::enthalpy >();
+
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > numMissing( 0 );
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( elemGhostRank[ei] >= 0 )
+        {
+          return;
+        }
+        localIndex const massRow = elemDofNumber[ei] - rankOffset + CellDof::pressure;
+        localIndex const energyRow = elemDofNumber[ei] - rankOffset + CellDof::temperature;
+        real64 const h = enthalpy[ei];
+
+        arraySlice1d< globalIndex const > const massCols = localMatrix.getColumns( massRow );
+        arraySlice1d< real64 const > const massVals = localMatrix.getEntries( massRow );
+        arraySlice1d< globalIndex const > const energyCols = localMatrix.getColumns( energyRow );
+        arraySlice1d< real64 > const energyVals = localMatrix.getEntries( energyRow );
+        localIndex const numEnergy = localMatrix.numNonZeros( energyRow );
+
+        // both rows are sorted by column
+        localIndex j = 0;
+        for( localIndex k = 0; k < localMatrix.numNonZeros( massRow ); ++k )
+        {
+          while( j < numEnergy && energyCols[j] < massCols[k] )
+          {
+            ++j;
+          }
+          if( j < numEnergy && energyCols[j] == massCols[k] )
+          {
+            energyVals[j] -= h * massVals[k];
+          }
+          else if( LvArray::math::abs( massVals[k] ) > 0.0 )
+          {
+            numMissing += 1;
+          }
+        }
+        localRhs[energyRow] -= h * localRhs[massRow];
+      } );
+      GEOS_ERROR_IF( numMissing.get() > 0, getDataContext() << ": the energy rows do not contain the pattern of the mass rows" );
+    } );
+  } );
 }
 
 void SinglePhaseMixedMFD::computeGhostDofs( DomainPartition const & domain,
@@ -603,7 +921,12 @@ void SinglePhaseMixedMFD::computeGhostDofs( DomainPartition const & domain,
   GEOS_MARK_FUNCTION;
 
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  string const faceDofKey = dofManager.getKey( mixedMimetic::faceMassFlux::key() );
+  integer const numCellDofs = numCellDofComponents();
+  stdVector< string > faceDofKeys = { dofManager.getKey( mixedMimetic::faceMassFlux::key() ) };
+  if( m_isThermal )
+  {
+    faceDofKeys.push_back( dofManager.getKey( mixedMimetic::faceHeatFlux::key() ) );
+  }
 
   array1d< globalIndex > dofs;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -611,13 +934,16 @@ void SinglePhaseMixedMFD::computeGhostDofs( DomainPartition const & domain,
                                                                string_array const & regionNames )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
-    arrayView1d< globalIndex const > const faceDofNumber = faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
-    for( localIndex kf = 0; kf < faceManager.size(); ++kf )
+    for( string const & key : faceDofKeys )
     {
-      if( faceGhostRank[kf] >= 0 && faceDofNumber[kf] >= 0 )
+      arrayView1d< globalIndex const > const faceDofNumber = faceManager.getReference< array1d< globalIndex > >( key );
+      for( localIndex kf = 0; kf < faceManager.size(); ++kf )
       {
-        dofs.emplace_back( faceDofNumber[kf] );
+        if( faceGhostRank[kf] >= 0 && faceDofNumber[kf] >= 0 )
+        {
+          dofs.emplace_back( faceDofNumber[kf] );
+        }
       }
     }
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -630,7 +956,10 @@ void SinglePhaseMixedMFD::computeGhostDofs( DomainPartition const & domain,
       {
         if( elemGhostRank[ei] >= 0 && elemDofNumber[ei] >= 0 )
         {
-          dofs.emplace_back( elemDofNumber[ei] );
+          for( integer c = 0; c < numCellDofs; ++c )
+          {
+            dofs.emplace_back( elemDofNumber[ei] + c );
+          }
         }
       }
     } );
@@ -660,7 +989,20 @@ void SinglePhaseMixedMFD::computeResidualWeights( DomainPartition & domain,
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  string const faceDofKey = dofManager.getKey( mixedMimetic::faceMassFlux::key() );
+  integer const numCellDofs = numCellDofComponents();
+
+  // the cell scales |p_n|, and |T_n|, |h_n| when thermal; the face fields with the cell scale
+  // their rows are measured with and the face field storing their scale
+  stdVector< string > cellScaleKeys = { flow::pressure_n::key() };
+  struct FaceField { string dofKey; string cellScaleKey; string scaleFieldKey; };
+  stdVector< FaceField > faceFields =
+  { { dofManager.getKey( mixedMimetic::faceMassFlux::key() ), flow::pressure_n::key(), mixedMimetic::faceDofScale::key() } };
+  if( m_isThermal )
+  {
+    cellScaleKeys.push_back( flow::temperature_n::key() );
+    cellScaleKeys.push_back( mixedMimetic::enthalpy_n::key() );
+    faceFields.push_back( { dofManager.getKey( mixedMimetic::faceHeatFlux::key() ), flow::temperature_n::key(), mixedMimetic::faceHeatDofScale::key() } );
+  }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -669,7 +1011,7 @@ void SinglePhaseMixedMFD::computeResidualWeights( DomainPartition & domain,
     ElementRegionManager & elemManager = mesh.getElemManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
-    // s_p = |p_n| for the cell-pressure dofs
+    // s of the cell dofs
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase const & subRegion )
@@ -677,69 +1019,72 @@ void SinglePhaseMixedMFD::computeResidualWeights( DomainPartition & domain,
       arrayView1d< globalIndex const > const elemDofNumber =
         subRegion.getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const presN = subRegion.getField< fields::flow::pressure_n >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      for( integer c = 0; c < numCellDofs; ++c )
       {
-        if( elemGhostRank[ei] < 0 )
+        arrayView1d< real64 const > const valueN = subRegion.getReference< array1d< real64 > >( cellScaleKeys[c] );
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
         {
-          dofScale[elemDofNumber[ei] - rankOffset] = LvArray::math::abs( presN[ei] );
-        }
-      } );
+          if( elemGhostRank[ei] < 0 )
+          {
+            dofScale[elemDofNumber[ei] - rankOffset + c] = LvArray::math::abs( valueN[ei] );
+          }
+        } );
+      }
     } );
 
-    // s_m = p_scale / |M_ff| for the face-flux dofs, p_scale the mean adjacent |p_n|
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const presNAccessor =
-      elemManager.constructArrayViewAccessor< real64, 1 >( fields::flow::pressure_n::key() );
-    ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > const presN = presNAccessor.toNestedViewConst();
-
-    arrayView1d< globalIndex const > const faceDofNumber =
-      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    // s_f = x_scale / |M_ff| for the face dofs, x_scale the mean adjacent cell scale
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
     arrayView2d< localIndex const > const elemRegionList = faceManager.elementRegionList();
     arrayView2d< localIndex const > const elemSubRegionList = faceManager.elementSubRegionList();
     arrayView2d< localIndex const > const elemList = faceManager.elementList();
     SortedArrayView< localIndex const > const regionFilter = m_regionFilter.toViewConst();
-    arrayView1d< real64 > const faceScale = faceManager.getField< mixedMimetic::faceDofScale >();
-
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+    for( FaceField const & ff : faceFields )
     {
-      if( faceGhostRank[kf] >= 0 || faceDofNumber[kf] < 0 )
+      ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const valueNAccessor =
+        elemManager.constructArrayViewAccessor< real64, 1 >( ff.cellScaleKey );
+      ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > const valueN = valueNAccessor.toNestedViewConst();
+      arrayView1d< globalIndex const > const faceDofNumber = faceManager.getReference< array1d< globalIndex > >( ff.dofKey );
+      arrayView1d< real64 > const faceScale = faceManager.getReference< array1d< real64 > >( ff.scaleFieldKey );
+
+      forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
       {
-        return;
-      }
-      real64 presSum = 0.0;
-      integer elemCounter = 0;
-      for( integer k = 0; k < elemRegionList.size( 1 ); ++k )
-      {
-        localIndex const er  = elemRegionList[kf][k];
-        localIndex const esr = elemSubRegionList[kf][k];
-        localIndex const ei  = elemList[kf][k];
-        if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
+        if( faceGhostRank[kf] >= 0 || faceDofNumber[kf] < 0 )
         {
-          presSum += LvArray::math::abs( presN[er][esr][ei] );
-          elemCounter++;
+          return;
         }
-      }
-      real64 const pScale = elemCounter > 0 ? presSum / elemCounter : 0.0;
-      localIndex const localRow = faceDofNumber[kf] - rankOffset;
-      real64 diag = 0.0;
-      arraySlice1d< globalIndex const > const columns = localMatrix.getColumns( localRow );
-      arraySlice1d< real64 const > const entries = localMatrix.getEntries( localRow );
-      for( localIndex k = 0; k < localMatrix.numNonZeros( localRow ); ++k )
-      {
-        if( columns[k] == faceDofNumber[kf] )
+        real64 sum = 0.0;
+        integer elemCounter = 0;
+        for( integer k = 0; k < elemRegionList.size( 1 ); ++k )
         {
-          diag = LvArray::math::abs( entries[k] );
+          localIndex const er  = elemRegionList[kf][k];
+          localIndex const esr = elemSubRegionList[kf][k];
+          localIndex const ei  = elemList[kf][k];
+          if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
+          {
+            sum += LvArray::math::abs( valueN[er][esr][ei] );
+            elemCounter++;
+          }
         }
-      }
-      dofScale[localRow] = diag > 0.0 ? pScale / diag : pScale;
-      faceScale[kf] = dofScale[localRow];
-    } );
+        real64 const xScale = elemCounter > 0 ? sum / elemCounter : 0.0;
+        localIndex const localRow = faceDofNumber[kf] - rankOffset;
+        real64 diag = 0.0;
+        arraySlice1d< globalIndex const > const columns = localMatrix.getColumns( localRow );
+        arraySlice1d< real64 const > const entries = localMatrix.getEntries( localRow );
+        for( localIndex k = 0; k < localMatrix.numNonZeros( localRow ); ++k )
+        {
+          if( columns[k] == faceDofNumber[kf] )
+          {
+            diag = LvArray::math::abs( entries[k] );
+          }
+        }
+        dofScale[localRow] = diag > 0.0 ? xScale / diag : xScale;
+        faceScale[kf] = dofScale[localRow];
+      } );
+    }
   } );
 
   // s_j of the ghost dofs: a cell may own none of its faces, so the face scales come from their owners;
-  // the pressure scale of a ghost cell is its synchronized |p_n|
+  // the scale of a ghost cell dof is its synchronized previous value
   m_ghostDofScale.resize( m_ghostDofs.size() );
   arrayView1d< real64 > const ghostDofScale = m_ghostDofScale.toView();
   ghostDofScale.zero();
@@ -750,21 +1095,27 @@ void SinglePhaseMixedMFD::computeResidualWeights( DomainPartition & domain,
                                                                string_array const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Face, { mixedMimetic::faceDofScale::key() } );
+    for( FaceField const & ff : faceFields )
+    {
+      fieldsToBeSync.addFields( FieldLocation::Face, { ff.scaleFieldKey } );
+    }
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
     FaceManager const & faceManager = mesh.getFaceManager();
-    arrayView1d< globalIndex const > const faceDofNumber = faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
-    arrayView1d< real64 const > const faceScale = faceManager.getField< mixedMimetic::faceDofScale >();
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+    for( FaceField const & ff : faceFields )
     {
-      if( faceGhostRank[kf] >= 0 && faceDofNumber[kf] >= 0 )
+      arrayView1d< globalIndex const > const faceDofNumber = faceManager.getReference< array1d< globalIndex > >( ff.dofKey );
+      arrayView1d< real64 const > const faceScale = faceManager.getReference< array1d< real64 > >( ff.scaleFieldKey );
+      forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
       {
-        localIndex const slot = LvArray::sortedArrayManipulation::find( ghostDofs.begin(), ghostDofs.size(), faceDofNumber[kf] );
-        ghostDofScale[slot] = faceScale[kf];
-      }
-    } );
+        if( faceGhostRank[kf] >= 0 && faceDofNumber[kf] >= 0 )
+        {
+          localIndex const slot = LvArray::sortedArrayManipulation::find( ghostDofs.begin(), ghostDofs.size(), faceDofNumber[kf] );
+          ghostDofScale[slot] = faceScale[kf];
+        }
+      } );
+    }
 
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                                         [&]( localIndex const,
@@ -772,15 +1123,18 @@ void SinglePhaseMixedMFD::computeResidualWeights( DomainPartition & domain,
     {
       arrayView1d< globalIndex const > const elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const presN = subRegion.getField< fields::flow::pressure_n >();
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      for( integer c = 0; c < numCellDofs; ++c )
       {
-        if( elemGhostRank[ei] >= 0 && elemDofNumber[ei] >= 0 )
+        arrayView1d< real64 const > const valueN = subRegion.getReference< array1d< real64 > >( cellScaleKeys[c] );
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
         {
-          localIndex const slot = LvArray::sortedArrayManipulation::find( ghostDofs.begin(), ghostDofs.size(), elemDofNumber[ei] );
-          ghostDofScale[slot] = LvArray::math::abs( presN[ei] );
-        }
-      } );
+          if( elemGhostRank[ei] >= 0 && elemDofNumber[ei] >= 0 )
+          {
+            localIndex const slot = LvArray::sortedArrayManipulation::find( ghostDofs.begin(), ghostDofs.size(), elemDofNumber[ei] + c );
+            ghostDofScale[slot] = LvArray::math::abs( valueN[ei] );
+          }
+        } );
+      }
     } );
   } );
 
@@ -819,6 +1173,7 @@ void SinglePhaseMixedMFD::applyAquiferBC( real64 const time,
                                           arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
+  // no contribution: the aquifer is a Robin condition of the flow operator (see applyFaceBoundaryValues)
   GEOS_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 }
 
@@ -827,6 +1182,7 @@ void SinglePhaseMixedMFD::saveAquiferConvergedState( real64 const & time,
                                                      DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+  // TODO: W^{n+1} = W^n + dt q( p_f^{n+1} ) on the faces of each aquifer (see applyFaceBoundaryValues)
   GEOS_UNUSED_VAR( time, dt, domain );
 }
 
@@ -890,7 +1246,8 @@ void SinglePhaseMixedMFD::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                flow::pressure::key(),
-                               scalingFactor );
+                               scalingFactor,
+                               DofManager::CompMask( numCellDofComponents(), CellDof::pressure, CellDof::pressure + 1 ) );
 
   // 2. apply the face-based update
 
@@ -898,6 +1255,24 @@ void SinglePhaseMixedMFD::applySystemSolution( DofManager const & dofManager,
                                mixedMimetic::faceMassFlux::key(),
                                mixedMimetic::faceMassFlux::key(),
                                scalingFactor );
+
+  if( m_isThermal )
+  {
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 flow::temperature::key(),
+                                 scalingFactor,
+                                 DofManager::CompMask( CellDof::num, CellDof::temperature, CellDof::temperature + 1 ) );
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 mixedMimetic::enthalpy::key(),
+                                 scalingFactor,
+                                 DofManager::CompMask( CellDof::num, CellDof::enthalpy, CellDof::enthalpy + 1 ) );
+    dofManager.addVectorToField( localSolution,
+                                 mixedMimetic::faceHeatFlux::key(),
+                                 mixedMimetic::faceHeatFlux::key(),
+                                 scalingFactor );
+  }
 
   // 3. synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -908,6 +1283,11 @@ void SinglePhaseMixedMFD::applySystemSolution( DofManager const & dofManager,
 
     fieldsToBeSync.addElementFields( { flow::pressure::key() }, regionNames );
     fieldsToBeSync.addFields( FieldLocation::Face, { mixedMimetic::faceMassFlux::key() } );
+    if( m_isThermal )
+    {
+      fieldsToBeSync.addElementFields( { flow::temperature::key(), mixedMimetic::enthalpy::key() }, regionNames );
+      fieldsToBeSync.addFields( FieldLocation::Face, { mixedMimetic::faceHeatFlux::key() } );
+    }
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
@@ -921,7 +1301,7 @@ void SinglePhaseMixedMFD::resetStateToBeginningOfStep( DomainPartition & domain 
   // Reset the face-based fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                string_array const & )
+                                                                string_array const & regionNames )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -930,6 +1310,19 @@ void SinglePhaseMixedMFD::resetStateToBeginningOfStep( DomainPartition & domain 
     arrayView1d< real64 const > const & faceFlux_n =
       faceManager.getField< mixedMimetic::faceMassFlux_n >();
     faceFlux.setValues< parallelDevicePolicy<> >( faceFlux_n );
+
+    if( m_isThermal )
+    {
+      faceManager.getField< mixedMimetic::faceHeatFlux >().setValues< parallelDevicePolicy<> >(
+        faceManager.getField< mixedMimetic::faceHeatFlux_n >().toViewConst() );
+      mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                          [&]( localIndex const,
+                                                                               ElementSubRegionBase & subRegion )
+      {
+        subRegion.getField< mixedMimetic::enthalpy >().setValues< parallelDevicePolicy<> >(
+          subRegion.getField< mixedMimetic::enthalpy_n >().toViewConst() );
+      } );
+    }
   } );
 }
 

@@ -61,6 +61,7 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/ResidualNormKernel.hpp
      kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
      kernels/singlePhase/SinglePhaseMixedMFDKernels.hpp
+     kernels/singlePhase/ThermalSinglePhaseMixedMFDKernels.hpp
      kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp
      kernels/singlePhase/SolutionCheckKernel.hpp
      kernels/singlePhase/SolutionScalingKernel.hpp

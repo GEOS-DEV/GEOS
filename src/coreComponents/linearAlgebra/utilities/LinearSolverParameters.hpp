@@ -300,6 +300,7 @@ struct LinearSolverParameters
       thermalSinglePhaseReservoirFVM,                 ///< finite volume thermal single-phase flow with wells
       singlePhaseHybridFVM,                           ///< hybrid finite volume single-phase flow
       singlePhaseMixedMFD,                            ///< mixed mimetic finite difference single-phase flow
+      thermalSinglePhaseMixedMFD,                     ///< mixed mimetic finite difference thermal single-phase flow
       singlePhaseReservoirHybridFVM,                  ///< hybrid finite volume single-phase flow with wells
       singlePhasePoromechanics,                       ///< single phase poromechanics with finite volume single phase flow
       thermalSinglePhasePoromechanics,                ///< thermal single phase poromechanics with finite volume single phase flow
@@ -586,6 +587,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "thermalSinglePhaseReservoirFVM",
               "singlePhaseHybridFVM",
               "singlePhaseMixedMFD",
+              "thermalSinglePhaseMixedMFD",
               "singlePhaseReservoirHybridFVM",
               "singlePhasePoromechanics",
               "thermalSinglePhasePoromechanics",

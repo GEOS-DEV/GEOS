@@ -1,0 +1,215 @@
+<?xml version="1.0" ?>
+
+<!-- Onset of convection in a porous layer heated from below: Lapwood (1948), section 6, both boundaries impervious
+     and perfectly conducting. The conductive state T = 320 - 0.2 z is stable up to
+
+       Ra = rho g alpha k dT h / ( mu kappa ) = 4 pi^2,    kappa = lambda / ( rho c_f ),
+
+     and the critical mode sin( pi z / h ) cos( pi x / h ) fits the domain [0,2h] x [0,h] with impervious, insulated side
+     walls. Seeded with that mode, the disturbance evolves as exp( n t ),
+
+       n = kappa ( Ra - 4 pi^2 ) / ( 2 h^2 sigma ),    sigma = ( rho c )_medium / ( rho c )_fluid.
+
+     Data: h = 100 m, dT = 20 K, alpha dT = 4.0e-3 (Boussinesq regime), kappa = 5.0e-7 m2/s, sigma = 0.6, so that
+     Ra = 7.848e12 k. The variants set the permeability k and the events. -->
+
+<Problem>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseMixedMFD
+      name="flow"
+      logLevel="1"
+      isThermal="1"
+      discretization="mixedMFD"
+      temperature="310.0"
+      targetRegions="{ domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="10"/>
+      <!-- the solver selects the MGR strategy of the thermal mixed system -->
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-7"
+        logLevel="1"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <!-- on tetrahedra TPFA is not consistent: the classification selects the consistent inner product in every cell -->
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="mixedMFD"
+        innerProductType="RT"
+        adaptiveConsistency="1"
+        consistencyTolerance="1.e-12"
+        nominalGradient="{ 1.0, 1.0, 1.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+
+  <!-- tetrahedral mesh obtained by subdividing a single layer of cubic cells of edge 2.5 m. The problem is
+       two-dimensional in the plane x-z: partition it with -x and -z only -->
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D4 }"
+      xCoords="{ 0, 200 }"
+      yCoords="{ 0, 2.5 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 120 }"
+      ny="{ 1 }"
+      nz="{ 60 }"
+      cellBlockNames="{ block }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="bottom"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 200.01, 2.51, 0.01 }"/>
+
+    <Box
+      name="top"
+      xMin="{ -0.01, -0.01, 99.99 }"
+      xMax="{ 200.01, 2.51, 100.01 }"/>
+
+    <!-- tetrahedra at mid-height, at the maximum of the initial perturbation -->
+    <Box
+      name="probe"
+      xMin="{ -0.01, -0.01, 49.99 }"
+      xMax="{ 2.51, 2.51, 52.51 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="domain"
+      cellBlocks="{ * }"
+      materialList="{ rock, fluid, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="1.0e7"
+      compressibility="0.0"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="2.0e6"
+      referenceTemperature="310.0"
+      referenceInternalEnergy="0.0"/>
+
+    <!-- k at Ra = 4 pi^2; the variants overwrite it -->
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 5.03038e-12, 5.03038e-12, 5.03038e-12 }"/>
+
+    <!-- every boundary is impervious: the fluid compressibility accommodates the thermal expansion -->
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="1.0e7"
+      referenceTemperature="310.0"
+      compressibility="4.5e-10"
+      thermalExpansionCoeff="2.0e-4"
+      viscosibility="0.0"
+      temperatureViscosityCoefficient="0.0"
+      specificHeatCapacity="4000"
+      referenceInternalEnergy="1.0e6"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 2.0, 2.0, 2.0 }"
+      thermalConductivityGradientComponents="{ 0, 0, 0 }"
+      referenceTemperature="310.0"/>
+  </Constitutive>
+
+  <!-- initial state tabulated every metre over the whole domain, independent of the mesh -->
+  <Functions>
+    <!-- 1.0e7 + rho g ( h - z ) -->
+    <TableFunction
+      name="hydrostaticPressure"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ lapwoodConvection_tables/xMid.geos, lapwoodConvection_tables/y.geos, lapwoodConvection_tables/z.geos }"
+      voxelFile="lapwoodConvection_tables/pressure.geos"/>
+
+    <!-- 320 - 0.2 z + 0.01 sin( pi z / h ) cos( pi x / h ) -->
+    <TableFunction
+      name="disturbedTemperature"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ lapwoodConvection_tables/x.geos, lapwoodConvection_tables/y.geos, lapwoodConvection_tables/z.geos }"
+      voxelFile="lapwoodConvection_tables/temperature.geos"/>
+  </Functions>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      functionName="hydrostaticPressure"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      functionName="disturbedTemperature"
+      scale="1.0"/>
+
+    <!-- heat: conducting bottom and top, the other faces are insulated. Flow: no condition, every face is impervious -->
+    <FieldSpecification
+      name="bottomTemperature"
+      setNames="{ bottom }"
+      objectPath="faceManager"
+      fieldName="bcTemperature"
+      scale="320.0"/>
+
+    <FieldSpecification
+      name="topTemperature"
+      setNames="{ top }"
+      objectPath="faceManager"
+      fieldName="bcTemperature"
+      scale="300.0"/>
+  </FieldSpecifications>
+
+  <!-- the disturbance is temperature - ( 320 - 0.2 z ) in the probe cells, z stored with the history -->
+  <Tasks>
+    <PackCollection
+      name="probeTemperature"
+      objectPath="ElementRegions/domain/block"
+      fieldName="temperature"
+      setNames="{ probe }"/>
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      fieldNames="{ pressure, temperature, enthalpy, mfdFlag }"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{ /Tasks/probeTemperature }"
+      filename="lapwoodProbe"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

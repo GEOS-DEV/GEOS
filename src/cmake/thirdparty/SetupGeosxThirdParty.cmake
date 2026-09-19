@@ -790,6 +790,12 @@ if( ENABLE_HYPREDRV )
         list( PREPEND CMAKE_PREFIX_PATH "${HYPRE_DIR}" )
     endif()
 
+    # expose the imported TPL hypre as HYPRE::HYPRE so HYPREDRVConfig does not search for another hypre
+    if( TARGET hypre AND NOT TARGET HYPRE::HYPRE )
+        add_library( HYPRE::HYPRE INTERFACE IMPORTED )
+        target_link_libraries( HYPRE::HYPRE INTERFACE hypre )
+    endif()
+
     find_package( HYPREDRV CONFIG QUIET
                   PATHS ${HYPREDRV_DIR}
                         ${HYPREDRV_DIR}/lib/cmake/HYPREDRV
