@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+
+<!-- Adaptive classification: TPFA is consistent on this Cartesian mesh and is selected in every cell. Direct solver. -->
+
+<Problem>
+  <Included>
+    <File name="./thermalConduction_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseMixedMFD
+      name="flow"
+      logLevel="1"
+      isThermal="1"
+      discretization="mixedMFD"
+      temperature="350.0"
+      targetRegions="{ domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="mixedMFD"
+        innerProductType="RT"
+        adaptiveConsistency="1"
+        consistencyTolerance="0.1"
+        nominalGradient="{ 1.0, 1.0, 1.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+</Problem>
