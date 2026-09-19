@@ -288,6 +288,8 @@ void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
 
   arrayView1d< real64 > const energy = subRegion.getField< flow::energy >();
+  arrayView1d< real64 > const energy_n = subRegion.getField< flow::energy_n >();
+  arrayView1d< real64 const > const mass_n = subRegion.getField< flow::mass_n >();
   arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dEnergy = subRegion.getField< flow::dEnergy >();
 
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -301,10 +303,14 @@ void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
   arrayView2d< real64 const > const rockInternalEnergy = porousSolid.getInternalEnergy();
   arrayView2d< real64 const > const dRockInternalEnergy_dT = porousSolid.getDinternalEnergy_dTemperature();
 
+  // only the fracture creates new elements, whose energy_n has to be initialized below
+  bool const isFractureSubRegion = dynamic_cast< SurfaceElementSubRegion const * >( &subRegion ) != nullptr;
+
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const density = fluid.density();
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const fluidInternalEnergy = fluid.internalEnergy();
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const fluidInternalEnergy_n = fluid.internalEnergy_n();
   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDensity = fluid.dDensity();
   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dFluidInternalEnergy = fluid.dInternalEnergy();
 
@@ -314,6 +320,12 @@ void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
     energy[ei] = vol *
                  ( porosity[ei][0] * density[ei][0] * fluidInternalEnergy[ei][0] +
                    ( 1.0 - porosity[ei][0] ) * rockInternalEnergy[ei][0] );
+    if( isFractureSubRegion && isZero( energy_n[ei] ) )   // this is a hack for hydrofrac cases, see updateMass
+    {
+      // Initialize the energy of a newly created element from the mass_n just initialized for it, both factors
+      // taken at t_n so that the two balances agree. The fracture porosity is one, so the rock term drops out.
+      energy_n[ei] = mass_n[ei] * fluidInternalEnergy_n[ei][0];
+    }
     dEnergy[ei][DerivOffset::dP] = vol *
                                    ( dPorosity_dP[ei][0] * density[ei][0] * fluidInternalEnergy[ei][0] +
                                      porosity[ei][0] * dDensity[ei][0][DerivOffset::dP] * fluidInternalEnergy[ei][0] +
