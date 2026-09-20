@@ -27,14 +27,11 @@
 #include "constitutive/fluid/singlefluid/CompressibleSinglePhaseFluid.hpp"
 #include "constitutive/fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp"
 
-#include "constitutive/HPCReact/src/reactions/geochemistry/GeochemicalSystems.hpp"
-#include "constitutive/HPCReact/src/reactions/exampleSystems/BulkGeneric.hpp"
-#include "constitutive/HPCReact/src/reactions/exampleSystems/ChainGeneric.hpp"
-#include "constitutive/HPCReact/src/reactions/exampleSystems/MoMasBenchmark.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveFluidSystemSelector.hpp"
 #include "constitutive/HPCReact/src/reactions/reactionsSystems/EquilibriumReactions.hpp"
 #include "constitutive/HPCReact/src/reactions/reactionsSystems/MixedEquilibriumKineticReactions.hpp"
-#include "constitutive/HPCReact/src/reactions/massActions/MassActions.hpp"
 #include <memory>
+#include <optional>
 
 namespace geos
 {
@@ -46,16 +43,6 @@ namespace reactivefluid
 {
 
 using namespace hpcReact::reactionsSystems;
-
-enum class ChemicalSystemType : integer
-{
-  carbonate,
-  carbonateAllEquilibrium,
-  ultramafic,
-  momasEasy,
-  momasMedium,
-  chainSerialAllKinetic
-};
 
 template< typename BASE >
 class ReactiveSinglePhaseFluid : public BASE
@@ -114,9 +101,18 @@ public:
   integer numKineticReactions() const { return m_numKineticReactions; }
 
   /**
+   * @brief Mass of solvent per unit volume of solution [kg/m^3].
+   *
+   * Converts species molality [mol/kg solvent] to molarity [mol/m^3 solution]. HPCReact is a
+   * molality-based library: concentrations, equilibrium constants and mass-action quotients are all
+   * on the molal scale.
+   */
+  real64 solventMassPerSolutionVolume() const { return m_solventMassPerSolutionVolume; }
+
+  /**
    * @brief Kernel wrapper class for ReactiveSinglePhaseFluid.
    */
-  template< typename REACTION_PARAMS_TYPE >
+  template< typename REACTION_PARAMS_TYPE, typename ACTIVITY_MODEL >
   class ReactionKernelWrapper
   {
 
@@ -134,7 +130,8 @@ public:
                            integer const numPrimarySpecies,
                            integer const numSecondarySpecies,
                            integer const numKineticReactions,
-                           REACTION_PARAMS_TYPE params ):
+                           REACTION_PARAMS_TYPE params,
+                           typename ACTIVITY_MODEL::Params activityParams ):
       m_numPrimarySpecies( numPrimarySpecies ),
       m_numSecondarySpecies( numSecondarySpecies ),
       m_numKineticReactions( numKineticReactions ),
@@ -147,10 +144,11 @@ public:
       m_kineticReactionRates( kineticReactionRates ),
       m_aggregateSpeciesRates( aggregateSpeciesRates ),
       m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations( dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations ),
-      m_params( params )
+      m_params( params ),
+      m_activityParams( activityParams )
     {}
 
-    using EquilibriumReactionsType = hpcReact::reactionsSystems::EquilibriumReactions< real64, integer, localIndex >;
+    using EquilibriumReactionsType = hpcReact::reactionsSystems::EquilibriumReactions< real64, integer, localIndex, ACTIVITY_MODEL >;
 
     /**
      * @brief Get number of elements in this wrapper.
@@ -159,14 +157,22 @@ public:
     GEOS_HOST_DEVICE
     localIndex numElems() const { return m_secondarySpeciesConcentration.size( 0 ); }
 
+    /**
+     * @brief Speciate cell @p k at equilibrium.
+     * @return whether the equilibrium solve converged
+     */
     GEOS_HOST_DEVICE
-    void updateEquilibriumReaction( localIndex const k,
+    bool updateEquilibriumReaction( localIndex const k,
                                     real64 const pressure,
                                     real64 const temperature,
                                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration ) const;
 
+    /**
+     * @brief Solve for the primary and secondary concentrations at the target aggregates.
+     * @return whether the solve converged
+     */
     GEOS_HOST_DEVICE
-    void enforceEquilibrium( real64 const pressure,
+    bool enforceEquilibrium( real64 const pressure,
                              real64 const temperature,
                              arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & targetPrimarySpeciesAggregateConcentration,
                              arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & initialPrimarySpeciesConcentration,
@@ -222,114 +228,56 @@ protected:
     arrayView4d< real64, reactivefluid::USD_SPECIES_DC >  m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations;
 
     REACTION_PARAMS_TYPE m_params;
+
+    typename ACTIVITY_MODEL::Params m_activityParams;
   };
 
-  std::variant<
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::ultramaficSystemType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemAllEquilibriumType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::ChainGeneric::serialAllKineticType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::mediumCaseType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::easyCaseType > >
-  createReactionKernelWrapper() const
-  {
-    using namespace hpcReact::geochemistry;
-    using namespace hpcReact::MoMasBenchmark;
-    using namespace hpcReact::bulkGeneric;
-    using namespace hpcReact::ChainGeneric;
-    switch( m_chemicalSystemType )
-    {
-      case ChemicalSystemType::ultramafic:
-        return ReactionKernelWrapper< ultramaficSystemType >( m_primarySpeciesAggregateConcentration,
-                                                              m_primarySpeciesMobileAggregateConcentration,
-                                                              m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                              m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                              m_initialPrimarySpeciesConcentration,
-                                                              m_secondarySpeciesConcentration,
-                                                              m_kineticReactionRates,
-                                                              m_aggregateSpeciesRates,
-                                                              m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                              m_numPrimarySpecies,
-                                                              m_numSecondarySpecies,
-                                                              m_numKineticReactions,
-                                                              ultramaficSystem );
+  /// The kernel wrapper for one system of reactivefluid::ReactionSystemList.
+  template< typename SYSTEM >
+  using WrapperFor = ReactionKernelWrapper< typename SYSTEM::ReactionParamsType, typename SYSTEM::ActivityType >;
 
-      case ChemicalSystemType::carbonate:
-        return ReactionKernelWrapper< carbonateSystemType >( m_primarySpeciesAggregateConcentration,
-                                                             m_primarySpeciesMobileAggregateConcentration,
-                                                             m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                             m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                             m_initialPrimarySpeciesConcentration,
-                                                             m_secondarySpeciesConcentration,
-                                                             m_kineticReactionRates,
-                                                             m_aggregateSpeciesRates,
-                                                             m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                             m_numPrimarySpecies,
-                                                             m_numSecondarySpecies,
-                                                             m_numKineticReactions,
-                                                             carbonateSystem );
-      case ChemicalSystemType::carbonateAllEquilibrium:
-        return ReactionKernelWrapper< carbonateSystemAllEquilibriumType >( m_primarySpeciesAggregateConcentration,
-                                                                           m_primarySpeciesMobileAggregateConcentration,
-                                                                           m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                                           m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                                           m_initialPrimarySpeciesConcentration,
-                                                                           m_secondarySpeciesConcentration,
-                                                                           m_kineticReactionRates,
-                                                                           m_aggregateSpeciesRates,
-                                                                           m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                                           m_numPrimarySpecies,
-                                                                           m_numSecondarySpecies,
-                                                                           m_numKineticReactions,
-                                                                           carbonateSystemAllEquilibrium );
-      case ChemicalSystemType::chainSerialAllKinetic:
-        return ReactionKernelWrapper< serialAllKineticType >( m_primarySpeciesAggregateConcentration,
-                                                              m_primarySpeciesMobileAggregateConcentration,
-                                                              m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                              m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                              m_initialPrimarySpeciesConcentration,
-                                                              m_secondarySpeciesConcentration,
-                                                              m_kineticReactionRates,
-                                                              m_aggregateSpeciesRates,
-                                                              m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                              m_numPrimarySpecies,
-                                                              m_numSecondarySpecies,
-                                                              m_numKineticReactions,
-                                                              serialAllKineticParams );
-      case ChemicalSystemType::momasMedium:
-        return ReactionKernelWrapper< mediumCaseType >( m_primarySpeciesAggregateConcentration,
-                                                        m_primarySpeciesMobileAggregateConcentration,
-                                                        m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                        m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                        m_initialPrimarySpeciesConcentration,
-                                                        m_secondarySpeciesConcentration,
-                                                        m_kineticReactionRates,
-                                                        m_aggregateSpeciesRates,
-                                                        m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                        m_numPrimarySpecies,
-                                                        m_numSecondarySpecies,
-                                                        m_numKineticReactions,
-                                                        mediumCaseParams );
-      default:
-        return ReactionKernelWrapper< easyCaseType >( m_primarySpeciesAggregateConcentration,
-                                                      m_primarySpeciesMobileAggregateConcentration,
-                                                      m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                      m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                      m_initialPrimarySpeciesConcentration,
-                                                      m_secondarySpeciesConcentration,
-                                                      m_kineticReactionRates,
-                                                      m_aggregateSpeciesRates,
-                                                      m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                      m_numPrimarySpecies,
-                                                      m_numSecondarySpecies,
-                                                      m_numKineticReactions,
-                                                      easyCaseParams );
-    }
+  /// @cond DO_NOT_DOCUMENT
+  template< typename LIST >
+  struct WrapperVariantHelper;
+
+  template< typename ... SYSTEMS >
+  struct WrapperVariantHelper< std::variant< SYSTEMS... > >
+  {
+    using type = std::variant< WrapperFor< SYSTEMS > ... >;
+  };
+  /// @endcond
+
+  /// One alternative per system of reactivefluid::ReactionSystemList.
+  using ReactionKernelWrapperVariant = typename WrapperVariantHelper< reactivefluid::ReactionSystemList >::type;
+
+  /**
+   * @brief Build the kernel wrapper for the chemical system and activity model this fluid was given.
+   * @return the wrapper, as the alternative of ReactionKernelWrapperVariant matching that pairing
+   *
+   * postInputInitialization has already rejected a pairing ReactionSystemList does not hold.
+   */
+  ReactionKernelWrapperVariant createReactionKernelWrapper() const
+  {
+    std::optional< ReactionKernelWrapperVariant > wrapper;
+
+    reactivefluid::forEachReactionSystem( [&]( auto system )
+    {
+      using System = decltype( system );
+      if( System::chemicalSystem == m_chemicalSystemType && System::activityModel == m_activityModelType )
+      {
+        wrapper.emplace( makeReactionKernelWrapper< WrapperFor< System > >( System::reactionParams(),
+                                                                            System::activityParams() ) );
+      }
+    } );
+
+    return std::move( wrapper.value() );
   }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * chemicalSystemNameString() { return "chemicalSystemType"; }
+    static constexpr char const * activityModelNameString() { return "activityModelType"; }
+    static constexpr char const * solventMassPerSolutionVolumeString() { return "solventMassPerSolutionVolume"; }
   };
 
 protected:
@@ -337,6 +285,29 @@ protected:
   virtual void postInputInitialization() override;
 
   virtual void resizeFields( localIndex const size, localIndex const numPts );
+
+  /**
+   * @brief Build one kernel wrapper for the given reaction system and activity model.
+   */
+  template< typename WRAPPER_TYPE, typename REACTION_PARAMS_TYPE, typename ACTIVITY_PARAMS_TYPE >
+  WRAPPER_TYPE makeReactionKernelWrapper( REACTION_PARAMS_TYPE const & params,
+                                          ACTIVITY_PARAMS_TYPE const & activityParams ) const
+  {
+    return WRAPPER_TYPE( m_primarySpeciesAggregateConcentration,
+                         m_primarySpeciesMobileAggregateConcentration,
+                         m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                         m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                         m_initialPrimarySpeciesConcentration,
+                         m_secondarySpeciesConcentration,
+                         m_kineticReactionRates,
+                         m_aggregateSpeciesRates,
+                         m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                         m_numPrimarySpecies,
+                         m_numSecondarySpecies,
+                         m_numKineticReactions,
+                         params,
+                         activityParams );
+  }
 
   integer m_numPrimarySpecies;
 
@@ -365,6 +336,19 @@ protected:
   array4d< real64, constitutive::reactivefluid::LAYOUT_SPECIES_DC >  m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations;
 
   ChemicalSystemType m_chemicalSystemType;
+
+  ActivityModelType m_activityModelType;
+
+  /// TODO: prescribed as a constant for now. The exact factor is
+  ///
+  ///         rho_s = rho * w
+  ///
+  ///       where rho_s is this quantity [kg/m^3], rho the solution density [kg/m^3] and w the
+  ///       solvent mass fraction [-]. For the carbonate brine EQ3/6 gives 1070.9 * 0.898 = 961.6,
+  ///       not the 1000 defaulted here. Ideally rho is a function of pressure, temperature and
+  ///       species concentration, and w a function of concentration. The update methods and where
+  ///       they should be launched are TBD.
+  real64 m_solventMassPerSolutionVolume;
 };
 
 // these aliases are useful in constitutive dispatch
@@ -373,41 +357,45 @@ using ReactiveCompressibleSinglePhaseFluid = ReactiveSinglePhaseFluid< Compressi
 using ReactiveThermalCompressibleSinglePhaseFluid = ReactiveSinglePhaseFluid< ThermalCompressibleSinglePhaseFluid >;
 
 template< typename BASE >
-template< typename REACTION_PARAMS_TYPE >
+template< typename REACTION_PARAMS_TYPE, typename ACTIVITY_MODEL >
 GEOS_HOST_DEVICE
-inline void
-ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
+inline bool
+ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE, ACTIVITY_MODEL >::
 updateEquilibriumReaction( localIndex const k,
                            real64 const pressure,
                            real64 const temperature,
                            arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration ) const
 {
-  integer const numSecondarySpecies = m_numSecondarySpecies;
+  constexpr integer numSecondarySpecies = REACTION_PARAMS_TYPE::numSecondarySpecies();
 
-  if( numSecondarySpecies > 0 )
+  if constexpr ( numSecondarySpecies > 0 )
   {
-    stackArray1d< real64, MAX_NUM_SPECIES > logSecondarySpeciesConcentration( numSecondarySpecies );
+    stackArray1d< real64, numSecondarySpecies > logSecondarySpeciesConcentration( numSecondarySpecies );
 
-    enforceEquilibrium( pressure, temperature, m_primarySpeciesAggregateConcentration[k][0], m_initialPrimarySpeciesConcentration[k][0], logPrimarySpeciesConcentration,
-                        logSecondarySpeciesConcentration.toSlice() );
+    bool const converged = enforceEquilibrium( pressure, temperature, m_primarySpeciesAggregateConcentration[k][0],
+                                               m_initialPrimarySpeciesConcentration[k][0], logPrimarySpeciesConcentration,
+                                               logSecondarySpeciesConcentration.toSlice() );
 
     for( integer i=0; i < numSecondarySpecies; ++i )
     {
       m_secondarySpeciesConcentration[k][0][i] =  LvArray::math::exp( logSecondarySpeciesConcentration[i] );
     }
+
+    return converged;
   }
   else
   {
     GEOS_UNUSED_VAR( k, pressure, temperature, logPrimarySpeciesConcentration );
+    return true;
   }
 
 }
 
 template< typename BASE >
-template< typename REACTION_PARAMS_TYPE >
+template< typename REACTION_PARAMS_TYPE, typename ACTIVITY_MODEL >
 GEOS_HOST_DEVICE
-inline void
-ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
+inline bool
+ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE, ACTIVITY_MODEL >::
 enforceEquilibrium( real64 const pressure,
                     real64 const temperature,
                     arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & targetPrimarySpeciesAggregateConcentration,
@@ -428,20 +416,21 @@ enforceEquilibrium( real64 const pressure,
     logPrimarySpeciesConcentration0[i] = LvArray::math::log( initialPrimarySpeciesConcentration[i] );
   }
 
-  // 1. We enforce equilibrium
-  EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature, m_params, targetPrimarySpeciesAggregateConc, logPrimarySpeciesConcentration0, logPrimarySpeciesConcentration );
-
-  // 2. We calculate the secondary species concentration
-  hpcReact::massActions::calculateLogSecondarySpeciesConcentration< real64,
-                                                                    localIndex,
-                                                                    localIndex >( m_params, logPrimarySpeciesConcentration, logSecondarySpeciesConcentration );
+  // Solve for the primary and secondary concentrations with equilibrium enforced at the target aggregates
+  return EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature,
+                                                                 m_params,
+                                                                 m_activityParams,
+                                                                 targetPrimarySpeciesAggregateConc,
+                                                                 logPrimarySpeciesConcentration0,
+                                                                 logPrimarySpeciesConcentration,
+                                                                 logSecondarySpeciesConcentration );
 }
 
 template< typename BASE >
-template< typename REACTION_PARAMS_TYPE >
+template< typename REACTION_PARAMS_TYPE, typename ACTIVITY_MODEL >
 GEOS_HOST_DEVICE
 inline void
-ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
+ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE, ACTIVITY_MODEL >::
 updateMixedReactionSystem( localIndex const k,
                            real64 const pressure,
                            real64 const temperature,
@@ -476,10 +465,10 @@ updateMixedReactionSystem( localIndex const k,
 }
 
 template< typename BASE >
-template< typename REACTION_PARAMS_TYPE >
+template< typename REACTION_PARAMS_TYPE, typename ACTIVITY_MODEL >
 GEOS_HOST_DEVICE
 inline void
-ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE >::
+ReactiveSinglePhaseFluid< BASE >::ReactionKernelWrapper< REACTION_PARAMS_TYPE, ACTIVITY_MODEL >::
 computeAggregateConcentrationsAndRates( real64 const pressure,
                                         real64 const temperature,
                                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
@@ -496,9 +485,10 @@ computeAggregateConcentrationsAndRates( real64 const pressure,
 {
   GEOS_UNUSED_VAR( pressure );
 
-  MixedEquilibriumKineticReactions< real64, localIndex, localIndex, true >::
+  MixedEquilibriumKineticReactions< real64, localIndex, localIndex, ACTIVITY_MODEL, true >::
   updateMixedSystem( temperature,
                      m_params,
+                     m_activityParams,
                      logPrimarySpeciesConcentration,
                      surfaceArea,
                      logSecondarySpeciesConcentration,
@@ -511,14 +501,6 @@ computeAggregateConcentrationsAndRates( real64 const pressure,
                      aggregateSpeciesRates,
                      dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations );
 }
-
-ENUM_STRINGS( ChemicalSystemType,
-              "carbonate",
-              "carbonateAllEquilibrium",
-              "ultramafic",
-              "momasEasy",
-              "momasMedium",
-              "chainSerialAllKinetic" );
 
 } // namespace reactivefluid
 
