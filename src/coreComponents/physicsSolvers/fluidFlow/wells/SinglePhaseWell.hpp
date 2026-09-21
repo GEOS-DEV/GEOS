@@ -314,14 +314,7 @@ public:
                                       MeshLevel & mesh,
                                       ElementRegionManager & elemManager,
                                       WellElementSubRegion & subRegion )override;
-  virtual void outputSingleWellDebug( real64 const time,
-                                      real64 const dt,
-                                      integer current_newton_iteration,
-                                      MeshLevel & mesh,
-                                      WellElementSubRegion & subRegion,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                                      arrayView1d< const real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override;
+
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;

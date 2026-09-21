@@ -109,11 +109,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   /// Nonlinear solver parameters
   m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
-  m_dofManagerInitialized( false ),
-  m_writeSegDebug( 0 ),
-
-  m_numTimesteps( 0 ),
-  m_wellDebugInit( false )
+  m_dofManagerInitialized( false )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
@@ -124,11 +120,6 @@ WellControls::WellControls( string const & name, Group * const parent )
     setApplyDefaultValue( 1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "When set to 1, write the rates into a CSV file." );
-
-  this->registerWrapper( viewKeyStruct::writeSegDebugFlagString(), &m_writeSegDebug ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the segment debug information into a CSV file." );
 
   this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
     setApplyDefaultValue( 0 ).
