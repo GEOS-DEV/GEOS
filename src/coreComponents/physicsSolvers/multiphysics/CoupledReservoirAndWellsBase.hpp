@@ -22,6 +22,7 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
@@ -29,7 +30,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellManager.hpp"
 
 namespace geos
 {
@@ -65,7 +66,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
  * @param domain the physical domain object
  */
 bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
-                               WellSolverBase const * const wellSolver,
+                               WellManager const * const wellSolver,
                                DomainPartition const & domain );
 
 }
@@ -136,11 +137,7 @@ public:
     pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
     // Copy the original nonzeros
-    for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
-    {
-      globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
-    }
+    appendSparsityPattern( pattern, patternDiag );
 
     // Add the nonzeros from coupling
     addCouplingSparsityPattern( domain, dofManager, pattern.toView());
@@ -357,7 +354,7 @@ private:
           GEOS_UNUSED_VAR( resElemSubRegion ); // unused if geos_error_if is nulld
           GEOS_UNUSED_VAR( resElemIndex ); // unused if geos_error_if is nulld
 
-          forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
+          forAll< serialPolicy >( perforationData.size(), [=, this] ( localIndex const iperf )
           {
             GEOS_UNUSED_VAR( iperf ); // unused if geos_error_if is nulld
             GEOS_LOG_RANK( GEOS_FMT( "{}: perforation at ({},{},{}), perforated element center = ({},{},{}), transmissibility = {} [{}]",

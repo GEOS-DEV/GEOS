@@ -103,6 +103,19 @@ struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
     m_shearModulus *= scale;
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  void computeTemperatureDerivative( real64 const thermalExpansionCoefficient, real64 ( & dStress_dT )[6] ) const
+  {
+    real64 const val = -3.0 * thermalExpansionCoefficient * m_bulkModulus;
+    dStress_dT[0] = val;
+    dStress_dT[1] = val;
+    dStress_dT[2] = val;
+    dStress_dT[3] = 0;
+    dStress_dT[4] = 0;
+    dStress_dT[5] = 0;
+  }
+
   real64 m_bulkModulus;   ///< Bulk modulus
   real64 m_shearModulus;  ///< Shear modulus
 };

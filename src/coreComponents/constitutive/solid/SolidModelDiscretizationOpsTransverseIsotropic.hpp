@@ -74,6 +74,20 @@ struct SolidModelDiscretizationOpsTransverseIsotropic : public SolidModelDiscret
     m_c66 *= scale;
   }
 
+  // dStress_dT[i] = -alpha * sum_{j=0}^{2} C[i][j], where C12 = C11 - 2*C66
+  // Shear rows are zero because TI symmetry decouples normal and shear components.
+  GEOS_HOST_DEVICE
+  inline
+  void computeTemperatureDerivative( real64 const thermalExpansionCoefficient, real64 ( & dStress_dT )[6] ) const
+  {
+    dStress_dT[0] = -thermalExpansionCoefficient * ( 2 * m_c11 - 2 * m_c66 + m_c13 );
+    dStress_dT[1] = dStress_dT[0];
+    dStress_dT[2] = -thermalExpansionCoefficient * ( 2 * m_c13 + m_c33 );
+    dStress_dT[3] = 0;
+    dStress_dT[4] = 0;
+    dStress_dT[5] = 0;
+  }
+
   real64 m_c11; ///< (1,1) element of TI stiffness matrix
   real64 m_c13; ///< (1,3) element of TI stiffness matrix
   real64 m_c33; ///< (3,3) element of TI stiffness matrix

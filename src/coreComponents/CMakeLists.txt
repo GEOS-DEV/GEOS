@@ -47,6 +47,16 @@ endif()
 
 add_subdirectory( LvArray )
 
+if( APPLE )
+  foreach( _geos_python_extension pylvarray
+           testPyArray testPySortedArray testPyCRSMatrix testPythonScalars
+           testPythonListOfStrings testPyCallback testPyArrayOfArrays testPyArrayOfSets )
+    if( TARGET ${_geos_python_extension} )
+      set_target_properties( ${_geos_python_extension} PROPERTIES SUFFIX ".so" )
+    endif()
+  endforeach()
+endif()
+
 if( ENABLE_PYGEOSX )
   list( APPEND coreLibs pylvarray )
 endif()
@@ -73,7 +83,7 @@ else()
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
-                       EXCLUDES cmake constitutive/PVTPackage constitutive/HPCReact )
+                       EXCLUDES cmake constitutive/HPCReact )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck

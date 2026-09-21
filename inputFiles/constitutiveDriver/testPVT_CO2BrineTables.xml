@@ -54,14 +54,24 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
+      pressureCoordinates="{1e6, 5e7}"
+      pressureInterval="1e6"
+      temperatureCoordinates="{340, 460}"
+      temperatureInterval="10"
+      salinity="1.0"
+      solubilityModel="Tables"
       solubilityTableNames="{ co2Solubility }" />
     <CO2BrinePhillipsFluid
       name="co2BrinePhillipsMixtureB"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
+      pressureCoordinates="{1e6, 5e7}"
+      pressureInterval="1e6"
+      temperatureCoordinates="{340, 460}"
+      temperatureInterval="10"
+      salinity="1.0"
+      solubilityModel="Tables"
       solubilityTableNames="{ co2Solubility, h20Vapourisation }" />
   </Constitutive>
 

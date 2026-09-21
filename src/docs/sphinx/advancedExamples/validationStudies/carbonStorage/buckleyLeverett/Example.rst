@@ -9,7 +9,7 @@
 **Context**
 
 In this example, we simulate a CO2 core flood experiment representing immiscible transport of two-phase
-flow (CO2 and water) through porous media `(Ekechukwu et al., 2022) <https://arxiv.org/pdf/2203.05021.pdf>`__. This problem is solved using the multiphase flow solver in GEOS to obtain the temporal evolution of saturation along the flow direction, and verified against the Buckley-Leverett analytical solutions `(Buckley and Leverett, 1942;  <https://onepetro.org/TRANS/article/146/01/107/161720/Mechanism-of-Fluid-Displacement-in-Sands>`__ `Arabzai and Honma, 2013)  <http://bulletin.soe.u-tokai.ac.jp/english_vol38/20_25.pdf>`__.
+flow (CO2 and water) through porous media `(Ekechukwu et al., 2022) <https://arxiv.org/pdf/2203.05021.pdf>`__. This problem is solved using the multiphase flow solver in GEOS to obtain the temporal evolution of saturation along the flow direction, and verified against the Buckley-Leverett analytical solutions `(Buckley and Leverett, 1942;  <https://onepetro.org/TRANS/article/146/01/107/161720/Mechanism-of-Fluid-Displacement-in-Sands>`__ `Arabzai and Honma, 2013)  <https://www.researchgate.net/profile/Abidullah-Arabzai-2/publication/385085530_Numerical_Simulation_of_the_Buckley-Leverett_Problem/links/6714f783d796f96b8ec38491/Numerical-Simulation-of-the-Buckley-Leverett-Problem.pdf>`__.
 
 
 **Input file**

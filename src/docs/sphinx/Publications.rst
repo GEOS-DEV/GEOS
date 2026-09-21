@@ -2,7 +2,7 @@
 Publications
 ###############################################################################
 
-Last updated 10-October-2025
+Last updated 07-July-2026
 
 Referencing GEOS  
 =========================
@@ -20,25 +20,6 @@ Referencing GEOS
 Preprints and Early-Views
 =========================
 
-.. list-table::
-   :widths: 100
-   :header-rows: 0
-
-   * - | **A robust framework for frictional fault contact in geological formations using a stabilized augmented Lagrangian approach**
-       | M Frigo, N Castelletto, M Cusini, RR Settgast, HA Tchelepi
-       | arXiv preprint
-       | `arXiv:2509.20528 <https://doi.org/10.48550/arXiv.2509.20528>`_
-
-   * - | **Recurrent Transformer U-Net surrogate for flow modeling and data assimilation in subsurface formations with faults**
-       | Y Han, LJ Durlofsky
-       | arXiv preprint
-       | `arXiv:2508.16631 <https://doi.org/10.48550/arXiv.2508.16631>`_
-
-   * - | **Semi-Analytical Approaches for Addressing Thermal Debonding Issues in Cased Wellbores**
-       | T Nguyen-Sy, J Huang, H Gross, FP Hamon
-       | SSRN preprint
-       | `doi:10.2139/ssrn.5208966 <https://doi.org/10.2139/ssrn.5208966>`_
-
 
 2026
 ====
@@ -51,6 +32,31 @@ Preprints and Early-Views
        | CM Crook, MA Homel
        | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2025.118399 <https://doi.org/10.1016/j.cma.2025.118399>`_
+
+   * - | **A robust framework for frictional fault contact in geological formations using a stabilized augmented Lagrangian approach**
+       | M Frigo, N Castelletto, M Cusini, RR Settgast, HA Tchelepi
+       | Journal of Computational Physics
+       | `doi:10.1016/j.jcp.2026.114988 <https://doi.org/10.1016/j.jcp.2026.114988>`_
+
+   * - | **Recurrent Transformer U-Net surrogate for flow modeling and data assimilation in subsurface formations with faults**
+       | Y Han, LJ Durlofsky
+       | Journal of Computational Physics
+       | `doi:10.1016/j.jcp.2026.114801 <https://doi.org/10.1016/j.jcp.2026.114801>`_
+
+   * - | **Simulation of Multiphase Flow and Poromechanical Effects Around Injection Wells in CO2 Storage Sites**
+       | J Huang, F Hamon, M Cusini, T Gazzola, RR Settgast, JA White, H Gross
+       | Rock Mechanics and Rock Engineering
+       | `doi:10.1007/s00603-024-04051-w <https://doi.org/10.1007/s00603-024-04051-w>`_ 
+
+   * - | **High-Resolution Simulations of Geological CO2 Injection: Application to the SPE11 Benchmark**
+       | D Kachuma, R Hasanzade, P Tomin, ME Thomadakis, J Franc, VAP Magri, TJ Byer, M Cusini, RR Settgast, H Gross, N Castelletto
+       | SPE Journal
+       | `doi:10.2118/231182-PA <https://doi.org/10.2118/231182-PA>`_ 
+
+   * - | **Basin-scale analysis of Mokelumne River Formation for multi-well CO2 injection**
+       | A  Zibitsker, B Schmidt, T Byer, N Castelletto, J Iyer
+       | International Journal of Greenhouse Gas Control
+       | `doi:10.1016/j.ijggc.2026.104703 <https://doi.org/10.1016/j.ijggc.2026.104703>`_ 
 
 
 2025
@@ -112,11 +118,6 @@ Preprints and Early-Views
        | Y Han, FP Hamon, S Jiang, LJ Durlofsky
        | Advances in Water Resources
        | `doi:10.1016/j.advwatres.2024.104678 <https://doi.org/10.1016/j.advwatres.2024.104678>`_
-
-   * - | **Simulation of Multiphase Flow and Poromechanical Effects Around Injection Wells in CO2 Storage Sites**
-       | J Huang, F Hamon, M Cusini, T Gazzola, RR Settgast, JA White, H Gross
-       | Rock Mechanics and Rock Engineering
-       | `doi:10.1007/s00603-024-04051-w <https://doi.org/10.1007/s00603-024-04051-w>`_ 
 
    * - | **Learning CO2 plume migration in faulted reservoirs with Graph Neural Networks**
        | X Ju, FP Hamon, G Wen, R Kanfar, M Araya-Polo, HA Tchelepi

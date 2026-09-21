@@ -17,4 +17,11 @@ foreach( test_source ${fluidFlow_gtest_tests} )
                       FOLDER UnitTests )
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} )
+  
+  if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+    set( nranks 2 )
+    geos_add_test( NAME ${test_name}_mpi
+                   COMMAND ${test_name} -x ${nranks}
+                   NUM_MPI_TASKS ${nranks} )
+  endif()
 endforeach()

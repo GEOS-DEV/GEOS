@@ -63,7 +63,7 @@ struct VelocityComputation
           arrayView2d< real32 > const velocity_y,
           arrayView2d< real32 > const velocity_z )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // only the eight corners of the mesh cell are needed to compute the Jacobian
       real64 xLocal[8][3];
@@ -205,7 +205,7 @@ struct PressureComputation
 
     real64 const rickerValue = useSourceWaveletTables ? 0 : WaveSolverUtils::evaluateRicker( time_n, timeSourceFrequency, timeSourceDelay, rickerOrder );
 
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const k )
     {
       // only the eight corners of the mesh cell are needed to compute the Jacobian
       real64 xLocal[8][3];

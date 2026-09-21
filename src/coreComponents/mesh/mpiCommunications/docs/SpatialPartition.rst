@@ -81,6 +81,6 @@ Therefore, it is a good practice or habit to hide ghost objects using ghostRank 
 If the visualization method involves interpolation, such as interpolating a zonal field into a nodal field or generating contours, 
 the interpretation near partition boundaries is not accurate.
 
-.. _METIS: http://glaros.dtc.umn.edu/gkhome/metis/metis/overview
-.. _PARMETIS: http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview
+.. _METIS: https://github.com/KarypisLab/METIS
+.. _PARMETIS: https://github.com/KarypisLab/ParMETIS
 .. _PTSCOTCH: https://www.labri.fr/perso/pelegrin/scotch/
