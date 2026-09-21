@@ -38,6 +38,11 @@ def parse_args():
     p.add_argument("--output-prefix", required=True)
     p.add_argument("--python", dest="python_cmd", default=os.environ.get("PFW_PYTHON", "/usr/tce/bin/python3"))
     p.add_argument("--force", "-y", action="store_true")
+    p.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Exit successfully without prompting when prior run/output files exist",
+    )
     p.add_argument("--prepare-only", action="store_true")
     p.add_argument("--no-visit", action="store_true")
     p.add_argument("--post-walltime", default='00:05:00')
@@ -72,10 +77,13 @@ def load_userdefs(pfw_root: Path):
     fail("verification", f"could not find userDefs_$USER.py in {pfw_root}")
 
 
-def prompt(case: str, run_dir: Path, output_dir: Path, force: bool):
+def prompt(case: str, run_dir: Path, output_dir: Path, force: bool, skip_existing: bool):
     exists = (run_dir.exists() and any(run_dir.iterdir())) or (output_dir.exists() and any(output_dir.iterdir()))
     if not exists or force:
         return
+    if skip_existing:
+        log(case, "SKIP: generated output already exists (use --force to rerun)")
+        raise SystemExit(0)
     if not sys.stdin.isatty():
         fail(case, "generated output already exists; rerun with --force")
     ans = input(f"Overwrite previous generated output for {case}? [y/N] ").strip().lower()
@@ -309,7 +317,9 @@ def main():
     output_dir = source_dir / "output" / args.case_id
     test_root.mkdir(parents=True, exist_ok=True)
     default_root.mkdir(parents=True, exist_ok=True)
-    prompt(args.case_id, run_dir, output_dir, args.force)
+    if args.force and args.skip_existing:
+        fail(args.case_id, "--force and --skip-existing are mutually exclusive")
+    prompt(args.case_id, run_dir, output_dir, args.force, args.skip_existing)
     clean_case(run_dir, output_dir, args.force)
     copy_files(pfw_root, source_dir, args.input, run_dir)
     append_overrides(run_dir / args.input, args.case_id, bank, args.walltime, not args.no_submit, args.ats_fast)

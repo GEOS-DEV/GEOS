@@ -37,25 +37,25 @@ CohesiveZoneRegion::CohesiveZoneRegion( string const & name, Group * const paren
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Max cohesive normal displacement for each cohesive grid node" );
+    setDescription( "Maximum cohesive normal displacement for each cohesive field pair" );
 
   registerWrapper( viewKeyStruct::maxTangentialDisplacementString(), &m_maxTangentialDisplacement ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Max cohesive tangential displacement for each cohesive grid node" );
+    setDescription( "Maximum cohesive tangential displacement for each cohesive field pair" );
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Cohesive grid node damages" );
+    setDescription( "Damage for each cohesive field pair" );
   
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Cohesive grid node temperatures" );
+    setDescription( "Temperature for each cohesive field pair" );
 }
 
 CohesiveZoneRegion::~CohesiveZoneRegion()

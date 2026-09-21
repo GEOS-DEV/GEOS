@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-python3}}"
+
+exec "$PYTHON_CMD" "$SCRIPT_DIR/postProcess_threeFieldContact.py" \
+  --source-dir "$SCRIPT_DIR" \
+  "$@"

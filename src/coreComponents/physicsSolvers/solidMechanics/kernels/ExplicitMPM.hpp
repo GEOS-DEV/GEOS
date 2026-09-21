@@ -186,62 +186,64 @@ struct CohesiveZoneStateUpdateKernel
    * @param[in] planeStrain Flag for plane strain problems
    * @param[in] smallMass Minimum grid mass
    * @param[in] preventCZInterpentration Flag to prevent interpentration of cohesive zones in compression
-   * @param[in] fieldA Velocity field A of cohesive zone
-   * @param[in] fieldB Velocity field B of cohesive zone
+   * @param[in] pairToFieldSlot Compact field slots on the two sides of every cohesive pair
    * @param[in] periodic0 Periodic flag for x-direction
    * @param[in] periodic1 Periodic flag for y-direction
    * @param[in] periodic2 Periodic flag for z-direction
    * @param[in] domainExtent0 Periodic domain extent in x-direction
    * @param[in] domainExtent1 Periodic domain extent in y-direction
    * @param[in] domainExtent2 Periodic domain extent in z-direction
-   * @param[in] gridMass Array view of the nodal mass
-   * @param[in] gridDisplacement Array view of nodal displacement
-   * @param[in] gridParticleSurfaceNormal Array view of particle mapped surface normals
-   * @param[in] gridDeformationGradientCofactor Array view of mapped deformation gradient cofactor
-   * @param[in] gridCZTraction Array view of cohesive tractions for each velocity field
-   * @param[in] czReferenceSurfaceNormal Array view of the reference surface normals for each velocity field
-   * @param[in] czReferenceArea Scalar reference area of each cohesive zone node and velocity field
+   * @param[in] fieldSlotMass Mass stored once for every active grid-node/velocity-field slot
+   * @param[in] fieldSlotDisplacement Displacement stored once for every active field slot
+   * @param[in] fieldSlotParticleSurfaceNormal Particle-mapped surface normal for every active field slot
+   * @param[in] fieldSlotDeformationGradientCofactor Mapped deformation-gradient cofactor for every active field slot
+   * @param[out] fieldSlotCohesiveForce Cohesive forces accumulated into the compact field slots
+   * @param[in] fieldSlotReferenceSurfaceNormal Reference surface normal for every active field slot
+   * @param[in] fieldSlotReferenceArea Reference area for every active field slot
    
    */
   template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
-  static void launch( int numNodes,
+  static void launch( int numPairs,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       real64 dt,
                       int planeStrain, // Should remove eventually, used for normals but normals after mapping to grid should be checked for planeStrain condition
                       real64 smallMass,
                       int preventCZInterpentration,
-                      localIndex fieldA,
-                      localIndex fieldB,
+                      arrayView2d< localIndex const > const pairToFieldSlot,
                       int periodic0,
                       int periodic1,
                       int periodic2,
                       real64 domainExtent0,
                       real64 domainExtent1,
                       real64 domainExtent2,
-                      arrayView2d< real64 const > const gridMass,
-                      arrayView3d< real64 const > const gridDisplacement,
-                      arrayView3d< real64 const > const gridParticleSurfaceNormal,
-                      arrayView4d< real64 const > const gridDeformationGradientCofactor,
-                      arrayView3d< real64 > const gridCZTraction,
-                      arrayView3d< real64 const > const czReferenceSurfaceNormal,
-                      arrayView2d< real64 const > const czReferenceArea )
+                      arrayView1d< real64 const > const fieldSlotMass,
+                      arrayView2d< real64 const > const fieldSlotDisplacement,
+                      arrayView2d< real64 const > const fieldSlotParticleSurfaceNormal,
+                      arrayView3d< real64 const > const fieldSlotDeformationGradientCofactor,
+                      arrayView2d< real64 > const fieldSlotCohesiveForce,
+                      arrayView2d< real64 const > const fieldSlotReferenceSurfaceNormal,
+                      arrayView1d< real64 const > const fieldSlotReferenceArea )
   {
     GEOS_UNUSED_VAR( dt );
 
     // Perform constitutive call
-    forAll< POLICY >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    {      
-      bool active = ( gridMass[k][fieldA] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridParticleSurfaceNormal[k][fieldA] ) > 1.0e-16 )
-                    and
-                    ( gridMass[k][fieldB] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridParticleSurfaceNormal[k][fieldB] ) > 1.0e-16 );
+    forAll< POLICY >( numPairs, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      localIndex const slotA = pairToFieldSlot[k][0];
+      localIndex const slotB = pairToFieldSlot[k][1];
+
+      bool active = ( fieldSlotMass[slotA] > smallMass ) &&
+                    ( LvArray::tensorOps::l2NormSquared< 3 >( fieldSlotParticleSurfaceNormal[slotA] ) > 1.0e-16 ) &&
+                    ( fieldSlotMass[slotB] > smallMass ) &&
+                    ( LvArray::tensorOps::l2NormSquared< 3 >( fieldSlotParticleSurfaceNormal[slotB] ) > 1.0e-16 );
 
       if( active )
       {
         // Copy normals
         real64 nA[3] = {};
         real64 nB[3] = {};
-        LvArray::tensorOps::copy< 3 >( nA, gridParticleSurfaceNormal[k][fieldA] );
-        LvArray::tensorOps::copy< 3 >( nB, gridParticleSurfaceNormal[k][fieldB] );
+        LvArray::tensorOps::copy< 3 >( nA, fieldSlotParticleSurfaceNormal[slotA] );
+        LvArray::tensorOps::copy< 3 >( nB, fieldSlotParticleSurfaceNormal[slotB] );
 
         // Initialize tractions here
         real64 tA[3] = {};
@@ -251,26 +253,30 @@ struct CohesiveZoneStateUpdateKernel
 
         // Compute updated nodal area vectors for cohesive zone traction calculations
         real64 referenceAreaVectorA[3] = {};
-        LvArray::tensorOps::scaledCopy< 3 >( referenceAreaVectorA, czReferenceSurfaceNormal[k][fieldA], czReferenceArea[k][fieldA] );
+        LvArray::tensorOps::scaledCopy< 3 >( referenceAreaVectorA,
+                                             fieldSlotReferenceSurfaceNormal[slotA],
+                                             fieldSlotReferenceArea[slotA] );
 
         real64 sA[3] = {}; // Update the name of this to be more descriptive, current area vector
-        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( sA, gridDeformationGradientCofactor[k][fieldA], referenceAreaVectorA );
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( sA, fieldSlotDeformationGradientCofactor[slotA], referenceAreaVectorA );
 
         real64 referenceAreaVectorB[3] = {};
-        LvArray::tensorOps::scaledCopy< 3 >( referenceAreaVectorB, czReferenceSurfaceNormal[k][fieldB], czReferenceArea[k][fieldB] );
+        LvArray::tensorOps::scaledCopy< 3 >( referenceAreaVectorB,
+                                             fieldSlotReferenceSurfaceNormal[slotB],
+                                             fieldSlotReferenceArea[slotB] );
 
         real64 sB[3] = {}; // Update the name of this to be more descriptive, current area vector
-        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(sB, gridDeformationGradientCofactor[k][fieldB], referenceAreaVectorB );
+        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(sB, fieldSlotDeformationGradientCofactor[slotB], referenceAreaVectorB );
 
         // Displacement for each field
         real64 dA[3] = {};
-        LvArray::tensorOps::copy< 3 >( dA, gridDisplacement[k][fieldA] );
+        LvArray::tensorOps::copy< 3 >( dA, fieldSlotDisplacement[slotA] );
         real64 dB[3] = {};
-        LvArray::tensorOps::copy< 3 >( dB, gridDisplacement[k][fieldB] );
+        LvArray::tensorOps::copy< 3 >( dB, fieldSlotDisplacement[slotB] );
 
         // Total mass for the contact pair.
-        real64 mA = gridMass[k][fieldA];
-        real64 mB = gridMass[k][fieldB];
+        real64 mA = fieldSlotMass[slotA];
+        real64 mB = fieldSlotMass[slotB];
         real64 mAB = mA + mB;
 
         // Outward normal of field A with respect to field B.
@@ -358,8 +364,11 @@ struct CohesiveZoneStateUpdateKernel
         LvArray::tensorOps::scale< 3 >( areaAB, 1 / mAB );
 
         real64 surfaceArea = LvArray::tensorOps::AiBi< 3 >( nAB, areaAB ); // Should we take the absolute value to ensure surface area can never be negative. However, if nAB is consistent with areaAB then it should also never be negative so negative surface area could indicate an error
-        LvArray::tensorOps::scaledAdd< 3 >( gridCZTraction[k][fieldA], tA, surfaceArea );
-        LvArray::tensorOps::scaledAdd< 3 >( gridCZTraction[k][fieldB], tB, surfaceArea );
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &fieldSlotCohesiveForce[slotA][i], tA[i] * surfaceArea );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &fieldSlotCohesiveForce[slotB][i], tB[i] * surfaceArea );
+        }
         
         // GEOS_LOG_RANK( "k: " << k << ", " << 
         //               //  "dA: " << "{" << dA[0] << ", " << dA[1] << ", " << dA[2] << "}, " << 
@@ -368,8 +377,8 @@ struct CohesiveZoneStateUpdateKernel
         //               //  "nA: " << "{" << nA[0] << ", " << nA[1] << ", " << nA[2] << "}, " << 
         //               //  "nB: " << "{" << nB[0] << ", " << nB[1] << ", " << nB[2] << "}, " << 
         //                "nAB: " << "{" << nAB[0] << ", " << nAB[1] << ", " << nAB[2] << "}, " << 
-        //               //  "aA: " << czReferenceArea[k][fieldA] << ", " << 
-        //               //  "aB: " << czReferenceArea[k][fieldB] << ", " << 
+        //               //  "aA: " << fieldSlotReferenceArea[slotA] << ", " <<
+        //               //  "aB: " << fieldSlotReferenceArea[slotB] << ", " <<
         //               //  "sA: " << "{" << sA[0] << ", " << sA[1] << ", " << sA[2] << "}, " << 
         //               //  "sB: " << "{" << sB[0] << ", " << sB[1] << ", " << sB[2] << "}, " << 
         //                "normalDisp: " << totalNormalDisplacement << ", " << 

@@ -29,7 +29,7 @@ class CohesiveZoneBase;
 
 /**
  * @class CohesiveZoneRegionBase
- * @brief The CohesiveZoneRegionBase is the base class to manage the cohesive zone data stored at the node level.
+ * @brief Manages sparse cohesive physical-node, field-slot, and field-pair data.
  *
  * The CohesiveZoneRegionBase is the base class for the CohesiveZoneRegion class. It may be depreciated at
  * some point since no other classes are currently derived from CohesiveZoneRegionBase.
@@ -95,9 +95,48 @@ public:
 
   localIndex getTag() const { return m_tag; }
 
-  localIndex getFieldA() const { return m_fieldA; }
+  /**
+   * @brief Get the compact field-slot indices on the two sides of each cohesive pair.
+   * @return An array with dimensions @c {numberOfPairs, 2}.
+   */
+  arrayView2d< localIndex const > getFieldSlots() const
+  { return m_fieldSlots; }
 
-  localIndex getFieldB() const { return m_fieldB; }
+  /** @copydoc getFieldSlots() const */
+  arrayView2d< localIndex > getFieldSlots()
+  { return m_fieldSlots; }
+
+  /** @brief Get the compact physical-node index for every field slot. */
+  arrayView1d< localIndex const > getFieldSlotNode() const
+  { return m_fieldSlotNode; }
+
+  /** @copydoc getFieldSlotNode() const */
+  arrayView1d< localIndex > getFieldSlotNode()
+  { return m_fieldSlotNode; }
+
+  /** @brief Get the global velocity-field index for every compact field slot. */
+  arrayView1d< localIndex const > getFieldSlotVelocityField() const
+  { return m_fieldSlotVelocityField; }
+
+  /** @copydoc getFieldSlotVelocityField() const */
+  arrayView1d< localIndex > getFieldSlotVelocityField()
+  { return m_fieldSlotVelocityField; }
+
+  /**
+   * @brief Resize the independently-sized physical-node and field-slot arrays.
+   * @param numNodes Number of unique physical cohesive nodes.
+   * @param numFieldSlots Number of active node/velocity-field combinations.
+   */
+  void resizeTopology( localIndex const numNodes, localIndex const numFieldSlots )
+  {
+    m_globalID.resize( numNodes );
+    m_referencePosition.resize( numNodes, 3 );
+    m_referencePartitioningSurfaceNormal.resize( numNodes, 3 );
+    m_fieldSlotNode.resize( numFieldSlots );
+    m_fieldSlotVelocityField.resize( numFieldSlots );
+    m_referenceSurfaceNormal.resize( numFieldSlots, 3 );
+    m_referenceArea.resize( numFieldSlots );
+  }
 
   /**
    * @brief Get a pointer to the constitutive model.
@@ -126,16 +165,15 @@ public:
   int isEnabled() const { return m_enabled; }
 
   /**
-   * @brief Get the global ID of each cohesive zone node.
-   * @return an arrayView1d of const node global ID
+   * @brief Get the sorted global IDs of unique physical cohesive nodes.
+   * @return an array view of physical grid-node global IDs
    */
-  SortedArrayView< globalIndex const > getGlobalID() const
+  arrayView1d< globalIndex const > getGlobalID() const
   { return m_globalID.toViewConst(); }
 
-  void setGlobalID(SortedArrayView< globalIndex const > const & globalID )
-  {
-    m_globalID.insert( globalID.begin(), globalID.end() );
-  }
+  /** @copydoc getGlobalID() const */
+  arrayView1d< globalIndex > getGlobalID()
+  { return m_globalID.toView(); }
 
   void setCZVolumeNormalization( int const & czVolumeNormalization ) { m_czVolumeNormalization = czVolumeNormalization; }
   void setComputeParticleSurfaceNormalsAndPositions( int const & computeParticleSurfaceNormalsAndPositions ) { m_computeParticleSurfaceNormalsAndPositions = computeParticleSurfaceNormalsAndPositions; }
@@ -161,29 +199,27 @@ public:
   { return m_referencePartitioningSurfaceNormal; }
 
   /**
-   * @brief Get the reference surface normal of each cohesive zone node.
-   * @return an arrayView2d of const node reference surface normal
+   * @brief Get the reference surface normal of each compact field slot.
+   * @return an array view with dimensions @c {numberOfFieldSlots, 3}
    */
-  arrayView3d< real64 const > getReferenceSurfaceNormal() const
+  arrayView2d< real64 const > getReferenceSurfaceNormal() const
   { return m_referenceSurfaceNormal; }
 
   /**
    * @copydoc getReferenceSurfaceNormal() const
    */
-  arrayView3d< real64 > getReferenceSurfaceNormal()
+  arrayView2d< real64 > getReferenceSurfaceNormal()
   { return m_referenceSurfaceNormal; }
 
   /**
-   * @brief Get the reference area of each cohesive zone node.
-   * @return an arrayView2d of const node reference area
+   * @brief Get the reference area of each compact field slot.
+   * @return an array view with one scalar per field slot
    */
-  arrayView2d< real64 const > getReferenceArea() const
+  arrayView1d< real64 const > getReferenceArea() const
   { return m_referenceArea; }
 
-  /**
-   * @copydoc getReferencePosition() const
-   */
-  arrayView2d< real64 > getReferenceArea()
+  /** @copydoc getReferenceArea() const */
+  arrayView1d< real64 > getReferenceArea()
   { return m_referenceArea; }
 
   /**
@@ -212,6 +248,15 @@ public:
 
     /// @return String key for the member level field for the cohesive zone node global ID.
     static constexpr char const * globalIDString() { return "globalID"; }
+
+    /// @return String key for the compact field slots forming each cohesive pair.
+    static constexpr char const * fieldSlotsString() { return "fieldSlots"; }
+
+    /// @return String key for the physical-node index of each compact field slot.
+    static constexpr char const * fieldSlotNodeString() { return "fieldSlotNode"; }
+
+    /// @return String key for the global velocity-field index of each compact field slot.
+    static constexpr char const * fieldSlotVelocityFieldString() { return "fieldSlotVelocityField"; }
 
     /// @return String key for the member level field for the cohesive zone node reference partitioning surface normals.
     static constexpr char const * referencePartitioningSurfaceNormalString() { return "referencePartitioningSurfaceNormal"; }
@@ -245,16 +290,20 @@ private:
 
   localIndex m_tag;
 
-  // Indices of fields for either side of the cohesive zone
-  localIndex m_fieldA;
-  localIndex m_fieldB;
+  // Sparse topology. Each cohesive constitutive point is a binary pair, while
+  // field slots deduplicate the kinematic and surface data shared at junctions.
+  array2d< localIndex > m_fieldSlots;
+  array1d< localIndex > m_fieldSlotNode;
+  array1d< localIndex > m_fieldSlotVelocityField;
 
-  // Reference fields
-  SortedArray< globalIndex > m_globalID;
+  // Physical-node reference fields (one entry per unique physical node).
+  array1d< globalIndex > m_globalID;
   array2d< real64 > m_referencePosition;
   array2d< real64 > m_referencePartitioningSurfaceNormal;
-  array3d< real64 > m_referenceSurfaceNormal;
-  array2d< real64 > m_referenceArea;
+
+  // Side geometry (one entry per active node/velocity-field slot).
+  array2d< real64 > m_referenceSurfaceNormal;
+  array1d< real64 > m_referenceArea;
 };
 
 }

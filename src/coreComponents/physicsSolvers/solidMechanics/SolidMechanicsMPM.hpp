@@ -34,6 +34,7 @@
 #include "mesh/CohesiveZoneManager.hpp"
 
 #include "MPMSolverFields.hpp"
+#include "ProjectedGaussSeidelContact.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
@@ -452,6 +453,16 @@ public:
 
   void shapeFunctionDiagnostics( ParticleManager & particleManager );
 
+  /**
+   * @brief Checks runtime-selected grid and particle fields for nonfinite or excessive values.
+   * @param[in] stage Label identifying the call site in diagnostic output.
+   * @param[in,out] particleManager Particle fields and global particle identifiers.
+   * @param[in,out] nodeManager Grid fields and global node identifiers.
+   */
+  void fieldDiagnostics( char const * stage,
+                         ParticleManager & particleManager,
+                         NodeManager & nodeManager );
+
   void performParticleToGridForExplicitStep( real64 const time_n,
                                              integer const cycleNumber,
                                              ParticleManager & particleManager,
@@ -533,6 +544,23 @@ public:
   void computeContactForces( real64 const dt,
                              ParticleManager & particleManager,
                              NodeManager & nodeManager );
+
+  /**
+   * @brief Solve all material-contact constraints at each node with PGS.
+   *
+   * @param dt Time step used to convert impulses to forces and for gap bias.
+   * @param particleManager Particle data used by logistic-regression normals.
+   * @param nodeManager Grid fields used to construct the constraints.
+   * @param trialVelocity Velocity on which the simultaneous contact solve acts.
+   * @param contactOutput Contact impulse multiplied by @p outputScale.
+   * @param outputScale Use 1/dt for force or 1 for momentum.
+   */
+  void computeProjectedGaussSeidelContact( real64 const dt,
+                                           ParticleManager & particleManager,
+                                           NodeManager & nodeManager,
+                                           arrayView3d< real64 const > const trialVelocity,
+                                           arrayView3d< real64 > const contactOutput,
+                                           real64 const outputScale );
 
   void enforceWeakInterfaceTraceProjection( real64 const dt,
                                             DomainPartition & domain,
@@ -1351,12 +1379,23 @@ protected:
   mpm::ContactGapCorrectionOption m_contactGapCorrection;
   real64 m_contactNormalExponent;
   mpm::ContactNormalTypeOption m_contactNormalType;
+  integer m_contactPGSMaximumIterations;
+  real64 m_contactPGSRelaxation;
+  int m_contactPGSRequireConvergence;
+  real64 m_contactPGSVelocityTolerance;
+  mpm::ContactSolverOption m_contactSolver;
   int m_cpdiDomainScaling;
   mpm::CPDIDomainScalingTypeOption m_cpdiDomainScalingType;
   real64 m_crackTipDetectionThreshold;
   int m_damageFieldPartitioning;
   real64 m_damageHessianSurfaceThreshold;
   int m_computeCZInterfacesFromDamage;
+  int m_deformationGradientDiagnostics;
+  real64 m_deformationGradientMinReciprocalCondition;
+  string_array m_fieldDiagnosticGridFields;
+  string_array m_fieldDiagnosticParticleFields;
+  real64 m_fieldDiagnosticMaximumAbsoluteValue;
+  integer m_fieldDiagnosticMaxReportsPerField;
   int m_directionalOverlapCorrection;
   int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
   int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
@@ -1387,6 +1426,7 @@ protected:
   // Deprecated compatibility input; endpoint split always advances scalar volume.
   int m_exactJIntegration;
   real64 m_explicitSurfaceNormalInfluence;
+  int m_floatingPointDiagnostics;
   real64 m_frictionCoefficient;
   array2d< real64 > m_frictionCoefficientTable;
   // Deprecated compatibility input; the fixed-L exponential uses internal scaling and squaring.

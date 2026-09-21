@@ -30,6 +30,7 @@ set( solidMechanicsSolvers_sources )
 
 if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
   list( APPEND solidMechanicsSolvers_headers
+        ProjectedGaussSeidelContact.hpp
         SolidMechanicsMPM.hpp
         MPMSolverFields.hpp
         kernels/ExplicitMPM.hpp )
@@ -133,4 +134,8 @@ install( TARGETS solidMechanicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFI
 
 if( externalComponentDeps )
   target_include_directories( solidMechanicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+endif()
+
+if( GEOS_ENABLE_TESTS AND GEOS_ENABLE_SOLIDMECHANICS_MPM )
+  add_subdirectory( unitTests )
 endif()

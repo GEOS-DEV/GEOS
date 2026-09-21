@@ -13,7 +13,7 @@ This section describes the solver-side cohesive-zone implementation used by GEOS
 \index{cohesive zone!reference configuration}
 \index{surface normal!cohesive zone}
 
-For a cohesive interface, the key geometric objects are the two material fields adjacent to the interface, denoted $A$ and $B$, a reference surface normal $\mathbf{N}^0$, a current surface normal $\mathbf{n}$, and a reference surface area $A^0$.  GEOS-MPM stores these data in \texttt{CohesiveZoneRegion} fields and in particle-level surface fields.  The region owns a list of cohesive nodes, their reference positions, reference partitioning normals, side-specific reference normals, and side-specific reference areas.  Cohesive particles store the reference grid nodes and reference shape-function weights that couple the particle to those cohesive nodes.
+For a cohesive interface, the key geometric objects for each interacting pair are the two material fields, denoted $A$ and $B$, a reference surface normal $\mathbf{N}^0$, a current surface normal $\mathbf{n}$, and a reference surface area $A^0$.  GEOS-MPM stores these data in \texttt{CohesiveZoneRegion} fields and in particle-level surface fields.  The region owns a list of unique physical cohesive nodes, active node/field slots, and binary field pairs.  Reference positions and partitioning normals are stored per physical node, while side-specific reference normals and areas are stored per active field slot and shared by every pair using that slot.  Cohesive particles store compact slot indices and reference shape-function weights that couple the particle to those cohesive nodes.
 
 The central design choice is that cohesive integration uses a reference grid mapping.  If $I$ denotes a cohesive node and $p$ a particle whose initial particle domain intersects the cohesive surface, the solver stores
 \begin{equation}
@@ -23,7 +23,7 @@ The central design choice is that cohesive integration uses a reference grid map
 \end{equation}
 where $\mathbf{X}_p$ is a reference particle position or reference particle-domain quadrature location, depending on the particle representation.  The same reference weights are reused during cohesive-law enforcement.  This is the mechanism emphasized by Crook and Homel: by keeping the cohesive mapping tied to the reference interface, the cohesive law can remain stable during large deformation without introducing a separate surface-particle discretization \cite{crook2025cohesive}.
 
-The implementation currently assumes two velocity fields for cohesive-zone enforcement.  During initialization, particles with a cohesive surface flag and a matching \texttt{CZTag} are partitioned onto fields $A$ and $B$ using the explicit surface normal and the particle's damage-field partitioning.  Nodes receiving mass from both fields become cohesive nodes.  This two-field assumption is checked explicitly when the cohesive reference configuration is initialized.
+The implementation supports an arbitrary runtime number of velocity fields.  During initialization, particles with a cohesive surface flag and a matching \texttt{CZTag} are partitioned using the explicit surface normal, the particle contact group, and the particle's damage-field partitioning.  At every physical grid node, each occupied pair of fields becomes one binary cohesive constitutive point.  The topology is sparse: constitutive history is stored only for active field pairs, surface kinematics and reference geometry are stored once for each active $(\text{node},\text{field})$ slot, and reference position data are stored once per physical cohesive node.  Consequently, memory is independent of the total number of contact groups except for groups that are actually present together at cohesive nodes.
 
 \subsection{Initialization algorithm}
 \index{cohesive zone!initialization}
@@ -37,9 +37,10 @@ reset cohesive surface flags on particles
 project particle surface normals to the grid
 for each CohesiveZoneRegion R that is not initialized:
     select particles with SurfaceFlag == Cohesive and CZTag == R.tag
-    split selected particle contributions onto fields A and B
-    mark grid nodes that receive mass from both fields as cohesive nodes
-    collect cohesive-node global ids across MPI ranks
+    split selected particle contributions onto their runtime velocity fields
+    form every occupied binary field pair at each cohesive node
+    collect sparse (node, field pair) keys across MPI ranks
+    deduplicate physical nodes and (node, field) slots
     store cohesive-node reference positions and reference partition normals
     initialize nodal cohesive state: damage, temperature, and max jump history
     for each selected particle:
@@ -220,4 +221,4 @@ Model & Principal required inputs & Notes \\
 
 The minimum event-level controls are \texttt{regionNames}, \texttt{constitutiveModels}, and \texttt{czTags}; the arrays must have the same nonzero length.  Optional controls are \texttt{czVolumeNormalization}, \texttt{computeNormalsAndPositions}, \texttt{normalsAndPositionsMethod}, and \texttt{czSurfaceDisplacementUpdate}.  These controls are documented with the other event inputs in Section~\ref{sec:event-cohesivezone}.  PFW-side setup usually also requires particle fields for surface flag, cohesive-zone tag, surface normal, and surface position.  The default PFW particle-field list already includes \texttt{SurfaceFlag}, \texttt{CZTag}, \texttt{SurfaceNormal}, and \texttt{SurfacePosition} in cohesive-capable cases.
 
-The principal implementation limitations in the reviewed snapshot are: cohesive-zone enforcement assumes two velocity fields; initialization depends on consistent particle surface flags and CZ tags; misorientation-dependent bicrystal strengths require a valid misorientation state; and once cohesive damage reaches completion the interface is handed off to contact rather than continuing to carry cohesive traction.  These limitations should be reflected in verification tests for new cohesive-zone use cases.
+The principal implementation limitations are: initialization depends on consistent particle surface flags and CZ tags; every simultaneously occupied field pair at a cohesive node is treated as a binary cohesive constitutive point; misorientation-dependent bicrystal strengths require a valid misorientation state; and once cohesive damage reaches completion the interface is handed off to contact rather than continuing to carry cohesive traction.  These limitations should be reflected in verification tests for new cohesive-zone use cases.

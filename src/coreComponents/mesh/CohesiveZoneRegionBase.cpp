@@ -32,8 +32,9 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
   m_normalsAndPositionsMethod( 0 ),
   m_czSurfaceDisplacementUpdate( 2 ),
   m_tag( 0 ),
-  m_fieldA( 0 ),
-  m_fieldB( 1 ),
+  m_fieldSlots(),
+  m_fieldSlotNode(),
+  m_fieldSlotVelocityField(),
   m_globalID(),
   m_referencePosition(),
   m_referencePartitioningSurfaceNormal(),
@@ -87,51 +88,64 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Tag ID");
 
-  registerWrapper( "fieldA", &m_fieldA ).
-    setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( m_fieldA ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Index of field A");
-
-  registerWrapper( "fieldB", &m_fieldB ).
-    setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( m_fieldB ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Index of field B");
-
- registerWrapper( viewKeyStruct::globalIDString(), &m_globalID ).
+  registerWrapper( viewKeyStruct::fieldSlotsString(), &m_fieldSlots ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Array of the global indices for cohesive grid nodes" );
+    setDescription( "Compact field-slot indices on the two sides of each cohesive pair" ).
+    reference().resizeDimension< 1 >( 2 );
+
+  registerWrapper( viewKeyStruct::fieldSlotNodeString(), &m_fieldSlotNode ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setSizedFromParent( 0 ).
+    setDescription( "Compact physical-node index for each cohesive field slot" );
+
+  registerWrapper( viewKeyStruct::fieldSlotVelocityFieldString(), &m_fieldSlotVelocityField ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setSizedFromParent( 0 ).
+    setDescription( "Global velocity-field index for each compact cohesive field slot" );
+
+  registerWrapper( viewKeyStruct::globalIDString(), &m_globalID ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setSizedFromParent( 0 ).
+    setDescription( "Sorted global IDs of unique physical cohesive nodes" );
 
   registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Reference cohesive grid node positions" ).
+    setSizedFromParent( 0 ).
+    setDescription( "Reference positions of unique physical cohesive nodes" ).
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::referencePartitioningSurfaceNormalString(), &m_referencePartitioningSurfaceNormal ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).  
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Reference partitioning surface normal for cohesive grid nodes" ).
+    setSizedFromParent( 0 ).
+    setDescription( "Reference partitioning surface normals of unique physical cohesive nodes" ).
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::referenceSurfaceNormalString(), &m_referenceSurfaceNormal ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Reference cohesive grid node surface normals" ).
-    reference().resizeDimension< 1, 2 >( 2, 3 );
+    setSizedFromParent( 0 ).
+    setDescription( "Reference surface normal for each compact cohesive field slot" ).
+    reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::referenceAreaString(), &m_referenceArea ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Reference cohesive grid node areas" ).
-    reference().resizeDimension< 1 >( 2 );
+    setSizedFromParent( 0 ).
+    setDescription( "Reference area for each compact cohesive field slot" );
 }
 
 

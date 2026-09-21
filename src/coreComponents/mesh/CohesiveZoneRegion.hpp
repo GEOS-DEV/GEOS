@@ -86,8 +86,8 @@ public:
   ///@{
 
   /**
-   * @brief Get the max normal displacement of each cohesive zone node.
-   * @return an arrayView1d of const node max normal displacement
+   * @brief Get the max normal displacement of each cohesive field pair.
+   * @return an array view of pair maximum normal displacements
    */
   arrayView1d< real64 const > getMaxNormalDisplacement() const
   { return m_maxNormalDisplacement; }
@@ -99,8 +99,8 @@ public:
   { return m_maxNormalDisplacement; }
 
   /**
-   * @brief Get the max tangential displacement of each cohesive zone node.
-   * @return an arrayView1d of const node max tangential displacement
+   * @brief Get the max tangential displacement of each cohesive field pair.
+   * @return an array view of pair maximum tangential displacements
    */
   arrayView1d< real64 const > getMaxTangentialDisplacement() const
   { return m_maxTangentialDisplacement; }
@@ -112,8 +112,8 @@ public:
   { return m_maxTangentialDisplacement; }
 
   /**
-   * @brief Get the damage of each cohesive zone node.
-   * @return an arrayView1d of const node damage
+   * @brief Get the damage of each cohesive field pair.
+   * @return an array view of pair damage values
    */
   arrayView1d< real64 const > getDamage() const
   { return m_damage; }
@@ -125,8 +125,8 @@ public:
   { return m_damage; }
 
   /**
-   * @brief Get the temperature of each cohesive zone node.
-   * @return an arrayView1d of const node temperature
+   * @brief Get the temperature of each cohesive field pair.
+   * @return an array view of pair temperatures
    */
   arrayView1d< real64 const > getTemperature() const
   { return m_temperature; }
@@ -146,16 +146,16 @@ public:
    */
   struct viewKeyStruct : public CohesiveZoneRegionBase::viewKeyStruct
   {
-    /// @return String key for the member level field for the cohesive zone node max normal displacement.
+    /// @return String key for the cohesive field-pair maximum normal displacement.
     static constexpr char const * maxNormalDisplacementString() { return "maxNormalDisplacement"; }
 
-    /// @return String key for the member level field for the cohesive zone node max tangential displacement.
+    /// @return String key for the cohesive field-pair maximum tangential displacement.
     static constexpr char const * maxTangentialDisplacementString() { return "maxTangentialDisplacement"; }
 
-    /// @return String key for the member level field for the cohesive zone node damages.
+    /// @return String key for cohesive field-pair damage.
     static constexpr char const * damageString() { return "damage"; }
 
-    /// @return String key for the member level field for the cohesive zone node temperature.
+    /// @return String key for cohesive field-pair temperature.
     static constexpr char const * temperatureString() { return "temperature"; }
   };
 

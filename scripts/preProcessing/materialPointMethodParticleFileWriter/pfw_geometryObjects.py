@@ -3349,6 +3349,11 @@ class czPrill(Geometry):
     If assignCellVelocityGroups is True, ``group`` is used as the first
     velocity-group ID and neighboring Voronoi cells are assigned different
     IDs.  Non-neighboring cells reuse IDs to keep the group count small.
+
+    If markVoronoiCellCorners is False, points within ``skinDepth`` of more
+    than one face of their Voronoi cell receive the standard contact-surface
+    flag (2) rather than a cohesive flag.  The default True value preserves
+    the original corner-marking behavior.
     """
 
     def __init__(self,
@@ -3368,7 +3373,8 @@ class czPrill(Geometry):
                  dim: int=3,
                  porosityDistribution="spherical",
                  cylinderAxis=(0.0, 0.0, 1.0),
-                 assignCellVelocityGroups: bool=False):
+                 assignCellVelocityGroups: bool=False,
+                 markVoronoiCellCorners: bool=True):
         super().__init__(name,
                          vel=vel,
                          mat=mat,
@@ -3387,6 +3393,7 @@ class czPrill(Geometry):
         self.porosityDistribution = str(porosityDistribution).lower()
         self.cylinderAxis = np.asarray(cylinderAxis, dtype=float)
         self.assignCellVelocityGroups = bool(assignCellVelocityGroups)
+        self.markVoronoiCellCorners = bool(markVoronoiCellCorners)
 
         if self.dim not in (2, 3):
             raise ValueError(f"czPrill only supports dim=2 or dim=3; received {self.dim}")
@@ -3649,6 +3656,8 @@ class czPrill(Geometry):
             index = index[0, 0]
 
             if self.phase[index] != 0:
+                surfaceFlag = 0
+                numNearbyFaces = 0
                 ridgePts = self.voronoi.ridge_points
                 for i in range(len(ridgePts)):
                     p1 = ridgePts[i][0]
@@ -3662,8 +3671,14 @@ class czPrill(Geometry):
                         dv = x - self.vpts[index, :]
                         dvc = np.dot(n, dv)
                         if dvc > 0.0 and dvc > d - skinDepth:
-                            return self.ridgePtFlags[i]
-                return 0
+                            if self.markVoronoiCellCorners:
+                                return self.ridgePtFlags[i]
+
+                            numNearbyFaces += 1
+                            if numNearbyFaces > 1:
+                                return 2
+                            surfaceFlag = self.ridgePtFlags[i]
+                return surfaceFlag
 
         return -1
 
@@ -6311,7 +6326,7 @@ class packedSphericalBed(Geometry):
       if (minGroup < 0 or maxGroup >= self.maxContactGroups) and g_rank == 0:
         print("WARNING packedSphericalBed '", self.name, "': contact groups range from ",
               minGroup, " to ", maxGroup, ", outside [0, ", self.maxContactGroups-1,
-              "]. GEOS MPM commonly supports at most 100 contact groups.", sep="")
+              "] configured by maxContactGroups.", sep="")
     return groups.astype(np.int64)
 
   def _assignHashColors(self):

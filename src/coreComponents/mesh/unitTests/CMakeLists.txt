@@ -1,5 +1,6 @@
 # Specify list of tests
 set( mesh_tests
+     testCohesiveZoneRegion.cpp
      testMeshObjectPath.cpp
      testComputationalGeometry.cpp
      testGeometricObjects.cpp

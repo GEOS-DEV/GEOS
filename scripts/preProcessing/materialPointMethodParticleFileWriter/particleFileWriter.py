@@ -765,6 +765,13 @@ parameters = {
                'contactGapCorrection': ( None, True ),  # MPM: enable contact-gap mitigation.
                'contactNormalExponent': ( None, True ),  # MPM: exponent for weighted contact normals.
                'contactNormalType': ( None, True ),  # MPM: contact-normal construction mode.
+
+               'contactSolver': ( None, True ),
+               'contactPGSMaximumIterations': ( None, True ),
+               'contactPGSVelocityTolerance': ( None, True ),
+               'contactPGSRelaxation': ( None, True ),
+               'contactPGSRequireConvergence': ( None, True ),
+               
                'cpdiDomainScaling': ( None, True ),  # MPM: enable CPDI integration-domain scaling.
                'cpdiDomainScalingType': ( None, True ),  # MPM: CPDI scaling algorithm: homel or vpHencky.
                'crackTipDetectionThreshold': ( None, True ),  # MPM: crack-tip detection threshold.

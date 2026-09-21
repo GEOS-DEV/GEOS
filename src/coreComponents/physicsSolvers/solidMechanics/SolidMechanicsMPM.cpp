@@ -48,6 +48,10 @@
 #include "physicsSolvers/solidMechanics/LogLevelsInfo.hpp"
 
 #include <chrono>
+#include <cfenv>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -83,6 +87,49 @@ bool hasExplicitPartitionSurfaceNormal( VECTOR const & normal )
 {
   return LvArray::tensorOps::l2NormSquared< 3 >( normal ) >
          explicitSurfaceNormalNormSquaredTolerance;
+}
+
+/**
+ * @brief Find a compact cohesive field slot by its physical node and global velocity field.
+ *
+ * Field slots are kept in lexicographic (node global ID, velocity field) order.
+ * A binary search avoids a dense node-by-field lookup whose memory would scale
+ * with the total number of contact groups.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+localIndex findCohesiveFieldSlot( arrayView1d< globalIndex const > const cohesiveNodeGlobalID,
+                                  arrayView1d< localIndex const > const fieldSlotNode,
+                                  arrayView1d< localIndex const > const slotVelocityField,
+                                  globalIndex const nodeGlobalID,
+                                  localIndex const velocityField )
+{
+  localIndex first = 0;
+  localIndex last = fieldSlotNode.size();
+  while( first < last )
+  {
+    localIndex const middle = first + ( last - first ) / 2;
+    globalIndex const middleNodeGlobalID = cohesiveNodeGlobalID[fieldSlotNode[middle]];
+    bool const middleIsBefore = middleNodeGlobalID < nodeGlobalID ||
+                                ( middleNodeGlobalID == nodeGlobalID &&
+                                  slotVelocityField[middle] < velocityField );
+    if( middleIsBefore )
+    {
+      first = middle + 1;
+    }
+    else
+    {
+      last = middle;
+    }
+  }
+
+  if( first < fieldSlotNode.size() &&
+      cohesiveNodeGlobalID[fieldSlotNode[first]] == nodeGlobalID &&
+      slotVelocityField[first] == velocityField )
+  {
+    return first;
+  }
+  return -1;
 }
 
 mpm::OversizedParticleTreatmentOption effectiveOversizedParticleTreatment(
@@ -319,8 +366,6 @@ void normalizeActiveDeterminant3x3( real64 (& matrix)[3][3],
 /**
 * Checks if floating-point variable is NaN
 */
-#include <cmath>
-
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 bool isNan( const real64 & val )
@@ -333,6 +378,631 @@ GEOS_FORCE_INLINE
 bool isFinite( real64 const value )
 {
   return std::isfinite( value );
+}
+
+namespace floatingPointDiagnostics
+{
+
+template< typename REAL >
+struct Ieee754Traits;
+
+template<>
+struct Ieee754Traits< real32 >
+{
+  using UInt = uint32_t;
+  static constexpr UInt exponentMask = 0x7f800000U;
+  static constexpr UInt fractionMask = 0x007fffffU;
+  static constexpr UInt quietNaNMask = 0x00400000U;
+  static constexpr UInt signMask = 0x80000000U;
+  static constexpr int hexadecimalWidth = 8;
+};
+
+template<>
+struct Ieee754Traits< real64 >
+{
+  using UInt = uint64_t;
+  static constexpr UInt exponentMask = 0x7ff0000000000000ULL;
+  static constexpr UInt fractionMask = 0x000fffffffffffffULL;
+  static constexpr UInt quietNaNMask = 0x0008000000000000ULL;
+  static constexpr UInt signMask = 0x8000000000000000ULL;
+  static constexpr int hexadecimalWidth = 16;
+};
+
+class FloatingPointEnvironmentGuard
+{
+public:
+  FloatingPointEnvironmentGuard()
+    : m_active( std::feholdexcept( &m_environment ) == 0 )
+  {}
+
+  ~FloatingPointEnvironmentGuard()
+  {
+    if( m_active )
+    {
+      std::fesetenv( &m_environment );
+    }
+  }
+
+  FloatingPointEnvironmentGuard( FloatingPointEnvironmentGuard const & ) = delete;
+  FloatingPointEnvironmentGuard & operator=( FloatingPointEnvironmentGuard const & ) = delete;
+
+private:
+  std::fenv_t m_environment;
+  bool const m_active;
+};
+
+template< typename REAL >
+inline typename Ieee754Traits< REAL >::UInt bitPattern( REAL const value )
+{
+  using Traits = Ieee754Traits< REAL >;
+  using UInt = typename Traits::UInt;
+  static_assert( sizeof( REAL ) == sizeof( UInt ),
+                 "The floating-point diagnostics require matching integer and real widths." );
+  static_assert( std::numeric_limits< REAL >::is_iec559,
+                 "The floating-point diagnostics require IEEE-754 values." );
+
+  UInt bits = 0;
+  std::memcpy( &bits, &value, sizeof( bits ) );
+  return bits;
+}
+
+template< typename REAL >
+inline bool isFinite( REAL const value )
+{
+  using Traits = Ieee754Traits< REAL >;
+  return ( bitPattern( value ) & Traits::exponentMask ) != Traits::exponentMask;
+}
+
+template< typename REAL >
+inline void appendValue( std::ostringstream & stream,
+                         REAL const value )
+{
+  using Traits = Ieee754Traits< REAL >;
+  typename Traits::UInt const bits = bitPattern( value );
+  if( ( bits & Traits::exponentMask ) != Traits::exponentMask )
+  {
+    stream << value;
+    return;
+  }
+
+  bool const negative = ( bits & Traits::signMask ) != 0;
+  typename Traits::UInt const fraction = bits & Traits::fractionMask;
+  if( fraction == 0 )
+  {
+    stream << ( negative ? "-inf" : "+inf" );
+    return;
+  }
+
+  stream << ( negative ? "-" : "+" )
+         << ( ( fraction & Traits::quietNaNMask ) != 0 ? "nan" : "snan" )
+         << "(bits=0x" << std::hex << std::setw( Traits::hexadecimalWidth ) << std::setfill( '0' ) << bits
+         << std::dec << std::setfill( ' ' ) << ")";
+}
+
+template< typename MATRIX >
+inline void appendMatrix( std::ostringstream & stream,
+                          MATRIX const & matrix )
+{
+  stream << "{{";
+  for( int i = 0; i < 3; ++i )
+  {
+    if( i > 0 )
+    {
+      stream << "}, {";
+    }
+    for( int j = 0; j < 3; ++j )
+    {
+      if( j > 0 )
+      {
+        stream << ", ";
+      }
+      appendValue( stream, matrix[i][j] );
+    }
+  }
+  stream << "}}";
+}
+
+} // namespace floatingPointDiagnostics
+
+real64 floatingPointProductSafetyLimit()
+{
+  return std::sqrt( std::numeric_limits< real64 >::max() / 3.0 );
+}
+
+/**
+ * @brief Adds a finite value without executing an overflowing addition.
+ * @return @c true when the addition was performed, or @c false when it would overflow.
+ */
+bool safelyAccumulate( real64 const value,
+                       real64 & sum )
+{
+  real64 const numericMaximum = std::numeric_limits< real64 >::max();
+  if( ( value > 0.0 && sum > numericMaximum - value ) ||
+      ( value < 0.0 && sum < -numericMaximum - value ) )
+  {
+    return false;
+  }
+
+  sum += value;
+  return floatingPointDiagnostics::isFinite( sum );
+}
+
+struct FieldDiagnosticCounts
+{
+  localIndex issueCount = 0;
+  localIndex nonfiniteCount = 0;
+  localIndex excessiveMagnitudeCount = 0;
+  localIndex reportCount = 0;
+};
+
+template< typename ... INDICES >
+void appendComponentIndices( std::ostringstream & stream,
+                             INDICES const ... indices )
+{
+  stream << "{";
+  if constexpr ( sizeof...( INDICES ) == 0 )
+  {
+    stream << "scalar";
+  }
+  else
+  {
+    localIndex count = 0;
+    ( ( stream << ( count++ == 0 ? "" : "," ) << indices ), ... );
+  }
+  stream << "}";
+}
+
+template< typename REAL, typename ... INDICES >
+void inspectAndReportFieldValue( char const * const stage,
+                                 char const * const location,
+                                 string const & subRegionName,
+                                 string const & fieldName,
+                                 char const * const entityType,
+                                 globalIndex const entityGlobalID,
+                                 localIndex const entityLocalIndex,
+                                 real64 const maximumAbsoluteValue,
+                                 integer const maxReportsPerField,
+                                 REAL const value,
+                                 FieldDiagnosticCounts & counts,
+                                 INDICES const ... componentIndices )
+{
+  bool const nonfinite = !floatingPointDiagnostics::isFinite( value );
+  real64 magnitude = 0.0;
+  bool excessiveMagnitude = false;
+  if( !nonfinite )
+  {
+    magnitude = std::abs( static_cast< real64 >( value ) );
+    excessiveMagnitude = magnitude > maximumAbsoluteValue;
+  }
+
+  if( !nonfinite && !excessiveMagnitude )
+  {
+    return;
+  }
+
+  ++counts.issueCount;
+  counts.nonfiniteCount += nonfinite ? 1 : 0;
+  counts.excessiveMagnitudeCount += excessiveMagnitude ? 1 : 0;
+  if( maxReportsPerField >= 0 && counts.reportCount >= maxReportsPerField )
+  {
+    return;
+  }
+  ++counts.reportCount;
+
+  std::ostringstream report;
+  report << std::scientific << std::setprecision( 17 )
+         << "MPM field diagnostic detected an issue"
+         << "\n  stage=" << ( stage == nullptr ? "unspecified" : stage )
+         << ", location=" << location
+         << ", field=" << fieldName;
+  if( !subRegionName.empty() )
+  {
+    report << ", particleSubRegion=" << subRegionName;
+  }
+  report << "\n  " << entityType << "GlobalID=" << entityGlobalID
+         << ", " << entityType << "LocalIndex=" << entityLocalIndex
+         << ", componentIndices=";
+  appendComponentIndices( report, componentIndices ... );
+  report << "\n  flags: nonfinite=" << nonfinite
+         << ", magnitudeTooLarge=" << excessiveMagnitude
+         << "\n  value=";
+  floatingPointDiagnostics::appendValue( report, value );
+  report << ", absoluteValue=";
+  if( nonfinite )
+  {
+    report << "not-available";
+  }
+  else
+  {
+    report << magnitude;
+  }
+  report << ", effectiveMaximumAbsoluteValue=" << maximumAbsoluteValue;
+  GEOS_LOG_RANK( report.str() );
+}
+
+/**
+ * @brief Checks selected entries of a floating-point wrapper without allocating an entity-sized buffer.
+ */
+template< typename ArrayType, typename INDEX_PROVIDER, typename GLOBAL_ID_PROVIDER >
+FieldDiagnosticCounts inspectFloatingPointField( char const * const stage,
+                                                  char const * const location,
+                                                  char const * const entityType,
+                                                  string const & subRegionName,
+                                                  WrapperBase const & wrapper,
+                                                  localIndex const parentSize,
+                                                  localIndex const numberOfEntries,
+                                                  INDEX_PROVIDER && indexProvider,
+                                                  GLOBAL_ID_PROVIDER && globalIDProvider,
+                                                  real64 const maximumAbsoluteValue,
+                                                  integer const maxReportsPerField )
+{
+  using ValueType = typename ArrayType::ValueType;
+  static_assert( std::is_floating_point< ValueType >::value,
+                 "Field diagnostics only dispatch floating-point arrays." );
+
+  floatingPointDiagnostics::FloatingPointEnvironmentGuard floatingPointEnvironmentGuard;
+  auto const values = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
+  real64 const typeProductSafetyLimit =
+    std::sqrt( static_cast< real64 >( std::numeric_limits< ValueType >::max() ) / 3.0 );
+  real64 const effectiveMaximumAbsoluteValue =
+    std::min( maximumAbsoluteValue, typeProductSafetyLimit );
+  GEOS_ERROR_IF_NE_MSG( values.size( 0 ), parentSize,
+                        "MPM field diagnostic selected '" << wrapper.getName()
+                        << "', whose first dimension (" << values.size( 0 )
+                        << ") does not match its " << location << " parent size ("
+                        << parentSize << ")." );
+
+  FieldDiagnosticCounts counts;
+  for( localIndex entry = 0; entry < numberOfEntries; ++entry )
+  {
+    localIndex const entityLocalIndex = indexProvider( entry );
+    globalIndex const entityGlobalID = globalIDProvider( entityLocalIndex );
+    if constexpr ( ArrayType::NDIM == 1 )
+    {
+      inspectAndReportFieldValue( stage,
+                                  location,
+                                  subRegionName,
+                                  wrapper.getName(),
+                                  entityType,
+                                  entityGlobalID,
+                                  entityLocalIndex,
+                                  effectiveMaximumAbsoluteValue,
+                                  maxReportsPerField,
+                                  values[entityLocalIndex],
+                                  counts );
+    }
+    else
+    {
+      LvArray::forValuesInSliceWithIndices(
+        values[entityLocalIndex],
+        [&]( ValueType const value, auto const ... componentIndices )
+      {
+        inspectAndReportFieldValue( stage,
+                                    location,
+                                    subRegionName,
+                                    wrapper.getName(),
+                                    entityType,
+                                    entityGlobalID,
+                                    entityLocalIndex,
+                                    effectiveMaximumAbsoluteValue,
+                                    maxReportsPerField,
+                                    value,
+                                    counts,
+                                    componentIndices ... );
+      } );
+    }
+  }
+  return counts;
+}
+
+void reportFieldDiagnosticSummary( char const * const stage,
+                                   char const * const location,
+                                   string const & subRegionName,
+                                   string const & fieldName,
+                                   FieldDiagnosticCounts const & counts )
+{
+  if( counts.issueCount == 0 )
+  {
+    return;
+  }
+
+  std::ostringstream report;
+  report << "MPM field diagnostic summary"
+         << "\n  stage=" << ( stage == nullptr ? "unspecified" : stage )
+         << ", location=" << location
+         << ", field=" << fieldName;
+  if( !subRegionName.empty() )
+  {
+    report << ", particleSubRegion=" << subRegionName;
+  }
+  report << "\n  issueValues=" << counts.issueCount
+         << ", nonfiniteValues=" << counts.nonfiniteCount
+         << ", excessiveMagnitudeValues=" << counts.excessiveMagnitudeCount
+         << ", individuallyReported=" << counts.reportCount
+         << ", suppressed=" << counts.issueCount - counts.reportCount;
+  GEOS_LOG_RANK( report.str() );
+}
+
+/**
+ * @brief Checks and reports a numerically unsafe particle deformation gradient.
+ * @tparam VELOCITY_GRADIENT Matrix type supporting @c matrix[i][j].
+ * @param[in] stage Description of the point at which the matrix is checked.
+ * @param[in] particleGlobalID Globally persistent particle identifier.
+ * @param[in] particleLocalIndex Particle index on the owning MPI rank.
+ * @param[in] deformationGradient Matrix to inspect.
+ * @param[in] velocityGradient Particle velocity gradient associated with the matrix.
+ * @param[in] minimumDeterminant Smallest acceptable positive determinant.
+ * @param[in] maximumDeterminant Largest acceptable positive determinant.
+ * @param[in] minimumReciprocalCondition Smallest acceptable infinity-norm reciprocal condition number.
+ * @return @c true only when an issue was found and reported.
+ *
+ * @details This host-side debugging helper is silent for valid matrices.  It
+ * temporarily holds and restores the caller's floating-point environment, and
+ * scales the matrix before evaluating its determinant and condition number.
+ * Consequently, the diagnostic can inspect a matrix that would otherwise
+ * raise a trapped exception, without changing the caller's exception flags or
+ * trap mask.  The infinity-norm reciprocal condition number is evaluated from
+ *
+ * @f[
+ *   \operatorname{rcond}_{\infty}(F) =
+ *   \frac{|\det(A)|}
+ *        {\|A\|_{\infty}\|\operatorname{cof}(A)^T\|_{\infty}},
+ *   \qquad A = F / \max_{ij}|F_{ij}|.
+ * @f]
+ *
+ * The report includes every component of F and the associated particle
+ * velocity gradient, identifies nonfinite or product-unsafe F components
+ * individually, and provides scaled row/column norms, determinant magnitude,
+ * and reciprocal condition number.  It does not modify the particle or set a
+ * deletion flag.
+ */
+template< typename VELOCITY_GRADIENT >
+bool reportIllConditionedDeformationGradient( char const * const stage,
+                                               globalIndex const particleGlobalID,
+                                               localIndex const particleLocalIndex,
+                                               real64 const (& deformationGradient)[3][3],
+                                               VELOCITY_GRADIENT const & velocityGradient,
+                                               real64 const minimumDeterminant,
+                                               real64 const maximumDeterminant,
+                                               real64 const minimumReciprocalCondition )
+{
+  floatingPointDiagnostics::FloatingPointEnvironmentGuard floatingPointEnvironmentGuard;
+
+  real64 constexpr matrixOrder = 3.0;
+  real64 const numericMaximum = std::numeric_limits< real64 >::max();
+  real64 const safeProductComponent = std::sqrt( numericMaximum / matrixOrder );
+  real64 const notAvailable = std::numeric_limits< real64 >::quiet_NaN();
+
+  bool componentNonfinite = false;
+  bool componentUnsafeForProducts = false;
+  bool componentIssue[3][3] = {};
+  bool finiteComponentFound = false;
+  real64 maximumAbsoluteComponent = 0.0;
+  int maximumComponentRow = -1;
+  int maximumComponentColumn = -1;
+
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      real64 const value = deformationGradient[i][j];
+      if( !floatingPointDiagnostics::isFinite( value ) )
+      {
+        componentNonfinite = true;
+        componentIssue[i][j] = true;
+        continue;
+      }
+
+      real64 const magnitude = std::abs( value );
+      if( !finiteComponentFound || magnitude > maximumAbsoluteComponent )
+      {
+        finiteComponentFound = true;
+        maximumAbsoluteComponent = magnitude;
+        maximumComponentRow = i;
+        maximumComponentColumn = j;
+      }
+      if( magnitude > safeProductComponent )
+      {
+        componentUnsafeForProducts = true;
+        componentIssue[i][j] = true;
+      }
+    }
+  }
+
+  bool const zeroMatrix = !componentNonfinite && isZero(maximumAbsoluteComponent);
+  bool determinantNonfinite = componentNonfinite;
+  bool nonpositiveDeterminant = false;
+  bool determinantTooSmall = false;
+  bool determinantTooLarge = false;
+  bool illConditioned = false;
+
+  real64 scaledDeterminant = notAvailable;
+  real64 log10AbsoluteDeterminant = notAvailable;
+  real64 reciprocalCondition = notAvailable;
+  real64 conditionNumber = notAvailable;
+  real64 scaledRowAbsoluteSum[3] = {};
+  real64 scaledColumnAbsoluteSum[3] = {};
+
+  if( !componentNonfinite && !zeroMatrix )
+  {
+    real64 scaled[3][3] = {};
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        scaled[i][j] = deformationGradient[i][j] / maximumAbsoluteComponent;
+        scaledRowAbsoluteSum[i] += std::abs( scaled[i][j] );
+        scaledColumnAbsoluteSum[j] += std::abs( scaled[i][j] );
+      }
+    }
+
+    real64 cofactor[3][3] = {};
+    cofactor[0][0] = scaled[1][1] * scaled[2][2] - scaled[1][2] * scaled[2][1];
+    cofactor[0][1] = scaled[1][2] * scaled[2][0] - scaled[1][0] * scaled[2][2];
+    cofactor[0][2] = scaled[1][0] * scaled[2][1] - scaled[1][1] * scaled[2][0];
+    cofactor[1][0] = scaled[0][2] * scaled[2][1] - scaled[0][1] * scaled[2][2];
+    cofactor[1][1] = scaled[0][0] * scaled[2][2] - scaled[0][2] * scaled[2][0];
+    cofactor[1][2] = scaled[0][1] * scaled[2][0] - scaled[0][0] * scaled[2][1];
+    cofactor[2][0] = scaled[0][1] * scaled[1][2] - scaled[0][2] * scaled[1][1];
+    cofactor[2][1] = scaled[0][2] * scaled[1][0] - scaled[0][0] * scaled[1][2];
+    cofactor[2][2] = scaled[0][0] * scaled[1][1] - scaled[0][1] * scaled[1][0];
+
+    scaledDeterminant = scaled[0][0] * cofactor[0][0] +
+                        scaled[0][1] * cofactor[0][1] +
+                        scaled[0][2] * cofactor[0][2];
+    determinantNonfinite = !floatingPointDiagnostics::isFinite( scaledDeterminant );
+    nonpositiveDeterminant = !determinantNonfinite && !( scaledDeterminant > 0.0 );
+
+    real64 matrixInfinityNorm = 0.0;
+    real64 cofactorTransposeInfinityNorm = 0.0;
+    for( int i = 0; i < 3; ++i )
+    {
+      matrixInfinityNorm = std::max( matrixInfinityNorm, scaledRowAbsoluteSum[i] );
+
+      real64 cofactorTransposeRowSum = 0.0;
+      for( int j = 0; j < 3; ++j )
+      {
+        cofactorTransposeRowSum += std::abs( cofactor[j][i] );
+      }
+      cofactorTransposeInfinityNorm =
+        std::max( cofactorTransposeInfinityNorm, cofactorTransposeRowSum );
+    }
+
+    real64 const conditionDenominator = matrixInfinityNorm * cofactorTransposeInfinityNorm;
+    if( !determinantNonfinite && conditionDenominator > 0.0 )
+    {
+      reciprocalCondition = std::min( 1.0, std::abs( scaledDeterminant ) / conditionDenominator );
+      if( reciprocalCondition > 1.0 / numericMaximum )
+      {
+        conditionNumber = 1.0 / reciprocalCondition;
+      }
+      else
+      {
+        conditionNumber = numericMaximum;
+      }
+    }
+    else
+    {
+      reciprocalCondition = 0.0;
+      conditionNumber = numericMaximum;
+    }
+
+    illConditioned = floatingPointDiagnostics::isFinite( minimumReciprocalCondition ) &&
+                     minimumReciprocalCondition > 0.0 &&
+                     !( reciprocalCondition >= minimumReciprocalCondition );
+
+    real64 const absoluteScaledDeterminant = std::abs( scaledDeterminant );
+    if( !determinantNonfinite && absoluteScaledDeterminant > 0.0 )
+    {
+      real64 const logAbsoluteDeterminant =
+        matrixOrder * std::log( maximumAbsoluteComponent ) +
+        std::log( absoluteScaledDeterminant );
+      log10AbsoluteDeterminant = logAbsoluteDeterminant / std::log( 10.0 );
+
+      if( floatingPointDiagnostics::isFinite( minimumDeterminant ) &&
+          minimumDeterminant > 0.0 )
+      {
+        determinantTooSmall = logAbsoluteDeterminant <= std::log( minimumDeterminant );
+      }
+      if( floatingPointDiagnostics::isFinite( maximumDeterminant ) &&
+          maximumDeterminant > 0.0 )
+      {
+        determinantTooLarge = logAbsoluteDeterminant >= std::log( maximumDeterminant );
+      }
+    }
+    else
+    {
+      determinantTooSmall = true;
+    }
+  }
+  else if( zeroMatrix )
+  {
+    nonpositiveDeterminant = true;
+    determinantTooSmall = true;
+    reciprocalCondition = 0.0;
+    conditionNumber = numericMaximum;
+    illConditioned = floatingPointDiagnostics::isFinite( minimumReciprocalCondition ) &&
+                     minimumReciprocalCondition > 0.0;
+  }
+
+  bool const issue = componentNonfinite ||
+                     componentUnsafeForProducts ||
+                     zeroMatrix ||
+                     determinantNonfinite ||
+                     nonpositiveDeterminant ||
+                     determinantTooSmall ||
+                     determinantTooLarge ||
+                     illConditioned;
+  if( !issue )
+  {
+    return false;
+  }
+
+  std::ostringstream report;
+  report << std::scientific << std::setprecision( 17 )
+         << "MPM deformation-gradient diagnostic detected an issue"
+         << "\n  stage=" << ( stage == nullptr ? "unspecified" : stage )
+         << ", particleGlobalID=" << particleGlobalID
+         << ", particleLocalIndex=" << particleLocalIndex
+         << "\n  flags: nonfiniteComponent=" << componentNonfinite
+         << ", productUnsafeComponent=" << componentUnsafeForProducts
+         << ", zeroMatrix=" << zeroMatrix
+         << ", nonfiniteScaledDeterminant=" << determinantNonfinite
+         << ", nonpositiveDeterminant=" << nonpositiveDeterminant
+         << ", determinantTooSmall=" << determinantTooSmall
+         << ", determinantTooLarge=" << determinantTooLarge
+         << ", illConditioned=" << illConditioned
+         << "\n  F=";
+  floatingPointDiagnostics::appendMatrix( report, deformationGradient );
+  report << "\n  velocityGradient=";
+  floatingPointDiagnostics::appendMatrix( report, velocityGradient );
+  report << "\n  maxAbsFiniteComponent=";
+  if( finiteComponentFound )
+  {
+    report << "F[" << maximumComponentRow << "][" << maximumComponentColumn << "]="
+           << maximumAbsoluteComponent;
+  }
+  else
+  {
+    report << "not-available";
+  }
+  report << ", safeProductComponentLimit=" << safeProductComponent
+         << "\n  scaledRowAbsSums={" << scaledRowAbsoluteSum[0] << ", "
+         << scaledRowAbsoluteSum[1] << ", " << scaledRowAbsoluteSum[2] << "}"
+         << ", scaledColumnAbsSums={" << scaledColumnAbsoluteSum[0] << ", "
+         << scaledColumnAbsoluteSum[1] << ", " << scaledColumnAbsoluteSum[2] << "}"
+         << "\n  scaledDeterminant=";
+  floatingPointDiagnostics::appendValue( report, scaledDeterminant );
+  report << ", log10AbsDeterminant=";
+  floatingPointDiagnostics::appendValue( report, log10AbsoluteDeterminant );
+  report << ", determinantLimits=(";
+  floatingPointDiagnostics::appendValue( report, minimumDeterminant );
+  report << ", ";
+  floatingPointDiagnostics::appendValue( report, maximumDeterminant );
+  report << ")\n  reciprocalConditionInf=";
+  floatingPointDiagnostics::appendValue( report, reciprocalCondition );
+  report << ", conditionNumberInf=";
+  floatingPointDiagnostics::appendValue( report, conditionNumber );
+  report << ", minimumReciprocalCondition=";
+  floatingPointDiagnostics::appendValue( report, minimumReciprocalCondition );
+
+  bool wroteComponentIssue = false;
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      if( componentIssue[i][j] )
+      {
+        report << ( wroteComponentIssue ? ", " : "\n  individuallyFlaggedComponents: " )
+               << "F[" << i << "][" << j << "]=";
+        floatingPointDiagnostics::appendValue( report, deformationGradient[i][j] );
+        wroteComponentIssue = true;
+      }
+    }
+  }
+
+  GEOS_LOG_RANK( report.str() );
+  return true;
 }
 
 /**
@@ -1685,12 +2355,22 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_contactGapCorrection( mpm::ContactGapCorrectionOption::Implicit ),
   m_contactNormalExponent( 1.0 ),
   m_contactNormalType( mpm::ContactNormalTypeOption::MassWeighted ),
+  m_contactPGSMaximumIterations( 200 ),
+  m_contactPGSRelaxation( 1.0 ),
+  m_contactPGSRequireConvergence( 1 ),
+  m_contactPGSVelocityTolerance( 1.0e-10 ),
+  m_contactSolver( mpm::ContactSolverOption::Pairwise ),
   m_cpdiDomainScaling( 0 ),
   m_cpdiDomainScalingType( mpm::CPDIDomainScalingTypeOption::Homel ),
   m_crackTipDetectionThreshold( 0.5 ),
   m_damageFieldPartitioning( 0 ),
   m_damageHessianSurfaceThreshold( 1e16 ), // Setting to DBL_MAX may cause floating point error in calculations from overflow
   m_computeCZInterfacesFromDamage( 0 ),
+  m_deformationGradientMinReciprocalCondition( 1.0e-12 ),
+  m_fieldDiagnosticGridFields(),
+  m_fieldDiagnosticParticleFields(),
+  m_fieldDiagnosticMaximumAbsoluteValue( floatingPointProductSafetyLimit() ),
+  m_fieldDiagnosticMaxReportsPerField( 100 ),
   m_directionalOverlapCorrection( 0 ),
   m_disableSurfaceNormalsAndPositionsOnCPDIScaling( 0 ),
   m_disableSurfaceNormalsAndPositionsOnDamage( 1 ),
@@ -1719,6 +2399,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_eventReporting( 0 ),
   m_exactJIntegration( 0 ),
   m_explicitSurfaceNormalInfluence( 0.0 ),
+  m_floatingPointDiagnostics( 0 ),
   m_frictionCoefficient( -1.0 ),
   m_frictionCoefficientTable(),
   m_FSubcycles( 1 ),
@@ -2057,6 +2738,36 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for contact normal type" );
 
+  registerWrapper( "contactPGSMaximumIterations", &m_contactPGSMaximumIterations ).
+    setApplyDefaultValue( m_contactPGSMaximumIterations ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum number of node-local projected Gauss-Seidel contact sweeps." );
+
+  registerWrapper( "contactPGSRelaxation", &m_contactPGSRelaxation ).
+    setApplyDefaultValue( m_contactPGSRelaxation ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Relaxation applied to each projected Gauss-Seidel contact update; valid range is (0,1]." );
+
+  registerWrapper( "contactPGSRequireConvergence", &m_contactPGSRequireConvergence ).
+    setApplyDefaultValue( m_contactPGSRequireConvergence ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "If nonzero, stop when any node-local projected Gauss-Seidel contact solve fails to converge." );
+
+  registerWrapper( "contactPGSVelocityTolerance", &m_contactPGSVelocityTolerance ).
+    setApplyDefaultValue( m_contactPGSVelocityTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Absolute projected contact residual tolerance in velocity units." );
+
+  registerWrapper( "contactSolver", &m_contactSolver ).
+    setApplyDefaultValue( m_contactSolver ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Nodal material-contact algorithm: Pairwise or ProjectedGaussSeidel." );
+
   registerWrapper( "cpdiDomainScaling", &m_cpdiDomainScaling ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_cpdiDomainScaling ).
@@ -2093,6 +2804,50 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to compute CZ interfaces from damage" );
+
+  registerWrapper( "floatingPointDiagnostics", &m_floatingPointDiagnostics ).
+    setApplyDefaultValue( m_floatingPointDiagnostics ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Host-side debugging flag that reports only nonfinite, determinant-invalid, product-unsafe, "
+                    "or ill-conditioned particle deformation gradients before and during their update. "
+                    "The diagnostic does not modify or delete particles." );
+
+  registerWrapper( "deformationGradientMinReciprocalCondition", &m_deformationGradientMinReciprocalCondition ).
+    setApplyDefaultValue( m_deformationGradientMinReciprocalCondition ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum acceptable infinity-norm reciprocal condition number reported by "
+                    "floatingPointDiagnostics. Values should be in (0,1]." );
+
+  registerWrapper( "fieldDiagnosticGridFields", &m_fieldDiagnosticGridFields ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Names of floating-point grid fields to scan immediately after gridTrialUpdate. "
+                    "Every scalar component is checked for NaN, infinity, and magnitude above "
+                    "fieldDiagnosticMaximumAbsoluteValue. An empty list disables grid-field diagnostics." );
+
+  registerWrapper( "fieldDiagnosticParticleFields", &m_fieldDiagnosticParticleFields ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Names of floating-point particle fields to scan on active, locally owned particles in every "
+                    "subregion immediately after gridTrialUpdate. Every scalar component is checked for NaN, infinity, "
+                    "and magnitude above fieldDiagnosticMaximumAbsoluteValue. An empty list disables particle-field diagnostics." );
+
+  registerWrapper( "fieldDiagnosticMaximumAbsoluteValue", &m_fieldDiagnosticMaximumAbsoluteValue ).
+    setApplyDefaultValue( m_fieldDiagnosticMaximumAbsoluteValue ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Largest finite absolute scalar value accepted by the runtime-selected grid and particle field diagnostics. "
+                    "The effective limit is the smaller of this value and sqrt(maximum value of the field's floating-point type / 3), "
+                    "above which a component is unsafe in a three-term product sum. The default is sqrt(DBL_MAX/3)." );
+
+  registerWrapper( "fieldDiagnosticMaxReportsPerField", &m_fieldDiagnosticMaxReportsPerField ).
+    setApplyDefaultValue( m_fieldDiagnosticMaxReportsPerField ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum number of individual bad values reported per selected field and particle subregion on each MPI rank. "
+                    "A value of 0 emits only the field summary; -1 reports every bad value." );
 
   registerWrapper( "directionalOverlapCorrection", &m_directionalOverlapCorrection ).
     setApplyDefaultValue( m_directionalOverlapCorrection ).
@@ -2734,7 +3489,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "shapeFunctionDiagnostics", &m_shapeFunctionDiagnostics ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag to perform diagnostics on particle shape functions." );
+    setDescription( "Flag to report particle shape-function and gradient sums and to identify every nonfinite, "
+                    "product-unsafe, or sum-overflowing component without triggering a trapped floating-point exception." );
 
   registerWrapper( "smallMass", &m_smallMass ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3319,6 +4075,36 @@ void SolidMechanicsMPM::postInputInitialization()
                  "maxSingleFieldStateFractionForSeparability must be <= 1. Use a negative value to disable it." );
   GEOS_ERROR_IF( m_thinFeatureDFGThreshold < 0.0,
                  "thinFeatureDFGThreshold must be non-negative." );
+  GEOS_ERROR_IF( m_floatingPointDiagnostics != 0 &&
+                 ( !floatingPointDiagnostics::isFinite(
+                     m_deformationGradientMinReciprocalCondition ) ||
+                   m_deformationGradientMinReciprocalCondition <= 0.0 ||
+                   m_deformationGradientMinReciprocalCondition > 1.0 ),
+                 "deformationGradientMinReciprocalCondition must be finite and in (0,1] when "
+                 "floatingPointDiagnostics is enabled." );
+  GEOS_ERROR_IF( !floatingPointDiagnostics::isFinite(
+                   m_fieldDiagnosticMaximumAbsoluteValue ) ||
+                 m_fieldDiagnosticMaximumAbsoluteValue <= 0.0,
+                 "fieldDiagnosticMaximumAbsoluteValue must be finite and positive." );
+  GEOS_ERROR_IF( m_fieldDiagnosticMaxReportsPerField < -1,
+                 "fieldDiagnosticMaxReportsPerField must be -1 (unlimited) or non-negative." );
+  GEOS_ERROR_IF( m_contactPGSMaximumIterations < 1,
+                 "contactPGSMaximumIterations must be at least one." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactPGSVelocityTolerance ) ||
+                 m_contactPGSVelocityTolerance <= 0.0,
+                 "contactPGSVelocityTolerance must be finite and positive." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactPGSRelaxation ) ||
+                 m_contactPGSRelaxation <= 0.0 || m_contactPGSRelaxation > 1.0,
+                 "contactPGSRelaxation must be finite and in (0,1]." );
+  GEOS_ERROR_IF( m_contactPGSRequireConvergence < 0 ||
+                 m_contactPGSRequireConvergence > 1,
+                 "contactPGSRequireConvergence must be 0 or 1." );
+#if defined( GEOS_USE_DEVICE )
+  GEOS_ERROR_IF( m_floatingPointDiagnostics != 0,
+                 "floatingPointDiagnostics is host-only and cannot be enabled in a device build." );
+  GEOS_ERROR_IF( m_contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel,
+                 "The ProjectedGaussSeidel contact solver currently requires a CPU build." );
+#endif
   GEOS_ERROR_IF( m_applyVelocityGradientWhenSplittingParticles < 0 ||
                  m_applyVelocityGradientWhenSplittingParticles > 1,
                  "applyVelocityGradientWhenSplittingParticles must be 0 or 1." );
@@ -4813,14 +5599,11 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   localIndex maxGlobalGroupNumber = MpiWrapper::max( maxLocalGroupNumber.get() ); // Maximum contact group number on global domain.
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines, "Found " << maxGlobalGroupNumber << " contact groups" );
-
-  // contact group validation - if user accidentally gave group = 1000 or something,
-  // memory would be use. This will show why so they can diagnose OOM
-  GEOS_ERROR_IF( maxGlobalGroupNumber + 1 > 100, "Too many MPM contact groups. Check particleGroup values." );
-
   // Number of contact groups
-  m_numContactGroups = maxGlobalGroupNumber + 1;
+  GEOS_ERROR_IF( maxGlobalGroupNumber >= std::numeric_limits< integer >::max(),
+                 "The maximum particleGroup value cannot be represented by the MPM velocity-field index type." );
+  m_numContactGroups = LvArray::integerConversion< integer >( maxGlobalGroupNumber + 1 );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines, "Found " << m_numContactGroups << " contact groups" );
 
   if( m_enableSurfaceTension == 1 )
   {
@@ -4869,7 +5652,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       }
     } );
   }
-  m_numVelocityFields = std::max( m_numContactGroups * m_numContactFlags, m_rigidBodyMaxGridFields );
+  std::int64_t const contactVelocityFieldCount =
+    static_cast< std::int64_t >( m_numContactGroups ) * static_cast< std::int64_t >( m_numContactFlags );
+  GEOS_ERROR_IF( contactVelocityFieldCount > std::numeric_limits< integer >::max(),
+                 "The requested number of MPM velocity fields exceeds the supported integer index range." );
+  m_numVelocityFields = std::max( static_cast< integer >( contactVelocityFieldCount ),
+                                  m_rigidBodyMaxGridFields );
 
   // Resize grid field arrays
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridReferenceAreaVectorString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -5984,6 +6772,9 @@ void SolidMechanicsMPM::updateGridDynamicsAndContactForExplicitStep( real64 cons
                                                                      NodeManager & nodeManager )
 {
   gridTrialUpdate( dt, nodeManager );
+  fieldDiagnostics( "after gridTrialUpdate",
+                    particleManager,
+                    nodeManager );
   
   /*
    * FMPM Net contact needs two first-order grid velocities. gridVelocity is
@@ -7135,35 +7926,342 @@ void SolidMechanicsMPM::updateCohesiveZonesForExplicitStep( real64 const dt,
   }
 }
 
-void SolidMechanicsMPM::shapeFunctionDiagnostics( ParticleManager & particleManager)
+void SolidMechanicsMPM::shapeFunctionDiagnostics( ParticleManager & particleManager )
 {
   if( m_shapeFunctionDiagnostics != 1 )
   {
     return;
   }
 
+  floatingPointDiagnostics::FloatingPointEnvironmentGuard floatingPointEnvironmentGuard;
+  real64 const safeProductComponentLimit = floatingPointProductSafetyLimit();
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    localIndex const numberOfMappedNodesPerParticle = 8 * subRegion.numberOfVerticesPerParticle();
-    arrayView2d< real64 > const effectiveShapeFunctionValues = m_effectiveShapeFunctionValues[subRegionIndex];
-    arrayView3d< real64 > const effectiveShapeFunctionGradientValues = m_effectiveShapeFunctionGradientValues[subRegionIndex];
+    m_effectiveShapeFunctionValues[subRegionIndex].move( hostMemorySpace, true );
+    m_effectiveShapeFunctionGradientValues[subRegionIndex].move( hostMemorySpace, true );
+    m_numEffectiveMappedNodes[subRegionIndex].move( hostMemorySpace, true );
+    subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleIDString() ).move(
+      hostMemorySpace, true );
+
+    localIndex const maximumMappedNodesPerParticle = 8 * subRegion.numberOfVerticesPerParticle();
+    arrayView2d< real64 const > const effectiveShapeFunctionValues =
+      m_effectiveShapeFunctionValues[subRegionIndex].toViewConst();
+    arrayView3d< real64 const > const effectiveShapeFunctionGradientValues =
+      m_effectiveShapeFunctionGradientValues[subRegionIndex].toViewConst();
+    arrayView1d< localIndex const > const numEffectiveMappedNodes =
+      m_numEffectiveMappedNodes[subRegionIndex].toViewConst();
+    arrayView1d< globalIndex const > const particleGlobalID = subRegion.getParticleID();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    GEOS_ERROR_IF( effectiveShapeFunctionValues.size( 0 ) != activeParticleIndices.size() ||
+                   effectiveShapeFunctionGradientValues.size( 0 ) != activeParticleIndices.size() ||
+                   numEffectiveMappedNodes.size() != activeParticleIndices.size() ||
+                   effectiveShapeFunctionValues.size( 1 ) < maximumMappedNodesPerParticle ||
+                   effectiveShapeFunctionGradientValues.size( 1 ) < maximumMappedNodesPerParticle ||
+                   effectiveShapeFunctionGradientValues.size( 2 ) < 3,
+                   "MPM shape-function diagnostic found inconsistent effective mapping-array dimensions in "
+                   << subRegion.getDataContext().toString() << "." );
     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
     {
       localIndex const p = activeParticleIndices[pp];
+      localIndex const numberOfMappedNodesForParticle = numEffectiveMappedNodes[pp];
+      GEOS_ERROR_IF( numberOfMappedNodesForParticle < 0 ||
+                     numberOfMappedNodesForParticle > maximumMappedNodesPerParticle,
+                     "MPM shape-function diagnostic found invalid numEffectiveMappedNodes="
+                     << numberOfMappedNodesForParticle << " for particle global ID "
+                     << particleGlobalID[p] << " in "
+                     << subRegion.getDataContext().toString() << "." );
 
-      real64 sum = 0.0;
-      real64 gradSum[3] = {};
-      for( localIndex n = 0; n < numberOfMappedNodesPerParticle; ++n )
+      // Effective mapping arrays are compacted by active-particle ordinal pp;
+      // particle fields and identifiers remain indexed by subregion-local p.
+      bool const emptyEffectiveMapping = numberOfMappedNodesForParticle == 0;
+      bool nonfiniteShapeValue = false;
+      bool productUnsafeShapeValue = false;
+      bool nonfiniteShapeGradient = false;
+      bool productUnsafeShapeGradient = false;
+      bool sumOverflow = false;
+      bool shapeValueSumAvailable = true;
+      bool shapeGradientSumAvailable[3] = { true, true, true };
+      real64 shapeValueSum = 0.0;
+      real64 shapeGradientSum[3] = {};
+      for( localIndex n = 0; n < numberOfMappedNodesForParticle; ++n )
       {
-        sum += effectiveShapeFunctionValues[p][n];
-        LvArray::tensorOps::add< 3 >( gradSum, effectiveShapeFunctionGradientValues[p][n] );
+        real64 const shapeValue = effectiveShapeFunctionValues[pp][n];
+        if( !floatingPointDiagnostics::isFinite( shapeValue ) )
+        {
+          nonfiniteShapeValue = true;
+          shapeValueSumAvailable = false;
+        }
+        else
+        {
+          productUnsafeShapeValue |= std::abs( shapeValue ) > safeProductComponentLimit;
+          if( shapeValueSumAvailable && !safelyAccumulate( shapeValue, shapeValueSum ) )
+          {
+            shapeValueSumAvailable = false;
+            sumOverflow = true;
+          }
+        }
+
+        for( int i = 0; i < 3; ++i )
+        {
+          real64 const gradientValue = effectiveShapeFunctionGradientValues[pp][n][i];
+          if( !floatingPointDiagnostics::isFinite( gradientValue ) )
+          {
+            nonfiniteShapeGradient = true;
+            shapeGradientSumAvailable[i] = false;
+          }
+          else
+          {
+            productUnsafeShapeGradient |= std::abs( gradientValue ) > safeProductComponentLimit;
+            if( shapeGradientSumAvailable[i] &&
+                !safelyAccumulate( gradientValue, shapeGradientSum[i] ) )
+            {
+              shapeGradientSumAvailable[i] = false;
+              sumOverflow = true;
+            }
+          }
+        }
       }
-      GEOS_LOG_RANK( "p: " << p << ", w: " << sum << ", grad|w| (x, y, z): {" << gradSum[0] << ", " << gradSum[1] << ", " << gradSum[2] << "}" );
+
+      bool const issue = emptyEffectiveMapping ||
+                         nonfiniteShapeValue ||
+                         productUnsafeShapeValue ||
+                         nonfiniteShapeGradient ||
+                         productUnsafeShapeGradient ||
+                         sumOverflow;
+      if( !issue )
+      {
+        GEOS_LOG_RANK( "p: " << p
+                       << ", w: " << shapeValueSum
+                       << ", grad|w| (x, y, z): {"
+                       << shapeGradientSum[0] << ", "
+                       << shapeGradientSum[1] << ", "
+                       << shapeGradientSum[2] << "}" );
+        continue;
+      }
+
+      std::ostringstream report;
+      report << std::scientific << std::setprecision( 17 )
+             << "MPM shape-function diagnostic detected an issue"
+             << "\n  particleSubRegion=" << subRegion.getDataContext().toString()
+             << ", particleGlobalID=" << particleGlobalID[p]
+             << ", particleLocalIndex=" << p
+             << ", activeParticleOrdinal=" << pp
+             << ", numEffectiveMappedNodes=" << numberOfMappedNodesForParticle
+             << "\n  flags: emptyEffectiveMapping=" << emptyEffectiveMapping
+             << ", nonfiniteShapeValue=" << nonfiniteShapeValue
+             << ", productUnsafeShapeValue=" << productUnsafeShapeValue
+             << ", nonfiniteShapeGradient=" << nonfiniteShapeGradient
+             << ", productUnsafeShapeGradient=" << productUnsafeShapeGradient
+             << ", sumOverflow=" << sumOverflow
+             << "\n  shapeValueSum=";
+      if( shapeValueSumAvailable )
+      {
+        floatingPointDiagnostics::appendValue( report, shapeValueSum );
+      }
+      else
+      {
+        report << "not-available";
+      }
+      report << ", shapeGradientSum={";
+      for( int i = 0; i < 3; ++i )
+      {
+        if( i > 0 )
+        {
+          report << ", ";
+        }
+        if( shapeGradientSumAvailable[i] )
+        {
+          floatingPointDiagnostics::appendValue( report, shapeGradientSum[i] );
+        }
+        else
+        {
+          report << "not-available";
+        }
+      }
+      report << "}, safeProductComponentLimit=" << safeProductComponentLimit;
+
+      bool wroteFlaggedComponent = false;
+      for( localIndex n = 0; n < numberOfMappedNodesForParticle; ++n )
+      {
+        real64 const shapeValue = effectiveShapeFunctionValues[pp][n];
+        bool const shapeValueNonfinite =
+          !floatingPointDiagnostics::isFinite( shapeValue );
+        bool const shapeValueUnsafe =
+          !shapeValueNonfinite && std::abs( shapeValue ) > safeProductComponentLimit;
+        if( shapeValueNonfinite || shapeValueUnsafe )
+        {
+          report << ( wroteFlaggedComponent ? ", " : "\n  individuallyFlaggedComponents: " )
+                 << "N[" << n << "]=";
+          floatingPointDiagnostics::appendValue( report, shapeValue );
+          wroteFlaggedComponent = true;
+        }
+
+        for( int i = 0; i < 3; ++i )
+        {
+          real64 const gradientValue = effectiveShapeFunctionGradientValues[pp][n][i];
+          bool const gradientNonfinite =
+            !floatingPointDiagnostics::isFinite( gradientValue );
+          bool const gradientUnsafe =
+            !gradientNonfinite && std::abs( gradientValue ) > safeProductComponentLimit;
+          if( gradientNonfinite || gradientUnsafe )
+          {
+            report << ( wroteFlaggedComponent ? ", " : "\n  individuallyFlaggedComponents: " )
+                   << "gradN[" << n << "][" << i << "]=";
+            floatingPointDiagnostics::appendValue( report, gradientValue );
+            wroteFlaggedComponent = true;
+          }
+        }
+      }
+      GEOS_LOG_RANK( report.str() );
     }
     ++subRegionIndex;
-  });
+  } );
+}
+
+void SolidMechanicsMPM::fieldDiagnostics( char const * const stage,
+                                          ParticleManager & particleManager,
+                                          NodeManager & nodeManager )
+{
+  if( m_fieldDiagnosticGridFields.empty() &&
+      m_fieldDiagnosticParticleFields.empty() )
+  {
+    return;
+  }
+
+  real64 const maximumAbsoluteValue = m_fieldDiagnosticMaximumAbsoluteValue;
+  integer const maxReportsPerField = m_fieldDiagnosticMaxReportsPerField;
+
+  if( !m_fieldDiagnosticGridFields.empty() )
+  {
+    nodeManager.getWrapperBase(
+      ObjectManagerBase::viewKeyStruct::localToGlobalMapString() ).move(
+      hostMemorySpace, true );
+    arrayView1d< globalIndex const > const nodeGlobalID =
+      static_cast< NodeManager const & >( nodeManager ).localToGlobalMap();
+
+    for( string const & fieldName : m_fieldDiagnosticGridFields )
+    {
+      GEOS_ERROR_IF( fieldName.empty(),
+                     "fieldDiagnosticGridFields cannot contain an empty field name." );
+      GEOS_ERROR_IF( !nodeManager.hasWrapper( fieldName ),
+                     "MPM field diagnostic could not find grid field '" << fieldName << "'." );
+      WrapperBase & wrapper = nodeManager.getWrapperBase( fieldName );
+      GEOS_ERROR_IF( wrapper.numArrayDims() == 0,
+                     "MPM field diagnostic requires array-valued grid fields; '"
+                     << fieldName << "' is scalar." );
+      wrapper.move( hostMemorySpace, true );
+
+      FieldDiagnosticCounts counts;
+      types::dispatch( types::ListofTypeList< types::RealArrays >{},
+                       [&]( auto tupleOfTypes )
+      {
+        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+        counts = inspectFloatingPointField< ArrayType >(
+          stage,
+          "grid",
+          "node",
+          "",
+          wrapper,
+          nodeManager.size(),
+          nodeManager.size(),
+          []( localIndex const entry ){ return entry; },
+          [nodeGlobalID]( localIndex const node ){ return nodeGlobalID[node]; },
+          maximumAbsoluteValue,
+          maxReportsPerField );
+      }, wrapper );
+      reportFieldDiagnosticSummary( stage,
+                                    "grid",
+                                    "",
+                                    fieldName,
+                                    counts );
+    }
+  }
+
+  if( !m_fieldDiagnosticParticleFields.empty() )
+  {
+    for( string const & fieldName : m_fieldDiagnosticParticleFields )
+    {
+      GEOS_ERROR_IF( fieldName.empty(),
+                     "fieldDiagnosticParticleFields cannot contain an empty field name." );
+    }
+
+    stdVector< int > fieldFound( m_fieldDiagnosticParticleFields.size(), 0 );
+    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      bool hasSelectedField = false;
+      for( string const & fieldName : m_fieldDiagnosticParticleFields )
+      {
+        hasSelectedField |= subRegion.hasWrapper( fieldName );
+      }
+      if( !hasSelectedField )
+      {
+        return;
+      }
+
+      subRegion.getWrapperBase(
+        ParticleSubRegion::viewKeyStruct::particleIDString() ).move(
+        hostMemorySpace, true );
+      arrayView1d< globalIndex const > const particleGlobalID = subRegion.getParticleID();
+      SortedArrayView< localIndex const > const activeParticleIndices =
+        subRegion.activeParticleIndices();
+      string const subRegionContext = subRegion.getDataContext().toString();
+
+      for( localIndex fieldIndex = 0;
+           fieldIndex < static_cast< localIndex >( m_fieldDiagnosticParticleFields.size() );
+           ++fieldIndex )
+      {
+        string const & fieldName = m_fieldDiagnosticParticleFields[fieldIndex];
+        if( !subRegion.hasWrapper( fieldName ) )
+        {
+          continue;
+        }
+        fieldFound[fieldIndex] = 1;
+
+        WrapperBase & wrapper = subRegion.getWrapperBase( fieldName );
+        GEOS_ERROR_IF( wrapper.numArrayDims() == 0,
+                       "MPM field diagnostic requires array-valued particle fields; '"
+                       << fieldName << "' is scalar in " << subRegionContext << "." );
+        wrapper.move( hostMemorySpace, true );
+
+        FieldDiagnosticCounts counts;
+        types::dispatch( types::ListofTypeList< types::RealArrays >{},
+                         [&]( auto tupleOfTypes )
+        {
+          using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+          counts = inspectFloatingPointField< ArrayType >(
+            stage,
+            "particle",
+            "particle",
+            subRegionContext,
+            wrapper,
+            subRegion.size(),
+            activeParticleIndices.size(),
+            [activeParticleIndices]( localIndex const entry )
+            { return activeParticleIndices[entry]; },
+            [particleGlobalID]( localIndex const particle )
+            { return particleGlobalID[particle]; },
+            maximumAbsoluteValue,
+            maxReportsPerField );
+        }, wrapper );
+        reportFieldDiagnosticSummary( stage,
+                                      "particle",
+                                      subRegionContext,
+                                      fieldName,
+                                      counts );
+      }
+    } );
+
+    for( localIndex fieldIndex = 0;
+         fieldIndex < static_cast< localIndex >( m_fieldDiagnosticParticleFields.size() );
+         ++fieldIndex )
+    {
+      GEOS_ERROR_IF( fieldFound[fieldIndex] == 0,
+                     "MPM field diagnostic could not find particle field '"
+                     << m_fieldDiagnosticParticleFields[fieldIndex]
+                     << "' in any particle subregion." );
+    }
+  }
 }
 
 
@@ -18311,15 +19409,13 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
 /**
  * @brief Initializes cohesive reference configuration.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * Builds a sparse pair/field-slot topology and initializes its reference data.
  */
 void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartition & domain,
                                                                   ParticleManager & particleManager,
                                                                   NodeManager & nodeManager,
                                                                   MeshLevel & mesh )
 {
-  GEOS_ERROR_IF( m_numVelocityFields > 2, "MPM cohesive zones currently only support two velocity fields! Check your DFG settings and number of contact groups");
-
   // Copy member variables to local ones for kernels
   integer const numDims = m_numDims;
   real64 const smallMass = m_smallMass;
@@ -18360,8 +19456,9 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
   arrayView2d< real64 const > const gridExplicitSurfaceNormal = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridExplicitSurfaceNormalString() );
   arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+  arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
 
-  // Create new cohesive zone region and resize to fit global number of cohesive zone nodes
+  // Initialize each cohesive-zone region with globally consistent sparse topology.
   CohesiveZoneManager & cohesiveZoneManager = getGroup< CohesiveZoneManager >( groupKeyStruct::cohesiveZoneManagerString() );
   cohesiveZoneManager.forCohesiveZoneRegions< CohesiveZoneRegion >( [&]( CohesiveZoneRegion & czRegion )
   {
@@ -18434,34 +19531,37 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     // Sync grid mass
     syncGridFields( { viewKeyStruct::gridMassString() }, domain, nodeManager, mesh, MPI_SUM );
 
-    // Any nodes with both gridMass for fields A and B are nodes that could belong to a cohesive interface
-    array1d< globalIndex > interfaceGridNodes;
-
-    // Currently only possible on host
-    // Would need to precompute the number of cohesive nodes, allocate array and then populate it in two separate
-    // kernels
-    // Even then there would be a race condition adding global indices to array. Some sort of atomics would be required
-    forAll< serialPolicy >( numNodes, [=, &interfaceGridNodes] GEOS_HOST ( localIndex const g )
+    // Record every active binary interface as {physical node, field A, field B}.
+    // Only these sparse pairs, rather than numNodes*numVelocityFields entries, are
+    // retained by the cohesive-zone implementation.
+    stdVector< globalIndex > localInterfacePairs;
+    stdVector< localIndex > activeFields;
+    for( localIndex g = 0; g < numNodes; ++g )
+    {
+      activeFields.clear();
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
-        for( localIndex A = 0; A < numVelocityFields - 1; ++A )
+        if( gridMass[g][fieldIndex] > smallMass )
         {
-          for( localIndex B = A + 1; B < numVelocityFields; ++B )
-          {
-            bool active = ( gridMass[g][A] > smallMass ) && ( gridMass[g][B] > smallMass );
-
-            if( active )
-            {
-              interfaceGridNodes.emplace_back( localToGlobalMap[g] );
-            }
-          }
+          activeFields.emplace_back( fieldIndex );
         }
-      } );
+      }
 
-    // Collect all the local nodes that belong to cohesive interfaces and distribute them to all the processes for
-    // mapping particles to
-    // reference grid when particle advection triggers repartitioning
+      for( localIndex a = 0; a + 1 < LvArray::integerConversion< localIndex >( activeFields.size() ); ++a )
+      {
+        for( localIndex b = a + 1; b < LvArray::integerConversion< localIndex >( activeFields.size() ); ++b )
+        {
+          localInterfacePairs.emplace_back( localToGlobalMap[g] );
+          localInterfacePairs.emplace_back( activeFields[a] );
+          localInterfacePairs.emplace_back( activeFields[b] );
+        }
+      }
+    }
+
+    // Distribute the sparse pair keys to every rank so cached particle mappings
+    // remain valid when particles migrate between partitions.
     array1d< int > dataSizes( MpiWrapper::commSize() );
-    MpiWrapper::allGather( LvArray::integerConversion< int >( interfaceGridNodes.size() ), dataSizes, MPI_COMM_GEOS );
+    MpiWrapper::allGather( LvArray::integerConversion< int >( localInterfacePairs.size() ), dataSizes, MPI_COMM_GEOS );
     int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
 
     // Once the MPI exchange is done, `allData` will contain all the data of all the MPI ranks.
@@ -18471,14 +19571,50 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     // `displacements` is the offset (relative to the receive buffer) to store the data for each rank.
     stdVector< int > displacements( MpiWrapper::commSize(), 0 );
     std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, displacements.begin() + 1 );
-    MpiWrapper::allgatherv( interfaceGridNodes.data(), interfaceGridNodes.size(), allData.data(), dataSizes.data(), displacements.data(), MPI_COMM_GEOS );
+    MpiWrapper::allgatherv( localInterfacePairs.data(), localInterfacePairs.size(), allData.data(), dataSizes.data(), displacements.data(), MPI_COMM_GEOS );
 
-    // Sort the global grid node indices and move any duplicates to the end.
-    std::ptrdiff_t const numUniqueValues = LvArray::sortedArrayManipulation::makeSortedUnique( allData.begin(),
-                                                                                              allData.end() );
-    // Move unique global grid node indices to member variable to store between time steps
-    SortedArray< globalIndex >  cohesiveNodeGlobalIndices; // Should be removed as member variable
-    cohesiveNodeGlobalIndices.insert( allData.begin(), allData.begin() + numUniqueValues );
+    GEOS_ERROR_IF( allData.size() % 3 != 0,
+                   "Invalid cohesive field-pair data received during initialization." );
+
+    using CohesivePairKey = std::tuple< globalIndex, localIndex, localIndex >;
+    stdVector< CohesivePairKey > cohesivePairKeys;
+    cohesivePairKeys.reserve( allData.size() / 3 );
+    for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( allData.size() ); i += 3 )
+    {
+      cohesivePairKeys.emplace_back( allData[i],
+                                     LvArray::integerConversion< localIndex >( allData[i + 1] ),
+                                     LvArray::integerConversion< localIndex >( allData[i + 2] ) );
+    }
+    std::sort( cohesivePairKeys.begin(), cohesivePairKeys.end() );
+    cohesivePairKeys.erase( std::unique( cohesivePairKeys.begin(), cohesivePairKeys.end() ),
+                            cohesivePairKeys.end() );
+    localInterfacePairs.clear();
+    localInterfacePairs.shrink_to_fit();
+    allData.clear();
+    allData.shrink_to_fit();
+
+    stdVector< globalIndex > cohesiveNodeGlobalIDs;
+    cohesiveNodeGlobalIDs.reserve( cohesivePairKeys.size() );
+    for( CohesivePairKey const & pairKey : cohesivePairKeys )
+    {
+      globalIndex const nodeGlobalID = std::get< 0 >( pairKey );
+      if( cohesiveNodeGlobalIDs.empty() || cohesiveNodeGlobalIDs.back() != nodeGlobalID )
+      {
+        cohesiveNodeGlobalIDs.emplace_back( nodeGlobalID );
+      }
+    }
+
+    using CohesiveFieldSlotKey = std::pair< globalIndex, localIndex >;
+    stdVector< CohesiveFieldSlotKey > fieldSlotKeys;
+    fieldSlotKeys.reserve( 2 * cohesivePairKeys.size() );
+    for( CohesivePairKey const & pairKey : cohesivePairKeys )
+    {
+      fieldSlotKeys.emplace_back( std::get< 0 >( pairKey ), std::get< 1 >( pairKey ) );
+      fieldSlotKeys.emplace_back( std::get< 0 >( pairKey ), std::get< 2 >( pairKey ) );
+    }
+    std::sort( fieldSlotKeys.begin(), fieldSlotKeys.end() );
+    fieldSlotKeys.erase( std::unique( fieldSlotKeys.begin(), fieldSlotKeys.end() ),
+                         fieldSlotKeys.end() );
 
     // Rezero grid mass fields
     forAll< parallelDevicePolicy<> >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
@@ -18489,146 +19625,92 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
       }
     } );
 
-    czRegion.resize( cohesiveNodeGlobalIndices.size() );
-    czRegion.setGlobalID( cohesiveNodeGlobalIndices.toViewConst() );
+    localIndex const numCohesivePairs = LvArray::integerConversion< localIndex >( cohesivePairKeys.size() );
+    localIndex const numCohesiveNodes = LvArray::integerConversion< localIndex >( cohesiveNodeGlobalIDs.size() );
+    localIndex const numCohesiveFieldSlots = LvArray::integerConversion< localIndex >( fieldSlotKeys.size() );
+    czRegion.resize( numCohesivePairs );
+    czRegion.resizeTopology( numCohesiveNodes, numCohesiveFieldSlots );
 
-    SortedArrayView< globalIndex const > globalID = czRegion.getGlobalID();
+    arrayView1d< globalIndex > const cohesiveNodeGlobalID = czRegion.getGlobalID();
+    arrayView2d< localIndex > const pairToFieldSlot = czRegion.getFieldSlots();
+    arrayView1d< localIndex > const fieldSlotNode = czRegion.getFieldSlotNode();
+    arrayView1d< localIndex > const fieldSlotVelocityField = czRegion.getFieldSlotVelocityField();
+
+    for( localIndex node = 0; node < numCohesiveNodes; ++node )
+    {
+      cohesiveNodeGlobalID[node] = cohesiveNodeGlobalIDs[node];
+    }
+
+    for( localIndex slot = 0; slot < numCohesiveFieldSlots; ++slot )
+    {
+      auto const nodeIter = std::lower_bound( cohesiveNodeGlobalIDs.begin(),
+                                              cohesiveNodeGlobalIDs.end(),
+                                              fieldSlotKeys[slot].first );
+      GEOS_ERROR_IF( nodeIter == cohesiveNodeGlobalIDs.end() || *nodeIter != fieldSlotKeys[slot].first,
+                     "Failed to construct compact cohesive-node topology." );
+      fieldSlotNode[slot] = LvArray::integerConversion< localIndex >(
+        std::distance( cohesiveNodeGlobalIDs.begin(), nodeIter ) );
+      fieldSlotVelocityField[slot] = fieldSlotKeys[slot].second;
+    }
+
+    for( localIndex pairIndex = 0; pairIndex < numCohesivePairs; ++pairIndex )
+    {
+      globalIndex const nodeGlobalID = std::get< 0 >( cohesivePairKeys[pairIndex] );
+      localIndex const fieldA = std::get< 1 >( cohesivePairKeys[pairIndex] );
+      localIndex const fieldB = std::get< 2 >( cohesivePairKeys[pairIndex] );
+
+      CohesiveFieldSlotKey const endpointKeys[2] = { { nodeGlobalID, fieldA },
+                                                     { nodeGlobalID, fieldB } };
+      for( localIndex side = 0; side < 2; ++side )
+      {
+        auto const iter = std::lower_bound( fieldSlotKeys.begin(), fieldSlotKeys.end(), endpointKeys[side] );
+        GEOS_ERROR_IF( iter == fieldSlotKeys.end() || *iter != endpointKeys[side],
+                       "Failed to construct compact cohesive field-slot topology." );
+        localIndex const slot = LvArray::integerConversion< localIndex >( std::distance( fieldSlotKeys.begin(), iter ) );
+        pairToFieldSlot[pairIndex][side] = slot;
+      }
+    }
+
+    // Topology now lives in the compact region arrays. Release construction
+    // buffers before allocating the larger kinematic scratch fields below.
+    cohesivePairKeys.clear();
+    cohesivePairKeys.shrink_to_fit();
+    cohesiveNodeGlobalIDs.clear();
+    cohesiveNodeGlobalIDs.shrink_to_fit();
+    fieldSlotKeys.clear();
+    fieldSlotKeys.shrink_to_fit();
+
     arrayView2d< real64 > czReferencePartitioningSurfaceNormal = czRegion.getReferencePartitioningSurfaceNormal();
     arrayView2d< real64 > czReferencePosition = czRegion.getReferencePosition();
 
-    array1d< localIndex > indexInGlobalCZArray; // Perhaps this should be initialized to size given we know the count of local cohesive grid nodes from beginning of initialization
-    array1d< localIndex > localNodalIndex;
-
-    // Following in current form must be done in serial
-    // Unsure how best to parallelize it without race conditions or loss of efficiency
-    // This is also only be performde once at CZ initialization
-    int const numCohesiveNodes = czRegion.size();
-    for( int g  = 0; g < numCohesiveNodes; ++g )
+    // Populate reference data only on the owning rank. In-place reductions
+    // avoid the full-size send, receive, and broadcast buffers previously
+    // required on rank zero.
+    for( localIndex node = 0; node < numCohesiveNodes; ++node )
     {
-      // Check if global index of cohesive zone is on this partition
-      // if( nodeGlobalToLocalMap.contains( globalID[g] ) ) // Only available with C++ 20
-      if( nodeGlobalToLocalMap.find( globalID[g] ) != nodeGlobalToLocalMap.end() )
+      LvArray::tensorOps::fill< 3 >( czReferencePosition[node], 0.0 );
+      LvArray::tensorOps::fill< 3 >( czReferencePartitioningSurfaceNormal[node], 0.0 );
+
+      auto const nodeIter = nodeGlobalToLocalMap.find( cohesiveNodeGlobalID[node] );
+      if( nodeIter != nodeGlobalToLocalMap.end() && gridGhostRank[nodeIter->second] < 0 )
       {
-        indexInGlobalCZArray.emplace_back( g );
-        localNodalIndex.emplace_back( nodeGlobalToLocalMap.at( globalID[g] ) );
+        localIndex const localNode = nodeIter->second;
+        LvArray::tensorOps::copy< 3 >( czReferencePosition[node], gridPosition[localNode] );
+        LvArray::tensorOps::copy< 3 >( czReferencePartitioningSurfaceNormal[node],
+                                       gridExplicitSurfaceNormal[localNode] );
       }
     }
 
-    // Load nodal reference fields into reference arrays to perform global sync
-    arrayView1d< localIndex > indexInGlobalCZArrayView = indexInGlobalCZArray;
-    arrayView1d< localIndex > localNodalIndexView = localNodalIndex;
-    forAll< serialPolicy >( indexInGlobalCZArray.size(), [=] GEOS_HOST ( localIndex const g )
-    {
-      localIndex czIndex = indexInGlobalCZArrayView[g];
-      localIndex nodeIndex = localNodalIndexView[g];
-      // Tensor equations:
-      //   czReferencePosition[czIndex] = gridPosition[nodeIndex].
-      //   czReferencePartitioningSurfaceNormal[czIndex] = gridExplicitSurfaceNormal[nodeIndex].
-      LvArray::tensorOps::copy< 3 >( czReferencePosition[czIndex], gridPosition[nodeIndex] );
-      LvArray::tensorOps::copy< 3 >( czReferencePartitioningSurfaceNormal[czIndex], gridExplicitSurfaceNormal[nodeIndex] );
-    } );
+    MpiWrapper::allReduce( czReferencePosition,
+                           czReferencePosition,
+                           MpiWrapper::Reduction::Sum,
+                           MPI_COMM_GEOS );
+    MpiWrapper::allReduce( czReferencePartitioningSurfaceNormal,
+                           czReferencePartitioningSurfaceNormal,
+                           MpiWrapper::Reduction::Sum,
+                           MPI_COMM_GEOS );
 
-    // Sync initial reference nodal values with rank 0
-    int const numRanks = MpiWrapper::commSize();
-    int rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-
-    array1d< MPI_Request > mpiRequestIndices( numRanks );
-    array1d< MPI_Request > mpiRequestPositions( numRanks );
-    array1d< MPI_Request > mpiRequestPartitioningSurfaceNormals( numRanks );
-
-    array1d< MPI_Status > mpiStatusIndices( numRanks );
-    array1d< MPI_Status > mpiStatusPositions( numRanks );
-    array1d< MPI_Status > mpiStatusPartitioningSurfaceNormals( numRanks );
-
-    array1d< int > nodalIndices;
-    if( rank != 0 )
-    {
-      // Send list of indices to overwrite nodal positions
-      mpiRequestIndices[rank] = MPI_REQUEST_NULL;
-      MpiWrapper::iSend( indexInGlobalCZArray.data(),
-                         indexInGlobalCZArray.size(),
-                         0,
-                         0,
-                         MPI_COMM_GEOS,
-                         &mpiRequestIndices[rank] );
-
-      // Send nodal positions
-      mpiRequestPositions[rank] = MPI_REQUEST_NULL;
-      MpiWrapper::iSend( czReferencePosition.data(),
-                         czReferencePosition.size(),
-                         0,
-                         1,
-                         MPI_COMM_GEOS,
-                         &mpiRequestPositions[rank] );
-
-      // Send nodal positions
-      mpiRequestPartitioningSurfaceNormals[rank] = MPI_REQUEST_NULL;
-      MpiWrapper::iSend( czReferencePartitioningSurfaceNormal.data(),
-                         czReferencePartitioningSurfaceNormal.size(),
-                         0,
-                         1,
-                         MPI_COMM_GEOS,
-                         &mpiRequestPartitioningSurfaceNormals[rank] );
-    }
-    else
-    {
-      for( localIndex r = 1; r < numRanks; ++r )
-      {
-        MpiWrapper::recv( nodalIndices,
-                          r,
-                          0,
-                          MPI_COMM_GEOS,
-                          &mpiStatusIndices[r] );
-
-        array2d< real64 > nodalReferencePositions( numCohesiveNodes, 3 );
-        mpiRequestPositions[r] = MPI_REQUEST_NULL;
-        MpiWrapper::iRecv( nodalReferencePositions.data(),
-                           nodalReferencePositions.size(),
-                           r,
-                           1,
-                           MPI_COMM_GEOS,
-                           &mpiRequestPositions[r] );
-
-        MpiWrapper::wait( &mpiRequestPositions[r], &mpiStatusPositions[r] );
-
-        // Send nodal surface normals
-        array2d< real64 > nodalReferencePartitioningSurfaceNormals( numCohesiveNodes, 3 );
-        mpiRequestPartitioningSurfaceNormals[r] = MPI_REQUEST_NULL;
-        MpiWrapper::iRecv( nodalReferencePartitioningSurfaceNormals.data(),
-                           nodalReferencePartitioningSurfaceNormals.size(),
-                           r,
-                           1,
-                           MPI_COMM_GEOS,
-                           &mpiRequestPartitioningSurfaceNormals[r] );
-
-        MpiWrapper::wait( &mpiRequestPartitioningSurfaceNormals[r], &mpiStatusPartitioningSurfaceNormals[r] );
-
-        // Combine grid positions
-        for( localIndex g = 0; g < nodalIndices.size(); ++g )
-        {
-          localIndex n = nodalIndices[g];
-          // Tensor equations:
-          //   czReferencePosition[n] = nodalReferencePositions[n].
-          //   czReferencePartitioningSurfaceNormal[n] = nodalReferencePartitioningSurfaceNormals[n].
-          LvArray::tensorOps::copy< 3 >( czReferencePosition[n], nodalReferencePositions[n] );
-          LvArray::tensorOps::copy< 3 >( czReferencePartitioningSurfaceNormal[n], nodalReferencePartitioningSurfaceNormals[n] );
-        }
-      }
-    }
-
-    // Wait for everything to complete
-    MpiWrapper::barrier();
-
-    // Scatter complete reference values back to other ranks
-    MpiWrapper::bcast( czReferencePosition.data(),
-                       czReferencePosition.size(),
-                       0,
-                       MPI_COMM_GEOS );
-
-    MpiWrapper::bcast( czReferencePartitioningSurfaceNormal.data(),
-                       czReferencePartitioningSurfaceNormal.size(),
-                       0,
-                       MPI_COMM_GEOS );
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
 
     // Initialize state variables
     arrayView1d< real64 > czDamage = czRegion.getDamage();
@@ -18636,7 +19718,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     arrayView1d< real64 > czMaxTangentialDisplacement = czRegion.getMaxTangentialDisplacement();
     arrayView1d< real64 > czTemperature = czRegion.getTemperature();
 
-    forAll< serialPolicy >( numCohesiveNodes, [=]( localIndex const & g ){
+    forAll< serialPolicy >( numCohesivePairs, [=]( localIndex const & g ){
       czTemperature[g] = m_domainTemperature;
       czDamage[g] = 0.0;
       czMaxNormalDisplacement[g] = 0.0;
@@ -18650,6 +19732,8 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
       arrayView1d< int > particleCohesiveZoneFlag = subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
       arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
       arrayView1d< localIndex const > const particleCZTag = subRegion.getParticleCZTag();
+      arrayView2d< int const > const particleCohesiveFieldMapping =
+        subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
       arrayView2d< globalIndex > particleReferenceMappedNodes = subRegion.getField< fields::mpm::particleReferenceMappedNodes >();
       arrayView2d< globalIndex > particleReferenceGlobalNodeIndex = subRegion.getField< fields::mpm::particleReferenceGlobalNodeIndex >();
       arrayView2d< real64 > const particleCohesiveReferencePosition = subRegion.getField< fields::mpm::particleCohesiveReferencePosition >();
@@ -18687,8 +19771,14 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
         for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
         {
           globalIndex const mappedNode = localToGlobalMap[ mappedNodes[pp][g] ];
+          localIndex const fieldIndex = particleCohesiveFieldMapping[p][g];
+          localIndex const fieldSlot = findCohesiveFieldSlot( cohesiveNodeGlobalID,
+                                                              fieldSlotNode,
+                                                              fieldSlotVelocityField,
+                                                              mappedNode,
+                                                              fieldIndex );
 
-          if( globalID.contains( mappedNode ) )
+          if( fieldSlot >= 0 )
           {
             if( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) )
             {
@@ -18701,17 +19791,14 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
               globalIndex const mappedNodeForReference = localToGlobalMap[ mappedNodes[pp][gg] ];
               particleReferenceMappedNodes[p][gg] = mappedNodeForReference;
               particleReferenceShapeFunctionValues[p][gg] = shapeFunctionValues[pp][gg];
-
-              if( globalID.contains( mappedNodeForReference ) )
+              localIndex const mappedFieldSlot = findCohesiveFieldSlot( cohesiveNodeGlobalID,
+                                                                         fieldSlotNode,
+                                                                         fieldSlotVelocityField,
+                                                                         mappedNodeForReference,
+                                                                         particleCohesiveFieldMapping[p][gg] );
+              if( mappedFieldSlot >= 0 )
               {
-                for( localIndex n = 0; n < numCohesiveNodes; ++n )
-                {
-                  if( globalID[n] == mappedNodeForReference )
-                  {
-                    particleReferenceGlobalNodeIndex[p][gg] = n;
-                    break;
-                  }
-                }
+                particleReferenceGlobalNodeIndex[p][gg] = mappedFieldSlot;
               }
             }
 
@@ -18758,30 +19845,26 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     // We map the surface position of each particle ( vector from particle center to interface surface ), this is also
     // the particle surface
     // normal direction
-    array2d< real64 > tempGridMassLocal( numCohesiveNodes, m_numVelocityFields );
-    array1d< real64 > tempGridTemperatureMassLocal( numCohesiveNodes );
-    array1d< real64 > tempGridVolumeLocal( numCohesiveNodes );
-    array3d< real64 > tempGridParticleSurfaceNormalLocal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridSurfacePositionLocal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array4d< real64 > tempGridMaterialDirectionLocal( numCohesiveNodes, m_numVelocityFields, 3, 3 );
+    array1d< real64 > tempFieldSlotMassGlobal( numCohesiveFieldSlots );
+    array1d< real64 > tempFieldSlotTemperatureMassGlobal( numCohesiveFieldSlots );
+    array1d< real64 > tempCohesiveNodeVolumeGlobal( numCohesiveNodes );
+    array2d< real64 > tempFieldSlotParticleSurfaceNormalGlobal( numCohesiveFieldSlots, 3 );
+    array2d< real64 > tempFieldSlotSurfacePositionGlobal( numCohesiveFieldSlots, 3 );
 
     // Initialize temporary grid fields to zero
-    forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=] GEOS_HOST_DEVICE ( int const g )
+    forAll< parallelDevicePolicy<> >( numCohesiveFieldSlots, [=] GEOS_HOST_DEVICE ( localIndex const slot )
     {
-      tempGridTemperatureMassLocal[g] = 0.0;
-      tempGridVolumeLocal[g] = 0.0;
-      for( localIndex fieldIndex = 0; fieldIndex < m_numVelocityFields; ++fieldIndex )
+      tempFieldSlotMassGlobal[slot] = 0.0;
+      tempFieldSlotTemperatureMassGlobal[slot] = 0.0;
+      for( int i = 0; i < numDims; ++i )
       {
-        tempGridMassLocal[g][fieldIndex] = 0.0;
-        for( int i = 0; i < numDims; ++i )
-        {
-          tempGridParticleSurfaceNormalLocal[g][fieldIndex][i] = 0.0;
-          tempGridSurfacePositionLocal[g][fieldIndex][i] = 0.0;
-        }
-
-        // Tensor equation: tempGridMaterialDirectionLocal[g][fieldIndex] = 0.0 component-wise.
-        LvArray::tensorOps::fill< 3, 3 >( tempGridMaterialDirectionLocal[g][fieldIndex], 0.0 );
+        tempFieldSlotParticleSurfaceNormalGlobal[slot][i] = 0.0;
+        tempFieldSlotSurfacePositionGlobal[slot][i] = 0.0;
       }
+    } );
+    forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=] GEOS_HOST_DEVICE ( localIndex const node )
+    {
+      tempCohesiveNodeVolumeGlobal[node] = 0.0;
     } );
 
     // Map relevant quantities to cz grid for cz node initialization
@@ -18792,25 +19875,22 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
       arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
       arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
       arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
-      arrayView2d< int const > const particleCohesiveFieldMapping = subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
       arrayView2d< globalIndex const > const particleReferenceGlobalNodeIndex = subRegion.getField< fields::mpm::particleReferenceGlobalNodeIndex >();
       arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
       arrayView2d< real64 const > const particleReferenceShapeFunctionValues = subRegion.getField< fields::mpm::particleReferenceShapeFunctionValues >();
       arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
       arrayView2d< real64 const > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
-      arrayView3d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
 
       int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
 
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(),
                               [=,
-                              &tempGridMassLocal,
-                              &tempGridTemperatureMassLocal,
-                              &tempGridVolumeLocal,
-                              &tempGridParticleSurfaceNormalLocal,
-                              &tempGridSurfacePositionLocal,
-                              &tempGridMaterialDirectionLocal] GEOS_HOST ( localIndex const pp )
+                              &tempFieldSlotMassGlobal,
+                              &tempFieldSlotTemperatureMassGlobal,
+                              &tempCohesiveNodeVolumeGlobal,
+                              &tempFieldSlotParticleSurfaceNormalGlobal,
+                              &tempFieldSlotSurfacePositionGlobal] GEOS_HOST ( localIndex const pp )
         {
           localIndex const p = activeParticleIndices[pp];
 
@@ -18826,21 +19906,22 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
             if( cachedNodeIndex != invalidCohesiveNodeIndex )
             {
-              localIndex const nodeIndex = LvArray::integerConversion< localIndex >( cachedNodeIndex );
+              localIndex const fieldSlot = LvArray::integerConversion< localIndex >( cachedNodeIndex );
+              localIndex const cohesiveNode = fieldSlotNode[fieldSlot];
               real64 shapeFunctionValue = particleReferenceShapeFunctionValues[p][g];
-              localIndex const fieldIndex = particleCohesiveFieldMapping[p][g];
 
               if( particleCohesiveZoneFlag[p] == 1 )
               {
                 real64 const massContribution = particleMass[p] * shapeFunctionValue;
-                tempGridMassLocal[nodeIndex][fieldIndex] += massContribution;
-                tempGridTemperatureMassLocal[nodeIndex] += massContribution * particleTemperature[p];
+                tempFieldSlotMassGlobal[fieldSlot] += massContribution;
+                tempFieldSlotTemperatureMassGlobal[fieldSlot] += massContribution * particleTemperature[p];
 
                 real64 surfacePositionRelativeToNode[3] = {};
                 // Tensor equation: surfacePositionRelativeToNode = particlePosition[p] -
-                //   czReferencePosition[nodeIndex], with periodic minimum-image correction.
+                //   the physical cohesive-node reference position, with periodic minimum-image correction.
                 LvArray::tensorOps::copy< 3 >( surfacePositionRelativeToNode, particlePosition[p] );
-                LvArray::tensorOps::subtract< 3 >( surfacePositionRelativeToNode, czReferencePosition[nodeIndex] );
+                LvArray::tensorOps::subtract< 3 >( surfacePositionRelativeToNode,
+                                                    czReferencePosition[cohesiveNode] );
                 for( int i = 0; i < numDims; ++i )
                 {
                   if( periodic[i] == 1 )
@@ -18853,132 +19934,72 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
                 for( int i  = 0; i < numDims; ++i )
                 {
-                  tempGridParticleSurfaceNormalLocal[nodeIndex][fieldIndex][i] += particleMass[p] * particleSurfaceNormal[p][i] * shapeFunctionValue;
-                  tempGridSurfacePositionLocal[nodeIndex][fieldIndex][i] += particleMass[p] *
-                                                                            surfacePositionRelativeToNode[i] *
-                                                                            shapeFunctionValue;
-                }
-
-                for( int i = 0; i < 3; ++i )
-                {
-                  for( int j = 0; j < 3; ++j )
-                  {
-                    tempGridMaterialDirectionLocal[nodeIndex][fieldIndex][i][j] += particleMass[p] * particleMaterialDirection[p][i][j] * shapeFunctionValue;
-                  }
+                  tempFieldSlotParticleSurfaceNormalGlobal[fieldSlot][i] +=
+                    massContribution * particleSurfaceNormal[p][i];
+                  tempFieldSlotSurfacePositionGlobal[fieldSlot][i] +=
+                    massContribution * surfacePositionRelativeToNode[i];
                 }
               }
-              tempGridVolumeLocal[nodeIndex] += particleVolume[p] * shapeFunctionValue;
+              tempCohesiveNodeVolumeGlobal[cohesiveNode] += particleVolume[p] * shapeFunctionValue;
             }
           }
         } );
     } );
 
-    // Sync temporary grid fields
-    array2d< real64 > tempGridMassGlobal( numCohesiveNodes, m_numVelocityFields );
-    array1d< real64 > tempGridTemperatureMassGlobal( numCohesiveNodes );
-    array1d< real64 > tempGridVolumeGlobal( numCohesiveNodes );
-    array3d< real64 > tempGridParticleSurfaceNormalGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridSurfacePositionGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array4d< real64 > tempGridMaterialDirectionGlobal( numCohesiveNodes, m_numVelocityFields, 3, 3 );
-
-    MpiWrapper::allReduce( tempGridMassLocal,
-                           tempGridMassGlobal,
+    // Synchronize in place to avoid retaining local and global copies of every
+    // compact field-slot array.
+    MpiWrapper::allReduce( tempFieldSlotMassGlobal,
+                           tempFieldSlotMassGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
-    MpiWrapper::allReduce( tempGridTemperatureMassLocal,
-                           tempGridTemperatureMassGlobal,
+    MpiWrapper::allReduce( tempFieldSlotTemperatureMassGlobal,
+                           tempFieldSlotTemperatureMassGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
-    MpiWrapper::allReduce( tempGridVolumeLocal,
-                           tempGridVolumeGlobal,
+    MpiWrapper::allReduce( tempCohesiveNodeVolumeGlobal,
+                           tempCohesiveNodeVolumeGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
-    MpiWrapper::allReduce( tempGridParticleSurfaceNormalLocal,
-                           tempGridParticleSurfaceNormalGlobal,
+    MpiWrapper::allReduce( tempFieldSlotParticleSurfaceNormalGlobal,
+                           tempFieldSlotParticleSurfaceNormalGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
-    MpiWrapper::allReduce( tempGridSurfacePositionLocal,
-                           tempGridSurfacePositionGlobal,
+    MpiWrapper::allReduce( tempFieldSlotSurfacePositionGlobal,
+                           tempFieldSlotSurfacePositionGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
-    MpiWrapper::allReduce( tempGridMaterialDirectionLocal,
-                           tempGridMaterialDirectionGlobal,
-                           MpiWrapper::Reduction::Sum,
-                           MPI_COMM_GEOS );
-
-    forAll< serialPolicy >( numCohesiveNodes, [=,
-                                              &tempGridTemperatureMassGlobal,
-                                              &tempGridParticleSurfaceNormalGlobal,
-                                              &tempGridSurfacePositionGlobal,
-                                              &tempGridMaterialDirectionGlobal] GEOS_HOST ( localIndex const g )
+    forAll< serialPolicy >( numCohesiveFieldSlots, [=,
+                                                   &tempFieldSlotParticleSurfaceNormalGlobal,
+                                                   &tempFieldSlotSurfacePositionGlobal] GEOS_HOST ( localIndex const slot )
     {
-      real64 nodalMass = 0.0;
-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      if( tempFieldSlotMassGlobal[slot] > smallMass )
       {
-        nodalMass += tempGridMassGlobal[g][fieldIndex];
-      }
-      czTemperature[g] = nodalMass > smallMass ? tempGridTemperatureMassGlobal[g] / nodalMass : m_domainTemperature;
-
-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
-      {
-        if( tempGridMassGlobal[g][fieldIndex] > smallMass )
+        for( int i = 0; i < numDims; ++i )
         {
-          for( int i = 0; i < numDims; ++i )
-          {
-            tempGridParticleSurfaceNormalGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
-            tempGridSurfacePositionGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
-          }
-
-          for( int i = 0; i < 3; ++i )
-          {
-            for( int j = 0; j < 3; ++j )
-            {
-              tempGridMaterialDirectionGlobal[g][fieldIndex][i][j] /= tempGridMassGlobal[g][fieldIndex];
-            }
-          }
+          tempFieldSlotParticleSurfaceNormalGlobal[slot][i] /= tempFieldSlotMassGlobal[slot];
+          tempFieldSlotSurfacePositionGlobal[slot][i] /= tempFieldSlotMassGlobal[slot];
         }
-        // If nodal mass is not large, zero just to avoid small number issues
       }
     } );
 
-    localIndex const numCZNodes = czRegion.size();
-
-    // // Compute misorientation of material directions on either side of the cohesive zone
-    // // Currently compute the transformation between material directions
-    // // Then perform polar decomposition to retrieve rotational misorientation and store that
-    // CohesiveZoneBase & cohesiveZoneConstitutiveModel = czRegion.getConstitutiveModel();
-    // if( cohesiveZoneConstitutiveModel.hasWrapper( "misorientation" ) )
-    // {
-    //   localIndex fieldA = czRegion.getFieldA();
-    //   localIndex fieldB = czRegion.getFieldB();
-    //   arrayView3d< real64 > const czMisorientation = cohesiveZoneConstitutiveModel.getReference< array3d< real64 > >(
-    // "misorientation" );
-    //   forAll< serialPolicy >( numCZNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
-    //   {
-    //     real64 invMatDirA[3][3] = {};
-    //     real64 det = LvArray::tensorOps::invert< 3 >( invMatDirA, tempGridMaterialDirectionGlobal[g][fieldA] );
-
-    //     GEOS_ERROR_IF( isZero( det ), "Particle material directions are singular, cannot invert" );
-
-    //     real64 T[3][3] = {};
-    //     LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( T, tempGridMaterialDirectionGlobal[g][fieldB], invMatDirA);
-
-    //     real64 R[3][3] = {};
-    //     LvArray::tensorOps::polarDecomposition< 3 >( R, T );
-
-    //     // Rotational matrix might need a transpose because of how we store material directions with basis along
-    // rows;
-    //     LvArray::tensorOps::transpose< 3, 3 >( czMisorientation[g], R );
-
-    //     // GEOS_LOG_RANK( "g: " << g << ", " <<
-    //     //                "czMisorientation: " << czMisorientation[g] );
-    //   } );
-    // }
+    // Each constitutive point is one binary field pair. Temperatures are
+    // therefore averaged from only its two endpoints, rather than from every
+    // contact group present at the physical grid node.
+    forAll< serialPolicy >( numCohesivePairs, [=] GEOS_HOST ( localIndex const pairIndex )
+    {
+      localIndex const slotA = pairToFieldSlot[pairIndex][0];
+      localIndex const slotB = pairToFieldSlot[pairIndex][1];
+      real64 const pairMass = tempFieldSlotMassGlobal[slotA] + tempFieldSlotMassGlobal[slotB];
+      czTemperature[pairIndex] = pairMass > smallMass
+                                 ? ( tempFieldSlotTemperatureMassGlobal[slotA] +
+                                     tempFieldSlotTemperatureMassGlobal[slotB] ) / pairMass
+                                 : m_domainTemperature;
+    } );
 
     // Compute nodal area
     // Tensor equation: L = ||hEl||.
@@ -18997,60 +20018,88 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     ParticleManager::ParticleViewConst< arrayView3d< real64 const > > const particleRVectorsView = particleRVectorsAccessor.toNestedViewConst();
 
     // CZ fields
-    arrayView2d< real64 > czReferenceArea = czRegion.getReferenceArea();
-    arrayView3d< real64 > czReferenceSurfaceNormal = czRegion.getReferenceSurfaceNormal();
+    arrayView1d< real64 > czReferenceArea = czRegion.getReferenceArea();
+    arrayView2d< real64 > czReferenceSurfaceNormal = czRegion.getReferenceSurfaceNormal();
 
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > totalCohesiveSurfaceArea( 0.0 );
+    array1d< real64 > referenceAreaLocal( numCohesiveFieldSlots );
 
-    forAll< serialPolicy >( numCZNodes, [=] GEOS_HOST ( localIndex const g )
+    for( localIndex slot = 0; slot < numCohesiveFieldSlots; ++slot )
     {
-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      localIndex const cohesiveNode = fieldSlotNode[slot];
+      globalIndex const nodeGlobalID = cohesiveNodeGlobalID[cohesiveNode];
+      localIndex const localNode = nodeGlobalToLocalMap.find( nodeGlobalID ) != nodeGlobalToLocalMap.end()
+                                   ? nodeGlobalToLocalMap.at( nodeGlobalID )
+                                   : -1;
+      referenceAreaLocal[slot] = 0.0;
+      czReferenceArea[slot] = 0.0;
+      LvArray::tensorOps::fill< 3 >( czReferenceSurfaceNormal[slot], 0.0 );
+
+      if( LvArray::tensorOps::l2Norm< 3 >( tempFieldSlotParticleSurfaceNormalGlobal[slot] ) < 1e-16 )
       {
-        // Initialize to zero
-        czReferenceArea[g][fieldIndex] = 0.0;
-
-        // Tensor condition: ||tempGridParticleSurfaceNormalGlobal[g][fieldIndex]|| < 1e-16.
-        if( LvArray::tensorOps::l2Norm< 3 >( tempGridParticleSurfaceNormalGlobal[g][fieldIndex] ) < 1e-16 )
-        {
-          continue;
-        }
-
-        // Tensor equation: czReferenceSurfaceNormal[g][fieldIndex] =
-        //   tempGridParticleSurfaceNormalGlobal[g][fieldIndex].
-        LvArray::tensorOps::copy< 3 >( czReferenceSurfaceNormal[g][fieldIndex], tempGridParticleSurfaceNormalGlobal[g][fieldIndex] );
-
-        switch( areaIntegrationMethod )
-        {
-          case mpm::AreaIntegrationOption::Mesh:
-            czReferenceArea[g][fieldIndex] = meshNodalAreaIntegration( hEl,
-                                                                        numSurfaceIntegrationPoints,
-                                                                        numNeighborsAll[g],
-                                                                        neighborRegions[g],
-                                                                        neighborSubRegions[g],
-                                                                        neighborIndices[g],
-                                                                        particleCenterView,
-                                                                        particleRVectorsView,
-                                                                        czReferenceSurfaceNormal[g][fieldIndex],
-                                                                        tempGridSurfacePositionGlobal[g][fieldIndex] );
-            break;
-          case mpm::AreaIntegrationOption::BruteForce:
-            czReferenceArea[g][fieldIndex] = bruteForceNodalAreaIntegration( hEl,
-                                                                              numSurfaceIntegrationPoints,
-                                                                              L,
-                                                                              dA,
-                                                                              czReferenceSurfaceNormal[g][fieldIndex],
-                                                                              tempGridSurfacePositionGlobal[g][fieldIndex] );
-            break;
-          default:
-              GEOS_ERROR( "Unrecognized nodal area integration method!" );
-        }
-        czReferenceArea[g][fieldIndex] *= ( czVolumeNormalization == 1 ? LvArray::math::min( tempGridVolumeGlobal[g] / cellVolume, 1.0 ) : 1.0 );
-        totalCohesiveSurfaceArea += czReferenceArea[g][fieldIndex];
+        continue;
       }
-    } );
 
-    // m_polymerCZThickness = m_totalBinderVolume * numVelocityFields / totalCohesiveSurfaceArea.get();
-    GEOS_LOG_RANK_0("Cohesive region initialization end: size " << czRegion.size());
+      LvArray::tensorOps::copy< 3 >( czReferenceSurfaceNormal[slot],
+                                     tempFieldSlotParticleSurfaceNormalGlobal[slot] );
+
+      switch( areaIntegrationMethod )
+      {
+        case mpm::AreaIntegrationOption::Mesh:
+          // Only the owning rank evaluates the local neighbor list; the
+          // result is reduced below to the globally replicated slot array.
+          if( localNode >= 0 && gridGhostRank[localNode] < 0 )
+          {
+            referenceAreaLocal[slot] =
+              meshNodalAreaIntegration( hEl,
+                                        numSurfaceIntegrationPoints,
+                                        numNeighborsAll[localNode],
+                                        neighborRegions[localNode],
+                                        neighborSubRegions[localNode],
+                                        neighborIndices[localNode],
+                                        particleCenterView,
+                                        particleRVectorsView,
+                                        czReferenceSurfaceNormal[slot],
+                                        tempFieldSlotSurfacePositionGlobal[slot] );
+          }
+          break;
+        case mpm::AreaIntegrationOption::BruteForce:
+          if( rank == 0 )
+          {
+            referenceAreaLocal[slot] =
+              bruteForceNodalAreaIntegration( hEl,
+                                              numSurfaceIntegrationPoints,
+                                              L,
+                                              dA,
+                                              czReferenceSurfaceNormal[slot],
+                                              tempFieldSlotSurfacePositionGlobal[slot] );
+          }
+          break;
+        default:
+          GEOS_ERROR( "Unrecognized nodal area integration method!" );
+      }
+
+      referenceAreaLocal[slot] *=
+        ( czVolumeNormalization == 1
+          ? LvArray::math::min( tempCohesiveNodeVolumeGlobal[cohesiveNode] / cellVolume, 1.0 )
+          : 1.0 );
+    }
+
+    MpiWrapper::allReduce( referenceAreaLocal,
+                           referenceAreaLocal,
+                           MpiWrapper::Reduction::Sum,
+                           MPI_COMM_GEOS );
+
+    real64 totalCohesiveSurfaceArea = 0.0;
+    for( localIndex slot = 0; slot < numCohesiveFieldSlots; ++slot )
+    {
+      czReferenceArea[slot] = referenceAreaLocal[slot];
+      totalCohesiveSurfaceArea += czReferenceArea[slot];
+    }
+
+    GEOS_LOG_RANK_0( "Cohesive region initialization end: " << numCohesivePairs
+                     << " field pairs on " << numCohesiveNodes << " physical nodes using "
+                     << numCohesiveFieldSlots
+                     << " compact field slots; total side area " << totalCohesiveSurfaceArea );
     czRegion.setInitialized( 1 );
   } );
 }
@@ -19957,7 +21006,7 @@ real64 SolidMechanicsMPM::convexHullAreaIntegration( real64 const (& hEl)[3],
 /**
  * @brief Enforces cohesive law.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * Updates all active cohesive field pairs and maps their accumulated slot forces to particles.
  */
 void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                                             ParticleManager & particleManager,
@@ -19968,11 +21017,11 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
   // during each kernel
   int const planeStrain = m_planeStrain;
   int const numDims = m_numDims;
-  int const numVelocityFields = m_numVelocityFields;
   globalIndex const invalidCohesiveNodeIndex = std::numeric_limits< globalIndex >::max();
   int const preventCZInterpenetration = m_preventCZInterpenetration;
   real64 const smallMass = m_smallMass;
   arrayView1d< int const > const periodic = partition.getPeriodic();
+  bool const hasPeriodicDomain = periodic[0] == 1 || periodic[1] == 1 || periodic[2] == 1;
   real64 domainExtent[3] = { };
   // Tensor equation: domainExtent = m_domainExtent.
   LvArray::tensorOps::copy< 3 >( domainExtent, m_domainExtent );
@@ -19986,55 +21035,80 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     }
 
     localIndex const czTag = czRegion.getTag();
-    int const numCohesiveNodes = czRegion.size();
+    localIndex const numCohesivePairs = czRegion.size();
+    localIndex const numCohesiveNodes = czRegion.getGlobalID().size();
+    localIndex const numCohesiveFieldSlots = czRegion.getFieldSlotNode().size();
     mpm::CohesiveSurfaceDisplacementUpdateOption const czSurfaceDisplacementUpdate =
       static_cast< mpm::CohesiveSurfaceDisplacementUpdateOption >( czRegion.getCZSurfaceDisplacementUpdate() );
 
     // CZ fields
-    SortedArrayView< globalIndex const > const czGlobalID = czRegion.getGlobalID();
+    arrayView2d< localIndex const > const pairToFieldSlot = czRegion.getFieldSlots();
+    arrayView1d< globalIndex const > const cohesiveNodeGlobalID = czRegion.getGlobalID();
+    arrayView1d< localIndex const > const fieldSlotNode = czRegion.getFieldSlotNode();
+    arrayView1d< localIndex const > const fieldSlotVelocityField = czRegion.getFieldSlotVelocityField();
     arrayView1d< real64 > czDamage = czRegion.getDamage();
-    arrayView2d< real64 > czReferenceArea = czRegion.getReferenceArea();
-    arrayView3d< real64 > czReferenceSurfaceNormal = czRegion.getReferenceSurfaceNormal();
+    arrayView1d< real64 const > czReferenceArea = czRegion.getReferenceArea();
+    arrayView2d< real64 const > czReferenceSurfaceNormal = czRegion.getReferenceSurfaceNormal();
     arrayView2d< real64 const > czReferencePosition = czRegion.getReferencePosition();
 
+    GEOS_ERROR_IF( pairToFieldSlot.size( 0 ) != numCohesivePairs ||
+                   pairToFieldSlot.size( 1 ) != 2 ||
+                   fieldSlotNode.size() != numCohesiveFieldSlots ||
+                   fieldSlotVelocityField.size() != numCohesiveFieldSlots ||
+                   czReferenceArea.size() != numCohesiveFieldSlots ||
+                   czReferenceSurfaceNormal.size( 0 ) != numCohesiveFieldSlots ||
+                   czReferenceSurfaceNormal.size( 1 ) != 3 ||
+                   czReferencePosition.size( 0 ) != numCohesiveNodes ||
+                   czReferencePosition.size( 1 ) != 3,
+                   "Invalid sparse cohesive field topology in region '" << czRegion.getName()
+                   << "'. Recreate the cohesive reference configuration with this version." );
+
     // Allocate temporary grid fields for cohesive zone calculations
-    array2d< real64 > tempGridMassLocal( numCohesiveNodes, m_numVelocityFields );
-    array3d< real64 > tempGridDisplacementLocal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridPeriodicDisplacementCosLocal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridPeriodicDisplacementSinLocal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridParticleSurfaceNormalLocal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array4d< real64 > tempGridDeformationGradientCofactorLocal( numCohesiveNodes, m_numVelocityFields, 3, 3 );
-    array3d< real64 > tempGridCohesiveTraction( numCohesiveNodes, m_numVelocityFields, 3 );
+    array1d< real64 > tempFieldSlotMassGlobal( numCohesiveFieldSlots );
+    array2d< real64 > tempFieldSlotDisplacementGlobal( numCohesiveFieldSlots, 3 );
+    array2d< real64 > tempFieldSlotPeriodicDisplacementCosGlobal( hasPeriodicDomain ? numCohesiveFieldSlots : 0, 3 );
+    array2d< real64 > tempFieldSlotPeriodicDisplacementSinGlobal( hasPeriodicDomain ? numCohesiveFieldSlots : 0, 3 );
+    array2d< real64 > tempFieldSlotParticleSurfaceNormalGlobal( numCohesiveFieldSlots, 3 );
+    array3d< real64 > tempFieldSlotDeformationGradientCofactorGlobal( numCohesiveFieldSlots, 3, 3 );
+    array2d< real64 > tempFieldSlotCohesiveForce( numCohesiveFieldSlots, 3 );
+    array1d< int > fieldSlotHasUndamagedPairStorage( numCohesiveFieldSlots );
+    arrayView1d< int > const fieldSlotHasUndamagedPair = fieldSlotHasUndamagedPairStorage;
 
     real64 constexpr twoPi = 6.283185307179586476925286766559;
 
     // Initialize temporary grid fields to zero
-    forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=,
-                                                        &tempGridMassLocal,
-                                                        &tempGridDisplacementLocal,
-                                                        &tempGridPeriodicDisplacementCosLocal,
-                                                        &tempGridPeriodicDisplacementSinLocal,
-                                                        &tempGridParticleSurfaceNormalLocal,
-                                                        &tempGridDeformationGradientCofactorLocal,
-                                                        &tempGridCohesiveTraction] GEOS_HOST_DEVICE ( localIndex const g )
+    forAll< parallelDevicePolicy<> >( numCohesiveFieldSlots, [=,
+                                                             &tempFieldSlotMassGlobal,
+                                                             &tempFieldSlotDisplacementGlobal,
+                                                             &tempFieldSlotPeriodicDisplacementCosGlobal,
+                                                             &tempFieldSlotPeriodicDisplacementSinGlobal,
+                                                             &tempFieldSlotParticleSurfaceNormalGlobal,
+                                                             &tempFieldSlotDeformationGradientCofactorGlobal,
+                                                             &tempFieldSlotCohesiveForce] GEOS_HOST_DEVICE ( localIndex const slot )
     {
-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      tempFieldSlotMassGlobal[slot] = 0.0;
+      LvArray::tensorOps::fill< 3 >( tempFieldSlotDisplacementGlobal[slot], 0.0 );
+      if( hasPeriodicDomain )
       {
-        tempGridMassLocal[g][fieldIndex] = 0.0;
+        LvArray::tensorOps::fill< 3 >( tempFieldSlotPeriodicDisplacementCosGlobal[slot], 0.0 );
+        LvArray::tensorOps::fill< 3 >( tempFieldSlotPeriodicDisplacementSinGlobal[slot], 0.0 );
+      }
+      LvArray::tensorOps::fill< 3 >( tempFieldSlotParticleSurfaceNormalGlobal[slot], 0.0 );
+      LvArray::tensorOps::fill< 3 >( tempFieldSlotCohesiveForce[slot], 0.0 );
+      LvArray::tensorOps::fill< 3, 3 >( tempFieldSlotDeformationGradientCofactorGlobal[slot], 0.0 );
+      fieldSlotHasUndamagedPair[slot] = 0;
+    } );
 
-        for( localIndex i = 0; i < numDims; ++i )
-        {
-          tempGridDisplacementLocal[g][fieldIndex][i] = 0.0;
-          tempGridPeriodicDisplacementCosLocal[g][fieldIndex][i] = 0.0;
-          tempGridPeriodicDisplacementSinLocal[g][fieldIndex][i] = 0.0;
-          tempGridParticleSurfaceNormalLocal[g][fieldIndex][i] = 0.0;
-          tempGridCohesiveTraction[g][fieldIndex][i] = 0.0;
-
-          for( localIndex j = 0; j < numDims; ++j )
-          {
-            tempGridDeformationGradientCofactorLocal[g][fieldIndex][i][j] = 0.0;
-          }
-        }
+    forAll< parallelDevicePolicy<> >( numCohesivePairs, [=] GEOS_HOST_DEVICE ( localIndex const pairIndex )
+    {
+      if( czDamage[pairIndex] < 1.0 )
+      {
+        RAJA::atomicMax( parallelDeviceAtomic{},
+                         &fieldSlotHasUndamagedPair[pairToFieldSlot[pairIndex][0]],
+                         1 );
+        RAJA::atomicMax( parallelDeviceAtomic{},
+                         &fieldSlotHasUndamagedPair[pairToFieldSlot[pairIndex][1]],
+                         1 );
       }
     } );
 
@@ -20046,7 +21120,6 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
       arrayView1d< localIndex const > const particleCZTag = subRegion.getParticleCZTag();
       arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
       arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-      arrayView2d< int const > const particleCohesiveFieldMapping = subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
       arrayView2d< globalIndex const > const particleReferenceGlobalNodeIndex = subRegion.getField< fields::mpm::particleReferenceGlobalNodeIndex >();
       arrayView2d< real64 const > const particleCohesiveReferencePosition = subRegion.getField< fields::mpm::particleCohesiveReferencePosition >();
       arrayView2d< real64 const > const particleCohesiveReferenceSurfacePosition = subRegion.getField< fields::mpm::particleCohesiveReferenceSurfacePosition >();
@@ -20063,12 +21136,12 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(),
                               [=,
-                              &tempGridMassLocal,
-                              &tempGridDisplacementLocal,
-                              &tempGridPeriodicDisplacementCosLocal,
-                              &tempGridPeriodicDisplacementSinLocal,
-                              &tempGridParticleSurfaceNormalLocal,
-                              &tempGridDeformationGradientCofactorLocal] GEOS_HOST ( localIndex const pp )
+                              &tempFieldSlotMassGlobal,
+                              &tempFieldSlotDisplacementGlobal,
+                              &tempFieldSlotPeriodicDisplacementCosGlobal,
+                              &tempFieldSlotPeriodicDisplacementSinGlobal,
+                              &tempFieldSlotParticleSurfaceNormalGlobal,
+                              &tempFieldSlotDeformationGradientCofactorGlobal] GEOS_HOST ( localIndex const pp )
         {
           localIndex const p = activeParticleIndices[pp];
 
@@ -20186,32 +21259,26 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
 
                 if( cachedNodeIndex != invalidCohesiveNodeIndex )
                 {
-                  localIndex const nodeIndex = LvArray::integerConversion< localIndex >( cachedNodeIndex );
-                  localIndex const fieldIndex = particleCohesiveFieldMapping[p][g];
-
-                  if( czDamage[nodeIndex] < 1.0 ) // We previously stored czDamage on each velocity field globally but with czRegions now, a region is a pair of velocity fields and should have the same value for both
+                  localIndex const fieldSlot = LvArray::integerConversion< localIndex >( cachedNodeIndex );
+                  if( fieldSlotHasUndamagedPair[fieldSlot] == 0 )
                   {
-                    particleCohesiveZoneFlag[p] = 1; // Reenable particle cohesive flag if any of the cohesive nodes are undamaged
+                    continue;
                   }
-                  else
-                  {
-                    // If particle does not have it's cohesive flag reenabled by end of check then flag it has a damaged
-                    // cohesive surface particle
-                    particleSurfaceFlag[p] = mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
-                  }
+                  particleCohesiveZoneFlag[p] = 1;
+                  localIndex const cohesiveNode = fieldSlotNode[fieldSlot];
 
                   real64 shapeFunctionValue = particleReferenceShapeFunctionValues[p][g];
 
-                  tempGridMassLocal[nodeIndex][fieldIndex] += particleMass[p] * shapeFunctionValue;
-                  // tempGridVolumeLocal[nodeIndex][fieldIndex] += particleVolume[p] * shapeFunctionValue;
+                  tempFieldSlotMassGlobal[fieldSlot] += particleMass[p] * shapeFunctionValue;
 
                   real64 cohesiveNodeDisplacement[3] = {};
                   if( useNodalCohesiveDisplacement )
                   {
                     real64 referenceVectorToNode[3] = {};
-                    // Tensor equation: referenceVectorToNode = czReferencePosition[nodeIndex] -
+                    // Tensor equation: referenceVectorToNode = the physical cohesive-node reference position -
                     // particleCohesiveReferencePosition[p].
-                    LvArray::tensorOps::copy< 3 >( referenceVectorToNode, czReferencePosition[nodeIndex] );
+                    LvArray::tensorOps::copy< 3 >( referenceVectorToNode,
+                                                   czReferencePosition[cohesiveNode] );
                     LvArray::tensorOps::subtract< 3 >( referenceVectorToNode, particleCohesiveReferencePosition[p] );
 
                     for( localIndex i = 0; i < numDims; ++i )
@@ -20251,17 +21318,14 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                       // branch-cut value itself so a single CZ node/field can be averaged robustly while its
                       // contributing particles are split over opposite periodic images.
                       real64 const angle = twoPi * cohesiveNodeDisplacement[i] / domainExtent[i];
-                      tempGridPeriodicDisplacementCosLocal[nodeIndex][fieldIndex][i] += massShapeFunctionValue * LvArray::math::cos( angle );
-                      tempGridPeriodicDisplacementSinLocal[nodeIndex][fieldIndex][i] += massShapeFunctionValue * LvArray::math::sin( angle );
+                      tempFieldSlotPeriodicDisplacementCosGlobal[fieldSlot][i] += massShapeFunctionValue * LvArray::math::cos( angle );
+                      tempFieldSlotPeriodicDisplacementSinGlobal[fieldSlot][i] += massShapeFunctionValue * LvArray::math::sin( angle );
                     }
                     else
                     {
-                      tempGridDisplacementLocal[nodeIndex][fieldIndex][i] += massShapeFunctionValue * cohesiveNodeDisplacement[i];
+                      tempFieldSlotDisplacementGlobal[fieldSlot][i] += massShapeFunctionValue * cohesiveNodeDisplacement[i];
                     }
-                    // tempGridCenterOfVolumeLocal[nodeIndex][fieldIndex][i] += particleVolume[p] *
-                    // (particlePosition[p][i] -
-                    // m_referenceCohesiveGridNodePositions[nodeIndex][i])* shapeFunctionValue;
-                    tempGridParticleSurfaceNormalLocal[nodeIndex][fieldIndex][i] += massShapeFunctionValue * particleSurfaceNormal[p][i];
+                    tempFieldSlotParticleSurfaceNormalGlobal[fieldSlot][i] += massShapeFunctionValue * particleSurfaceNormal[p][i];
                   }
 
                   // GEOS_LOG_RANK( "refPos:" << "{" << particleCohesiveReferencePosition[p][0] << ", " << particleCohesiveReferencePosition[p][1] << ", " << particleCohesiveReferencePosition[p][2] << "}, " <<
@@ -20283,98 +21347,99 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                   {
                     for( int j = 0; j < 3; ++j )
                     {
-                      tempGridDeformationGradientCofactorLocal[nodeIndex][fieldIndex][i][j] += particleMass[p] * shapeFunctionValue * deformationGradientCofactor[i][j];
+                      tempFieldSlotDeformationGradientCofactorGlobal[fieldSlot][i][j] +=
+                        massShapeFunctionValue * deformationGradientCofactor[i][j];
                     }
                   }
                 }
               }
             }
+
+            if( particleCohesiveZoneFlag[p] == 0 )
+            {
+              particleSurfaceFlag[p] = mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
+            }
           }
         } );
     } );
 
-    // Sync temporary grid fields
-    array2d< real64 > tempGridMassGlobal( numCohesiveNodes, m_numVelocityFields );
-    array3d< real64 > tempGridDisplacementGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridPeriodicDisplacementCosGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridPeriodicDisplacementSinGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridParticleSurfaceNormalGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array4d< real64 > tempGridDeformationGradientCofactorGlobal( numCohesiveNodes, m_numVelocityFields, 3, 3 );
-
-    MpiWrapper::allReduce( tempGridMassLocal,
-                           tempGridMassGlobal,
+    // Synchronize in place to keep peak cohesive scratch memory proportional
+    // to one copy of the active field slots.
+    MpiWrapper::allReduce( tempFieldSlotMassGlobal,
+                           tempFieldSlotMassGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
-    MpiWrapper::allReduce( tempGridDisplacementLocal,
-                           tempGridDisplacementGlobal,
+    MpiWrapper::allReduce( tempFieldSlotDisplacementGlobal,
+                           tempFieldSlotDisplacementGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
-    MpiWrapper::allReduce( tempGridPeriodicDisplacementCosLocal,
-                           tempGridPeriodicDisplacementCosGlobal,
+    if( hasPeriodicDomain )
+    {
+      MpiWrapper::allReduce( tempFieldSlotPeriodicDisplacementCosGlobal,
+                             tempFieldSlotPeriodicDisplacementCosGlobal,
+                             MpiWrapper::Reduction::Sum,
+                             MPI_COMM_GEOS );
+
+      MpiWrapper::allReduce( tempFieldSlotPeriodicDisplacementSinGlobal,
+                             tempFieldSlotPeriodicDisplacementSinGlobal,
+                             MpiWrapper::Reduction::Sum,
+                             MPI_COMM_GEOS );
+    }
+
+    MpiWrapper::allReduce( tempFieldSlotParticleSurfaceNormalGlobal,
+                           tempFieldSlotParticleSurfaceNormalGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
-    MpiWrapper::allReduce( tempGridPeriodicDisplacementSinLocal,
-                           tempGridPeriodicDisplacementSinGlobal,
-                           MpiWrapper::Reduction::Sum,
-                           MPI_COMM_GEOS );
-
-    MpiWrapper::allReduce( tempGridParticleSurfaceNormalLocal,
-                           tempGridParticleSurfaceNormalGlobal,
-                           MpiWrapper::Reduction::Sum,
-                           MPI_COMM_GEOS );
-
-    MpiWrapper::allReduce( tempGridDeformationGradientCofactorLocal,
-                           tempGridDeformationGradientCofactorGlobal,
+    MpiWrapper::allReduce( tempFieldSlotDeformationGradientCofactorGlobal,
+                           tempFieldSlotDeformationGradientCofactorGlobal,
                            MpiWrapper::Reduction::Sum,
                            MPI_COMM_GEOS );
 
     // Normalize fields after global sync
-    forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=,
-                                                        &tempGridDisplacementGlobal,
-                                                        &tempGridPeriodicDisplacementCosGlobal,
-                                                        &tempGridPeriodicDisplacementSinGlobal,
-                                                        &tempGridParticleSurfaceNormalGlobal,
-                                                        &tempGridDeformationGradientCofactorGlobal] GEOS_HOST_DEVICE ( localIndex const g )
+    forAll< parallelDevicePolicy<> >( numCohesiveFieldSlots, [=,
+                                                             &tempFieldSlotDisplacementGlobal,
+                                                             &tempFieldSlotPeriodicDisplacementCosGlobal,
+                                                             &tempFieldSlotPeriodicDisplacementSinGlobal,
+                                                             &tempFieldSlotParticleSurfaceNormalGlobal,
+                                                             &tempFieldSlotDeformationGradientCofactorGlobal] GEOS_HOST_DEVICE ( localIndex const slot )
     {
-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      if( tempFieldSlotMassGlobal[slot] > smallMass )
       {
-        if( tempGridMassGlobal[g][fieldIndex] > smallMass )
+        for( int i = 0; i < numDims; ++i )
         {
-          for( int i = 0; i < numDims; ++i )
+          if( periodic[i] == 1 && domainExtent[i] > 0.0 )
           {
-            if( periodic[i] == 1 && domainExtent[i] > 0.0 )
+            real64 const periodicCos = tempFieldSlotPeriodicDisplacementCosGlobal[slot][i];
+            real64 const periodicSin = tempFieldSlotPeriodicDisplacementSinGlobal[slot][i];
+            if( periodicCos * periodicCos + periodicSin * periodicSin >
+                1.0e-30 * tempFieldSlotMassGlobal[slot] * tempFieldSlotMassGlobal[slot] )
             {
-              real64 const periodicCos = tempGridPeriodicDisplacementCosGlobal[g][fieldIndex][i];
-              real64 const periodicSin = tempGridPeriodicDisplacementSinGlobal[g][fieldIndex][i];
-              if( periodicCos * periodicCos + periodicSin * periodicSin > 1.0e-30 * tempGridMassGlobal[g][fieldIndex] * tempGridMassGlobal[g][fieldIndex] )
-              {
-                tempGridDisplacementGlobal[g][fieldIndex][i] =
-                  domainExtent[i] * LvArray::math::atan2( periodicSin, periodicCos ) / twoPi;
-              }
-              else
-              {
-                tempGridDisplacementGlobal[g][fieldIndex][i] = 0.0;
-              }
+              tempFieldSlotDisplacementGlobal[slot][i] =
+                domainExtent[i] * LvArray::math::atan2( periodicSin, periodicCos ) / twoPi;
             }
             else
             {
-              tempGridDisplacementGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
-            }
-            tempGridParticleSurfaceNormalGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
-
-            for( int j = 0; j < numDims; ++j )
-            {
-              tempGridDeformationGradientCofactorGlobal[g][fieldIndex][i][j] /= tempGridMassGlobal[g][fieldIndex];
+              tempFieldSlotDisplacementGlobal[slot][i] = 0.0;
             }
           }
-
-          if( numDims == 2 )
+          else
           {
-            tempGridDeformationGradientCofactorGlobal[g][fieldIndex][2][2] = 1.0;
+            tempFieldSlotDisplacementGlobal[slot][i] /= tempFieldSlotMassGlobal[slot];
           }
+          tempFieldSlotParticleSurfaceNormalGlobal[slot][i] /= tempFieldSlotMassGlobal[slot];
+
+          for( int j = 0; j < numDims; ++j )
+          {
+            tempFieldSlotDeformationGradientCofactorGlobal[slot][i][j] /= tempFieldSlotMassGlobal[slot];
+          }
+        }
+
+        if( numDims == 2 )
+        {
+          tempFieldSlotDeformationGradientCofactorGlobal[slot][2][2] = 1.0;
         }
       }
     } );
@@ -20387,7 +21452,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     {
       arrayView1d< real64 > const constitutiveTemperature = cohesiveZone.getReference< array1d< real64 > >( "temperature" );
       arrayView1d< real64 const > const czTemperature = czRegion.getTemperature();
-      forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+      forAll< parallelDevicePolicy<> >( numCohesivePairs, [=] GEOS_HOST_DEVICE ( localIndex const g )
       {
         constitutiveTemperature[g] = czTemperature[g];
       } );
@@ -20407,19 +21472,18 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                                                                                                  planeStrain,
                                                                                                  smallMass,
                                                                                                  preventCZInterpenetration,
-                                                                                                 czRegion.getFieldA(),
-                                                                                                 czRegion.getFieldB(),
+                                                                                                 pairToFieldSlot,
                                                                                                  periodic[0],
                                                                                                  periodic[1],
                                                                                                  periodic[2],
                                                                                                  domainExtent[0],
                                                                                                  domainExtent[1],
                                                                                                  domainExtent[2],
-                                                                                                 tempGridMassGlobal,
-                                                                                                 tempGridDisplacementGlobal,
-                                                                                                 tempGridParticleSurfaceNormalGlobal,
-                                                                                                 tempGridDeformationGradientCofactorGlobal,
-                                                                                                 tempGridCohesiveTraction,
+                                                                                                 tempFieldSlotMassGlobal,
+                                                                                                 tempFieldSlotDisplacementGlobal,
+                                                                                                 tempFieldSlotParticleSurfaceNormalGlobal,
+                                                                                                 tempFieldSlotDeformationGradientCofactorGlobal,
+                                                                                                 tempFieldSlotCohesiveForce,
                                                                                                  czReferenceSurfaceNormal,
                                                                                                  czReferenceArea );
     } );
@@ -20428,39 +21492,58 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     if( cohesiveZone.hasWrapper("damage"))
     {
       arrayView1d< real64 const > const constitutiveDamage = cohesiveZone.getReference< array1d< real64 > >( "damage" );
-      forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+      forAll< parallelDevicePolicy<> >( numCohesivePairs, [=] GEOS_HOST_DEVICE ( localIndex const g )
       {
         czDamage[g] = LvArray::math::max( czDamage[g], constitutiveDamage[g] );
       } );
     }
 
+    // Damage can reach one in the constitutive update above. Rebuild the
+    // endpoint activity flags before mapping forces back to particles.
+    forAll< parallelDevicePolicy<> >( numCohesiveFieldSlots, [=] GEOS_HOST_DEVICE ( localIndex const slot )
+    {
+      fieldSlotHasUndamagedPair[slot] = 0;
+    } );
+    forAll< parallelDevicePolicy<> >( numCohesivePairs, [=] GEOS_HOST_DEVICE ( localIndex const pairIndex )
+    {
+      localIndex const slotA = pairToFieldSlot[pairIndex][0];
+      localIndex const slotB = pairToFieldSlot[pairIndex][1];
+      if( czDamage[pairIndex] < 1.0 &&
+          tempFieldSlotMassGlobal[slotA] > smallMass &&
+          tempFieldSlotMassGlobal[slotB] > smallMass )
+      {
+        RAJA::atomicMax( parallelDeviceAtomic{}, &fieldSlotHasUndamagedPair[slotA], 1 );
+        RAJA::atomicMax( parallelDeviceAtomic{}, &fieldSlotHasUndamagedPair[slotB], 1 );
+      }
+    } );
+
     // XXX Debug-only temp-grid visualization hook; remove if no longer needed.
     arrayView1d< int > const gridCohesiveNode = nodeManager.getReference< array1d< int > >( viewKeyStruct::gridCohesiveNodeString() );
-    arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap();
+    auto const & nodeGlobalToLocalMap = nodeManager.globalToLocalMap();
     arrayView3d< real64 > const gridCohesiveArea = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveAreaString() );
     arrayView3d< real64 > const gridCohesiveForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveForceString() );
     arrayView3d< real64 > const gridDisplacement = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDisplacementString() );
     arrayView3d< real64 > const gridParticleMappedSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridParticleMappedSurfaceNormalString() );
-    // Check if unordered_map is part of lvarray and can be passed into kernel, use that instead to find the local grid
-    // node index
-    forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST ( localIndex const g )
+    for( localIndex slot = 0; slot < numCohesiveFieldSlots; ++slot )
+    {
+      globalIndex const nodeGlobalID = cohesiveNodeGlobalID[fieldSlotNode[slot]];
+      auto const nodeIter = nodeGlobalToLocalMap.find( nodeGlobalID );
+      if( nodeIter == nodeGlobalToLocalMap.end() )
       {
-        for( localIndex n = 0; n < numCohesiveNodes; ++n )
-          if( localToGlobalMap[g] == czGlobalID[n] )
-          {
-            gridCohesiveNode[g] = 1;
-            for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
-            {
-              for( localIndex i = 0; i < numDims; ++i )
-              {
-                gridCohesiveArea[g][fieldIndex][i] = czReferenceSurfaceNormal[n][fieldIndex][i];
-                gridDisplacement[g][fieldIndex][i] = tempGridDisplacementGlobal[n][fieldIndex][i];
-                gridCohesiveForce[g][fieldIndex][i] = tempGridCohesiveTraction[n][fieldIndex][i];
-                gridParticleMappedSurfaceNormal[g][fieldIndex][i] = tempGridParticleSurfaceNormalGlobal[n][fieldIndex][i];
-              }
-            }
-          }
-      } );
+        continue;
+      }
+
+      localIndex const g = nodeIter->second;
+      localIndex const fieldIndex = fieldSlotVelocityField[slot];
+      gridCohesiveNode[g] = 1;
+      for( localIndex i = 0; i < numDims; ++i )
+      {
+        gridCohesiveArea[g][fieldIndex][i] = czReferenceSurfaceNormal[slot][i];
+        gridDisplacement[g][fieldIndex][i] = tempFieldSlotDisplacementGlobal[slot][i];
+        gridCohesiveForce[g][fieldIndex][i] = tempFieldSlotCohesiveForce[slot][i];
+        gridParticleMappedSurfaceNormal[g][fieldIndex][i] = tempFieldSlotParticleSurfaceNormalGlobal[slot][i];
+      }
+    }
 
     // Map cohesive law back to particle
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -20469,7 +21552,6 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
       arrayView1d< integer > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
       arrayView1d< localIndex const > const particleCZTag = subRegion.getParticleCZTag();
       arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-      arrayView2d< int const > const particleCohesiveFieldMapping = subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
       arrayView2d< globalIndex const > const particleReferenceGlobalNodeIndex = subRegion.getField< fields::mpm::particleReferenceGlobalNodeIndex >();
       arrayView2d< real64 > const particleCohesiveForce = subRegion.getField< fields::mpm::particleCohesiveForce >();
       arrayView2d< real64 const > const particleReferenceShapeFunctionValues = subRegion.getField< fields::mpm::particleReferenceShapeFunctionValues >();
@@ -20485,30 +21567,33 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
 
           if( particleCohesiveZoneFlag[p] == 1 && particleCZTag[p] == czTag )
           {
+            bool hasActiveCohesiveMapping = false;
             for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
             {
               globalIndex const cachedNodeIndex = particleReferenceGlobalNodeIndex[p][g];
 
               if( cachedNodeIndex != invalidCohesiveNodeIndex )
               {
-                localIndex const nodeIndex = LvArray::integerConversion< localIndex >( cachedNodeIndex );
+                localIndex const fieldSlot = LvArray::integerConversion< localIndex >( cachedNodeIndex );
                 real64 shapeFunctionValue = particleReferenceShapeFunctionValues[p][g];
-                localIndex const fieldIndex = particleCohesiveFieldMapping[p][g];
-                if( tempGridMassGlobal[nodeIndex][fieldIndex] > smallMass && czDamage[nodeIndex] < 1.0 )
+                if( tempFieldSlotMassGlobal[fieldSlot] > smallMass &&
+                    fieldSlotHasUndamagedPair[fieldSlot] != 0 )
                 {
+                  hasActiveCohesiveMapping = true;
                   for( localIndex i = 0; i < numDims; ++i )
                   {
-                    particleCohesiveForce[p][i] += tempGridCohesiveTraction[nodeIndex][fieldIndex][i] * particleMass[p] * shapeFunctionValue / tempGridMassGlobal[nodeIndex][fieldIndex];
+                    particleCohesiveForce[p][i] += tempFieldSlotCohesiveForce[fieldSlot][i] *
+                                                   particleMass[p] * shapeFunctionValue /
+                                                   tempFieldSlotMassGlobal[fieldSlot];
                   }
                 }
-                else
-                {
-                  // If cohesive node is fully damaged then any particles mapping to it should have their cohesive zone
-                  // flags turned off.
-                  particleCohesiveZoneFlag[p] = 0;
-                  particleSurfaceFlag[p] = mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
-                }
               }
+            }
+
+            if( !hasActiveCohesiveMapping )
+            {
+              particleCohesiveZoneFlag[p] = 0;
+              particleSurfaceFlag[p] = mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
             }
           }
 
@@ -23583,10 +24668,23 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   arrayView3d< real64 > const & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
   arrayView3d< real64 > const & gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
 
-  // Compute contact forces
-  computeContactForces( dt,
-                        particleManager,
-                        nodeManager );
+  // Compute contact forces.  Keep the legacy pairwise path intact and select
+  // the simultaneous node solve only when explicitly requested.
+  if( m_contactSolver == mpm::ContactSolverOption::Pairwise )
+  {
+    computeContactForces( dt,
+                          particleManager,
+                          nodeManager );
+  }
+  else
+  {
+    computeProjectedGaussSeidelContact( dt,
+                                        particleManager,
+                                        nodeManager,
+                                        gridVelocity,
+                                        gridContactForce,
+                                        1.0 / dt );
+  }
 
   // Update grid momenta and velocities based on contact forces
   localIndex const numDims = m_numDims;
@@ -24148,6 +25246,619 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 }
 
 /**
+ * @brief Computes simultaneous nodal contact with projected Gauss-Seidel.
+ *
+ * The legacy pairwise routine above intentionally remains independent.  This
+ * alternative first constructs the active constraints at one node, converges
+ * their impulses against a shared working velocity, writes the resulting
+ * force/momentum correction, and then reuses the same storage for the next
+ * node.  Consequently, temporary storage scales with the largest active
+ * contact set on one node rather than nodes times all possible field pairs.
+ */
+void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
+  real64 const dt,
+  ParticleManager & particleManager,
+  NodeManager & nodeManager,
+  arrayView3d< real64 const > const trialVelocity,
+  arrayView3d< real64 > const contactOutput,
+  real64 const outputScale )
+{
+  GEOS_MARK_FUNCTION;
+
+  real64 hEl[3] = {};
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  mpm::ContactNormalTypeOption const contactNormalType = m_contactNormalType;
+  mpm::ContactGapCorrectionOption const contactGapCorrection = m_contactGapCorrection;
+  mpm::OverlapCorrectionOption const overlapCorrection = m_overlapCorrection;
+
+  int const planeStrain = m_planeStrain;
+  int const damageFieldPartitioning = m_damageFieldPartitioning;
+  int const maxLRIterations = m_maxLRIterations;
+  real64 const LRtolerance = m_LRtolerance;
+  int const preventCZInterpenetration = m_preventCZInterpenetration;
+  int const useSurfacePositionForContact = m_useSurfacePositionForContact;
+  int const enableWeakInterfaceTraceProjection = m_enableWeakInterfaceTraceProjection;
+  int const weakInterfaceTraceSuppressNodalContact = m_weakInterfaceTraceSuppressNodalContact;
+  int const numWeakInterfaceTracePairs = m_weakInterfaceTracePairs.size( 0 );
+
+  int const numContactGroups = m_numContactGroups;
+  int const numVelocityFields = m_numVelocityFields;
+  int const rigidBodyMode = m_rigidBodyMode;
+  real64 const rigidBodyPenetrationPenaltyBeta =
+    rigidBodyMode == 1 ? m_rigidBodyPenetrationPenaltyBeta : 0.0;
+  real64 const smallMass = m_smallMass;
+  real64 const neighborRadius = m_neighborRadius;
+  real64 const separabilityMinDamage = m_separabilityMinDamage;
+  real64 const thinFeatureDFGThreshold = m_thinFeatureDFGThreshold;
+  real64 const overlapThreshold1 = m_overlapThreshold1;
+  real64 const overlapThreshold2 = m_overlapThreshold2;
+  real64 const maxParticleVelocitySquared = m_maxParticleVelocitySquared;
+  real64 const surfaceQualityThreshold = m_surfaceQualityThreshold;
+  real64 const maxSingleFieldStateFractionForSeparability =
+    m_maxSingleFieldStateFractionForSeparability;
+
+  arrayView2d< integer const > const rigidBodyGridFieldColor =
+    nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() );
+  arrayView2d< integer const > const rigidBodyGridFieldContactGroup =
+    nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() );
+  arrayView2d< int const > const gridCohesiveFieldFlag =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
+  arrayView2d< real64 const > const gridDamage =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageString() );
+  arrayView2d< real64 > const gridDamageGradient =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
+  arrayView3d< real64 const > const gridMappingNormalTensor =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMappingNormalTensorString() );
+  arrayView2d< real64 const > const gridMass =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView2d< real64 const > const gridMaterialVolume =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
+  arrayView2d< real64 const > const gridMaxDamage =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() );
+  arrayView2d< real64 const > const gridSingleFieldStateFraction =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSingleFieldStateFractionString() );
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition =
+    nodeManager.referencePosition();
+  arrayView2d< real64 const > const gridSurfaceFieldMass =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
+  arrayView2d< real64 const > const gridSurfaceNormalWeights =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
+  arrayView3d< real64 const > const gridCenterOfMass =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
+  arrayView3d< real64 const > const gridSurfaceNormal =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+  arrayView3d< real64 const > const gridSurfacePosition =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
+  arrayView2d< int > const gridWeakInterfaceTraceContactSuppressed =
+    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() );
+  arrayView2d< int const > const weakInterfaceTracePairs = m_weakInterfaceTracePairs;
+
+  ParticleManager::ParticleViewAccessor< arrayView1d< localIndex const > > particleGroupAccessor =
+    particleManager.constructArrayViewAccessor< localIndex, 1 >( "particleGroup" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particleDamageGradientAccessor =
+    particleManager.constructArrayViewAccessor< real64, 2 >( "particleDamageGradient" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor =
+    particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particleSurfaceNormalAccessor =
+    particleManager.constructArrayViewAccessor< real64, 2 >( "particleSurfaceNormal" );
+  ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroupView =
+    particleGroupAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleDamageGradientView =
+    particleDamageGradientAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePositionView =
+    particlePositionAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleSurfaceNormalView =
+    particleSurfaceNormalAccessor.toNestedViewConst();
+  arrayView1d< localIndex const > const numNeighborsAll =
+    m_nodalNeighborList.m_numParticles.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborRegions =
+    m_nodalNeighborList.m_toParticleRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborSubRegions =
+    m_nodalNeighborList.m_toParticleSubRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborIndices =
+    m_nodalNeighborList.m_toParticleIndex.toViewConst();
+
+  real64 maxFrictionCoefficient = 0.0;
+  for( integer i = 0; i < numContactGroups; ++i )
+  {
+    for( integer j = 0; j < numContactGroups; ++j )
+    {
+      maxFrictionCoefficient = std::max( maxFrictionCoefficient,
+                                         m_frictionCoefficientTable[i][j] );
+    }
+  }
+
+  std::vector< real64 > nodalMass( numVelocityFields, 0.0 );
+  std::vector< std::array< real64, 3 > > initialVelocity( numVelocityFields );
+  std::vector< std::array< real64, 3 > > solvedVelocity( numVelocityFields );
+  std::vector< mpm::ProjectedGaussSeidelContactConstraint > constraints;
+  // A small reserve avoids allocations in the common case without allocating
+  // O(numVelocityFields^2) storage when the global contact-group count is large.
+  constraints.reserve( 8 );
+
+  integer localNonconvergedNodes = 0;
+  real64 localMaximumResidual = 0.0;
+  real64 localMaximumPenetration = 0.0;
+
+  for( localIndex g = 0; g < nodeManager.size(); ++g )
+  {
+    constraints.clear();
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      nodalMass[fieldIndex] = gridMass[g][fieldIndex];
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        initialVelocity[fieldIndex][i] = trialVelocity[g][fieldIndex][i];
+        solvedVelocity[fieldIndex][i] = trialVelocity[g][fieldIndex][i];
+        contactOutput[g][fieldIndex][i] = 0.0;
+      }
+    }
+
+    for( localIndex A = 0; A < numVelocityFields - 1; ++A )
+    {
+      for( localIndex B = A + 1; B < numVelocityFields; ++B )
+      {
+        bool const active =
+          gridMass[g][A] > smallMass &&
+          gridMass[g][B] > smallMass &&
+          LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-16 &&
+          LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][B] ) > 1.0e-16;
+        if( !active )
+        {
+          continue;
+        }
+
+        real64 frictionCoefficient =
+          m_frictionCoefficientTable[A % numContactGroups][B % numContactGroups];
+        bool const rigidBodyContactPair =
+          rigidBodyMode == 1 &&
+          rigidBodyGridFieldColor[g][A] != -1 &&
+          rigidBodyGridFieldColor[g][B] != -1 &&
+          rigidBodyGridFieldColor[g][A] != rigidBodyGridFieldColor[g][B];
+        if( rigidBodyMode == 1 && !rigidBodyContactPair )
+        {
+          continue;
+        }
+        if( rigidBodyContactPair )
+        {
+          integer const groupA = rigidBodyGridFieldContactGroup[g][A];
+          integer const groupB = rigidBodyGridFieldContactGroup[g][B];
+          if( groupA >= 0 && groupA < numContactGroups &&
+              groupB >= 0 && groupB < numContactGroups )
+          {
+            frictionCoefficient = m_frictionCoefficientTable[groupA][groupB];
+          }
+          else
+          {
+            frictionCoefficient = maxFrictionCoefficient;
+          }
+        }
+
+        bool weakTracePair = rigidBodyMode == 0 &&
+                             enableWeakInterfaceTraceProjection == 1;
+        if( weakTracePair && numWeakInterfaceTracePairs > 0 )
+        {
+          weakTracePair = false;
+          int const groupA = numContactGroups > 0 ? A % numContactGroups : A;
+          int const groupB = numContactGroups > 0 ? B % numContactGroups : B;
+          for( int pairIndex = 0; pairIndex < numWeakInterfaceTracePairs; ++pairIndex )
+          {
+            int const p0 = weakInterfaceTracePairs[pairIndex][0];
+            int const p1 = weakInterfaceTracePairs[pairIndex][1];
+            if( ( groupA == p0 && groupB == p1 ) ||
+                ( groupA == p1 && groupB == p0 ) )
+            {
+              weakTracePair = true;
+            }
+          }
+        }
+        if( weakTracePair && weakInterfaceTraceSuppressNodalContact == 1 )
+        {
+          gridWeakInterfaceTraceContactSuppressed[g][A] = 1;
+          gridWeakInterfaceTraceContactSuppressed[g][B] = 1;
+          continue;
+        }
+
+        bool separable = false;
+        bool const cohesivePair =
+          gridCohesiveFieldFlag[g][A] != 0 &&
+          gridCohesiveFieldFlag[g][B] != 0;
+        if( rigidBodyMode == 1 )
+        {
+          separable = true;
+        }
+        else if( cohesivePair )
+        {
+          if( mpm::projectedGaussSeidelContact::suppressContactForCohesivePair(
+                gridCohesiveFieldFlag[g][A],
+                gridCohesiveFieldFlag[g][B],
+                preventCZInterpenetration ) )
+          {
+            // Cohesive traction already owns this interface.  Ordinary
+            // contact is added only when the user requests normal
+            // interpenetration prevention.
+            continue;
+          }
+          separable = true;
+          frictionCoefficient = 0.0;
+        }
+        else
+        {
+          real64 const surfaceQuality =
+            computeSurfaceQualityFromMappingNormalTensor( planeStrain,
+                                                          gridMappingNormalTensor[g][A],
+                                                          gridMappingNormalTensor[g][B],
+                                                          gridMaterialVolume[g][A],
+                                                          gridMaterialVolume[g][B] );
+          real64 const pairMaterialVolume =
+            gridMaterialVolume[g][A] + gridMaterialVolume[g][B];
+          real64 const singleFieldStateFraction =
+            pairMaterialVolume > 1.0e-30
+            ? ( gridSingleFieldStateFraction[g][A] * gridMaterialVolume[g][A] +
+                gridSingleFieldStateFraction[g][B] * gridMaterialVolume[g][B] ) /
+              pairMaterialVolume
+            : 0.0;
+          separable = evaluateSeparabilityCriterion(
+            numContactGroups,
+            maxSingleFieldStateFractionForSeparability,
+            separabilityMinDamage,
+            thinFeatureDFGThreshold,
+            neighborRadius,
+            surfaceQualityThreshold,
+            A,
+            B,
+            gridDamage[g][A],
+            gridDamage[g][B],
+            gridMaxDamage[g][A],
+            gridMaxDamage[g][B],
+            gridCenterOfMass[g][A],
+            gridCenterOfMass[g][B],
+            surfaceQuality,
+            singleFieldStateFraction );
+        }
+
+        real64 const mA = gridMass[g][A];
+        real64 const mB = gridMass[g][B];
+        real64 const VA = gridMaterialVolume[g][A];
+        real64 const VB = gridMaterialVolume[g][B];
+        real64 nA[3] = {};
+        real64 nB[3] = {};
+        real64 nAB[3] = {};
+        LvArray::tensorOps::copy< 3 >( nA, gridSurfaceNormal[g][A] );
+        LvArray::tensorOps::copy< 3 >( nB, gridSurfaceNormal[g][B] );
+
+        mpm::ContactNormalTypeOption const activeContactNormalType =
+          rigidBodyMode == 1 &&
+          contactNormalType == mpm::ContactNormalTypeOption::LogisticRegression
+          ? mpm::ContactNormalTypeOption::MassWeighted
+          : contactNormalType;
+        switch( activeContactNormalType )
+        {
+          case mpm::ContactNormalTypeOption::Difference:
+            LvArray::tensorOps::copy< 3 >( nAB, nA );
+            LvArray::tensorOps::subtract< 3 >( nAB, nB );
+            break;
+          case mpm::ContactNormalTypeOption::MassWeighted:
+            LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
+            LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
+            break;
+          case mpm::ContactNormalTypeOption::LargerMass:
+            if( mA > mB )
+            {
+              LvArray::tensorOps::copy< 3 >( nAB, nA );
+            }
+            else
+            {
+              LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1.0 );
+            }
+            break;
+          case mpm::ContactNormalTypeOption::Mixed:
+          {
+            real64 const rhoA = mA / VA;
+            real64 const rhoB = mB / VB;
+            if( isZero( rhoA - rhoB, 0.1 * rhoA ) )
+            {
+              LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
+              LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
+            }
+            else if( rhoA > rhoB )
+            {
+              LvArray::tensorOps::copy< 3 >( nAB, nA );
+            }
+            else
+            {
+              LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1.0 );
+            }
+            break;
+          }
+          case mpm::ContactNormalTypeOption::Aligned:
+          {
+            real64 tempA[3] = {};
+            real64 tempB[3] = {};
+            real64 const threshold = 0.9;
+            real64 const xxA = LvArray::math::min(
+              LvArray::math::max( ( gridSurfaceNormalWeights[g][A] - threshold ) /
+                                  threshold, 0.0 ), 1.0 );
+            real64 const xxB = LvArray::math::min(
+              LvArray::math::max( ( gridSurfaceNormalWeights[g][B] - threshold ) /
+                                  threshold, 0.0 ), 1.0 );
+            LvArray::tensorOps::scaledCopy< 3 >(
+              tempA, nA, 3 * LvArray::math::pow( xxA, 2 ) -
+                          2 * LvArray::math::pow( xxA, 3 ) );
+            LvArray::tensorOps::scaledCopy< 3 >(
+              tempB, nB, 3 * LvArray::math::pow( xxB, 2 ) -
+                          2 * LvArray::math::pow( xxB, 3 ) );
+            LvArray::tensorOps::copy< 3 >( nAB, tempA );
+            LvArray::tensorOps::subtract< 3 >( nAB, tempB );
+            break;
+          }
+          case mpm::ContactNormalTypeOption::LogisticRegression:
+          {
+            real64 n0[3] = {};
+            real64 unusedSurfacePosition[3] = {};
+            LvArray::tensorOps::scaledCopy< 3 >( n0, nA, mA );
+            LvArray::tensorOps::scaledAdd< 3 >( n0, nB, -mB );
+            logisticRegression( planeStrain,
+                                numContactGroups,
+                                damageFieldPartitioning,
+                                maxLRIterations,
+                                LRtolerance,
+                                hEl,
+                                A,
+                                B,
+                                numNeighborsAll[g],
+                                neighborRegions[g],
+                                neighborSubRegions[g],
+                                neighborIndices[g],
+                                particleGroupView,
+                                particleDamageGradientView,
+                                particleSurfaceNormalView,
+                                particlePositionView,
+                                gridPosition[g],
+                                gridDamageGradient[g],
+                                n0,
+                                nAB,
+                                unusedSurfacePosition );
+            break;
+          }
+          default:
+            GEOS_ERROR( "Unrecognized contact normal type." );
+        }
+
+        real64 normalMagnitude = LvArray::tensorOps::l2Norm< 3 >( nAB );
+        if( normalMagnitude < 1.0e-20 )
+        {
+          LvArray::tensorOps::copy< 3 >( nAB, nA );
+        }
+        if( planeStrain == 1 )
+        {
+          nAB[2] = 0.0;
+        }
+        normalMagnitude = LvArray::tensorOps::l2Norm< 3 >( nAB );
+        if( normalMagnitude < 1.0e-20 || !std::isfinite( normalMagnitude ) )
+        {
+          continue;
+        }
+        LvArray::tensorOps::scale< 3 >( nAB, 1.0 / normalMagnitude );
+
+        mpm::ProjectedGaussSeidelContactConstraint constraint;
+        constraint.fieldA = A;
+        constraint.fieldB = B;
+        constraint.normal = {{ nAB[0], nAB[1], nAB[2] }};
+        constraint.frictionCoefficient = frictionCoefficient;
+        constraint.bilateral = !separable;
+        if( !separable )
+        {
+          constraints.emplace_back( constraint );
+          continue;
+        }
+
+        real64 const inverseMassSum = 1.0 / mA + 1.0 / mB;
+        std::array< real64, 3 > const initialRelativeVelocity = {{
+          initialVelocity[B][0] - initialVelocity[A][0],
+          initialVelocity[B][1] - initialVelocity[A][1],
+          initialVelocity[B][2] - initialVelocity[A][2]
+        }};
+        real64 const initialNormalVelocity =
+          mpm::projectedGaussSeidelContact::dot( initialRelativeVelocity,
+                                                 constraint.normal );
+
+        real64 const gap0 = planeStrain == 1
+          ? 1.0 / LvArray::math::sqrt(
+              LvArray::math::pow( nAB[0] / hEl[0], 2 ) +
+              LvArray::math::pow( nAB[1] / hEl[1], 2 ) )
+          : 1.0 / LvArray::math::sqrt(
+              LvArray::math::pow( nAB[0] / hEl[0], 2 ) +
+              LvArray::math::pow( nAB[1] / hEl[1], 2 ) +
+              LvArray::math::pow( nAB[2] / hEl[2], 2 ) );
+
+        real64 gapScale = 0.0;
+        real64 surfacePositionA[3] = {};
+        real64 surfacePositionB[3] = {};
+        if( gridSurfaceFieldMass[g][A] > smallMass &&
+            useSurfacePositionForContact )
+        {
+          LvArray::tensorOps::copy< 3 >( surfacePositionA,
+                                         gridSurfacePosition[g][A] );
+        }
+        else
+        {
+          LvArray::tensorOps::copy< 3 >( surfacePositionA,
+                                         gridCenterOfMass[g][A] );
+          gapScale += 0.5;
+        }
+        if( gridSurfaceFieldMass[g][B] > smallMass &&
+            useSurfacePositionForContact )
+        {
+          LvArray::tensorOps::copy< 3 >( surfacePositionB,
+                                         gridSurfacePosition[g][B] );
+        }
+        else
+        {
+          LvArray::tensorOps::copy< 3 >( surfacePositionB,
+                                         gridCenterOfMass[g][B] );
+          gapScale += 0.5;
+        }
+        real64 const gap =
+          ( surfacePositionB[0] - surfacePositionA[0] ) * nAB[0] +
+          ( surfacePositionB[1] - surfacePositionA[1] ) * nAB[1] +
+          ( surfacePositionB[2] - surfacePositionA[2] ) * nAB[2] -
+          gapScale * gap0;
+        localMaximumPenetration = std::max( localMaximumPenetration,
+                                            std::max( 0.0, -gap ) );
+
+        bool gapConstraintActive = false;
+        constraint.targetNormalVelocity = initialNormalVelocity;
+        switch( contactGapCorrection )
+        {
+          case mpm::ContactGapCorrectionOption::Simple:
+            gapConstraintActive = true;
+            constraint.targetNormalVelocity = 0.0;
+            break;
+          case mpm::ContactGapCorrectionOption::Implicit:
+            gapConstraintActive = gap < 0.0;
+            if( gapConstraintActive )
+            {
+              constraint.targetNormalVelocity = 0.0;
+            }
+            break;
+          case mpm::ContactGapCorrectionOption::Softened:
+            gapConstraintActive = gap < gap0;
+            if( gap <= 0.0 )
+            {
+              constraint.targetNormalVelocity = 0.0;
+            }
+            else if( gapConstraintActive )
+            {
+              // This target reproduces the legacy softened correction for an
+              // isolated closing pair while allowing all pairs to converge
+              // against the same node velocity.
+              constraint.targetNormalVelocity =
+                initialNormalVelocity < 0.0
+                ? initialNormalVelocity * gap / gap0
+                : 0.0;
+            }
+            break;
+          default:
+            GEOS_ERROR( "Unknown contact gap correction type specified." );
+        }
+
+        real64 signedNormalBiasImpulse = 0.0;
+        if( overlapCorrection == mpm::OverlapCorrectionOption::NormalForce )
+        {
+          real64 const cellVolume = hEl[0] * hEl[1] * hEl[2];
+          real64 const cellLength =
+            LvArray::math::abs( nAB[0] ) * hEl[0] +
+            LvArray::math::abs( nAB[1] ) * hEl[1] +
+            LvArray::math::abs( nAB[2] ) * hEl[2];
+          real64 const cellArea = cellVolume / cellLength;
+          real64 const overlapLength = planeStrain
+            ? ( 2.0 * VA + 2.0 * VB - cellVolume ) / cellArea
+            : ( VA + VB - cellVolume ) / cellArea;
+          if( overlapLength > ( overlapThreshold1 - 1.0 ) * cellLength &&
+              overlapLength < ( overlapThreshold2 - 1.0 ) * cellLength )
+          {
+            real64 const overlap = planeStrain
+              ? ( VA + VB ) / ( 0.5 * cellVolume )
+              : ( VA + VB ) / cellVolume;
+            real64 const correctionScale = LvArray::math::min(
+              1.0,
+              LvArray::math::max(
+                0.0,
+                ( overlap - overlapThreshold1 ) /
+                ( overlapThreshold2 - overlapThreshold1 ) ) );
+            real64 const maxVelocity =
+              LvArray::math::sqrt( maxParticleVelocitySquared );
+            real64 const maxGapImpulseMagnitude =
+              0.05 * LvArray::math::min( mA, mB ) * maxVelocity;
+            real64 const legacyGapImpulse = correctionScale * LvArray::math::max(
+              -maxGapImpulseMagnitude,
+              -2.0 * overlapLength * mA * mB /
+              ( dt * ( mA + mB ) ) );
+            signedNormalBiasImpulse -= legacyGapImpulse;
+          }
+        }
+        if( rigidBodyPenetrationPenaltyBeta > 0.0 && gap < 0.0 )
+        {
+          real64 const effectiveMass = 1.0 / inverseMassSum;
+          signedNormalBiasImpulse +=
+            rigidBodyPenetrationPenaltyBeta * effectiveMass * ( -gap ) / dt;
+        }
+
+        if( !isZero(signedNormalBiasImpulse) )
+        {
+          constraint.targetNormalVelocity +=
+            inverseMassSum * signedNormalBiasImpulse;
+        }
+        constraint.normalBiasImpulse =
+          std::max( 0.0, signedNormalBiasImpulse );
+
+        if( gapConstraintActive || !isZero(signedNormalBiasImpulse) )
+        {
+          constraints.emplace_back( constraint );
+        }
+      }
+    }
+
+    mpm::ProjectedGaussSeidelContactResult const result =
+      mpm::projectedGaussSeidelContact::solve(
+        nodalMass,
+        solvedVelocity,
+        constraints,
+        m_contactPGSMaximumIterations,
+        m_contactPGSVelocityTolerance,
+        m_contactPGSRelaxation );
+    if( !result.converged )
+    {
+      ++localNonconvergedNodes;
+      localMaximumResidual = std::max( localMaximumResidual, result.residual );
+    }
+
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      if( nodalMass[fieldIndex] > smallMass )
+      {
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          contactOutput[g][fieldIndex][i] =
+            outputScale * nodalMass[fieldIndex] *
+            ( solvedVelocity[fieldIndex][i] -
+              initialVelocity[fieldIndex][i] );
+        }
+      }
+    }
+  }
+
+  integer const globalNonconvergedNodes =
+    MpiWrapper::sum( localNonconvergedNodes );
+  real64 const globalMaximumResidual =
+    MpiWrapper::max( localMaximumResidual );
+  GEOS_ERROR_IF( m_contactPGSRequireConvergence != 0 &&
+                 globalNonconvergedNodes != 0,
+                 GEOS_FMT( "ProjectedGaussSeidel contact failed to converge at {} grid nodes "
+                           "within {} iterations; maximum projected velocity residual was {}.",
+                           globalNonconvergedNodes,
+                           m_contactPGSMaximumIterations,
+                           globalMaximumResidual ) );
+  GEOS_LOG_RANK_0_IF( m_contactPGSRequireConvergence == 0 &&
+                      globalNonconvergedNodes != 0,
+                      GEOS_FMT( "Warning: ProjectedGaussSeidel contact did not converge at {} grid nodes; "
+                                "maximum projected velocity residual was {}.",
+                                globalNonconvergedNodes,
+                                globalMaximumResidual ) );
+
+  if( rigidBodyMode == 1 )
+  {
+    real64 const globalMaximumPenetration =
+      MpiWrapper::max( localMaximumPenetration );
+    m_rigidBodyObservedMaxPenetration = std::max(
+      m_rigidBodyObservedMaxPenetration,
+      globalMaximumPenetration );
+  }
+}
+
+/**
  * @brief Computes the total FMPM Net material-contact momentum target.
  *
  * The target is the cumulative nodal impulse that would enforce the current
@@ -24167,6 +25878,17 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                                                              arrayView3d< real64 const > const vUncorrectedTotal,
                                                              arrayView3d< real64 > const contactMomentumTarget )
 {
+  if( m_contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel )
+  {
+    computeProjectedGaussSeidelContact( dt,
+                                        particleManager,
+                                        nodeManager,
+                                        vUncorrectedTotal,
+                                        contactMomentumTarget,
+                                        1.0 );
+    return;
+  }
+
   real64 hEl[3] = {};
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
@@ -30178,6 +31900,13 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
   GEOS_MARK_FUNCTION;
 
   integer const numDims = m_numDims;
+#if !defined( GEOS_USE_DEVICE )
+  int const floatingPointDiagnostics = m_floatingPointDiagnostics;
+  real64 const minimumDeformationGradientDeterminant = m_minParticleJacobian;
+  real64 const maximumDeformationGradientDeterminant = m_maxParticleJacobian;
+  real64 const minimumDeformationGradientReciprocalCondition =
+    m_deformationGradientMinReciprocalCondition;
+#endif
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -30201,6 +31930,9 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
     arrayView3d< real64 > const particleOldRotation = subRegion.getField< fields::mpm::particleOldRotation >();
     arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
     arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+#if !defined( GEOS_USE_DEVICE )
+    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
+#endif
 
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
@@ -30216,6 +31948,21 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
       LvArray::tensorOps::copy< 3, 3 >(
         oldDeformationGradient,
         particleDeformationGradient[p] );
+
+#if !defined( GEOS_USE_DEVICE )
+      if( floatingPointDiagnostics != 0 )
+      {
+        reportIllConditionedDeformationGradient(
+          "before deformation-gradient update",
+          particleID[p],
+          p,
+          oldDeformationGradient,
+          particleVelocityGradient[p],
+          minimumDeformationGradientDeterminant,
+          maximumDeformationGradientDeterminant,
+          minimumDeformationGradientReciprocalCondition );
+      }
+#endif
 
       real64 divergence = 0.0;
       for( integer i = 0; i < numDims; ++i )
@@ -30251,6 +31998,22 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
       matrixExponential3x3(
         deviatoricGenerator,
         isochoricIncrement );
+
+#if !defined( GEOS_USE_DEVICE )
+      if( floatingPointDiagnostics != 0 )
+      {
+        reportIllConditionedDeformationGradient(
+          "after isochoric matrix exponential",
+          particleID[p],
+          p,
+          isochoricIncrement,
+          particleVelocityGradient[p],
+          minimumDeformationGradientDeterminant,
+          maximumDeformationGradientDeterminant,
+          minimumDeformationGradientReciprocalCondition );
+      }
+#endif
+
       normalizeActiveDeterminant3x3(
         isochoricIncrement,
         numDims );
@@ -30286,6 +32049,21 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
         newDeformationGradient[2][1] = 0.0;
         newDeformationGradient[2][2] = 1.0;
       }
+
+#if !defined( GEOS_USE_DEVICE )
+      if( floatingPointDiagnostics != 0 )
+      {
+        reportIllConditionedDeformationGradient(
+          "before polar decomposition",
+          particleID[p],
+          p,
+          newDeformationGradient,
+          particleVelocityGradient[p],
+          minimumDeformationGradientDeterminant,
+          maximumDeformationGradientDeterminant,
+          minimumDeformationGradientReciprocalCondition );
+      }
+#endif
 
       LvArray::tensorOps::copy< 3, 3 >(
         particleDeformationGradient[p],

@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PFW_ROOT="$(cd "$SCRIPT_DIR" && while [ ! -f particleFileWriter.py ] && [ "$PWD" != "/" ]; do cd ..; done; pwd -P)"
+PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-/usr/tce/bin/python3}}"
+CASE=""
+RUN_ALL=false
+FORCE=false
+ARGS=()
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./runProblem --case CASE [runner options]
+  ./runProblem --all [--force] [runner options]
+
+Options handled by this wrapper:
+  --case CASE    Run one pfw_input test (prefix and .py suffix are optional).
+  --all          Run every pfw_input_*.py test in this directory.
+  --force, -y    Overwrite and rerun existing results without prompting.
+  --python PATH  Python interpreter used by the verification runner.
+  -h, --help     Show this help.
+
+Safe batch behavior:
+  --all          Existing cases are skipped without prompting.
+  --all --force  Existing cases are deleted and rerun without prompting.
+
+All other options are forwarded to mpm_vv_case_runner.py.
+EOF
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --python)
+      [ "$#" -ge 2 ] || { echo "--python requires a path" >&2; exit 2; }
+      PYTHON_CMD="$2"; ARGS+=("$1" "$2"); shift 2 ;;
+    --case)
+      [ "$#" -ge 2 ] || { echo "--case requires a name" >&2; exit 2; }
+      CASE="$2"; shift 2 ;;
+    --case=*) CASE="${1#--case=}"; shift ;;
+    --all) RUN_ALL=true; shift ;;
+    --force|-y) FORCE=true; ARGS+=("--force"); shift ;;
+    --help|-h) usage; exit 0 ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
+done
+
+if [ "$RUN_ALL" = true ] && [ -n "$CASE" ]; then
+  echo "Choose either --all or --case, not both." >&2
+  exit 2
+fi
+
+mapfile -t INPUTS < <(find "$SCRIPT_DIR" -maxdepth 1 -name 'pfw_input_*.py' -type f | sort)
+if [ "${#INPUTS[@]}" -eq 0 ]; then
+  echo "No pfw_input_*.py files in $SCRIPT_DIR" >&2
+  exit 1
+fi
+
+select_case() {
+  local requested="$1"
+  local input stem short
+  for input in "${INPUTS[@]}"; do
+    stem="$(basename "$input" .py)"
+    short="${stem#pfw_input_}"
+    if [ "$requested" = "$short" ] || [ "$requested" = "$stem" ] || [ "$requested" = "$(basename "$input")" ]; then
+      printf '%s\n' "$input"
+      return 0
+    fi
+  done
+  return 1
+}
+
+run_case() {
+  local input="$1"
+  local short case_id
+  short="$(basename "$input" .py)"
+  short="${short#pfw_input_}"
+  case_id="threeFieldContact__${short}"
+
+  echo "[$case_id] dispatching"
+  "$PYTHON_CMD" "$PFW_ROOT/mpm_vv_case_runner.py" \
+    --suite verification \
+    --case-id "$case_id" \
+    --input "$(basename "$input")" \
+    --source-dir "$SCRIPT_DIR" \
+    --output-prefix "$case_id" \
+    --python "$PYTHON_CMD" \
+    "${ARGS[@]}"
+}
+
+if [ "$RUN_ALL" = true ]; then
+  if [ "$FORCE" = false ]; then
+    # Batch runs must never stop for one overwrite prompt.  The runner checks
+    # both the generated run directory and the collected output directory.
+    ARGS+=("--skip-existing")
+  fi
+  echo "Running ${#INPUTS[@]} three-field contact tests."
+  for input in "${INPUTS[@]}"; do
+    run_case "$input"
+  done
+  echo "Finished dispatching ${#INPUTS[@]} three-field contact tests."
+  exit 0
+fi
+
+if [ -n "$CASE" ]; then
+  if ! chosen="$(select_case "$CASE")"; then
+    echo "Unknown case '$CASE'." >&2
+    printf '  %s\n' "${INPUTS[@]##*/}" >&2
+    exit 2
+  fi
+else
+  echo "Pass --all or --case with one of:" >&2
+  printf '  %s\n' "${INPUTS[@]##*/}" >&2
+  exit 2
+fi
+
+run_case "$chosen"
