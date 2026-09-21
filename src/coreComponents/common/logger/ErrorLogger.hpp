@@ -14,7 +14,7 @@
  */
 
 /**
- * @file ErrorHandling.hpp
+ * @file ErrorLogger.hpp
  */
 
 #ifndef INITIALIZATION_ERROR_LOGGER_HPP
@@ -423,8 +423,6 @@ private:
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                      std::string_view indent );
 };
-
-
 
 } /* namespace geos */
 

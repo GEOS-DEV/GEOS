@@ -195,6 +195,11 @@ void pushStatsIntoAdiak( string const & name, T const value )
 #endif
 }
 
+/**
+ * @brief Post-Handling error behaviour
+ */
+void abortGeos();
+
 } // namespace geos
 
 #endif // GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_

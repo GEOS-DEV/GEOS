@@ -14,7 +14,7 @@
  */
 
 // Source includes
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/ErrorLogger.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"

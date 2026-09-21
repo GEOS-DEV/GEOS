@@ -18,7 +18,7 @@
  */
 
 
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/ErrorHandler.hpp"
 
 namespace geos
 {

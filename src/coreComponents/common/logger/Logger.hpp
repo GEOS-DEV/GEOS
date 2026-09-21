@@ -164,7 +164,7 @@
         .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )); \
       GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
-      LvArray::system::callErrorHandler(); \
+      ErrorHandler::getInstance().abortProgram(); \
     } \
   }while( false )
   #elif __CUDA_ARCH__
