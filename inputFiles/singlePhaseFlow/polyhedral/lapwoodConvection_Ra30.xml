@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+
+<!-- Ra = 30, below the threshold: the disturbance decays, n = -3.95e-10 1/s -->
+
+<Problem>
+  <Included>
+    <File name="./lapwoodConvection_base.xml"/>
+  </Included>
+
+  <!-- k = Ra / 7.848e12 -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="permX"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rockPerm_permeability"
+      scale="3.82263e-12"/>
+
+    <FieldSpecification
+      name="permY"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rockPerm_permeability"
+      scale="3.82263e-12"/>
+
+    <FieldSpecification
+      name="permZ"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="rockPerm_permeability"
+      scale="3.82263e-12"/>
+  </FieldSpecifications>
+
+  <!-- 2.0e10 s is the diffusion time h^2 / kappa -->
+  <Events
+    maxTime="2.0e10">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0e8"
+      target="/Solvers/flow"/>
+
+    <PeriodicEvent
+      name="probeCollection"
+      timeFrequency="1.0e8"
+      target="/Tasks/probeTemperature"/>
+
+    <PeriodicEvent
+      name="probeOutput"
+      timeFrequency="1.0e9"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0e9"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+</Problem>

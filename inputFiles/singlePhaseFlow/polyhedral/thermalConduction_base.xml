@@ -1,0 +1,169 @@
+<?xml version="1.0" ?>
+
+<!-- Transient heat conduction in the one-dimensional domain [0,1] without flow: uniform pressure, T = 350 K initially,
+     T = 300 K at x = 0 and T = 400 K at x = 1. With the diffusivity a = lambda / ( phi rho c_f + ( 1 - phi ) C_s ),
+
+       T( x, t ) = 300 + 100 x + sum_n b_n sin( n pi x ) exp( - a n^2 pi^2 t ),    b_n = 100 ( 1 + (-1)^n ) / ( n pi ),
+
+     and the steady state is linear. Here a = 2 / 2.4e6 m2/s and the final time is 0.033 of the diffusion time 1 / a.
+     The variants add the solver and the discretization. -->
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 0.1 }"
+      zCoords="{ 0, 0.1 }"
+      nx="{ 20 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ block }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="west"
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ 0.001, 0.101, 0.101 }"/>
+
+    <Box
+      name="east"
+      xMin="{ 0.999, -0.001, -0.001 }"
+      xMax="{ 1.001, 0.101, 0.101 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="domain"
+      cellBlocks="{ * }"
+      materialList="{ rock, fluid, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="1.0e7"
+      compressibility="0.0"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="2.0e6"
+      referenceTemperature="350.0"
+      referenceInternalEnergy="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="1.0e7"
+      referenceTemperature="350.0"
+      compressibility="0.0"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      temperatureViscosityCoefficient="0.0"
+      specificHeatCapacity="4000"
+      referenceInternalEnergy="1.4e6"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 2.0, 2.0, 2.0 }"
+      thermalConductivityGradientComponents="{ 0, 0, 0 }"
+      referenceTemperature="350.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1.0e7"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="350.0"/>
+
+    <!-- flow operator: the same pressure at both ends, no flow -->
+    <FieldSpecification
+      name="westPressure"
+      setNames="{ west }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="1.0e7"/>
+
+    <FieldSpecification
+      name="eastPressure"
+      setNames="{ east }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="1.0e7"/>
+
+    <!-- heat operator: Dirichlet at both ends, homogeneous Neumann on the other faces -->
+    <FieldSpecification
+      name="westTemperature"
+      setNames="{ west }"
+      objectPath="faceManager"
+      fieldName="bcTemperature"
+      scale="300.0"/>
+
+    <FieldSpecification
+      name="eastTemperature"
+      setNames="{ east }"
+      objectPath="faceManager"
+      fieldName="bcTemperature"
+      scale="400.0"/>
+  </FieldSpecifications>
+
+  <!-- twenty steps, restart after ten -->
+  <Events
+    maxTime="4.0e4">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="2.0e3"
+      target="/Solvers/flow"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2.0e4"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="2.0e4"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      fieldNames="{ pressure, temperature, enthalpy, mfdFlag }"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

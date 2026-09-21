@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+
+<!-- Incompressible single-phase flow on a small hybrid mesh of the box [0,1] x [0,1] x [0,2]: Cartesian hexahedra for z < 1,
+     tetrahedra for z > 1, one layer of pyramids in between (238 cells). Pressure is imposed on the faces x = 0 and x = 1.
+     TPFA is consistent on the hexahedra and not on the other cells, which is what the mixed MFD discretization adapts to.
+     The variants add the solver and the discretization. -->
+
+<Problem>
+
+  <Mesh>
+    <VTKMesh
+      name="hybridMesh"
+      file="hybrid_mesh_l_0.vtu"
+      partitionRefinement="0"
+      useGlobalIds="0"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="inlet"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  0.01,  1.01,  2.01 }"/>
+    <Box
+      name="outlet"
+      xMin="{ 0.99, -0.01, -0.01 }"
+      xMax="{ 1.01,  1.01,  2.01 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="domain"
+      cellBlocks="{ * }"
+      materialList="{ fluid, rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000.0"
+      referenceDensity="1000.0"
+      defaultViscosity="0.001"
+      referenceViscosity="0.001"
+      referencePressure="2.0e7"
+      compressibility="0.0"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="2.0e7"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="2.0e7"/>
+
+    <FieldSpecification
+      name="inletPressure"
+      setNames="{ inlet }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="2.0e7"/>
+
+    <FieldSpecification
+      name="outletPressure"
+      setNames="{ outlet }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="1.0e7"/>
+  </FieldSpecifications>
+
+  <!-- one step: the problem is steady and linear -->
+  <Events
+    maxTime="1.0e3">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0e3"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0e3"
+      target="/Solvers/mixedMFDFlow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0e3"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <!-- mfdFlag is the inner product selected in each cell: 0 = TPFA, 1 = consistent (MFD) -->
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      fieldNames="{ pressure, mfdFlag, prescribedMfdFlag, consistencyIndicator, degeneracyIndicator }"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

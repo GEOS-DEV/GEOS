@@ -289,6 +289,16 @@ TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
     }
     hypre::hypredrive::InputArgsParseTarget target;
 
+    if( strategy == StrategyType::singlePhaseMixedMFD || strategy == StrategyType::thermalSinglePhaseMixedMFD )
+    {
+      // solver-provided point markers have no field-label form: this strategy stays on legacy hypre
+      EXPECT_FALSE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( strategy ),
+                                                                  strategyFieldNames,
+                                                                  strategyNumComponentsPerField,
+                                                                  target ) );
+      continue;
+    }
+
     try
     {
       EXPECT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( strategy ),

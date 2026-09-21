@@ -1,0 +1,34 @@
+from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+
+restartcheck_params = {}
+restartcheck_params['atol'] = 1e-08
+restartcheck_params['rtol'] = 4e-07
+
+decks = [
+    TestDeck(
+        name="thermalConduction_smoke",
+        description=
+        'Thermal mixed MFD single phase flow test (1D transient heat conduction, TPFA selected in every cell, direct solver)',
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=10,
+        check_step=20,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="thermalConduction_consistent_smoke",
+        description=
+        'Thermal mixed MFD single phase flow test (1D transient heat conduction, consistent inner product in every cell, GMRES with the thermal MGR strategy)',
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=10,
+        check_step=20,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="lapwoodConvection_Ra50_smoke",
+        description=
+        'Thermal mixed MFD single phase flow test (onset of natural convection in a porous layer, tetrahedral mesh, consistent inner product, GMRES with the thermal MGR strategy)',
+        partitions=((1, 1, 1), (2, 1, 1), (2, 1, 2)),
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+]
+
+generate_geos_tests(decks)

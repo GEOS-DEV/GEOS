@@ -1,0 +1,34 @@
+from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+
+restartcheck_params = {}
+restartcheck_params['atol'] = 1e-08
+restartcheck_params['rtol'] = 4e-07
+
+decks = [
+    TestDeck(
+        name="incompressible_hybridMesh_mixed_smoke",
+        description=
+        'Adaptive mixed MFD single phase flow test (3D hybrid mesh, incompressible, TPFA on hexahedra and RT elsewhere, direct solver)',
+        partitions=((1, 1, 1), (2, 1, 1), (3, 1, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="incompressible_hybridMesh_mixed_iterative_smoke",
+        description=
+        'Adaptive mixed MFD single phase flow test (3D hybrid mesh, incompressible, GMRES with the MGR strategy)',
+        partitions=((1, 1, 1), (2, 1, 1), (3, 1, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="incompressible_hybridMesh_mixed_prescribed_smoke",
+        description=
+        'Adaptive mixed MFD single phase flow test (3D hybrid mesh, incompressible, prescribed inner product and degeneracy layer)',
+        partitions=((1, 1, 1), (2, 1, 1), (3, 1, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+]
+
+generate_geos_tests(decks)
