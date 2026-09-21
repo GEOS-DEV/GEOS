@@ -3153,7 +3153,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="ReactiveCompressibleSinglePhaseFluidType">
 		<!--aggregateSpeciesRates => aggregateSpeciesRates-->
 		<xsd:attribute name="aggregateSpeciesRates" type="real64_array3d" />
-		<!--dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations => Deivatives of aggregate concentration rates w.r.t log primary species concentration-->
+		<!--dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations => Derivatives of aggregate concentration rates w.r.t log primary species concentration-->
 		<xsd:attribute name="dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations" type="real64_array4d" />
 		<!--dDensity => dDensity-->
 		<xsd:attribute name="dDensity" type="real64_array3d" />
@@ -3161,9 +3161,9 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="dEnthalpy" type="real64_array3d" />
 		<!--dInternalEnergy => dInternalEnergy-->
 		<xsd:attribute name="dInternalEnergy" type="real64_array3d" />
-		<!--dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations => Deivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration-->
+		<!--dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations => Derivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration-->
 		<xsd:attribute name="dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations" type="real64_array4d" />
-		<!--dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations => Deivatives of primarySpeciesMobileAggregateConcentration w.r.t log primary species concentration-->
+		<!--dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations => Derivatives of primarySpeciesMobileAggregateConcentration w.r.t log primary species concentration-->
 		<xsd:attribute name="dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations" type="real64_array4d" />
 		<!--dViscosity => dViscosity-->
 		<xsd:attribute name="dViscosity" type="real64_array3d" />
@@ -3218,7 +3218,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="ReactiveThermalCompressibleSinglePhaseFluidType">
 		<!--aggregateSpeciesRates => aggregateSpeciesRates-->
 		<xsd:attribute name="aggregateSpeciesRates" type="real64_array3d" />
-		<!--dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations => Deivatives of aggregate concentration rates w.r.t log primary species concentration-->
+		<!--dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations => Derivatives of aggregate concentration rates w.r.t log primary species concentration-->
 		<xsd:attribute name="dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations" type="real64_array4d" />
 		<!--dDensity => dDensity-->
 		<xsd:attribute name="dDensity" type="real64_array3d" />
@@ -3226,9 +3226,9 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="dEnthalpy" type="real64_array3d" />
 		<!--dInternalEnergy => dInternalEnergy-->
 		<xsd:attribute name="dInternalEnergy" type="real64_array3d" />
-		<!--dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations => Deivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration-->
+		<!--dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations => Derivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration-->
 		<xsd:attribute name="dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations" type="real64_array4d" />
-		<!--dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations => Deivatives of primarySpeciesMobileAggregateConcentration w.r.t log primary species concentration-->
+		<!--dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations => Derivatives of primarySpeciesMobileAggregateConcentration w.r.t log primary species concentration-->
 		<xsd:attribute name="dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations" type="real64_array4d" />
 		<!--dViscosity => dViscosity-->
 		<xsd:attribute name="dViscosity" type="real64_array3d" />
