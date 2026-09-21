@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+
+<!-- CASE C, eigenstrain variant: AS with precipitation and clogging, driven by cooling.
+
+     Pairs with AS_wellbore_caseC_ASprecip.xml, which runs the same case through the phase-field
+     and Biot mineral-pressure route. Running both isolates how much of the response comes from the
+     precipitation itself and how much from the damage/mineral-pressure coupling. -->
+<Problem>
+  <Included>
+    <File name="./AS_wellbore_eigenstrain.xml"/>
+    <File name="./AS_wellbore_logConc.xml"/>
+  </Included>
+</Problem>

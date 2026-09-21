@@ -76,13 +76,25 @@ public:
   {
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
+    real64 const cloggingFactor = pow( fmax( 1.0 - m_porosityUpdate.getCloggedPoreFraction( k, q ), 0.0 ), 2.0/3.0 );
 
     for( integer r=0; r < initialSurfaceArea.size(); ++r )
     {
-      real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
       real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
-      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
-                       * pow( porosity / initialPorosity, 2.0/3.0 );
+
+      if( initialVolumeFraction_r > 0.0 )
+      {
+        // Dispersed-crystal growth: the surface follows the mineral already present
+        real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
+        surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
+                         * pow( porosity / initialPorosity, 2.0/3.0 );
+      }
+      else
+      {
+        // Pore-lining growth: with no mineral to grow from, the input area is the pore-wall area on which
+        // crystals nucleate, and it shrinks only as the coating fills the pore.
+        surfaceArea[r] = initialSurfaceArea[r] * cloggingFactor;
+      }
     }
   }
 

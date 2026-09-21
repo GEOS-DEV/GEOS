@@ -102,9 +102,11 @@ public:
     {
       m_newPorosity[k][q] = m_porosity_n[k][q] + reactionPorosityIncrement;
 
-      if( m_newPorosity[k][q] < 0 )
+      // Keep a minimal pore volume so a fully clogged cell stays well posed in the flow solver; clamping
+      // to exactly zero makes its accumulation term singular.
+      if( m_newPorosity[k][q] < minPorosity )
       {
-        m_newPorosity[k][q] = 0;
+        m_newPorosity[k][q] = minPorosity;
       }
       else if( m_newPorosity[k][q] > 1.0 )
       {
@@ -112,6 +114,9 @@ public:
       }
     }
   }
+
+  /// Smallest porosity a clogged cell is allowed to reach
+  static constexpr real64 minPorosity = 1.0e-6;
 
   // this function is used in flow solver
   // it uses average stress increment (element-based)

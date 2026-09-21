@@ -1,0 +1,501 @@
+<?xml version="1.0" ?>
+
+<!-- ============================================================================================
+     WATER baseline for the 2D near-wellbore problem, on the plain single-phase phase-field
+     poromechanics stack.
+
+     This is the AS wellbore with the chemistry taken out, kept deliberately close to
+     AS_wellbore_eigenstrain.xml so the two are comparable: same mesh, same notches, same symmetry
+     constraints, same outlet, same injection interval and duration. What differs is only the
+     physics that the AS case adds.
+
+     SOLVER STACK, and why it is simpler than the AS one:
+       PhaseFieldPoromechanics  ->  SinglePhasePoromechanics (damageFlag=1)
+                                      ->  SolidMechanicsLagrangianFEM
+                                      ->  SinglePhaseFVM  (TwoPointFluxApproximation)
+                                ->  PhaseFieldDamageFEM
+     No reactive transport, so no species rows, no K(T), no prescribed temperature field, and no
+     clogging permeability. A standard MGR strategy exists for SinglePhasePoromechanics, which the
+     reactive solver has none of, so the linear solve is both cheaper and better conditioned.
+
+     TPFA, not hybrid mimetic. inputFiles/phaseField/PhaseFieldPoromechanics_Nucleation_Wellbore.xml
+     runs SinglePhaseHybridFVM on a HybridMimeticDiscretization; this deck uses SinglePhaseFVM on a
+     TwoPointFluxApproximation instead, matching the discretization the AS decks are built on so the
+     flow solution is directly comparable.
+
+     fracturePressureTermFlag = 0: the fluid pressure inside the crack does NOT contribute to the
+     damage driving force. Damage is then driven purely by the degraded elastic energy from the
+     poroelastic stress state. This makes the damage problem materially easier - the pressure term
+     couples the damage residual back to flow and is a common source of the sequential loop failing
+     to settle - at the cost of under-driving the crack relative to a full hydraulic model. Turn it
+     back on once the case is known to run.
+
+     Granite as in the AS deck (2-2446, Table 3): E = 40 GPa, nu = 0.23, Gc = 12 J/m2, L = 0.5 mm,
+     phi = 0.05. SI throughout.
+
+     INJECTION: 5 mL/min for 200 s into a 50 mm interval; this 1 mm slice takes 1/50 of it. At the
+     water density 1000 kg/m3 that is (5e-6/60)*(1/50)*1000 = 1.6667e-6 kg/s - lower than the AS
+     deck's 2.075e-6 kg/s purely because water is lighter than saturated AS, same volumetric rate.
+
+     EXPECTED RESULT, so it is not mistaken for a failure: at bulkPermeability = 5e-16 the steady
+     borehole pressure is ~1.3 MPa, well below the ~3.8 MPa needed to drive the notched crack, so
+     this case should NOT fracture. That is the point of a baseline - in the AS case clogging is
+     what raises the pressure to breakdown. To get a fracturing water case for testing the damage
+     machinery on its own, drop bulkPermeability toward the true granite value (1e-18 gives 655 MPa
+     and fractures within ~1 s); 1e-17 is a reasonable middle.
+     ============================================================================================ -->
+<Problem>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+
+    <PhaseFieldPoromechanics
+      name="pfSolve"
+      poromechanicsSolverName="poroSolve"
+      damageSolverName="damageSolve"
+      logLevel="1"
+      initialDt="1e-3"
+      targetRegions="{ Source, Rock }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"
+        newtonMaxIter="20"/>
+    </PhaseFieldPoromechanics>
+
+    <!-- damageFlag = 1 selects the SinglePhasePoromechanicsDamageKernel, which is what makes the
+         poromechanics aware of the damage field. It is required whenever the solid is a
+         PorousDamage* type; without it the assembly takes the undamaged path and the crack never
+         affects the stress. -->
+    <SinglePhasePoromechanics
+      name="poroSolve"
+      solidSolverName="lagsolve"
+      flowSolverName="singlePhaseFlow"
+      logLevel="1"
+      targetRegions="{ Source, Rock }"
+      damageFlag="0">
+      <!-- couplingType MUST be written out. Left unset, this solver behaves as Sequential despite
+           the FullyImplicit default, and the flow sub-solver then dies in HypreVector::set on a
+           vector that was never allocated. MGR also preconditions the assembled
+           displacement/pressure system, so it only applies in the monolithic case. The outer
+           phase-field loop stays Sequential; only this level is monolithic.
+
+           damageFlag = 0 is required here, and it costs nothing this deck wants. Setting it to 1
+           selects SinglePhasePoromechanicsDamage, whose only addition is computeFractureFlowTerm -
+           the body force from fluid flowing ALONG the crack - and which reads the "pressureGradient"
+           field. That field is registered solely by SinglePhaseHybridFVM ("pressureGradient is
+           specific for HybridFVM", SinglePhaseHybridFVM.cpp:76), so damageFlag=1 cannot run on
+           TPFA at all. Dropping it removes precisely the fluid-pressure-drives-the-crack coupling
+           that fracturePressureTermFlag=0 also switches off, so the two are consistent.
+
+           Damage still degrades the stiffness: that happens inside PorousDamageSolid /
+           DamageSpectralElasticIsotropic, and PorousDamageSolid is in the regular (non-damage)
+           kernel dispatch list, so the constitutive degradation is unaffected. -->
+      <NonlinearSolverParameters
+        couplingType="FullyImplicit"
+        lineSearchAction="None"
+        newtonMaxIter="40"
+        newtonTol="1.0e-4"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-6"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Source, Rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1.0e-6"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <!-- allowNegativePressure: dilation around the pressurizing borehole pulls a few cells to a
+         small suction, ordinary for a saturated porous solid; the default check rejects any
+         negative pressure and cuts dt indefinitely. -->
+    <SinglePhaseFVM
+      name="singlePhaseFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Source, Rock }"
+      allowNegativePressure="1"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"
+        newtonMaxIter="30"
+        lineSearchAction="None"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1.0e-6"/>
+    </SinglePhaseFVM>
+
+    <!-- fracturePressureTermFlag = 0 (also the code default) - see the header.
+         damageUpperBound must be <= 1: the default 1.5 makes irreversibility inert, since damage
+         saturates at 1 and the constraint only fires at d >= damageUpperBound.
+         viscousRegularizationCoeff = 1.0 Pa.s adds eta/(Gc*dt) to the Jacobian diagonal
+         (Miehe 2010, CMAME Eq. 48), keeping it definite. The term scales as 1/dt, so recheck its
+         size if dt grows much. -->
+    <PhaseFieldDamageFEM
+      name="damageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      irreversibilityFlag="1"
+      damageUpperBound="1.0"
+      fracturePressureTermFlag="0"
+      viscousRegularizationCoeff="1.0"
+      logLevel="1"
+      targetRegions="{ Source, Rock }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-6"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <!-- Bounds are +/-0.075 m in x and y, +/-0.5 mm in z: already in metres, so no scale attribute. -->
+  <Mesh>
+    <VTKMesh
+      name="mesh"
+      file="../../../../../runs/ammoniumSulfate/wellbore/meshes/wellboreFill2DMeterBased.vtu"
+      regionAttribute="SOURCE-MATRIX"
+      nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ 0_hexahedra }"
+      materialList="{ water, voidMat }"/>
+
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ water, rockMat }"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <!-- ================= ROCK ================= -->
+    <PorousDamageSpectralElasticIsotropic
+      name="rockMat"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <!-- E = 40 GPa, nu = 0.23 => K = 24.6914e9, G = 16.2602e9.
+         BRITTLE / AT2 (Quadratic dissipation): AT2 puts a real zeroth-order term in the damage
+         Jacobian, which the gradient-only AT1 operator lacks. criticalStrainEnergy is unused for
+         Brittle and set to zero.
+         lengthScale = 0.5 mm gives L/h = 2.1 out to r = 15 mm on this mesh - the minimum for a
+         resolved band - then coarsens. A crack running past ~15 mm is mesh-dependent. -->
+    <DamageSpectralElasticIsotropic
+      name="rockSolid"
+      defaultDensity="0.0"
+      defaultBulkModulus="24.6914e9"
+      defaultShearModulus="16.2602e9"
+      lengthScale="0.0005"
+      defaultCriticalFractureEnergy="12"
+      criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
+      localDissipationOption="Quadratic"
+      degradationLowerLimit="1e-6"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="128.5e9"
+      defaultReferencePorosity="0.05"/>
+
+    <!-- See the header on bulkPermeability. damageDependenceConstant = 12 is carried over from the
+         AS deck, where it was set so the fracture out-conducts the radial matrix: the conductance
+         ratio at r = 10 mm is 1 at c = 5, 175 at c = 10, 1295 at c = 12. c = 15 is the physically
+         natural value but places a 3.3e6 contrast across one cell and diverged in the AS case. -->
+    <DamagePermeability
+      name="rockPerm"
+      bulkPermeability="5.0e-16"
+      damageDependenceConstant="12.0"/>
+
+    <!-- ================= BOREHOLE (soft "void") =================
+         Same catalog type as the rock, only softer. At 1e-4 x rock stiffness the disc acts as a
+         hole while keeping the stiffness matrix conditioned - do not push it to 1e-12. Biot b -> 1
+         as K -> 0, so the region transmits pore pressure to the wall as a traction and no
+         <Traction> BC is needed. The damage pin keeps it intact. -->
+    <PorousDamageSpectralElasticIsotropic
+      name="voidMat"
+      solidModelName="voidSolid"
+      porosityModelName="voidPorosity"
+      permeabilityModelName="voidPerm"/>
+
+    <DamageSpectralElasticIsotropic
+      name="voidSolid"
+      defaultDensity="0.0"
+      defaultBulkModulus="24.6914e5"
+      defaultShearModulus="16.2602e5"
+      lengthScale="0.0005"
+      defaultCriticalFractureEnergy="12"
+      criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
+      localDissipationOption="Quadratic"
+      degradationLowerLimit="1e-6"/>
+
+    <BiotPorosity
+      name="voidPorosity"
+      defaultGrainBulkModulus="128.5e9"
+      defaultReferencePorosity="0.99"/>
+
+    <DamagePermeability
+      name="voidPerm"
+      bulkPermeability="1.0e-10"
+      damageDependenceConstant="0.0"/>
+
+    <!-- ================= FLUID =================
+         Plain water: rho = 1000, mu = 0.001. No chemical system, no solvent mass. -->
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      referenceViscosity="0.001"
+      compressibility="5e-10"
+      viscosibility="0.0"/>
+
+  </Constitutive>
+
+  <Geometry>
+    <!-- The two symmetry planes through the borehole axis, used to remove rigid-body motion. The
+         nearest off-plane node is 0.056 mm away, so a 0.02 mm box selects the plane and nothing
+         else. -->
+    <Box
+      name="symX"
+      xMin="{ -2.0e-5, -0.0751, -0.0006 }"
+      xMax="{  2.0e-5,  0.0751,  0.0006 }"/>
+    <Box
+      name="symY"
+      xMin="{ -0.0751, -2.0e-5, -0.0006 }"
+      xMax="{  0.0751,  2.0e-5,  0.0006 }"/>
+
+    <!-- Pre-existing notches, left and right of the borehole along x. They give the fracture a
+         preferred plane so it propagates from a flaw instead of having to nucleate, and they give
+         the damage system a genuine Dirichlet condition - without them it is pure Neumann.
+         A SINGLE ROW of nodes on y = 0, not a band: the boxes are 40 um thick and node spacing off
+         the plane is 56 um. They run from the borehole wall at 6.35 mm to 8.70 mm (4.7 L), and do
+         not share a node with the boreCore pin, which stops at 6.2 mm - the two Dirichlet
+         conditions must not touch. -->
+    <Box
+      name="notchPlus"
+      xMin="{  0.00635, -0.00002, -0.0006 }"
+      xMax="{  0.00870,  0.00002,  0.0006 }"/>
+    <Box
+      name="notchMinus"
+      xMin="{ -0.00870, -0.00002, -0.0006 }"
+      xMax="{ -0.00635,  0.00002,  0.0006 }"/>
+
+    <Cylinder
+      name="boreCore"
+      firstFaceCenter="{ 0.0, 0.0, -0.001 }"
+      secondFaceCenter="{ 0.0, 0.0, 0.001 }"
+      outerRadius="0.0062"/>
+  </Geometry>
+
+  <FieldSpecifications>
+
+    <!-- ===== initial stress: zero =====
+         The 0.15 m lab block is unconfined, so there is no in-situ stress to initialize. Zero also
+         avoids starting mechanics and flow out of balance with no stress-initialization task. The
+         outer faces are traction-free to match. -->
+    <FieldSpecification
+      name="Sh_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockSolid_stress"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="SH_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockSolid_stress"
+      component="1"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="Sv_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockSolid_stress"
+      component="2"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="S_void"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="voidSolid_stress"
+      component="0"
+      scale="0.0"/>
+
+    <!-- ===== damage: notches seeded at d = 1, borehole pinned at d = 0 ===== -->
+    <FieldSpecification
+      name="damageNotchInitial"
+      initialCondition="1"
+      objectPath="nodeManager"
+      fieldName="damage"
+      scale="1.0"
+      setNames="{ notchPlus, notchMinus }"/>
+
+    <FieldSpecification
+      name="damageNotch"
+      objectPath="nodeManager"
+      fieldName="damage"
+      scale="1.0"
+      setNames="{ notchPlus, notchMinus }"/>
+
+    <FieldSpecification
+      name="damagePinBore"
+      objectPath="nodeManager"
+      fieldName="damage"
+      scale="0.0"
+      setNames="{ boreCore }"/>
+
+    <!-- ===== displacement: traction-free outer faces, plane strain in z =====
+         The sample is unconfined, so the side faces get no constraint at all - an absent
+         FieldSpecification IS the traction-free condition. In-plane rigid-body modes are removed
+         on the symmetry planes through the borehole axis, which add no confining reaction the way
+         outer-face rollers would. This imposes mirror symmetry about both axes, so bi-wing planar
+         and symmetric four-fold fractures are admissible and asymmetric ones are not. -->
+    <FieldSpecification
+      name="symX_ux"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ symX }"/>
+
+    <FieldSpecification
+      name="symY_uy"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ symY }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <!-- ===== flow ===== -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <!-- Outlet; without it pressure just accumulates. On faceManager, not on cells: a cell-based
+         version pins pressure in a band of INTERIOR cells and stops them developing their own
+         gradient. The sets are the mesh nodesets, which GEOS propagates to faces (a face joins the
+         set when all its nodes do). -->
+    <FieldSpecification
+      name="outerPressure"
+      setNames="{ xneg, xpos, yneg, ypos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <!-- Mass injection; a negative scale is injection. Do NOT add a pressure Dirichlet on this set
+         - Dirichlet is applied before SourceFlux and the two together corrupt the mass row.
+         5 mL/min into a 50 mm interval, of which this 1 mm slice takes 1/50, at 1000 kg/m3:
+         (5e-6/60)*(1/50)*1000 = 1.6667e-6 kg/s. -->
+    <SourceFlux
+      name="massInjection"
+      objectPath="ElementRegions/Source"
+      setNames="{ all }"
+      scale="-1.6667e-6"/>
+
+  </FieldSpecifications>
+
+  <Tasks>
+    <PackCollection
+      name="sourcePressureCollection"
+      objectPath="ElementRegions/Source/0_hexahedra"
+      fieldName="pressure"/>
+  </Tasks>
+
+  <Events
+    maxTime="200.0">
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="0.5"
+      target="/Solvers/pfSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="sourcePressureHistoryCollection"
+      timeFrequency="1.0"
+      target="/Tasks/sourcePressureCollection"/>
+    <PeriodicEvent
+      name="sourcePressureHistoryOutput"
+      timeFrequency="1.0"
+      target="/Outputs/sourcePressureHistoryOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="50.0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotLevel="3"/>
+
+    <TimeHistory
+      name="sourcePressureHistoryOutput"
+      sources="{ /Tasks/sourcePressureCollection }"
+      filename="sourcePressureHistory"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

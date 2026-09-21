@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+
+<!-- CASE C - the hypothesis: AS with precipitation and clogging active.
+
+     This is the base deck plus the shared composition file, with nothing overridden:
+       - AS fluid at saturation (Omega = 1) at the injection temperature
+       - initialSurfaceArea = 100 m2/m3 in the rock, gated by damage (surfaceAreaDamageExponent=1)
+         so reaction happens only in the fractured region
+       - DamageCloggingPermeability, so precipitate closes the fracture down
+
+     DRIVER: cooling. The base deck prescribes a radial temperature field, warm at the borehole and
+     falling to rock temperature over a radius rc that grows from 7 to 27 mm across the run. The
+     fluid enters at Omega = 1 and supersaturates as it cools, so precipitation tracks the cold
+     zone. rc is derived from the injection rate in coolingField_tables/make_cooling_field.py and
+     is the main thing to sweep: the 1D work showed that front position, not chemistry, sets where
+     the plug forms, and that a front which moves too fast smears the deposit instead of plugging.
+
+     Expected signature once the driver is in: precipitate accumulates where the thermal front
+     sits, permeability collapses there, borehole pressure climbs above cases A and B, and the
+     fracture branches rather than extending as a single plane.
+
+     Kept as a separate file rather than running the base directly so that the case matrix is
+     explicit and the base can gain shared changes without silently redefining "case C". -->
+<Problem>
+  <Included>
+    <File name="./AS_wellbore_base.xml"/>
+    <File name="./AS_wellbore_logConc.xml"/>
+  </Included>
+</Problem>

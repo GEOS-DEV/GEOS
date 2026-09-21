@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+
+<!-- Species composition for the AS wellbore cases, kept separate from the base deck so the
+     chemistry can be re-specified without touching mesh, solvers or mechanics.
+
+     Saturated AS: m(NH4+) = 11.56, m(SO4 2-) = 5.78 mol/kg, so
+     Q = 11.56^2 * 5.78 = 772.402 = 4 s^3 = K, i.e. Omega = 1 exactly.
+     Dehydration can then only push the fluid supersaturated, so the rate law never enters its
+     dissolution branch and no mineral inventory is ever drawn on.
+
+     Values are log10 of the molality: log10(11.56) = 2.44755086, log10(5.78) = 1.75440368.
+
+     BOTH species must be specified in each block. A single species FieldSpecification silently
+     pins ALL species on the set using bcLogPrimarySpeciesConcentration, which defaults to 0
+     (= 1 mol/kg).
+
+     Only logPrimarySpeciesConcentration is used here. Unlike the carbonate deck there is no
+     aggregate-concentration counterpart: ammoniumSulfate is all-kinetic (numSecondarySpecies = 0),
+     and the aggregate concentration is never back-solved into logPrimarySpeciesConcentration at
+     initialization because that path is gated on numSecondarySpecies > 0. -->
+<Problem>
+  <FieldSpecifications>
+
+    <!-- LOG CONCENTRATIONS AT SOURCE - the injected composition.
+         SourceFlux feeds the total mass row only, so AS enters the rock by upwind advection from
+         these cells. -->
+    <FieldSpecification
+      name="log_NH4_source"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="2.44755086"/>
+
+    <FieldSpecification
+      name="log_SO4_source"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="1.75440368"/>
+
+    <!-- INITIAL LOG CONCENTRATIONS EVERYWHERE. Required: without these the interior would
+         silently start at the field default rather than at the saturated composition. -->
+    <FieldSpecification
+      name="initialLog_NH4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="2.44755086"/>
+
+    <FieldSpecification
+      name="initialLog_SO4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="1.75440368"/>
+
+  </FieldSpecifications>
+</Problem>

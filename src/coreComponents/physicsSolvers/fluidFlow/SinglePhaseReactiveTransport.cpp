@@ -117,10 +117,7 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
   m_numKineticReactions( 0 ),
   m_hasDiffusion( 0 ),
   m_isUpdateReactivePorosity( 0 ),
-  m_isUpdateSurfaceArea( 0 ),
-  m_dehydrationDamageExponent( 1.0 ),
-  m_dehydrationPressureFloor( 0.0 ),
-  m_dehydrationPressureRamp( 1.0e5 )
+  m_isUpdateSurfaceArea( 0 )
 {
   // To add modeling parameters we want to add here
 
@@ -138,22 +135,6 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
     setApplyDefaultValue( { } ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Array to store the indices of immobile species. Default is {}, which indicates no immobile species." );
-
-  this->registerWrapper( viewKeyStruct::dehydrationDamageExponentString(), &m_dehydrationDamageExponent ).
-    setApplyDefaultValue( 1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Exponent m of the damage gate d^m of the dehydration water sink (0 means no damage gating). "
-                    "The sink rate constant is the field dehydrationRateConstant (default 0, i.e. no dehydration)." );
-
-  this->registerWrapper( viewKeyStruct::dehydrationPressureFloorString(), &m_dehydrationPressureFloor ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Pressure below which the dehydration water sink is switched off [Pa]" );
-
-  this->registerWrapper( viewKeyStruct::dehydrationPressureRampString(), &m_dehydrationPressureRamp ).
-    setApplyDefaultValue( 1.0e5 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Pressure range over which the dehydration water sink ramps up from the floor pressure [Pa]" );
 
   addLogLevel< logInfo::BoundaryConditions >();
 }
@@ -272,12 +253,6 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< initialSurfaceArea >( getName() ).
         reference().resizeDimension< 1 >( m_numKineticReactions );
-
-      subRegion.registerField< dehydrationRateConstant >( getName() );
-      // cellAverageDamage is produced by the phase-field solver but lives on the mandatory consumer:
-      // a reactive-transport run without mechanics still needs the array, gated to one by a zero exponent.
-      subRegion.registerField< fields::solidMechanics::cellAverageDamage >( getName() );
-      subRegion.registerField< cumulativeDehydratedMass >( getName() );
     } );
   } );
 }
@@ -369,6 +344,28 @@ void SinglePhaseReactiveTransport::implicitStepSetup( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
+  // Prescribed temperature. When the run is isothermal, temperature is not a degree of freedom and nothing
+  // else applies a FieldSpecification on it, so it is applied here, before anything reads it. This is what
+  // lets a deck drive the chemistry with a temperature that varies in space and time -- the equilibrium
+  // constant of a mineral reaction depends on it -- without solving an energy equation.
+  if( !m_isThermal )
+  {
+    static char const temperatureLogMessage[] =
+      "SinglePhaseReactiveTransport {}: at time {}s, the <{}> field specification '{}' is applied to the "
+      "element set '{}' in subRegion '{}'. \nThe scale of this field specification is {} and multiplies the "
+      "value of the provided function (if any). \nThe total number of target elements (including ghost "
+      "elements) is {}.";
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & )
+    {
+      applyFieldValue< ElementSubRegionBase >( time_n, dt, mesh, temperatureLogMessage,
+                                               fields::flow::temperature::key(),
+                                               fields::flow::temperature::key() );
+    } );
+  }
+
   SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -401,7 +398,6 @@ void SinglePhaseReactiveTransport::implicitStepComplete( real64 const & time,
                                                                   ElementSubRegionBase & subRegion )
     {
       updateKineticReactionMolarIncrements( dt, subRegion );
-      updateCumulativeDehydratedMass( dt, subRegion );
     } );
   } );
 
@@ -498,8 +494,7 @@ void SinglePhaseReactiveTransport::assembleAccumulationTermsInMassBalanceAndSpec
                                                      fluid,
                                                      solid,
                                                      localMatrix,
-                                                     localRhs,
-                                                     dehydrationParameters() );
+                                                     localRhs );
       }
     } );
   } );
@@ -697,32 +692,6 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
       }
     } );
   }
-}
-
-void SinglePhaseReactiveTransport::updateCumulativeDehydratedMass( real64 const dt,
-                                                                   ElementSubRegionBase & subRegion ) const
-{
-  GEOS_MARK_FUNCTION;
-
-  arrayView1d< real64 const > const rateConstant = subRegion.getField< fields::flow::dehydrationRateConstant >();
-  arrayView1d< real64 const > const damage = subRegion.getField< fields::solidMechanics::cellAverageDamage >();
-  arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const mass = subRegion.getField< fields::flow::mass >();
-  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-  arrayView1d< real64 > const cumulativeMass = subRegion.getField< fields::flow::cumulativeDehydratedMass >();
-
-  singlePhaseReactiveBaseKernels::DehydrationParameters const params = dehydrationParameters();
-
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-  {
-    if( rateConstant[ei] > 0.0 )
-    {
-      real64 dGate_dP = 0.0;
-      real64 const pressureGate = singlePhaseReactiveBaseKernels::dehydrationPressureGate( params, pressure[ei], dGate_dP );
-      real64 const damageGate = singlePhaseReactiveBaseKernels::dehydrationDamageGate( params, damage[ei] );
-      cumulativeMass[ei] += dt * rateConstant[ei] * damageGate * pressureGate * mass[ei] / volume[ei];
-    }
-  } );
 }
 
 void SinglePhaseReactiveTransport::updateFluidModel( ObjectManagerBase & dataGroup ) const
@@ -962,24 +931,6 @@ void SinglePhaseReactiveTransport::initializePostInitialConditionsPreSubGroups()
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 
-    // The dehydration sink removes water mass but not its enthalpy, so it is restricted to isothermal runs
-    if( m_isThermal )
-    {
-      mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
-                                                                    ElementSubRegionBase const & subRegion )
-      {
-        arrayView1d< real64 const > const rateConstant = subRegion.getField< fields::flow::dehydrationRateConstant >();
-        RAJA::ReduceMax< parallelHostReduce, real64 > maxRateConstant( 0.0 );
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
-        {
-          maxRateConstant.max( rateConstant[ei] );
-        } );
-        GEOS_THROW_IF( maxRateConstant.get() > 0.0,
-                       GEOS_FMT( "SinglePhaseReactiveTransport {}: the dehydration water sink ({}) is only available for isothermal runs",
-                                 getDataContext(), fields::flow::dehydrationRateConstant::key() ),
-                       InputError );
-      } );
-    }
   } );
 
   FlowSolverBase::initializeState( domain );
