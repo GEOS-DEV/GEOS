@@ -160,6 +160,17 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  /**
+   * @brief Compute the residual-norm weights w_i = max_j |A_ij| s_j, s_j the characteristic scale of unknown j.
+   * @param domain the domain
+   * @param dofManager the dof manager
+   * @param localMatrix the assembled local matrix
+   * @note public: it contains device lambdas, which nvcc rejects in a private member function
+   */
+  void computeResidualWeights( DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64 const, globalIndex const > const & localMatrix );
+
 private:
 
   /**
@@ -199,16 +210,6 @@ private:
    */
   void computeGhostDofs( DomainPartition const & domain,
                          DofManager const & dofManager );
-
-  /**
-   * @brief Compute the residual-norm weights w_i = max_j |A_ij| s_j, s_j the characteristic scale of unknown j.
-   * @param domain the domain
-   * @param dofManager the dof manager
-   * @param localMatrix the assembled local matrix
-   */
-  void computeResidualWeights( DomainPartition & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64 const, globalIndex const > const & localMatrix );
 
   /// relative tolerance used in the mass matrix computations
   real64 m_areaRelTol;
