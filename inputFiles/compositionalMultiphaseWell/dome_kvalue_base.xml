@@ -210,6 +210,7 @@
   </Constitutive>
 
   <FieldSpecifications>
+    <!-- SPHINX_DOME_EQUILIBRIUM_BEGIN -->
     <HydrostaticEquilibrium
       name="EQUILIBRIUM"
       objectPath="ElementRegions"
@@ -220,6 +221,7 @@
       componentNames="{ CH4, CO2, H2S, H2O }"
       componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
       temperatureVsElevationTableName="TEMP.VD"/>
+    <!-- SPHINX_DOME_EQUILIBRIUM_END -->
   </FieldSpecifications>
 
   <Outputs>

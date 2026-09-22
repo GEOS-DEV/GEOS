@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <Problem>
     <Mesh>
+        <!-- SPHINX_DOME_MESH_BEGIN -->
         <VTKMesh
             name="mesh"
             file="dome_bench.vti"
@@ -45,5 +46,6 @@
                     distanceFromHead="1.25" />
             </InternalWell>
         </VTKMesh>
+        <!-- SPHINX_DOME_MESH_END -->
     </Mesh>
 </Problem>
