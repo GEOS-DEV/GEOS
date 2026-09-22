@@ -493,14 +493,14 @@ TEST( VTKImport, redistribute )
   {
     EXPECT_EQ( result->GetNumberOfCells(), 0 );
     expectEmptyArrayMetadata( *result->GetCellData(),
-                               { { "redistributeCellLabels", VTK_STRING, 2 },
-                                 { "redistributeCellValues", VTK_INT, 3 } } );
+                              { { "redistributeCellLabels", VTK_STRING, 2 },
+                                { "redistributeCellValues", VTK_INT, 3 } } );
     expectEmptyArrayMetadata( *result->GetPointData(),
-                               { { "redistributePointLabels", VTK_STRING, 2 },
-                                 { "redistributePointValues", VTK_DOUBLE, 4 } } );
+                              { { "redistributePointLabels", VTK_STRING, 2 },
+                                { "redistributePointValues", VTK_DOUBLE, 4 } } );
     expectEmptyArrayMetadata( *result->GetFieldData(),
-                               { { "redistributeFieldLabels", VTK_STRING, 2 },
-                                 { "redistributeFieldValues", VTK_INT, 3 } } );
+                              { { "redistributeFieldLabels", VTK_STRING, 2 },
+                                { "redistributeFieldValues", VTK_INT, 3 } } );
   }
 }
 
