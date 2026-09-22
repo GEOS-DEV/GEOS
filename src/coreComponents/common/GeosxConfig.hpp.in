@@ -83,6 +83,9 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOS_USE_HYPRE
 
+/// Enables use of SuiteSparse direct solvers (CMake option ENABLE_SUITESPARSE)
+#cmakedefine GEOS_USE_SUITESPARSE
+
 /// Enables use of HYPREDRV library (CMake option ENABLE_HYPREDRV)
 #cmakedefine GEOS_USE_HYPREDRV
 
