@@ -574,7 +574,33 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                                                          arrayView1d< real64 > const & localRhs,
                                                          CRSMatrixView< real64, localIndex const > const & dR_dAper,
                                                          stdMap< string, localIndex > const * const dR_dAperOffsets,
+                                                         bool const useAugmentedLagrangianMultiplier,
                                                          stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
+{
+  if( useAugmentedLagrangianMultiplier )
+  {
+    assembleHydrofracFluxTermsImpl< singlePhasePoromechanicsConformingFracturesALMKernels::ConnectorBasedAssemblyKernelFactory,
+                                    thermalSinglePhasePoromechanicsConformingFracturesALMKernels::ConnectorBasedAssemblyKernelFactory >
+      ( dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, dR_dAperEnergyOffsets );
+  }
+  else
+  {
+    assembleHydrofracFluxTermsImpl< singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernelFactory,
+                                    thermalSinglePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernelFactory >
+      ( dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, dR_dAperEnergyOffsets );
+  }
+}
+
+template< typename BASE >
+template< typename ISOTHERMAL_FRACTURE_KERNEL_FACTORY, typename THERMAL_FRACTURE_KERNEL_FACTORY >
+void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsImpl( real64 const dt,
+                                                             DomainPartition const & domain,
+                                                             DofManager const & dofManager,
+                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             arrayView1d< real64 > const & localRhs,
+                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                                             stdMap< string, localIndex > const * const dR_dAperOffsets,
+                                                             stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
 {
   GEOS_MARK_FUNCTION;
 
@@ -625,6 +651,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
       {
         return;
       }
+
+      // Row offset, in dR_dAper, of the mass-balance block for this mesh target.
       localIndex const dR_dAperOffset = [&]() -> localIndex
       {
         if( dR_dAperOffsets == nullptr )
@@ -636,125 +664,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                        GEOS_FMT( "No dR/dAperture row offset is available for mesh body '{}'", meshName ) );
         return offsetIt->second;
       }();
-     
+
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      if( m_isThermal )
-      { 
-        // Sentinel -1 means "no energy block available" (non-thermal flow solver)
-      localIndex const dR_dAperEnergyOffset = [&]() -> localIndex
-      {
-        if( !m_isThermal || dR_dAperEnergyOffsets == nullptr )
-        {
-          return -1;
-        }
-        auto const offsetIt = dR_dAperEnergyOffsets->find( meshName );
-        return offsetIt == dR_dAperEnergyOffsets->end() ? -1 : offsetIt->second;
-      }();
-        
-      thermalSinglePhasePoromechanicsConformingFracturesKernels::
-          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                          dofKey,
-                                                                                          this->getName(),
-                                                                                          mesh.getElemManager(),
-                                                                                          stencilWrapper,
-                                                                                          dt,
-                                                                                          localMatrix.toViewConstSizes(),
-                                                                                          localRhs.toView(),
-                                                                                          dR_dAper,
-                                                                                          dR_dAperOffset,
-                                                                                          dR_dAperEnergyOffset );
-      }
-      else
-      {
-        singlePhasePoromechanicsConformingFracturesKernels::
-          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                          dofKey,
-                                                                                          this->getName(),
-                                                                                          mesh.getElemManager(),
-                                                                                          stencilWrapper,
-                                                                                          dt,
-                                                                                          localMatrix.toViewConstSizes(),
-                                                                                          localRhs.toView(),
-                                                                                          dR_dAper,
-                                                                                          dR_dAperOffset );
-      }
-    } );
-  } );
-
-
-}
-
-template< typename BASE >
-void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UNUSED_PARAM ( time_n ),
-                                                            real64 const dt,
-                                                            DomainPartition const & domain,
-                                                            DofManager const & dofManager,
-                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                            arrayView1d< real64 > const & localRhs,
-                                                            CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                            stdMap< string, localIndex > const * const dR_dAperOffsets,
-                                                            stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
-{
-  GEOS_MARK_FUNCTION;
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-
-
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
-                                                                      MeshLevel const & mesh,
-                                                                      string_array const & )
-  {
-    fluxApprox.forStencils< CellElementStencilTPFA, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
-    {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      if( m_isThermal )
-      {
-        thermalSinglePhaseFVMKernels::
-          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                               dofKey,
-                                                                               this->getName(),
-                                                                               mesh.getElemManager(),
-                                                                               stencilWrapper,
-                                                                               dt,
-                                                                               localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
-      }
-      else
-      {
-        singlePhaseFVMKernels::
-          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                               dofKey,
-                                                                               this->getName(),
-                                                                               mesh.getElemManager(),
-                                                                               stencilWrapper,
-                                                                               dt,
-                                                                               localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
-      }
-    } );
-
-    fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
-    {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      // Row offset, in dR_dAper, of the mass-balance block for this mesh target. Defaults to 0 (i.e. no
-      // offset) when the caller doesn't distinguish mesh targets - mass is always written, unlike the
-      // energy block below, which is skipped entirely (sentinel -1) rather than defaulted.
-      localIndex const dR_dAperOffset = [&]() -> localIndex
-      {
-        if( dR_dAperOffsets == nullptr )
-        {
-          return 0;
-        }
-        auto const offsetIt = dR_dAperOffsets->find( meshName );
-        return offsetIt == dR_dAperOffsets->end() ? 0 : offsetIt->second;
-      }();
 
       if( m_isThermal )
       {
@@ -769,32 +680,30 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
           return offsetIt == dR_dAperEnergyOffsets->end() ? -1 : offsetIt->second;
         }();
 
-        thermalSinglePhasePoromechanicsConformingFracturesALMKernels::
-          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                          dofKey,
-                                                                                          this->getName(),
-                                                                                          mesh.getElemManager(),
-                                                                                          stencilWrapper,
-                                                                                          dt,
-                                                                                          localMatrix.toViewConstSizes(),
-                                                                                          localRhs.toView(),
-                                                                                          dR_dAper,
-                                                                                          dR_dAperOffset,
-                                                                                          dR_dAperEnergyOffset );
+        THERMAL_FRACTURE_KERNEL_FACTORY::template createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                              dofKey,
+                                                                                              this->getName(),
+                                                                                              mesh.getElemManager(),
+                                                                                              stencilWrapper,
+                                                                                              dt,
+                                                                                              localMatrix.toViewConstSizes(),
+                                                                                              localRhs.toView(),
+                                                                                              dR_dAper,
+                                                                                              dR_dAperOffset,
+                                                                                              dR_dAperEnergyOffset );
       }
       else
       {
-        singlePhasePoromechanicsConformingFracturesALMKernels::
-          ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                          dofKey,
-                                                                                          this->getName(),
-                                                                                          mesh.getElemManager(),
-                                                                                          stencilWrapper,
-                                                                                          dt,
-                                                                                          localMatrix.toViewConstSizes(),
-                                                                                          localRhs.toView(),
-                                                                                          dR_dAper,
-                                                                                          dR_dAperOffset );
+        ISOTHERMAL_FRACTURE_KERNEL_FACTORY::template createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                                 dofKey,
+                                                                                                 this->getName(),
+                                                                                                 mesh.getElemManager(),
+                                                                                                 stencilWrapper,
+                                                                                                 dt,
+                                                                                                 localMatrix.toViewConstSizes(),
+                                                                                                 localRhs.toView(),
+                                                                                                 dR_dAper,
+                                                                                                 dR_dAperOffset );
       }
     } );
   } );

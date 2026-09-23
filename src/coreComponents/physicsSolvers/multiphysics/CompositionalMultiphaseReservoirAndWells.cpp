@@ -445,25 +445,10 @@ assembleHydrofracFluxTerms( real64 const time_n,
                             arrayView1d< real64 > const & localRhs,
                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
                             stdMap< string, localIndex > const * const dR_dAperOffsets,
+                            bool const useAugmentedLagrangianMultiplier,
                             stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
 {
-  flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, dR_dAperEnergyOffsets );
-}
-
-template< typename RESERVOIR_SOLVER >
-void
-CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
-assembleHydrofracFluxTermsALM( real64 const time_n,
-                               real64 const dt,
-                               DomainPartition const & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs,
-                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                               stdMap< string, localIndex > const * const dR_dAperOffsets,
-                               stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
-{
-  flowSolver()->assembleHydrofracFluxTermsALM( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, dR_dAperEnergyOffsets );
+  flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, useAugmentedLagrangianMultiplier, dR_dAperEnergyOffsets );
 }
 
 template< typename RESERVOIR_SOLVER >

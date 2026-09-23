@@ -157,6 +157,7 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
                               stdMap< string, localIndex > const * const dR_dAperOffsets,
+                              bool const useAugmentedLagrangianMultiplier = false,
                               stdMap< string, localIndex > const * const dR_dAperEnergyOffsets = nullptr ) override final;
 
   virtual void

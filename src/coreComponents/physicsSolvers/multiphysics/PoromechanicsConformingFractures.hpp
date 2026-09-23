@@ -391,26 +391,16 @@ public:
                                        localRhs );
 
     // Assemble fluxes 3D/2D and get dFluidResidualDAperture
-    if constexpr (CONTACT_SOLVER::hasContactStabilization)
-      this->flowSolver()->assembleHydrofracFluxTermsALM( time_n,
-                                                         dt,
-                                                         domain,
-                                                         dofManager,
-                                                         localMatrix,
-                                                         localRhs,
-                                                         getDerivativeFluxResidual_dNormalJump(),
-                                                         &m_derivativeFluxResidual_dApertureOffsets,
-                                                         &m_derivativeFluxResidual_dApertureEnergyOffsets );
-    else
-      this->flowSolver()->assembleHydrofracFluxTerms( time_n,
-                                                      dt,
-                                                      domain,
-                                                      dofManager,
-                                                      localMatrix,
-                                                      localRhs,
-                                                      getDerivativeFluxResidual_dNormalJump(),
-                                                      &m_derivativeFluxResidual_dApertureOffsets,
-                                                      &m_derivativeFluxResidual_dApertureEnergyOffsets );
+    this->flowSolver()->assembleHydrofracFluxTerms( time_n,
+                                                    dt,
+                                                    domain,
+                                                    dofManager,
+                                                    localMatrix,
+                                                    localRhs,
+                                                    getDerivativeFluxResidual_dNormalJump(),
+                                                    &m_derivativeFluxResidual_dApertureOffsets,
+                                                    CONTACT_SOLVER::hasContactStabilization,
+                                                    &m_derivativeFluxResidual_dApertureEnergyOffsets );
 
     m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
 
