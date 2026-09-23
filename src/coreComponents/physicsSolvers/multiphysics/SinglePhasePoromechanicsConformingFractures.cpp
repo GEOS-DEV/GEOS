@@ -62,7 +62,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
                                                     arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
 
-//TODO refactor with contact browser and kernel
 
   GEOS_MARK_FUNCTION;
 

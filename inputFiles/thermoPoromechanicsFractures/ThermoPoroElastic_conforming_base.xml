@@ -34,6 +34,7 @@
 
     <SinglePhaseFVM
       name="flowSolver"
+      logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ RockMatrix, Fracture }"
       isThermal="1">
@@ -73,7 +74,7 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      materialList="{ water, fractureFilling, fractureContact, thermalCond, hApertureModel }"
+      materialList="{ water, fractureFilling, lmFractureContact, thermalCond, hApertureModel }"
       defaultAperture="1.e-4"/>
   </ElementRegions>
 

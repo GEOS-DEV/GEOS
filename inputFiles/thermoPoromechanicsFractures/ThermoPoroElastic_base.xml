@@ -61,12 +61,15 @@
       defaultReferencePorosity="1.00"
       referencePressure="0.0"
       compressibility="0.0"/>
-
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <FrictionlessContact
-      name="fractureContact"/>
+    <!-- <FrictionlessContact
+      name="fractureContact"/> -->
+    <Coulomb
+      name="lmFractureContact"
+      defaultCohesion="0.0"
+      defaultFrictionCoefficient="0.577350269189626"/>
 
     <HydraulicApertureTable
       name="hApertureModel"
