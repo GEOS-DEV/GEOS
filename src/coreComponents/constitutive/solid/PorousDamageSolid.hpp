@@ -57,8 +57,8 @@ public:
   void smallStrainUpdatePoromechanics( localIndex const k,
                                        localIndex const q,
                                        real64 const & timeIncrement,
-                                       real64 const & pressure_n,
                                        real64 const & pressure,
+                                       real64 const & pressure_n,
                                        real64 const & deltaTemperature,
                                        real64 const & deltaTemperatureFromLastStep,
                                        real64 const ( &strainIncrement )[6],
@@ -275,7 +275,7 @@ private:
                            real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
-    GEOS_UNUSED_VAR( deltaTemperature );
+    GEOS_UNUSED_VAR( deltaTemperature, pressure_n );
 
     updateBiotCoefficientAndAssignModuli( k );
 
@@ -302,14 +302,18 @@ private:
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
-    real64 const pressureDamage = m_solidUpdate.pressureDamageFunction( k, q );
-    real64 const damagedBiotCoefficient = pressureDamage * biotCoefficient;
+    // real64 const pressureDamage = m_solidUpdate.pressureDamageFunction( k, q );
+    // real64 const damagedBiotCoefficient = pressureDamage * biotCoefficient;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureDamage * pressure_n - damagedBiotCoefficient * pressure );
+    // LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureDamage * pressure_n - damagedBiotCoefficient * pressure );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, - biotCoefficient * pressure );
 
-    dTotalStress_dPressure[0] = -damagedBiotCoefficient;
-    dTotalStress_dPressure[1] = -damagedBiotCoefficient;
-    dTotalStress_dPressure[2] = -damagedBiotCoefficient;
+    // dTotalStress_dPressure[0] = -damagedBiotCoefficient;
+    // dTotalStress_dPressure[1] = -damagedBiotCoefficient;
+    // dTotalStress_dPressure[2] = -damagedBiotCoefficient;
+    dTotalStress_dPressure[0] = -biotCoefficient;
+    dTotalStress_dPressure[1] = -biotCoefficient;
+    dTotalStress_dPressure[2] = -biotCoefficient;
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;

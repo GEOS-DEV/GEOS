@@ -363,25 +363,27 @@ private:
     // So we ignore the derivatives wrt pressure and temperature
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
-    real64 mechanicsStrainIncrement[6]{};
-    mechanicsStrainIncrement[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
-    mechanicsStrainIncrement[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
-    mechanicsStrainIncrement[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
-    mechanicsStrainIncrement[3] = strainIncrement[3];
-    mechanicsStrainIncrement[4] = strainIncrement[4];
-    mechanicsStrainIncrement[5] = strainIncrement[5];
+    updateBiotCoefficientAndAssignModuli( k );
+
+    real64 strainIncrementNoThermalStrain[6]{};
+    strainIncrementNoThermalStrain[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[3] = strainIncrement[3];
+    strainIncrementNoThermalStrain[4] = strainIncrement[4];
+    strainIncrementNoThermalStrain[5] = strainIncrement[5];
 
     // Add the contributions of pore material stress/pressure
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
-    // Degrade Biot coupling in step with the elastic stiffness degradation
-    real64 const damagedBiotCoefficient = getDegradationValue( k, q ) * biotCoefficient + ( 1.0 - getDegradationValue( k, q ) );
+    // // Degrade Biot coupling in step with the elastic stiffness degradation
+    // real64 const damagedBiotCoefficient = getDegradationValue( k, q ) * biotCoefficient + ( 1.0 - getDegradationValue( k, q ) );
 
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
                                      timeIncrement,
-                                     mechanicsStrainIncrement,
+                                     strainIncrementNoThermalStrain,
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
@@ -396,7 +398,7 @@ private:
     }
 
     // Compute effective stress increment for the porosity update
-    real64 const meanEffectiveStressIncrement = bulkModulus * ( mechanicsStrainIncrement[0] + mechanicsStrainIncrement[1] + mechanicsStrainIncrement[2] );
+    real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrementNoThermalStrain[0] + strainIncrementNoThermalStrain[1] + strainIncrementNoThermalStrain[2] );
 
     m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
 
@@ -412,10 +414,12 @@ private:
     real64 const totalPorePressure = pressure + mineralPressure;
 
     // Add the contributions of pressure to the total stress
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * totalPorePressure );
+    // LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * totalPorePressure );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * totalPorePressure );
 
     // Add the contributions of mineral pressure to the volumetric part of the stiffness
-    real64 const dTotalStress_dVolStrain = damagedBiotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
+    // real64 const dTotalStress_dVolStrain = damagedBiotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
+    real64 const dTotalStress_dVolStrain = biotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
     if constexpr ( std::is_same_v< DiscretizationOps, SolidModelDiscretizationOpsFullyAnisotropic > )
     {
       for( int i = 0; i < 3; ++i )

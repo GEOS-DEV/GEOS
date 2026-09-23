@@ -109,6 +109,7 @@
       timeIntegrationOption="SteadyState"
       irreversibilityFlag="1"
       damageUpperBound="1.0"
+      fracturePressureTermFlag="0"
       viscousRegularizationCoeff="1.0"
       logLevel="1"
       targetRegions="{ Source, Rock }">
@@ -136,7 +137,7 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="../../../../../runs/ammoniumSulfate/wellbore/meshes/wellboreFill2DMeterBased.vtu"
+      file="./meshes/wellboreFill2DMeterBased.vtu"
       regionAttribute="SOURCE-MATRIX"
       nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos }"/>
   </Mesh>
@@ -188,10 +189,10 @@
       defaultDensity="0.0"
       defaultBulkModulus="24.6914e9"
       defaultShearModulus="16.2602e9"
-      lengthScale="0.001"
-      defaultCriticalFractureEnergy="12"
-      criticalStrainEnergy="4050"
-      fractureModelType="Cohesive"
+      lengthScale="0.0001"
+      defaultCriticalFractureEnergy="2.5"
+      criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
       localDissipationOption="Linear"
       degradationLowerLimit="1e-6"/>
 
@@ -202,8 +203,8 @@
       defaultInitialVolumeFractions="{ 0.0 }"
       molarWeights="{ 0.13214 }"
       mineralDensities="{ 1770.0 }"
-      defaultGrainBulkModulus="128.5e9"
-      defaultMineralBulkModulus="1e9"/>
+      defaultGrainBulkModulus="24.6914e9"
+      defaultMineralBulkModulus="0.0"/>
 
     <!-- Matrix permeability RAISED to 5e-16 m2 (0.5 mD) from the granite value of 1e-18 (1e-6
          Darcy). This is a deliberate numerical choice, not a property of the rock, and it is the
@@ -226,8 +227,8 @@
          c = 15 gives ~3e6, but the report does not give a value. -->
     <DamageCloggingPermeability
       name="rockPerm"
-      bulkPermeability="5.0e-16"
-      damageDependenceConstant="15.0"
+      bulkPermeability="5.0e-18"
+      damageDependenceConstant="5.0"
       cloggingExponent="3"
       minCloggingMultiplier="1e-6"/>
 
@@ -242,34 +243,34 @@
       porosityModelName="voidPorosity"
       permeabilityModelName="voidPerm"
       fluidModelName="water"
-      surfaceAreaDamageExponent="1"/>
+      surfaceAreaDamageExponent="0"/>
 
     <DamageSpectralElasticIsotropic
       name="voidSolid"
       defaultDensity="0.0"
       defaultBulkModulus="24.6914e5"
       defaultShearModulus="16.2602e5"
-      lengthScale="0.001"
+      lengthScale="0.0001"
       defaultCriticalFractureEnergy="1e12"
-      criticalStrainEnergy="4050"
-      fractureModelType="Cohesive"
+      criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
       localDissipationOption="Linear"
-      degradationLowerLimit="1e-6"/>
+      degradationLowerLimit="1.0"/>
 
     <BiotReactivePorosity
       name="voidPorosity"
-      defaultReferencePorosity="0.99"
+      defaultReferencePorosity="0.9999"
       defaultInitialVolumeFractions="{ 0.0 }"
       molarWeights="{ 0.13214 }"
       mineralDensities="{ 1770.0 }"
-      defaultGrainBulkModulus="128.5e9"
-      defaultMineralBulkModulus="1e9"/>
+      defaultGrainBulkModulus="1e21"
+      defaultMineralBulkModulus="0.0"/>
 
     <DamageCloggingPermeability
       name="voidPerm"
       bulkPermeability="1.0e-10"
       damageDependenceConstant="0.0"
-      cloggingExponent="3"
+      cloggingExponent="0.0"
       minCloggingMultiplier="1e-6"/>
 
     <!-- ================= FLUID =================
@@ -277,36 +278,18 @@
          Case A overrides this block with water (rho = 1000, mu = 0.001). -->
     <ReactiveCompressibleSinglePhaseFluid
       name="water"
-      defaultDensity="1245"
-      defaultViscosity="0.002"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="5e-10"
+      compressibility="1e-8"
+      referenceDensity="1000"
       viscosibility="0.0"
-      solventMassPerSolutionVolume="706"
+      solventMassFraction="0.5670682731"
       chemicalSystemType="ammoniumSulfate"/>
 
   </Constitutive>
 
   <Geometry>
-    <!-- Outermost element layers, used as ELEMENT sets for the pressure outlet. Cell centres reach
-         0.074886, so a 1.5 mm band takes the outer two layers on each side. -->
-    <Box
-      name="xminus"
-      xMin="{ -0.0751, -0.0751, -0.0006 }"
-      xMax="{ -0.0735,  0.0751,  0.0006 }"/>
-    <Box
-      name="xplus"
-      xMin="{  0.0735, -0.0751, -0.0006 }"
-      xMax="{  0.0751,  0.0751,  0.0006 }"/>
-    <Box
-      name="yminus"
-      xMin="{ -0.0751, -0.0751, -0.0006 }"
-      xMax="{  0.0751, -0.0735,  0.0006 }"/>
-    <Box
-      name="yplus"
-      xMin="{ -0.0751,  0.0735, -0.0006 }"
-      xMax="{  0.0751,  0.0751,  0.0006 }"/>
-
     <!-- The two symmetry planes through the borehole axis, used to remove rigid-body motion. The
          nearest off-plane node is 0.056 mm away, so a 0.02 mm box selects the plane and nothing
          else. -->
@@ -328,7 +311,7 @@
       name="boreCore"
       firstFaceCenter="{ 0.0, 0.0, -0.001 }"
       secondFaceCenter="{ 0.0, 0.0, 0.001 }"
-      outerRadius="0.004"/>
+      outerRadius="0.0062"/>
   </Geometry>
 
   <FieldSpecifications>
@@ -355,7 +338,7 @@
       objectPath="ElementRegions/Rock"
       fieldName="rockSolid_stress"
       component="1"
-      scale="0.0"/>
+      scale="-1e5"/>
 
     <FieldSpecification
       name="Sv_rock"
@@ -401,7 +384,7 @@
          branching, and only the symmetric form can appear. Being true symmetry planes, this could
          equally run on a quarter mesh for ~4x. -->
     <FieldSpecification
-      name="symX_ux"
+      name="xconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="0"
@@ -409,12 +392,12 @@
       setNames="{ symX }"/>
 
     <FieldSpecification
-      name="symY_uy"
+      name="yconstraint"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ symY }"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -463,7 +446,7 @@
       name="massInjection"
       objectPath="ElementRegions/Source"
       setNames="{ all }"
-      scale="-2.075e-6"/>
+      scale="-1.6667e-6"/>
 
     <!-- ===== AS composition =====
          In AS_wellbore_logConc.xml, included by every case file alongside this deck so the
@@ -546,22 +529,29 @@
   <Events
     maxTime="200.0">
     <PeriodicEvent
-      name="solverApplications"
-      maxEventDt="0.5"
+      name="solverApplications0"
+      endTime="20.0"
+      maxEventDt="0.2"
+      target="/Solvers/pfSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="20.0"
+      maxEventDt="0.01"
       target="/Solvers/pfSolve"/>
 
     <PeriodicEvent
       name="vtkOutput"
-      timeFrequency="1.0"
+      cycleFrequency="5"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="sourcePressureHistoryCollection"
-      timeFrequency="1.0"
+      cycleFrequency="1"
       target="/Tasks/sourcePressureCollection"/>
     <PeriodicEvent
       name="sourcePressureHistoryOutput"
-      timeFrequency="1.0"
+      cycleFrequency="1"
       target="/Outputs/sourcePressureHistoryOutput"/>
 
     <PeriodicEvent

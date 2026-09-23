@@ -3,12 +3,14 @@
 <!-- Species composition for the AS wellbore cases, kept separate from the base deck so the
      chemistry can be re-specified without touching mesh, solvers or mechanics.
 
-     Saturated AS: m(NH4+) = 11.56, m(SO4 2-) = 5.78 mol/kg, so
-     Q = 11.56^2 * 5.78 = 772.402 = 4 s^3 = K, i.e. Omega = 1 exactly.
-     Dehydration can then only push the fluid supersaturated, so the rate law never enters its
-     dissolution branch and no mineral inventory is ever drawn on.
+     The source is saturated at 60 C: m(NH4+) = 13.24419 and m(SO4 2-) = 6.622095 mol/kg,
+     giving Q = K(333.15 K) = 1161.572. Cooling this solution to 25 C gives Omega = 1.504
+     and drives precipitation once damage activates the reactive surface area.
 
-     Values are log10 of the molality: log10(11.56) = 2.44755086, log10(5.78) = 1.75440368.
+     The initial domain fluid remains saturated at 25 C: m(NH4+) = 11.56 and
+     m(SO4 2-) = 5.78 mol/kg, giving Q = K(298.15 K) = 772.402.
+
+     Values are natural logarithms of molality, as required by the reactive transport solver.
 
      BOTH species must be specified in each block. A single species FieldSpecification silently
      pins ALL species on the set using bcLogPrimarySpeciesConcentration, which defaults to 0
@@ -30,7 +32,7 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="0"
-      scale="2.44755086"/>
+      scale="2.58355894"/>
 
     <FieldSpecification
       name="log_SO4_source"
@@ -38,7 +40,7 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="1"
-      scale="1.75440368"/>
+      scale="1.89041176"/>
 
     <!-- INITIAL LOG CONCENTRATIONS EVERYWHERE. Required: without these the interior would
          silently start at the field default rather than at the saturated composition. -->

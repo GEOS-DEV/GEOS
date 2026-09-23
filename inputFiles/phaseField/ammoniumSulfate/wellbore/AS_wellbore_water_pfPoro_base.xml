@@ -1,0 +1,341 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <!-- Bounds are +/-0.075 m in x and y, +/-0.5 mm in z: already in metres, so no scale attribute. -->
+  <Mesh>
+    <VTKMesh
+      name="mesh"
+      file="./meshes/wellboreFill2DMeterBased.vtu"
+      regionAttribute="SOURCE-MATRIX"
+      nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ 0_hexahedra }"
+      materialList="{ water, voidMat }"/>
+
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ water, rockMat }"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <!-- ================= ROCK ================= -->
+    <PorousDamageSpectralElasticIsotropic
+      name="rockMat"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <!-- E = 40 GPa, nu = 0.23 => K = 24.6914e9, G = 16.2602e9.
+         BRITTLE / AT2 (Quadratic dissipation): AT2 puts a real zeroth-order term in the damage
+         Jacobian, which the gradient-only AT1 operator lacks. criticalStrainEnergy is unused for
+         Brittle and set to zero.
+         lengthScale = 0.5 mm gives L/h = 2.1 out to r = 15 mm on this mesh - the minimum for a
+         resolved band - then coarsens. A crack running past ~15 mm is mesh-dependent. -->
+    <DamageSpectralElasticIsotropic
+      name="rockSolid"
+      defaultDensity="0.0"
+      defaultBulkModulus="24.6914e9"
+      defaultShearModulus="16.2602e9"
+      lengthScale="0.0001"
+      defaultCriticalFractureEnergy="2.5"
+      criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
+      localDissipationOption="Linear"
+      degradationLowerLimit="1e-6"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="24.6914e9"
+      defaultReferencePorosity="0.05"/>
+
+    <!-- See the header on bulkPermeability. damageDependenceConstant = 12 is carried over from the
+         AS deck, where it was set so the fracture out-conducts the radial matrix: the conductance
+         ratio at r = 10 mm is 1 at c = 5, 175 at c = 10, 1295 at c = 12. c = 15 is the physically
+         natural value but places a 3.3e6 contrast across one cell and diverged in the AS case. -->
+    <DamagePermeability
+      name="rockPerm"
+      bulkPermeability="5.0e-18"
+      damageDependenceConstant="5.0"/>
+
+    <!-- ================= BOREHOLE (soft "void") =================
+         Same catalog type as the rock, only softer. At 1e-4 x rock stiffness the disc acts as a
+         hole while keeping the stiffness matrix conditioned - do not push it to 1e-12. Biot b -> 1
+         as K -> 0, so the region transmits pore pressure to the wall as a traction and no
+         <Traction> BC is needed. The damage pin keeps it intact. -->
+    <PorousDamageSpectralElasticIsotropic
+      name="voidMat"
+      solidModelName="voidSolid"
+      porosityModelName="voidPorosity"
+      permeabilityModelName="voidPerm"/>
+
+    <DamageSpectralElasticIsotropic
+      name="voidSolid"
+      defaultDensity="0.0"
+      defaultBulkModulus="24.6914e6"
+      defaultShearModulus="16.2602e6"
+      lengthScale="0.0001"
+      defaultCriticalFractureEnergy="2.5"
+      criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
+      localDissipationOption="Linear"
+      degradationLowerLimit="1.0"/>
+
+    <BiotPorosity
+      name="voidPorosity"
+      defaultGrainBulkModulus="1e21"
+      defaultReferencePorosity="0.9999"/>
+
+    <DamagePermeability
+      name="voidPerm"
+      bulkPermeability="1.0e-10"
+      damageDependenceConstant="0.0"/>
+
+    <!-- ================= FLUID =================
+         Plain water: rho = 1000, mu = 0.001. No chemical system, no solvent mass. -->
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      referenceViscosity="0.001"
+      compressibility="1e-8"
+      viscosibility="0.0"/>
+
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="symX"
+      xMin="{ -2.0e-5, -0.0751, -0.0006 }"
+      xMax="{  2.0e-5,  0.0751,  0.0006 }"/>
+    <Box
+      name="symY"
+      xMin="{ -0.0751, -2.0e-5, -0.0006 }"
+      xMax="{  0.0751,  2.0e-5,  0.0006 }"/>
+
+    <Box
+      name="notchPlus"
+      xMin="{  0.00635, -0.00002, -0.0006 }"
+      xMax="{  0.00870,  0.00002,  0.0006 }"/>
+    <Box
+      name="notchMinus"
+      xMin="{ -0.00870, -0.00002, -0.0006 }"
+      xMax="{ -0.00635,  0.00002,  0.0006 }"/>
+
+    <Cylinder
+      name="boreCore"
+      firstFaceCenter="{ 0.0, 0.0, -0.001 }"
+      secondFaceCenter="{ 0.0, 0.0, 0.001 }"
+      outerRadius="0.0062"/>
+  </Geometry>
+
+  <FieldSpecifications>
+
+    <!-- ===== initial stress: zero =====
+         The 0.15 m lab block is unconfined, so there is no in-situ stress to initialize. Zero also
+         avoids starting mechanics and flow out of balance with no stress-initialization task. The
+         outer faces are traction-free to match. -->
+    <FieldSpecification
+      name="Sh_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockSolid_stress"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="SH_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockSolid_stress"
+      component="1"
+      scale="-1e5"/>
+
+    <!-- <Traction
+      name="Traction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-1e5"
+      setNames="{ ypos, yneg }"/> -->
+
+    <FieldSpecification
+      name="Sv_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockSolid_stress"
+      component="2"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="S_void"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="voidSolid_stress"
+      component="0"
+      scale="0.0"/>
+
+    <!-- ===== damage: notches seeded at d = 1, borehole pinned at d = 0 ===== -->
+    <!-- <FieldSpecification
+      name="damageNotch"
+      objectPath="nodeManager"
+      fieldName="damage"
+      scale="1.0"
+      setNames="{ notchPlus, notchMinus }"/> -->
+
+    <FieldSpecification
+      name="damagePinBore"
+      objectPath="nodeManager"
+      fieldName="damage"
+      scale="0.0"
+      setNames="{ boreCore }"/>
+
+    <!-- ===== displacement: traction-free outer faces, plane strain in z =====
+         The sample is unconfined, so the side faces get no constraint at all - an absent
+         FieldSpecification IS the traction-free condition. In-plane rigid-body modes are removed
+         on the symmetry planes through the borehole axis, which add no confining reaction the way
+         outer-face rollers would. This imposes mirror symmetry about both axes, so bi-wing planar
+         and symmetric four-fold fractures are admissible and asymmetric ones are not. -->
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ symX }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <!-- ===== flow ===== -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <!-- Outlet; without it pressure just accumulates. On faceManager, not on cells: a cell-based
+         version pins pressure in a band of INTERIOR cells and stops them developing their own
+         gradient. The sets are the mesh nodesets, which GEOS propagates to faces (a face joins the
+         set when all its nodes do). -->
+    <FieldSpecification
+      name="outerPressure"
+      setNames="{ xneg, xpos, yneg, ypos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <!-- Mass injection; a negative scale is injection. Do NOT add a pressure Dirichlet on this set
+         - Dirichlet is applied before SourceFlux and the two together corrupt the mass row.
+         5 mL/min into a 50 mm interval, of which this 1 mm slice takes 1/50, at 1000 kg/m3:
+         (5e-6/60)*(1/50)*1000 = 1.6667e-6 kg/s. -->
+    <SourceFlux
+      name="massInjection"
+      objectPath="ElementRegions/Source"
+      setNames="{ all }"
+      scale="-1.6667e-6"/>
+
+  </FieldSpecifications>
+
+  <Tasks>
+    <PackCollection
+      name="sourcePressureCollection"
+      objectPath="ElementRegions/Source/0_hexahedra"
+      fieldName="pressure"/>
+  </Tasks>
+
+  <Events
+    maxTime="200.0">
+    <PeriodicEvent
+      name="solverApplications0"
+      endTime="20.0"
+      maxEventDt="0.2"
+      target="/Solvers/pfSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="20.0"
+      endTime="20.7"
+      maxEventDt="0.01"
+      target="/Solvers/pfSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="20.7"
+      maxEventDt="0.002"
+      target="/Solvers/pfSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      cycleFrequency="5"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="sourcePressureHistoryCollection"
+      cycleFrequency="1"
+      target="/Tasks/sourcePressureCollection"/>
+    <PeriodicEvent
+      name="sourcePressureHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/sourcePressureHistoryOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="200"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotLevel="1"/>
+
+    <TimeHistory
+      name="sourcePressureHistoryOutput"
+      sources="{ /Tasks/sourcePressureCollection }"
+      filename="sourcePressureHistory"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 
-<!-- Water reference case with fully implicit flow-mechanics coupling. -->
+<!-- Water reference case with sequential flow-mechanics coupling. All physical inputs are shared
+     with AS_wellbore_water_pfPoro.xml; the coupling controls mirror the sequential AS case. -->
 <Problem>
   <Included>
     <File name="./AS_wellbore_water_pfPoro_base.xml"/>
@@ -30,16 +31,13 @@
       targetRegions="{ Source, Rock }"
       damageFlag="0">
       <NonlinearSolverParameters
-        couplingType="FullyImplicit"
-        lineSearchAction="Attempt"
-        newtonMaxIter="40"
-        newtonTol="1.0e-4"
+        couplingType="Sequential"
+        lineSearchAction="None"
+        newtonMaxIter="10"
+        newtonTol="1.0e-3"
+        subcycling="1"
         maxTimeStepCuts="8"
         maxSubSteps="200"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="mgr"
-        krylovTol="1.0e-6"/>
     </SinglePhasePoromechanics>
 
     <SolidMechanicsLagrangianFEM
