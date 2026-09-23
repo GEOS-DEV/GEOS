@@ -206,7 +206,6 @@ void ProdPipeFlowTableFunction::initializeFunction()
   m_tableFunction0->setInterpolationMethod( TableFunction::InterpolationType::Linear );
   //m_tableFunction0.setInputVarNames( inputVarNames );
   m_tableFunction0->reInitializeFunction();
-  writeTable();
 }
 integer
 ProdPipeFlowTableFunction::getRateBracket( real64 const & rate, integer & b0, integer & b1 ) const
@@ -349,6 +348,7 @@ void ProdPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRat
 
 void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const
 {
+  GEOS_UNUSED_VAR( wellName );
 
   MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
                                                                    getAxisPoints(),
@@ -357,23 +357,10 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
                                                                    getAxisHypercubeMults(),
                                                                    getHypercubeData()
                                                                    );
-  //TableFunction::KernelWrapper kernelWrapper = m_tableFunction0->createKernelWrapper();
-  //solveStat = 0;  // Assume success
-  // liq(oil)=0 vap = 1 wat = 2
-  //real64 totalVolumeRate = 0.0;
-  //for( int i = 0; i < phaseRates.size(); ++i )
-  //{
-  //  totalVolumeRate += phaseRates[i];
-//  }
   real64 const gasLift=0.0;
   std::cout << bhp << " " << phaseRates << " " << whp  << std::endl;
   real64 const m_sign=-1.0;
   real64 liq = (phaseRates[0] + phaseRates[2]);
-  //for( int i = 0; i < phaseRates.size(); ++i )
-  //{
-  //  totalVolumeRate += phaseRates[i];
-//  }
-  std::cout << bhp << " " << phaseRates << " " << whp  << std::endl;
 
   real64 wct = 0;
   if( phaseRates[0]*m_sign > 0 )
@@ -384,7 +371,7 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
   if( phaseRates[1]*m_sign  > 0 )
     gor =  phaseRates[1]/(phaseRates[0] );
 
-#if 1
+
   array1d< real64 > table_coords( 5 );
   //real64 derivatives[5]{};
   array1d< real64 > table_bhp( 1 );
@@ -396,20 +383,17 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
 
   table_coords[3]=whp;    // well head pressure
   kernel.compute( table_coords, table_bhp, table_derv );
-  std::cout << " ProdPipeFlowTableFunction::calculateWHP initial whp = " << whp << " bhp calc " << table_bhp[0] << " " << table_coords <<std::endl;
 
   integer nWHP = m_whp.size();
   for( integer i=0; i<nWHP; i++ )
   {
     table_coords[3]=m_whp[i];    // well head pressure
     kernel.compute( table_coords, table_bhp, table_derv );
-    std::cout << table_coords[3] << " " << table_bhp[0] << std::endl;
   }
   integer foundBracket= 0;
   table_coords[3]=m_whp[nWHP-1];  // well head pressure
   kernel.compute( table_coords, table_bhp, table_derv );
   double bhpN = table_bhp[0];
-  //double bhpN = kernelWrapper.compute( table_coords, derivatives );
   double bhp0, whp0;
   if( bhpN < bhp )
   {
@@ -418,19 +402,8 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
     kernel.compute( table_coords, table_bhp, table_derv );
     bhp0 = table_bhp[0];
     double dwhp_dp = ( m_whp[nWHP-1] - m_whp[nWHP-2] )/( bhpN - bhp0 );
-    //bhp0 = kernelWrapper.compute( table_coords, derivatives );
     whp0 = m_whp[nWHP-1] + ( bhp - bhpN )*dwhp_dp;
-    //whp0 = m_whp[nWHP-1] + ( bhp - bhpN )*table_derv[0][3];
-    std::cout << table_derv << " " << dwhp_dp << " " <<  m_whp[nWHP-1] + ( bhp - bhpN )*table_derv[0][3]<<std::endl;
     whp=whp0;
-
-    if( std::isnan( whp0 ) )
-    {
-      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP bhpN " << bhpN << " bhp0 " << bhp0 << " bhp " << bhp << std::endl;
-    }
-    std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP extrapolate at high whp = " << whp << " " << bhp<< " " <<m_whp[nWHP-1] << " " << m_whp[nWHP-2] << " " << bhpN <<" " << bhp0 <<
-      " liq = " << liq*m_sign  << std::endl;
-    solveStat=2;
   }
   else
   {
@@ -438,7 +411,6 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
     table_coords[3]=m_whp[0];  // well head pressure
     kernel.compute( table_coords, table_bhp, table_derv );
     bhp0 = table_bhp[0];
-    //bhp0 = kernelWrapper.compute( table_coords, derivatives );
     whp0  = m_whp[0];
     double whpN;
     if( bhp <  bhp0 )
@@ -447,10 +419,7 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
       table_coords[3]=m_whp[1];
       kernel.compute( table_coords, table_bhp, table_derv );
       bhpN = table_bhp[0];
-      //bhpN = kernelWrapper.compute( table_coords, derivatives );
       whpN = m_whp[0] + ( bhp - bhp0 )*( m_whp[1] - whp0 )/( bhpN - bhp0 );
-      //whpN = m_whp[0] + ( bhp - bhp0 )*table_derv[0][3];
-
       whp=whpN;
       solveStat=0;
       return;
@@ -472,7 +441,6 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
       whp0 = m_whp[i];
 
     }
-
     if( foundBracket ==0 )
     {
       throw; std::runtime_error( "ProdPipeFlowTableFunction::calculateWHP failed to find bracketing whp values" );
@@ -480,380 +448,11 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
     else
     {
       solveStat=1;
-      whp  = whp0 + ( bhp - bhp0 )*( whpN - whp0  )/( bhpN - bhp0 );
       whp  = whp0 + ( bhp - bhp0  )*( whpN - whp0  )/( bhpN - bhp0 );
-      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
-      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
-        " gor = " << gor << std::endl;
       solveStat=1;
     }
   }
-#else
-  real64 table_coords[5]{};
-  real64 derivatives[5]{};
-  table_coords[0]=liq*m_sign; // gas oil ratio
-  table_coords[2]=wct;  // water cut
-  table_coords[3]=gor; // well head pressure
-  table_coords[4]=gasLift; // gas lift rat
-
-  integer nWHP = m_whp.size();
-  integer foundBracket= 0;
-  table_coords[1]=m_whp[nWHP-1];  // well head pressure
-  double bhpN = kernelWrapper.compute( table_coords, derivatives );
-  double bhp0, whp0;
-  if( bhpN < bhp )
-  {
-    table_coords[1]=m_whp[nWHP-2];
-    bhp0 = kernelWrapper.compute( table_coords, derivatives );
-    whp0 = m_whp[nWHP-1] + ( bhp - bhpN )*( m_whp[nWHP-1] - m_whp[nWHP-2] )/( bhpN - bhp0 );
-    whp=whp0;
-
-    if( std::isnan( whp0 ) )
-    {
-      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP bhpN " << bhpN << " bhp0 " << bhp0 << " bhp " << bhp << std::endl;
-    }
-    std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP extrapolate at high whp = " << whp << " " << bhp<< " " <<m_whp[nWHP-1] << " " << m_whp[nWHP-2] << " " << bhpN <<" " << bhp0 <<
-      " liq = " << liq*m_sign  << std::endl;
-
-  }
-  else
-  {
-    // check low end
-    table_coords[1]=m_whp[0];  // well head pressure
-    bhp0 = kernelWrapper.compute( table_coords, derivatives );
-    whp0  = m_whp[0];
-    double whpN;
-    if( bhp <  bhp0 )
-    {
-      table_coords[1]=m_whp[1];
-      bhpN = kernelWrapper.compute( table_coords, derivatives );
-      whpN = m_whp[0] + ( bhp - bhp0 )*( m_whp[1] - whp0 )/( bhpN - bhp0 );
-      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
-        " gor = " << gor << std::endl;
-      whp=whpN;
-      return;
-    }
-    // search for bracketing whp
-    for( integer i=1; i<nWHP; ++i )
-    {
-      table_coords[1]=m_whp[i]; // well head pressure
-      bhpN = kernelWrapper.compute( table_coords, derivatives );
-      if( bhp0 <= bhp && bhp <= bhpN )
-      {
-        foundBracket=1;
-        whpN = m_whp[i];
-        break;
-      }
-      bhp0 = bhpN;
-      whp0 = m_whp[i];
-
-    }
-
-    if( foundBracket ==0 )
-    {
-      throw; std::runtime_error( "ProdPipeFlowTableFunction::calculateWHP failed to find bracketing whp values" );
-    }
-    else
-    {
-      whp  = whp0 + ( bhp - bhp0 )*( whpN - whp0  )/( bhpN - bhp0 );
-      whp  = whp0 + ( bhp - bhp0  )*( whpN - whp0  )/( bhpN - bhp0 );
-      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
-      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
-        " gor = " << gor << std::endl;
-    }
-  }
-#endif
   return;
-}
-
-void ProdPipeFlowTableFunction::writeTable() const
-{
-
-  std::ofstream of;
-  std::string filename12 = getTableName() + ".csv";
-  of.open( filename12 );
-
-  MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
-                                                                   getAxisPoints(),
-                                                                   getAxisSteps(),
-                                                                   getAxisStepInvs(),
-                                                                   getAxisHypercubeMults(),
-                                                                   getHypercubeData()
-                                                                   );
-
-  TableFunction::KernelWrapper kernelWrapper = m_tableFunction0->createKernelWrapper();
-
-  of << "rate,wellHeadPressure,waterFraction,gasFraction,bottomHolePressure" << std::endl;
-  //array1d< real64 > table_coords( 5 );
-  real64 table_coords[5]{};
-  real64 derivatives[5]{};
-  table_coords[4] = 0.0; //gas lift
-  for( integer i=0; i < m_gfr.size(); ++i )
-  {
-    table_coords[3]=m_gfr[i];   // well head pressure
-    // gas oil ratio
-    for( real64 j=m_wfr[0]; j < m_wfr[m_wfr.size()-1]; j=j+0.01 )
-    {
-      table_coords[2]=j;   // water cut
-      for( real64 k=m_whp[0]; k < m_whp[m_whp.size()-1]; k=k+10e5 )
-      {
-        table_coords[1]=k;
-        for( integer l=0; l < m_rate.size(); ++l )
-        {
-          table_coords[0]=m_rate[l]; // liquid rate
-
-          // array2d< real64 > derivs( 1, 5 );
-          //kernel.compute( table_coords, table_bhp, derivs );
-          real64 table_bhp = kernelWrapper.compute( table_coords, derivatives );
-          of << table_coords[0] << "," << table_coords[1] << "," << table_coords[2] << "," << table_coords[3] << "," << table_bhp << std::endl;
-        }
-      }
-    }
-  }
-  of.close();
-#if 0
-  std::vector< double > tim, orate, wrate, grate, bhp, whp, fnum, lnum;
-  std::vector< std::string > efx;
-  //efx.push_back( "/Users/byer3/geos_models/whp/compo/ecl/ix/P1_stats.txt" );
-  efx.push_back( "/Users/byer3/geos_models/BlackOilTest/eclipse/ix_fixed_qo/P1_stats.txt" );
-  for( size_t fn=0; fn< efx.size(); fn++ )
-  {
-    std::string filename = efx[fn];
-    std::cout << "Attempting to open file: " << filename << std::endl;
-    std::ifstream infile( filename );
-    integer nData = 0;
-    if( infile.is_open())
-    {
-      std::cout << "File opened successfully" << std::endl;
-      double ti, val1, val2, val3, val4, val5;
-
-      while( infile >> ti>> val1 >> val2 >> val3 >> val4 >> val5 )
-      {
-        tim.push_back( ti );
-        bhp.push_back( val1 );
-        whp.push_back( val2 );
-        orate.push_back( val3 );
-        wrate.push_back( val4 );
-        grate.push_back( val5 );
-        nData++;
-      }
-      infile.close();
-    }
-
-    std::vector< real64 > bhpc, whpc;
-    bhpc.resize( nData );
-    whpc.resize( nData );
-    std::string ofn="P1_bhp_whp_comparison.csv";
-    std::ofstream ofile( ofn );
-    ofile << "time,bhp,whp,orate,wrate,grate, bhp_calc,whp_calc,bhpSolveStat,whpSolveStat" << std::endl;
-    array1d< real64 > phaseRates;
-    phaseRates.resize( 3 );
-    for( integer i=0; i<  nData; ++i )
-    {
-      real64 trate=orate[i]+wrate[i]+grate[i];
-      if( isZero( trate ))
-        continue;
-      integer solveStatBHP=1;
-      phaseRates[0] = orate[i];
-      phaseRates[1] = wrate[i];
-      phaseRates[2] = grate[i];
-      calculateBHP( phaseRates, whp[i], bhpc[i], solveStatBHP );
-      integer solveStatWHP=0;
-      calculateWHP( "test", bhp[i], phaseRates, whpc[i], solveStatWHP );
-
-      ofile << tim[i] << "," << bhp[i] << "," << whp[i] << "," << orate[i] << "," << wrate[i] << "," << grate[i] << "," << bhpc[i] << "," << whpc[i] << ","  << solveStatBHP << "," <<  solveStatWHP <<
-        std::endl;
-    }
-    ofile.close();
-  }
-#endif
-#if 0
-  // Read data from file into separate vectors
-  std::vector< double > tim, orate, wrate, grate, bhp, whp, fnum, lnum;
-  std::vector< std::string > fnss;
-  fnss.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/whp/black_oil_producer/bmodlrc/WELL.SOLVER_rates/P1.txt" );
-  fnss.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/whp/black_oil_producer/bmodlrc/WELL.SOLVER_rates/P2.txt" );
-  fnss.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/whp/black_oil_producer/bmodlrc/WELL.SOLVER_rates/P3.txt" );
-  std::vector< std::string > fns;
-
-  fns.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/P1_IX.txt" );
-  fns.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/P2_IX.txt" );
-  fns.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/P3_IX.txt" );
-
-  std::vector< std::string > ofns;
-  ofns.push_back( "p1" );
-  ofns.push_back( "p2" );
-  ofns.push_back( "p3" );
-  for( size_t fn=0; fn< fnss.size(); fn++ )
-  {
-    std::string filename = fnss[fn];
-    std::cout << "Attempting to open file: " << filename << std::endl;
-    std::ifstream infile( filename );
-    if( infile.is_open())
-    {
-      std::cout << "File opened successfully" << std::endl;
-      double ti, val1, val2, val3, val4, val5, val6, val7, val8, val9, val10, val11;
-      integer rowCount = 0;
-      while( infile >> ti>> val1 >> val2 >> val3 >> val4 >> val5 >> val6 >> val7 >> val8 >> val9 >> val10>> val11 )
-      {
-        tim.push_back( ti );
-        orate.push_back( -val6 );
-        wrate.push_back( -val8 );
-        grate.push_back( -val7 );
-        bhp.push_back( val2 );
-        whp.push_back( val3 );
-        fnum.push_back( fn +0.5 );
-        lnum.push_back( rowCount );
-        rowCount++;
-
-
-      }
-      infile.close();
-    }
-
-    filename = fns[fn];
-    std::cout << "Attempting to open file: " << filename << std::endl;
-    std::ifstream infile1( filename );
-
-
-    double bar_to_pa = 1e5;
-    double m3d_to_sm3s = 1/86400.0;
-    double yrs_to_secs = 31536000.0;
-    if( infile1.is_open())
-    {
-      std::cout << "File opened successfully" << std::endl;
-      double ti, val1, val2, val3, val4, val5;
-      int rowCount = 0;
-      while( infile1 >> ti>> val1 >> val2 >> val3 >> val4 >> val5 )
-      {
-        tim.push_back( ti*yrs_to_secs );
-        orate.push_back( val1*m3d_to_sm3s );
-        wrate.push_back( val2*m3d_to_sm3s );
-        grate.push_back( val3*m3d_to_sm3s );
-        bhp.push_back( val4*bar_to_pa );
-        whp.push_back( val5*bar_to_pa );
-        fnum.push_back( fn );
-        lnum.push_back( rowCount );
-        rowCount++;
-
-      }
-      infile1.close();
-
-      std::cout << "Read " << orate.size() << " rows of data from " << filename << std::endl;
-      if( orate.size() == 0 )
-      {
-        std::cout << "No data was read - file might be empty or have formatting issues" << std::endl;
-      }
-    }
-    else
-    {
-      std::cout << "Could not open file: " << filename << std::endl;
-      std::cout << "Please check if the file exists and is accessible" << std::endl;
-    }
-
-    integer solveStat;
-    real64 bhpc;
-    {
-
-      //integer nData = orate.size();
-      array1d< real64 > phaseRates;
-      phaseRates.resize( 3 );
-      integer nRate = m_rate.size();
-      integer nWHP = m_whp.size();
-      std::ofstream ofs;
-      filename = ofns[fn]+"_ix_whpt_stable.csv";
-      ofs.open( filename );
-      ofs << "index ,time,ifnd ,dPdQ , stable , m_rate, bhp, whp,orate , wrate , grate , m_rate_next , fnum , lnum " << std::endl;
-      integer nentry = tim.size();
-      for( integer i=2; i<  nentry; ++i )
-      {
-        if( isZero( std::abs( orate[i] ) + wrate[i] ))
-          continue;
-        filename = ofns[fn]+"_ix_whpt_" + std::to_string( i ) + ".csv";
-        of.open( filename );
-        of <<   " i , wc , ql ,qls, bhp,whp " << std::endl;
-
-        integer ifnd=-1;
-        real64 wct = (wrate[i])/( orate[i] + wrate[i] + 0.0000001 );
-        phaseRates[0] = -orate[i];
-        phaseRates[1] = -grate[i];
-        phaseRates[2] = -wrate[i];
-        real64 gor = phaseRates[1]/(phaseRates[0]+0.000000001);
-        // find liquid rate bracketing
-
-        std::vector< real64 > bhps;
-        ifnd=-1;
-
-        for( integer j=0; j<nRate-1; j++ )
-        {
-          if( m_rate[j] <= (orate[i]+wrate[i]) && (orate[i]+wrate[i]) <= m_rate[j+1] )
-          {
-            ifnd=j;
-          }
-
-          phaseRates[0] = m_rate[j]*(1-wct)* -1.0;
-          phaseRates[1] = phaseRates[0]*gor;
-          phaseRates[2] = m_rate[j]*(wct)* -1.0;
-          solveStat=0;
-          calculateBHP( phaseRates, whp[i], bhpc, solveStat );
-          bhps.push_back( bhpc );
-          of << i <<  ", " << tim[i] << "," << wct << ", " << m_rate[j] << ", " << (orate[i]+wrate[i]) << ","<< bhpc << "," << whp[i] << "," << fnum[i] <<  "," << lnum[i] << std::endl;
-        }
-        of.close();
-        if( ifnd > -1 )
-        {
-          real64 dpdq = (bhps[ifnd+1]-bhps[ifnd])/(m_rate[ifnd+1]-m_rate[ifnd]);
-          bool cstat = (dpdq < 0.0);
-          if( whp[i] > m_whp[nWHP-1] )
-          {
-            cstat = false;
-          }
-
-          fnum.push_back( fn );
-
-          ofs << i << ","<<tim[i]   <<","<<ifnd << "," << dpdq << "," << cstat << "," << m_rate[ifnd] << "," << bhp[i] << "," << whp[i] << "," << orate[i] << "," << wrate[i] << "," << grate[i] <<
-            "," << m_rate[ifnd+1] << "," << fnum[i] << "," << lnum[i] <<  std::endl;
-        }
-        else
-        {
-          ofs << i <<","<<ifnd << "," << "FALSE" << std::endl;
-        }
-
-      }
-      ofs.close();
-
-    }
-    filename = ofns[fn]+"_ix_whp.csv";
-    of.open( filename );
-    of <<   " time, orate , wrate , grate , bhp ,bhpt, bhpc ,whp , whpc , solveStatWHP , solveStatBHP ,wellnum" << std::endl;
-    integer nData = orate.size();
-    array1d< real64 > phaseRates;
-    phaseRates.resize( 3 );
-    integer solveStatWHP;
-    integer solveStatBHP;
-    real64 bhpt;
-    for( integer i=1; i<  nData; ++i )
-    {
-      if( isZero( -orate[i] ))
-        continue;
-      phaseRates[0] = -orate[i];
-      phaseRates[1] = -grate[i];
-      phaseRates[2] = -wrate[i];
-      real64 whpc= whp[i];
-      solveStatWHP=0;
-      calculateWHP( "test", bhp[i], phaseRates, whpc, solveStatWHP );
-      solveStatBHP=0;
-      calculateBHP( phaseRates, whp[i], bhpc, solveStatBHP );
-      solveStatBHP=1;
-      calculateBHP( phaseRates, whp[i], bhpt, solveStatBHP );
-      std::cout << " Data " << i << " orate " << orate[i] << " wrate " << wrate[i] << " grate " << grate[i] << " bhp " << bhp[i] << " bhpc " << bhpc << " whp " << whp[i] << " whpc " << whpc <<
-        std::endl;
-      of << tim[i] << "," << orate[i] << "," << wrate[i] << "," << grate[i] << "," << bhp[i] << "," << bhpt << "," << bhpc << "," << whp[i] << "," << whpc << ", " << solveStatWHP << ", " <<
-        solveStatBHP << "," << fnum[i] << std::endl;
-    }
-    of.close();
-  }
-#endif
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, ProdPipeFlowTableFunction, string const &, Group * const )

@@ -48,34 +48,7 @@
 
 namespace geos
 {
-void printlmat( std::string loc, CRSMatrixView< real64, globalIndex const > const & localMatrix, arrayView1d< real64 > const & localRhs )
-{
-  std::cout << "Local matrix at " << loc << ":" << std::endl;
-  // Print matrix information using proper CRS matrix access methods
-  std::cout << "LocalMatrix info:" << std::endl;
-  std::cout << "Number of rows: " << localMatrix.numRows() << std::endl;
-  std::cout << "Number of columns: " << localMatrix.numColumns() << std::endl;
-  // Print first few rows of the matrix
-  for( localIndex row = 0; row < std::min( localIndex( 5 ), localMatrix.numRows() ); ++row )
-  {
-    std::cout << "Row " << row << " (nnz=" << localMatrix.numNonZeros( row ) << "): ";
-    if( localMatrix.numNonZeros( row ) > 0 )
-    {
-      auto entries = localMatrix.getEntries( row );
-      auto columns = localMatrix.getColumns( row );
-      for( localIndex j = 0; j < std::min( localIndex( 5 ), localMatrix.numNonZeros( row ) ); ++j )
-      {
-        std::cout << "[" << columns[j] << "]=" << entries[j] << " ";
-      }
-      if( localMatrix.numNonZeros( row ) > 5 )
-      {
-        std::cout << " .. ";
-      }
-    }
 
-    std::cout << localRhs[row] << std::endl;
-  }
-}
 using namespace dataRepository;
 
 WellControls::WellControls( string const & name, Group * const parent )
@@ -296,7 +269,6 @@ void WellControls::createMaxVolumeInjConstraintForWHP()
   forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >
                 >( [&]( auto & constraint )
   {
-    std::cout << "check phase for whp constraint " << constraint.getName() << " rate type " << constraint.getPhaseName() << std::endl;
     if( constraint.isConstraintActive() && constraint.getPhaseName() ==  rateType )
     {
       foundMatchingConstraint = true;
@@ -670,7 +642,6 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
     {
       for( auto const * constraint : getRateConstraints() )
       {
-        std::cout << "Checking injection constraint " << constraint->getName() << " with value " << constraint->getConstraintValue( currentTime ) << std::endl;
         if( isZero( constraint->getConstraintValue( currentTime ) ) )
         {
           hasZeroRate = true;
@@ -1231,7 +1202,6 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     if( useEstimator )
     {
       // Estimate well solution prior to coupled solve
-      std::cout << "Estimating well solution for well " << subRegion.getName() << " at time " << time_n << std::endl;
       evaluateConstraints( time_n,
                            dt,
                            cycleNumber,
@@ -1245,7 +1215,6 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     else
     {
       // Evaluate well constraints based on current solution
-      std::cout << "Evaluating well constraints for well " << subRegion.getName() << " at time " << time_n << std::endl;
       evaluateConstraints( time_n,
                            subRegion );
     }
@@ -1280,20 +1249,14 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       MinimumBHPConstraint * minBHPForWHP =  dynamic_cast< MinimumBHPConstraint * >( getBHPConstraint( ConstraintSourceId::WHP ) );
       if( minBHPForWHP != nullptr && minBHPForWHP->isConstraintActive())
       {
-        std::cout << "we not active " << subRegion.getName() << " Constraint " << minBHPForWHP->getName() << " active " << minBHPForWHP->isConstraintActive() <<
-          " value " << minBHPForWHP->getConstraintValue( time_n ) << std::endl;
         constraintList.insert( constraintList.begin(), minBHPForWHP );
-
       }
       else
       {
         LiquidRateConstraint * maxLiqForWHP =  getProductionRateConstraint< LiquidRateConstraint >( ConstraintSourceId::WHP );
         if( maxLiqForWHP != nullptr && maxLiqForWHP->isConstraintActive())
         {
-          std::cout << "we  not active " << subRegion.getName() << " Constraint " << maxLiqForWHP->getName() << " active " << maxLiqForWHP->isConstraintActive() <<
-            " value " << maxLiqForWHP->getConstraintValue( time_n ) << std::endl;
           constraintList.insert( constraintList.begin(), maxLiqForWHP );
-
         }
         else
         {
@@ -1301,7 +1264,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
           WellConstraintBase * minBHPConstraint = getBHPConstraint();
           if( minBHPConstraint != nullptr && minBHPConstraint->isConstraintActive() )
           {
-            std::cout << "we  not active " << subRegion.getName() << " Constraint add minbp " << std::endl;
             constraintList.insert( constraintList.begin(), minBHPConstraint );
           }
         }
@@ -1312,8 +1274,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       WellConstraintBase * minBHPConstraint = getBHPConstraint();
       if( minBHPConstraint != nullptr )
       {
-        std::cout << "we  not active " << subRegion.getName() << " Constraint " << minBHPConstraint->getName() << " active " << minBHPConstraint->isConstraintActive() <<
-          " value " << minBHPConstraint->getConstraintValue( time_n ) << std::endl;
         constraintList.insert( constraintList.begin(), minBHPConstraint );
       }
     }
@@ -1326,20 +1286,14 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       MaximumBHPConstraint * maxBHPForWHP =  dynamic_cast< MaximumBHPConstraint * >( getBHPConstraint( ConstraintSourceId::WHP ) );
       if( maxBHPForWHP != nullptr && maxBHPForWHP->isConstraintActive())
       {
-        std::cout << "we not active " << subRegion.getName() << " Constraint " << maxBHPForWHP->getName() << " active " << maxBHPForWHP->isConstraintActive() <<
-          " value " << maxBHPForWHP->getConstraintValue( time_n ) << std::endl;
         constraintList.insert( constraintList.begin(), maxBHPForWHP );
-
       }
       else
       {
         PhaseVolumeRateConstraint * maxVolForWHP =  getInjectionRateConstraint< PhaseVolumeRateConstraint >( ConstraintSourceId::WHP );
         if( maxVolForWHP != nullptr && maxVolForWHP->isConstraintActive())
         {
-          std::cout << "we  not active " << subRegion.getName() << " Constraint " << maxVolForWHP->getName() << " active " << maxVolForWHP->isConstraintActive() <<
-            " value " << maxVolForWHP->getConstraintValue( time_n ) << std::endl;
           constraintList.insert( constraintList.begin(), maxVolForWHP );
-
         }
         else
         {
@@ -1347,7 +1301,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
           WellConstraintBase * maxBHPConstraint = getBHPConstraint();
           if( maxBHPConstraint != nullptr && maxBHPConstraint->isConstraintActive() )
           {
-            std::cout << "we  not active " << subRegion.getName() << " Constraint add maxbp " << std::endl;
             constraintList.insert( constraintList.begin(), maxBHPConstraint );
           }
         }
@@ -1376,7 +1329,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
     }
   }
 // Check current against other constraints
-  std::cout << "Current constraint for well " << subRegion.getName() << " is " << limitingConstraint->getName() << std::endl;
   constraintList.erase( std::remove( constraintList.begin(), constraintList.end(), limitingConstraint ), constraintList.end());
   std::vector< int > constraintChecked( constraintList.size(), 0 );
   for( int i = 0; i < static_cast< int >(constraintList.size()); ++i )
@@ -1438,8 +1390,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   }
   if( isoThermalEstimatorEnabled() )
   {
-    std::cout << "Solving limiting constraint " << limitingConstraint->getName() << " without thermal effects for well " << subRegion.getName() << std::endl;
-
     enableThermalEffects( false );
     solveConstraint ( limitingConstraint, time_n,
                       dt,

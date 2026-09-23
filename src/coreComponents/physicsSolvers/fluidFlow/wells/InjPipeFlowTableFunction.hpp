@@ -131,8 +131,6 @@ public:
 
   void calculateWHP( const std::string & wellName, real64 const & bhp, real64 const & totalVolumeRate, real64 & whp, integer & solveStat ) const;
 
-  void writeTable() const;
-
   virtual void postInputInitialization() override;
 
 protected:

@@ -136,7 +136,6 @@ void InjPipeFlowTableFunction::initializeFunction()
   m_tableFunction0->setInterpolationMethod( TableFunction::InterpolationType::Linear );
   //m_tableFunction0.setInputVarNames( inputVarNames );
   m_tableFunction0->reInitializeFunction();
-  writeTable();
 }
 integer
 InjPipeFlowTableFunction::getRateBracket( real64 const & rate, integer & b0, integer & b1 ) const
@@ -489,97 +488,6 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
   }
   whp0 = table_coords[1];
   std::cout << "InjPipeFlowTableFunction::calculateWHP output whp = " << whp0 << " liq = " << liq*m_sign << " bhp " << bhpn <<  std::endl;
-}
-
-void InjPipeFlowTableFunction::writeTable() const
-{
-  return;
-  std::ofstream of;
-  std::string filename12 = getTableName() + ".csv";
-  of.open( filename12 );
-
-
-
-  MultivariableNonuniformTableFunctionStaticKernel< 2, 1 > kernel( getAxisCoordinates(),
-                                                                   getAxisPoints(),
-                                                                   getAxisSteps(),
-                                                                   getAxisStepInvs(),
-                                                                   getAxisHypercubeMults(),
-                                                                   getHypercubeData()
-                                                                   );
-
-  TableFunction::KernelWrapper kernelWrapper = m_tableFunction0->createKernelWrapper();
-
-  of << "rate,wellHeadPressure,bottomHolePressure" << std::endl;
-  //array1d< real64 > table_coords( 5 );
-  real64 table_coords[2]{};
-  real64 derivatives[2]{};
-
-
-  //for( real64 k=m_whp[0]; k < m_whp[m_whp.size()-1]; k=k+10e5 )
-  for( integer l=0; l < m_whp.size(); ++l )
-  {
-    table_coords[1]=m_whp[l];
-    for( integer m=0; m < m_rate.size(); ++m )
-    {
-      table_coords[0]=m_rate[m];     // liquid rate
-
-      // array2d< real64 > derivs( 1, 5 );
-      //kernel.compute( table_coords, table_bhp, derivs );
-      real64 table_bhp = kernelWrapper.compute( table_coords, derivatives );
-      of << table_coords[0] << "," << table_coords[1]    << "," << table_bhp << std::endl;
-    }
-  }
-
-  of.close();
-
-  std::vector< double > tim, wwir, wgir, bhp, whp, fnum, lnum;
-  std::vector< std::string > efx;
-  efx.push_back( "/Users/byer3/geos_models/whp/compo/ecl/ix/I1_stats.txt" );
-  for( size_t fn=0; fn< efx.size(); fn++ )
-  {
-    std::string filename = efx[fn];
-    std::cout << "Attempting to open file: " << filename << std::endl;
-    std::ifstream infile( filename );
-    integer nData = 0;
-    if( infile.is_open())
-    {
-      std::cout << "File opened successfully" << std::endl;
-      double ti, val1, val2, val3, val4;
-
-      while( infile >> ti>> val1 >> val2 >> val3 >> val4 )
-      {
-        tim.push_back( ti );
-        bhp.push_back( val1 );
-        whp.push_back( val2 );
-        wwir.push_back( val3 );
-        wgir.push_back( val4 );
-        nData++;
-      }
-      infile.close();
-    }
-
-    real64 bhpcp, bhpct, whpc;
-    std::string ofn="I1_bhp_whp_comparison.csv";
-    std::ofstream ofile( ofn );
-    ofile << "bhp,whp,wwir, bhp_calct,bhp_calcp,whp_calc,bhpSolveStat,whpSolveStat" << std::endl;
-    for( integer i=0; i<  nData; ++i )
-    {
-      std::cout << "Data point " << i << " time " << tim[i] << " bhp " << bhp[i] << " whp " << whp[i] << " wgir " << wgir[i] << " wwir " << wwir[i] << std::endl;
-      if( isZero( wwir[i] ))
-        continue;
-      integer solveStatBHP=0;
-      calculateBHP( wwir[i], whp[i], bhpct, solveStatBHP );
-      solveStatBHP=1;
-      calculateBHP( wwir[i], whp[i], bhpcp, solveStatBHP );
-      integer solveStatWHP=0;
-      calculateWHP( "test", bhp[i], wwir[i], whpc, solveStatWHP );
-
-      ofile << bhp[i] << "," << whp[i] << "," << wwir[i] << "," << bhpcp << "," << bhpct << ","<< whpc  << ","  << solveStatBHP << "," <<  solveStatWHP << std::endl;
-    }
-    ofile.close();
-  }
-  return;
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, InjPipeFlowTableFunction, string const &, Group * const )

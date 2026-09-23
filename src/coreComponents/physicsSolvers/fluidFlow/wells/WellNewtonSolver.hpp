@@ -684,13 +684,10 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
                                              WellElementSubRegion & subRegion )
 {
   integer maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
-  integer dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
-  integer configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
   integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
 
 // keep residual from previous iteration in case we need to do a line search
-  maxNewtonIter=15;
   integer newtonIter = 0;
   real64 scaleFactor = 1.0;
 
@@ -763,10 +760,6 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
     //                       mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
     // if the residual norm is less than the Newton tolerance we denote that we have
     // converged and break from the Newton loop immediately.
-    std::cout << " Well: " << subRegion.getName() << "   Est Attempt: " << dtAttempt
-              << ", ConfigurationIter: " << configurationLoopIter
-              << ", NewtonIter: " << newtonIter
-              << ", Residual Norm: " << residualNorm << std::endl;
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
       isNewtonConverged = true;
@@ -857,7 +850,6 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
     }
 
   }
-  std::cout << "WellSolverBase::solveNewtonSystem completed with isNewtonConverged = " << isNewtonConverged << std::endl;
   return isNewtonConverged;
 }
 

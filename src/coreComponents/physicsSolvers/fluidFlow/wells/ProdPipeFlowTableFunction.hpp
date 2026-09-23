@@ -160,8 +160,6 @@ public:
 
   void calculateWHP( const std::string & wellName, real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const;
 
-  void writeTable() const;
-
   virtual void postInputInitialization() override;
 
 protected:
