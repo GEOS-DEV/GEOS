@@ -625,7 +625,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
       {
         return;
       }
-      localIndex const dR_dAperOffset = [&]()
+      localIndex const dR_dAperOffset = [&]() -> localIndex
       {
         if( dR_dAperOffsets == nullptr )
         {
@@ -636,7 +636,12 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                        GEOS_FMT( "No dR/dAperture row offset is available for mesh body '{}'", meshName ) );
         return offsetIt->second;
       }();
-      // Sentinel -1 means "no energy block available" (non-thermal flow solver)
+     
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      if( m_isThermal )
+      { 
+        // Sentinel -1 means "no energy block available" (non-thermal flow solver)
       localIndex const dR_dAperEnergyOffset = [&]() -> localIndex
       {
         if( !m_isThermal || dR_dAperEnergyOffsets == nullptr )
@@ -646,11 +651,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
         auto const offsetIt = dR_dAperEnergyOffsets->find( meshName );
         return offsetIt == dR_dAperEnergyOffsets->end() ? -1 : offsetIt->second;
       }();
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-
-      if( m_isThermal )
-      {
-        thermalSinglePhasePoromechanicsConformingFracturesKernels::
+        
+      thermalSinglePhasePoromechanicsConformingFracturesKernels::
           ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                           dofKey,
                                                                                           this->getName(),
@@ -691,6 +693,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs,
                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                                            stdMap< string, localIndex > const * const dR_dAperOffsets,
                                                             stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
 {
   GEOS_MARK_FUNCTION;
@@ -740,6 +743,19 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
+      // Row offset, in dR_dAper, of the mass-balance block for this mesh target. Defaults to 0 (i.e. no
+      // offset) when the caller doesn't distinguish mesh targets - mass is always written, unlike the
+      // energy block below, which is skipped entirely (sentinel -1) rather than defaulted.
+      localIndex const dR_dAperOffset = [&]() -> localIndex
+      {
+        if( dR_dAperOffsets == nullptr )
+        {
+          return 0;
+        }
+        auto const offsetIt = dR_dAperOffsets->find( meshName );
+        return offsetIt == dR_dAperOffsets->end() ? 0 : offsetIt->second;
+      }();
+
       if( m_isThermal )
       {
         // Sentinel -1 means "no energy block available" (non-thermal flow solver, or caller didn't build one)
@@ -763,6 +779,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
                                                                                           localMatrix.toViewConstSizes(),
                                                                                           localRhs.toView(),
                                                                                           dR_dAper,
+                                                                                          dR_dAperOffset,
                                                                                           dR_dAperEnergyOffset );
       }
       else
@@ -776,7 +793,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
                                                                                           dt,
                                                                                           localMatrix.toViewConstSizes(),
                                                                                           localRhs.toView(),
-                                                                                          dR_dAper );
+                                                                                          dR_dAper,
+                                                                                          dR_dAperOffset );
       }
     } );
   } );

@@ -97,6 +97,18 @@ public:
                               stdMap< string, localIndex > const * const dR_dAperEnergyOffsets = nullptr )
   { flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, dR_dAperEnergyOffsets ); }
 
+  void
+  assembleHydrofracFluxTermsALM( real64 const time_n,
+                                 real64 const dt,
+                                 DomainPartition const & domain,
+                                 DofManager const & dofManager,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs,
+                                 CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                 stdMap< string, localIndex > const * const dR_dAperOffsets,
+                                 stdMap< string, localIndex > const * const dR_dAperEnergyOffsets = nullptr )
+  { flowSolver()->assembleHydrofracFluxTermsALM( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, dR_dAperEnergyOffsets ); }
+
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,
                                    SUBREGION_TYPE const & subRegion,

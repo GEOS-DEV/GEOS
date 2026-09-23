@@ -399,6 +399,7 @@ public:
                                                          localMatrix,
                                                          localRhs,
                                                          getDerivativeFluxResidual_dNormalJump(),
+                                                         &m_derivativeFluxResidual_dApertureOffsets,
                                                          &m_derivativeFluxResidual_dApertureEnergyOffsets );
     else
       this->flowSolver()->assembleHydrofracFluxTerms( time_n,

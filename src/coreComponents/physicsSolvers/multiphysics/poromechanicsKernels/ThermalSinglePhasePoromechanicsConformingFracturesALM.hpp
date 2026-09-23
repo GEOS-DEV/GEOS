@@ -101,6 +101,7 @@ public:
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
                                 CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                localIndex const dR_dAperOffset,
                                 localIndex const dR_dAperEnergyOffset )
     : Base( rankOffset,
             stencilWrapper,
@@ -112,7 +113,8 @@ public:
             dt,
             localMatrix,
             localRhs,
-            dR_dAper ),
+            dR_dAper,
+            dR_dAperOffset ),
     m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
@@ -400,6 +402,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                   localIndex const dR_dAperOffset = 0,
                    localIndex const dR_dAperEnergyOffset = -1 )
   {
     integer constexpr NUM_DOF = 2;   // pressure + temperature
@@ -425,7 +428,7 @@ public:
                        flowDofNumberAccessor,
                        flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
                        permAccessors, edfmPermAccessors, thermalConductivityAccessors,
-                       dt, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset );
+                       dt, localMatrix, localRhs, dR_dAper, dR_dAperOffset, dR_dAperEnergyOffset );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
