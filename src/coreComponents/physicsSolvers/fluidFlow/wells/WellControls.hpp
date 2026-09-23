@@ -843,6 +843,20 @@ public:
 protected:
   virtual void postRestartInitialization( )override;
 
+  void updateNumDofPerElement();
+
+  void shutClosedSegments( WellElementSubRegion & subRegion,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
+
+  void shutEntireWell( WellElementSubRegion & subRegion,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs );
+
+  virtual void resetShutInControlState() = 0;
+
   /**
    * @brief Logs the state and values of a specific well constraint.
    *

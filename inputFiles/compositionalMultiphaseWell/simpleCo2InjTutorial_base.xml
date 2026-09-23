@@ -17,9 +17,10 @@
         maxTimeStepCuts="10"
         newtonMaxIter="40"/>
       <LinearSolverParameters
+        logLevel="1"
         solverType="fgmres"
         preconditionerType="mgr"
-        krylovTol="1e-5"/>
+        krylovTol="1e-8"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFVM

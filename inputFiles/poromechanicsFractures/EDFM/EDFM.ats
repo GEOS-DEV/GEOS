@@ -41,6 +41,16 @@ decks = [
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="PoroElastic_efem-edfm_inclinedFrac_iterative_smoke",
+        description=
+        "Single-phase poromechanics with EDFM and hypre MGR (exercises the hypredrive path when available)",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        # Near-zero stress components (~1e-3 Pa in a ~1e7 Pa field) drift by ~1e-3
+        # between the hypredrive and legacy paths at 4 ranks.
+        restartcheck_params=RestartcheckParameters(atol=1e-2, rtol=1e-4)),
+    TestDeck(
         name="ExponentialDecayPermeability_edfm_smoke",
         description='Exponential Decay Permeability model with EDFM',
         partitions=((1, 1, 1), (2, 2, 1)),
