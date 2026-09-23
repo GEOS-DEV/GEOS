@@ -1239,7 +1239,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
 {
 
   // create list of all constraints to process
-  std::vector< WellConstraintBase * > constraintList;
+  stdVector< WellConstraintBase * > constraintList;
   if( isProducer() )
   {
     constraintList = getRateConstraints();
@@ -1330,7 +1330,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   }
 // Check current against other constraints
   constraintList.erase( std::remove( constraintList.begin(), constraintList.end(), limitingConstraint ), constraintList.end());
-  std::vector< int > constraintChecked( constraintList.size(), 0 );
+  stdVector< integer > constraintChecked( constraintList.size(), 0 );
   for( int i = 0; i < static_cast< int >(constraintList.size()); ++i )
   {
     auto & constraint = constraintList[i];
@@ -1415,7 +1415,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   constraintList.erase( std::remove( constraintList.begin(), constraintList.end(), limitingConstraint ), constraintList.end());
 
 
-  std::vector< int > constraintChecked( constraintList.size(), 0 );
+  stdVector< integer > constraintChecked( constraintList.size(), 0 );
   for( int i = 0; i < static_cast< int >(constraintList.size()); ++i )
   {
     auto & constraint = constraintList[i];

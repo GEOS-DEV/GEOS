@@ -62,7 +62,7 @@ void MultivariableNonuniformTableFunction::initializeFunctionFromFile( string co
 
   // 2. Read axis parameters
 
-  std::vector< std::vector< real64 > > coords;
+  stdVector< stdVector< real64 > > coords;
   coords.resize( numDims );
   for( integer i = 0; i < numDims; i++ )
   {
