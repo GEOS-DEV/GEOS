@@ -238,6 +238,24 @@ blt_add_library( NAME       fluidFlowSolvers
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
+if( ENABLE_CUDA AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64" )
+  # The CUDA instantiations in this library can exceed the x86-64 small code
+  # model. Use the large host code model so nvcc-generated host stubs can
+  # address the complete shared library without truncated PC-relative
+  # relocations at link time.
+  target_compile_options( fluidFlowSolvers PRIVATE
+                          $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-mcmodel=large>
+                          $<$<COMPILE_LANGUAGE:CXX>:-mcmodel=large> )
+  if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+    # Clang's large code model emits uniquely named .ltext.* sections. GNU ld
+    # has no .ltext linker-script rule, so each name becomes an output section
+    # and overflows the 16-bit ELF section index (SHN_LORESERVE == 65280).
+    target_compile_options( fluidFlowSolvers PRIVATE
+                            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fno-unique-section-names>
+                            $<$<COMPILE_LANGUAGE:CXX>:-fno-unique-section-names> )
+  endif()
+endif()
+
 target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS fluidFlowSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

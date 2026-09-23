@@ -86,6 +86,7 @@ public:
 
     if( m_disableInelasticity )
     {
+      UPDATE_BASE::smallStrainUpdate_ElasticOnly( k, q, timeIncrement, strainIncrement, stress, stiffness );
       return;
     }
 
