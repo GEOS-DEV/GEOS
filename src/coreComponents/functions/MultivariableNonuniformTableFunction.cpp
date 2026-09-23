@@ -155,8 +155,8 @@ void MultivariableNonuniformTableFunction::getHypercubePoints( globalIndex const
 
   for( auto i = 0; i < m_numDims; ++i )
   {
-    if( m_axisHypercubeMults[i] <=0 )
-      std::cout << hypercubeIndex << " " << i << " " << m_axisHypercubeMults[i] << std::endl;
+    //if( m_axisHypercubeMults[i] <=0 )
+    //  std::cout << hypercubeIndex << " " << i << " " << m_axisHypercubeMults[i] << std::endl;
     integer const axis_idx = remainder / m_axisHypercubeMults[i];
     remainder = remainder % m_axisHypercubeMults[i];
 
@@ -207,13 +207,14 @@ void MultivariableNonuniformTableFunction::initializeFunction()
     {
       m_axisSteps[dim][j-1] =  m_axisCoordinates[dim][j] - m_axisCoordinates[dim][j-1];
       m_axisStepInvs[dim][j-1] = 1 / m_axisSteps[dim][j-1];
-      std::cout << "set invs " << dim << " " << j-1 << " " << m_axisStepInvs[dim][j-1] << std::endl;
+      //std::cout << "set invs " << dim << " " << j-1 << " " << m_axisStepInvs[dim][j-1] << std::endl;
     }
   }
 
   m_axisPointMults[m_numDims - 1] = 1;
   m_axisHypercubeMults[m_numDims - 1] = 1;
-  std::cout << "cube " << m_numDims - 1 << " " << m_axisPointMults[m_numDims - 1] << " " <<m_axisHypercubeMults[m_numDims - 1] <<  std::endl;;
+  //std::cout << "cube " << m_numDims - 1 << " " << m_axisPointMults[m_numDims - 1] << " " <<m_axisHypercubeMults[m_numDims - 1] <<
+  //  std::endl;;
 
   for( integer dim = m_numDims - 2; dim >= 0; --dim )
   {
@@ -222,14 +223,15 @@ void MultivariableNonuniformTableFunction::initializeFunction()
     if( isZero( m_axisHypercubeMults[dim] ) )
       m_axisHypercubeMults[dim] =0;
 
-    std::cout << "cube " << dim << " " << m_axisPointMults[dim] << " " << m_axisPointMults[dim + 1] << " " << m_axisPoints[dim + 1]  << " "<<m_axisHypercubeMults[dim + 1] *
-      (m_axisPoints[dim + 1] - 1) << " " << m_axisHypercubeMults[dim]<<std::endl;;
+    //std::cout << "cube " << dim << " " << m_axisPointMults[dim] << " " << m_axisPointMults[dim + 1] << " " << m_axisPoints[dim + 1]  << "
+    // "<<m_axisHypercubeMults[dim + 1] *
+    //  (m_axisPoints[dim + 1] - 1) << " " << m_axisHypercubeMults[dim]<<std::endl;;
 
   }
-  for( integer dim=0; dim<m_numDims; dim++ )
-  {
-    std::cout << " dim " << dim << " point mult " << m_axisPointMults[dim] << " hypercube mult " << m_axisHypercubeMults[dim] <<std::endl;
-  }
+  //for( integer dim=0; dim<m_numDims; dim++ )
+  //{
+  //  std::cout << " dim " << dim << " point mult " << m_axisPointMults[dim] << " hypercube mult " << m_axisHypercubeMults[dim] <<std::endl;
+  //}
   // check for point index overflow
   // fp type is intentional - to prevent overflow during computation and detect it later
   real64 numTablePoints = 1.0;
@@ -238,7 +240,7 @@ void MultivariableNonuniformTableFunction::initializeFunction()
   {
     numTablePoints *= m_axisPoints[dim];
     numTableHypercubes *=  std::max( 1, m_axisPoints[dim] - 1 );
-    std::cout << dim << " " << numTablePoints << " " << numTableHypercubes << std::endl;
+    //std::cout << dim << " " << numTablePoints << " " << numTableHypercubes << std::endl;
   }
 
 
