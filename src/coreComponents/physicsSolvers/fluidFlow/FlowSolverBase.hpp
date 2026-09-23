@@ -183,9 +183,9 @@ public:
   {
     GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets,
                       dR_dAperEnergyOffsets );
-    GEOS_ERROR( useAugmentedLagrangianMultiplier
+    GEOS_ERROR( (useAugmentedLagrangianMultiplier
                ? "Poroelastic fluxes with conforming fractures ALM not yet implemented."
-               : "Poroelastic fluxes with conforming fractures not yet implemented." );
+               : "Poroelastic fluxes with conforming fractures not yet implemented.") );
   }
 
   void initializeState( DomainPartition & domain );

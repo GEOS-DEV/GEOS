@@ -681,29 +681,29 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsImpl( real64 const dt,
         }();
 
         THERMAL_FRACTURE_KERNEL_FACTORY::template createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                              dofKey,
-                                                                                              this->getName(),
-                                                                                              mesh.getElemManager(),
-                                                                                              stencilWrapper,
-                                                                                              dt,
-                                                                                              localMatrix.toViewConstSizes(),
-                                                                                              localRhs.toView(),
-                                                                                              dR_dAper,
-                                                                                              dR_dAperOffset,
-                                                                                              dR_dAperEnergyOffset );
+                                                                                             dofKey,
+                                                                                             this->getName(),
+                                                                                             mesh.getElemManager(),
+                                                                                             stencilWrapper,
+                                                                                             dt,
+                                                                                             localMatrix.toViewConstSizes(),
+                                                                                             localRhs.toView(),
+                                                                                             dR_dAper,
+                                                                                             dR_dAperOffset,
+                                                                                             dR_dAperEnergyOffset );
       }
       else
       {
         ISOTHERMAL_FRACTURE_KERNEL_FACTORY::template createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                                                                 dofKey,
-                                                                                                 this->getName(),
-                                                                                                 mesh.getElemManager(),
-                                                                                                 stencilWrapper,
-                                                                                                 dt,
-                                                                                                 localMatrix.toViewConstSizes(),
-                                                                                                 localRhs.toView(),
-                                                                                                 dR_dAper,
-                                                                                                 dR_dAperOffset );
+                                                                                                dofKey,
+                                                                                                this->getName(),
+                                                                                                mesh.getElemManager(),
+                                                                                                stencilWrapper,
+                                                                                                dt,
+                                                                                                localMatrix.toViewConstSizes(),
+                                                                                                localRhs.toView(),
+                                                                                                dR_dAper,
+                                                                                                dR_dAperOffset );
       }
     } );
   } );

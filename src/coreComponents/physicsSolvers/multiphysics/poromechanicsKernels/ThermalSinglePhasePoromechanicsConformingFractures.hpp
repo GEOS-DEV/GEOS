@@ -32,7 +32,7 @@ namespace thermalSinglePhasePoromechanicsConformingFracturesKernels
 template< integer NUM_EQN, integer NUM_DOF >
 using ConnectorBasedAssemblyKernel =
   thermalConformingFracturesKernels::ThermalConformingFracturesConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF,
-    singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel >;
+                                                                                             singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel >;
 
 using ConnectorBasedAssemblyKernelFactory =
   thermalConformingFracturesKernels::ThermalConformingFracturesConnectorBasedAssemblyKernelFactory<
