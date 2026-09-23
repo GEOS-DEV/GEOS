@@ -7,6 +7,8 @@ set( dependencyList gtest denseLinearAlgebra )
 
 if ( ENABLE_CUDA )
   list( APPEND dependencyList cuda )
+elseif ( ENABLE_HIP )
+  list( APPEND dependencyList blt::hip )
 endif()
 
 foreach(test ${serial_tests})

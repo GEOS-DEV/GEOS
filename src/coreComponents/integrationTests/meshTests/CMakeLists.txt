@@ -2,7 +2,6 @@
 set( gtest_geosx_tests
      testMeshGeneration.cpp
      testNeighborCommunicator.cpp
-     testElementRegions.cpp
      testSurfaceGenerator.cpp )
 
 set( gtest_geosx_mpi_tests
@@ -10,15 +9,14 @@ set( gtest_geosx_mpi_tests
 
 if( ENABLE_VTK )
   list( APPEND gtest_geosx_tests
+        testElementRegions.cpp
         testVTKImport.cpp )
   list( APPEND gtest_geosx_mpi_tests
         testVTKImport.cpp )
 endif()
 
-if( ENABLE_VTK )
-  set( TEST_MESH_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
-  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
-endif()
+set( TEST_MESH_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
 
 set( tplDependencyList ${parallelDeps} gtest )
 

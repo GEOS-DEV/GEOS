@@ -202,9 +202,7 @@ public:
   {
     GEOS_UNUSED_VAR( mgrParams );
     setReduction( precond, mgrData );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCycleType( precond.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxCycle( precond.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalSmoothCycle( precond.ptr, 1 ) );
+    setMGRCycleSettings( precond.ptr );
 
     auto * const nested = new SinglePhaseALMNestedMGR;
     nested->setup = singlePhaseALMNestedMGRSetup;
@@ -228,14 +226,14 @@ public:
     }
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRCreate( &nested->mgr ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( nested->mgr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( nested->mgr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( nested->mgr, 0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCycleType( nested->mgr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxCycle( nested->mgr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalSmoothCycle( nested->mgr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( nested->mgr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonGalerkinMaxElmts( nested->mgr, 1 ) );
+    MGRParameters const nestedParameters = defaultMGRParameters();
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( nested->mgr, nestedParameters.tolerance ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( nested->mgr, nestedParameters.maxIterations ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( nested->mgr, nestedParameters.printLevel ) );
+    setMGRCycleSettings( nested->mgr, nestedParameters );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( nested->mgr, nestedParameters.nonCpointsToFpoints ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonGalerkinMaxElmts( nested->mgr, nestedParameters.nonGalerkinMaxElmts ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( nested->mgr, nestedParameters.pMaxElmts ) );
 
     HYPRE_Int innerCoarseLabels[3] = { 3, 4, 5 };
     HYPRE_Int * innerCoarseLabelsPtr[1] = { innerCoarseLabels };
