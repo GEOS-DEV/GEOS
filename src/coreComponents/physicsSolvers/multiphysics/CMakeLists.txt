@@ -60,6 +60,7 @@ set( multiPhysicsSolvers_headers
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFracturesALM.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFracturesKernelBase.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
     SinglePhasePoromechanics.hpp
     SinglePhasePoromechanicsEmbeddedFractures.hpp
