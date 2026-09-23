@@ -691,7 +691,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs,
                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                            stdMap< string, localIndex > const * const dR_dAperEnergyOffsets) 
+                                                            stdMap< string, localIndex > const * const GEOS_UNUSED_PARAM ( dR_dAperEnergyOffsets)) 
 {
   GEOS_MARK_FUNCTION;
 
