@@ -31,6 +31,9 @@ import platform
 import argparse
 import re
 import builtins
+import json
+from collections import Counter
+from pfw_surface_refinement import GeometryQueries, TwoPassRefiner, object_slice_bounds
 
 parser = argparse.ArgumentParser(description='Particle File Writer for GEOS-MPM')
 parser.add_argument('input_file', help="PFW input file", type=str)
@@ -885,7 +888,12 @@ parameters = {
                'particleDataWriteInterval': ( None, True ),  # MPM: particle-data write interval.
                'particleFileFields': ( [], False ),  # PFW: particle columns to write.
                'particleRefinement': ( None, False ),  # PFW: material-wise particle refinement settings.
-               'surfaceRefinementLevel': ( 1, False ),  # PFW: extra per-direction refinement for surface-flagged particle domains.
+               'surfaceRefinementLevel': ( 1, False ),  # PFW: per-direction subdivision in the two-pass surface band.
+               'particleReferenceGeometry': ( 'equivalentBox', False ),  # Optional fromRefinement metadata; no mechanics change.
+               'particleDomainOutput': ( 'native', False ),  # ParticleRegion output: native or equivalentBox.
+               'surfaceRefinementMethod': ( 'cartesian', False ),  # PFW: cartesian or simplex (single-point B-splines).
+               'surfaceRefinementFallback': ( 'cartesian', False ),  # PFW: cartesian or error for unresolved local simplex cuts.
+               'surfaceRefinementPlaneTolerance': ( 0.05, False ),  # PFW: allowed corner/plane disagreement divided by child diagonal.
                'periodic': ( [ False, False, False ], False ),  # PFW: periodicity in x/y/z.
                'planeStrain': ( 0, True ),  # MPM: run in plane-strain mode.
                'plotGridFields': ( None, True ),  # MPM: write grid fields to plot output.
@@ -1094,6 +1102,14 @@ mpmSolverParameterString = ''.join(parameterStrings)
 cohesiveZoneRegionString = ""
 
 # Remove fields form particleFileOrder the user does not wish to write to particle field (particleFieldOrder preseveres the correct header order for values written to the particle file)
+particleReferenceGeometry = str(particleReferenceGeometry)
+if particleReferenceGeometry not in ('equivalentBox', 'fromRefinement'):
+  raise ValueError("particleReferenceGeometry must be 'equivalentBox' or 'fromRefinement'")
+nativeReferenceGeometry = particleReferenceGeometry == 'fromRefinement'
+if particleDomainOutput not in ('native', 'equivalentBox'):
+  raise ValueError("particleDomainOutput must be 'native' or 'equivalentBox'")
+if nativeReferenceGeometry:
+  from pfw_reference_geometry import COLUMN_NAMES, encode_reference_geometry, geometry_columns
 particleFileFields.extend([ 'RVector' ]) # MaterialType, velocity, contact group, and surface flags should all default to 0 if unspecified in GEOS initialization
 particleFileFields = set(particleFileFields)
 particleFieldOrder = [ f for f in particleFieldOrder if f in particleFileFields ]
@@ -1110,6 +1126,17 @@ NK = nK   # total grid cells in the z-direction (counting ghosts)
 ppcx = ppcx if ppcx != None else ppc
 ppcy = ppcy if ppcy != None else ppc
 ppcz = ppcz if ppcz != None else ppc
+
+# Validate these before make_objects: a sliced factory must receive the same
+# integer-row bounds used for particle ownership, plus a read-only coarse halo.
+surfaceRefinementLevel = 1 if surfaceRefinementLevel is None else surfaceRefinementLevel
+if float(surfaceRefinementLevel) != int(surfaceRefinementLevel) or int(surfaceRefinementLevel) < 1:
+  raise ValueError("pfw['surfaceRefinementLevel'] must be a positive integer")
+surfaceRefinementLevel = int(surfaceRefinementLevel)
+surfaceRefinementMethod = str(surfaceRefinementMethod).lower().replace('-conforming', '')
+if surfaceRefinementMethod not in ('cartesian', 'simplex'):
+  raise ValueError("surfaceRefinementMethod must be 'cartesian' or 'simplex'")
+surfaceRefinementEnabled = surfaceRefinementLevel > 1 or surfaceRefinementMethod == 'simplex'
 
 # list of geometry creation objects
 # if objects == None:
@@ -1137,8 +1164,10 @@ elif ( hasattr(job, 'make_objects') ):
   else:
     # This will be used to make objects only be created if their bounding box contains the current
     # ranks slice.
-    rankxmin = xmin + (rank/num_ranks)*(xmax-xmin)
-    rankxmax = xmin + ( (rank+1)/num_ranks)*(xmax-xmin)
+    coarseRows = int(ppcx * (NI if periodic[0] else NI - 2))
+    rankxmin, rankxmax = object_slice_bounds(
+      xmin, xmax, coarseRows, rank, num_ranks,
+      halo=surfaceRefinementEnabled, periodic=bool(periodic[0]))
     objects = job.make_objects(rankxmin,rankxmax)
 else:
   # Throw error if no objects defined.  you can still specify objects=[] to run with no objects.
@@ -1200,6 +1229,11 @@ for obj in objects:
   subregions = obj.getSubregions()
   subregions_all.extend(subregions)
 
+# A rank-local object factory may not contain every material/type.  XML written
+# by rank 0 must nevertheless describe particles produced by all ranks.
+if not flux:
+  subregions_all = [entry for entries in comm.allgather(subregions_all) for entry in entries]
+subregions_all = sorted(set(tuple(entry) for entry in subregions_all))
 print("subregions_all:", subregions_all)
 
 particleTypesPerMat = [set() for m in materials]
@@ -1215,9 +1249,6 @@ if rank == 0:
   print("Num subregions:", numSubRegions)
 
 particleRefinement = particleRefinement if particleRefinement != None else [ 1 for i in range(numMats) ]  # Create list of size materials all ones
-surfaceRefinementLevel = int(surfaceRefinementLevel if surfaceRefinementLevel != None else 1)
-if surfaceRefinementLevel < 1:
-  raise ValueError("pfw['surfaceRefinementLevel'] must be at least 1")
 
 
 # ============================================================================================
@@ -1338,7 +1369,7 @@ if generateParticleFile:
       raise ValueError("particleRefinement values must be at least 1")
     return refinement
 
-  def _evaluate_particle_data(object, pt, voxelFlag):
+  def _evaluate_particle_data(object, pt, voxelFlag, surfaceOverride=None):
     # Surface refinement may revisit this query at child particle centers. Keep
     # every surface-dependent field relative to the point that will be written.
     data = { "object": object, "surfaceFlag": voxelFlag }
@@ -1385,14 +1416,19 @@ if generateParticleFile:
         data["temperature"] = object.temperature(object, pt ) if callable( object.temperature ) else object.temperature
 
     data["surfacePosition"] = np.array([0.0, 0.0, 0.0])
-    if "SurfacePosition" in particleFileFields and data["surfaceFlag"] != 0:
+    if "SurfacePosition" in particleFileFields and data["surfaceFlag"] != 0 and surfaceOverride is None:
       data["surfacePosition"] = object.getSurfacePosition( pt )
 
     data["surfaceNormal"] = np.array([0.0, 0.0, 0.0])
-    if "SurfaceNormal" in particleFileFields and data["surfaceFlag"] != 0:
+    if "SurfaceNormal" in particleFileFields and data["surfaceFlag"] != 0 and surfaceOverride is None:
       data["surfaceNormal"] = np.array(object.getSurfaceNormal( pt ))
       if (np.linalg.norm(data["surfaceNormal"]) < 0.0001 ):
         print("Near zero surface normal specfied for surface flagged particle.")
+
+    if surfaceOverride is not None and data["surfaceFlag"] != 0:
+      # The child uses the adopted local cutting plane.  Its offset must be
+      # recomputed from its own centroid, not copied from the coarse marker.
+      data["surfaceNormal"], data["surfacePosition"] = surfaceOverride
 
     data["surfaceTraction"] = np.array([0.0,0.0,0.0])
     if "SurfaceTraction" in particleFileFields and data["surfaceFlag"] != 0:
@@ -1503,7 +1539,7 @@ if generateParticleFile:
         return _evaluate_particle_data(object, pt, voxelFlag)
     return None
 
-  def _particle_file_line(particleNumber, particlePosition, data, dxr, dyr, dzr):
+  def _particle_file_line(particleNumber, particlePosition, data, dxr, dyr, dzr, geometryVertices=None):
     object = data["object"]
     pString = str(particleNumber) + delim \
               + str(particlePosition[0]) + delim \
@@ -1611,59 +1647,165 @@ if generateParticleFile:
     if "ShrinkageFlag" in particleFileFields:
       pString = pString + delim + str(data["shrinkageFlag"])
 
+    if nativeReferenceGeometry:
+      geometry = encode_reference_geometry(particlePosition, (dxr, dyr, dzr),
+                                           geometryVertices, plane_strain=planeStrain == 1)
+      pString += delim + geometry_columns(geometry, delim)
     return pString +'\n'
 
-  max_num_particles = ni*nj*nk
-  
-  n_p = 0
-  for i in range(1+math.ceil(ni*rank/num_ranks), math.ceil(ni*(rank+1)/num_ranks)+1):
-    print('creating files, row',i,'/',ni,', estimated time remaining = ',(ni-i)/i*(time.time()-timer),'s')
-    x = xmin + (i - 0.5)*dx
+  refinementReport = None
+  if surfaceRefinementEnabled:
+    # Logical pass 1: ordinary coarse-center occupancy and surface flags.
+    # Logical pass 2: replace only the selected band, including empty centers.
+    # The helper pipelines these passes through three x slices.  Each rank
+    # requeries its read-only halo and emits only its owned coarse domains.
+    queries = GeometryQueries(objects, surfaceDepth, planeStrain == 1, sortObjects)
 
-    if(sortObjects):
-      sliceObjects = [ob for ob in objects if (ob.xMin() <= x and ob.xMax() >= x)]
-    else:
-      sliceObjects = objects
+    def _capture_coarse_record(sample):
+      # This is the ordinary first-pass particle record.  Keeping only its text
+      # avoids reevaluating bulk geometry/state in pass 2.  Selected parents'
+      # records are discarded and replaced, not added to their children.
+      obj = objects[sample.object_index]
+      data = _evaluate_particle_data(obj, sample.point, sample.surface_flag)
+      if sample.surface_flag and {'SurfaceNormal', 'SurfacePosition'} <= particleFileFields:
+        normal = np.array(data['surfaceNormal'], dtype=float).copy()
+        offset = np.array(data['surfacePosition'], dtype=float).copy()
+        if planeStrain == 1:
+          normal[2] = 0.0
+          offset[2] = 0.0
+        length = np.linalg.norm(normal)
+        sample.surface_checked = True
+        if np.isfinite(length) and length > 1.0e-14 and np.all(np.isfinite(offset)):
+          sample.surface = (normal / length, sample.point + offset)
+        queries.stats['surface_queries'] += 1
+      return _particle_file_line(0, sample.point, data, dx, dy, dz).split(delim, 1)[1]
 
-    for j in range(1,nj+1):
-      y = ymin + (j - 0.5)*dy
-      for k in range(1,nk+1):
-        z = zmin + (k - 0.5)*dz
-        pt = np.array([x,y,z])
-        parentData = _query_particle_data(pt, sliceObjects)
-        if parentData is None:
+    n_p = 0
+    try:
+      refiner = TwoPassRefiner(
+        queries, [xmin, ymin, zmin], [ni, nj, nk], [dx, dy, dz], periodic,
+        rank=rank, size=num_ranks, plane_strain=(planeStrain == 1),
+        method=surfaceRefinementMethod, level=surfaceRefinementLevel,
+        material_refinement=_particle_refinement_for_mat,
+        fallback=surfaceRefinementFallback, plane_tolerance=surfaceRefinementPlaneTolerance,
+        capture_coarse_record=_capture_coarse_record)
+      for piece in refiner.particles():
+        if piece.coarse_record is not None:
+          n_p += 1
+          particleVolume += piece.volume
+          particleFile.write(str(n_p) + delim + piece.coarse_record)
           continue
+        obj = objects[piece.sample.object_index]
+        # Restore any geometry-object membership cache before evaluating state.
+        # The coarse pass has already staged parent state.  Replacement state
+        # is evaluated at emitted children, never at trial simplex centroids or
+        # halo points.  For rank-count invariance, getters must be deterministic
+        # functions of position, not process-order-dependent random draws.
+        obj.isInterior(piece.point, surfaceDepth)
+        queries.stats["isInterior_calls"] += 1
+        override = None
+        flag = piece.sample.surface_flag
+        if piece.vertices is not None:
+          flag = piece.surface_flag
+          distance = float(np.dot(piece.normal, piece.point - piece.surface_point))
+          override = (piece.normal, -distance * piece.normal)
+        data = _evaluate_particle_data(obj, piece.point, flag, surfaceOverride=override)
+        if piece.vertices is not None and data["particleType"] != 1:
+          raise ValueError("Simplex refinement requires particleType=1 (SinglePointBSpline) "
+                           "at cut domains; use cartesian refinement for CPDI/CPTI particles")
+        if "MaterialType" in particleFileFields and data["mat"] != piece.sample.material:
+          raise ValueError("Geometry getMat changed between classification and particle output")
+        if "ContactGroup" in particleFileFields and data["group"] != piece.sample.group:
+          raise ValueError("Geometry getGroup changed between classification and particle output")
+        _validate_particle_value("Position", obj, piece.point, piece.point)
+        _validate_particle_value("ParticleType", obj, data["particleType"], piece.point)
+        n_p += 1
+        particleVolume += piece.volume
+        # Keep legacy equivalent-box R-vectors unchanged. Optional native
+        # reference geometry is appended from the already constructed simplex.
+        particleFile.write(_particle_file_line(n_p, piece.point, data, *piece.widths,
+                                               geometryVertices=piece.vertices))
+      refinementReport = refiner.report()
+    except Exception as exc:
+      particleFile.close()
+      _abort_particle_generation("Two-pass surface refinement failed on rank " + str(rank) + ": " + str(exc))
+  else:
+    # Preserve the original no-surface-refinement path and its output ordering.
+    max_num_particles = ni*nj*nk
 
-        baseRefinement = _particle_refinement_for_mat(parentData["mat"])
-        isSurfaceParent = parentData["surfaceFlag"] != 0
-        localRefinement = baseRefinement * (surfaceRefinementLevel if isSurfaceParent else 1)
-        dxr = dx/localRefinement
-        dyr = dy/localRefinement
-        dzr = dz if planeStrain == 1 else dz/localRefinement
-        queryObjects = objects if isSurfaceParent and surfaceRefinementLevel > 1 else sliceObjects
+    n_p = 0
+    for i in range(1+math.ceil(ni*rank/num_ranks), math.ceil(ni*(rank+1)/num_ranks)+1):
+      print('creating files, row',i,'/',ni,', estimated time remaining = ',(ni-i)/i*(time.time()-timer),'s')
+      x = xmin + (i - 0.5)*dx
 
-        for ri in range(localRefinement):
-          for rj in range(localRefinement):
-            for rk in range( ( 1 if planeStrain == 1 else localRefinement ) ):
-              xr = x - 0.5*dx + (ri + 0.5)*dxr
-              yr = y - 0.5*dy + (rj + 0.5)*dyr
-              zr = z - 0.5*dz + (rk + 0.5)*dzr
-              particlePosition = [xr, yr, zr]
-              childData = parentData
-              if isSurfaceParent and surfaceRefinementLevel > 1:
-                childData = _query_particle_data(np.array(particlePosition), queryObjects)
-                if childData is None:
+      if(sortObjects):
+        sliceObjects = [ob for ob in objects if (ob.xMin() <= x and ob.xMax() >= x)]
+      else:
+        sliceObjects = objects
+
+      for j in range(1,nj+1):
+        y = ymin + (j - 0.5)*dy
+        for k in range(1,nk+1):
+          z = zmin + (k - 0.5)*dz
+          pt = np.array([x,y,z])
+          parentData = _query_particle_data(pt, sliceObjects)
+          if parentData is None:
+            continue
+
+          baseRefinement = _particle_refinement_for_mat(parentData["mat"])
+          isSurfaceParent = parentData["surfaceFlag"] != 0
+          localRefinement = baseRefinement * (surfaceRefinementLevel if isSurfaceParent else 1)
+          dxr = dx/localRefinement
+          dyr = dy/localRefinement
+          dzr = dz if planeStrain == 1 else dz/localRefinement
+          queryObjects = objects if isSurfaceParent and surfaceRefinementLevel > 1 else sliceObjects
+
+          for ri in range(localRefinement):
+            for rj in range(localRefinement):
+              for rk in range( ( 1 if planeStrain == 1 else localRefinement ) ):
+                xr = x - 0.5*dx + (ri + 0.5)*dxr
+                yr = y - 0.5*dy + (rj + 0.5)*dyr
+                zr = z - 0.5*dz + (rk + 0.5)*dzr
+                particlePosition = [xr, yr, zr]
+                childData = parentData
+                if isSurfaceParent and surfaceRefinementLevel > 1:
+                  childData = _query_particle_data(np.array(particlePosition), queryObjects)
+                  if childData is None:
+                    continue
+
+                if childData["mat"] < 0:
                   continue
-
-              if childData["mat"] < 0:
-                continue
-              _validate_particle_value("Position", childData["object"], particlePosition, particlePosition)
-              _validate_particle_value("ParticleType", childData["object"], childData["particleType"], particlePosition)
-              n_p = n_p + 1
-              particleVolume += dxr*dyr*dzr
-              particleFile.write(_particle_file_line(n_p, particlePosition, childData, dxr, dyr, dzr))
+                _validate_particle_value("Position", childData["object"], particlePosition, particlePosition)
+                _validate_particle_value("ParticleType", childData["object"], childData["particleType"], particlePosition)
+                n_p = n_p + 1
+                particleVolume += dxr*dyr*dzr
+                particleFile.write(_particle_file_line(n_p, particlePosition, childData, dxr, dyr, dzr))
 
   particleFile.close()
+
+  # Counts/volumes must include all rank-owned rows, not only rank 0's slice.
+  # Only small diagnostics are communicated; no particles or geometry objects.
+  if not flux:
+    particleVolume = comm.allreduce(particleVolume, op=MPI.SUM)
+    rankReports = comm.gather(refinementReport, root=0)
+  else:
+    rankReports = [refinementReport]
+  if rank == 0 and surfaceRefinementEnabled:
+    combined = Counter()
+    for report in rankReports:
+      for key, value in report.items():
+        if key.startswith('peak_'):
+          combined[key] = max(combined[key], value)
+        else:
+          combined[key] += value
+    summary = dict(combined)
+    summary.update(method=surfaceRefinementMethod, level=surfaceRefinementLevel,
+                   pfw_ranks=num_ranks, particle_volume=particleVolume,
+                   peak_values_are_per_rank=True)
+    with open(particleFileName + '_refinement.json', 'w') as reportFile:
+      json.dump(summary, reportFile, indent=2, sort_keys=True)
+      reportFile.write('\n')
+    print('Two-pass surface refinement:', summary)
 
   # Wait for all mpi processes to finish generating particles
   if flux:
@@ -1697,6 +1839,8 @@ if generateParticleFile:
 
         columnNames = columnNames + delim + fieldString
 
+      if nativeReferenceGeometry:
+        columnNames += delim + delim.join(COLUMN_NAMES)
       columnNames = columnNames + "\n"
       outfile.write(columnNames)
 
@@ -1829,12 +1973,14 @@ if rank == 0:
     if i < numMats-1:
       particleBlockString+=", "
       targetRegionsString+=", "
+    geometryOutputAttribute = (f'\n        particleDomainOutput="{particleDomainOutput}"'
+                               if nativeReferenceGeometry else "")
     particleRegionString+=f"""
     <ParticleRegion
         name="ParticleRegion{i+1}"
         meshBody="particles"
         particleBlocks="{{ {regionBlocksStr} }}"
-        materialList="{{ {matsOrig[i]} }}"/>"""
+        materialList="{{ {matsOrig[i]} }}"{geometryOutputAttribute}/>"""
 
 
   # Format explicit solver child XML blocks after defaults have been resolved.

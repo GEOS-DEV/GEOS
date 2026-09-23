@@ -11008,6 +11008,16 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
   RAJA::ReduceMin< parallelDeviceReduce, real64 > minMassLocal( LvArray::NumericLimits< real64 >::max );
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    if( subRegion.hasParticleReferenceGeometry() )
+    {
+      auto const geometry = subRegion.referenceGeometryViewOnHost();
+      for( localIndex p=0; p<subRegion.size(); ++p )
+      {
+        GEOS_ERROR_IF( ( geometry.shape[p] == 1 && m_planeStrain != 1 ) ||
+                       ( geometry.shape[p] == 2 && m_planeStrain == 1 ),
+                       "TriangleWedge reference geometry requires plane strain; Tetrahedron requires 3D" );
+      }
+    }
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
@@ -11895,6 +11905,7 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
         particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
       }
 
+      auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
       for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
       {
         localIndex const p = activeParticleIndices[pp];
@@ -11923,6 +11934,9 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
           particleReferenceTemperature[p] = state.temperature;
         }
 
+        // Thermodynamic initialization changes the reference, not the input shape.
+        real64 const newGeometryF[3][3] = { {scale[0],0,0}, {0,scale[1],0}, {0,0,scale[2]} };
+        referenceGeometry.rebase( p, particleDeformationGradient[p], newGeometryF );
         for( int i = 0; i < 3; ++i )
         {
           for( int j = 0; j < 3; ++j )
@@ -12537,6 +12551,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
             if( ( constitutiveModel.getCatalogName() == "StrainHardeningPolymer" || constitutiveModel.getCatalogName() == "SurfaceInformedPolymer" ) )
             {
+              auto const referenceGeometry = targetSubRegion.referenceGeometryViewOnHost();
               // Particle fields
               arrayView1d< real64 > const particleDamage = targetSubRegion.getParticleDamage();
               arrayView1d< real64 > const particleReferenceVolume = targetSubRegion.getField< fields::mpm::particleReferenceVolume >();
@@ -12558,6 +12573,8 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                 {
                   particleDamage[p] = 0.0; // Reset damage
 
+                  real64 const identity[3][3] = { {1,0,0}, {0,1,0}, {0,0,1} };
+                  referenceGeometry.rebase( p, particleDeformationGradient[p], identity );
                   // Tensor equation: particleDeformationGradient[p] = 0.0 component-wise.
                   LvArray::tensorOps::fill< 3, 3 >( particleDeformationGradient[p], 0.0 );
                   particleDeformationGradient[p][0][0] = 1.0;
@@ -12659,6 +12676,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
               arrayView2d< real64 > const particleStress = targetSubRegion.getField< fields::mpm::particleStress >();
               arrayView3d< real64 > const particleDeformationGradient = targetSubRegion.getField< fields::mpm::particleDeformationGradient >();
               arrayView3d< real64 > const particleRVectors = targetSubRegion.getParticleRVectors();
+              auto const referenceGeometry = targetSubRegion.referenceGeometryViewOnHost();
 
               // CC: TODO Need to add this for Mike
               // arrayView1d< real64 const > const particleReferencePorosity = targetSubRegion.getField<
@@ -12719,6 +12737,10 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                       J,
                       1.0 / static_cast< real64 >( activeDimensions ) );
 
+                    real64 newGeometryF[3][3];
+                    for( int i=0; i<3; ++i ) for( int j=0; j<3; ++j )
+                      newGeometryF[i][j] = particleDeformationGradient[p][i][j] / ( i < activeDimensions ? scaling : 1.0 );
+                    referenceGeometry.rebase( p, particleDeformationGradient[p], newGeometryF );
                     // Remove only the active-dimensional volumetric stretch;
                     // leave F33=1 for plane strain.
                     for( int i = 0; i < activeDimensions; ++i )
@@ -13550,6 +13572,7 @@ bool SolidMechanicsMPM::subdivideParticles(
       particleSubdivideFlag[p] = 0;
     } );
 
+    auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
@@ -13713,6 +13736,8 @@ bool SolidMechanicsMPM::subdivideParticles(
         }
       }
 
+      GEOS_ERROR_IF( subdivisionMask != 0 && referenceGeometry.isSimplex( p ),
+                     "Runtime subdivision of native simplex geometry is not implemented; use PFW refinement" );
       particleSubdivideFlag[p] = subdivisionMask;
       int const numberOfDirections =
         countSubdivisionDirections( subdivisionMask, numDims );
@@ -37713,6 +37738,9 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       return;
     }
 
+    // Preserve native vertices while the numerical reference is reset.
+    auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
+
     arrayView1d< int > particleDomainScaledFlag;
     if( cpdiDomainScaling == 1 )
     {
@@ -38075,6 +38103,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
         }
       }
 
+      referenceGeometry.rebase( p, oldDeformationGradient, newDeformationGradient );
       LvArray::tensorOps::copy< 3, 3 >(
         particleDeformationGradient[p],
         newDeformationGradient );

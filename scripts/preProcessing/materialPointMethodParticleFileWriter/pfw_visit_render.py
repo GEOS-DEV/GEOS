@@ -686,6 +686,43 @@ def _derive_particle_stress_component(all_names, requested, particle_meshes=None
     return None
 
 
+def _define_particle_long_diagonal_stress_candidates(all_names, particle_meshes=None):
+    component_info = (
+        ("XX", 0, "particleStressXX"),
+        ("YY", 1, "particleStressYY"),
+        ("ZZ", 2, "particleStressZZ"),
+        ("YZ", 3, "particleStressYZ"),
+        ("XZ", 4, "particleStressXZ"),
+        ("XY", 5, "particleStressXY"),
+    )
+    component_candidates = {}
+    for label, index, base_name in component_info:
+        region_names = _define_particle_region_stress_component_candidates(base_name, particle_meshes, label, index)
+        fallback_names = _define_stress_component_expression(base_name, all_names, label, index, particle_meshes=particle_meshes)
+        component_candidates[label] = _unique_keep_order(region_names + fallback_names)
+    if not all(component_candidates.values()):
+        return None
+
+    names = []
+    max_candidates = max(len(v) for v in component_candidates.values())
+    for i in range(max_candidates):
+        def pick(label):
+            candidates = component_candidates[label]
+            return candidates[min(i, len(candidates) - 1)]
+
+        name = "particleStressLongDiagonal" if i == 0 else "particleStressLongDiagonal_candidate{0}".format(i)
+        expression = "(({sxx})+({syy})+({szz})+2.0*(({sxy})+({sxz})+({syz})))/3.0".format(
+            sxx=pick("XX"),
+            syy=pick("YY"),
+            szz=pick("ZZ"),
+            syz=pick("YZ"),
+            sxz=pick("XZ"),
+            sxy=pick("XY"),
+        )
+        names.append(_define_scalar_expression(name, expression))
+    return names
+
+
 def _derive_pressure(scalars):
     # Prefer particle stress components.  Support both grouped Silo components
     # such as particleStress/xx and legacy flat components such as particleStress_0.
@@ -954,6 +991,8 @@ def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=N
     stress_component = _derive_particle_stress_component(all_names, requested, particle_meshes=particle_meshes)
     if stress_component:
         return stress_component
+    if key in ("particlestresslongdiagonal", "stresslongdiagonal", "sigmalongdiagonal", "sigmaaa", "stressaa", "particlestressaa"):
+        return _define_particle_long_diagonal_stress_candidates(all_names, particle_meshes=particle_meshes)
     deformation_gradient_component = _derive_particle_deformation_gradient_component(all_names, requested, particle_meshes=particle_meshes)
     if deformation_gradient_component:
         return deformation_gradient_component

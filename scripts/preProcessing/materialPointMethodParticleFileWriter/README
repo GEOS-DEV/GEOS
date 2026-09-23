@@ -239,3 +239,18 @@ Example: a disk of points on an x-normal surface to monitor velocity:
 The generated solver attributes are `tracerHistory`, `tracerCoordinates`,
 `tracerVariables`, `tracerWriteInterval` or `tracerCycleInterval`, and
 `tracerOutputPrefix`.  Use a time interval or a cycle interval, not both.
+
+***Two-pass surface refinement***
+
+Set surfaceRefinementLevel > 1 to refine the band identified from ordinary
+coarse-center surface flags, occupied/empty adjacency, and region changes:
+
+  pfw["surfaceRefinementMethod"] = "cartesian"  # default
+  pfw["surfaceRefinementLevel"] = 4
+
+Empty-center coarse domains adjacent to particles are included. For local
+plane-cut triangle/tetrahedron centroid/volume initialization with single-point
+B-spline particles, use surfaceRefinementMethod="simplex". The existing geometry
+objects are unchanged. Both options use rank-owned coarse domains and read-only
+coarse-slice halos. See SURFACE_REFINEMENT.md for the algorithm, file-format
+compatibility, MPI factory requirements, fallback behavior, and tests.

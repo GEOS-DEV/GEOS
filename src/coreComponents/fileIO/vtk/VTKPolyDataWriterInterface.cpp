@@ -269,6 +269,17 @@ getVtkPoints( NodeManager const & nodeManager,
 static vtkSmartPointer< vtkPoints >
 getVtkPoints( ParticleRegion const & particleRegion ) // TODO: Loop over the subregions owned by this region and operate on them directly
 {
+  if( particleRegion.usesNativeParticleGeometry() )
+  {
+    auto const mesh = particleRegion.getParticleDomainMesh();
+    auto points = vtkSmartPointer< vtkPoints >::New();
+    points->SetDataTypeToDouble();
+    points->SetNumberOfPoints( static_cast< vtkIdType >( mesh.points.size() ) );
+    for( std::size_t i=0; i<mesh.points.size(); ++i )
+      points->SetPoint( static_cast< vtkIdType >( i ), mesh.points[i][0], mesh.points[i][1], mesh.points[i][2] );
+    return points;
+  }
+
   // Particles are plotted as polyhedron with the geometry determined by the particle
   // type.  CPDI particles are parallelepiped (8 corners and 6 faces).
   // TODO: add support for CPTI (tet) and single point (cube or sphere) geometries
@@ -603,6 +614,28 @@ using ParticleData = std::pair< stdVector< int >, vtkSmartPointer< vtkCellArray 
 static ParticleData
 getVtkCells( ParticleRegion const & region )
 {
+  if( region.usesNativeParticleGeometry() )
+  {
+    // One zone per particle, in exactly the field-output order. There is no
+    // vertex welding or hidden tetrahedral subdivision of wedge particles.
+    auto const mesh = region.getParticleDomainMesh();
+    GEOS_ERROR_IF( mesh.shape.size() != static_cast< std::size_t >( region.getNumberOfParticles() ),
+                   "Native particle mesh/field count mismatch" );
+    auto cells = vtkSmartPointer< vtkCellArray >::New();
+    stdVector< int > types;
+    types.reserve( mesh.shape.size() );
+    for( std::size_t p=0; p<mesh.shape.size(); ++p )
+    {
+      integer const shape = mesh.shape[p];
+      int const count = particleGeometry::vertexCount( shape );
+      vtkIdType vertices[8];
+      for( int a=0; a<count; ++a ) vertices[a] = static_cast< vtkIdType >( mesh.offsets[p]+particleGeometry::vtkVertex( shape, a ) );
+      cells->InsertNextCell( count, vertices );
+      types.push_back( shape == 0 ? VTK_HEXAHEDRON : ( shape == 1 ? VTK_WEDGE : VTK_TETRA ) );
+    }
+    return std::make_pair( types, cells );
+  }
+
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
   cellsArray->SetNumberOfCells( region.getNumberOfParticles() );
   stdVector< int > cellType;

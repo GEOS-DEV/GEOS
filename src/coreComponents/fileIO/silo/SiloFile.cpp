@@ -2533,6 +2533,50 @@ void SiloFile::writeParticleMeshObject( ParticleRegion const & particleRegion,
                                         int const cycleNumber,
                                         real64 const problemTime )
 {
+  if( particleRegion.usesNativeParticleGeometry() )
+  {
+    // Preserve particle order: fields are flattened in subregion/particle order.
+    // Shape runs may repeat; do not sort zones into geometry-type groups.
+    auto const mesh = particleRegion.getParticleDomainMesh();
+    localIndex const npoints = LvArray::integerConversion< localIndex >( mesh.points.size() );
+    localIndex const nzones = LvArray::integerConversion< localIndex >( mesh.shape.size() );
+    GEOS_ERROR_IF( nzones != particleRegion.getNumberOfParticles(), "Native particle mesh/field count mismatch" );
+    array1d< real64 > x( npoints ), y( npoints ), z( npoints );
+    array1d< char > nodeGhost( npoints ), zoneGhost( nzones );
+    std::vector< int > counts, sizes, types;
+    std::vector< std::vector< localIndex > > connectivity;
+    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+    for( localIndex p=0; p<nzones; ++p )
+    {
+      integer const shape = mesh.shape[p];
+      int const count = particleGeometry::vertexCount( shape );
+      if( p == 0 || shape != mesh.shape[p-1] )
+      {
+        counts.push_back( 0 ); sizes.push_back( count );
+        types.push_back( shape == 0 ? DB_ZONETYPE_HEX : ( shape == 1 ? DB_ZONETYPE_PRISM : DB_ZONETYPE_TET ) );
+        connectivity.emplace_back();
+      }
+      ++counts.back();
+      char const ghost = mesh.ownerRank[p] == rank ? 0 : 1;
+      zoneGhost[p] = ghost;
+      for( int a=0; a<count; ++a )
+      {
+        localIndex const q = mesh.offsets[p]+a;
+        x[q] = mesh.points[q][0]; y[q] = mesh.points[q][1]; z[q] = mesh.points[q][2];
+        nodeGhost[q] = ghost;
+        connectivity.back().push_back( mesh.offsets[p]+particleGeometry::siloVertex( shape, a ) );
+      }
+    }
+    std::vector< localIndex const * > pointers;
+    for( auto const & run : connectivity ) pointers.push_back( run.data() );
+    real64 * coords[3] = { x.data(), y.data(), z.data() };
+    // The existing writer handles multimeshes and empty-rank output.
+    writeMeshObject( meshName, npoints, coords, nullptr, nodeGhost.data(), zoneGhost.data(),
+                     LvArray::integerConversion< int >( counts.size() ), counts.data(), pointers.data(),
+                     nullptr, types.data(), sizes.data(), cycleNumber, problemTime );
+    return;
+  }
+
   localIndex const numParticles = particleRegion.getNumberOfParticles();
 
   array2d< real64 > const particleCorners = particleRegion.getParticleCorners();
