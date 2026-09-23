@@ -56,10 +56,10 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityP
   GEOS_MARK_FUNCTION;
 
   // Recompute fracture face/element geometry and rebuild the ALM contact solver's internal lists.
-  // These must happen before assembling the contact-dependent pattern; setSparsityPattern() 
+  // These must happen before assembling the contact-dependent pattern; setSparsityPattern()
   this->solidMechanicsSolver()->updateFractureGeometry( domain );
 
-  Base::setSparsityPattern(domain,dofManager,localMatrix, pattern);
+  Base::setSparsityPattern( domain, dofManager, localMatrix, pattern );
 }
 
 template< typename FLOW_SOLVER >
@@ -417,13 +417,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     }
 
     // ==== Part 3: Energy-balance flux derivative (advective contribution only) ====
-    // Mirrors Parts 1/2 above but reads the energy block appended after all mass rows in
-    // dFluxResidual_dNormalJump, reuses the same dAperturedU/dAperturedB chain-rule factors
-    // (aperture -> nodal/bubble DOF is equation-agnostic, so the pre-computed derivatives from
-    // ComputeApertureDerivativesFactory above apply unchanged), and scatters into the
-    // temperature/energy residual row (packed right after pressure) instead of the mass row.
-    // The conductive term's aperture sensitivity is not modeled - see
-    // setUpDflux_dApertureMatrix and ThermalSinglePhasePoromechanicsConformingFractures.hpp.
+    // The conductive term's aperture sensitivity
     if( this->m_isThermal )
     {
       stdMap< string, localIndex > const & energyOffsets = this->getDerivativeFluxResidual_dApertureEnergyOffsets();

@@ -331,14 +331,14 @@ public:
                                                                                                       stack.stencilSize * numDof );
 
       // Advective dEnergyFlux/dAperture -> energy-balance block of dR_dAper, appended after
-      // all mass-balance rows 
+      // all mass-balance rows
       if( m_dR_dAperEnergyOffset >= 0 )
       {
         localIndex const energyRow = m_dR_dAperEnergyOffset + LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
         m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( energyRow,
-                                                                  stack.localColIndices.data(),
-                                                                  stack.dEnergyFlux_dAperture[i].dataIfContiguous(),
-                                                                  stack.stencilSize );
+                                                                 stack.localColIndices.data(),
+                                                                 stack.dEnergyFlux_dAperture[i].dataIfContiguous(),
+                                                                 stack.stencilSize );
       }
 
     } );
@@ -359,7 +359,7 @@ private:
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
 
-  /// View on dR_dAper 
+  /// View on dR_dAper
   CRSMatrixView< real64, localIndex const > m_dR_dAper;
 
   /// Row offset, in m_dR_dAper, of the energy-balance block for this mesh target.

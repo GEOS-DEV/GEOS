@@ -189,7 +189,7 @@ public:
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs,
                                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                           stdMap< string, localIndex > const * const dR_dAperEnergyOffsets = nullptr )
+                                              stdMap< string, localIndex > const * const dR_dAperEnergyOffsets = nullptr )
   {
     GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffsets );
     GEOS_ERROR( "Poroelastic fluxes with conforming fractures ALM not yet implemented." );

@@ -32,7 +32,7 @@ class SolidMechanicsAugmentedLagrangianContact : public ContactSolverBase
 {
 public:
   static constexpr bool hasContactStabilization = true;
-  
+
   SolidMechanicsAugmentedLagrangianContact( const string & name,
                                             Group * const parent );
 

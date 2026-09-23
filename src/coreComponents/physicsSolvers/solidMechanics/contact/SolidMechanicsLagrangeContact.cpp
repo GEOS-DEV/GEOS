@@ -657,8 +657,8 @@ void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
   }
 }
 
-void SolidMechanicsLagrangeContact::assembleContact( real64 const GEOS_UNUSED_PARAM(time),
-                                                     real64 const GEOS_UNUSED_PARAM(dt),
+void SolidMechanicsLagrangeContact::assembleContact( real64 const GEOS_UNUSED_PARAM( time ),
+                                                     real64 const GEOS_UNUSED_PARAM( dt ),
                                                      DomainPartition & domain,
                                                      DofManager const & dofManager,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,

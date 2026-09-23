@@ -29,11 +29,11 @@ namespace geos
 {
 
 template< typename FLOW_SOLVER = SinglePhaseBase >
-class SinglePhasePoromechanicsConformingFracturesALM : public PoromechanicsConformingFractures<  SinglePhasePoromechanics, FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
+class SinglePhasePoromechanicsConformingFracturesALM : public PoromechanicsConformingFractures< SinglePhasePoromechanics, FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
 {
 public:
 
-  using Base = PoromechanicsConformingFractures< SinglePhasePoromechanics, FLOW_SOLVER , SolidMechanicsAugmentedLagrangianContact >;
+  using Base = PoromechanicsConformingFractures< SinglePhasePoromechanics, FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -114,10 +114,10 @@ public:
     // Wells contribute their own dof labels and need an extra reduction level
     // to keep the well block out of the coarse grid, so they get a separate
     // strategy.
-    if (this->m_isThermal)
+    if( this->m_isThermal )
     {
       if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName() ) );
+        GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName() ) );
     }
 
     if constexpr ( hasWells )
@@ -130,7 +130,7 @@ public:
       linearSolverParameters.mgr.strategy =
         LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM;
     }
-  
+
     linearSolverParameters.mgr.separateComponents = true;
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
@@ -146,30 +146,28 @@ private:
   {};
 
 
- 
 
   virtual void assembleForceResidualDerivativeWrtPressure( string const & meshName,
-                                                   MeshLevel const & mesh,
-                                                   string_array const & regionNames,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs ) override final;
-
-  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
                                                            MeshLevel const & mesh,
                                                            string_array const & regionNames,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs ) override final;
 
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+                                                                   MeshLevel const & mesh,
+                                                                   string_array const & regionNames,
+                                                                   DofManager const & dofManager,
+                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   arrayView1d< real64 > const & localRhs ) override final;
 
 
 
   virtual void assembleMatrixPressureBubbleContribution( real64 const dt,
-                                                 DomainPartition & domain,
-                                                 DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs ) override;
+                                                         DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs ) override;
 
 
 

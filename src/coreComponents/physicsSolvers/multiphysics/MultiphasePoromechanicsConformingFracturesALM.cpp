@@ -28,15 +28,15 @@ using namespace fields;
 
 template< typename FLOW_SOLVER >
 MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::MultiphasePoromechanicsConformingFracturesALM( const string & name,
-                                                                                                               Group * const parent )
+                                                                                                             Group * const parent )
   : Base( name, parent )
 {}
 
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setSparsityPattern( DomainPartition & domain,
-                                                                                        DofManager & dofManager,
-                                                                                        CRSMatrix< real64, globalIndex > & localMatrix,
-                                                                                        SparsityPattern< globalIndex > & pattern )
+                                                                                       DofManager & dofManager,
+                                                                                       CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                                       SparsityPattern< globalIndex > & pattern )
 {
   GEOS_MARK_FUNCTION;
 

@@ -95,12 +95,12 @@ protected:
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) override final;
 
-  virtual void assembleForceResidualDerivativeWrtPressure( string const & GEOS_UNUSED_PARAM(meshName),
-                                                   MeshLevel const & mesh,
-                                                   string_array const & regionNames,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs ) override final;     
+  virtual void assembleForceResidualDerivativeWrtPressure( string const & GEOS_UNUSED_PARAM( meshName ),
+                                                           MeshLevel const & mesh,
+                                                           string_array const & regionNames,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs ) override final;
 
 
   virtual string getFlowDofKey() const override { return SinglePhaseBase::viewKeyStruct::elemDofFieldString(); }
