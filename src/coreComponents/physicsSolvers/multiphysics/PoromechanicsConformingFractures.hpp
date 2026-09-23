@@ -391,15 +391,25 @@ public:
                                        localRhs );
 
     // Assemble fluxes 3D/2D and get dFluidResidualDAperture
-    this->flowSolver()->assembleHydrofracFluxTerms( time_n,
-                                                    dt,
-                                                    domain,
-                                                    dofManager,
-                                                    localMatrix,
-                                                    localRhs,
-                                                    getDerivativeFluxResidual_dNormalJump(),
-                                                    nullptr,
-                                                    &m_derivativeFluxResidual_dApertureEnergyOffsets );
+    if constexpr (CONTACT_SOLVER::hasContactStabilization)
+      this->flowSolver()->assembleHydrofracFluxTermsALM( time_n,
+                                                         dt,
+                                                         domain,
+                                                         dofManager,
+                                                         localMatrix,
+                                                         localRhs,
+                                                         getDerivativeFluxResidual_dNormalJump(),
+                                                         &m_derivativeFluxResidual_dApertureEnergyOffsets );
+    else
+      this->flowSolver()->assembleHydrofracFluxTerms( time_n,
+                                                      dt,
+                                                      domain,
+                                                      dofManager,
+                                                      localMatrix,
+                                                      localRhs,
+                                                      getDerivativeFluxResidual_dNormalJump(),
+                                                      &m_derivativeFluxResidual_dApertureOffsets,
+                                                      &m_derivativeFluxResidual_dApertureEnergyOffsets );
 
     m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
 

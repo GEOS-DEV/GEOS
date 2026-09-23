@@ -691,7 +691,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs,
                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                            stdMap< string, localIndex > const * const GEOS_UNUSED_PARAM ( dR_dAperEnergyOffsets ))
+                                                            stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
 {
   GEOS_MARK_FUNCTION;
 
@@ -702,7 +702,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                       MeshLevel const & mesh,
                                                                       string_array const & )
   {
@@ -742,6 +742,17 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
 
       if( m_isThermal )
       {
+        // Sentinel -1 means "no energy block available" (non-thermal flow solver, or caller didn't build one)
+        localIndex const dR_dAperEnergyOffset = [&]() -> localIndex
+        {
+          if( dR_dAperEnergyOffsets == nullptr )
+          {
+            return -1;
+          }
+          auto const offsetIt = dR_dAperEnergyOffsets->find( meshName );
+          return offsetIt == dR_dAperEnergyOffsets->end() ? -1 : offsetIt->second;
+        }();
+
         thermalSinglePhasePoromechanicsConformingFracturesALMKernels::
           ConnectorBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                           dofKey,
@@ -751,7 +762,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsALM( real64 const GEOS_UN
                                                                                           dt,
                                                                                           localMatrix.toViewConstSizes(),
                                                                                           localRhs.toView(),
-                                                                                          dR_dAper );
+                                                                                          dR_dAper,
+                                                                                          dR_dAperEnergyOffset );
       }
       else
       {
