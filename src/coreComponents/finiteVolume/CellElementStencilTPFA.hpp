@@ -25,12 +25,24 @@
 namespace geos
 {
 
+
 /**
  * Provides access to the cellElement stencil that may be called from a kernel function.
  */
 class CellElementStencilTPFAWrapper : public StencilWrapperBase< TwoPointStencilTraits >
 {
 public:
+
+  void
+  computeVelocity(
+    localIndex iconn, localIndex ip,
+    const real64 (&phaseFlux),
+    arraySlice1d< real64 const > const (&cellCartDim)[2],
+    localIndex const (&ghostRank)[2],
+    ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
+  void
+  initVelocity( localIndex iconn,
+                ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
 
   /// Coefficient view accessory type
   template< typename VIEWTYPE >

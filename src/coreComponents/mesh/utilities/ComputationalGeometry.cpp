@@ -23,6 +23,7 @@ namespace geos
 {
 
 namespace computationalGeometry
-{} /* namespace computationalGeometry */
+{
+} /* namespace computationalGeometry */
 
 } /* namespace geos */
