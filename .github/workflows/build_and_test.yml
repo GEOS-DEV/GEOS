@@ -371,12 +371,16 @@ jobs:
           -h=`hostname` \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
           ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
-          ${script_args[@]}
+          ${script_args[@]} \
+          > "$RUNNER_TEMP/docker-run.log" 2>&1
         EXIT_STATUS=$?
+        cat "$RUNNER_TEMP/docker-run.log"
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
         if [[ "$EXIT_STATUS" -ne 0 ]]; then
-          echo "::error title=Build failed::docker run exited ${EXIT_STATUS}"
+          tail -n 8 "$RUNNER_TEMP/docker-run.log" | while IFS= read -r line; do
+            echo "::error title=Build failed::$line"
+          done
         fi
 
         echo "exit_status=${EXIT_STATUS}" >> "${GITHUB_OUTPUT}"
