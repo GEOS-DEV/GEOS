@@ -65,6 +65,9 @@ endif()
 
 set( GEOS_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
 
+set( GEOS_SCHEMA_INSTALL_PATH "${CMAKE_INSTALL_FULL_DATAROOTDIR}/${CMAKE_PROJECT_NAME}/schema/schema.xsd" )
+set( GEOS_SCHEMA_SOURCE_PATH "${CMAKE_SOURCE_DIR}/coreComponents/schema/schema.xsd" )
+
 configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
                 ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp )
 

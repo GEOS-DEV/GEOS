@@ -374,6 +374,8 @@ This should print out a brief summary of the available command line arguments:
     --trace-data-migration,  Trace host-device data migration
     -m, --memory-usage,      Minimum threshold for printing out memory allocations in a member of the data repository.
     --pause-for,             Pause geosx for a given number of seconds before starting execution
+    -e, --errors-output,     Output path for the errors file (".yaml" supported)
+    -a, --archive,           Set the archiving strategy level (0 = no archiving, 1 = only XML inputs (default), 2 = XML inputs and the XSD schema)
 
     Rank 0: No XML input file nor schema specified. Exiting...
 
