@@ -484,6 +484,41 @@ jobs:
       REQUIRED_LABEL: "ci: run device builds"
     secrets: inherit
 
+  # Native macOS build. The TPL install comes from the published image
+  # geosx/macos-26-apple-clang:${GEOS_TPL_TAG}, the same tag the Linux jobs use.
+  macos_builds:
+    name: macOS 26 - Apple Clang (arm64)
+    needs: [is_not_draft_pull_request]
+    runs-on: macos-26
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        submodules: true
+        lfs: false
+        fetch-depth: 1
+    - name: Load macOS TPL image
+      env:
+        DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+      run: |
+        set -euo pipefail
+        image="geosx/macos-26-apple-clang:${DOCKER_IMAGE_TAG}"
+        docker pull "$image"
+        container=$(docker create "$image")
+        sudo mkdir -p /opt/GEOS
+        sudo chown "$(id -un)" /opt/GEOS
+        docker cp "$container":/opt/GEOS/. /opt/GEOS/
+        docker cp "$container":/spack-generated.cmake /opt/GEOS/spack-generated.cmake
+        docker rm "$container"
+    - name: Build GEOS
+      run: |
+        set -euo pipefail
+        python3 scripts/config-build.py \
+          -hc /opt/GEOS/spack-generated.cmake \
+          -bt Release \
+          --buildpath "$RUNNER_TEMP/geos-build"
+        cmake --build "$RUNNER_TEMP/geos-build" -j 2 --target geosx
+
   # Convenience job - passes when all substantive jobs have passed. A
   # submodule-sync failure is an allowed exception when testing submodule branches.
   check_that_all_jobs_succeeded:
@@ -497,6 +532,7 @@ jobs:
     - cuda_builds
     - rocm_builds
     - run_integrated_tests
+    - macos_builds
     if: ${{ always() }}
     steps:
     - run: |
@@ -506,7 +542,8 @@ jobs:
         echo "cpu_builds: ${{needs.cpu_builds.result}}"
         echo "cuda_builds: ${{needs.cuda_builds.result}}"
         echo "rocm_builds: ${{needs.rocm_builds.result}}"
-        echo "run_integrated_tests: ${{needs.run_integrated_tests.result}} "
+        echo "run_integrated_tests: ${{needs.run_integrated_tests.result}}"
+        echo "macos_builds: ${{needs.macos_builds.result}}"
         ${{
           needs.if_not_unassigned_pull_request.result == 'success' &&
           (
@@ -517,5 +554,6 @@ jobs:
           needs.cpu_builds.result == 'success' &&
           needs.cuda_builds.result == 'success' && 
           needs.rocm_builds.result == 'success' &&
-          needs.run_integrated_tests.result == 'success'
+          needs.run_integrated_tests.result == 'success' &&
+          needs.macos_builds.result == 'success'
         }}
