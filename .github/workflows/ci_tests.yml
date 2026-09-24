@@ -502,12 +502,17 @@ jobs:
         DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       run: |
         set -euo pipefail
-        curl -fsSL -o "$RUNNER_TEMP/crane.tgz" \
-          https://github.com/google/go-containerregistry/releases/download/v0.20.6/go-containerregistry_Darwin_arm64.tar.gz
-        tar -xzf "$RUNNER_TEMP/crane.tgz" -C "$RUNNER_TEMP" crane
-        image="geosx/macos-26-apple-clang:${DOCKER_IMAGE_TAG}"
-        "$RUNNER_TEMP/crane" export "$image" "$RUNNER_TEMP/tpl.tar"
-        sed 's/^        //' <<'PY' | sudo python3 - "$RUNNER_TEMP/tpl.tar"
+        log="$RUNNER_TEMP/load-tpl.log"
+        set +e
+        {
+          curl -fsSL -o "$RUNNER_TEMP/crane.tgz" \
+            https://github.com/google/go-containerregistry/releases/download/v0.20.6/go-containerregistry_Darwin_arm64.tar.gz
+          tar -xzf "$RUNNER_TEMP/crane.tgz" -C "$RUNNER_TEMP" crane
+          chmod +x "$RUNNER_TEMP/crane"
+          xattr -d com.apple.quarantine "$RUNNER_TEMP/crane" 2>/dev/null || true
+          image="geosx/macos-26-apple-clang:${DOCKER_IMAGE_TAG}"
+          "$RUNNER_TEMP/crane" export "$image" "$RUNNER_TEMP/tpl.tar"
+          cat > "$RUNNER_TEMP/extract_tpl.py" <<'PY'
         import inspect
         import os
         import sys
@@ -529,8 +534,19 @@ jobs:
                     os.unlink(destination)
                 os.link(source, destination)
         PY
-        sudo mv /spack-generated.cmake /opt/GEOS/spack-generated.cmake
-        sudo chown -R "$(id -un)" /opt/GEOS
+          python3 -c 'from pathlib import Path; p=Path("'"$RUNNER_TEMP"'/extract_tpl.py"); t=p.read_text().splitlines(); n=len(t[0])-len(t[0].lstrip()); p.write_text("\n".join(line[n:] for line in t)+"\n")'
+          sudo /usr/bin/python3 "$RUNNER_TEMP/extract_tpl.py" "$RUNNER_TEMP/tpl.tar"
+          sudo mv /spack-generated.cmake /opt/GEOS/spack-generated.cmake
+          sudo chown -R "$(id -un)" /opt/GEOS
+        } >"$log" 2>&1
+        status=$?
+        set -e
+        if [[ "$status" -ne 0 ]]; then
+          tail -n 40 "$log" | while IFS= read -r line; do
+            echo "::error title=Load TPL image::$line"
+          done
+          exit "$status"
+        fi
     - name: Build GEOS
       run: |
         set -euo pipefail

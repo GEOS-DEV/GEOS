@@ -375,6 +375,9 @@ jobs:
         EXIT_STATUS=$?
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
+        if [[ "$EXIT_STATUS" -ne 0 ]]; then
+          echo "::error title=Build failed::docker run exited ${EXIT_STATUS}"
+        fi
 
         echo "exit_status=${EXIT_STATUS}" >> "${GITHUB_OUTPUT}"
         echo "data_basename=${DATA_BASENAME}" >> "${GITHUB_OUTPUT}"
