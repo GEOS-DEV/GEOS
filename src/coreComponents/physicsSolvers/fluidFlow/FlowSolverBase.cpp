@@ -114,6 +114,31 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
 }
 
 template< typename POROUSWRAPPER_TYPE >
+void updatePorosityAndPermeabilityFromPressureApertureAndNormal( POROUSWRAPPER_TYPE porousWrapper,
+                                                           SurfaceElementSubRegion & subRegion,
+                                                           arrayView1d< real64 const > const & pressure,
+                                                           arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                           arrayView1d< real64 const > const & newHydraulicAperture,
+                                                           arrayView2d< real64 const > const & normalVector)
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    array1d < real64 > normal(3);
+    normal[0] = normalVector[k][0];
+    normal[1] = normalVector[k][1];
+    normal[2] = normalVector[k][2];
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+       porousWrapper.updateStateFromPressureApertureAndNormal( k, q,
+                                                               pressure[k],
+                                                               oldHydraulicAperture[k],
+                                                               newHydraulicAperture[k],
+                                                               normal );
+    }
+  } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureApertureJumpAndTraction( POROUSWRAPPER_TYPE porousWrapper,
                                                                        SurfaceElementSubRegion & subRegion,
                                                                        arrayView1d< real64 const > const & pressure,
@@ -677,6 +702,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
+  arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hp
 
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< flow::aperture0 >();
@@ -707,12 +733,14 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
       }
       else
       {
-        updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+        // updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+        updatePorosityAndPermeabilityFromPressureApertureAndNormal( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, normalVector );
       }
     }
     else
     {
-      updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+      // updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+      updatePorosityAndPermeabilityFromPressureApertureAndNormal( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, normalVector );
     }
 
   } );
