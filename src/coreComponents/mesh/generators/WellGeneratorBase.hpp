@@ -306,7 +306,6 @@ protected:
 
   /// @cond DO_NOT_DOCUMENT
   void logInternalWell() const;
-  void logPerforationTable() const;
   /// @endcond
 
   /// Global number of perforations

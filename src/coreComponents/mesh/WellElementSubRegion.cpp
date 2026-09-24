@@ -399,7 +399,7 @@ bool searchLocalElements( MeshLevel const & mesh,
 {
   ElementRegionBase const & region = mesh.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
 
-  bool resElemFound = false;
+  bool localResElemFound = false;
   for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
   {
     ElementSubRegionBase const & subRegionBase = region.getSubRegion( esr );
@@ -446,7 +446,7 @@ bool searchLocalElements( MeshLevel const & mesh,
         // stop if a reservoir element containing the perforation is found
         // if not, enlarge the set "nodes"
 
-        resElemFound =
+        localResElemFound =
           visitNeighborElements< TYPEOFREF( subRegion ) >( mesh,
                                                            location,
                                                            nodes,
@@ -457,9 +457,9 @@ bool searchLocalElements( MeshLevel const & mesh,
                                                            giMatched,
                                                            geomTol );
 
-        if( resElemFound || nNodes == nodes.size())
+        if( localResElemFound || nNodes == nodes.size())
         {
-          if( resElemFound )
+          if( localResElemFound )
           {
             esrMatched = esr;
             GEOS_LOG( GEOS_FMT( "    found {}/{}/{}", region.getName(), subRegion.getName(), giMatched ) );
@@ -469,13 +469,13 @@ bool searchLocalElements( MeshLevel const & mesh,
       }
     } );
 
-    if( resElemFound )
+    if( localResElemFound )
     {
       break;
     }
   }
 
-  return resElemFound;
+  return localResElemFound;
 }
 
 }
@@ -609,10 +609,10 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
       localIndex esrMatched = -1;
       localIndex eiMatched  = -1;
       globalIndex giMatched = -1;
-      integer const resElemFound = searchLocalElements( mesh, location, m_searchDepth, er, esrMatched, eiMatched, giMatched, geomTol );
+      integer const localResElemFound = searchLocalElements( mesh, location, m_searchDepth, er, esrMatched, eiMatched, giMatched, geomTol );
 
       // if the element was found
-      if( resElemFound )
+      if( localResElemFound )
       {
         // the well element is in the reservoir element (erMatched,esrMatched,eiMatched), so tag it as local
         localElems.insert( currGlobal );
@@ -620,7 +620,7 @@ void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
       }
 
       // if one rank has found the element, all ranks exit the search
-      if( MpiWrapper::allReduce( resElemFound, MpiWrapper::Reduction::LogicalOr ))
+      if( MpiWrapper::allReduce( localResElemFound, MpiWrapper::Reduction::LogicalOr ))
         break;
     }
   }
@@ -899,6 +899,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
   string_array const & perfName = lineBlock.getPerfName();
   string_array const & perfStatusTableName = lineBlock.getPerfStatusTableName();
   m_perforationData.resize( perfCoordsGlobal.size( 0 ) );
+  m_perforationData.isReservoirElementFound().resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
 
   arrayView2d< real64 > const perfLocation = m_perforationData.getLocation();
@@ -919,10 +920,10 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
 
     localIndex erStart = -1, erEnd = -1;
 
-    localIndex const targetRegionIndex = elemManager.getRegions().getIndex( perfTargetRegionGlobal[iperfGlobal] );
-    if( targetRegionIndex >= 0 )
+    localIndex const knownTargetRegionIndex = elemManager.getRegions().getIndex( perfTargetRegionGlobal[iperfGlobal] );
+    if( knownTargetRegionIndex >= 0 )
     {
-      erStart = targetRegionIndex;
+      erStart = knownTargetRegionIndex;
       erEnd = erStart + 1;
     }
     else // default is all regions
@@ -931,44 +932,45 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
       erEnd = elemManager.numRegions();
     }
 
+    m_perforationData.isReservoirElementFound()[iperfLocal] =  false;
     // for each perforation, we have to find the reservoir element that contains the perforation
-    for( localIndex er = erStart; er < erEnd; er++ )
+    for( localIndex targetRegionIndex = erStart; targetRegionIndex < erEnd; targetRegionIndex++ )
     {
       // search for the reservoir element that contains the well element
       localIndex esrMatched = -1;
       localIndex eiMatched  = -1;
       globalIndex giMatched  = -1;
-      integer resElemFound = searchLocalElements( mesh,
-                                                  location,
-                                                  m_searchDepth,
-                                                  er,
-                                                  esrMatched,
-                                                  eiMatched,
-                                                  giMatched,
-                                                  geomTol );
+      integer localResElemFound = searchLocalElements( mesh,
+                                                       location,
+                                                       m_searchDepth,
+                                                       targetRegionIndex,
+                                                       esrMatched,
+                                                       eiMatched,
+                                                       giMatched,
+                                                       geomTol );
 
       // Multiple ranks can match the element of the well perforation occurs at the interface of 2 or multiple
       // cells (face, edge or even vertex). We will arbitrarily assign the perforation to the process with the
       // lowest global id
-      integer const matchedRanks = MpiWrapper::sum( resElemFound ? 1 : 0 );
+      integer const matchedRanks = MpiWrapper::sum( localResElemFound ? 1 : 0 );
       if( 1 < matchedRanks )
       {
         // Reduction for pairs (globalIndex, int) seems unsupported. We will cast the rank to globalIndex
-        globalIndex const rank = resElemFound ? static_cast< globalIndex >(MpiWrapper::commRank()) : LvArray::NumericLimits< globalIndex >::max;
-        MpiWrapper::PairType< globalIndex, globalIndex > match = { resElemFound ? giMatched : rank, rank };
+        globalIndex const rank = localResElemFound ? static_cast< globalIndex >(MpiWrapper::commRank()) : LvArray::NumericLimits< globalIndex >::max;
+        MpiWrapper::PairType< globalIndex, globalIndex > match = { localResElemFound ? giMatched : rank, rank };
         match = MpiWrapper::min( match );
         // If this process does not have the lowest Id we will say it hasn't found the element
         if( match.first != giMatched || match.second != rank )
         {
-          resElemFound = 0;
+          localResElemFound = 0;
         }
       }
 
       // if the element was found
-      if( resElemFound )
+      if( localResElemFound )
       {
         // set the indices for the matched reservoir element
-        m_perforationData.getMeshElements().m_toElementRegion[iperfLocal] = er;
+        m_perforationData.getMeshElements().m_toElementRegion[iperfLocal] = targetRegionIndex;
         m_perforationData.getMeshElements().m_toElementSubRegion[iperfLocal] = esrMatched;
         m_perforationData.getMeshElements().m_toElementIndex[iperfLocal] = eiMatched;
         m_perforationData.getReservoirElementGlobalIndex()[iperfLocal] = giMatched;
@@ -984,6 +986,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
 
         // increment the local to global map
         m_perforationData.localToGlobalMap()[iperfLocal++] = iperfGlobal;
+
       }
 
       // if one rank has found the element, all ranks exit the search

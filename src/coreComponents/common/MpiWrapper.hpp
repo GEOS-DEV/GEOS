@@ -332,6 +332,53 @@ public:
   static int nodeCommSize();
 
   /**
+   * @brief Structure holding the result from all the gather operation
+   * @tparam CONTAINER The container type holding the data.
+   * The underlying storage in CONTAINER must be contiguous
+   */
+  template< typename CONTAINER >
+  struct GatherResult
+  {
+    // Collected data which must be trivially copyable
+    CONTAINER data;
+    // Number of elements per rank
+    stdVector< integer > counts;
+    // Starting index for each rank in 'data'
+    stdVector< integer > offsets;
+  };
+
+  /**
+   * @brief Gather buffers of varying sizes from all ranks to rank 0.
+   * @tparam CONTAINER The container type holding the data.
+   * @tparam VALUE_T The trivially copyable underlying data type (deduced automatically).
+   * @param localBuffer The local buffer to be gathered on rank 0.
+   * @return A struct containing:
+   * - 'data': all the gathered data on rank 0
+   * - 'counts': number of elements for each rank
+   * - 'offsets': starting index for each rank in 'data'
+   */
+  template<
+    typename CONTAINER,
+    typename VALUE_T = typename CONTAINER::value_type,
+    typename = std::enable_if_t<
+      std::is_trivially_copyable_v< VALUE_T > &&
+      std::is_same_v< decltype(std::declval< CONTAINER >().data()), VALUE_T * > &&
+      std::is_same_v< decltype(std::declval< CONTAINER >().size()), std::size_t >
+      >
+    >
+  static GatherResult< CONTAINER >
+  gatherBufferRank0( CONTAINER const & localBuffer );
+
+  /**
+   * @brief Gather srting from all ranks to rank 0
+   * @tparam FUNC Callable type invoked as void(string_view) for each non-empty rank string.
+   * @param str The local string to send from the calling rank.
+   * @param func Callback invoked on rank 0 for each non-empty received string.
+   */
+  static void gatherStringOnRank0( string_view str,
+                                   std::function< void(string_view) > && func );
+
+  /**
    * @brief Strongly typed wrapper around MPI_Allgather.
    * @tparam T_SEND The pointer type for \p sendbuf
    * @tparam T_RECV The pointer type for \p recvbuf
@@ -976,6 +1023,45 @@ inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
       GEOS_ERROR( "Unsupported reduction operation" );
       return MPI_NO_OP;
   }
+}
+
+template< typename CONTAINER, typename VALUE_T, typename >
+MpiWrapper::GatherResult< CONTAINER >
+MpiWrapper::gatherBufferRank0( CONTAINER const & localBuffer )
+{
+  integer const numRanks = MpiWrapper::commSize();
+  integer const numLocalValues  = static_cast< integer >(localBuffer.size());
+
+  GatherResult< CONTAINER > gatherResult;
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    gatherResult.counts.resize( numRanks );
+    gatherResult.offsets.resize( numRanks );
+  }
+
+
+  MpiWrapper::gather( &numLocalValues, 1, gatherResult.counts.data(), 1, 0 );
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    integer totalSize = 0;
+    for( integer i = 0; i < numRanks; ++i )
+    {
+      gatherResult.offsets[i] = totalSize;
+      totalSize += gatherResult.counts[i];
+    }
+    gatherResult.data.resize( totalSize );
+  }
+
+  MpiWrapper::gatherv( localBuffer.data(),
+                       numLocalValues,
+                       gatherResult.data.data(),
+                       gatherResult.counts.data(),
+                       gatherResult.offsets.data(),
+                       0 );
+
+  return gatherResult;
 }
 
 template< typename T_SEND, typename T_RECV >
