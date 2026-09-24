@@ -497,19 +497,18 @@ jobs:
         submodules: true
         lfs: false
         fetch-depth: 1
-    - name: Load macOS TPL image
+    - name: Load TPL image
       env:
         DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       run: |
         set -euo pipefail
+        curl -fsSL -o "$RUNNER_TEMP/crane.tgz" \
+          https://github.com/google/go-containerregistry/releases/download/v0.20.6/go-containerregistry_Darwin_arm64.tar.gz
+        tar -xzf "$RUNNER_TEMP/crane.tgz" -C "$RUNNER_TEMP" crane
         image="geosx/macos-26-apple-clang:${DOCKER_IMAGE_TAG}"
-        docker pull "$image"
-        container=$(docker create "$image")
-        sudo mkdir -p /opt/GEOS
-        sudo chown "$(id -un)" /opt/GEOS
-        docker cp "$container":/opt/GEOS/. /opt/GEOS/
-        docker cp "$container":/spack-generated.cmake /opt/GEOS/spack-generated.cmake
-        docker rm "$container"
+        "$RUNNER_TEMP/crane" export "$image" - | sudo tar -C / -xf -
+        sudo mv /spack-generated.cmake /opt/GEOS/spack-generated.cmake
+        sudo chown -R "$(id -un)" /opt/GEOS
     - name: Build GEOS
       run: |
         set -euo pipefail
