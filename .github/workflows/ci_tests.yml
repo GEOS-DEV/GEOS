@@ -506,7 +506,29 @@ jobs:
           https://github.com/google/go-containerregistry/releases/download/v0.20.6/go-containerregistry_Darwin_arm64.tar.gz
         tar -xzf "$RUNNER_TEMP/crane.tgz" -C "$RUNNER_TEMP" crane
         image="geosx/macos-26-apple-clang:${DOCKER_IMAGE_TAG}"
-        "$RUNNER_TEMP/crane" export "$image" - | sudo tar -C / -xf -
+        "$RUNNER_TEMP/crane" export "$image" "$RUNNER_TEMP/tpl.tar"
+        sed 's/^        //' <<'PY' | sudo python3 - "$RUNNER_TEMP/tpl.tar"
+        import inspect
+        import os
+        import sys
+        import tarfile
+
+        with tarfile.open(sys.argv[1]) as tar:
+            members = tar.getmembers()
+            kwargs = {}
+            if "filter" in inspect.signature(tar.extractall).parameters:
+                kwargs["filter"] = "fully_trusted"
+            tar.extractall("/", members=[member for member in members if not member.islnk()], **kwargs)
+            for member in members:
+                if not member.islnk():
+                    continue
+                destination = os.path.join("/", member.name)
+                source = os.path.join("/", member.linkname)
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                if os.path.lexists(destination):
+                    os.unlink(destination)
+                os.link(source, destination)
+        PY
         sudo mv /spack-generated.cmake /opt/GEOS/spack-generated.cmake
         sudo chown -R "$(id -un)" /opt/GEOS
     - name: Build GEOS
