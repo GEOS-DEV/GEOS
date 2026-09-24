@@ -137,7 +137,7 @@ In production runs, you may want to suppress most console output.
 
 For solvers of the ``SinglePhaseFVM`` family, one required attribute is a discretization scheme.
 Here, we use a Two-Point Flux Approximation (TPFA) finite volume discretization scheme called ``singlePhaseTPFA``.
-To know the list of admissible values of an attribute, please see `GEOS's XML schema <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/CompleteXMLSchema.html#>`_.
+To know the list of admissible values of an attribute, please see `GEOS's XML schema <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/CompleteXMLSchema.html#>`_.
 This discretization type must know how to find permeability values that it uses internally to compute transmissibilities.
 The ``permeabilityNames`` attribute tells the solver the user-defined name (the *handle*)
 of the permeability values that will be defined elsewhere in the input file.

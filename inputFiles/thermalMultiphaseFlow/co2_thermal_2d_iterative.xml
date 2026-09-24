@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./co2_thermal_2d_base.xml"/>
+  </Included>
+
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      temperature="368.15"
+      useMass="1"
+      isThermal="1"
+      initialDt="1e3"
+      targetRelativePressureChangeInTimeStep="1"
+      targetRelativeTemperatureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"      
+      maxCompFractionChange="0.5"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="100"
+        lineSearchAction="None"
+        maxTimeStepCuts="5"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+
+</Problem>

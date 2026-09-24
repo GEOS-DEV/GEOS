@@ -123,7 +123,11 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
   real64 strainInc[6] = {0};
   real64 stress[6] = {0};
 
-  typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
+  // The constitutive update fills the tangent, but it is passed through a
+  // virtual interface that GCC cannot prove initializes every member. Value
+  // initialize it so a conservative diagnostic does not hide a real
+  // uninitialized read.
+  typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness{};
 
   finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 

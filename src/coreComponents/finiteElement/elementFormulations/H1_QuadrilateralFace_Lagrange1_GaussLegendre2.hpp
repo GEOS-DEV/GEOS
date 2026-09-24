@@ -414,6 +414,7 @@ public:
                        ImplType::numQuadraturePoints )
   {}
 
+  GEOS_HOST_DEVICE
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override final = default;
 
   /**

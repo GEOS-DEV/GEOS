@@ -22,7 +22,8 @@ set( fluidFlowSolvers_headers
      FlowSolverBaseFields.hpp
      CompositionalMultiphaseBase.hpp
      CompositionalMultiphaseBaseFields.hpp
-     CompositionalMultiphaseStatistics.hpp
+     CompositionalMultiphaseStatisticsAggregator.hpp
+     CompositionalMultiphaseStatisticsTask.hpp
      CompositionalMultiphaseFVM.hpp
      CompositionalMultiphaseHybridFVM.hpp
      CompositionalMultiphaseUtilities.hpp
@@ -34,7 +35,8 @@ set( fluidFlowSolvers_headers
      SourceFluxStatistics.hpp
      SinglePhaseBase.hpp
      SinglePhaseBaseFields.hpp
-     SinglePhaseStatistics.hpp
+     SinglePhaseStatisticsAggregator.hpp
+     SinglePhaseStatisticsTask.hpp
      SinglePhaseFVM.hpp
      SinglePhaseHybridFVM.hpp
      SinglePhaseProppantBase.hpp
@@ -134,11 +136,20 @@ set( fluidFlowSolvers_headers
      wells/SinglePhaseWellFields.hpp
      wells/WellConstants.hpp
      wells/WellControls.hpp
-     wells/WellSolverBase.hpp
-     wells/WellSolverBaseFields.hpp
+     wells/WellConstraintsBase.hpp
+     wells/WellInjectionConstraint.hpp
+     wells/WellProductionConstraint.hpp
+     wells/WellBHPConstraints.hpp
+     wells/WellVolumeRateConstraint.hpp
+     wells/WellMassRateConstraint.hpp
+     wells/WellPhaseVolumeRateConstraint.hpp
+     wells/WellManager.hpp
+     wells/WellNewtonSolver.hpp
      wells/LogLevelsInfo.hpp
      wells/kernels/SinglePhaseWellKernels.hpp
      wells/kernels/CompositionalMultiphaseWellKernels.hpp
+     wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp
+     wells/kernels/SinglePhaseWellConstraintKernels.hpp
      proppantTransport/ProppantTransport.hpp
      proppantTransport/ProppantTransportFields.hpp
      proppantTransport/ProppantTransportKernels.hpp )
@@ -147,13 +158,15 @@ set( fluidFlowSolvers_headers
 set( fluidFlowSolvers_sources
      CompositionalMultiphaseBase.cpp
      CompositionalMultiphaseFVM.cpp
-     CompositionalMultiphaseStatistics.cpp
+     CompositionalMultiphaseStatisticsAggregator.cpp
+     CompositionalMultiphaseStatisticsTask.cpp
      CompositionalMultiphaseHybridFVM.cpp
      ImmiscibleMultiphaseFlow.cpp
      ReactiveCompositionalMultiphaseOBL.cpp
      FlowSolverBase.cpp
      SinglePhaseBase.cpp
-     SinglePhaseStatistics.cpp
+     SinglePhaseStatisticsAggregator.cpp
+     SinglePhaseStatisticsTask.cpp
      SinglePhaseFVM.cpp
      SinglePhaseHybridFVM.cpp
      SinglePhaseProppantBase.cpp
@@ -172,7 +185,15 @@ set( fluidFlowSolvers_sources
      wells/SinglePhaseWell.cpp
      wells/kernels/SinglePhaseWellKernels.cpp
      wells/WellControls.cpp
-     wells/WellSolverBase.cpp
+     wells/WellConstraintsBase.cpp
+     wells/WellInjectionConstraint.cpp
+     wells/WellProductionConstraint.cpp
+     wells/WellBHPConstraints.cpp
+     wells/WellVolumeRateConstraint.cpp
+     wells/WellMassRateConstraint.cpp
+     wells/WellPhaseVolumeRateConstraint.cpp
+     wells/WellManager.cpp
+     wells/WellNewtonSolver.cpp
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
@@ -213,6 +234,24 @@ blt_add_library( NAME       fluidFlowSolvers
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
+
+if( ENABLE_CUDA AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64" )
+  # The CUDA instantiations in this library can exceed the x86-64 small code
+  # model. Use the large host code model so nvcc-generated host stubs can
+  # address the complete shared library without truncated PC-relative
+  # relocations at link time.
+  target_compile_options( fluidFlowSolvers PRIVATE
+                          $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-mcmodel=large>
+                          $<$<COMPILE_LANGUAGE:CXX>:-mcmodel=large> )
+  if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+    # Clang's large code model emits uniquely named .ltext.* sections. GNU ld
+    # has no .ltext linker-script rule, so each name becomes an output section
+    # and overflows the 16-bit ELF section index (SHN_LORESERVE == 65280).
+    target_compile_options( fluidFlowSolvers PRIVATE
+                            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fno-unique-section-names>
+                            $<$<COMPILE_LANGUAGE:CXX>:-fno-unique-section-names> )
+  endif()
+endif()
 
 target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

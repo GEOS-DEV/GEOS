@@ -12,7 +12,21 @@ set( parallel_tests
 
 set( nranks 2 )
 
+# A single visible HIP device cannot safely service multiple HYPRE MPI ranks:
+# HYPRE's ROCm device-side radix sort reports hipErrorIllegalState when ranks
+# share the device during matrix assembly. Keep these unit tests runnable on
+# the one-GPU HIP configuration while retaining the two-rank CPU coverage.
+if( ENABLE_HIP )
+  set( nranks 1 )
+endif()
+
 set( dependencyList gtest linearAlgebra ${parallelDeps} )
+# MPI is intentionally consumed through linearAlgebra's public interface.
+# Adding the legacy BLT `mpi` target here independently can cause CMake to
+# split libmpicxx and libmpi across the transitive link line.
+if( ENABLE_MPI )
+  list( REMOVE_ITEM dependencyList mpi )
+endif()
 
 foreach(test ${serial_tests})
   get_filename_component( test_name ${test} NAME_WE )

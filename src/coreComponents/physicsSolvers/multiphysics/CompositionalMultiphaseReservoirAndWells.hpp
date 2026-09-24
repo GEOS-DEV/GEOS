@@ -23,20 +23,25 @@
 
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellsBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellManager.hpp"
 
 namespace geos
 {
 
+namespace compositionalMultiphaseStatistics
+{
+class StatsAggregator;
+}
+
 /// @tparam RESERVOIR_SOLVER compositional flow or compositional poromechanics solver
 template< typename RESERVOIR_SOLVER = CompositionalMultiphaseBase >
 class CompositionalMultiphaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                                                                      CompositionalMultiphaseWell >
+                                                                                      WellManager >
 {
 public:
 
   using Base = CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                             CompositionalMultiphaseWell >;
+                                             WellManager >;
   using Base::getLogLevel;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
@@ -98,7 +103,8 @@ public:
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper );
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                              stdMap< string, localIndex > const * const dR_dAperOffsets );
 
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,

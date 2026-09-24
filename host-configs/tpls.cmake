@@ -53,8 +53,7 @@ if(EXISTS ${GEOS_TPL_DIR}/vtk)
 endif()
 
 if(EXISTS ${GEOS_TPL_DIR}/fmt)
-#  set(FMT_DIR ${GEOS_TPL_DIR}/fmt CACHE PATH "" FORCE)
-  set(FMT_DIR ${GEOS_TPL_DIR}/chai CACHE PATH "" FORCE)
+  set(FMT_DIR ${GEOS_TPL_DIR}/fmt CACHE PATH "" FORCE)
 endif()
 
 #
@@ -82,6 +81,11 @@ endif()
 
 if(EXISTS ${GEOS_TPL_DIR}/hypre)
   set(HYPRE_DIR ${GEOS_TPL_DIR}/hypre CACHE PATH "" FORCE)
+endif()
+
+if(EXISTS ${GEOS_TPL_DIR}/hypredrive)
+  set(HYPREDRV_DIR ${GEOS_TPL_DIR}/hypredrive CACHE PATH "" FORCE)
+  set(ENABLE_HYPREDRV ON CACHE BOOL "" FORCE)
 endif()
 
 if(EXISTS ${GEOS_TPL_DIR}/scotch)

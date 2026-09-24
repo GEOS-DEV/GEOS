@@ -36,6 +36,11 @@ struct WellConstants
   static constexpr real64 defaultInjectorBHP = 1.01325e8;
 };
 
+enum class WellTypes : integer
+{
+  PRODUCER,    /**< A production well */
+  INJECTOR     /**< An injection well */
+};
 } //namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTANTS_HPP
