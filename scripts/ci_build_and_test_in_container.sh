@@ -3,13 +3,6 @@ set -o pipefail
 
 export PYTHONDONTWRITEBYTECODE=1
 
-# Current TPL images export GEOS_TPL_DIR. Images built before that export
-# GEOSX_TPL_DIR, which the pinned tag still provides.
-if [[ -z "${GEOS_TPL_DIR:-}" && -n "${GEOSX_TPL_DIR:-}" ]]; then
-  GEOS_TPL_DIR=${GEOSX_TPL_DIR}
-fi
-export GEOS_TPL_DIR
-
 SCRIPT_NAME=$0
 echo "Running CLI ${SCRIPT_NAME} $@"
 
