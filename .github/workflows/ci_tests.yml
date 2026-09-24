@@ -523,7 +523,12 @@ jobs:
             kwargs = {}
             if "filter" in inspect.signature(tar.extractall).parameters:
                 kwargs["filter"] = "fully_trusted"
-            tar.extractall("/", members=[member for member in members if not member.islnk()], **kwargs)
+            files = [member for member in members if not member.islnk() and member.name not in (".", "./")]
+            try:
+                tar.extractall("/", members=files, **kwargs)
+            except OSError as exc:
+                sys.stderr.write("EXTRACT_ERROR %s: %s\n" % (type(exc).__name__, exc))
+                sys.exit(1)
             for member in members:
                 if not member.islnk():
                     continue
