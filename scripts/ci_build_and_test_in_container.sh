@@ -3,6 +3,13 @@ set -o pipefail
 
 export PYTHONDONTWRITEBYTECODE=1
 
+# Current TPL images export GEOS_TPL_DIR. Images built before that export
+# GEOSX_TPL_DIR, which the pinned tag still provides.
+if [[ -z "${GEOS_TPL_DIR:-}" && -n "${GEOSX_TPL_DIR:-}" ]]; then
+  GEOS_TPL_DIR=${GEOSX_TPL_DIR}
+fi
+export GEOS_TPL_DIR
+
 SCRIPT_NAME=$0
 echo "Running CLI ${SCRIPT_NAME} $@"
 
@@ -344,7 +351,7 @@ do
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)           HOST_CONFIG=$2;             shift 2;;
-    --install-dir-basename)  GEOS_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
+    --install-dir-basename)  GEOS_DIR=${GEOS_TPL_DIR}/../$2; shift 2;;
     --makefile)              BUILD_GENERATOR="";         shift;;
     --no-install-schema)     GEOS_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
@@ -416,7 +423,7 @@ print_crypto_diagnostics
 # Always pass the requested state so a host-config cannot silently enable
 # hypredrive when the CI job requested OFF. Do not pass -DHYPREDRV_DIR:
 # TPL images install hypredrive under a compiler-prefixed hashed path, which
-# /spack-generated.cmake already sets. ${GEOSX_TPL_DIR}/hypredrive does not
+# /spack-generated.cmake already sets. ${GEOS_TPL_DIR}/hypredrive does not
 # exist and would override that host-config value (CMake -D wins over -C
 # set(... CACHE ...) without FORCE).
 HYPREDRV_CMAKE_ARGS=(-DENABLE_HYPREDRV=${ENABLE_HYPREDRV})
@@ -646,8 +653,6 @@ else
     echo "DATA_EXCHANGE_DIR=${DATA_EXCHANGE_DIR}"
     echo "DATA_BASENAME_WE=${DATA_BASENAME_WE}"
     echo "GEOS_TPL_DIR=${GEOS_TPL_DIR}"
-    echo "GEOSX_TPL_DIR=${GEOSX_TPL_DIR}"
-    GEOS_TPL_DIR=${GEOSX_TPL_DIR}
     echo tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
     or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi
