@@ -216,6 +216,11 @@ For now, loaded regions has the following limitations:
 - The ``regionAttribute`` can only refer to integer values (no texts),
 - Each element can belong to only one region.
 
+``VTKMesh`` redistribution (``partitionRefinement``, default 1) preserves cell,
+point, and field array metadata on every rank, including empty ranks and
+non-numeric VTK arrays such as string labels. GEOS still imports only numeric
+properties (float/double); ``regionAttribute`` values remain integers.
+
 .. figure:: mesh_multi.png
    :align: center
    :width: 500
