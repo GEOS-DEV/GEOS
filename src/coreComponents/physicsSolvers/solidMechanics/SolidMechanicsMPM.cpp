@@ -19,6 +19,9 @@
 
 #include "SolidMechanicsMPM.hpp"
 #include "kernels/MPMBoundaryMortar.hpp"
+#include "kernels/MPMBoundaryMortarQR.hpp"
+#include "kernels/MPMBoundaryMortarComponents.hpp"
+#include "kernels/MPMMortarSearch.hpp"
 #include <iterator>
 
 #if defined( GEOS_USE_HIP )
@@ -79,6 +82,18 @@ using namespace constitutive;
 
 namespace
 {
+
+// Thin adapter: the component scheduler has no GEOS dependency and is tested
+// separately with MPI or emulated collectives. All calls use MPI_COMM_GEOS.
+struct BoundaryMortarCommunicator
+{
+  int rank() const { return MpiWrapper::commRank( MPI_COMM_GEOS ); }
+  int size() const { return MpiWrapper::commSize( MPI_COMM_GEOS ); }
+  int allMinimum( int value ) const
+  { return MpiWrapper::allReduce( value, MpiWrapper::Reduction::Min, MPI_COMM_GEOS ); }
+  template< class T > void broadcast( T * values, int count, int root ) const
+  { MpiWrapper::bcast( values, count, root, MPI_COMM_GEOS ); }
+};
 
 constexpr real64 explicitSurfaceNormalTolerance = 1.0e-12;
 constexpr real64 explicitSurfaceNormalNormSquaredTolerance =
@@ -2435,6 +2450,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_weakInterfaceTraceAbsoluteTolerance( 1.0e-12 ),
   m_weakInterfaceTraceQRRankTolerance( 1.0e-12 ),
   m_weakInterfaceTraceQRMaxEntries( 16000000 ),
+  m_weakInterfaceTraceQRBackend( "auto" ),
+  m_weakInterfaceTraceComponentRanks( 3 ),
+  m_weakInterfaceTraceFastMarkerSearch( 1 ),
+  m_weakInterfaceTracePerformanceLog( 0 ),
   m_weakInterfaceTracePairs(),
   m_weakInterfaceTraceProjectionIterations( 30 ),
   m_weakInterfaceTraceProjectionScale( 0.6 ),
@@ -3817,6 +3836,19 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 16000000 ).
     setDescription( "Maximum double entries in the dense rectangular QR factor; fail rather than silently use unconverged sweeps." );
 
+  registerWrapper( "weakInterfaceTraceQRBackend", &m_weakInterfaceTraceQRBackend ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( string( "auto" ) ).
+    setDescription( "Boundary mortar QR: auto (LAPACK when built, otherwise native), reference, native, or lapack. All retain the same residual checks." );
+  registerWrapper( "weakInterfaceTraceComponentRanks", &m_weakInterfaceTraceComponentRanks ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 3 ).
+    setDescription( "Maximum workers for independent boundary mortar component solves (1..3). Actual workers=min(value,dimensions,MPI ranks). Each component remains a complete solve." );
+  registerWrapper( "weakInterfaceTraceFastMarkerSearch", &m_weakInterfaceTraceFastMarkerSearch ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 1 ).
+    setDescription( "Deduplicate search-bin keys and bypass redundant marker sorting in boundary-coupled surface fitting; zero restores the legacy gather/sort." );
+  registerWrapper( "weakInterfaceTracePerformanceLog", &m_weakInterfaceTracePerformanceLog ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 0 ).
+    setDescription( "Log rank-max wall timings and candidate counts for boundary mortar. Enable MPMSubroutines logging as well. No numerical decisions depend on timing." );
+
   registerWrapper( "weakInterfaceTraceLinearSolverRegularization", &m_weakInterfaceTraceLinearSolverRegularization ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceLinearSolverRegularization ).
@@ -4200,6 +4232,13 @@ void SolidMechanicsMPM::postInputInitialization()
                  "weakInterfaceTraceBoundaryCoupling must be zero or one." );
   if( m_weakInterfaceTraceBoundaryCoupling == 1 )
   {
+    GEOS_ERROR_IF( m_weakInterfaceTraceComponentRanks < 1 || m_weakInterfaceTraceComponentRanks > 3,
+                   "weakInterfaceTraceComponentRanks must be between one and three." );
+    GEOS_ERROR_IF( (m_weakInterfaceTraceFastMarkerSearch != 0 && m_weakInterfaceTraceFastMarkerSearch != 1) ||
+                   (m_weakInterfaceTracePerformanceLog != 0 && m_weakInterfaceTracePerformanceLog != 1),
+                   "Boundary mortar search/timing switches must be zero or one." );
+    try { mpm::boundaryMortar::selectQRBackend( m_weakInterfaceTraceQRBackend ); }
+    catch( std::exception const & e ) { GEOS_ERROR( e.what() ); }
     GEOS_ERROR_IF( m_rigidBodyMode != 0, "Boundary-compatible mortar is not available in RigidBodyMPM." );
     GEOS_ERROR_IF( m_enableWeakInterfaceTraceProjection != 1 || m_weakInterfaceTraceSuppressNodalContact != 1,
                    "Boundary-compatible mortar requires trace projection and suppression of redundant nodal contact." );
@@ -25017,6 +25056,16 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   zeroWeakInterfaceTraceProjectionFields( nodeManager );
   m_weakInterfaceBoundaryTouched.resize( 0, 0 );
   bool const boundaryCoupled = m_weakInterfaceTraceBoundaryCoupling == 1;
+  using MortarClock = std::chrono::steady_clock;
+  bool const timeMortar = boundaryCoupled && m_weakInterfaceTracePerformanceLog != 0;
+  bool const fastMarkerSearch = boundaryCoupled && m_weakInterfaceTraceFastMarkerSearch != 0;
+  auto const mortarNow = [&]() { return timeMortar ? MortarClock::now() : MortarClock::time_point{}; };
+  auto const elapsed = []( MortarClock::time_point const start, MortarClock::time_point const end )
+  { return std::chrono::duration< double >( end-start ).count(); };
+  auto const projectionStart = mortarNow();
+  double fittingSeconds = 0.0;
+  real64 markerCandidatesVisited = 0.0, maximumMarkerCandidates = 0.0;
+
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
   int const numDims = m_numDims;
@@ -25889,6 +25938,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       static_cast< std::size_t >( numNodesX * numNodesY * numNodesZ ) );
     std::vector< std::pair< real64, localIndex > > distances;
     std::vector< localIndex > nearbyMarkers;
+    auto const fittingStart = mortarNow();
     for( localIndex k = 0; k < numNodesZ; ++k )
     {
       localIndex const gridK = m_planeStrain == 1 ? planeNodeK : k;
@@ -25903,6 +25953,8 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
           }};
           distances.clear();
           nearbyMarkers.clear();
+          std::array< WeakInterfaceMortarNodeKey, 27 > neighborBins{};
+          std::size_t numberOfNeighborBins = 0;
           WeakInterfaceMortarNodeKey const baseBin = markerBinKeyFromPoint( x );
           for( int dk = numDims > 2 ? -1 : 0; dk <= ( numDims > 2 ? 1 : 0 ); ++dk )
           {
@@ -25937,20 +25989,29 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                 {
                   continue;
                 }
-                auto const bin = markerBins.find(
-                  WeakInterfaceMortarNodeKey{ ii, jj, kk } );
-                if( bin != markerBins.end() )
+                WeakInterfaceMortarNodeKey const binKey{ ii, jj, kk };
+                if( fastMarkerSearch ) neighborBins[numberOfNeighborBins++] = binKey;
+                else
                 {
-                  nearbyMarkers.insert( nearbyMarkers.end(),
-                                        bin->second.begin(), bin->second.end() );
+                  auto const bin = markerBins.find( binKey );
+                  if( bin != markerBins.end() )
+                    nearbyMarkers.insert( nearbyMarkers.end(), bin->second.begin(), bin->second.end() );
                 }
               }
             }
           }
-          std::sort( nearbyMarkers.begin(), nearbyMarkers.end() );
-          nearbyMarkers.erase(
-            std::unique( nearbyMarkers.begin(), nearbyMarkers.end() ),
-            nearbyMarkers.end() );
+          if( fastMarkerSearch )
+            mpm::mortarSearch::gatherSortedMarkers( neighborBins, numberOfNeighborBins, markerBins, nearbyMarkers );
+          else
+          {
+            std::sort( nearbyMarkers.begin(), nearbyMarkers.end() );
+            nearbyMarkers.erase( std::unique( nearbyMarkers.begin(), nearbyMarkers.end() ), nearbyMarkers.end() );
+          }
+          if( timeMortar )
+          {
+            markerCandidatesVisited += static_cast< real64 >( nearbyMarkers.size() );
+            maximumMarkerCandidates = std::max( maximumMarkerCandidates, static_cast< real64 >( nearbyMarkers.size() ) );
+          }
           distances.reserve( nearbyMarkers.size() );
           for( localIndex const markerIndex : nearbyMarkers )
           {
@@ -26075,6 +26136,8 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         }
       }
     }
+
+    if( timeMortar ) fittingSeconds += elapsed( fittingStart, mortarNow() );
 
     auto localCellKey = [&]( std::array< std::array< real64, 3 >, 8 > const & points,
                              int const numberOfCorners )
@@ -27777,6 +27840,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                    "a coupled active-set/constitutive interface solve is required for that case." );
   }
 
+  auto const nodalGatherStart = mortarNow();
   std::vector< WeakInterfaceMortarNodeFieldRecord > localNodeFieldRecords;
   for( localIndex node = 0; node < nodeManager.size(); ++node )
   {
@@ -27903,10 +27967,11 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
 
   if( boundaryCoupled )
   {
-    // The legacy essential-BC update has already supplied the inhomogeneous
-    // endpoint state. Solve only compatible corrections, with every reflected
-    // donor AND buffer mass included. The dense reference solve runs on rank 0;
-    // all ranks receive the same canonical-key result, including empty ranks.
+    auto const commonSetupStart = mortarNow();
+    // The legacy essential-BC update supplied the inhomogeneous endpoint state.
+    // Solve compatible corrections with every donor AND buffer mass included.
+    // Geometry/masses are gathered as before; only the independent component
+    // computations are scheduled across workers. No per-interface split yet.
     std::vector< bm::LatticeKey > keys;
     keys.reserve( interfaceNodeKeys.size() );
     for( auto const & key : interfaceNodeKeys ) keys.push_back( toBoundaryKey( key ) );
@@ -27959,6 +28024,9 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     options.maximumMatrixEntries = static_cast< std::size_t >( m_weakInterfaceTraceQRMaxEntries );
     options.minimumRetainedFraction = minRetainedSupportFraction;
     options.supportFallback = fallbackToSingleField;
+    options.measureTimings = timeMortar;
+    bm::QRBackend const qrBackend = bm::selectQRBackend( m_weakInterfaceTraceQRBackend );
+    bm::MinimumNormSolver const qrSolve = bm::minimumNormSolver( qrBackend );
 
     // Scratch expectations are not restart data; they only audit this step's
     // owner-to-ghost synchronization and detect a later kinematic overwrite.
@@ -27974,59 +28042,50 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                    rows.size() > static_cast< std::size_t >( std::numeric_limits< int >::max() ),
                    "Boundary mortar broadcast exceeds the MPI count limit." );
 
-    for( int component = 0; component < numDims; ++component )
+    auto const solveStart = mortarNow();
+    std::array< bm::Result, 3 > componentResults;
+    try
     {
-      bm::Result result;
-      int success = 1;
-      std::string error;
-      if( rank == 0 )
-      {
-        try
+      componentResults = bm::solveComponents( BoundaryMortarCommunicator{}, numDims,
+        m_weakInterfaceTraceComponentRanks, flatSize, rows.size(), [&]( int component )
         {
-          std::vector< double > trial( flatSize, 0.0 );
+          std::vector< double > trial( flatSize );
           for( std::size_t flat = 0; flat < flatSize; ++flat ) trial[flat] = interfaceVelocity[flat][component];
           auto const relations = bm::makeBoundaryRelations( keys, numVelocityFields, component, boundaryFaces );
-          result = bm::project( mass, trial, cutoff, relations, fallback, rows, options );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
-            "C0 boundary-compatible QR component=" << component <<
-            ", time=" << m_currentMomentumLogTime + dt <<
-            ", cycle=" << m_currentMomentumLogCycle <<
-            ", candidates/accepted=" << rows.size() << "/" << rows.size() - result.rejectedRows <<
-            ", rank/free-columns=" << result.rank << "/" << result.unknowns <<
-            ", smallest-relative-pivot=" << result.smallestRelativePivot <<
-            ", relative residual=" << result.relativeResidual <<
-            ", max average jump=" << result.maximumJump <<
-            ", boundary residual=" << result.boundaryResidual <<
-            ", fallback dofs=" << std::count( result.fallbackDof.begin(), result.fallbackDof.end(), 1 ) <<
-            ", boundary+fallback reaction impulse=" <<
-              std::accumulate( result.reactionImpulse.begin(), result.reactionImpulse.end(), 0.0 ) );
-        }
-        catch( std::exception const & exception ) { success = 0; error = exception.what(); }
-      }
-      // Broadcast failure before any result buffers: no rank waits on a solve
-      // that another rank abandoned. The message is identical on every rank.
-      MpiWrapper::bcast( &success, 1, 0, MPI_COMM_GEOS );
-      int messageSize = static_cast< int >( error.size() );
-      MpiWrapper::bcast( &messageSize, 1, 0, MPI_COMM_GEOS );
-      error.resize( messageSize );
-      if( messageSize > 0 ) MpiWrapper::bcast( &error[0], messageSize, 0, MPI_COMM_GEOS );
-      GEOS_ERROR_IF( success == 0, "C0 boundary-compatible projection failed: " << error );
-      if( rank != 0 )
-      {
-        result.velocity.resize( flatSize ); result.reactionImpulse.resize( flatSize );
-        result.preJump.resize( rows.size() ); result.postJump.resize( rows.size() );
-        result.retainedFraction.resize( rows.size() ); result.accepted.resize( rows.size() );
-        result.fallbackDof.resize( flatSize );
-      }
-      auto broadcastDoubles = [&]( std::vector< double > & values )
-      {
-        if( !values.empty() ) MpiWrapper::bcast( values.data(), static_cast< int >( values.size() ), 0, MPI_COMM_GEOS );
-      };
-      broadcastDoubles( result.velocity ); broadcastDoubles( result.reactionImpulse );
-      broadcastDoubles( result.preJump ); broadcastDoubles( result.postJump );
-      broadcastDoubles( result.retainedFraction );
-      if( !result.accepted.empty() ) MpiWrapper::bcast( result.accepted.data(), static_cast< int >( rows.size() ), 0, MPI_COMM_GEOS );
-      if( !result.fallbackDof.empty() ) MpiWrapper::bcast( result.fallbackDof.data(), static_cast< int >( flatSize ), 0, MPI_COMM_GEOS );
+          return bm::project( mass, trial, cutoff, relations, fallback, rows, options, qrSolve );
+        } );
+    }
+    catch( std::exception const & e )
+    {
+      GEOS_ERROR( "C0 boundary-compatible projection failed: " << e.what() );
+    }
+    auto const commitStart = mortarNow();
+    for( int component = 0; component < numDims; ++component )
+    {
+      bm::Result const & result = componentResults[component];
+      int const worker = bm::componentWorker( component, numDims, MpiWrapper::commSize( MPI_COMM_GEOS ),
+                                               m_weakInterfaceTraceComponentRanks );
+      // Scalar metadata is now broadcast too, so rank zero can report every
+      // component even when another rank performed its factorization.
+      GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
+        "C0 boundary-compatible QR component=" << component <<
+        ", time=" << m_currentMomentumLogTime + dt <<
+        ", cycle=" << m_currentMomentumLogCycle <<
+        ", worker=" << worker << ", backend=" << bm::qrBackendName( qrBackend ) <<
+        ", candidates/accepted=" << rows.size() << "/" << rows.size() - result.rejectedRows <<
+        ", rank/free-columns=" << result.rank << "/" << result.unknowns <<
+        ", smallest-relative-pivot=" << result.smallestRelativePivot <<
+        ", relative residual=" << result.relativeResidual <<
+        ", max average jump=" << result.maximumJump <<
+        ", boundary residual=" << result.boundaryResidual <<
+        ", fallback dofs=" << std::count( result.fallbackDof.begin(), result.fallbackDof.end(), 1 ) <<
+        ", boundary+fallback reaction impulse=" <<
+          std::accumulate( result.reactionImpulse.begin(), result.reactionImpulse.end(), 0.0 ) );
+      if( timeMortar )
+        GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
+          "C0 mortar component timing: component=" << component << ", worker=" << worker <<
+          ", setup=" << result.setupSeconds << ", qr=" << result.qrSeconds <<
+          ", recovery=" << result.recoverySeconds );
 
       std::vector< double > worstPre( flatSize, 0.0 ), worstPost( flatSize, 0.0 );
       std::vector< int > active( flatSize, 0 );
@@ -28087,6 +28146,25 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
               gridWeakInterfaceTracePoint[node][field][d] = minimumImageDelta( anchor[flat][d] - gridPosition[node][d], d );
         }
       }
+    }
+    if( timeMortar )
+    {
+      auto const end = mortarNow();
+      // These are maxima of each rank's elapsed stage, not a sum of rank times.
+      // fitting is a nested subset of geometry; stage maxima need not add exactly.
+      std::array< real64, 8 > times{{ elapsed( projectionStart, end ),
+        elapsed( projectionStart, nodalGatherStart ), fittingSeconds,
+        elapsed( nodalGatherStart, commonSetupStart ), elapsed( commonSetupStart, solveStart ),
+        elapsed( solveStart, commitStart ), elapsed( commitStart, end ), maximumMarkerCandidates }};
+      for( real64 & value : times )
+        value = MpiWrapper::allReduce( value, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+      real64 const totalVisits = MpiWrapper::allReduce( markerCandidatesVisited, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
+        "C0 mortar timing rank-max seconds: total=" << times[0] << ", geometry+rows=" << times[1] <<
+        ", fitting(subset)=" << times[2] << ", node-gather=" << times[3] <<
+        ", common-setup=" << times[4] << ", solves+distribution=" << times[5] <<
+        ", commit=" << times[6] << ", max-candidates/query=" << times[7] <<
+        ", total-candidate-visits=" << totalVisits );
     }
     return; // No legacy GS, denominator regularization, or post-solve fallback.
   }

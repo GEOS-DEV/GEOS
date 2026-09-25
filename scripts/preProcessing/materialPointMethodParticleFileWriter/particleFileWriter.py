@@ -832,6 +832,10 @@ parameters = {
                'weakInterfaceTraceAbsoluteTolerance': ( None, True ),  # Accepted final average jump/BC error in velocity units.
                'weakInterfaceTraceQRRankTolerance': ( None, True ),  # Relative rank threshold, not a physical compliance.
                'weakInterfaceTraceQRMaxEntries': ( None, True ),  # Dense QR memory guard; entries of double, not bytes.
+               'weakInterfaceTraceQRBackend': ( None, True ),  # auto/reference/native/lapack; does not change constraints.
+               'weakInterfaceTraceComponentRanks': ( None, True ),  # 1..3 concurrent scalar workers, capped by MPI size/dimensions.
+               'weakInterfaceTraceFastMarkerSearch': ( None, True ),  # Preserve exact sorted candidate order with a bin-stream merge.
+               'weakInterfaceTracePerformanceLog': ( None, True ),  # Optional per-stage rank-max timings (also enable MPMSubroutines logs).
                'weakInterfaceTraceLinearSolverRegularization': ( None, True ),  # MPM: local mass-denominator regularization fraction for mortar projection.
                'weakInterfaceTraceSuppressNodalContact': ( None, True ),  # MPM: suppress nodal contact for trace-projected group pairs.
                'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.

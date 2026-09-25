@@ -33,11 +33,15 @@ if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
         SolidMechanicsMPM.hpp
         MPMSolverFields.hpp
         kernels/ExplicitMPM.hpp
-        kernels/MPMBoundaryMortar.hpp )
+        kernels/MPMBoundaryMortar.hpp
+        kernels/MPMBoundaryMortarQR.hpp
+        kernels/MPMBoundaryMortarComponents.hpp
+        kernels/MPMMortarSearch.hpp )
 
   list( APPEND solidMechanicsSolvers_sources
         SolidMechanicsMPM.cpp
-        SolidMechanicsMPMRigidBody.cpp )
+        SolidMechanicsMPMRigidBody.cpp
+        kernels/MPMBoundaryMortarQR.cpp )
 endif()
 
 if( GEOS_ENABLE_SOLIDMECHANICS_FEM )
@@ -98,6 +102,12 @@ if( GEOS_ENABLE_CONTACT )
 endif()
 
 set( dependencyList ${parallelDeps} physicsSolversBase )
+if( GEOS_ENABLE_SOLIDMECHANICS_MPM AND GEOS_ENABLE_MPM_MORTAR_LAPACK )
+  if( DEFINED BLA_SIZEOF_INTEGER AND BLA_SIZEOF_INTEGER STREQUAL "8" )
+    message( FATAL_ERROR "MPM mortar LAPACK QR requires LP64 (32-bit library integers), not ILP64" )
+  endif()
+  list( APPEND dependencyList lapack blas )
+endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
@@ -129,6 +139,13 @@ blt_add_library( NAME       solidMechanicsSolvers
                )
 
 target_include_directories( solidMechanicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+
+if( GEOS_ENABLE_SOLIDMECHANICS_MPM AND GEOS_ENABLE_MPM_MORTAR_LAPACK )
+  target_compile_definitions( solidMechanicsSolvers PRIVATE GEOS_MPM_MORTAR_LAPACK=1 )
+  if( GEOS_USE_FORTRAN_MANGLE_NO_UNDERSCORE OR ENABLE_FORTRAN_MANGLE_NO_UNDERSCORE OR GEOS_ENABLE_FORTRAN_MANGLE_NO_UNDERSCORE )
+    target_compile_definitions( solidMechanicsSolvers PRIVATE GEOS_MPM_MORTAR_FORTRAN_NO_UNDERSCORE=1 )
+  endif()
+endif()
 
 install( TARGETS solidMechanicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 

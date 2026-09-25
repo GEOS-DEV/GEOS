@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <chrono>
 #include <cstddef>
 #include <limits>
 #include <map>
@@ -40,6 +41,7 @@ struct Options
   double minimumRetainedFraction = 1.0e-12;
   Index maximumMatrixEntries = 16000000; // 128 MB for the factor itself
   bool supportFallback = true;
+  bool measureTimings = false; // wall times only; never changes numerical decisions
 };
 
 // A constraint is the integral of a velocity jump. Each coefficient multiplies
@@ -313,6 +315,11 @@ inline QRResult minimumNorm( std::vector< double > & bt, Index const n, Index co
   return out;
 }
 
+// All backends solve the same mass-normalized minimum-norm problem. Keep the
+// reference function as the default for existing standalone callers and tests.
+using MinimumNormSolver = QRResult (*)( std::vector< double > &, Index, Index,
+                                        std::vector< double > const &, double );
+
 struct Result
 {
   std::vector< double > velocity, mortarImpulse, reactionImpulse;
@@ -321,6 +328,7 @@ struct Result
   Index rank = 0, unknowns = 0, assembledRows = 0, rejectedRows = 0;
   double maximumJump = 0.0, relativeResidual = 0.0, boundaryResidual = 0.0;
   double smallestRelativePivot = 0.0;
+  double setupSeconds = 0.0, qrSeconds = 0.0, recoverySeconds = 0.0;
 };
 
 /** Boundary reduction, common-support selection, and simultaneous mortar solve.
@@ -336,8 +344,12 @@ inline Result project( std::vector< double > const & mass,
                        std::vector< Relation > const & boundary,
                        std::vector< std::pair< Index, Index > > const & fallback,
                        std::vector< Row > const & rows,
-                       Options const & options )
+                       Options const & options,
+                       MinimumNormSolver const solveMinimumNorm = minimumNorm )
 {
+  using Clock = std::chrono::steady_clock;
+  Clock::time_point const start = options.measureTimings ? Clock::now() : Clock::time_point{};
+  require( solveMinimumNorm != nullptr, "Missing boundary mortar QR backend." );
   Index const n = mass.size();
   require( trial.size() == n && cutoff.size() == n, "Boundary mortar input size mismatch." );
   require( std::isfinite( options.relativeTolerance ) && std::isfinite( options.absoluteTolerance ) &&
@@ -455,7 +467,14 @@ inline Result project( std::vector< double > const & mass,
   for( Index a = 0; a < nr; ++a )
     for( auto const & c : reducedRows[a] )
       if( std::abs( c.second ) > 0.0 ) bt[a*nc+compact.at( c.first )] = scale[a] * c.second;
-  QRResult qr = minimumNorm( bt, nc, nr, rhs, options.rankTolerance );
+  Clock::time_point const qrStart = options.measureTimings ? Clock::now() : Clock::time_point{};
+  QRResult qr = solveMinimumNorm( bt, nc, nr, rhs, options.rankTolerance );
+  Clock::time_point const qrEnd = options.measureTimings ? Clock::now() : Clock::time_point{};
+  if( options.measureTimings )
+  {
+    result.setupSeconds = std::chrono::duration< double >( qrStart - start ).count();
+    result.qrSeconds = std::chrono::duration< double >( qrEnd - qrStart ).count();
+  }
   result.rank = qr.rank; result.unknowns = nc; result.assembledRows = nr;
   result.smallestRelativePivot = qr.smallestRelativePivot;
   for( Index r = 0; r < n; ++r )
@@ -508,6 +527,8 @@ inline Result project( std::vector< double > const & mass,
     // The latter cancel when summed over the fields tied at a node.
     result.reactionImpulse[i] = mass[i] * ( result.velocity[i] - trial[i] ) - result.mortarImpulse[i];
   }
+  if( options.measureTimings )
+    result.recoverySeconds = std::chrono::duration< double >( Clock::now() - qrEnd ).count();
   return result;
 }
 

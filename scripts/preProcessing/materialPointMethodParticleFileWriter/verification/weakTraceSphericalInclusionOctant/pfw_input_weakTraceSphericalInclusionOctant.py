@@ -98,11 +98,13 @@ pfw = dict(
     surfaceRefinementMethod=os.environ.get("WEAK_TRACE_SURFACE_REFINEMENT_METHOD", "simplex"),
     surfaceRefinementFallback="cartesian",
     particleReferenceGeometry="fromRefinement", particleDomainOutput="native",
-    endTime=stop_time, plotInterval=stop_time / 40.0,
+    endTime=stop_time, plotInterval=positive_float("WEAK_TRACE_PLOT_INTERVAL", stop_time / 40.0),
     restartInterval=10.0 * stop_time, timeIntegrationOption="ExplicitDynamic",
     cflFactor=positive_float("WEAK_TRACE_CFL", 0.15), initialDt=1.0e-16,
-    writeStatistics="all", reactionHistory=1, reactionWriteInterval=stop_time / 200,
-    boxAverageHistory=1, boxAverageWriteInterval=stop_time / 200,
+    writeStatistics="all", reactionHistory=1,
+    reactionWriteInterval=positive_float("WEAK_TRACE_HISTORY_INTERVAL", stop_time / 200),
+    boxAverageHistory=1,
+    boxAverageWriteInterval=positive_float("WEAK_TRACE_HISTORY_INTERVAL", stop_time / 200),
     updateMethod=os.environ.get("WEAK_TRACE_UPDATE_METHOD", "PIC"),
     cpdiDomainScaling=0, outputType="silo", plotGridFields=1,
     frictionCoefficient=0.0, contactNormalType="Aligned", useSurfacePositionForContact=1,
@@ -125,9 +127,16 @@ pfw["gridFieldNames"] = [
     "gridWeakInterfaceTraceForce", "gridWeakInterfaceTraceBoundaryForce",
 ]
 if variant == "traceContactGroups":
+    qr_backend = os.environ.get("WEAK_TRACE_QR_BACKEND", "auto")
+    if qr_backend not in ("auto", "reference", "native", "lapack"):
+        raise ValueError("WEAK_TRACE_QR_BACKEND must be auto, reference, native, or lapack")
     pfw.update(
         enableContact=1, enableWeakInterfaceTraceProjection=1,
         weakInterfaceTraceBoundaryCoupling=1, weakInterfaceTraceProjectionScale=1.0,
+        weakInterfaceTraceQRBackend=qr_backend,
+        weakInterfaceTraceComponentRanks=positive_int("WEAK_TRACE_COMPONENT_RANKS", 3),
+        weakInterfaceTraceFastMarkerSearch=1 if bool_env("WEAK_TRACE_FAST_MARKER_SEARCH", True) else 0,
+        weakInterfaceTracePerformanceLog=1 if bool_env("WEAK_TRACE_PERFORMANCE_LOG", False) else 0,
         weakInterfaceTraceSuppressNodalContact=1, weakInterfaceTracePairs=[[0, 1]],
         weakInterfaceTraceSurfaceFitNeighbors=12, weakInterfaceTraceSurfaceFitRadius=2.5,
         weakInterfaceTraceMinNormalCoherence=0.0, weakInterfaceTraceMaxFitResidual=1.0e6,

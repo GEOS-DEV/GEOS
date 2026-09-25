@@ -1729,6 +1729,10 @@ protected:
   real64 m_weakInterfaceTraceAbsoluteTolerance;
   real64 m_weakInterfaceTraceQRRankTolerance;
   integer m_weakInterfaceTraceQRMaxEntries;
+  string m_weakInterfaceTraceQRBackend;
+  integer m_weakInterfaceTraceComponentRanks;
+  integer m_weakInterfaceTraceFastMarkerSearch;
+  integer m_weakInterfaceTracePerformanceLog;
   bool m_weakInterfaceBoundaryKinematicsPrepared = false;
   array3d< real64 > m_weakInterfaceBoundaryExpected;
   array2d< int > m_weakInterfaceBoundaryTouched;

@@ -1,4 +1,9 @@
-# Boundary-compatible C0 mortar: opt-in CPU reference implementation
+# Boundary-compatible C0 mortar: opt-in CPU implementation
+
+Performance update (2026-09-25): see [MPMBoundaryMortarPerformance.md](MPMBoundaryMortarPerformance.md)
+for native/LAPACK QR backends and concurrent component workers. The mathematics
+and acceptance criteria below are unchanged. Historical test limitations below
+refer to the original boundary-compatible patch, not a new full GEOS validation.
 
 ## Baseline and status
 
@@ -136,7 +141,7 @@ For a reduced row operator D, solve the row-scaled rectangular system
 B y = b,  minimizing ||y||,  B = S D M_reduced^(-1/2).
 ```
 
-The helper uses column-pivoted Householder QR of `B^T`, rather than explicitly
+All backends use column-pivoted Householder QR of `B^T`, rather than explicitly
 forming the poorly conditioned Gram matrix. It computes a minimum-norm
 correction for the retained numerical rank, then checks ALL accepted original
 rows, including dependent ones. Incompatible or insufficiently resolved
@@ -179,8 +184,10 @@ relations before the nodal-state gather, including edge/corner combinations.
 Owner-preferred deduplication counts a mass once, rather than summing partition
 copies. Physical buffer nodes are distinct from duplicate MPI ghosts.
 
-Rank 0 performs the dense solve and broadcasts success/failure before any result
-buffers. Every rank receives the same solution and reconstructs local entries;
+Each scalar component is a complete dense solve. Up to three ranks now solve
+x/y/z concurrently; `weakInterfaceTraceComponentRanks=1` restores rank-zero
+scheduling. Every component status is exchanged before any result is committed.
+Every rank receives the same solution and reconstructs local entries;
 ranks with no local interface still participate in collectives. A post-sync
 check is collective even on an empty rank. Missing donor records and the MPI
 count limit fail explicitly. Actual MPI transport and GEOS field migration are

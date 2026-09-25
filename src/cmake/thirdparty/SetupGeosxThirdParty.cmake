@@ -130,6 +130,9 @@ set(thirdPartyLibs "")
 # BLAS/LAPACK
 ################################
 set( GEOS_NEEDS_BLAS_LAPACK ${GEOS_ENABLE_DENSE_LINEARALGEBRA} )
+if( GEOS_ENABLE_MPM_MORTAR_LAPACK )
+  set( GEOS_NEEDS_BLAS_LAPACK ON )
+endif()
 foreach( _tpl_requires_blas_lapack
          ENABLE_SUPERLU_DIST
          ENABLE_SUITESPARSE
