@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+
+<!-- The three ways a cell gets its inner product, on the same problem:
+     1) free cells (prescribedMfdFlag = -1, the default) are decided by consistencyTolerance;
+     2) prescribed cells are final: here TPFA (0) is imposed on a band of tetrahedra, where the consistency layer would
+        select MFD, and MFD (1) on a band of hexahedra, where it would keep TPFA. The same field can be read from a
+        VTK mesh with fieldsToImport="{ prescribedMfdFlag }";
+     3) degeneracyTolerance keeps TPFA on the free cells smaller than this percentage of the volume of the cells
+        sharing a vertex with them: 1 % switches the smallest tetrahedra of this mesh. -->
+
+<Problem>
+  <Included>
+    <File name="./incompressible_hybridMesh_mixed_base.xml"/>
+  </Included>
+
+  <Solvers>
+    <SinglePhaseMixedMFD
+      name="mixedMFDFlow"
+      logLevel="1"
+      discretization="mixedMFD"
+      targetRegions="{ domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="mixedMFD"
+        innerProductType="RT"
+        adaptiveConsistency="1"
+        consistencyTolerance="0.1"
+        degeneracyTolerance="1.0"
+        nominalGradient="{ 1.0, 1.0, 1.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+
+  <Geometry>
+    <Box
+      name="tetrahedraBand"
+      xMin="{ -0.01, -0.01, 1.49 }"
+      xMax="{  1.01,  1.01, 2.01 }"/>
+    <Box
+      name="hexahedraBand"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  1.01,  1.01,  0.51 }"/>
+  </Geometry>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="prescribeTPFA"
+      initialCondition="1"
+      setNames="{ tetrahedraBand }"
+      objectPath="ElementRegions/domain"
+      fieldName="prescribedMfdFlag"
+      scale="0"/>
+
+    <FieldSpecification
+      name="prescribeMFD"
+      initialCondition="1"
+      setNames="{ hexahedraBand }"
+      objectPath="ElementRegions/domain"
+      fieldName="prescribedMfdFlag"
+      scale="1"/>
+  </FieldSpecifications>
+</Problem>
