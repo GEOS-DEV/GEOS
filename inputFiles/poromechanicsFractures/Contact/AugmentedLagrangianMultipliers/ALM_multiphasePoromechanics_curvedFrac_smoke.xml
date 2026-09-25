@@ -76,6 +76,16 @@
         logLevel="1"/>
      </CompositionalMultiphaseFVM> 
   </Solvers>
+  
+  <Tasks>
+
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      computeRegionStatistics="1"/>
+    
+  </Tasks>
 
   <ElementRegions>
     <CellElementRegion
