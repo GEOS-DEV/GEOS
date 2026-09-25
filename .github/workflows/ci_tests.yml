@@ -592,15 +592,19 @@ jobs:
           sccache-v0.17.0-aarch64-apple-darwin/sccache
         chmod +x "$RUNNER_TEMP/sccache"
         xattr -d com.apple.quarantine "$RUNNER_TEMP/sccache" 2>/dev/null || true
-        mkdir -p "${HOME}/.config/sccache"
-        cat > "${HOME}/.config/sccache/config" <<EOF
+        # sccache reads SCCACHE_CONF first. On macOS the default is
+        # ~/Library/Application Support, so a Linux-style ~/.config file is ignored
+        # and the cache stays on the runner's local disk.
+        export SCCACHE_CONF="${HOME}/.config/sccache/config"
+        mkdir -p "$(dirname "$SCCACHE_CONF")"
+        cat > "$SCCACHE_CONF" <<EOF
+        basedirs = ["${GITHUB_WORKSPACE}"]
         [cache.gcs]
         rw_mode = "READ_WRITE"
         cred_path = "${GOOGLE_GHA_CREDS_PATH}"
         bucket = "geos-dev"
         key_prefix = "sccache"
         EOF
-        python3 -c 'from pathlib import Path; p=Path.home()/".config"/"sccache"/"config"; t=p.read_text().splitlines(); n=len(t[0])-len(t[0].lstrip()); p.write_text("\n".join(line[n:] for line in t)+"\n")'
         "$RUNNER_TEMP/sccache" --show-stats || true
         /opt/homebrew/opt/python@3.14/bin/python3 -m pip install --upgrade --break-system-packages virtualenv
         # Caliper records the Open MPI Cellar path from the TPL build. Homebrew on this
