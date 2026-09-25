@@ -18,6 +18,8 @@
  */
 
 #include "SolidMechanicsMPM.hpp"
+#include "kernels/MPMBoundaryMortar.hpp"
+#include <iterator>
 
 #if defined( GEOS_USE_HIP )
 #include <hip/hip_runtime.h>
@@ -2168,6 +2170,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_computeSPHJacobian( 0 ),
   m_confiningPressureBoxMax(),
   m_confiningPressureBoxMin(),
+  m_confiningPressureSphereRadius( 0.0 ),
   m_confiningStress(),
   m_contactGapCorrection( mpm::ContactGapCorrectionOption::Implicit ),
   m_contactNormalExponent( 1.0 ),
@@ -2428,6 +2431,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_weakInterfaceTraceMinTriangleQuality( 1.0e-4 ),
   m_weakInterfaceTraceLinearSolverTolerance( 1.0e-10 ),
   m_weakInterfaceTraceLinearSolverRegularization( 1.0e-12 ),
+  m_weakInterfaceTraceBoundaryCoupling( 0 ),
+  m_weakInterfaceTraceAbsoluteTolerance( 1.0e-12 ),
+  m_weakInterfaceTraceQRRankTolerance( 1.0e-12 ),
+  m_weakInterfaceTraceQRMaxEntries( 16000000 ),
   m_weakInterfaceTracePairs(),
   m_weakInterfaceTraceProjectionIterations( 30 ),
   m_weakInterfaceTraceProjectionScale( 0.6 ),
@@ -2550,6 +2557,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "xyz coordinate of confining pressure box min corner" );
+
+  registerWrapper( "confiningPressureSphereRadius", &m_confiningPressureSphereRadius ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Origin-centered spherical confining pressure radius; positive values select spherical confining pressure instead of the box test." );
 
   registerWrapper( "confiningStress", &m_confiningStress ).
     setInputFlag( InputFlags::FALSE ).
@@ -3791,6 +3803,20 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Relative RMS mortar-velocity residual used for optional early termination after a forward/reverse sweep pair." );
 
+  // Opt-in reference implementation. Legacy runs retain the original sweep path.
+  registerWrapper( "weakInterfaceTraceBoundaryCoupling", &m_weakInterfaceTraceBoundaryCoupling ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 0 ).
+    setDescription( "Use the CPU boundary-admissible QR mortar projection; symmetry and bilateral Moving/FTable faces only." );
+  registerWrapper( "weakInterfaceTraceAbsoluteTolerance", &m_weakInterfaceTraceAbsoluteTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 1.0e-12 ).
+    setDescription( "Absolute final average-jump/BC tolerance in velocity units for boundary-compatible mortar." );
+  registerWrapper( "weakInterfaceTraceQRRankTolerance", &m_weakInterfaceTraceQRRankTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 1.0e-12 ).
+    setDescription( "Relative pivot threshold for the minimum-norm QR reference projection; not an interface compliance." );
+  registerWrapper( "weakInterfaceTraceQRMaxEntries", &m_weakInterfaceTraceQRMaxEntries ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 16000000 ).
+    setDescription( "Maximum double entries in the dense rectangular QR factor; fail rather than silently use unconverged sweeps." );
+
   registerWrapper( "weakInterfaceTraceLinearSolverRegularization", &m_weakInterfaceTraceLinearSolverRegularization ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_weakInterfaceTraceLinearSolverRegularization ).
@@ -4168,6 +4194,22 @@ void SolidMechanicsMPM::postInputInitialization()
     GEOS_ERROR_IF( m_weakInterfaceTraceFallbackToSingleField != 0 &&
                    m_weakInterfaceTraceFallbackToSingleField != 1,
                    "weakInterfaceTraceFallbackToSingleField must be zero or one." );
+  }
+
+  GEOS_ERROR_IF( m_weakInterfaceTraceBoundaryCoupling != 0 && m_weakInterfaceTraceBoundaryCoupling != 1,
+                 "weakInterfaceTraceBoundaryCoupling must be zero or one." );
+  if( m_weakInterfaceTraceBoundaryCoupling == 1 )
+  {
+    GEOS_ERROR_IF( m_rigidBodyMode != 0, "Boundary-compatible mortar is not available in RigidBodyMPM." );
+    GEOS_ERROR_IF( m_enableWeakInterfaceTraceProjection != 1 || m_weakInterfaceTraceSuppressNodalContact != 1,
+                   "Boundary-compatible mortar requires trace projection and suppression of redundant nodal contact." );
+    GEOS_ERROR_IF( !isEqual( m_weakInterfaceTraceProjectionScale, 1.0 ),
+                   "Boundary-compatible QR is a full projection; set weakInterfaceTraceProjectionScale=1." );
+    GEOS_ERROR_IF( m_prescribedFTable != 0,
+                   "Boundary-compatible mortar supports prescribedBoundaryFTable, not superimposed prescribedFTable deformation." );
+    GEOS_ERROR_IF( m_weakInterfaceTraceAbsoluteTolerance <= 0.0 || m_weakInterfaceTraceQRRankTolerance <= 0.0 ||
+                   m_weakInterfaceTraceQRRankTolerance >= 1.0 || m_weakInterfaceTraceQRMaxEntries < 1,
+                   "Invalid boundary-compatible mortar tolerance or QR memory limit." );
   }
 
   // Initialize boundary condition types if they're not specified by the user
@@ -4991,7 +5033,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Balanced C0 vertex-mortar projection force on each node and velocity field." );
+        setDescription( "Mortar force; in boundary-compatible mode this is the total compatible correction, with reactions also recorded separately." );
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() ).
+        setPlotLevel( gridFieldPlotLevel ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "Additional boundary and internal fallback reaction from the boundary-compatible mortar correction; force units." );
 
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -5768,6 +5814,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() ).resize( numNodes, m_numVelocityFields, 3 );
+  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() ).resize( numNodes, m_numVelocityFields, 3 );
+  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() ).zero();
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() ).resize( numNodes, m_numVelocityFields );
@@ -6038,6 +6086,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   updateGridDynamicsAndContactForExplicitStep( dt,
                                                particleManager,
                                                nodeManager );
+  m_weakInterfaceBoundaryKinematicsPrepared = false;
+  if( m_rigidBodyMode == 0 && m_enableWeakInterfaceTraceProjection == 1 && m_weakInterfaceTraceBoundaryCoupling == 1 )
+  {
+    // Table/controller evaluation is performed exactly once at the endpoint.
+    // Keep the existing boundary acceleration and transfer-increment contract,
+    // then solve only increments in its homogeneous admissible space.
+    updatePrescribedKinematicsForExplicitStep( dt, time_n, particleManager, partition );
+    applyEssentialBCs( dt, time_n, nodeManager );
+    applyFMPMUncontactedVelocityBoundaryConditions( nodeManager );
+    m_weakInterfaceBoundaryKinematicsPrepared = true;
+  }
   if( m_rigidBodyMode == 0 && m_enableWeakInterfaceTraceProjection == 1 )
   {
     /*
@@ -6078,6 +6137,22 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   synchronizePostBoundaryKinematicFieldsForG2P( domain,
                                                 nodeManager,
                                                 mesh );
+  if( m_weakInterfaceTraceBoundaryCoupling == 1 )
+  {
+    auto const & v = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+    real64 error = 0.0;
+    for( localIndex node = 0; node < nodeManager.size() && m_weakInterfaceBoundaryTouched.size() > 0; ++node )
+      for( localIndex field = 0; field < m_numVelocityFields; ++field )
+        if( m_weakInterfaceBoundaryTouched[node][field] != 0 )
+          for( int d = 0; d < m_numDims; ++d )
+          {
+            real64 const difference = std::abs( v[node][field][d] - m_weakInterfaceBoundaryExpected[node][field][d] );
+            error = std::isfinite( difference ) ? std::max( error, difference ) : std::numeric_limits< real64 >::max();
+          }
+    error = MpiWrapper::allReduce( error, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+    GEOS_ERROR_IF( error > 8.0 * m_weakInterfaceTraceAbsoluteTolerance,
+                   "A post-mortar boundary/synchronization update changed the coupled solution; max difference=" << error );
+  }
   if( m_rigidBodyMode == 1 )
   {
     /*
@@ -7215,12 +7290,15 @@ void SolidMechanicsMPM::applyPrescribedDeformationAndBoundaryConditionsForExplic
                                                                                        NodeManager & nodeManager,
                                                                                        SpatialPartition & partition )
 {
-  updatePrescribedKinematicsForExplicitStep( dt,
-                                             time_n,
-                                             particleManager,
-                                             partition );
-  applyEssentialBCs( dt, time_n, nodeManager );
-  applyFMPMUncontactedVelocityBoundaryConditions( nodeManager );
+  if( !m_weakInterfaceBoundaryKinematicsPrepared )
+  {
+    updatePrescribedKinematicsForExplicitStep( dt, time_n, particleManager, partition );
+    applyEssentialBCs( dt, time_n, nodeManager );
+    applyFMPMUncontactedVelocityBoundaryConditions( nodeManager );
+  }
+  // In coupled mode the BC operation preceded the mortar, and the mortar
+  // correction preserved its dependencies. Do not overwrite it a second time.
+  m_weakInterfaceBoundaryKinematicsPrepared = false;
   real64 const profileOutputTime = time_n + dt;
   if( shouldWriteProfiles( profileOutputTime, cycleNumber ) )
   {
@@ -11337,6 +11415,7 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
                                       viewKeyStruct::gridSurfaceTensionForceString(), // 3
                                       viewKeyStruct::gridContactForceString(), // 3
                                       viewKeyStruct::gridWeakInterfaceTraceForceString(), // 3
+                                      viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString(), // 3
                                       viewKeyStruct::gridWeakInterfaceTracePointString(), // 3
                                       viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString(), // 3
                                       viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString(), // 3
@@ -11420,6 +11499,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString(),
       viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString(),
       viewKeyStruct::gridWeakInterfaceTraceForceString(),
+      viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString(),
       viewKeyStruct::gridWeakInterfaceTracePointString(),
       viewKeyStruct::gridWeakInterfaceTraceSupportWeightString(),
       viewKeyStruct::gridWeakInterfaceTraceSkipReasonString(),
@@ -12308,6 +12388,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       m_confiningPressureBoxMin = confiningPressure.getConfiningPressureBoxMin();
       m_confiningPressureBoxMax = confiningPressure.getConfiningPressureBoxMax();
+      m_confiningPressureSphereRadius = confiningPressure.getConfiningPressureSphereRadius();
 
       real64 startPressure = confiningPressure.getStartPressure();
       real64 endPressure = confiningPressure.getEndPressure();
@@ -22060,11 +22141,11 @@ void SolidMechanicsMPM::updateGridBackgroundStress( NodeManager & nodeManager )
   // where the cylinder axis is [0,0,1] centered at the origin so the geometry is specified entirely by
   // a borehole radius.  This is used in borehole stability calculations.
   //
-  // CONFINING PRESSURE: Here a box can be specified and any void region outside the box will have a
-  // virtual pressure applied.   This is useful for creating stress boundary conditions consistent
-  // with stress initialization for triaxial compression testing, or generally for creating a pressure
-  // boundary on a region with an abitrary surface.  The box is specified to allow this option to be used
-  // along with the BOREHOLE boundary condition.
+  // CONFINING PRESSURE: Here either a box or an origin-centered sphere can be specified and any void
+  // region outside that geometry will have a virtual pressure applied. This is useful for creating
+  // stress boundary conditions consistent with stress initialization for triaxial compression testing,
+  // or generally for creating a pressure boundary on a region with an arbitrary surface. The box is
+  // retained to allow this option to be used along with the BOREHOLE boundary condition.
   //
   // The order of these is arbitrary, and the 2nd can over-write the first.  They are intended to be used
   // such that the borehole is within the box geometry.
@@ -22094,13 +22175,39 @@ void SolidMechanicsMPM::updateGridBackgroundStress( NodeManager & nodeManager )
   if( m_enableConfiningPressure == 1 )
   {
     real64 confiningStress[6] = { };
+    real64 const confiningPressureSphereRadius = m_confiningPressureSphereRadius;
+    real64 const confiningPressureSphereRadiusSqr =
+      confiningPressureSphereRadius * confiningPressureSphereRadius;
+    int const numDims = m_numDims;
     // Here we support only a confining pressure:  TODO: add support for a general background confining stress.
     // Tensor equation: confiningStress = m_confiningStress.
     LvArray::tensorOps::copy< 6 >( confiningStress, m_confiningStress );
     forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
     {
-      if ( ( gridPosition[g][0] < m_confiningPressureBoxMin[0] ) || ( gridPosition[g][1] < m_confiningPressureBoxMin[1] ) || ( gridPosition[g][2] < m_confiningPressureBoxMin[2] ) ||
-      ( gridPosition[g][0] > m_confiningPressureBoxMax[0] ) || ( gridPosition[g][1] > m_confiningPressureBoxMax[1] ) || ( gridPosition[g][2] > m_confiningPressureBoxMax[2] ) )
+      bool applyConfiningStress = false;
+      if( confiningPressureSphereRadius > 0.0 )
+      {
+        real64 radiusSqr =
+          LvArray::math::square( gridPosition[g][0] ) +
+          LvArray::math::square( gridPosition[g][1] );
+        if( numDims > 2 )
+        {
+          radiusSqr += LvArray::math::square( gridPosition[g][2] );
+        }
+        applyConfiningStress = radiusSqr > confiningPressureSphereRadiusSqr;
+      }
+      else
+      {
+        applyConfiningStress =
+          ( gridPosition[g][0] < m_confiningPressureBoxMin[0] ) ||
+          ( gridPosition[g][1] < m_confiningPressureBoxMin[1] ) ||
+          ( gridPosition[g][2] < m_confiningPressureBoxMin[2] ) ||
+          ( gridPosition[g][0] > m_confiningPressureBoxMax[0] ) ||
+          ( gridPosition[g][1] > m_confiningPressureBoxMax[1] ) ||
+          ( gridPosition[g][2] > m_confiningPressureBoxMax[2] );
+      }
+
+      if( applyConfiningStress )
       {
         // Tensor equation: gridBackgroundStress[g] = confiningStress.
         LvArray::tensorOps::copy< 6 >( gridBackgroundStress[g], confiningStress );
@@ -24854,8 +24961,10 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
  * and a six-tetrahedron Kuhn subdivision with triangular facets in 3D. One
  * multiplier hat is associated with each reconstructed interface vertex and
  * integrated over all incident segments/facets using the actual cubic B-spline
- * trace basis, or the underlying Q1 grid trace for CPDI. Alternating
- * forward/reverse local mass-metric corrections enforce the bonded velocity
+ * trace basis, or the underlying Q1 grid trace for CPDI. The opt-in B-spline
+ * boundary-compatible branch restricts integration to the physical grid box,
+ * reduces BC/buffer dependencies, and solves the accepted constraints with QR.
+ * Otherwise, alternating forward/reverse local corrections enforce the bonded velocity
  * trace without assembling a global matrix. If the reconstructed geometry is
  * locally unreliable, or if multiple weak interfaces enter one grid-node
  * support, a conservative mass-weighted nodal single-field fallback is used.
@@ -24906,6 +25015,8 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   }
 
   zeroWeakInterfaceTraceProjectionFields( nodeManager );
+  m_weakInterfaceBoundaryTouched.resize( 0, 0 );
+  bool const boundaryCoupled = m_weakInterfaceTraceBoundaryCoupling == 1;
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
   int const numDims = m_numDims;
@@ -24951,6 +25062,47 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     GEOS_ERROR_IF( globalCellCount[d] < 1,
                    "Invalid global background-grid cell count for the C0 mortar." );
   }
+
+  namespace bm = mpm::boundaryMortar;
+  bm::Faces boundaryFaces;
+  boundaryFaces.dimensions = numDims;
+  for( int d = 0; d < 3; ++d )
+  {
+    boundaryFaces.cells[d] = globalCellCount[d];
+    boundaryFaces.low[d] = m_xGlobalMin[d];
+    boundaryFaces.high[d] = m_xGlobalMax[d];
+    boundaryFaces.periodic[d] = periodic[d] != 0;
+  }
+  if( boundaryCoupled )
+  {
+    for( int face = 0; face < 2 * numDims; ++face )
+    {
+      int const d = face / 2;
+      int const kind = m_boundaryConditionTypes[face];
+      GEOS_ERROR_IF( kind == static_cast< int >( mpm::BoundaryConditionOption::Contact ),
+                     "Boundary-compatible mortar: unilateral Contact faces require a coupled active-set solve (not in this patch)." );
+      boundaryFaces.kind[face] = periodic[d] ? 0 : kind;
+      if( periodic[d] || kind == 0 ) continue;
+      boundaryFaces.controlled[face][d] = true;
+      if( kind == static_cast< int >( mpm::BoundaryConditionOption::Moving ) )
+      {
+        GEOS_ERROR_IF( m_prescribedBoundaryFTable != 1 && m_stressControl[0] != 1 &&
+                       m_stressControl[1] != 1 && m_stressControl[2] != 1,
+                       "A Moving face in boundary-compatible mortar requires FTableBC or active stress control." );
+        real64 const position = face % 2 == 0 ? m_xGlobalMin[d] : m_xGlobalMax[d];
+        boundaryFaces.target[face][d] = m_domainL[d] * m_domainIncrementalStretch[d] * position;
+        if( m_enablePrescribedBoundaryTransverseVelocities[face] )
+          for( int t = 0; t < 2; ++t )
+          {
+            int const component = ( d + t + 1 ) % 3;
+            boundaryFaces.controlled[face][component] = true;
+            boundaryFaces.target[face][component] = m_prescribedBoundaryTransverseVelocities[face][t];
+          }
+      }
+    }
+  }
+  auto toBoundaryKey = []( WeakInterfaceMortarNodeKey const & key )
+  { return bm::LatticeKey{{ key.i, key.j, key.k }}; };
 
   auto positiveModulo = []( globalIndex value, globalIndex const modulus )
   {
@@ -25204,6 +25356,8 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                  "SurfaceFlag::WeakDiscontinuity particles with valid normals." );
 
   bool const useBSplineTrace = haveBSplineParticles != 0;
+  GEOS_ERROR_IF( boundaryCoupled && !useBSplineTrace,
+                 "Boundary-compatible mortar currently requires single-point cubic B-spline particles." );
 
   std::vector< std::pair< int, int > > selectedPairs;
   std::set< std::pair< int, int > > pairKeys;
@@ -25541,6 +25695,9 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
 
   auto physicalBoundaryMask = [&]( std::array< real64, 3 > const & point )
   {
+    if( boundaryCoupled )
+      return boundaryFaces.boundaryMask( point, std::max( geometryTolerance,
+        256.0 * DBL_EPSILON * std::max( { gridGlobalExtent[0], gridGlobalExtent[1], gridGlobalExtent[2], 1.0 } ) ) );
     int mask = 0;
     real64 const tolerance = 256.0 * DBL_EPSILON *
       LvArray::math::max( LvArray::math::max( gridGlobalExtent[0], gridGlobalExtent[1] ),
@@ -25614,6 +25771,22 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                              WeakInterfaceMortarFallbackReason::MissingPairMarkers );
       }
       continue;
+    }
+    if( boundaryCoupled )
+    {
+      std::vector< WeakInterfaceTraceMarker > extended;
+      for( auto const & marker : pairMarkers )
+      {
+        bm::SurfaceSample const sample{ marker.point, marker.normal };
+        for( auto const & image : bm::symmetryImages( sample, boundaryFaces,
+              surfaceFitRadius * cellDiagonal, geometryTolerance ) )
+        {
+          WeakInterfaceTraceMarker copy = marker;
+          copy.point = image.point; copy.normal = image.normal;
+          extended.push_back( copy );
+        }
+      }
+      pairMarkers.swap( extended );
     }
     ++pairReconstructions;
     totalPairMarkers += static_cast< localIndex >( pairMarkers.size() );
@@ -25707,6 +25880,8 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       real64 coherence = 0.0;
       real64 residual = std::numeric_limits< real64 >::max();
       bool near = false;
+      bool hasScalar = false;
+      bool qualityAccepted = false;
       bool valid = false;
     };
 
@@ -25889,9 +26064,13 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                              LvArray::math::max( cellDiagonal, 1.0e-30 );
             }
           }
-          fit.valid = fit.near &&
-                      fit.coherence >= minNormalCoherence &&
-                      fit.residual <= maxFitResidual;
+          fit.hasScalar = std::isfinite( fit.phi ) &&
+                          std::isfinite( fit.coherence ) &&
+                          std::isfinite( fit.residual );
+          fit.qualityAccepted = fit.hasScalar &&
+                                fit.coherence >= minNormalCoherence &&
+                                fit.residual <= maxFitResidual;
+          fit.valid = fit.near && fit.qualityAccepted;
           nodalFit[nodalPhiIndex( i, j, k )] = fit;
         }
       }
@@ -26074,6 +26253,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
           std::array< std::array< real64, 3 >, 8 > cellPoints{};
           std::array< WeakInterfaceMortarNodeKey, 4 > cornerNodeKeys{};
           std::array< real64, 4 > cornerPhi{};
+          std::array< bool, 4 > cornerQualityAccepted{};
           bool nearCell = false;
           bool validCell = true;
           real64 minPhi = std::numeric_limits< real64 >::max();
@@ -26089,6 +26269,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
             localIndex const jj = corner >= 2 ? j + 1 : j;
             NodalSurfaceFit const & fit = nodalFit[nodalPhiIndex( ii, jj, 0 )];
             cornerPhi[corner] = fit.phi;
+            cornerQualityAccepted[corner] = fit.qualityAccepted;
             nearCell = nearCell || fit.near;
             validCell = validCell && fit.valid;
             minPhi = LvArray::math::min( minPhi, fit.phi );
@@ -26106,18 +26287,36 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
           {
             continue;
           }
+          std::array< real64, 3 > const cellCenter{{ centerX, centerY, physicalMidZ }};
+          if( boundaryCoupled && !boundaryFaces.inside( cellCenter ) ) continue;
           ++localOwnedPairCells;
           WeakInterfaceMortarNodeKey const cellKey = localCellKey( cellPoints, 4 );
-          std::array< real64, 3 > const cellCenter{{ centerX, centerY, physicalMidZ }};
           bool const containsMarker = markerCellKeys.find( cellKey ) != markerCellKeys.end();
           bool const potentialCut = minPhi <= geometryTolerance &&
                                     maxPhi >= -geometryTolerance;
+          bool allQualityScalar = true;
+          bool allStrictPositive = true;
+          bool allStrictNegative = true;
+          for( int corner = 0; corner < 4; ++corner )
+          {
+            allQualityScalar = allQualityScalar && cornerQualityAccepted[corner] &&
+                               std::isfinite( cornerPhi[corner] );
+            allStrictPositive = allStrictPositive && cornerPhi[corner] > geometryTolerance;
+            allStrictNegative = allStrictNegative && cornerPhi[corner] < -geometryTolerance;
+          }
+          bool const skipUncutFitFallback =
+            !containsMarker && allQualityScalar &&
+            ( allStrictPositive || allStrictNegative );
           if( !nearCell && !containsMarker )
           {
             continue;
           }
           if( !validCell )
           {
+            if( skipUncutFitFallback )
+            {
+              continue;
+            }
             ++localRejectedFitCells;
             appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
                                  WeakInterfaceMortarFallbackReason::SurfaceFitQuality );
@@ -26469,6 +26668,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
             std::array< std::array< real64, 3 >, 8 > cellPoints{};
             std::array< WeakInterfaceMortarNodeKey, 8 > cornerNodeKeys{};
             std::array< real64, 8 > cornerPhi{};
+            std::array< bool, 8 > cornerQualityAccepted{};
             bool nearCell = false;
             bool validCell = true;
             real64 minPhi = std::numeric_limits< real64 >::max();
@@ -26486,6 +26686,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
               cornerNodeKeys[corner] = localNodeKeys[static_cast< std::size_t >( node )];
               NodalSurfaceFit const & fit = nodalFit[nodalPhiIndex( ii, jj, kk )];
               cornerPhi[corner] = fit.phi;
+              cornerQualityAccepted[corner] = fit.qualityAccepted;
               nearCell = nearCell || fit.near;
               validCell = validCell && fit.valid;
               minPhi = LvArray::math::min( minPhi, fit.phi );
@@ -26506,17 +26707,35 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
             {
               continue;
             }
+            if( boundaryCoupled && !boundaryFaces.inside( cellCenter ) ) continue;
             ++localOwnedPairCells;
             WeakInterfaceMortarNodeKey const cellKey = localCellKey( cellPoints, 8 );
             bool const containsMarker = markerCellKeys.find( cellKey ) != markerCellKeys.end();
             bool const potentialCut = minPhi <= geometryTolerance &&
                                       maxPhi >= -geometryTolerance;
+            bool allQualityScalar = true;
+            bool allStrictPositive = true;
+            bool allStrictNegative = true;
+            for( int corner = 0; corner < 8; ++corner )
+            {
+              allQualityScalar = allQualityScalar && cornerQualityAccepted[corner] &&
+                                 std::isfinite( cornerPhi[corner] );
+              allStrictPositive = allStrictPositive && cornerPhi[corner] > geometryTolerance;
+              allStrictNegative = allStrictNegative && cornerPhi[corner] < -geometryTolerance;
+            }
+            bool const skipUncutFitFallback =
+              !containsMarker && allQualityScalar &&
+              ( allStrictPositive || allStrictNegative );
             if( !nearCell && !containsMarker )
             {
               continue;
             }
             if( !validCell )
             {
+              if( skipUncutFitFallback )
+              {
+                continue;
+              }
               ++localRejectedFitCells;
               appendFallbackPoint( cellCenter, cellKey, groupA, groupB,
                                    WeakInterfaceMortarFallbackReason::SurfaceFitQuality );
@@ -26626,6 +26845,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   std::vector< WeakInterfaceMortarConstraintCandidate > candidates;
   std::set< WeakInterfaceMortarNodeKey > requiredNodeKeys;
   std::map< WeakInterfaceMortarNodeKey, std::map< int, int > > fallbackFieldsByNodeKey;
+  std::map< int, localIndex > fallbackRequestReasonCounts;
   localIndex totalVertices = 0;
   localIndex totalSegments = 0;
   localIndex totalFacets = 0;
@@ -26658,6 +26878,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     {
       return;
     }
+    ++fallbackRequestReasonCounts[static_cast< int >( reason )];
     std::map< WeakInterfaceMortarNodeKey, real64 > support;
     bool const valid = addTraceBasis( point, 1.0, support );
     GEOS_UNUSED_VAR( valid );
@@ -26666,6 +26887,59 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       addFallbackField( entry.first, fieldA, reason );
       addFallbackField( entry.first, fieldB, reason );
     }
+  };
+
+  auto fallbackReasonForNode = [&]( WeakInterfaceMortarNodeKey const & node,
+                                    WeakInterfaceMortarFallbackReason const defaultReason )
+  {
+    auto const found = fallbackFieldsByNodeKey.find( node );
+    if( found == fallbackFieldsByNodeKey.end() )
+    {
+      return defaultReason;
+    }
+    int reason = 0;
+    for( auto const & fieldReason : found->second )
+    {
+      reason = LvArray::math::max( reason, fieldReason.second );
+    }
+    return reason == 0
+      ? defaultReason
+      : static_cast< WeakInterfaceMortarFallbackReason >( reason );
+  };
+
+  auto fallbackReasonSummaryString = [&]( std::map< int, localIndex > const & counts )
+  {
+    std::ostringstream summary;
+    bool first = true;
+    for( auto const & reasonEntry : counts )
+    {
+      if( !first )
+      {
+        summary << ",";
+      }
+      first = false;
+      summary << weakInterfaceMortarFallbackReasonName(
+        static_cast< WeakInterfaceMortarFallbackReason >( reasonEntry.first ) ) <<
+        "=" << reasonEntry.second;
+    }
+    if( first )
+    {
+      summary << "none";
+    }
+    return summary.str();
+  };
+
+  auto fallbackNodeFieldReasonCounts = [&]()
+  {
+    std::map< int, localIndex > counts;
+    for( auto const & nodeEntry : fallbackFieldsByNodeKey )
+    {
+      for( auto const & fieldEntry : nodeEntry.second )
+      {
+        ++counts[fieldEntry.second];
+      }
+    }
+    return counts;
   };
 
   for( WeakInterfaceMortarFallbackPointRecord const & record : gatheredFallbackPointRecords )
@@ -27433,6 +27707,9 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     {
       fallbackOverlapNodeKeys.insert( entry.first );
     }
+    WeakInterfaceMortarFallbackReason const propagatedFallbackReason =
+      fallbackReasonForNode( entry.first,
+                             WeakInterfaceMortarFallbackReason::SurfaceTopology );
 
     for( localIndex const candidateIndex : localCandidates )
     {
@@ -27441,11 +27718,11 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       addFallbackField( entry.first, candidate.fieldA,
                         multipleSheets
                         ? WeakInterfaceMortarFallbackReason::MultipleInterfaceSupport
-                        : WeakInterfaceMortarFallbackReason::SurfaceTopology );
+                        : propagatedFallbackReason );
       addFallbackField( entry.first, candidate.fieldB,
                         multipleSheets
                         ? WeakInterfaceMortarFallbackReason::MultipleInterfaceSupport
-                        : WeakInterfaceMortarFallbackReason::SurfaceTopology );
+                        : propagatedFallbackReason );
     }
   }
 
@@ -27469,6 +27746,35 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   {
     participatingFields.insert( selectedPair.first );
     participatingFields.insert( selectedPair.second );
+  }
+
+  if( boundaryCoupled )
+  {
+    std::set< bm::LatticeKey > keys;
+    for( auto const & key : requiredNodeKeys ) keys.insert( toBoundaryKey( key ) );
+    bm::closeBoundaryDependencies( keys, boundaryFaces );
+    for( auto const & key : keys )
+      requiredNodeKeys.insert( WeakInterfaceMortarNodeKey{ static_cast< globalIndex >( key[0] ),
+        static_cast< globalIndex >( key[1] ), static_cast< globalIndex >( key[2] ) } );
+  }
+
+  if( boundaryCoupled )
+  {
+    // This first implementation couples bilateral BCs and bonded mortar only.
+    // Do not silently destroy an already-applied unilateral/frictional or CZ law.
+    auto const & contactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
+    auto const & cohesiveForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveForceString() );
+    real64 otherImpulse = 0.0;
+    for( localIndex node = 0; node < nodeManager.size(); ++node )
+      if( requiredNodeKeys.count( localNodeKeys[static_cast< std::size_t >( node )] ) )
+        for( localIndex const field : participatingFields )
+          for( int d = 0; d < numDims; ++d )
+            otherImpulse = std::max( otherImpulse,
+              dt * ( std::abs( contactForce[node][field][d] ) + std::abs( cohesiveForce[node][field][d] ) ) );
+    otherImpulse = MpiWrapper::allReduce( otherImpulse, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+    GEOS_ERROR_IF( otherImpulse > 0.0,
+                   "Boundary-compatible mortar encountered an overlapping legacy contact/CZ impulse; "
+                   "a coupled active-set/constitutive interface solve is required for that case." );
   }
 
   std::vector< WeakInterfaceMortarNodeFieldRecord > localNodeFieldRecords;
@@ -27593,6 +27899,196 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         interfaceSurfacePosition[flat] = record.surfacePosition;
       }
     }
+  }
+
+  if( boundaryCoupled )
+  {
+    // The legacy essential-BC update has already supplied the inhomogeneous
+    // endpoint state. Solve only compatible corrections, with every reflected
+    // donor AND buffer mass included. The dense reference solve runs on rank 0;
+    // all ranks receive the same canonical-key result, including empty ranks.
+    std::vector< bm::LatticeKey > keys;
+    keys.reserve( interfaceNodeKeys.size() );
+    for( auto const & key : interfaceNodeKeys ) keys.push_back( toBoundaryKey( key ) );
+    std::vector< bm::Row > rows;
+    rows.reserve( candidates.size() );
+    for( auto const & candidate : candidates )
+    {
+      bm::Row row;
+      row.measure = candidate.measure;
+      for( auto const & coefficient : candidate.coefficients )
+      {
+        auto const found = interfaceNodeLookup.find( coefficient.node );
+        GEOS_ERROR_IF( found == interfaceNodeLookup.end(), "Missing gathered mortar coefficient node." );
+        row.coefficients.push_back( bm::PairCoefficient{
+          flatFieldIndex( found->second, candidate.fieldA ),
+          flatFieldIndex( found->second, candidate.fieldB ), coefficient.coefficient } );
+      }
+      rows.emplace_back( std::move( row ) );
+    }
+    std::vector< std::pair< std::size_t, std::size_t > > fallback;
+    for( auto const & entry : fallbackFieldsByNodeKey )
+    {
+      localIndex const node = interfaceNodeLookup.at( entry.first );
+      for( auto a = entry.second.begin(); a != entry.second.end(); ++a )
+        for( auto b = std::next( a ); b != entry.second.end(); ++b )
+          fallback.emplace_back( flatFieldIndex( node, a->first ), flatFieldIndex( node, b->first ) );
+    }
+    std::vector< double > mass( flatSize, 0.0 ), cutoff( flatSize, smallMass );
+    for( localIndex node = 0; node < static_cast< localIndex >( interfaceNodeKeys.size() ); ++node )
+      for( localIndex const field : participatingFields )
+      {
+        std::size_t const flat = flatFieldIndex( node, field );
+        GEOS_ERROR_IF( interfaceRecordPriority[flat] < 0,
+                       "Boundary-compatible mortar is missing a required owner/donor record." );
+        if( interfaceActive[flat] > 0.5 && interfaceMass[flat] > smallMass ) mass[flat] = interfaceMass[flat];
+        cutoff[flat] = LvArray::math::max( smallMass, massCutoffRatio * maximumFieldMass[field] );
+      }
+	    GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
+	      "C0 boundary-compatible geometry: vertices/facets=" << totalVertices << "/" << totalFacets <<
+	      ", candidate rows=" << candidates.size() <<
+	      ", requested fallback nodes=" << fallbackFieldsByNodeKey.size() <<
+	      ", fallback requests={" << fallbackReasonSummaryString( fallbackRequestReasonCounts ) << "}" <<
+	      ", fallback node-fields={" << fallbackReasonSummaryString( fallbackNodeFieldReasonCounts() ) << "}" <<
+	      ", unexpected boundary entities=" << unexpectedBoundaryEntities <<
+	      ", max duplicate node-state difference=" << maximumDuplicateStateDifference );
+    bm::Options options;
+    options.relativeTolerance = relativeTolerance;
+    options.absoluteTolerance = m_weakInterfaceTraceAbsoluteTolerance;
+    options.rankTolerance = m_weakInterfaceTraceQRRankTolerance;
+    options.maximumMatrixEntries = static_cast< std::size_t >( m_weakInterfaceTraceQRMaxEntries );
+    options.minimumRetainedFraction = minRetainedSupportFraction;
+    options.supportFallback = fallbackToSingleField;
+
+    // Scratch expectations are not restart data; they only audit this step's
+    // owner-to-ghost synchronization and detect a later kinematic overwrite.
+    m_weakInterfaceBoundaryExpected.resize( nodeManager.size(), numVelocityFields, 3 );
+    m_weakInterfaceBoundaryTouched.resize( nodeManager.size(), numVelocityFields );
+    m_weakInterfaceBoundaryTouched.zero();
+    arrayView3d< real64 > const velocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+    arrayView3d< real64 > const momentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
+    arrayView3d< real64 > const acceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
+    arrayView3d< real64 > const dVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDVelocityString() );
+    arrayView3d< real64 > const boundaryForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() );
+    GEOS_ERROR_IF( flatSize > static_cast< std::size_t >( std::numeric_limits< int >::max() ) ||
+                   rows.size() > static_cast< std::size_t >( std::numeric_limits< int >::max() ),
+                   "Boundary mortar broadcast exceeds the MPI count limit." );
+
+    for( int component = 0; component < numDims; ++component )
+    {
+      bm::Result result;
+      int success = 1;
+      std::string error;
+      if( rank == 0 )
+      {
+        try
+        {
+          std::vector< double > trial( flatSize, 0.0 );
+          for( std::size_t flat = 0; flat < flatSize; ++flat ) trial[flat] = interfaceVelocity[flat][component];
+          auto const relations = bm::makeBoundaryRelations( keys, numVelocityFields, component, boundaryFaces );
+          result = bm::project( mass, trial, cutoff, relations, fallback, rows, options );
+          GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
+            "C0 boundary-compatible QR component=" << component <<
+            ", time=" << m_currentMomentumLogTime + dt <<
+            ", cycle=" << m_currentMomentumLogCycle <<
+            ", candidates/accepted=" << rows.size() << "/" << rows.size() - result.rejectedRows <<
+            ", rank/free-columns=" << result.rank << "/" << result.unknowns <<
+            ", smallest-relative-pivot=" << result.smallestRelativePivot <<
+            ", relative residual=" << result.relativeResidual <<
+            ", max average jump=" << result.maximumJump <<
+            ", boundary residual=" << result.boundaryResidual <<
+            ", fallback dofs=" << std::count( result.fallbackDof.begin(), result.fallbackDof.end(), 1 ) <<
+            ", boundary+fallback reaction impulse=" <<
+              std::accumulate( result.reactionImpulse.begin(), result.reactionImpulse.end(), 0.0 ) );
+        }
+        catch( std::exception const & exception ) { success = 0; error = exception.what(); }
+      }
+      // Broadcast failure before any result buffers: no rank waits on a solve
+      // that another rank abandoned. The message is identical on every rank.
+      MpiWrapper::bcast( &success, 1, 0, MPI_COMM_GEOS );
+      int messageSize = static_cast< int >( error.size() );
+      MpiWrapper::bcast( &messageSize, 1, 0, MPI_COMM_GEOS );
+      error.resize( messageSize );
+      if( messageSize > 0 ) MpiWrapper::bcast( &error[0], messageSize, 0, MPI_COMM_GEOS );
+      GEOS_ERROR_IF( success == 0, "C0 boundary-compatible projection failed: " << error );
+      if( rank != 0 )
+      {
+        result.velocity.resize( flatSize ); result.reactionImpulse.resize( flatSize );
+        result.preJump.resize( rows.size() ); result.postJump.resize( rows.size() );
+        result.retainedFraction.resize( rows.size() ); result.accepted.resize( rows.size() );
+        result.fallbackDof.resize( flatSize );
+      }
+      auto broadcastDoubles = [&]( std::vector< double > & values )
+      {
+        if( !values.empty() ) MpiWrapper::bcast( values.data(), static_cast< int >( values.size() ), 0, MPI_COMM_GEOS );
+      };
+      broadcastDoubles( result.velocity ); broadcastDoubles( result.reactionImpulse );
+      broadcastDoubles( result.preJump ); broadcastDoubles( result.postJump );
+      broadcastDoubles( result.retainedFraction );
+      if( !result.accepted.empty() ) MpiWrapper::bcast( result.accepted.data(), static_cast< int >( rows.size() ), 0, MPI_COMM_GEOS );
+      if( !result.fallbackDof.empty() ) MpiWrapper::bcast( result.fallbackDof.data(), static_cast< int >( flatSize ), 0, MPI_COMM_GEOS );
+
+      std::vector< double > worstPre( flatSize, 0.0 ), worstPost( flatSize, 0.0 );
+      std::vector< int > active( flatSize, 0 );
+      std::vector< double > support( flatSize, 0.0 ), anchorWeight( flatSize, 0.0 );
+      std::vector< std::array< real64, 3 > > anchor( flatSize );
+      for( std::size_t a = 0; a < rows.size(); ++a ) if( result.accepted[a] )
+        for( bm::PairCoefficient const & c : rows[a].coefficients )
+          for( int side = 0; side < 2; ++side )
+          {
+            std::size_t const flat = side == 0 ? c.a : c.b;
+            active[flat] = 1;
+            anchorWeight[flat] = std::max( anchorWeight[flat], rows[a].measure / std::max( cellDiagonal, 1.0e-30 ) );
+            real64 const jumpSign = side == 0 ? 1.0 : -1.0;
+            if( std::abs( result.preJump[a] ) > std::abs( worstPre[flat] ) ) worstPre[flat] = jumpSign * result.preJump[a];
+            if( std::abs( result.postJump[a] ) > std::abs( worstPost[flat] ) ) worstPost[flat] = jumpSign * result.postJump[a];
+            if( c.value / rows[a].measure >= support[flat] )
+            { support[flat] = c.value / rows[a].measure; anchor[flat] = candidates[a].point; }
+          }
+      for( localIndex node = 0; node < nodeManager.size(); ++node )
+      {
+        auto const found = interfaceNodeLookup.find( localNodeKeys[static_cast< std::size_t >( node )] );
+        if( found == interfaceNodeLookup.end() ) continue;
+        for( localIndex const field : participatingFields )
+        {
+          std::size_t const flat = flatFieldIndex( found->second, field );
+          real64 const delta = result.velocity[flat] - velocity[node][field][component];
+          // Commit once. Inactive dependent buffers get their velocity but no
+          // invented mass or activation. Existing active-field increment
+          // conventions are preserved from the preceding essential-BC update.
+          if( gridActive[node][field] > 0.5 && gridMass[node][field] > smallMass )
+          {
+            acceleration[node][field][component] += delta / dt;
+            dVelocity[node][field][component] += delta;
+          }
+          velocity[node][field][component] = result.velocity[flat];
+          momentum[node][field][component] = gridMass[node][field] * result.velocity[flat];
+          gridWeakInterfaceTraceForce[node][field][component] = gridMass[node][field] * delta / dt;
+          boundaryForce[node][field][component] = result.reactionImpulse[flat] / dt;
+          m_weakInterfaceBoundaryExpected[node][field][component] = result.velocity[flat];
+          m_weakInterfaceBoundaryTouched[node][field] = 1;
+          gridWeakInterfaceTraceActive[node][field] |= active[flat] || result.fallbackDof[flat];
+          if( active[flat] ) gridWeakInterfaceTraceSkipReason[node][field] =
+            std::max( gridWeakInterfaceTraceSkipReason[node][field], 10 );
+          if( result.fallbackDof[flat] )
+          {
+            int reason = 26;
+            auto const f = fallbackFieldsByNodeKey.find( localNodeKeys[static_cast< std::size_t >( node )] );
+            if( f != fallbackFieldsByNodeKey.end() && f->second.count( field ) )
+              reason = f->second.at( field );
+            gridWeakInterfaceTraceSkipReason[node][field] = std::max( gridWeakInterfaceTraceSkipReason[node][field], reason );
+          }
+          gridWeakInterfaceTraceVelocityJump[node][field][component] = worstPre[flat];
+          gridWeakInterfaceTraceVelocityJumpPost[node][field][component] = worstPost[flat];
+          gridWeakInterfaceTraceAnchorWeight[node][field] = std::max( gridWeakInterfaceTraceAnchorWeight[node][field], anchorWeight[flat] );
+          gridWeakInterfaceTraceSupportWeight[node][field] = std::max( gridWeakInterfaceTraceSupportWeight[node][field], support[flat] );
+          if( active[flat] )
+            for( int d = 0; d < 3; ++d )
+              gridWeakInterfaceTracePoint[node][field][d] = minimumImageDelta( anchor[flat][d] - gridPosition[node][d], d );
+        }
+      }
+    }
+    return; // No legacy GS, denominator regularization, or post-solve fallback.
   }
 
   std::vector< WeakInterfaceMortarConstraint > constraints;
@@ -27744,14 +28240,17 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       continue;
     }
     fallbackOverlapNodeKeys.insert( entry.first );
+    WeakInterfaceMortarFallbackReason const propagatedFallbackReason =
+      fallbackReasonForNode( entry.first,
+                             WeakInterfaceMortarFallbackReason::SurfaceTopology );
     for( localIndex const candidateIndex : entry.second )
     {
       WeakInterfaceMortarConstraintCandidate const & candidate =
         candidates[candidateIndex];
       addFallbackField( entry.first, candidate.fieldA,
-                        WeakInterfaceMortarFallbackReason::SurfaceTopology );
+                        propagatedFallbackReason );
       addFallbackField( entry.first, candidate.fieldB,
-                        WeakInterfaceMortarFallbackReason::SurfaceTopology );
+                        propagatedFallbackReason );
     }
   }
 
@@ -28267,11 +28766,13 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     ", constraints=" << constraints.size() <<
     ", interface nodes=" << interfaceNodeKeys.size() <<
     ", fallback nodes(requested/applied/skipped/multiple-interface/quality-overlap)=" <<
-    fallbackFieldsByNodeKey.size() << "/" << fallbackAppliedNodes << "/" <<
-    fallbackSkippedNodes << "/" << multipleInterfaceFallbackNodes << "/" <<
-    fallbackOverlapNodeKeys.size() <<
-    ", fallback reasons={" << fallbackSummary.str() << "}" <<
-    ", rejected(fit/small/topology/basis/support/mass)=" << rejectedFitCells << "/" <<
+	    fallbackFieldsByNodeKey.size() << "/" << fallbackAppliedNodes << "/" <<
+	    fallbackSkippedNodes << "/" << multipleInterfaceFallbackNodes << "/" <<
+	    fallbackOverlapNodeKeys.size() <<
+	    ", fallback requests={" << fallbackReasonSummaryString( fallbackRequestReasonCounts ) << "}" <<
+	    ", fallback node-fields={" << fallbackReasonSummaryString( fallbackNodeFieldReasonCounts() ) << "}" <<
+	    ", fallback reasons={" << fallbackSummary.str() << "}" <<
+	    ", rejected(fit/small/topology/basis/support/mass)=" << rejectedFitCells << "/" <<
     rejectedSmallEntities << "/" << ( nonmanifoldEntities + unexpectedBoundaryEntities ) << "/" <<
     rejectedBasisConstraints << "/" << rejectedSupportConstraints << "/" <<
     rejectedMassConstraints <<
@@ -28302,6 +28803,7 @@ void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & no
   GEOS_MARK_FUNCTION;
 
   localIndex const numVelocityFields = m_numVelocityFields;
+  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() ).zero();
   arrayView2d< int > const gridWeakInterfaceTraceActive =
     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
   arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight =
@@ -31615,6 +32117,8 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   arrayView3d< real64 > const gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
   arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
   arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+  arrayView3d< real64 > const gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
+  bool const compatibleMortar = m_weakInterfaceTraceBoundaryCoupling == 1;
 
   // Get node sets
   Group & nodeSets = nodeManager.sets();
@@ -32184,6 +32688,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
             gridDVelocity[g][fieldIndex][component] += dVelocity;
           }
           gridVelocity[g][fieldIndex][component] = newVelocity;
+          if( compatibleMortar ) gridMomentum[g][fieldIndex][component] = gridMass[g][fieldIndex] * newVelocity;
           gridAcceleration[g][fieldIndex][component] = newAcceleration;
         }
       }

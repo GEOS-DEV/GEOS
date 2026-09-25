@@ -100,9 +100,9 @@ pfw["mpmEventsString"] = """
 \end{lstlisting}
 
 \subsubsection{\texttt{ConfiningPressure}}
-\eventidx{ConfiningPressure}\eventattridx{confiningPressureBoxMin}\eventattridx{confiningPressureBoxMax}
+\eventidx{ConfiningPressure}\eventattridx{confiningPressureBoxMin}\eventattridx{confiningPressureBoxMax}\eventattridx{confiningPressureSphereRadius}
 
-\texttt{ConfiningPressure} applies a virtual confining pressure over a rectangular box.  It is commonly paired with \texttt{InitializeStress} so that particles begin with a compatible hydrostatic stress and the boundary/background pressure is then held or ramped over a short start-up interval.
+\texttt{ConfiningPressure} applies a virtual confining pressure outside a rectangular box, or outside an origin-centered sphere when \texttt{confiningPressureSphereRadius} is positive.  It is commonly paired with \texttt{InitializeStress} so that particles begin with a compatible hydrostatic stress and the boundary/background pressure is then held or ramped over a short start-up interval.
 
 \begin{lstlisting}[language=Python,caption={Confining-pressure event.}]
 pfw["useEvents"] = 1
@@ -117,6 +117,22 @@ pfw["mpmEventsString"] = """
   endTime="1.0e-3"
   confiningPressureBoxMin="{-0.02, -0.02, -0.001}"
   confiningPressureBoxMax="{ 0.02,  0.02,  0.001}"
+  startPressure="10.0e6"
+  endPressure="10.0e6"
+  interpType="1"/>
+"""
+\end{lstlisting}
+
+For an origin-centered spherical pressure transition, replace the two box
+corners with \texttt{confiningPressureSphereRadius}.  Positive sphere radius
+takes precedence over the box test when both are present.
+
+\begin{lstlisting}[language=Python,caption={Spherical confining-pressure event.}]
+pfw["mpmEventsString"] = """
+<ConfiningPressure
+  startTime="0.0"
+  endTime="1.0e-3"
+  confiningPressureSphereRadius="0.47"
   startPressure="10.0e6"
   endPressure="10.0e6"
   interpType="1"/>

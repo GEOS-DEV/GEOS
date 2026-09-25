@@ -152,6 +152,7 @@ public:
     static constexpr char const * gridWeakInterfaceTraceContactSuppressedString() { return "gridWeakInterfaceTraceContactSuppressed"; }
     static constexpr char const * gridWeakInterfaceTraceAnchorWeightString() { return "gridWeakInterfaceTraceAnchorWeight"; }
     static constexpr char const * gridWeakInterfaceTraceForceString() { return "gridWeakInterfaceTraceForce"; }
+    static constexpr char const * gridWeakInterfaceTraceBoundaryForceString() { return "gridWeakInterfaceTraceBoundaryForce"; }
     static constexpr char const * gridWeakInterfaceTracePointString() { return "gridWeakInterfaceTracePoint"; }
     static constexpr char const * gridWeakInterfaceTraceSupportWeightString() { return "gridWeakInterfaceTraceSupportWeight"; }
     static constexpr char const * gridWeakInterfaceTraceSkipReasonString() { return "gridWeakInterfaceTraceSkipReason"; }
@@ -1450,6 +1451,7 @@ protected:
   int m_computeSPHJacobian;
   array1d< real64 > m_confiningPressureBoxMax;
   array1d< real64 > m_confiningPressureBoxMin;
+  real64 m_confiningPressureSphereRadius;
   array1d< real64 > m_confiningStress;
   mpm::ContactGapCorrectionOption m_contactGapCorrection;
   real64 m_contactNormalExponent;
@@ -1723,6 +1725,13 @@ protected:
   real64 m_weakInterfaceTraceMinTriangleQuality;
   real64 m_weakInterfaceTraceLinearSolverTolerance;
   real64 m_weakInterfaceTraceLinearSolverRegularization;
+  integer m_weakInterfaceTraceBoundaryCoupling;
+  real64 m_weakInterfaceTraceAbsoluteTolerance;
+  real64 m_weakInterfaceTraceQRRankTolerance;
+  integer m_weakInterfaceTraceQRMaxEntries;
+  bool m_weakInterfaceBoundaryKinematicsPrepared = false;
+  array3d< real64 > m_weakInterfaceBoundaryExpected;
+  array2d< int > m_weakInterfaceBoundaryTouched;
   array2d< int > m_weakInterfaceTracePairs;
   int m_weakInterfaceTraceProjectionIterations;
   real64 m_weakInterfaceTraceProjectionScale;

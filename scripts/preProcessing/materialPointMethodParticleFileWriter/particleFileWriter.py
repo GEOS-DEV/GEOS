@@ -828,6 +828,10 @@ parameters = {
                'weakInterfaceTraceCutTolerance': ( None, True ),  # MPM: nodal level-set zero tolerance relative to the in-plane cell diagonal.
                'weakInterfaceTraceMinSegmentFraction': ( None, True ),  # MPM: discarded P1 segment threshold relative to minimum in-plane cell width.
                'weakInterfaceTraceLinearSolverTolerance': ( None, True ),  # MPM: relative RMS mortar-residual tolerance for early sweep termination.
+               'weakInterfaceTraceBoundaryCoupling': ( None, True ),  # CPU symmetry/Moving-BC-compatible minimum-norm QR projection (opt-in).
+               'weakInterfaceTraceAbsoluteTolerance': ( None, True ),  # Accepted final average jump/BC error in velocity units.
+               'weakInterfaceTraceQRRankTolerance': ( None, True ),  # Relative rank threshold, not a physical compliance.
+               'weakInterfaceTraceQRMaxEntries': ( None, True ),  # Dense QR memory guard; entries of double, not bytes.
                'weakInterfaceTraceLinearSolverRegularization': ( None, True ),  # MPM: local mass-denominator regularization fraction for mortar projection.
                'weakInterfaceTraceSuppressNodalContact': ( None, True ),  # MPM: suppress nodal contact for trace-projected group pairs.
                'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.

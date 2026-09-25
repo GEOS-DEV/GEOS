@@ -32,7 +32,8 @@ if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
   list( APPEND solidMechanicsSolvers_headers
         SolidMechanicsMPM.hpp
         MPMSolverFields.hpp
-        kernels/ExplicitMPM.hpp )
+        kernels/ExplicitMPM.hpp
+        kernels/MPMBoundaryMortar.hpp )
 
   list( APPEND solidMechanicsSolvers_sources
         SolidMechanicsMPM.cpp
