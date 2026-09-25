@@ -583,19 +583,20 @@ jobs:
         brew install cmake open-mpi openblas python@3.14 binutils
         log="$RUNNER_TEMP/geos-build.log"
         set +e
+        set -o pipefail
         {
           python3 scripts/config-build.py \
             -hc /opt/GEOS/spack-generated.cmake \
             -bt Release \
             --buildpath "$RUNNER_TEMP/geos-build"
           cmake --build "$RUNNER_TEMP/geos-build" -j 2 --target geosx
-        } >"$log" 2>&1
+        } 2>&1 | tee "$log"
         status=$?
-        cat "$log"
+        set +o pipefail
         if [[ "$status" -ne 0 ]]; then
           grep -E 'error:|CMake Error' "$log" | tail -n 8 | while IFS= read -r line; do
             echo "::error title=Build GEOS::$line"
-          done
+          done || true
           exit "$status"
         fi
 
