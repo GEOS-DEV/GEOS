@@ -50,9 +50,10 @@ public:
 
   /**
    * @brief Prepare and cache the formatted exception message
+   * @param logger Logger instance that will keep track of the exception message (through `*CurrentExceptionMessage()` methods)
    * @param msg Error message logger for structured error reporting
    */
-  void prepareWhat( DiagnosticMsg & msg ) noexcept;
+  void prepareWhat( ErrorLogger const & logger, DiagnosticMsg & msg ) noexcept;
 
 private:
   /// Formatted exception message for what() method
