@@ -18,6 +18,7 @@
  */
 
 #include "SolidMechanicsMPM.hpp"
+#include "NewtonRaphsonContact.hpp"
 
 #if defined( GEOS_USE_HIP )
 #include <hip/hip_runtime.h>
@@ -79,6 +80,7 @@ namespace
 constexpr real64 explicitSurfaceNormalTolerance = 1.0e-12;
 constexpr real64 explicitSurfaceNormalNormSquaredTolerance =
   explicitSurfaceNormalTolerance * explicitSurfaceNormalTolerance;
+constexpr real64 contactNormalMagnitudeTolerance = 1.0e-8;
 
 template< typename VECTOR >
 GEOS_HOST_DEVICE
@@ -378,6 +380,209 @@ GEOS_FORCE_INLINE
 bool isFinite( real64 const value )
 {
   return std::isfinite( value );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool checkedAdd( real64 const a,
+                 real64 const b,
+                 real64 & result )
+{
+  real64 const maximum = std::numeric_limits< real64 >::max();
+  if( !isFinite( a ) || !isFinite( b ) ||
+      ( b > 0.0 && a > maximum - b ) ||
+      ( b < 0.0 && a < -maximum - b ) )
+  {
+    return false;
+  }
+  result = a + b;
+  return isFinite( result );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool checkedSubtract( real64 const a,
+                      real64 const b,
+                      real64 & result )
+{
+  return isFinite( b ) && checkedAdd( a, -b, result );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool checkedMultiply( real64 const a,
+                      real64 const b,
+                      real64 & result )
+{
+  if( !isFinite( a ) || !isFinite( b ) )
+  {
+    return false;
+  }
+  if( isZero(a) || isZero(b) )
+  {
+    result = 0.0;
+    return true;
+  }
+
+  real64 const absA = LvArray::math::abs( a );
+  real64 const absB = LvArray::math::abs( b );
+  if( absA > 1.0 &&
+      absB > std::numeric_limits< real64 >::max() / absA )
+  {
+    return false;
+  }
+  result = a * b;
+  return isFinite( result );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool checkedDivide( real64 const numerator,
+                    real64 const denominator,
+                    real64 & result )
+{
+  if( !isFinite( numerator ) || !isFinite( denominator ) ||
+      isZero(denominator) )
+  {
+    return false;
+  }
+  real64 const absNumerator = LvArray::math::abs( numerator );
+  real64 const absDenominator = LvArray::math::abs( denominator );
+  if( absDenominator < 1.0 &&
+      absNumerator > std::numeric_limits< real64 >::max() * absDenominator )
+  {
+    return false;
+  }
+  result = numerator / denominator;
+  return isFinite( result );
+}
+
+/**
+ * @brief Evaluate the signed logistic response and derivative without an
+ * exponential overflow or an indeterminate inf/inf quotient.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool stableSignedLogistic( real64 const argument,
+                           real64 & response,
+                           real64 & derivative )
+{
+  if( !isFinite( argument ) )
+  {
+    return false;
+  }
+
+  // Beyond this range the derivative is below double-precision relevance for
+  // the contact-plane fit.  Returning the limiting value also avoids exp
+  // underflow when floating-point underflow traps are enabled.
+  constexpr real64 saturationArgument = 40.0;
+  if( argument >= saturationArgument )
+  {
+    response = 1.0;
+    derivative = 0.0;
+    return true;
+  }
+  if( argument <= -saturationArgument )
+  {
+    response = -1.0;
+    derivative = 0.0;
+    return true;
+  }
+
+  if( argument >= 0.0 )
+  {
+    real64 const exponential = LvArray::math::exp( -argument );
+    real64 const denominator = 1.0 + exponential;
+    response = 2.0 / denominator - 1.0;
+    derivative = 2.0 * exponential / ( denominator * denominator );
+  }
+  else
+  {
+    real64 const exponential = LvArray::math::exp( argument );
+    real64 const denominator = 1.0 + exponential;
+    response = 2.0 * exponential / denominator - 1.0;
+    derivative = 2.0 * exponential / ( denominator * denominator );
+  }
+  return isFinite( response ) && isFinite( derivative );
+}
+
+/** @brief Checked four-component dot product for the logistic contact fit. */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool checkedDot4( real64 const (& a)[4],
+                  real64 const (& b)[4],
+                  real64 & result )
+{
+  result = 0.0;
+  for( localIndex component = 0; component < 4; ++component )
+  {
+    if( !isFinite( a[component] ) || !isFinite( b[component] ) )
+    {
+      return false;
+    }
+    real64 product = 0.0;
+    if( !checkedMultiply( a[component], b[component], product ) ||
+        !checkedAdd( result, product, result ) )
+    {
+      return false;
+    }
+  }
+  return isFinite( result );
+}
+
+/** @brief Normalize a finite three-vector without overflowing its norm. */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool checkedNormalize3( real64 (& value)[3],
+                        real64 & originalNorm )
+{
+  if( !isFinite( value[0] ) || !isFinite( value[1] ) ||
+      !isFinite( value[2] ) )
+  {
+    return false;
+  }
+  real64 const scale = LvArray::math::max(
+    LvArray::math::abs( value[0] ),
+    LvArray::math::max( LvArray::math::abs( value[1] ),
+                        LvArray::math::abs( value[2] ) ) );
+  if( !( scale > 0.0 ) )
+  {
+    originalNorm = 0.0;
+    return false;
+  }
+  real64 const x = value[0] / scale;
+  real64 const y = value[1] / scale;
+  real64 const z = value[2] / scale;
+  real64 const scaledNorm = LvArray::math::sqrt( x * x + y * y + z * z );
+  if( !isFinite( scaledNorm ) || !( scaledNorm > 0.0 ) ||
+      scale > std::numeric_limits< real64 >::max() / scaledNorm )
+  {
+    return false;
+  }
+  originalNorm = scale * scaledNorm;
+  if( !isFinite( originalNorm ) || !( originalNorm > 0.0 ) )
+  {
+    return false;
+  }
+  // Normalize the already scaled components.  Forming 1/originalNorm can
+  // overflow for a valid subnormal vector even though its unit direction is
+  // perfectly representable.
+  value[0] = x / scaledNorm;
+  value[1] = y / scaledNorm;
+  value[2] = z / scaledNorm;
+  return isFinite( value[0] ) && isFinite( value[1] ) &&
+         isFinite( value[2] );
+}
+
+template< typename VECTOR >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool hasUsableContactNormal( VECTOR const & normal )
+{
+  real64 checkedNormal[3] = { normal[0], normal[1], normal[2] };
+  real64 magnitude = 0.0;
+  return checkedNormalize3( checkedNormal, magnitude ) &&
+         magnitude > contactNormalMagnitudeTolerance;
 }
 
 namespace floatingPointDiagnostics
@@ -2352,14 +2557,28 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_confiningPressureBoxMax(),
   m_confiningPressureBoxMin(),
   m_confiningStress(),
+  m_contactGapActivationRelativeTolerance( 1.0e-10 ),
+  m_contactMinimumMass( 0.0 ),
+  m_contactMinimumMassFraction( 0.0 ),
   m_contactGapCorrection( mpm::ContactGapCorrectionOption::Implicit ),
   m_contactNormalExponent( 1.0 ),
   m_contactNormalType( mpm::ContactNormalTypeOption::MassWeighted ),
+  m_contactNRFiniteDifferenceRelativeStep( 1.0e-6 ),
+  m_contactNRLineSearchMinimumScale( 1.0e-4 ),
+  m_contactNRMaximumIterations( 50 ),
+  m_contactNRRegularization( 1.0e-12 ),
+  m_contactNRRequireConvergence( 1 ),
+  m_contactNRVelocityTolerance( 1.0e-10 ),
   m_contactPGSMaximumIterations( 200 ),
   m_contactPGSRelaxation( 1.0 ),
   m_contactPGSRequireConvergence( 1 ),
+  m_contactPGSUseLogisticRegressionForMultifield( 0 ),
   m_contactPGSVelocityTolerance( 1.0e-10 ),
   m_contactSolver( mpm::ContactSolverOption::Pairwise ),
+  m_contactSolverDiagnosticMaxNodes( 20 ),
+  m_contactSolverDiagnostics( 0 ),
+  m_contactSolverFailureDiagnosticMaxNodes( 20 ),
+  m_contactSolverFailureDiagnostics( 0 ),
   m_cpdiDomainScaling( 0 ),
   m_cpdiDomainScalingType( mpm::CPDIDomainScalingTypeOption::Homel ),
   m_crackTipDetectionThreshold( 0.5 ),
@@ -2720,6 +2939,26 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Array that stores confining stress state" );
 
+  registerWrapper( "contactGapActivationRelativeTolerance",
+                   &m_contactGapActivationRelativeTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_contactGapActivationRelativeTolerance ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Nonnegative implicit-contact gap activation tolerance as a fraction of the local grid spacing in the pair-normal direction." );
+
+  registerWrapper( "contactMinimumMass", &m_contactMinimumMass ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_contactMinimumMass ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Nonnegative absolute nodal field-mass cutoff used only when constructing material-contact constraints. The effective contact cutoff is never smaller than smallMass." );
+
+  registerWrapper( "contactMinimumMassFraction",
+                   &m_contactMinimumMassFraction ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_contactMinimumMassFraction ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Nonnegative fraction of the largest contact-capable field mass on a node used to exclude poorly conditioned fields from material contact. Must be less than one." );
+
   registerWrapper( "contactGapCorrection", &m_contactGapCorrection ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_contactGapCorrection ).
@@ -2737,6 +2976,53 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for contact normal type" );
+
+  registerWrapper( "contactNRFiniteDifferenceRelativeStep",
+                   &m_contactNRFiniteDifferenceRelativeStep ).
+    setApplyDefaultValue( m_contactNRFiniteDifferenceRelativeStep ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Relative impulse perturbation used to form the Newton-Raphson contact Jacobian." );
+
+  registerWrapper( "contactNRLineSearchMinimumScale",
+                   &m_contactNRLineSearchMinimumScale ).
+    setApplyDefaultValue( m_contactNRLineSearchMinimumScale ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Smallest damped Newton-Raphson contact step accepted by the backtracking line search." );
+
+  registerWrapper( "contactNRMaximumIterations", &m_contactNRMaximumIterations ).
+    setApplyDefaultValue( m_contactNRMaximumIterations ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum number of node-local Newton-Raphson contact iterations." );
+
+  registerWrapper( "contactNRRegularization", &m_contactNRRegularization ).
+    setApplyDefaultValue( m_contactNRRegularization ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Relative least-squares regularization used when the Newton contact Jacobian is singular." );
+
+  registerWrapper( "contactNRRequireConvergence", &m_contactNRRequireConvergence ).
+    setApplyDefaultValue( m_contactNRRequireConvergence ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "If nonzero, stop when any node-local Newton-Raphson contact solve fails to converge." );
+
+  registerWrapper( "contactNRVelocityTolerance", &m_contactNRVelocityTolerance ).
+    setApplyDefaultValue( m_contactNRVelocityTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Absolute Newton-Raphson contact residual tolerance in velocity units." );
+
+  registerWrapper( "contactPGSUseLogisticRegressionForMultifield",
+                   &m_contactPGSUseLogisticRegressionForMultifield ).
+    setApplyDefaultValue( m_contactPGSUseLogisticRegressionForMultifield ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "If nonzero, coupled projected Gauss-Seidel or Newton-Raphson contact uses a pairwise "
+                    "logistic-regression normal at nodes with more than two active contact fields; two-field nodes "
+                    "continue to use contactNormalType. The PGS-prefixed name is retained for input compatibility." );
 
   registerWrapper( "contactPGSMaximumIterations", &m_contactPGSMaximumIterations ).
     setApplyDefaultValue( m_contactPGSMaximumIterations ).
@@ -2766,7 +3052,34 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_contactSolver ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Nodal material-contact algorithm: Pairwise or ProjectedGaussSeidel." );
+    setDescription( "Nodal material-contact algorithm: Pairwise, ProjectedGaussSeidel, or NewtonRaphson." );
+
+  registerWrapper( "contactSolverDiagnosticMaxNodes",
+                   &m_contactSolverDiagnosticMaxNodes ).
+    setApplyDefaultValue( m_contactSolverDiagnosticMaxNodes ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum number of detailed coupled-contact node diagnostics written per rank and solve." );
+
+  registerWrapper( "contactSolverDiagnostics", &m_contactSolverDiagnostics ).
+    setApplyDefaultValue( m_contactSolverDiagnostics ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "If nonzero, write bounded node/pair diagnostics for coupled multifield contact." );
+
+  registerWrapper( "contactSolverFailureDiagnostics",
+                   &m_contactSolverFailureDiagnostics ).
+    setApplyDefaultValue( m_contactSolverFailureDiagnostics ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "If nonzero, write detailed node, field, and pair data for nonconverged coupled-contact nodes." );
+
+  registerWrapper( "contactSolverFailureDiagnosticMaxNodes",
+                   &m_contactSolverFailureDiagnosticMaxNodes ).
+    setApplyDefaultValue( m_contactSolverFailureDiagnosticMaxNodes ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Maximum number of nonconverged coupled-contact nodes reported per rank and solve." );
 
   registerWrapper( "cpdiDomainScaling", &m_cpdiDomainScaling ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -4088,8 +4401,41 @@ void SolidMechanicsMPM::postInputInitialization()
                  "fieldDiagnosticMaximumAbsoluteValue must be finite and positive." );
   GEOS_ERROR_IF( m_fieldDiagnosticMaxReportsPerField < -1,
                  "fieldDiagnosticMaxReportsPerField must be -1 (unlimited) or non-negative." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactGapActivationRelativeTolerance ) ||
+                 m_contactGapActivationRelativeTolerance < 0.0 ||
+                 m_contactGapActivationRelativeTolerance > 0.1,
+                 "contactGapActivationRelativeTolerance must be finite and in [0,0.1]." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactMinimumMass ) ||
+                 m_contactMinimumMass < 0.0,
+                 "contactMinimumMass must be finite and non-negative." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactMinimumMassFraction ) ||
+                 m_contactMinimumMassFraction < 0.0 ||
+                 m_contactMinimumMassFraction >= 1.0,
+                 "contactMinimumMassFraction must be finite and in [0,1)." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactNRFiniteDifferenceRelativeStep ) ||
+                 m_contactNRFiniteDifferenceRelativeStep <= 0.0 ||
+                 m_contactNRFiniteDifferenceRelativeStep > 0.1,
+                 "contactNRFiniteDifferenceRelativeStep must be finite and in (0,0.1]." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactNRLineSearchMinimumScale ) ||
+                 m_contactNRLineSearchMinimumScale <= 0.0 ||
+                 m_contactNRLineSearchMinimumScale > 1.0,
+                 "contactNRLineSearchMinimumScale must be finite and in (0,1]." );
+  GEOS_ERROR_IF( m_contactNRMaximumIterations < 1,
+                 "contactNRMaximumIterations must be at least one." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactNRRegularization ) ||
+                 m_contactNRRegularization <= 0.0,
+                 "contactNRRegularization must be finite and positive." );
+  GEOS_ERROR_IF( m_contactNRRequireConvergence < 0 ||
+                 m_contactNRRequireConvergence > 1,
+                 "contactNRRequireConvergence must be 0 or 1." );
+  GEOS_ERROR_IF( !std::isfinite( m_contactNRVelocityTolerance ) ||
+                 m_contactNRVelocityTolerance <= 0.0,
+                 "contactNRVelocityTolerance must be finite and positive." );
   GEOS_ERROR_IF( m_contactPGSMaximumIterations < 1,
                  "contactPGSMaximumIterations must be at least one." );
+  GEOS_ERROR_IF( m_contactPGSUseLogisticRegressionForMultifield < 0 ||
+                 m_contactPGSUseLogisticRegressionForMultifield > 1,
+                 "contactPGSUseLogisticRegressionForMultifield must be 0 or 1." );
   GEOS_ERROR_IF( !std::isfinite( m_contactPGSVelocityTolerance ) ||
                  m_contactPGSVelocityTolerance <= 0.0,
                  "contactPGSVelocityTolerance must be finite and positive." );
@@ -4099,11 +4445,21 @@ void SolidMechanicsMPM::postInputInitialization()
   GEOS_ERROR_IF( m_contactPGSRequireConvergence < 0 ||
                  m_contactPGSRequireConvergence > 1,
                  "contactPGSRequireConvergence must be 0 or 1." );
+  GEOS_ERROR_IF( m_contactSolverDiagnosticMaxNodes < 0,
+                 "contactSolverDiagnosticMaxNodes must be non-negative." );
+  GEOS_ERROR_IF( m_contactSolverDiagnostics < 0 ||
+                 m_contactSolverDiagnostics > 1,
+                 "contactSolverDiagnostics must be 0 or 1." );
+  GEOS_ERROR_IF( m_contactSolverFailureDiagnostics < 0 ||
+                 m_contactSolverFailureDiagnostics > 1,
+                 "contactSolverFailureDiagnostics must be 0 or 1." );
+  GEOS_ERROR_IF( m_contactSolverFailureDiagnosticMaxNodes < 0,
+                 "contactSolverFailureDiagnosticMaxNodes must be non-negative." );
 #if defined( GEOS_USE_DEVICE )
   GEOS_ERROR_IF( m_floatingPointDiagnostics != 0,
                  "floatingPointDiagnostics is host-only and cannot be enabled in a device build." );
-  GEOS_ERROR_IF( m_contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel,
-                 "The ProjectedGaussSeidel contact solver currently requires a CPU build." );
+  GEOS_ERROR_IF( m_contactSolver != mpm::ContactSolverOption::Pairwise,
+                 "The coupled ProjectedGaussSeidel and NewtonRaphson contact solvers currently require a CPU build." );
 #endif
   GEOS_ERROR_IF( m_applyVelocityGradientWhenSplittingParticles < 0 ||
                  m_applyVelocityGradientWhenSplittingParticles > 1,
@@ -7835,6 +8191,8 @@ void SolidMechanicsMPM::updateNodalNeighborListRequirement()
 {
   m_needsNodalNeighborList = m_computeParticleSurfaceNormalsAndPositions == 1 ||
                              m_contactNormalType == mpm::ContactNormalTypeOption::LogisticRegression ||
+                             ( m_contactSolver != mpm::ContactSolverOption::Pairwise &&
+                               m_contactPGSUseLogisticRegressionForMultifield == 1 ) ||
                              m_areaIntegrationMethod == mpm::AreaIntegrationOption::Mesh;
 }
 
@@ -10217,7 +10575,7 @@ void SolidMechanicsMPM::computePairwiseLogisticRegressionSurfaceNormalsAndPositi
 
         real64 nAB[3] = {};
         real64 sAB[3] = {};
-        logisticRegression( planeStrain,
+        mpm::LogisticRegressionResultFlag result = logisticRegression( planeStrain,
                             numContactGroups,
                             damageFieldPartitioning,
                             maxLRIterations,
@@ -10441,7 +10799,7 @@ real64 SolidMechanicsMPM::computeMaximumSurfacePositionOffset( real64 (& n)[3],
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
+mpm::LogisticRegressionResultFlag SolidMechanicsMPM::logisticRegression( int const & planeStrain,
                                             integer const & numContactGroups,
                                             integer const & damageFieldPartitioning,
                                             int const & maxLRIterations,
@@ -10463,10 +10821,58 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
                                             real64 (& normal)[3],
                                             real64 (& surfacePosition)[3] )
 {
+  // Establish a finite fallback before performing any fit arithmetic.  The
+  // coupled contact caller may supply a mass-weighted normal whose magnitude
+  // is small, so preserve its direction while normalizing it safely.
+  real64 fallbackNormal[3] = { normal0[0], normal0[1], normal0[2] };
+  real64 fallbackNormalMagnitude = 0.0;
+  if( !checkedNormalize3( fallbackNormal, fallbackNormalMagnitude ) )
+  {
+    LvArray::tensorOps::fill< 3 >( normal, 0.0 );
+    LvArray::tensorOps::fill< 3 >( surfacePosition, 0.0 );
+    return;
+  }
+  LvArray::tensorOps::copy< 3 >( normal, fallbackNormal );
+  LvArray::tensorOps::fill< 3 >( surfacePosition, 0.0 );
+
+  if( numContactGroups <= 0 || numNeighboringParticles <= 0 ||
+      maxLRIterations <= 0 || !isFinite( LRtolerance ) ||
+      LRtolerance < 0.0 )
+  {
+    return;
+  }
+
+  real64 const maximumCellSize = LvArray::math::max(
+    LvArray::math::abs( hEl[0] ),
+    LvArray::math::max( LvArray::math::abs( hEl[1] ),
+                        LvArray::math::abs( hEl[2] ) ) );
+  if( !isFinite( maximumCellSize ) || !( maximumCellSize > 0.0 ) ||
+      !isFinite( hEl[0] ) || !isFinite( hEl[1] ) ||
+      !isFinite( hEl[2] ) )
+  {
+    return;
+  }
+
   // Diagonal penalty matrix from paper
-  real64 const lambda = 1e-7 * LvArray::math::square( ( hEl[0] + hEl[1] + hEl[2] ) / 3 ); // Paper doesn't say what equivalent grid
-                                                                                                // size to use (min,
-                                                                                                // max, or average)
+  real64 const scaledMeanCellSize =
+    ( hEl[0] / maximumCellSize + hEl[1] / maximumCellSize +
+      hEl[2] / maximumCellSize ) / 3.0;
+  real64 meanCellSize = 0.0;
+  real64 meanCellSizeSquared = 0.0;
+  real64 lambda = 0.0;
+  if( !checkedMultiply( maximumCellSize,
+                        scaledMeanCellSize,
+                        meanCellSize ) ||
+      !checkedMultiply( meanCellSize,
+                        meanCellSize,
+                        meanCellSizeSquared ) ||
+      !checkedMultiply( 1.0e-7,
+                        meanCellSizeSquared,
+                        lambda ) ||
+      !( lambda > 0.0 ) )
+  {
+    return;
+  }
   real64 const w_p = 1; // Particle weight, was 1 in paper
 
   // Initial guess for normal and offset phi={n_1, n_2, n_2, offset}
@@ -10477,8 +10883,8 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
   // Tensor equations:
   //   n_old = normal0.
   //   s_old = normal0.
-  LvArray::tensorOps::copy< 3 >( n_old, normal0 );
-  LvArray::tensorOps::copy< 3 >( s_old, normal0 );
+  LvArray::tensorOps::copy< 3 >( n_old, fallbackNormal );
+  LvArray::tensorOps::copy< 3 >( s_old, surfacePosition );
 
   // Guess normal and offset of contact plane first (simple to use a weighting on the grid mapped normals from both
   // fields and zero offset)
@@ -10510,19 +10916,108 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
           }
 
           real64 x_p[4] = { 1.0 };
-          x_p[0] = particlePosition[regionIndex][subRegionIndex][particleIndex][0] - gridPosition[0]; // Unsure if position of material
-                                                                                                      // point is relative to
-                                                                                                      // grid node
-          x_p[1] = particlePosition[regionIndex][subRegionIndex][particleIndex][1] - gridPosition[1];
-          x_p[2] = particlePosition[regionIndex][subRegionIndex][particleIndex][2] - gridPosition[2];
+          if( !checkedSubtract(
+                particlePosition[regionIndex][subRegionIndex][particleIndex][0],
+                gridPosition[0],
+                x_p[0] ) ||
+              !checkedSubtract(
+                particlePosition[regionIndex][subRegionIndex][particleIndex][1],
+                gridPosition[1],
+                x_p[1] ) ||
+              !checkedSubtract(
+                particlePosition[regionIndex][subRegionIndex][particleIndex][2],
+                gridPosition[2],
+                x_p[2] ) )
+          {
+            errored = true;
+            break;
+          }
           x_p[3] = 1.0;
-          // Tensor equation: exp_x_phi = exp(-dot(x_p, phi)).
-          real64 exp_x_phi = LvArray::math::exp( -LvArray::tensorOps::AiBi< 4 >( x_p, phi ) );
-          real64 psi_sqr = LvArray::math::square( 2 * exp_x_phi / LvArray::math::square( 1.0 + exp_x_phi ) );
-
-          mat[i][j] += psi_sqr * w_p * x_p[i] * x_p[j];
+          real64 logisticArgument = 0.0;
+          real64 logisticResponse = 0.0;
+          real64 psi = 0.0;
+          if( !checkedDot4( x_p, phi, logisticArgument ) ||
+              !stableSignedLogistic( logisticArgument,
+                                     logisticResponse,
+                                     psi ) )
+          {
+            errored = true;
+            break;
+          }
+          static_cast< void >( logisticResponse );
+          real64 psiSquared = 0.0;
+          real64 weightedPsiSquared = 0.0;
+          real64 rowContribution = 0.0;
+          real64 matrixContribution = 0.0;
+          if( !checkedMultiply( psi, psi, psiSquared ) ||
+              !checkedMultiply( psiSquared, w_p, weightedPsiSquared ) ||
+              !checkedMultiply( weightedPsiSquared,
+                                x_p[i],
+                                rowContribution ) ||
+              !checkedMultiply( rowContribution,
+                                x_p[j],
+                                matrixContribution ) ||
+              !checkedAdd( mat[i][j],
+                           matrixContribution,
+                           mat[i][j] ) )
+          {
+            errored = true;
+            break;
+          }
+        }
+        if( errored || !isFinite( mat[i][j] ) )
+        {
+          errored = true;
+          break;
         }
       }
+      if( errored )
+      {
+        break;
+      }
+    }
+    if( errored )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      break;
+    }
+
+    // Scale the normal equations before evaluating the determinant.  The
+    // contact fit is unchanged because the right-hand side is scaled by the
+    // same factor below, while determinant/cofactor products stay bounded.
+    real64 matrixScale = 0.0;
+    for( localIndex i = 0; i < 4; ++i )
+    {
+      for( localIndex j = 0; j < 4; ++j )
+      {
+        matrixScale = LvArray::math::max(
+          matrixScale, LvArray::math::abs( mat[i][j] ) );
+      }
+    }
+    if( !isFinite( matrixScale ) || !( matrixScale > 0.0 ) )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      errored = true;
+      break;
+    }
+    for( localIndex i = 0; i < 4 && !errored; ++i )
+    {
+      for( localIndex j = 0; j < 4; ++j )
+      {
+        if( !checkedDivide( mat[i][j], matrixScale, mat[i][j] ) )
+        {
+          errored = true;
+          break;
+        }
+      }
+    }
+    if( errored )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      break;
     }
 
     real64 matInv[4][4] = {};
@@ -10535,7 +11030,7 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
     // mat[2][0], mat[2][1],
     // mat[2][2], mat[2][3], mat[3][0], mat[3][1], mat[3][2], mat[3][3], matDet);
 
-    if( isZero( matDet, 1e-16 ) )
+    if( !isFinite( matDet ) || isZero( matDet, 1e-16 ) )
     {
       // GEOS_LOG_RANK( "Matrix became singular!" );
       // Tensor equations:
@@ -10549,11 +11044,32 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
 
     // Tensor equation: matInv = inv(mat).
     LvArray::tensorOps::invert< 4 >( matInv, mat );
+    for( localIndex i = 0; i < 4 && !errored; ++i )
+    {
+      for( localIndex j = 0; j < 4; ++j )
+      {
+        if( !isFinite( matInv[i][j] ) )
+        {
+          errored = true;
+          break;
+        }
+      }
+    }
+    if( errored )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      break;
+    }
 
     real64 vec[4] = {}; // J^T*W*(c-f(\phi^k))-Lambda*phi^k
     for( localIndex i = 0; i < 4; ++i )
     {
-      vec[i] = -lambda * ( i < 3 ) * phi[i];
+      if( i < 3 && !checkedMultiply( -lambda, phi[i], vec[i] ) )
+      {
+        errored = true;
+        break;
+      }
       for( localIndex n=0; n < numNeighboringParticles; ++n )
       {
         localIndex const regionIndex = neighborRegions[n];
@@ -10573,21 +11089,84 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
         }
 
         real64 x_p[4] = {};
-        x_p[0] = particlePosition[regionIndex][subRegionIndex][particleIndex][0] - gridPosition[0]; // Unsure if position of material point
-                                                                                                    // is relative to grid
-                                                                                                    // node
-        x_p[1] = particlePosition[regionIndex][subRegionIndex][particleIndex][1] - gridPosition[1];
-        x_p[2] = particlePosition[regionIndex][subRegionIndex][particleIndex][2] - gridPosition[2];
+        if( !checkedSubtract(
+              particlePosition[regionIndex][subRegionIndex][particleIndex][0],
+              gridPosition[0],
+              x_p[0] ) ||
+            !checkedSubtract(
+              particlePosition[regionIndex][subRegionIndex][particleIndex][1],
+              gridPosition[1],
+              x_p[1] ) ||
+            !checkedSubtract(
+              particlePosition[regionIndex][subRegionIndex][particleIndex][2],
+              gridPosition[2],
+              x_p[2] ) )
+        {
+          errored = true;
+          break;
+        }
         x_p[3] = 1;
 
         real64 c_p = -( fieldIndex == fieldA ) + ( fieldIndex == fieldB );  // Flip this to be consistent with normal direction for average
                                                                             // method (initial guess)
 
-        // Tensor equation: exp_x_phi = exp(-dot(x_p, phi)).
-        real64 exp_x_phi = LvArray::math::exp( -LvArray::tensorOps::AiBi< 4 >( x_p, phi ) );
-        real64 psi  = 2.0 * exp_x_phi / LvArray::math::square( 1.0 +  exp_x_phi );
-        vec[i] += psi * w_p * ( c_p - ( 2.0 / ( 1.0 + exp_x_phi ) - 1.0 ) ) * x_p[i];
+        real64 logisticArgument = 0.0;
+        real64 logisticResponse = 0.0;
+        real64 psi = 0.0;
+        if( !checkedDot4( x_p, phi, logisticArgument ) ||
+            !stableSignedLogistic( logisticArgument,
+                                   logisticResponse,
+                                   psi ) )
+        {
+          errored = true;
+          break;
+        }
+        real64 responseError = 0.0;
+        real64 weightedDerivative = 0.0;
+        real64 residualContribution = 0.0;
+        real64 vectorContribution = 0.0;
+        if( !checkedSubtract( c_p,
+                              logisticResponse,
+                              responseError ) ||
+            !checkedMultiply( psi, w_p, weightedDerivative ) ||
+            !checkedMultiply( weightedDerivative,
+                              responseError,
+                              residualContribution ) ||
+            !checkedMultiply( residualContribution,
+                              x_p[i],
+                              vectorContribution ) ||
+            !checkedAdd( vec[i], vectorContribution, vec[i] ) )
+        {
+          errored = true;
+          break;
+        }
       }
+      if( errored || !isFinite( vec[i] ) )
+      {
+        errored = true;
+        break;
+      }
+    }
+    if( errored )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      break;
+    }
+
+    for( localIndex i = 0; i < 4; ++i )
+    {
+      if( !checkedDivide( vec[i], matrixScale, vec[i] ) )
+      {
+        errored = true;
+        break;
+      }
+    }
+    if( errored )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      break;
     }
 
     // Compute increment in phi
@@ -10595,8 +11174,34 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
     // Tensor equations:
     //   dphi = matInv * vec.
     //   phi = phi + dphi.
-    LvArray::tensorOps::Ri_eq_AijBj< 4, 4 >( dphi, matInv, vec );
-    LvArray::tensorOps::add< 4 >( phi, dphi );
+    for( localIndex i = 0; i < 4; ++i )
+    {
+      if( !checkedDot4( matInv[i], vec, dphi[i] ) )
+      {
+        errored = true;
+        break;
+      }
+    }
+    if( errored )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      break;
+    }
+    for( localIndex i = 0; i < 4; ++i )
+    {
+      if( !checkedAdd( phi[i], dphi[i], phi[i] ) )
+      {
+        errored = true;
+        break;
+      }
+    }
+    if( errored )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      break;
+    }
 
     // real64 newPhiNorm = LvArray::tensorOps::l2Norm< 4 >( phi );
 
@@ -10605,12 +11210,11 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
     n_new[1] = phi[1];
     n_new[2] = phi[2];
     // Tensor equation: newNorm = ||n_new||.
-    real64 newNorm = LvArray::tensorOps::l2Norm< 3 >( n_new );
+    real64 newNorm = 0.0;
     // GEOS_LOG_RANK( "newNorm: " << newNorm );
-    if( newNorm > 1e-25 )
+    if( checkedNormalize3( n_new, newNorm ) && newNorm > 1e-25 )
     {
-      // Tensor equation: n_new = 1 / newNorm * (n_new).
-      LvArray::tensorOps::scale< 3 >( n_new, 1 / newNorm );
+      // checkedNormalize3 already normalized n_new without overflowing.
     }
     else
     {
@@ -10630,29 +11234,68 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
     // real64 const epsilon = 1e-5; // Convergence criteria
     // real64 const relativeChange = LvArray::math::abs( 1.0 - LvArray::tensorOps::AiBi< 3 >( n_new, n_old ) );
     // real64 const relativeNormChange = LvArray::math::abs(newPhiNorm - oldPhiNorm)/ oldPhiNorm;
-    real64 surfaceOffset = ( -LvArray::math::log( 1.0 / 3.0 ) - phi[3] ) / newNorm; // Add check and constraint to make sure that surface
-                                                                                    // position is never more than grid
-                                                                                    // diagonal
+    real64 surfaceOffsetNumerator = 0.0;
+    real64 surfaceOffset = 0.0;
+    if( !checkedSubtract( -LvArray::math::log( 1.0 / 3.0 ),
+                          phi[3],
+                          surfaceOffsetNumerator ) ||
+        !checkedDivide( surfaceOffsetNumerator,
+                        newNorm,
+                        surfaceOffset ) )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      errored = true;
+      break;
+    }
 
     real64 s_new[3] = {};
     // Tensor equation: s_new = surfaceOffset * n_new.
-    LvArray::tensorOps::scaledCopy< 3 >( s_new, n_new, surfaceOffset );
+    if( !checkedMultiply( surfaceOffset, n_new[0], s_new[0] ) ||
+        !checkedMultiply( surfaceOffset, n_new[1], s_new[1] ) ||
+        !checkedMultiply( surfaceOffset, n_new[2], s_new[2] ) )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      errored = true;
+      break;
+    }
 
     real64 diff[3] = {};
     // Tensor equations:
     //   diff = s_new - s_old.
     //   ds = ||s_new - s_old||.
-    LvArray::tensorOps::copy< 3 >( diff, s_new );
-    LvArray::tensorOps::subtract< 3 >( diff, s_old );
-    real64 ds = LvArray::tensorOps::l2Norm< 3 >( diff );
+    if( !checkedSubtract( s_new[0], s_old[0], diff[0] ) ||
+        !checkedSubtract( s_new[1], s_old[1], diff[1] ) ||
+        !checkedSubtract( s_new[2], s_old[2], diff[2] ) )
+    {
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      errored = true;
+      break;
+    }
+    real64 normalizedDiff[3] = { diff[0], diff[1], diff[2] };
+    real64 ds = 0.0;
+    if( !checkedNormalize3( normalizedDiff, ds ) )
+    {
+      ds = 0.0;
+    }
+    real64 cellSize[3] = { hEl[0], hEl[1], hEl[2] };
     if( planeStrain == 1 )
     {
-      ds /= LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] );
+      cellSize[2] = 0.0;
     }
-    else
+    real64 normalizedCellSize[3] = {
+      cellSize[0], cellSize[1], cellSize[2]
+    };
+    real64 cellSizeNorm = 0.0;
+    if( !checkedNormalize3( normalizedCellSize, cellSizeNorm ) ||
+        !checkedDivide( ds, cellSizeNorm, ds ) )
     {
-      // Tensor equation: hEl: l2Norm(hEl).
-      ds /= LvArray::tensorOps::l2Norm< 3 >( hEl );
+      LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
+      LvArray::tensorOps::copy< 3 >( normal, n_old );
+      errored = true;
+      break;
     }
 
 
@@ -10727,12 +11370,26 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
   // GEOS_LOG_RANK(sstream.str());
   // GEOS_LOG_RANK(nstream.str());
 
-  if( !converged && !errored )
-  {
-#if !defined(GEOS_USE_HIP) && !defined(__HIP__) && !defined(__HIPCC__) && !defined(__HIP_DEVICE_COMPILE__)
-    GEOS_LOG_RANK( "Logistic regression did not converge! Using last iteration value." );
-#endif
-  }
+ if( converged )
+ {
+  return mpm::LogisticRegressionResultFlag::Converged
+ }
+
+ if( errored )
+ {
+  return mpm::LogisticRegressionResultFlag::Errored;
+ }
+ else
+ {
+  return mpm::LogisticRegressionResultFlag::Unconverged;
+ }
+
+//   if( !converged && !errored )
+//   {
+// #if !defined(GEOS_USE_HIP) && !defined(__HIP__) && !defined(__HIPCC__) && !defined(__HIP_DEVICE_COMPILE__)
+//     GEOS_LOG_RANK( "Logistic regression did not converge! Using last iteration value." );
+// #endif
+//   }
 }
 
 /**
@@ -24678,12 +25335,49 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   }
   else
   {
-    computeProjectedGaussSeidelContact( dt,
-                                        particleManager,
-                                        nodeManager,
-                                        gridVelocity,
-                                        gridContactForce,
-                                        1.0 / dt );
+real64 inverseDt = 0.0;
+
+bool const numeratorFinite =
+  mpm::projectedGaussSeidelContact::finiteValue( 1.0 );
+bool const dtFinite =
+  mpm::projectedGaussSeidelContact::finiteValue( dt );
+bool const dtZero = isZero(dt);
+
+real64 overflowBound = 0.0;
+bool quotientWouldOverflow = false;
+if( dtFinite && !dtZero )
+{
+  real64 const absDt = std::abs( dt );
+  overflowBound =
+    std::numeric_limits< real64 >::max() * absDt;
+  quotientWouldOverflow =
+    absDt < 1.0 && 1.0 > overflowBound;
+}
+
+bool const divideSucceeded =
+  mpm::projectedGaussSeidelContact::safeDivide(
+    1.0, dt, inverseDt );
+
+GEOS_ERROR_IF(
+  !divideSucceeded,
+  "Coupled-contact reciprocal failed:"
+  << " rank=" << MpiWrapper::commRank()
+  << " cycle=" << m_currentMomentumLogCycle
+  << " dt=" << std::setprecision( 17 ) << dt
+  << " dtHex=" << std::hexfloat << dt << std::defaultfloat
+  << " numeratorFinite=" << numeratorFinite
+  << " dtFinite=" << dtFinite
+  << " dtZero=" << dtZero
+  << " quotientWouldOverflow=" << quotientWouldOverflow
+  << " overflowBound=" << overflowBound
+  << " inverseDt=" << inverseDt );
+
+    computeCoupledContact( dt,
+                           particleManager,
+                           nodeManager,
+                           gridVelocity,
+                           gridContactForce,
+                           inverseDt );
   }
 
   // Update grid momenta and velocities based on contact forces
@@ -24785,6 +25479,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
   mpm::ContactNormalTypeOption const contactNormalType = m_contactNormalType;
   mpm::ContactGapCorrectionOption const contactGapCorrection = m_contactGapCorrection;
+  real64 const contactGapActivationRelativeTolerance =
+    m_contactGapActivationRelativeTolerance;
   mpm::OverlapCorrectionOption const overlapCorrection = m_overlapCorrection;
 
   int const planeStrain = m_planeStrain;
@@ -24808,6 +25504,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
     nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() );
 
   real64 const smallMass = m_smallMass;
+  real64 const contactMinimumMass = m_contactMinimumMass;
+  real64 const contactMinimumMassFraction = m_contactMinimumMassFraction;
   real64 const neighborRadius = m_neighborRadius;
   real64 const separabilityMinDamage = m_separabilityMinDamage;
   real64 const thinFeatureDFGThreshold = m_thinFeatureDFGThreshold;
@@ -24878,25 +25576,37 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
       LvArray::tensorOps::fill< 3 >( gridContactForce[g][fieldIndex], 0.0 );
     }
 
+    real64 nodeMaximumContactMass = 0.0;
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      real64 const fieldMass = gridMass[g][fieldIndex];
+      if( isFinite( fieldMass ) && fieldMass > smallMass &&
+          hasUsableContactNormal( gridSurfaceNormal[g][fieldIndex] ) )
+      {
+        nodeMaximumContactMass =
+          LvArray::math::max( nodeMaximumContactMass, fieldMass );
+      }
+    }
+    real64 const nodeContactMassCutoff =
+      mpm::projectedGaussSeidelContact::contactMassCutoff(
+        smallMass,
+        contactMinimumMass,
+        contactMinimumMassFraction,
+        nodeMaximumContactMass );
+
     for( localIndex A = 0; A < numVelocityFields - 1; ++A )
     {
       for( localIndex B = A + 1; B < numVelocityFields; ++B )
       {
-        // Make sure both fields in the pair are active
-        // Tensor equation: active = (gridMass[g][A] > smallMass) && (||gridSurfaceNormal[g][A]||^2 > 1.0e-16).
-        bool active = ( gridMass[g][A] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-16 )
-                      and
-                      // Tensor equation: gridSurfaceNormal[g][B]: l2NormSquared(gridSurfaceNormal[g][B]).
-                      ( gridMass[g][B] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][B] ) > 1.0e-16 ); // CC:
-                                                                                                                                         // Should
-                                                                                                                                         // grid
-                                                                                                                                         // surface
-                                                                                                                                         // normal
-                                                                                                                                         // min
-                                                                                                                                         // magnitude
-                                                                                                                                         // be
-                                                                                                                                         // DBL_MIN
-                                                                                                                                         // instead?
+        // Only well-conditioned fields participate in contact.  The cutoff is
+        // contact-local and does not change ordinary MPM grid-field activity.
+        bool const active =
+          isFinite( gridMass[g][A] ) &&
+          gridMass[g][A] > nodeContactMassCutoff &&
+          hasUsableContactNormal( gridSurfaceNormal[g][A] ) &&
+          isFinite( gridMass[g][B] ) &&
+          gridMass[g][B] > nodeContactMassCutoff &&
+          hasUsableContactNormal( gridSurfaceNormal[g][B] );
 
         real64 frictionCoefficient = frictionCoefficientTable[A % numContactGroups][B % numContactGroups];
 
@@ -25136,7 +25846,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                 LvArray::tensorOps::scaledAdd< 3 >( n0, nB, -mB );
 
                 real64 dumby[3] = {};
-                logisticRegression( planeStrain,
+                mpm::LogisticRegressionResultFlag result = logisticRegression( planeStrain,
                                     numContactGroups,
                                     damageFieldPartitioning,
                                     maxLRIterations,
@@ -25195,13 +25905,14 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
           real64 contactPenetration = 0.0;
           computePairwiseNodalContactForce( contactGapCorrection,
+                                            contactGapActivationRelativeTolerance,
                                             overlapCorrection,
                                             overlapThreshold1,
                                             overlapThreshold2,
                                             maxParticleVelocitySquared,
                                             hEl,
                                             planeStrain,
-                                            smallMass,
+                                            nodeContactMassCutoff,
                                             useSurfacePositionForContact,
                                             useCohesiveTangentialForces,
                                             rigidBodyPenetrationPenaltyBeta,
@@ -25246,7 +25957,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 }
 
 /**
- * @brief Computes simultaneous nodal contact with projected Gauss-Seidel.
+ * @brief Computes simultaneous nodal contact with the selected coupled solver.
  *
  * The legacy pairwise routine above intentionally remains independent.  This
  * alternative first constructs the active constraints at one node, converges
@@ -25255,7 +25966,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
  * node.  Consequently, temporary storage scales with the largest active
  * contact set on one node rather than nodes times all possible field pairs.
  */
-void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
+void SolidMechanicsMPM::computeCoupledContact(
   real64 const dt,
   ParticleManager & particleManager,
   NodeManager & nodeManager,
@@ -25265,12 +25976,60 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
 {
   GEOS_MARK_FUNCTION;
 
+  // Coupled contact is intentionally contained inside a held floating-point
+  // environment.  All accepted values are checked below; this final layer
+  // prevents a malformed nodal field or a rejected trial step from raising
+  // SIGFPE before the solver can roll back to a finite state.
+  floatingPointDiagnostics::FloatingPointEnvironmentGuard
+    floatingPointEnvironmentGuard;
+
   real64 hEl[3] = {};
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+  GEOS_ERROR_IF( !mpm::projectedGaussSeidelContact::finiteValue( dt ) ||
+                 !( dt > 0.0 ),
+                 "Coupled contact requires a finite positive time step." );
+  GEOS_ERROR_IF( !mpm::projectedGaussSeidelContact::finiteValue( outputScale ),
+                 "Coupled contact requires a finite output scale." );
+  GEOS_ERROR_IF( !mpm::projectedGaussSeidelContact::finiteValue( hEl[0] ) ||
+                 !mpm::projectedGaussSeidelContact::finiteValue( hEl[1] ) ||
+                 !mpm::projectedGaussSeidelContact::finiteValue( hEl[2] ) ||
+                 !( hEl[0] > 0.0 ) || !( hEl[1] > 0.0 ) ||
+                 !( hEl[2] > 0.0 ),
+                 "Coupled contact requires finite positive grid spacings." );
 
   mpm::ContactNormalTypeOption const contactNormalType = m_contactNormalType;
   mpm::ContactGapCorrectionOption const contactGapCorrection = m_contactGapCorrection;
+  real64 const contactGapActivationRelativeTolerance =
+    m_contactGapActivationRelativeTolerance;
   mpm::OverlapCorrectionOption const overlapCorrection = m_overlapCorrection;
+  mpm::ContactSolverOption const contactSolver = m_contactSolver;
+  GEOS_ERROR_IF( contactSolver == mpm::ContactSolverOption::Pairwise,
+                 "computeCoupledContact requires a coupled contact solver." );
+  char const * const contactSolverName =
+    contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel
+    ? "ProjectedGaussSeidel"
+    : "NewtonRaphson";
+  integer const contactSolverMaximumIterations =
+    contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel
+    ? m_contactPGSMaximumIterations
+    : m_contactNRMaximumIterations;
+  real64 const contactSolverVelocityTolerance =
+    contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel
+    ? m_contactPGSVelocityTolerance
+    : m_contactNRVelocityTolerance;
+  int const contactSolverRequireConvergence =
+    contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel
+    ? m_contactPGSRequireConvergence
+    : m_contactNRRequireConvergence;
+  int const useLogisticRegressionForMultifield =
+    m_contactPGSUseLogisticRegressionForMultifield;
+  int const contactSolverDiagnostics = m_contactSolverDiagnostics;
+  int const contactSolverFailureDiagnostics =
+    m_contactSolverFailureDiagnostics;
+  integer const contactSolverFailureDiagnosticMaxNodes =
+    m_contactSolverFailureDiagnosticMaxNodes;
+  integer const contactSolverDiagnosticMaxNodes =
+    m_contactSolverDiagnosticMaxNodes;
 
   int const planeStrain = m_planeStrain;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
@@ -25284,10 +26043,17 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
 
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
+  GEOS_ERROR_IF( numContactGroups <= 0,
+                 "Coupled contact requires at least one contact group." );
   int const rigidBodyMode = m_rigidBodyMode;
   real64 const rigidBodyPenetrationPenaltyBeta =
     rigidBodyMode == 1 ? m_rigidBodyPenetrationPenaltyBeta : 0.0;
   real64 const smallMass = m_smallMass;
+  GEOS_ERROR_IF( !mpm::projectedGaussSeidelContact::finiteValue( smallMass ) ||
+                 smallMass < 0.0,
+                 "Coupled contact requires a finite non-negative smallMass." );
+  real64 const contactMinimumMass = m_contactMinimumMass;
+  real64 const contactMinimumMassFraction = m_contactMinimumMassFraction;
   real64 const neighborRadius = m_neighborRadius;
   real64 const separabilityMinDamage = m_separabilityMinDamage;
   real64 const thinFeatureDFGThreshold = m_thinFeatureDFGThreshold;
@@ -25333,6 +26099,9 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
   arrayView2d< int > const gridWeakInterfaceTraceContactSuppressed =
     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() );
   arrayView2d< int const > const weakInterfaceTracePairs = m_weakInterfaceTracePairs;
+  arrayView1d< globalIndex const > const nodeGlobalID =
+    static_cast< NodeManager const & >( nodeManager ).localToGlobalMap();
+  arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
 
   ParticleManager::ParticleViewAccessor< arrayView1d< localIndex const > > particleGroupAccessor =
     particleManager.constructArrayViewAccessor< localIndex, 1 >( "particleGroup" );
@@ -25370,40 +26139,140 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
   }
 
   std::vector< real64 > nodalMass( numVelocityFields, 0.0 );
+  std::vector< unsigned char > candidateContactField( numVelocityFields, 0 );
+  std::vector< unsigned char > usableContactField( numVelocityFields, 0 );
   std::vector< std::array< real64, 3 > > initialVelocity( numVelocityFields );
   std::vector< std::array< real64, 3 > > solvedVelocity( numVelocityFields );
   std::vector< mpm::ProjectedGaussSeidelContactConstraint > constraints;
+  struct PairDiagnostic
+  {
+    mpm::ProjectedGaussSeidelContactConstraint constraint;
+    localIndex activeConstraintIndex = -1;
+    bool gapConstraintActive = false;
+    bool biasConstraintActive = false;
+  };
+  std::vector< PairDiagnostic > pairDiagnostics;
   // A small reserve avoids allocations in the common case without allocating
   // O(numVelocityFields^2) storage when the global contact-group count is large.
   constraints.reserve( 8 );
+  pairDiagnostics.reserve( 8 );
 
+  integer localSolvedNodes = 0;
   integer localNonconvergedNodes = 0;
+  integer localMaximumIterations = 0;
+  integer localMaximumRegularizedSteps = 0;
+  integer localMaximumLineSearchReductions = 0;
+  integer localDetailedDiagnosticNodes = 0;
+  integer localFailureDiagnosticNodes = 0;
+  integer localNumericalGuardActivations = 0;
+  integer localNumericallySkippedNodes = 0;
+  integer localNumericallySkippedPairs = 0;
+  integer localNewtonToPGSFallbackNodes = 0;
+  integer localSolverRollbackNodes = 0;
+  integer localContactMassFilteredFields = 0;
+  integer localContactMassFilteredCandidatePairs = 0;
   real64 localMaximumResidual = 0.0;
   real64 localMaximumPenetration = 0.0;
+  real64 localMaximumContactMassCutoff = 0.0;
 
   for( localIndex g = 0; g < nodeManager.size(); ++g )
   {
     constraints.clear();
+    pairDiagnostics.clear();
+    localIndex candidateContactFieldCount = 0;
+    localIndex activeContactFieldCount = 0;
+    real64 nodeMaximumContactMass = 0.0;
+    bool nodeInputFinite = true;
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
-      nodalMass[fieldIndex] = gridMass[g][fieldIndex];
+      real64 const fieldMass = gridMass[g][fieldIndex];
+      std::array< real64, 3 > const fieldNormal = {{
+        gridSurfaceNormal[g][fieldIndex][0],
+        gridSurfaceNormal[g][fieldIndex][1],
+        gridSurfaceNormal[g][fieldIndex][2]
+      }};
+      real64 fieldNormalMagnitude = 0.0;
+      bool const finiteMass =
+        mpm::projectedGaussSeidelContact::finiteValue( fieldMass );
+      bool const finiteNormal =
+        mpm::projectedGaussSeidelContact::robustNorm(
+          fieldNormal,
+          fieldNormalMagnitude );
+      bool const candidateField = finiteMass && finiteNormal &&
+                                  fieldMass > smallMass &&
+                                  fieldNormalMagnitude >
+                                    contactNormalMagnitudeTolerance;
+      candidateContactField[fieldIndex] = candidateField ? 1 : 0;
+      if( candidateField )
+      {
+        ++candidateContactFieldCount;
+        nodeMaximumContactMass = std::max( nodeMaximumContactMass,
+                                           fieldMass );
+      }
       for( localIndex i = 0; i < 3; ++i )
       {
-        initialVelocity[fieldIndex][i] = trialVelocity[g][fieldIndex][i];
-        solvedVelocity[fieldIndex][i] = trialVelocity[g][fieldIndex][i];
+        real64 const component = trialVelocity[g][fieldIndex][i];
+        bool const finiteComponent =
+          mpm::projectedGaussSeidelContact::finiteValue( component );
+        initialVelocity[fieldIndex][i] = finiteComponent ? component : 0.0;
+        solvedVelocity[fieldIndex][i] = initialVelocity[fieldIndex][i];
         contactOutput[g][fieldIndex][i] = 0.0;
       }
     }
+    real64 const nodeContactMassCutoff =
+      mpm::projectedGaussSeidelContact::contactMassCutoff(
+        smallMass,
+        contactMinimumMass,
+        contactMinimumMassFraction,
+        nodeMaximumContactMass );
+    localMaximumContactMassCutoff = std::max( localMaximumContactMassCutoff,
+                                              nodeContactMassCutoff );
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      bool const usableField =
+        candidateContactField[fieldIndex] != 0 &&
+        gridMass[g][fieldIndex] > nodeContactMassCutoff;
+      usableContactField[fieldIndex] = usableField ? 1 : 0;
+      nodalMass[fieldIndex] = usableField ? gridMass[g][fieldIndex] : 0.0;
+      if( usableField )
+      {
+        ++activeContactFieldCount;
+        for( localIndex component = 0; component < 3; ++component )
+        {
+          nodeInputFinite = nodeInputFinite &&
+            mpm::projectedGaussSeidelContact::finiteValue(
+              trialVelocity[g][fieldIndex][component] );
+        }
+      }
+    }
+    localIndex const massFilteredFieldCount =
+      candidateContactFieldCount - activeContactFieldCount;
+    localContactMassFilteredFields += massFilteredFieldCount;
+    localContactMassFilteredCandidatePairs +=
+      candidateContactFieldCount * ( candidateContactFieldCount - 1 ) / 2 -
+      activeContactFieldCount * ( activeContactFieldCount - 1 ) / 2;
+    if( !nodeInputFinite )
+    {
+      ++localNumericallySkippedNodes;
+      ++localNumericalGuardActivations;
+      continue;
+    }
+    bool const recordNodeDiagnostics =
+      contactSolverDiagnostics != 0 &&
+      activeContactFieldCount > 2 &&
+      localDetailedDiagnosticNodes < contactSolverDiagnosticMaxNodes;
+    bool const collectFailureDiagnostics =
+      contactSolverFailureDiagnostics != 0 &&
+      localFailureDiagnosticNodes < contactSolverFailureDiagnosticMaxNodes;
+    bool const collectPairDiagnostics =
+      recordNodeDiagnostics || collectFailureDiagnostics;
 
     for( localIndex A = 0; A < numVelocityFields - 1; ++A )
     {
       for( localIndex B = A + 1; B < numVelocityFields; ++B )
       {
-        bool const active =
-          gridMass[g][A] > smallMass &&
-          gridMass[g][B] > smallMass &&
-          LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-16 &&
-          LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][B] ) > 1.0e-16;
+        bool const active = usableContactField[A] != 0 &&
+                            usableContactField[B] != 0;
         if( !active )
         {
           continue;
@@ -25433,6 +26302,15 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
           {
             frictionCoefficient = maxFrictionCoefficient;
           }
+        }
+        if( !mpm::projectedGaussSeidelContact::finiteValue(
+              frictionCoefficient ) ||
+            frictionCoefficient < 0.0 )
+        {
+          // A malformed friction entry must not poison the entire node.  The
+          // conservative finite fallback is frictionless normal contact.
+          frictionCoefficient = 0.0;
+          ++localNumericalGuardActivations;
         }
 
         bool weakTracePair = rigidBodyMode == 0 &&
@@ -25485,20 +26363,51 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
         }
         else
         {
-          real64 const surfaceQuality =
+          real64 surfaceQuality =
             computeSurfaceQualityFromMappingNormalTensor( planeStrain,
                                                           gridMappingNormalTensor[g][A],
                                                           gridMappingNormalTensor[g][B],
                                                           gridMaterialVolume[g][A],
                                                           gridMaterialVolume[g][B] );
-          real64 const pairMaterialVolume =
-            gridMaterialVolume[g][A] + gridMaterialVolume[g][B];
-          real64 const singleFieldStateFraction =
-            pairMaterialVolume > 1.0e-30
-            ? ( gridSingleFieldStateFraction[g][A] * gridMaterialVolume[g][A] +
-                gridSingleFieldStateFraction[g][B] * gridMaterialVolume[g][B] ) /
-              pairMaterialVolume
-            : 0.0;
+          if( !mpm::projectedGaussSeidelContact::finiteValue(
+                surfaceQuality ) )
+          {
+            surfaceQuality = 0.0;
+            ++localNumericalGuardActivations;
+          }
+          real64 pairMaterialVolume = 0.0;
+          real64 singleFieldStateFraction = 0.0;
+          real64 weightedFractionA = 0.0;
+          real64 weightedFractionB = 0.0;
+          real64 weightedFraction = 0.0;
+          bool const finiteFraction =
+            mpm::projectedGaussSeidelContact::safeAdd(
+              gridMaterialVolume[g][A],
+              gridMaterialVolume[g][B],
+              pairMaterialVolume ) &&
+            mpm::projectedGaussSeidelContact::safeMultiply(
+              gridSingleFieldStateFraction[g][A],
+              gridMaterialVolume[g][A],
+              weightedFractionA ) &&
+            mpm::projectedGaussSeidelContact::safeMultiply(
+              gridSingleFieldStateFraction[g][B],
+              gridMaterialVolume[g][B],
+              weightedFractionB ) &&
+            mpm::projectedGaussSeidelContact::safeAdd(
+              weightedFractionA,
+              weightedFractionB,
+              weightedFraction ) &&
+            ( pairMaterialVolume <= 1.0e-30 ||
+              mpm::projectedGaussSeidelContact::safeDivide(
+                weightedFraction,
+                pairMaterialVolume,
+                singleFieldStateFraction ) );
+          if( !finiteFraction )
+          {
+            pairMaterialVolume = 0.0;
+            singleFieldStateFraction = 0.0;
+            ++localNumericalGuardActivations;
+          }
           separable = evaluateSeparabilityCriterion(
             numContactGroups,
             maxSingleFieldStateFractionForSeparability,
@@ -25528,11 +26437,18 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
         LvArray::tensorOps::copy< 3 >( nA, gridSurfaceNormal[g][A] );
         LvArray::tensorOps::copy< 3 >( nB, gridSurfaceNormal[g][B] );
 
+        mpm::ContactNormalTypeOption const requestedContactNormalType =
+          mpm::projectedGaussSeidelContact::useMultifieldLogisticRegression(
+            useLogisticRegressionForMultifield,
+            activeContactFieldCount,
+            rigidBodyMode == 1 )
+          ? mpm::ContactNormalTypeOption::LogisticRegression
+          : contactNormalType;
         mpm::ContactNormalTypeOption const activeContactNormalType =
           rigidBodyMode == 1 &&
-          contactNormalType == mpm::ContactNormalTypeOption::LogisticRegression
+          requestedContactNormalType == mpm::ContactNormalTypeOption::LogisticRegression
           ? mpm::ContactNormalTypeOption::MassWeighted
-          : contactNormalType;
+          : requestedContactNormalType;
         switch( activeContactNormalType )
         {
           case mpm::ContactNormalTypeOption::Difference:
@@ -25555,9 +26471,20 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
             break;
           case mpm::ContactNormalTypeOption::Mixed:
           {
-            real64 const rhoA = mA / VA;
-            real64 const rhoB = mB / VB;
-            if( isZero( rhoA - rhoB, 0.1 * rhoA ) )
+            real64 rhoA = 0.0;
+            real64 rhoB = 0.0;
+            bool const densityAvailable = VA > 0.0 && VB > 0.0 &&
+              mpm::projectedGaussSeidelContact::safeDivide(
+                mA, VA, rhoA ) &&
+              mpm::projectedGaussSeidelContact::safeDivide(
+                mB, VB, rhoB );
+            if( !densityAvailable )
+            {
+              LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
+              LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
+              ++localNumericalGuardActivations;
+            }
+            else if( isZero( rhoA - rhoB, 0.1 * rhoA ) )
             {
               LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
               LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
@@ -25599,7 +26526,7 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
             real64 unusedSurfacePosition[3] = {};
             LvArray::tensorOps::scaledCopy< 3 >( n0, nA, mA );
             LvArray::tensorOps::scaledAdd< 3 >( n0, nB, -mB );
-            logisticRegression( planeStrain,
+            mpm::LogisticRegressionResultFlag result = logisticRegression( planeStrain,
                                 numContactGroups,
                                 damageFieldPartitioning,
                                 maxLRIterations,
@@ -25626,21 +26553,74 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
             GEOS_ERROR( "Unrecognized contact normal type." );
         }
 
-        real64 normalMagnitude = LvArray::tensorOps::l2Norm< 3 >( nAB );
-        if( normalMagnitude < 1.0e-20 )
+        std::array< real64, 3 > checkedNormal = {{ nAB[0],
+                                                   nAB[1],
+                                                   nAB[2] }};
+        real64 normalMagnitude = 0.0;
+        if( !mpm::projectedGaussSeidelContact::robustNorm(
+              checkedNormal,
+              normalMagnitude ) ||
+            normalMagnitude < 1.0e-20 )
         {
-          LvArray::tensorOps::copy< 3 >( nAB, nA );
+          bool fallbackAvailable = true;
+          for( localIndex component = 0; component < 3; ++component )
+          {
+            fallbackAvailable = fallbackAvailable &&
+              mpm::projectedGaussSeidelContact::safeSubtract(
+                nA[component],
+                nB[component],
+                checkedNormal[component] );
+          }
+          fallbackAvailable = fallbackAvailable &&
+            mpm::projectedGaussSeidelContact::robustNorm(
+              checkedNormal,
+              normalMagnitude ) &&
+            normalMagnitude >= 1.0e-20;
+          if( !fallbackAvailable )
+          {
+            checkedNormal = {{ nA[0], nA[1], nA[2] }};
+            fallbackAvailable =
+              mpm::projectedGaussSeidelContact::robustNorm(
+                checkedNormal,
+                normalMagnitude ) &&
+              normalMagnitude >= 1.0e-20;
+          }
+          if( !fallbackAvailable )
+          {
+            ++localNumericallySkippedPairs;
+            ++localNumericalGuardActivations;
+            continue;
+          }
+          ++localNumericalGuardActivations;
         }
         if( planeStrain == 1 )
         {
-          nAB[2] = 0.0;
+          checkedNormal[2] = 0.0;
         }
-        normalMagnitude = LvArray::tensorOps::l2Norm< 3 >( nAB );
-        if( normalMagnitude < 1.0e-20 || !std::isfinite( normalMagnitude ) )
+        if( !mpm::projectedGaussSeidelContact::robustNorm(
+              checkedNormal,
+              normalMagnitude ) ||
+            normalMagnitude < 1.0e-20 )
         {
+          ++localNumericallySkippedPairs;
+          ++localNumericalGuardActivations;
           continue;
         }
-        LvArray::tensorOps::scale< 3 >( nAB, 1.0 / normalMagnitude );
+        bool normalized = true;
+        for( localIndex component = 0; component < 3; ++component )
+        {
+          normalized = normalized &&
+            mpm::projectedGaussSeidelContact::safeDivide(
+              checkedNormal[component],
+              normalMagnitude,
+              nAB[component] );
+        }
+        if( !normalized )
+        {
+          ++localNumericallySkippedPairs;
+          ++localNumericalGuardActivations;
+          continue;
+        }
 
         mpm::ProjectedGaussSeidelContactConstraint constraint;
         constraint.fieldA = A;
@@ -25650,61 +26630,152 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
         constraint.bilateral = !separable;
         if( !separable )
         {
+          localIndex const activeConstraintIndex =
+            static_cast< localIndex >( constraints.size() );
           constraints.emplace_back( constraint );
+          if( collectPairDiagnostics )
+          {
+            PairDiagnostic diagnostic;
+            diagnostic.constraint = constraint;
+            diagnostic.activeConstraintIndex = activeConstraintIndex;
+            pairDiagnostics.emplace_back( diagnostic );
+          }
           continue;
         }
 
-        real64 const inverseMassSum = 1.0 / mA + 1.0 / mB;
-        std::array< real64, 3 > const initialRelativeVelocity = {{
-          initialVelocity[B][0] - initialVelocity[A][0],
-          initialVelocity[B][1] - initialVelocity[A][1],
-          initialVelocity[B][2] - initialVelocity[A][2]
-        }};
-        real64 const initialNormalVelocity =
-          mpm::projectedGaussSeidelContact::dot( initialRelativeVelocity,
-                                                 constraint.normal );
+        real64 pairEffectiveMass = 0.0;
+        std::array< real64, 3 > initialRelativeVelocity = {{ 0.0, 0.0, 0.0 }};
+        real64 initialNormalVelocity = 0.0;
+        if( !mpm::projectedGaussSeidelContact::effectiveMass(
+              mA, mB, pairEffectiveMass ) ||
+            !mpm::projectedGaussSeidelContact::tryRelativeVelocity(
+              initialVelocity,
+              constraint,
+              initialRelativeVelocity ) ||
+            !mpm::projectedGaussSeidelContact::safeDot(
+              initialRelativeVelocity,
+              constraint.normal,
+              initialNormalVelocity ) )
+        {
+          ++localNumericallySkippedPairs;
+          ++localNumericalGuardActivations;
+          continue;
+        }
 
-        real64 const gap0 = planeStrain == 1
-          ? 1.0 / LvArray::math::sqrt(
-              LvArray::math::pow( nAB[0] / hEl[0], 2 ) +
-              LvArray::math::pow( nAB[1] / hEl[1], 2 ) )
-          : 1.0 / LvArray::math::sqrt(
-              LvArray::math::pow( nAB[0] / hEl[0], 2 ) +
-              LvArray::math::pow( nAB[1] / hEl[1], 2 ) +
-              LvArray::math::pow( nAB[2] / hEl[2], 2 ) );
+        std::array< real64, 3 > inverseCellNormal = {{ 0.0, 0.0, 0.0 }};
+        bool cellDirectionAvailable = true;
+        integer const activeDimensions = planeStrain == 1 ? 2 : 3;
+        for( integer component = 0; component < activeDimensions; ++component )
+        {
+          cellDirectionAvailable = cellDirectionAvailable &&
+            mpm::projectedGaussSeidelContact::safeDivide(
+              constraint.normal[component],
+              hEl[component],
+              inverseCellNormal[component] );
+        }
+        real64 inverseGap0 = 0.0;
+        real64 gap0 = 0.0;
+        cellDirectionAvailable = cellDirectionAvailable &&
+          mpm::projectedGaussSeidelContact::robustNorm(
+            inverseCellNormal,
+            inverseGap0 ) &&
+          inverseGap0 > 0.0 &&
+          mpm::projectedGaussSeidelContact::safeDivide(
+            1.0,
+            inverseGap0,
+            gap0 );
+        if( !cellDirectionAvailable )
+        {
+          ++localNumericallySkippedPairs;
+          ++localNumericalGuardActivations;
+          continue;
+        }
 
         real64 gapScale = 0.0;
-        real64 surfacePositionA[3] = {};
-        real64 surfacePositionB[3] = {};
-        if( gridSurfaceFieldMass[g][A] > smallMass &&
-            useSurfacePositionForContact )
+        std::array< real64, 3 > surfacePositionA = {{ 0.0, 0.0, 0.0 }};
+        std::array< real64, 3 > surfacePositionB = {{ 0.0, 0.0, 0.0 }};
+        auto copyFinitePosition = []( auto const & source,
+                                      std::array< real64, 3 > & destination )
         {
-          LvArray::tensorOps::copy< 3 >( surfacePositionA,
-                                         gridSurfacePosition[g][A] );
-        }
-        else
+          destination = {{ source[0], source[1], source[2] }};
+          return mpm::projectedGaussSeidelContact::finiteVector( destination );
+        };
+        bool const mappedPositionARequested =
+          mpm::projectedGaussSeidelContact::finiteValue(
+            gridSurfaceFieldMass[g][A] ) &&
+          gridSurfaceFieldMass[g][A] > nodeContactMassCutoff &&
+          useSurfacePositionForContact;
+        bool const mappedPositionBRequested =
+          mpm::projectedGaussSeidelContact::finiteValue(
+            gridSurfaceFieldMass[g][B] ) &&
+          gridSurfaceFieldMass[g][B] > nodeContactMassCutoff &&
+          useSurfacePositionForContact;
+        bool const mappedPositionAAvailable = mappedPositionARequested &&
+          copyFinitePosition( gridSurfacePosition[g][A], surfacePositionA );
+        bool const mappedPositionBAvailable = mappedPositionBRequested &&
+          copyFinitePosition( gridSurfacePosition[g][B], surfacePositionB );
+        bool positionAvailable = true;
+        if( !mappedPositionAAvailable )
         {
-          LvArray::tensorOps::copy< 3 >( surfacePositionA,
-                                         gridCenterOfMass[g][A] );
+          positionAvailable = copyFinitePosition( gridCenterOfMass[g][A],
+                                                  surfacePositionA );
           gapScale += 0.5;
+          localNumericalGuardActivations += mappedPositionARequested ? 1 : 0;
         }
-        if( gridSurfaceFieldMass[g][B] > smallMass &&
-            useSurfacePositionForContact )
+        if( !mappedPositionBAvailable )
         {
-          LvArray::tensorOps::copy< 3 >( surfacePositionB,
-                                         gridSurfacePosition[g][B] );
-        }
-        else
-        {
-          LvArray::tensorOps::copy< 3 >( surfacePositionB,
-                                         gridCenterOfMass[g][B] );
+          positionAvailable = positionAvailable &&
+            copyFinitePosition( gridCenterOfMass[g][B], surfacePositionB );
           gapScale += 0.5;
+          localNumericalGuardActivations += mappedPositionBRequested ? 1 : 0;
         }
-        real64 const gap =
-          ( surfacePositionB[0] - surfacePositionA[0] ) * nAB[0] +
-          ( surfacePositionB[1] - surfacePositionA[1] ) * nAB[1] +
-          ( surfacePositionB[2] - surfacePositionA[2] ) * nAB[2] -
-          gapScale * gap0;
+        if( !positionAvailable )
+        {
+          ++localNumericallySkippedPairs;
+          ++localNumericalGuardActivations;
+          continue;
+        }
+
+        std::array< real64, 3 > surfaceSeparation = {{ 0.0, 0.0, 0.0 }};
+        bool gapAvailable = true;
+        for( localIndex component = 0; component < 3; ++component )
+        {
+          gapAvailable = gapAvailable &&
+            mpm::projectedGaussSeidelContact::safeSubtract(
+              surfacePositionB[component],
+              surfacePositionA[component],
+              surfaceSeparation[component] );
+        }
+        real64 projectedSurfaceSeparation = 0.0;
+        real64 gapOffset = 0.0;
+        real64 gap = 0.0;
+        real64 gapActivationTolerance = 0.0;
+        gapAvailable = gapAvailable &&
+          mpm::projectedGaussSeidelContact::safeDot(
+            surfaceSeparation,
+            constraint.normal,
+            projectedSurfaceSeparation ) &&
+          mpm::projectedGaussSeidelContact::safeMultiply(
+            gapScale,
+            gap0,
+            gapOffset ) &&
+          mpm::projectedGaussSeidelContact::safeSubtract(
+            projectedSurfaceSeparation,
+            gapOffset,
+            gap ) &&
+          mpm::projectedGaussSeidelContact::safeMultiply(
+            contactGapActivationRelativeTolerance,
+            gap0,
+            gapActivationTolerance );
+        if( !gapAvailable )
+        {
+          ++localNumericallySkippedPairs;
+          ++localNumericalGuardActivations;
+          continue;
+        }
+        constraint.gap = gap;
+        constraint.gapActivationTolerance = gapActivationTolerance;
+        constraint.hasGap = true;
         localMaximumPenetration = std::max( localMaximumPenetration,
                                             std::max( 0.0, -gap ) );
 
@@ -25717,7 +26788,10 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
             constraint.targetNormalVelocity = 0.0;
             break;
           case mpm::ContactGapCorrectionOption::Implicit:
-            gapConstraintActive = gap < 0.0;
+            gapConstraintActive =
+              mpm::projectedGaussSeidelContact::implicitGapConstraintCandidate(
+                gap,
+                gapActivationTolerance );
             if( gapConstraintActive )
             {
               constraint.targetNormalVelocity = 0.0;
@@ -25734,10 +26808,26 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
               // This target reproduces the legacy softened correction for an
               // isolated closing pair while allowing all pairs to converge
               // against the same node velocity.
-              constraint.targetNormalVelocity =
-                initialNormalVelocity < 0.0
-                ? initialNormalVelocity * gap / gap0
-                : 0.0;
+              if( initialNormalVelocity < 0.0 )
+              {
+                real64 scaledNormalVelocity = 0.0;
+                if( !mpm::projectedGaussSeidelContact::safeMultiply(
+                      initialNormalVelocity,
+                      gap,
+                      scaledNormalVelocity ) ||
+                    !mpm::projectedGaussSeidelContact::safeDivide(
+                      scaledNormalVelocity,
+                      gap0,
+                      constraint.targetNormalVelocity ) )
+                {
+                  constraint.targetNormalVelocity = 0.0;
+                  ++localNumericalGuardActivations;
+                }
+              }
+              else
+              {
+                constraint.targetNormalVelocity = 0.0;
+              }
             }
             break;
           default:
@@ -25747,104 +26837,854 @@ void SolidMechanicsMPM::computeProjectedGaussSeidelContact(
         real64 signedNormalBiasImpulse = 0.0;
         if( overlapCorrection == mpm::OverlapCorrectionOption::NormalForce )
         {
-          real64 const cellVolume = hEl[0] * hEl[1] * hEl[2];
-          real64 const cellLength =
-            LvArray::math::abs( nAB[0] ) * hEl[0] +
-            LvArray::math::abs( nAB[1] ) * hEl[1] +
-            LvArray::math::abs( nAB[2] ) * hEl[2];
-          real64 const cellArea = cellVolume / cellLength;
-          real64 const overlapLength = planeStrain
-            ? ( 2.0 * VA + 2.0 * VB - cellVolume ) / cellArea
-            : ( VA + VB - cellVolume ) / cellArea;
-          if( overlapLength > ( overlapThreshold1 - 1.0 ) * cellLength &&
-              overlapLength < ( overlapThreshold2 - 1.0 ) * cellLength )
+          real64 cellAreaProduct = 0.0;
+          real64 cellVolume = 0.0;
+          real64 cellLength = 0.0;
+          bool overlapDataAvailable =
+            mpm::projectedGaussSeidelContact::safeMultiply(
+              hEl[0], hEl[1], cellAreaProduct ) &&
+            mpm::projectedGaussSeidelContact::safeMultiply(
+              cellAreaProduct, hEl[2], cellVolume );
+          for( localIndex component = 0;
+               component < 3 && overlapDataAvailable;
+               ++component )
           {
-            real64 const overlap = planeStrain
-              ? ( VA + VB ) / ( 0.5 * cellVolume )
-              : ( VA + VB ) / cellVolume;
-            real64 const correctionScale = LvArray::math::min(
-              1.0,
-              LvArray::math::max(
-                0.0,
-                ( overlap - overlapThreshold1 ) /
-                ( overlapThreshold2 - overlapThreshold1 ) ) );
-            real64 const maxVelocity =
-              LvArray::math::sqrt( maxParticleVelocitySquared );
-            real64 const maxGapImpulseMagnitude =
-              0.05 * LvArray::math::min( mA, mB ) * maxVelocity;
-            real64 const legacyGapImpulse = correctionScale * LvArray::math::max(
-              -maxGapImpulseMagnitude,
-              -2.0 * overlapLength * mA * mB /
-              ( dt * ( mA + mB ) ) );
-            signedNormalBiasImpulse -= legacyGapImpulse;
+            real64 lengthContribution = 0.0;
+            overlapDataAvailable =
+              mpm::projectedGaussSeidelContact::safeMultiply(
+                std::abs( constraint.normal[component] ),
+                hEl[component],
+                lengthContribution ) &&
+              mpm::projectedGaussSeidelContact::safeAdd(
+                cellLength,
+                lengthContribution,
+                cellLength );
+          }
+          real64 cellArea = 0.0;
+          real64 overlapNumerator = 0.0;
+          real64 overlapLength = 0.0;
+          real64 volumeSum = 0.0;
+          overlapDataAvailable = overlapDataAvailable &&
+            mpm::projectedGaussSeidelContact::safeDivide(
+              cellVolume, cellLength, cellArea ) &&
+            mpm::projectedGaussSeidelContact::safeAdd( VA, VB, volumeSum );
+          if( overlapDataAvailable )
+          {
+            real64 scaledVolumeSum = volumeSum;
+            if( planeStrain == 1 )
+            {
+              overlapDataAvailable =
+                mpm::projectedGaussSeidelContact::safeMultiply(
+                  2.0, volumeSum, scaledVolumeSum );
+            }
+            overlapDataAvailable = overlapDataAvailable &&
+              mpm::projectedGaussSeidelContact::safeSubtract(
+                scaledVolumeSum,
+                cellVolume,
+                overlapNumerator ) &&
+              mpm::projectedGaussSeidelContact::safeDivide(
+                overlapNumerator,
+                cellArea,
+                overlapLength );
+          }
+
+          real64 lowerLength = 0.0;
+          real64 upperLength = 0.0;
+          overlapDataAvailable = overlapDataAvailable &&
+            mpm::projectedGaussSeidelContact::finiteValue(
+              maxParticleVelocitySquared ) &&
+            maxParticleVelocitySquared >= 0.0 &&
+            mpm::projectedGaussSeidelContact::safeMultiply(
+              overlapThreshold1 - 1.0,
+              cellLength,
+              lowerLength ) &&
+            mpm::projectedGaussSeidelContact::safeMultiply(
+              overlapThreshold2 - 1.0,
+              cellLength,
+              upperLength );
+          if( overlapDataAvailable &&
+              overlapLength > lowerLength && overlapLength < upperLength )
+          {
+            real64 overlapDenominator = cellVolume;
+            if( planeStrain == 1 )
+            {
+              overlapDataAvailable =
+                mpm::projectedGaussSeidelContact::safeMultiply(
+                  0.5, cellVolume, overlapDenominator );
+            }
+            real64 overlap = 0.0;
+            real64 thresholdRange = 0.0;
+            real64 normalizedOverlap = 0.0;
+            overlapDataAvailable = overlapDataAvailable &&
+              mpm::projectedGaussSeidelContact::safeDivide(
+                volumeSum,
+                overlapDenominator,
+                overlap ) &&
+              mpm::projectedGaussSeidelContact::safeSubtract(
+                overlapThreshold2,
+                overlapThreshold1,
+                thresholdRange ) &&
+              mpm::projectedGaussSeidelContact::safeSubtract(
+                overlap,
+                overlapThreshold1,
+                normalizedOverlap ) &&
+              mpm::projectedGaussSeidelContact::safeDivide(
+                normalizedOverlap,
+                thresholdRange,
+                normalizedOverlap );
+            if( overlapDataAvailable )
+            {
+              real64 const correctionScale = std::min(
+                1.0, std::max( 0.0, normalizedOverlap ) );
+              real64 const maxVelocity = std::sqrt(
+                maxParticleVelocitySquared );
+              real64 massVelocity = 0.0;
+              real64 maxGapImpulseMagnitude = 0.0;
+              real64 overlapMass = 0.0;
+              real64 overlapImpulseRate = 0.0;
+              real64 kinematicGapImpulse = 0.0;
+              real64 legacyGapImpulse = 0.0;
+              overlapDataAvailable =
+                mpm::projectedGaussSeidelContact::safeMultiply(
+                  std::min( mA, mB ),
+                  maxVelocity,
+                  massVelocity ) &&
+                mpm::projectedGaussSeidelContact::safeMultiply(
+                  0.05,
+                  massVelocity,
+                  maxGapImpulseMagnitude ) &&
+                mpm::projectedGaussSeidelContact::safeMultiply(
+                  overlapLength,
+                  pairEffectiveMass,
+                  overlapMass ) &&
+                mpm::projectedGaussSeidelContact::safeMultiply(
+                  -2.0,
+                  overlapMass,
+                  overlapImpulseRate ) &&
+                mpm::projectedGaussSeidelContact::safeDivide(
+                  overlapImpulseRate,
+                  dt,
+                  kinematicGapImpulse ) &&
+                mpm::projectedGaussSeidelContact::safeMultiply(
+                  correctionScale,
+                  std::max( -maxGapImpulseMagnitude,
+                            kinematicGapImpulse ),
+                  legacyGapImpulse ) &&
+                mpm::projectedGaussSeidelContact::safeSubtract(
+                  signedNormalBiasImpulse,
+                  legacyGapImpulse,
+                  signedNormalBiasImpulse );
+            }
+          }
+          if( !overlapDataAvailable )
+          {
+            signedNormalBiasImpulse = 0.0;
+            ++localNumericalGuardActivations;
           }
         }
         if( rigidBodyPenetrationPenaltyBeta > 0.0 && gap < 0.0 )
         {
-          real64 const effectiveMass = 1.0 / inverseMassSum;
-          signedNormalBiasImpulse +=
-            rigidBodyPenetrationPenaltyBeta * effectiveMass * ( -gap ) / dt;
+          real64 penaltyMass = 0.0;
+          real64 penaltyGapImpulse = 0.0;
+          real64 penaltyImpulse = 0.0;
+          real64 updatedBiasImpulse = 0.0;
+          if( mpm::projectedGaussSeidelContact::safeMultiply(
+                rigidBodyPenetrationPenaltyBeta,
+                pairEffectiveMass,
+                penaltyMass ) &&
+              mpm::projectedGaussSeidelContact::safeMultiply(
+                penaltyMass,
+                -gap,
+                penaltyGapImpulse ) &&
+              mpm::projectedGaussSeidelContact::safeDivide(
+                penaltyGapImpulse,
+                dt,
+                penaltyImpulse ) &&
+              mpm::projectedGaussSeidelContact::safeAdd(
+                signedNormalBiasImpulse,
+                penaltyImpulse,
+                updatedBiasImpulse ) )
+          {
+            signedNormalBiasImpulse = updatedBiasImpulse;
+          }
+          else
+          {
+            ++localNumericalGuardActivations;
+          }
         }
 
         if( !isZero(signedNormalBiasImpulse) )
         {
-          constraint.targetNormalVelocity +=
-            inverseMassSum * signedNormalBiasImpulse;
+          real64 biasVelocity = 0.0;
+          real64 updatedTarget = 0.0;
+          if( mpm::projectedGaussSeidelContact::safeDivide(
+                signedNormalBiasImpulse,
+                pairEffectiveMass,
+                biasVelocity ) &&
+              mpm::projectedGaussSeidelContact::safeAdd(
+                constraint.targetNormalVelocity,
+                biasVelocity,
+                updatedTarget ) )
+          {
+            constraint.targetNormalVelocity = updatedTarget;
+          }
+          else
+          {
+            signedNormalBiasImpulse = 0.0;
+            ++localNumericalGuardActivations;
+          }
         }
         constraint.normalBiasImpulse =
           std::max( 0.0, signedNormalBiasImpulse );
 
-        if( gapConstraintActive || !isZero(signedNormalBiasImpulse) )
+        bool const biasConstraintActive = !isZero( signedNormalBiasImpulse );
+        bool const pairConstraintActive =
+          gapConstraintActive || biasConstraintActive;
+        localIndex activeConstraintIndex = -1;
+        if( pairConstraintActive )
         {
+          activeConstraintIndex =
+            static_cast< localIndex >( constraints.size() );
           constraints.emplace_back( constraint );
+        }
+        if( collectPairDiagnostics )
+        {
+          PairDiagnostic diagnostic;
+          diagnostic.constraint = constraint;
+          diagnostic.activeConstraintIndex = activeConstraintIndex;
+          diagnostic.gapConstraintActive = gapConstraintActive;
+          diagnostic.biasConstraintActive = biasConstraintActive;
+          pairDiagnostics.emplace_back( diagnostic );
         }
       }
     }
 
-    mpm::ProjectedGaussSeidelContactResult const result =
-      mpm::projectedGaussSeidelContact::solve(
-        nodalMass,
-        solvedVelocity,
-        constraints,
-        m_contactPGSMaximumIterations,
-        m_contactPGSVelocityTolerance,
-        m_contactPGSRelaxation );
-    if( !result.converged )
+    integer nodeIterations = 0;
+    integer nodeFallbackIterations = 0;
+    integer nodeRegularizedSteps = 0;
+    integer nodeLineSearchReductions = 0;
+    integer nodeNumericalGuardActivations = 0;
+    real64 nodeResidual = 0.0;
+    bool nodeConverged = true;
+    bool nodeUsedNewtonToPGSFallback = false;
+    bool nodeUsedSolverRollback = false;
+    if( contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel )
     {
-      ++localNonconvergedNodes;
-      localMaximumResidual = std::max( localMaximumResidual, result.residual );
+      mpm::ProjectedGaussSeidelContactResult const result =
+        mpm::projectedGaussSeidelContact::solve(
+          nodalMass,
+          solvedVelocity,
+          constraints,
+          m_contactPGSMaximumIterations,
+          m_contactPGSVelocityTolerance,
+          m_contactPGSRelaxation );
+      nodeIterations = result.iterations;
+      nodeResidual = result.residual;
+      nodeConverged = result.converged;
+      nodeNumericalGuardActivations = result.numericalGuardActivations;
+      nodeUsedSolverRollback = result.usedSafeFallback;
+    }
+    else
+    {
+      std::vector< mpm::ProjectedGaussSeidelContactConstraint > const
+        constraintsBeforeNewton = constraints;
+      mpm::NewtonRaphsonContactResult const result =
+        mpm::newtonRaphsonContact::solve(
+          nodalMass,
+          solvedVelocity,
+          constraints,
+          m_contactNRMaximumIterations,
+          m_contactNRVelocityTolerance,
+          m_contactNRFiniteDifferenceRelativeStep,
+          m_contactNRLineSearchMinimumScale,
+          m_contactNRRegularization );
+      nodeIterations = result.iterations;
+      nodeRegularizedSteps = result.regularizedSteps;
+      nodeLineSearchReductions = result.lineSearchReductions;
+      nodeResidual = result.residual;
+      nodeConverged = result.converged;
+      nodeNumericalGuardActivations = result.numericalGuardActivations;
+      nodeUsedSolverRollback = result.usedSafeFallback;
+
+      if( !result.converged && !constraints.empty() )
+      {
+        // Newton can legitimately encounter a singular generalized Jacobian
+        // at a redundant multifield node.  Restart from the unmodified trial
+        // velocity and use the independently guarded PGS projection rather
+        // than accepting a failed or non-finite Newton state.
+        solvedVelocity = initialVelocity;
+        constraints = constraintsBeforeNewton;
+        mpm::ProjectedGaussSeidelContactResult const fallbackResult =
+          mpm::projectedGaussSeidelContact::solve(
+            nodalMass,
+            solvedVelocity,
+            constraints,
+            m_contactPGSMaximumIterations,
+            m_contactPGSVelocityTolerance,
+            m_contactPGSRelaxation );
+        nodeUsedNewtonToPGSFallback = true;
+        nodeFallbackIterations = fallbackResult.iterations;
+        nodeResidual = fallbackResult.residual;
+        nodeConverged = fallbackResult.converged;
+        nodeNumericalGuardActivations +=
+          fallbackResult.numericalGuardActivations;
+        nodeUsedSolverRollback = nodeUsedSolverRollback ||
+                                 fallbackResult.usedSafeFallback;
+      }
     }
 
+    localNumericalGuardActivations += nodeNumericalGuardActivations;
+    localNewtonToPGSFallbackNodes += nodeUsedNewtonToPGSFallback ? 1 : 0;
+    localSolverRollbackNodes += nodeUsedSolverRollback ? 1 : 0;
+
+    if( !constraints.empty() )
+    {
+      ++localSolvedNodes;
+    }
+    localMaximumIterations = std::max( localMaximumIterations,
+                                       nodeIterations );
+    localMaximumRegularizedSteps = std::max( localMaximumRegularizedSteps,
+                                             nodeRegularizedSteps );
+    localMaximumLineSearchReductions = std::max(
+      localMaximumLineSearchReductions,
+      nodeLineSearchReductions );
+    localMaximumResidual = std::max( localMaximumResidual, nodeResidual );
+    if( !nodeConverged )
+    {
+      ++localNonconvergedNodes;
+    }
+
+    bool const recordFailureDiagnostics =
+      collectFailureDiagnostics && !nodeConverged;
+    bool const reportNodeDiagnostics =
+      recordNodeDiagnostics || recordFailureDiagnostics;
+
+    if( reportNodeDiagnostics )
+    {
+      char const * const nodeDiagnosticName = recordFailureDiagnostics
+        ? "CoupledContactFailureNodeDiagnostics"
+        : "CoupledContactNodeDiagnostics";
+      char const * const pairDiagnosticName = recordFailureDiagnostics
+        ? "CoupledContactFailurePairDiagnostics"
+        : "CoupledContactPairDiagnostics";
+      std::ostringstream nodeReport;
+      nodeReport << std::scientific << std::setprecision( 17 )
+                 << nodeDiagnosticName
+                 << " solver=" << contactSolverName
+                 << " nodeGlobalID=" << nodeGlobalID[g]
+                 << " nodeLocalIndex=" << g
+                 << " ghostRank=" << gridGhostRank[g]
+                 << " nodePosition=[" << gridPosition[g][0] << ","
+                 << gridPosition[g][1] << "," << gridPosition[g][2] << "]"
+                 << " dt=" << dt
+                 << " configuredNormalType="
+                 << EnumStrings< mpm::ContactNormalTypeOption >::toString(
+                      contactNormalType )
+                 << " gapCorrection="
+                 << EnumStrings< mpm::ContactGapCorrectionOption >::toString(
+                      contactGapCorrection )
+                 << " multifieldLogisticRegression="
+                 << useLogisticRegressionForMultifield
+                 << " gapActivationRelativeTolerance="
+                 << contactGapActivationRelativeTolerance
+                 << " candidateMassFields=" << candidateContactFieldCount
+                 << " massFilteredFields=" << massFilteredFieldCount
+                 << " contactMassCutoff=" << nodeContactMassCutoff
+                 << " activeFields=" << activeContactFieldCount
+                 << " candidatePairs=" << pairDiagnostics.size()
+                 << " activeConstraints=" << constraints.size()
+                 << " iterations=" << nodeIterations
+                 << " fallbackIterations=" << nodeFallbackIterations
+                 << " velocityResidual=" << nodeResidual
+                 << " velocityTolerance="
+                 << contactSolverVelocityTolerance
+                 << " converged=" << ( nodeConverged ? 1 : 0 )
+                 << " regularizedSteps=" << nodeRegularizedSteps
+                 << " lineSearchReductions=" << nodeLineSearchReductions
+                 << " numericalGuardActivations="
+                 << nodeNumericalGuardActivations
+                 << " fallback="
+                 << ( nodeUsedNewtonToPGSFallback
+                      ? "ProjectedGaussSeidel"
+                      : ( nodeUsedSolverRollback ? "lastFiniteState" : "none" ) );
+      GEOS_LOG_RANK( nodeReport.str() );
+
+      if( recordFailureDiagnostics )
+      {
+        for( localIndex fieldIndex = 0;
+             fieldIndex < numVelocityFields;
+             ++fieldIndex )
+        {
+          bool const candidateField =
+            candidateContactField[fieldIndex] != 0;
+          bool const activeField = usableContactField[fieldIndex] != 0;
+          if( !candidateField )
+          {
+            continue;
+          }
+
+          bool const useMappedSurfacePosition =
+            gridSurfaceFieldMass[g][fieldIndex] > nodeContactMassCutoff &&
+            useSurfacePositionForContact;
+          real64 usedSurfacePosition[3] = {};
+          if( useMappedSurfacePosition )
+          {
+            LvArray::tensorOps::copy< 3 >(
+              usedSurfacePosition,
+              gridSurfacePosition[g][fieldIndex] );
+          }
+          else
+          {
+            LvArray::tensorOps::copy< 3 >(
+              usedSurfacePosition,
+              gridCenterOfMass[g][fieldIndex] );
+          }
+
+          integer const contactGroup = numContactGroups > 0
+            ? fieldIndex % numContactGroups
+            : fieldIndex;
+          integer const damageField = numContactGroups > 0
+            ? fieldIndex / numContactGroups
+            : 0;
+          std::ostringstream fieldReport;
+          fieldReport << std::scientific << std::setprecision( 17 )
+                      << "CoupledContactFailureFieldDiagnostics"
+                      << " solver=" << contactSolverName
+                      << " nodeGlobalID=" << nodeGlobalID[g]
+                      << " field=" << fieldIndex
+                      << " contactActive=" << ( activeField ? 1 : 0 )
+                      << " contactMassCutoff=" << nodeContactMassCutoff
+                      << " contactGroup=" << contactGroup
+                      << " damageField=" << damageField
+                      << " mass=" << gridMass[g][fieldIndex]
+                      << " materialVolume="
+                      << gridMaterialVolume[g][fieldIndex]
+                      << " surfaceFieldMass="
+                      << gridSurfaceFieldMass[g][fieldIndex]
+                      << " surfaceNormalWeight="
+                      << gridSurfaceNormalWeights[g][fieldIndex]
+                      << " surfaceNormal=["
+                      << gridSurfaceNormal[g][fieldIndex][0] << ","
+                      << gridSurfaceNormal[g][fieldIndex][1] << ","
+                      << gridSurfaceNormal[g][fieldIndex][2] << "]"
+                      << " centerOfMass=["
+                      << gridCenterOfMass[g][fieldIndex][0] << ","
+                      << gridCenterOfMass[g][fieldIndex][1] << ","
+                      << gridCenterOfMass[g][fieldIndex][2] << "]"
+                      << " mappedSurfacePosition=["
+                      << gridSurfacePosition[g][fieldIndex][0] << ","
+                      << gridSurfacePosition[g][fieldIndex][1] << ","
+                      << gridSurfacePosition[g][fieldIndex][2] << "]"
+                      << " usedSurfacePosition=["
+                      << usedSurfacePosition[0] << ","
+                      << usedSurfacePosition[1] << ","
+                      << usedSurfacePosition[2] << "]"
+                      << " surfacePositionSource="
+                      << ( useMappedSurfacePosition
+                           ? "mappedSurface"
+                           : "centerOfMass" )
+                      << " preVelocity=["
+                      << initialVelocity[fieldIndex][0] << ","
+                      << initialVelocity[fieldIndex][1] << ","
+                      << initialVelocity[fieldIndex][2] << "]"
+                      << " postVelocity=["
+                      << solvedVelocity[fieldIndex][0] << ","
+                      << solvedVelocity[fieldIndex][1] << ","
+                      << solvedVelocity[fieldIndex][2] << "]"
+                      << " cohesiveFieldFlag="
+                      << gridCohesiveFieldFlag[g][fieldIndex]
+                      << " damage=" << gridDamage[g][fieldIndex]
+                      << " maxDamage=" << gridMaxDamage[g][fieldIndex]
+                      << " singleFieldStateFraction="
+                      << gridSingleFieldStateFraction[g][fieldIndex]
+                      << " rigidBodyColor="
+                      << rigidBodyGridFieldColor[g][fieldIndex]
+                      << " rigidBodyContactGroup="
+                      << rigidBodyGridFieldContactGroup[g][fieldIndex];
+          GEOS_LOG_RANK( fieldReport.str() );
+        }
+      }
+
+      for( std::size_t pairIndex = 0;
+           pairIndex < pairDiagnostics.size();
+           ++pairIndex )
+      {
+        PairDiagnostic const & pairDiagnostic = pairDiagnostics[pairIndex];
+        bool const activeConstraint =
+          pairDiagnostic.activeConstraintIndex >= 0;
+        mpm::ProjectedGaussSeidelContactConstraint const & constraint =
+          activeConstraint
+          ? constraints[pairDiagnostic.activeConstraintIndex]
+          : pairDiagnostic.constraint;
+        std::array< real64, 3 > const preRelativeVelocity =
+          mpm::projectedGaussSeidelContact::relativeVelocity(
+            initialVelocity,
+            constraint );
+        std::array< real64, 3 > const postRelativeVelocity =
+          mpm::projectedGaussSeidelContact::relativeVelocity(
+            solvedVelocity,
+            constraint );
+        real64 const preNormalVelocity =
+          mpm::projectedGaussSeidelContact::dot(
+            preRelativeVelocity,
+            constraint.normal );
+        real64 const postNormalVelocity =
+          mpm::projectedGaussSeidelContact::dot(
+            postRelativeVelocity,
+            constraint.normal );
+        real64 const tangentialImpulseNorm =
+          mpm::projectedGaussSeidelContact::norm(
+            constraint.accumulatedTangentialImpulse );
+        real64 const frictionNormalImpulse = std::max(
+          0.0,
+          constraint.accumulatedNormalImpulse -
+          constraint.normalBiasImpulse );
+        real64 const coulombLimit =
+          constraint.frictionCoefficient * frictionNormalImpulse;
+        real64 const coulombMargin =
+          coulombLimit - tangentialImpulseNorm;
+        real64 const normalSlack =
+          postNormalVelocity - constraint.targetNormalVelocity;
+
+        char const * activation = "inactive";
+        if( constraint.bilateral )
+        {
+          activation = "bilateral";
+        }
+        else if( pairDiagnostic.gapConstraintActive &&
+                 pairDiagnostic.biasConstraintActive )
+        {
+          activation = "gap+bias";
+        }
+        else if( pairDiagnostic.gapConstraintActive )
+        {
+          activation = "gap";
+        }
+        else if( pairDiagnostic.biasConstraintActive )
+        {
+          activation = "bias";
+        }
+
+        std::ostringstream pairReport;
+        pairReport << std::scientific << std::setprecision( 17 )
+                   << pairDiagnosticName
+                   << " solver=" << contactSolverName
+                   << " nodeGlobalID=" << nodeGlobalID[g]
+                   << " pairIndex=" << pairIndex
+                   << " fieldA=" << constraint.fieldA
+                   << " fieldB=" << constraint.fieldB
+                   << " active=" << ( activeConstraint ? 1 : 0 )
+                   << " constraintIndex="
+                   << pairDiagnostic.activeConstraintIndex
+                   << " activation=" << activation
+                   << " bilateral=" << ( constraint.bilateral ? 1 : 0 )
+                   << " hasGap=" << ( constraint.hasGap ? 1 : 0 )
+                   << " gap=" << constraint.gap
+                   << " gapActivationTolerance="
+                   << constraint.gapActivationTolerance
+                   << " normal=[" << constraint.normal[0] << ","
+                   << constraint.normal[1] << ","
+                   << constraint.normal[2] << "]"
+                   << " targetNormalVelocity="
+                   << constraint.targetNormalVelocity
+                   << " preRelativeVelocity=[" << preRelativeVelocity[0]
+                   << "," << preRelativeVelocity[1]
+                   << "," << preRelativeVelocity[2] << "]"
+                   << " postRelativeVelocity=[" << postRelativeVelocity[0]
+                   << "," << postRelativeVelocity[1]
+                   << "," << postRelativeVelocity[2] << "]"
+                   << " preNormalVelocity=" << preNormalVelocity
+                   << " postNormalVelocity=" << postNormalVelocity
+                   << " normalSlack=" << normalSlack
+                   << " normalImpulse="
+                   << constraint.accumulatedNormalImpulse
+                   << " normalBiasImpulse="
+                   << constraint.normalBiasImpulse
+                   << " tangentialImpulse=["
+                   << constraint.accumulatedTangentialImpulse[0] << ","
+                   << constraint.accumulatedTangentialImpulse[1] << ","
+                   << constraint.accumulatedTangentialImpulse[2] << "]"
+                   << " tangentialImpulseNorm=" << tangentialImpulseNorm
+                   << " frictionCoefficient="
+                   << constraint.frictionCoefficient
+                   << " coulombLimit=" << coulombLimit
+                   << " coulombMargin=" << coulombMargin
+                   << " impulseAvailable="
+                   << ( constraint.bilateral ? 0 : 1 );
+
+        if( recordFailureDiagnostics )
+        {
+          localIndex const fieldA = constraint.fieldA;
+          localIndex const fieldB = constraint.fieldB;
+          bool const useMappedSurfacePositionA =
+            gridSurfaceFieldMass[g][fieldA] > nodeContactMassCutoff &&
+            useSurfacePositionForContact;
+          bool const useMappedSurfacePositionB =
+            gridSurfaceFieldMass[g][fieldB] > nodeContactMassCutoff &&
+            useSurfacePositionForContact;
+          real64 const gapScale =
+            ( useMappedSurfacePositionA ? 0.0 : 0.5 ) +
+            ( useMappedSurfacePositionB ? 0.0 : 0.5 );
+          real64 usedSurfacePositionA[3] = {};
+          real64 usedSurfacePositionB[3] = {};
+          if( useMappedSurfacePositionA )
+          {
+            LvArray::tensorOps::copy< 3 >(
+              usedSurfacePositionA,
+              gridSurfacePosition[g][fieldA] );
+          }
+          else
+          {
+            LvArray::tensorOps::copy< 3 >(
+              usedSurfacePositionA,
+              gridCenterOfMass[g][fieldA] );
+          }
+          if( useMappedSurfacePositionB )
+          {
+            LvArray::tensorOps::copy< 3 >(
+              usedSurfacePositionB,
+              gridSurfacePosition[g][fieldB] );
+          }
+          else
+          {
+            LvArray::tensorOps::copy< 3 >(
+              usedSurfacePositionB,
+              gridCenterOfMass[g][fieldB] );
+          }
+
+          real64 gap0 = 0.0;
+          if( constraint.hasGap )
+          {
+            gap0 = planeStrain == 1
+              ? 1.0 / LvArray::math::sqrt(
+                  LvArray::math::pow( constraint.normal[0] / hEl[0], 2 ) +
+                  LvArray::math::pow( constraint.normal[1] / hEl[1], 2 ) )
+              : 1.0 / LvArray::math::sqrt(
+                  LvArray::math::pow( constraint.normal[0] / hEl[0], 2 ) +
+                  LvArray::math::pow( constraint.normal[1] / hEl[1], 2 ) +
+                  LvArray::math::pow( constraint.normal[2] / hEl[2], 2 ) );
+          }
+          real64 const fieldNormalDot =
+            gridSurfaceNormal[g][fieldA][0] *
+              gridSurfaceNormal[g][fieldB][0] +
+            gridSurfaceNormal[g][fieldA][1] *
+              gridSurfaceNormal[g][fieldB][1] +
+            gridSurfaceNormal[g][fieldA][2] *
+              gridSurfaceNormal[g][fieldB][2];
+          integer const contactGroupA = numContactGroups > 0
+            ? fieldA % numContactGroups
+            : fieldA;
+          integer const contactGroupB = numContactGroups > 0
+            ? fieldB % numContactGroups
+            : fieldB;
+          integer const damageFieldA = numContactGroups > 0
+            ? fieldA / numContactGroups
+            : 0;
+          integer const damageFieldB = numContactGroups > 0
+            ? fieldB / numContactGroups
+            : 0;
+          mpm::ContactNormalTypeOption const failureNormalType =
+            mpm::projectedGaussSeidelContact::useMultifieldLogisticRegression(
+              useLogisticRegressionForMultifield,
+              activeContactFieldCount,
+              rigidBodyMode == 1 )
+            ? mpm::ContactNormalTypeOption::LogisticRegression
+            : contactNormalType;
+          mpm::ContactNormalTypeOption const activeFailureNormalType =
+            rigidBodyMode == 1 &&
+            failureNormalType == mpm::ContactNormalTypeOption::LogisticRegression
+            ? mpm::ContactNormalTypeOption::MassWeighted
+            : failureNormalType;
+
+          pairReport << " contactGroupA=" << contactGroupA
+                     << " contactGroupB=" << contactGroupB
+                     << " damageFieldA=" << damageFieldA
+                     << " damageFieldB=" << damageFieldB
+                     << " normalType="
+                     << EnumStrings< mpm::ContactNormalTypeOption >::toString(
+                          activeFailureNormalType )
+                     << " massA=" << gridMass[g][fieldA]
+                     << " massB=" << gridMass[g][fieldB]
+                     << " materialVolumeA="
+                     << gridMaterialVolume[g][fieldA]
+                     << " materialVolumeB="
+                     << gridMaterialVolume[g][fieldB]
+                     << " surfaceFieldMassA="
+                     << gridSurfaceFieldMass[g][fieldA]
+                     << " surfaceFieldMassB="
+                     << gridSurfaceFieldMass[g][fieldB]
+                     << " surfaceNormalA=["
+                     << gridSurfaceNormal[g][fieldA][0] << ","
+                     << gridSurfaceNormal[g][fieldA][1] << ","
+                     << gridSurfaceNormal[g][fieldA][2] << "]"
+                     << " surfaceNormalB=["
+                     << gridSurfaceNormal[g][fieldB][0] << ","
+                     << gridSurfaceNormal[g][fieldB][1] << ","
+                     << gridSurfaceNormal[g][fieldB][2] << "]"
+                     << " fieldNormalDot=" << fieldNormalDot
+                     << " centerOfMassA=["
+                     << gridCenterOfMass[g][fieldA][0] << ","
+                     << gridCenterOfMass[g][fieldA][1] << ","
+                     << gridCenterOfMass[g][fieldA][2] << "]"
+                     << " centerOfMassB=["
+                     << gridCenterOfMass[g][fieldB][0] << ","
+                     << gridCenterOfMass[g][fieldB][1] << ","
+                     << gridCenterOfMass[g][fieldB][2] << "]"
+                     << " mappedSurfacePositionA=["
+                     << gridSurfacePosition[g][fieldA][0] << ","
+                     << gridSurfacePosition[g][fieldA][1] << ","
+                     << gridSurfacePosition[g][fieldA][2] << "]"
+                     << " mappedSurfacePositionB=["
+                     << gridSurfacePosition[g][fieldB][0] << ","
+                     << gridSurfacePosition[g][fieldB][1] << ","
+                     << gridSurfacePosition[g][fieldB][2] << "]"
+                     << " usedSurfacePositionA=["
+                     << usedSurfacePositionA[0] << ","
+                     << usedSurfacePositionA[1] << ","
+                     << usedSurfacePositionA[2] << "]"
+                     << " usedSurfacePositionB=["
+                     << usedSurfacePositionB[0] << ","
+                     << usedSurfacePositionB[1] << ","
+                     << usedSurfacePositionB[2] << "]"
+                     << " surfacePositionSourceA="
+                     << ( useMappedSurfacePositionA
+                          ? "mappedSurface"
+                          : "centerOfMass" )
+                     << " surfacePositionSourceB="
+                     << ( useMappedSurfacePositionB
+                          ? "mappedSurface"
+                          : "centerOfMass" )
+                     << " gapScale=" << gapScale
+                     << " gap0=" << gap0;
+        }
+        GEOS_LOG_RANK( pairReport.str() );
+      }
+      if( recordNodeDiagnostics )
+      {
+        ++localDetailedDiagnosticNodes;
+      }
+      if( recordFailureDiagnostics )
+      {
+        ++localFailureDiagnosticNodes;
+      }
+    }
+
+    bool outputRollback = false;
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
-      if( nodalMass[fieldIndex] > smallMass )
+      if( usableContactField[fieldIndex] != 0 )
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          contactOutput[g][fieldIndex][i] =
-            outputScale * nodalMass[fieldIndex] *
-            ( solvedVelocity[fieldIndex][i] -
-              initialVelocity[fieldIndex][i] );
+          real64 velocityCorrection = 0.0;
+          real64 momentumCorrection = 0.0;
+          if( mpm::projectedGaussSeidelContact::safeSubtract(
+                solvedVelocity[fieldIndex][i],
+                initialVelocity[fieldIndex][i],
+                velocityCorrection ) &&
+              mpm::projectedGaussSeidelContact::safeMultiply(
+                nodalMass[fieldIndex],
+                velocityCorrection,
+                momentumCorrection ) &&
+              mpm::projectedGaussSeidelContact::safeMultiply(
+                outputScale,
+                momentumCorrection,
+                contactOutput[g][fieldIndex][i] ) )
+          {
+            continue;
+          }
+          contactOutput[g][fieldIndex][i] = 0.0;
+          ++localNumericalGuardActivations;
+          outputRollback = true;
         }
       }
     }
+    localSolverRollbackNodes += outputRollback ? 1 : 0;
   }
 
   integer const globalNonconvergedNodes =
     MpiWrapper::sum( localNonconvergedNodes );
+  integer const globalSolvedNodes = MpiWrapper::sum( localSolvedNodes );
+  integer const globalFailureDiagnosticNodes =
+    MpiWrapper::sum( localFailureDiagnosticNodes );
+  integer const globalNumericalGuardActivations =
+    MpiWrapper::sum( localNumericalGuardActivations );
+  integer const globalNumericallySkippedNodes =
+    MpiWrapper::sum( localNumericallySkippedNodes );
+  integer const globalNumericallySkippedPairs =
+    MpiWrapper::sum( localNumericallySkippedPairs );
+  integer const globalNewtonToPGSFallbackNodes =
+    MpiWrapper::sum( localNewtonToPGSFallbackNodes );
+  integer const globalSolverRollbackNodes =
+    MpiWrapper::sum( localSolverRollbackNodes );
+  integer const globalContactMassFilteredFields =
+    MpiWrapper::sum( localContactMassFilteredFields );
+  integer const globalContactMassFilteredCandidatePairs =
+    MpiWrapper::sum( localContactMassFilteredCandidatePairs );
+  integer const globalMaximumIterations =
+    MpiWrapper::max( localMaximumIterations );
+  integer const globalMaximumRegularizedSteps =
+    MpiWrapper::max( localMaximumRegularizedSteps );
+  integer const globalMaximumLineSearchReductions =
+    MpiWrapper::max( localMaximumLineSearchReductions );
   real64 const globalMaximumResidual =
     MpiWrapper::max( localMaximumResidual );
-  GEOS_ERROR_IF( m_contactPGSRequireConvergence != 0 &&
+  real64 const globalMaximumContactMassCutoff =
+    MpiWrapper::max( localMaximumContactMassCutoff );
+  GEOS_LOG_RANK_IF(
+    contactSolverFailureDiagnostics != 0 &&
+    localNonconvergedNodes > localFailureDiagnosticNodes,
+    GEOS_FMT( "CoupledContactFailureDiagnosticsTruncated solver={} "
+              "nonconvergedNodes={} reportedNodes={} maximumReportedNodes={}.",
+              contactSolverName,
+              localNonconvergedNodes,
+              localFailureDiagnosticNodes,
+              contactSolverFailureDiagnosticMaxNodes ) );
+  GEOS_LOG_RANK_0_IF(
+    ( contactSolverDiagnostics != 0 ||
+    ( contactSolverFailureDiagnostics != 0 &&
+      globalNonconvergedNodes != 0 ) ||
+    globalNumericalGuardActivations != 0 ||
+    globalNewtonToPGSFallbackNodes != 0 ||
+    globalSolverRollbackNodes != 0 ||
+    globalContactMassFilteredFields != 0 ),
+    GEOS_FMT( "CoupledContactSolverDiagnostics solver={} solvedNodes={} "
+              "nonconvergedNodes={} maximumNodeIterations={} "
+              "maximumVelocityResidual={} velocityTolerance={} "
+              "maximumRegularizedSteps={} maximumLineSearchReductions={} "
+              "failureDiagnosticNodes={} numericalGuardActivations={} "
+              "numericallySkippedNodes={} numericallySkippedPairs={} "
+              "newtonToPGSFallbackNodes={} solverRollbackNodes={}.",
+              contactSolverName,
+              globalSolvedNodes,
+              globalNonconvergedNodes,
+              globalMaximumIterations,
+              globalMaximumResidual,
+              contactSolverVelocityTolerance,
+              globalMaximumRegularizedSteps,
+              globalMaximumLineSearchReductions,
+              globalFailureDiagnosticNodes,
+              globalNumericalGuardActivations,
+              globalNumericallySkippedNodes,
+              globalNumericallySkippedPairs,
+              globalNewtonToPGSFallbackNodes,
+              globalSolverRollbackNodes,
+              globalContactMassFilteredFields,
+              globalContactMassFilteredCandidatePairs,
+              globalMaximumContactMassCutoff ) );
+  GEOS_ERROR_IF( contactSolverRequireConvergence != 0 &&
                  globalNonconvergedNodes != 0,
-                 GEOS_FMT( "ProjectedGaussSeidel contact failed to converge at {} grid nodes "
+                 GEOS_FMT( "{} contact failed to converge at {} grid nodes "
                            "within {} iterations; maximum projected velocity residual was {}.",
+                           contactSolverName,
                            globalNonconvergedNodes,
-                           m_contactPGSMaximumIterations,
+                           contactSolverMaximumIterations,
                            globalMaximumResidual ) );
-  GEOS_LOG_RANK_0_IF( m_contactPGSRequireConvergence == 0 &&
+  GEOS_LOG_RANK_0_IF( contactSolverRequireConvergence == 0 &&
                       globalNonconvergedNodes != 0,
-                      GEOS_FMT( "Warning: ProjectedGaussSeidel contact did not converge at {} grid nodes; "
+                      GEOS_FMT( "Warning: {} contact did not converge at {} grid nodes; "
                                 "maximum projected velocity residual was {}.",
+                                contactSolverName,
                                 globalNonconvergedNodes,
                                 globalMaximumResidual ) );
 
@@ -25878,14 +27718,14 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                                                              arrayView3d< real64 const > const vUncorrectedTotal,
                                                              arrayView3d< real64 > const contactMomentumTarget )
 {
-  if( m_contactSolver == mpm::ContactSolverOption::ProjectedGaussSeidel )
+  if( m_contactSolver != mpm::ContactSolverOption::Pairwise )
   {
-    computeProjectedGaussSeidelContact( dt,
-                                        particleManager,
-                                        nodeManager,
-                                        vUncorrectedTotal,
-                                        contactMomentumTarget,
-                                        1.0 );
+    computeCoupledContact( dt,
+                           particleManager,
+                           nodeManager,
+                           vUncorrectedTotal,
+                           contactMomentumTarget,
+                           1.0 );
     return;
   }
 
@@ -25895,6 +27735,8 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
   mpm::ContactNormalTypeOption const contactNormalType = m_contactNormalType;
   mpm::ContactGapCorrectionOption const contactGapCorrection = m_contactGapCorrection;
+  real64 const contactGapActivationRelativeTolerance =
+    m_contactGapActivationRelativeTolerance;
   mpm::OverlapCorrectionOption const overlapCorrection = m_overlapCorrection;
 
   int const planeStrain = m_planeStrain;
@@ -25915,6 +27757,8 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
     nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() );
 
   real64 const smallMass = m_smallMass;
+  real64 const contactMinimumMass = m_contactMinimumMass;
+  real64 const contactMinimumMassFraction = m_contactMinimumMassFraction;
   real64 const neighborRadius = m_neighborRadius;
   real64 const separabilityMinDamage = m_separabilityMinDamage;
   real64 const thinFeatureDFGThreshold = m_thinFeatureDFGThreshold;
@@ -25982,25 +27826,35 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
       LvArray::tensorOps::fill< 3 >( contactMomentumTarget[g][fieldIndex], 0.0 );
     }
 
+    real64 nodeMaximumContactMass = 0.0;
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      real64 const fieldMass = gridMass[g][fieldIndex];
+      if( isFinite( fieldMass ) && fieldMass > smallMass &&
+          hasUsableContactNormal( gridSurfaceNormal[g][fieldIndex] ) )
+      {
+        nodeMaximumContactMass =
+          LvArray::math::max( nodeMaximumContactMass, fieldMass );
+      }
+    }
+    real64 const nodeContactMassCutoff =
+      mpm::projectedGaussSeidelContact::contactMassCutoff(
+        smallMass,
+        contactMinimumMass,
+        contactMinimumMassFraction,
+        nodeMaximumContactMass );
+
     for( localIndex A = 0; A < numVelocityFields - 1; ++A )
     {
       for( localIndex B = A + 1; B < numVelocityFields; ++B )
       {
-        // Make sure both fields in the pair are active
-        // Tensor equation: active = (gridMass[g][A] > smallMass) && (||gridSurfaceNormal[g][A]||^2 > 1.0e-16).
-        bool active = ( gridMass[g][A] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-16 )
-                      and
-                      // Tensor equation: gridSurfaceNormal[g][B]: l2NormSquared(gridSurfaceNormal[g][B]).
-                      ( gridMass[g][B] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][B] ) > 1.0e-16 ); // CC:
-                                                                                                                                         // Should
-                                                                                                                                         // grid
-                                                                                                                                         // surface
-                                                                                                                                         // normal
-                                                                                                                                         // min
-                                                                                                                                         // magnitude
-                                                                                                                                         // be
-                                                                                                                                         // DBL_MIN
-                                                                                                                                         // instead?
+        bool const active =
+          isFinite( gridMass[g][A] ) &&
+          gridMass[g][A] > nodeContactMassCutoff &&
+          hasUsableContactNormal( gridSurfaceNormal[g][A] ) &&
+          isFinite( gridMass[g][B] ) &&
+          gridMass[g][B] > nodeContactMassCutoff &&
+          hasUsableContactNormal( gridSurfaceNormal[g][B] );
 
         real64 frictionCoefficient = frictionCoefficientTable[A % numContactGroups][B % numContactGroups];
 
@@ -26214,7 +28068,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                 LvArray::tensorOps::scaledAdd< 3 >( n0, nB, -mB );
 
                 real64 dumby[3] = {};
-                logisticRegression( planeStrain,
+                mpm::LogisticRegressionResultFlag result = logisticRegression( planeStrain,
                                     numContactGroups,
                                     damageFieldPartitioning,
                                     maxLRIterations,
@@ -26273,13 +28127,14 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
           real64 contactPenetration = 0.0;
           computePairwiseNodalContactImpulse( contactGapCorrection,
+                                              contactGapActivationRelativeTolerance,
                                               overlapCorrection,
                                             overlapThreshold1,
                                             overlapThreshold2,
                                             maxParticleVelocitySquared,
                                               hEl,
                                               planeStrain,
-                                              smallMass,
+                                              nodeContactMassCutoff,
                                               useSurfacePositionForContact,
                                               useCohesiveTangentialForces,
                                               rigidBodyPenetrationPenaltyBeta,
@@ -26523,6 +28378,7 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & numContactGro
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorrectionOption const & contactGapCorrection,
+                                                            real64 const contactGapActivationRelativeTolerance,
                                                             mpm::OverlapCorrectionOption const & overlapCorrection,
                                                             real64 const overlapThreshold1,
                                                             real64 const overlapThreshold2,
@@ -26646,7 +28502,13 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorre
       contact = test > 0.0 ? 1.0 : 0.0;
       break;
     case mpm::ContactGapCorrectionOption::Implicit:
-      contact = ( test > 0.0 && gap < 0.0 ) ? 1.0 : 0.0;
+      contact =
+        ( test > 0.0 &&
+          mpm::projectedGaussSeidelContact::implicitGapConstraintCandidate(
+            gap,
+            contactGapActivationRelativeTolerance * gap0 ) )
+        ? 1.0
+        : 0.0;
       break;
     case mpm::ContactGapCorrectionOption::Softened:
       if( test > 0 )
@@ -26744,6 +28606,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorre
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computePairwiseNodalContactForce( mpm::ContactGapCorrectionOption const & contactGapCorrection,
+                                                          real64 const contactGapActivationRelativeTolerance,
                                                           mpm::OverlapCorrectionOption const & overlapCorrection,
                                                           real64 const overlapThreshold1,
                                                           real64 const overlapThreshold2,
@@ -26923,7 +28786,13 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( mpm::ContactGapCorrect
       break;
     // Check materials are interpenetrating and velocities will results in further interpenetration
     case mpm::ContactGapCorrectionOption::Implicit:
-      contact = ( test > 0.0 && gap < 0.0 ) ? 1.0 : 0.0;
+      contact =
+        ( test > 0.0 &&
+          mpm::projectedGaussSeidelContact::implicitGapConstraintCandidate(
+            gap,
+            contactGapActivationRelativeTolerance * gap0 ) )
+        ? 1.0
+        : 0.0;
       break;
     //
     case mpm::ContactGapCorrectionOption::Softened:

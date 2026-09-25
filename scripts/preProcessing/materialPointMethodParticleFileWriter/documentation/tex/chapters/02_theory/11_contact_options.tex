@@ -275,6 +275,16 @@ For the \texttt{Aligned} option, the alignment weights are accumulated during pa
 \end{equation}
 The pair normal is normalized after the option-specific construction, and the solver stores opposite normals back to the two grid fields for consistency.
 
+For simultaneous nodal contact, set
+\texttt{contactSolver=ProjectedGaussSeidel}.  The optional
+\texttt{contactPGSUseLogisticRegressionForMultifield=1} policy counts the
+active contact fields at each node.  Nodes with more than two active fields
+use a separate logistic-regression normal for each field pair, while one-pair
+nodes retain the configured \texttt{contactNormalType}.  Enabling this policy
+also requests the nodal particle-neighbor list required by the fit.  It is
+disabled by default, and rigid-body contact retains its mapped-normal policy
+because its color-based field indices are not logistic-regression classes.
+
 \subsection{Separability criteria}
 \label{subsec:contact-separability}
 \index{contact!separability}
@@ -343,6 +353,17 @@ for the force form, or to the same expression without $1/\Delta t$ for the impul
   |f_t|\le \mu_{AB}|f_n|.
 \end{equation}
 If cohesive tangential forces are active for the pair, the frictional tangential contribution is set to zero so that the cohesive law supplies the tangential resistance.
+
+The projected Gauss--Seidel path applies the same Coulomb law to the coupled
+node solve.  After each normal-impulse update it removes the normal component
+of the accumulated tangential impulse and projects the remainder onto
+\begin{equation}
+  \|\mathbf{J}_{t,AB}\| \le
+  \mu_{AB}\max\!\left(0,J_{n,AB}-J_{n,AB}^{\mathrm{bias}}\right).
+\end{equation}
+All pair constraints at a node update the same working field velocities, so
+frictional pairs that share a field are converged together rather than applied
+as independent one-pass corrections.
 
 The gap length scale used by the contact criterion is the grid-normal support length,
 \begin{equation}
@@ -479,7 +500,11 @@ Attribute & Internal effect \\
 \endhead
 \texttt{enableContact} & Master switch for material contact once \texttt{hasContact} is true. \\
 \texttt{damageFieldPartitioning} & Enables DFG two-flag splitting inside each prescribed contact group. \\
+\texttt{contactSolver} & Selects the legacy one-pass \texttt{Pairwise} update or the coupled \texttt{ProjectedGaussSeidel} node solve. \\
 \texttt{contactNormalType} & Selects the pair-normal construction branch: \texttt{Difference}, \texttt{MassWeighted}, \texttt{LargerMass}, \texttt{Mixed}, \texttt{Aligned}, or \texttt{LogisticRegression}. \\
+\texttt{contactPGSUseLogisticRegressionForMultifield} & When nonzero, uses pair-specific logistic-regression normals at PGS nodes with more than two active contact fields. \\
+\texttt{contactPGSMaximumIterations}, \texttt{contactPGSVelocityTolerance} & Set the sweep limit and projected-velocity convergence tolerance for the node-local PGS solve. \\
+\texttt{contactPGSRelaxation}, \texttt{contactPGSRequireConvergence} & Set the PGS relaxation factor and whether a nonconverged node is fatal. \\
 \texttt{contactGapCorrection} & Selects \texttt{Simple}, \texttt{Implicit}, or \texttt{Softened} closure in Eq.~\eqref{eq:contact-gap-closure-factor}. \\
 \texttt{frictionCoefficient} & Scalar global coefficient expanded to a uniform group-group table when no explicit table is supplied. \\
 \texttt{frictionCoefficientTable} & Defines pairwise group-dependent friction coefficients; must be square, must match the number of contact groups, and is indexed by $A\bmod N_g$ and $B\bmod N_g$ when DFG adds fields. \\

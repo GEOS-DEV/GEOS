@@ -232,6 +232,13 @@ namespace mpm
     DFGAndVolumeIntegration
   };
 
+  enum struct LogisticRegressionResultFlag : integerConversion
+  {
+    Unconverged,
+    Converged,
+    Errored
+  };
+
   ENUM_STRINGS( mpm::TimeIntegrationOption,
               "QuasiStatic",
               "ImplicitDynamic",
@@ -323,6 +330,11 @@ ENUM_STRINGS( mpm::GPUSchemeOption,
 ENUM_STRINGS( mpm::NormalsAndPositionsMethodOption,
               "LogisticRegression",
               "DFGAndVolumeIntegration" );
+
+ENUM_STRINGS( mpm::LogisticRegressionResultFlag,
+              "Unconverged",
+            "Converged",
+          "Errored" );
 
 GEOS_HOST_DEVICE
 inline integer toInteger( SurfaceFlag const flag )

@@ -546,7 +546,7 @@ public:
                              NodeManager & nodeManager );
 
   /**
-   * @brief Solve all material-contact constraints at each node with PGS.
+   * @brief Solve all material-contact constraints at each node with a coupled solver.
    *
    * @param dt Time step used to convert impulses to forces and for gap bias.
    * @param particleManager Particle data used by logistic-regression normals.
@@ -555,12 +555,12 @@ public:
    * @param contactOutput Contact impulse multiplied by @p outputScale.
    * @param outputScale Use 1/dt for force or 1 for momentum.
    */
-  void computeProjectedGaussSeidelContact( real64 const dt,
-                                           ParticleManager & particleManager,
-                                           NodeManager & nodeManager,
-                                           arrayView3d< real64 const > const trialVelocity,
-                                           arrayView3d< real64 > const contactOutput,
-                                           real64 const outputScale );
+  void computeCoupledContact( real64 const dt,
+                              ParticleManager & particleManager,
+                              NodeManager & nodeManager,
+                              arrayView3d< real64 const > const trialVelocity,
+                              arrayView3d< real64 > const contactOutput,
+                              real64 const outputScale );
 
   void enforceWeakInterfaceTraceProjection( real64 const dt,
                                             DomainPartition & domain,
@@ -602,6 +602,7 @@ public:
   static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computePairwiseNodalContactImpulse( mpm::ContactGapCorrectionOption const & contactGapCorrection,
+                                           real64 const contactGapActivationRelativeTolerance,
                                            mpm::OverlapCorrectionOption const & overlapCorrection,
                                            real64 const overlapThreshold1,
                                            real64 const overlapThreshold2,
@@ -641,6 +642,7 @@ public:
   static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computePairwiseNodalContactForce( mpm::ContactGapCorrectionOption const & contactGapCorrection,
+                                         real64 const contactGapActivationRelativeTolerance,
                                          mpm::OverlapCorrectionOption const & overlapCorrection,
                                          real64 const overlapThreshold1,
                                          real64 const overlapThreshold2,
@@ -972,7 +974,7 @@ public:
 
   static GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  void logisticRegression( int const & planeStrain,
+  mpm::LogisticRegressionResultFlag logisticRegression( int const & planeStrain,
                            integer const & numContactGroups,
                            integer const & damageFieldPartitioning,
                            integer const & maxLRIterations,
@@ -1376,14 +1378,28 @@ protected:
   array1d< real64 > m_confiningPressureBoxMax;
   array1d< real64 > m_confiningPressureBoxMin;
   array1d< real64 > m_confiningStress;
+  real64 m_contactGapActivationRelativeTolerance;
+  real64 m_contactMinimumMass;
+  real64 m_contactMinimumMassFraction;
   mpm::ContactGapCorrectionOption m_contactGapCorrection;
   real64 m_contactNormalExponent;
   mpm::ContactNormalTypeOption m_contactNormalType;
+  real64 m_contactNRFiniteDifferenceRelativeStep;
+  real64 m_contactNRLineSearchMinimumScale;
+  integer m_contactNRMaximumIterations;
+  real64 m_contactNRRegularization;
+  int m_contactNRRequireConvergence;
+  real64 m_contactNRVelocityTolerance;
   integer m_contactPGSMaximumIterations;
   real64 m_contactPGSRelaxation;
   int m_contactPGSRequireConvergence;
+  int m_contactPGSUseLogisticRegressionForMultifield;
   real64 m_contactPGSVelocityTolerance;
   mpm::ContactSolverOption m_contactSolver;
+  integer m_contactSolverDiagnosticMaxNodes;
+  int m_contactSolverDiagnostics;
+  integer m_contactSolverFailureDiagnosticMaxNodes;
+  int m_contactSolverFailureDiagnostics;
   int m_cpdiDomainScaling;
   mpm::CPDIDomainScalingTypeOption m_cpdiDomainScalingType;
   real64 m_crackTipDetectionThreshold;

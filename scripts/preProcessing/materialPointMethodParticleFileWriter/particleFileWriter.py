@@ -762,15 +762,29 @@ parameters = {
                'computeSPHJacobian': ( None, True ),  # MPM: compute SPH Jacobian for overlap correction.
                'cohesiveFieldPartitioning': ( None, False ),  # PFW/CZ legacy convenience key; not a solver XML attribute.
                'cohesiveLaw': ( None, False ),  # PFW/CZ legacy convenience key; not a solver XML attribute.
+               'contactGapActivationRelativeTolerance': ( None, True ),  # MPM: near-zero gap activation tolerance relative to normal grid spacing.
                'contactGapCorrection': ( None, True ),  # MPM: enable contact-gap mitigation.
+               'contactMinimumMass': ( None, True ),  # MPM: absolute nodal field-mass cutoff used only by material contact.
+               'contactMinimumMassFraction': ( None, True ),  # MPM: node-relative field-mass cutoff used only by material contact.
                'contactNormalExponent': ( None, True ),  # MPM: exponent for weighted contact normals.
                'contactNormalType': ( None, True ),  # MPM: contact-normal construction mode.
 
                'contactSolver': ( None, True ),
+               'contactSolverDiagnosticMaxNodes': ( None, True ),
+               'contactSolverDiagnostics': ( None, True ),
+               'contactSolverFailureDiagnosticMaxNodes': ( None, True ),
+               'contactSolverFailureDiagnostics': ( None, True ),
+               'contactNRFiniteDifferenceRelativeStep': ( None, True ),
+               'contactNRLineSearchMinimumScale': ( None, True ),
+               'contactNRMaximumIterations': ( None, True ),
+               'contactNRRegularization': ( None, True ),
+               'contactNRRequireConvergence': ( None, True ),
+               'contactNRVelocityTolerance': ( None, True ),
                'contactPGSMaximumIterations': ( None, True ),
                'contactPGSVelocityTolerance': ( None, True ),
                'contactPGSRelaxation': ( None, True ),
                'contactPGSRequireConvergence': ( None, True ),
+               'contactPGSUseLogisticRegressionForMultifield': ( None, True ),
                
                'cpdiDomainScaling': ( None, True ),  # MPM: enable CPDI integration-domain scaling.
                'cpdiDomainScalingType': ( None, True ),  # MPM: CPDI scaling algorithm: homel or vpHencky.

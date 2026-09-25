@@ -30,6 +30,7 @@ set( solidMechanicsSolvers_sources )
 
 if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
   list( APPEND solidMechanicsSolvers_headers
+        NewtonRaphsonContact.hpp
         ProjectedGaussSeidelContact.hpp
         SolidMechanicsMPM.hpp
         MPMSolverFields.hpp

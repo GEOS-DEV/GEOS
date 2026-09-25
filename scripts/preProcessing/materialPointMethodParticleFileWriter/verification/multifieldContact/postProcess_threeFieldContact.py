@@ -416,16 +416,60 @@ def add_check(
     checks.append(Check(name, status, expected, actual, edge, required))
 
 
-def scan_logs(run_dir: Path) -> Tuple[List[str], Optional[int]]:
+def scan_logs(run_dir: Path) -> Tuple[List[str], Optional[int], List[str]]:
     failure_pattern = re.compile(
         r"(projected\s*gauss.seidel.{0,100}(failed|did not converge|non.?converg)|"
-        r"contact.{0,80}(failed|did not converge)|segmentation fault|floating point exception|"
+        r"newton.raphson.{0,100}(failed|did not converge|non.?converg)|"
+        r"contact.{0,80}(failed|did not converge)|segmentation fault|floating point (exception|error)|"
         r"mpi_abort|\bnan\b|\binf(?:inity)?\b|out_of_memory|time limit)",
         re.IGNORECASE,
     )
-    iteration_pattern = re.compile(r"(?:PGS|ProjectedGaussSeidel).{0,80}?iterations?\s*[:=]?\s*(\d+)", re.IGNORECASE)
+    iteration_pattern = re.compile(
+        r"(?:CoupledContactSolverDiagnostics[^\n]*maximumNodeIterations=|"
+        r"(?:PGS|ProjectedGaussSeidel|NewtonRaphson).{0,80}?iterations?\s*[:=]?\s*)(\d+)",
+        re.IGNORECASE,
+    )
     failures: List[str] = []
     iterations: List[int] = []
+    aggregate_records = 0
+    diagnostic_solvers = set()
+    diagnostic_nonconverged: List[int] = []
+    diagnostic_residuals: List[float] = []
+    diagnostic_numerical_guards: List[int] = []
+    diagnostic_skipped_nodes: List[int] = []
+    diagnostic_skipped_pairs: List[int] = []
+    diagnostic_newton_fallbacks: List[int] = []
+    diagnostic_solver_rollbacks: List[int] = []
+    detailed_nodes = 0
+    nonconverged_detailed_nodes = 0
+    pair_records = 0
+    failure_nodes = 0
+    failure_fields = 0
+    failure_pairs = 0
+    inactive_pairs = 0
+    inactive_zero_gap_pairs = 0
+    coulomb_margins: List[float] = []
+    fitted_normals: List[str] = []
+
+    def token(line: str, name: str) -> Optional[str]:
+        match = re.search(r"(?:^|\s)" + re.escape(name) + r"=([^\s]+)", line)
+        return match.group(1).rstrip(".") if match else None
+
+    def integer_token(line: str, name: str) -> Optional[int]:
+        value = token(line, name)
+        try:
+            return int(value) if value is not None else None
+        except ValueError:
+            return None
+
+    def float_token(line: str, name: str) -> Optional[float]:
+        value = token(line, name)
+        try:
+            parsed = float(value) if value is not None else None
+        except ValueError:
+            return None
+        return parsed if parsed is not None and math.isfinite(parsed) else None
+
     paths = sorted(set(run_dir.glob("*.out")) | set(run_dir.glob("*.log")))
     for path in paths:
         if "postProcess" in path.name or "visit" in path.name.lower():
@@ -437,8 +481,104 @@ def scan_logs(run_dir: Path) -> Tuple[List[str], Optional[int]]:
         for line in text.splitlines():
             if failure_pattern.search(line):
                 failures.append(path.name + ": " + line.strip()[:300])
+            if "CoupledContactSolverDiagnostics" in line:
+                aggregate_records += 1
+                solver = token(line, "solver")
+                if solver:
+                    diagnostic_solvers.add(solver)
+                nonconverged = integer_token(line, "nonconvergedNodes")
+                if nonconverged is not None:
+                    diagnostic_nonconverged.append(nonconverged)
+                    if nonconverged > 0:
+                        failures.append(path.name + ": " + line.strip()[:300])
+                residual = float_token(line, "maximumVelocityResidual")
+                if residual is not None:
+                    diagnostic_residuals.append(residual)
+                for name, destination in (
+                    ("numericalGuardActivations", diagnostic_numerical_guards),
+                    ("numericallySkippedNodes", diagnostic_skipped_nodes),
+                    ("numericallySkippedPairs", diagnostic_skipped_pairs),
+                    ("newtonToPGSFallbackNodes", diagnostic_newton_fallbacks),
+                    ("solverRollbackNodes", diagnostic_solver_rollbacks),
+                ):
+                    value = integer_token(line, name)
+                    if value is not None:
+                        destination.append(value)
+            elif "CoupledContactFailureNodeDiagnostics" in line:
+                failure_nodes += 1
+                if integer_token(line, "converged") == 0:
+                    nonconverged_detailed_nodes += 1
+            elif "CoupledContactFailureFieldDiagnostics" in line:
+                failure_fields += 1
+            elif "CoupledContactFailurePairDiagnostics" in line:
+                failure_pairs += 1
+            elif "CoupledContactNodeDiagnostics" in line:
+                detailed_nodes += 1
+                if integer_token(line, "converged") == 0:
+                    nonconverged_detailed_nodes += 1
+            elif "CoupledContactPairDiagnostics" in line:
+                pair_records += 1
+                active = integer_token(line, "active")
+                bilateral = integer_token(line, "bilateral")
+                gap = float_token(line, "gap")
+                if active == 0:
+                    inactive_pairs += 1
+                    if gap is not None and abs(gap) <= 1.0e-12:
+                        inactive_zero_gap_pairs += 1
+                if active == 1 and bilateral == 0:
+                    margin = float_token(line, "coulombMargin")
+                    if margin is not None:
+                        coulomb_margins.append(margin)
+                normal_match = re.search(r"(?:^|\s)normal=(\[[^\]]+\])", line)
+                if normal_match and normal_match.group(1) not in fitted_normals and len(fitted_normals) < 4:
+                    fitted_normals.append(normal_match.group(1))
         iterations.extend(int(match.group(1)) for match in iteration_pattern.finditer(text))
-    return failures[:20], (max(iterations) if iterations else None)
+
+    diagnostic_notes: List[str] = []
+    if aggregate_records:
+        diagnostic_notes.append(
+            "Coupled-solver log: solver={0}; records={1}; max node iterations={2}; "
+            "max velocity residual={3}; max nonconverged nodes={4}.".format(
+                ",".join(sorted(diagnostic_solvers)) or "unknown",
+                aggregate_records,
+                max(iterations) if iterations else "not reported",
+                format_number(max(diagnostic_residuals)) if diagnostic_residuals else "not reported",
+                max(diagnostic_nonconverged) if diagnostic_nonconverged else 0,
+            )
+        )
+        diagnostic_notes.append(
+            "Numerical safeguards: max guard activations={0}; skipped nodes={1}; "
+            "skipped pairs={2}; Newton-to-PGS fallbacks={3}; solver rollbacks={4}.".format(
+                max(diagnostic_numerical_guards) if diagnostic_numerical_guards else 0,
+                max(diagnostic_skipped_nodes) if diagnostic_skipped_nodes else 0,
+                max(diagnostic_skipped_pairs) if diagnostic_skipped_pairs else 0,
+                max(diagnostic_newton_fallbacks) if diagnostic_newton_fallbacks else 0,
+                max(diagnostic_solver_rollbacks) if diagnostic_solver_rollbacks else 0,
+            )
+        )
+    if detailed_nodes or pair_records:
+        diagnostic_notes.append(
+            "Pair-frame log: detailed nodes={0} ({1} nonconverged); pairs={2}; "
+            "inactive pairs={3}; inactive near-zero-gap pairs={4}; minimum active Coulomb margin={5}; "
+            "sample fitted normals={6}.".format(
+                detailed_nodes,
+                nonconverged_detailed_nodes,
+                pair_records,
+                inactive_pairs,
+                inactive_zero_gap_pairs,
+                format_number(min(coulomb_margins)) if coulomb_margins else "not reported",
+                ", ".join(fitted_normals) if fitted_normals else "not reported",
+            )
+        )
+    if failure_nodes or failure_fields or failure_pairs:
+        diagnostic_notes.append(
+            "Failure-detail log: nodes={0}; fields={1}; pairs={2}.".format(
+                failure_nodes,
+                failure_fields,
+                failure_pairs,
+            )
+        )
+    return failures[:20], (max(iterations) if iterations else None), diagnostic_notes
 
 
 def evaluate_case(spec: CaseSpec, samples: List[Sample], run_dir: Optional[Path], history_path: Optional[Path], tolerances: Tolerances) -> CaseResult:
@@ -464,12 +604,14 @@ def evaluate_case(spec: CaseSpec, samples: List[Sample], run_dir: Optional[Path]
 
     failures: List[str] = []
     max_iterations: Optional[int] = None
+    log_diagnostic_notes: List[str] = []
     if run_dir and run_dir.is_dir():
-        failures, max_iterations = scan_logs(run_dir)
-    add_check(checks, "Solver completed without fatal marker", not failures, "no PGS/non-finite/fatal marker", failures[0] if failures else "no fatal marker found", "Convergence and numerical stability")
+        failures, max_iterations, log_diagnostic_notes = scan_logs(run_dir)
+    result.notes.extend(log_diagnostic_notes)
+    add_check(checks, "Solver completed without fatal marker", not failures, "no coupled-contact/non-finite/fatal marker", failures[0] if failures else "no fatal marker found", "Convergence and numerical stability")
     add_check(
         checks,
-        "PGS iteration limit",
+        "Coupled-solver iteration limit",
         None if max_iterations is None else max_iterations <= 200,
         "maximum reported iterations <= 200",
         "not reported in logs" if max_iterations is None else str(max_iterations),
@@ -479,9 +621,9 @@ def evaluate_case(spec: CaseSpec, samples: List[Sample], run_dir: Optional[Path]
     if spec.key == "threeField_collinearChain":
         add_check(
             checks,
-            "Coupled solve uses multiple sweeps",
+            "Coupled solve uses multiple iterations",
             None if max_iterations is None else max_iterations >= 2,
-            "reported PGS iteration count >= 2",
+            "reported coupled-solver iteration count >= 2",
             "not reported in logs" if max_iterations is None else str(max_iterations),
             "Middle field participates in both constraints",
             required=max_iterations is not None,

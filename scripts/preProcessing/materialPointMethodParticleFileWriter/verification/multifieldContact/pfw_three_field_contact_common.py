@@ -89,17 +89,36 @@ def _base_pfw(
         "enableContact": 1,
         "boundaryConditionTypes": [0, 0, 0, 0, 1, 1],
         "frictionCoefficient": float(friction_coefficient),
+        "contactGapActivationRelativeTolerance": 1.0e-10,
         "contactGapCorrection": gap_correction,
         "contactNormalType": "Difference",
         "contactNormalExponent": 1.0,
         "useSurfacePositionForContact": 1 if use_surface_positions else 0,
-        "explicitSurfaceNormalInfluence": 50.0 if explicit_normals else 0.0,
+        "explicitSurfaceNormalInfluence": 1000.0 if explicit_normals else 0.0,
         "disableSurfaceNormalsAndPositionsOnCPDIScaling": 0,
+
         "contactSolver": "ProjectedGaussSeidel",
         "contactPGSMaximumIterations": 200,
         "contactPGSVelocityTolerance": 1.0e-10,
         "contactPGSRelaxation": 1.0,
+
+
+        # # Newton-Raphson
+        # "contactSolver": "NewtonRaphson",
+        # "contactNRMaximumIterations": 50,
+        # "contactNRVelocityTolerance": 1.0e-10,
+        # "contactNRFiniteDifferenceRelativeStep": 1.0e-6,
+        # "contactNRLineSearchMinimumScale": 1.0e-4,
+        # "contactNRRegularization": 1.0e-12,
+
         "contactPGSRequireConvergence": 1,
+        "contactPGSUseLogisticRegressionForMultifield": 0,
+
+        "contactSolverDiagnostics": 1,
+        "contactSolverDiagnosticMaxNodes": 20,
+        "contactSolverFailureDiagnosticMaxNodes": 20,
+        "contactSolverFailureDiagnostics": 1,
+
         "maxParticleVelocity": 2.0,
         "minParticleJacobian": 0.01,
         "maxParticleJacobian": 10.0,

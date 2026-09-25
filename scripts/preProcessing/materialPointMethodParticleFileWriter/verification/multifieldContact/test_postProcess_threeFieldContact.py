@@ -93,6 +93,41 @@ class EvaluatorTests(unittest.TestCase):
         self.assertEqual(result.status, "FAIL")
         self.assertTrue(any(check.name == "No unilateral contact impulse" and check.status == "FAIL" for check in result.checks))
 
+    def test_coupled_solver_diagnostics_are_summarized(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "run.out").write_text(
+                "CoupledContactFailureNodeDiagnostics solver=NewtonRaphson nodeGlobalID=8 "
+                "activeFields=3 candidatePairs=2 activeConstraints=1 iterations=4 "
+                "velocityResidual=2.0e-11 converged=0 regularizedSteps=1 lineSearchReductions=2\n"
+                "CoupledContactFailureFieldDiagnostics solver=NewtonRaphson nodeGlobalID=8 "
+                "field=0 mass=1.0 surfaceNormal=[1.0,0.0,0.0]\n"
+                "CoupledContactFailurePairDiagnostics solver=NewtonRaphson nodeGlobalID=8 pairIndex=0 "
+                "fieldA=0 fieldB=2 active=0 activation=inactive bilateral=0 hasGap=1 gap=0.0 "
+                "normal=[9.0e-1,4.0e-1,0.0] coulombMargin=0.0\n"
+                "CoupledContactFailurePairDiagnostics solver=NewtonRaphson nodeGlobalID=8 pairIndex=1 "
+                "fieldA=1 fieldB=2 active=1 activation=gap bilateral=0 hasGap=1 gap=-1.0e-3 "
+                "normal=[1.0,0.0,0.0] coulombMargin=-3.0e-12\n"
+                "CoupledContactSolverDiagnostics solver=NewtonRaphson solvedNodes=1 "
+                "nonconvergedNodes=1 maximumNodeIterations=4 maximumVelocityResidual=2.0e-11 "
+                "velocityTolerance=1.0e-12 maximumRegularizedSteps=1 maximumLineSearchReductions=2 "
+                "numericalGuardActivations=3 numericallySkippedNodes=0 numericallySkippedPairs=1 "
+                "newtonToPGSFallbackNodes=1 solverRollbackNodes=0.\n"
+            )
+            failures, max_iterations, notes = post.scan_logs(root)
+            self.assertEqual(max_iterations, 4)
+            self.assertTrue(failures)
+            self.assertTrue(
+                any("Failure-detail log: nodes=1; fields=1; pairs=2" in note for note in notes)
+            )
+            self.assertTrue(
+                any(
+                    "max guard activations=3; skipped nodes=0; skipped pairs=1; "
+                    "Newton-to-PGS fallbacks=1; solver rollbacks=0" in note
+                    for note in notes
+                )
+            )
+
     def test_report_writers_emit_all_formats(self):
         spec = post.SPEC_BY_KEY["threeField_sharedInterfaceOverlap"]
         result = post.evaluate_case(spec, [synthetic_sample(spec)], None, None, post.Tolerances())
@@ -100,9 +135,9 @@ class EvaluatorTests(unittest.TestCase):
             root = Path(directory)
             post.write_csv([result], root / "checks.csv")
             post.write_markdown([result], "PASS", root / "report.md")
-            post.write_html([result], "PASS", root / "report.html")
+            post.write_pdf([result], "PASS", root / "report.pdf")
             post.write_tex([result], "PASS", root / "results.tex")
-            for filename in ("checks.csv", "report.md", "report.html", "results.tex"):
+            for filename in ("checks.csv", "report.md", "report.pdf", "results.tex"):
                 self.assertGreater((root / filename).stat().st_size, 100 if filename != "results.tex" else 20)
 
     def test_permuted_csv_is_mapped_back_to_physical_bodies(self):

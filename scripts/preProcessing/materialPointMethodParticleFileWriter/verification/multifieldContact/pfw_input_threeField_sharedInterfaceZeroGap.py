@@ -1,8 +1,8 @@
 """Exact-zero explicit gap with closing velocities.
 
-Regression target: contact should activate when gap <= tolerance.  The current
-PGS patch tests gap < 0 exactly, so this deck exposes a one-step activation delay
-or missed contact at a mathematically closed interface.
+Regression target: implicit contact must include the pair when its mapped gap
+is within the configured activation tolerance. The unilateral projection must
+then stop closing motion without waiting for one step of interpenetration.
 """
 
 #[pfw_dependency] input:pfw_three_field_contact_common.py
@@ -13,4 +13,3 @@ pfw = make_shared_interface_case(
     gap=0.0,
     velocities=((0.10, 0.0, 0.0), (0.05, 0.0, 0.0), (-0.10, 0.0, 0.0)),
 )
-
