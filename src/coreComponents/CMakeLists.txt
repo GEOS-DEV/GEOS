@@ -83,7 +83,7 @@ else()
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
-                       EXCLUDES cmake constitutive/HPCReact )
+                       EXCLUDES cmake constitutive/HPCReact LvArray/docs )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck

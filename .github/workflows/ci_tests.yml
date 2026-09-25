@@ -581,6 +581,13 @@ jobs:
       run: |
         set -euo pipefail
         brew install cmake open-mpi openblas python@3.14 binutils
+        /opt/homebrew/opt/python@3.14/bin/python3 -m pip install --upgrade --break-system-packages virtualenv
+        # Caliper records the Open MPI Cellar path from the TPL build. Homebrew on this
+        # runner may install a different version, so point that path at the one just installed.
+        if [[ ! -d /opt/homebrew/Cellar/open-mpi/5.0.11 ]]; then
+          sudo mkdir -p /opt/homebrew/Cellar/open-mpi
+          sudo ln -sfn "$(readlink -f /opt/homebrew/opt/open-mpi)" /opt/homebrew/Cellar/open-mpi/5.0.11
+        fi
         # Apple Clang rejects -mtune=native, which the host-config adds for every Clang.
         sed -i '' 's/ -march=native -mtune=native//' /opt/GEOS/spack-generated.cmake
         log="$RUNNER_TEMP/geos-build.log"
