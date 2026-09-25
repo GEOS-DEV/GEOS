@@ -454,6 +454,19 @@ EOT
   fi
 
   # Backend-specific credentials and endpoints are injected through the environment and/or config file.
+  # streak2 Ubuntu containers set OPENSSL_CONF so OpenSSL can start without a
+  # FIPS provider. sccache then rejects the Google token endpoint certificate
+  # as too weak and the server never starts. Launch sccache without that config.
+  sccache_real="${SCCACHE_BIN}"
+  SCCACHE_BIN=/tmp/sccache-launch
+  or_die cat > "${SCCACHE_BIN}" <<EOF
+#!/bin/bash
+unset OPENSSL_CONF
+unset OPENSSL_FORCE_FIPS_MODE
+exec ${sccache_real} "\$@"
+EOF
+  or_die chmod +x "${SCCACHE_BIN}"
+
   SCCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE_BIN}"
 
   if [[ -f /certs/ca-bundle.crt ]]; then
