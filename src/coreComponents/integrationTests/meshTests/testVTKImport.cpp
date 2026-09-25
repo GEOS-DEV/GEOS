@@ -130,19 +130,24 @@ struct ExpectedArray
   int numComponents;
 };
 
-void expectEmptyArrayMetadata( vtkFieldData & data, std::initializer_list< ExpectedArray > const expectedArrays )
+void expectArrayMetadata( vtkFieldData & data, std::initializer_list< ExpectedArray > const expectedArrays,
+                          vtkIdType const numTuples )
 {
   ASSERT_EQ( data.GetNumberOfArrays(), static_cast< int >( expectedArrays.size() ) );
   for( ExpectedArray const & expected: expectedArrays )
   {
     vtkAbstractArray * const array = data.GetAbstractArray( expected.name );
     ASSERT_NE( array, nullptr ) << expected.name;
-    EXPECT_EQ( array->GetDataType(), expected.dataType );
-    EXPECT_EQ( array->GetNumberOfComponents(), expected.numComponents );
-    EXPECT_EQ( array->GetNumberOfTuples(), 0 );
+    EXPECT_EQ( array->GetDataType(), expected.dataType ) << expected.name;
+    EXPECT_EQ( array->GetNumberOfComponents(), expected.numComponents ) << expected.name;
+    EXPECT_EQ( array->GetNumberOfTuples(), numTuples ) << expected.name;
   }
 }
 
+void expectEmptyArrayMetadata( vtkFieldData & data, std::initializer_list< ExpectedArray > const expectedArrays )
+{
+  expectArrayMetadata( data, expectedArrays, 0 );
+}
 } // namespace
 
 
