@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PhaseFieldFracture_ThreePointsBending_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"
+        subcycling="0"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="SolidMechSolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        lineSearchAction="None"
+        newtonTol="1.0e-5"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      irreversibilityFlag="1"
+      damageUpperBound="0.95"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        lineSearchAction="None"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <Mesh>
+    <VTKMesh
+      name="ThreePointsBending"
+      file="mesh/threePointsBendingSingleNotchCoarse.vtu"
+      nodesetNames="{ support_left_line, support_right_line, load_line_full_thickness, starter_notch_flank_nodes }"/>
+  </Mesh>
+
+  <Events
+    maxTime="600.0">
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="300.0"
+      targetExactTimestep="1"
+      target="/Outputs/ThreePointsBending_VTKOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication"
+      maxEventDt="50.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="300.0"
+      targetExactTimestep="1"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="ThreePointsBending_VTKOutput"
+      plotFileRoot="threePointsBending"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

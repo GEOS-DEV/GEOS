@@ -68,7 +68,7 @@ void RAJA_INLINE parallelHostSync() { }
 
 #endif
 
-#if defined( GEOS_USE_CUDA )
+#if defined( GEOS_USE_CUDA ) && defined( RAJA_CUDA_ACTIVE )
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
 
 template< size_t BLOCK_SIZE = GEOS_BLOCK_SIZE >
@@ -93,7 +93,7 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
                                  std::forward< LAMBDA >( body ) );
 }
 
-#elif defined( GEOS_USE_HIP )
+#elif defined( GEOS_USE_HIP ) && defined( RAJA_HIP_ACTIVE )
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
 
@@ -161,7 +161,7 @@ struct PolicyMap< serialPolicy >
   using reduce = serialReduce;
 };
 
-#if defined(GEOS_USE_OPENMP)
+#if defined( GEOS_USE_OPENMP )
 template<>
 struct PolicyMap< RAJA::omp_parallel_for_exec >
 {
@@ -170,7 +170,7 @@ struct PolicyMap< RAJA::omp_parallel_for_exec >
 };
 #endif
 
-#if defined(GEOS_USE_CUDA)
+#if defined( GEOS_USE_CUDA ) && defined( RAJA_CUDA_ACTIVE )
 template< typename X, typename Y, typename C, size_t BLOCK_SIZE, bool ASYNC >
 struct PolicyMap< RAJA::policy::cuda::cuda_exec_explicit< X, Y, C, BLOCK_SIZE, ASYNC > >
 {
@@ -179,7 +179,7 @@ struct PolicyMap< RAJA::policy::cuda::cuda_exec_explicit< X, Y, C, BLOCK_SIZE, A
 };
 #endif
 
-#if defined(GEOS_USE_HIP)
+#if defined( GEOS_USE_HIP ) && defined( RAJA_HIP_ACTIVE )
 template< size_t BLOCK_SIZE, bool ASYNC >
 struct PolicyMap< RAJA::hip_exec< BLOCK_SIZE, ASYNC > >
 {
