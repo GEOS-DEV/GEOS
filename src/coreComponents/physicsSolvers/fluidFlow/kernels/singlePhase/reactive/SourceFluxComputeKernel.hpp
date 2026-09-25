@@ -74,6 +74,7 @@ public:
     m_elemGhostRank( elemGhostRank ),
     m_rhsContributionArrayView( rhsContributionArrayView ),
     m_sizeScalingFactor( sizeScalingFactor ),
+    m_solventMassFraction( fluid.solventMassFraction() ),
     m_primarySpeciesAggregateConcentration( fluid.primarySpeciesAggregateConcentration() ),
     m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations( fluid.dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations() ),
     m_density( fluid.density() ),
@@ -149,14 +150,15 @@ public:
   {
     real64 const scaledInflowMass = stack.totalInflowMass / m_sizeScalingFactor;
 
+    // the inflow mass carries molality * solvent mass fraction moles per kg of solution
     for( integer i = 0; i < numSpecies; ++i )
     {
-      stack.localSpeciesRhs[i] += m_primarySpeciesAggregateConcentration[ei][0][i] / m_density[ei][0] * scaledInflowMass;
-      stack.localSpeciesJacobian[i][0] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_dDensity[ei][0][DerivOffset::dP] / (m_density[ei][0] * m_density[ei][0]) * scaledInflowMass;
+      stack.localSpeciesRhs[i] += m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventMassFraction * scaledInflowMass;
 
       for( integer j = 0; j < numSpecies; ++j )
       {
-        stack.localSpeciesJacobian[i][j+numDof-numSpecies] += m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0][i][j] / m_density[ei][0] * scaledInflowMass;
+        stack.localSpeciesJacobian[i][j+numDof-numSpecies] += m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0][i][j] * m_solventMassFraction *
+                                                              scaledInflowMass;
       }
     }
   }
@@ -236,6 +238,9 @@ protected:
   arrayView1d< real64 const > const m_rhsContributionArrayView;
   /// size scaling factor
   real64 const m_sizeScalingFactor;
+
+  /// Mass fraction of solvent in the solution [-]; molality times this fraction is the amount per kg of solution
+  real64 const m_solventMassFraction;
 
   // View on the total concentration of ions that contain the primary species
   arrayView3d< real64 const, constitutive::reactivefluid::USD_SPECIES > const m_primarySpeciesAggregateConcentration;

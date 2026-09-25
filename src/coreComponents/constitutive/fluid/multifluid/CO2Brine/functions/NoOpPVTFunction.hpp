@@ -68,7 +68,7 @@ class NoOpPVTFunction : public PVTFunctionBase
 public:
 
   NoOpPVTFunction( string const & name,
-                   string_array const & inputPara,
+                   BrineFluidParameters const & brineFluidParameters,
                    string_array const & componentNames,
                    array1d< real64 > const & componentMolarWeight,
                    TableFunction::OutputOptions const pvtOutputOpts )
@@ -76,7 +76,7 @@ public:
                        componentNames,
                        componentMolarWeight )
   {
-    GEOS_UNUSED_VAR( inputPara, pvtOutputOpts );
+    GEOS_UNUSED_VAR( brineFluidParameters, pvtOutputOpts );
   }
 
   static string catalogName() { return "NoOpPVTFunction"; }

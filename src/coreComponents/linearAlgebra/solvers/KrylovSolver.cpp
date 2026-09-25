@@ -95,12 +95,12 @@ void KrylovSolver< VECTOR >::logProgress() const
     if( iter == 0 )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "[{}] start iteration", methodName() ) );
-      GEOS_LOG_RANK_0( GEOS_FMT( headFormat, "iter", "resid.norm", "conv.rate", "rel.res.norm" ) );
+      GEOS_LOG_RANK_0( GEOS_FMT_RUNTIME( headFormat, "iter", "resid.norm", "conv.rate", "rel.res.norm" ) );
     }
     real64 const norm = m_residualNorms[iter];
     real64 const relNorm = m_residualNorms[0] > 0.0 ? norm / m_residualNorms[0] : 0.0;
     real64 const convRate = iter > 0 ? norm / m_residualNorms[iter - 1] : 1.0;
-    GEOS_LOG_RANK_0( GEOS_FMT( lineFormat, iter, norm, convRate, relNorm ) );
+    GEOS_LOG_RANK_0( GEOS_FMT_RUNTIME( lineFormat, iter, norm, convRate, relNorm ) );
   }
 }
 

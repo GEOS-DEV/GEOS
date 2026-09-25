@@ -50,18 +50,17 @@ protected:
   static real64 constexpr relTol = 1.0e-5;
   static real64 constexpr absTol = 1.0e-7;
   static real64 constexpr pertubation = 1.0e-6;
-  static constexpr char const * flashContent = "FlashModel CO2Solubility 1.0e5 1.0e7 9.9e5 283.15 383.15 10.0 0.15 1.0e-8 SpycherPruess";
 
 public:
   CO2SolubilitySpycherPruessTestFixture() = default;
   ~CO2SolubilitySpycherPruessTestFixture() override = default;
 
 protected:
-  static std::unique_ptr< CO2Solubility > makeFlashModel( string const & fileContent );
+  static std::unique_ptr< CO2Solubility > makeFlashModel();
 };
 
 std::unique_ptr< CO2Solubility >
-CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileContent )
+CO2SolubilitySpycherPruessTestFixture::makeFlashModel()
 {
   // Define phase names
   string_array phaseNames;
@@ -80,16 +79,25 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
   componentMolarWeight[0] = 44.0e-3;
   componentMolarWeight[1] = 18.0e-3;
 
-  // Read file parameters
-  string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( fileContent );
+  // Fluid model parameters
+  BrineFluidParameters parameters;
+  parameters.m_solubilityModel = BrineFluidParameters::SolubilityModel::SpycherPruess;
+  parameters.m_pressureCoordinates.emplace_back( 1.0e5 );
+  parameters.m_pressureCoordinates.emplace_back( 1.0e7 );
+  parameters.m_pressureInterval = 9.9e5;
+  parameters.m_temperatureCoordinates.emplace_back( 283.15 );
+  parameters.m_temperatureCoordinates.emplace_back( 383.15 );
+  parameters.m_temperatureInterval = 10.0;
+  parameters.m_salinity = 0.15;
+  parameters.m_tolerance = 1.0e-8;
 
   TableFunction::OutputOptions const flashOutputOpts = {
     false,  // writeCSV
     false,   // writeInLog
   };
 
-  return std::make_unique< CO2Solubility >( strs[1],
-                                            strs,
+  return std::make_unique< CO2Solubility >( "FlashModel",
+                                            parameters,
                                             phaseNames,
                                             componentNames,
                                             componentMolarWeight,
@@ -98,7 +106,7 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
 
 TEST_P( CO2SolubilitySpycherPruessTestFixture, testExpectedValues )
 {
-  auto flashModel = makeFlashModel( CO2SolubilitySpycherPruessTestFixture::flashContent );
+  auto flashModel = makeFlashModel();
 
   auto [pressure, temperature, z_co2, expected_V, expected_x_co2, expected_y_wat] = GetParam();
 
@@ -137,7 +145,7 @@ TEST_P( CO2SolubilitySpycherPruessTestFixture, testNumericalDerivatives )
 {
   using Deriv = multifluid::DerivativeOffset;
 
-  auto flashModel = makeFlashModel( CO2SolubilitySpycherPruessTestFixture::flashContent );
+  auto flashModel = makeFlashModel();
 
   auto [pressure, temperature, z_co2, expected_V, expected_x_co2, expected_y_wat] = GetParam();
   GEOS_UNUSED_VAR( expected_V, expected_x_co2, expected_y_wat );

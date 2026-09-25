@@ -116,6 +116,14 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  void setupLinearSolverNearNullKernel( DomainPartition & domain,
+                                        DofManager const & dofManager );
+
+  arrayView1d< ParallelVector const > getLinearSolverNearNullKernel() const override
+  {
+    return m_linearSolverNearNullKernel.toViewConst();
+  }
+
   virtual void setMGRStrategy() override
   {
     if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
@@ -155,6 +163,7 @@ protected:
 
   virtual string getFlowDofKey() const override { return SinglePhaseBase::viewKeyStruct::elemDofFieldString(); }
 
+  array1d< ParallelVector > m_linearSolverNearNullKernel;
   integer m_damageFlag;
 };
 

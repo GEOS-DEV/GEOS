@@ -210,7 +210,7 @@ struct MassMatrixKernel
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+    forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
 
@@ -288,7 +288,7 @@ struct DampingMatrixKernel
           arrayView1d< real32 > const damping_pq,
           arrayView1d< real32 > const damping_qp )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+    forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const e )
     {
       for( localIndex i = 0; i < elemsToFaces.size( 1 ); ++i )
       {
