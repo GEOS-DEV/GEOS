@@ -3,12 +3,12 @@
 <Problem>
   <Included>
     <File
-      name="./ThermoPoroElastic_base.xml"/>
+      name="ThermoPoroElastic_base.xml"/>
   </Included>
 
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SinglePhasePoromechanicsConformingFractures
+    <SinglePhasePoromechanicsConformingFracturesALM
       name="poroSolver"
       targetRegions="{ RockMatrix, Fracture }"
       initialDt="1e-3"
@@ -23,20 +23,38 @@
       <LinearSolverParameters
         directParallel="0"
         solverType="direct"/>
-    </SinglePhasePoromechanicsConformingFractures>
+    </SinglePhasePoromechanicsConformingFracturesALM>
 
-    <SolidMechanicsLagrangeContact
+    <SolidMechanicsAugmentedLagrangianContact
       name="fractureMechSolver"
-      stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
-      targetRegions="{ RockMatrix, Fracture }"
-      discretization="FE1"/>
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="10.0"
+      iterPenaltyT="10.0"
+      tolJumpN="1.e-05"
+      tolJumpT="1.e-04"
+      tolTauLimit="1.e-02"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ RockMatrix, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        logLevel="1"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        directParallel="0"
+        solverType="direct"/>
+    </SolidMechanicsAugmentedLagrangianContact>
 
     <SinglePhaseFVM
       name="flowSolver"
-      logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ RockMatrix, Fracture }"
+      logLevel="1"
       isThermal="1">
       <NonlinearSolverParameters
         normType="L2"/>
@@ -61,8 +79,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"/>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA_stab"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -74,9 +90,83 @@
 
     <SurfaceElementRegion
       name="Fracture"
-      materialList="{ water, fractureFilling, lmFractureContact, thermalCond, hApertureModel }"
+      materialList="{ water, fractureFilling, almFractureContact, thermalCond, hApertureModel }"
       defaultAperture="1.e-4"/>
   </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="1"
+      defaultYoungModulus="10.0e9"
+      defaultPoissonRatio="0.2"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>
+
+    <ThermalCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="1.0e-10"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="1.672e2"
+      referenceInternalEnergy="0.001"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 1, 1, 1 }"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="1.672e5"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="2.2222e27"
+      defaultReferencePorosity="0.2"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <Coulomb
+      name="almFractureContact"
+      defaultCohesion="0.0"
+      defaultFrictionCoefficient="0.577350269189626"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>
+  </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification
@@ -172,13 +262,30 @@
       setNames="{ xneg, xpos }"/>
   </FieldSpecifications>
 
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="apertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="hydraulicAperture"/>
+
+    <PackCollection
+      name="temperatureCollection"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="temperature"/>
+  </Tasks>
+
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="ThermoPoroElastic_conforming_verticalFrac"
+      plotFileRoot="ThermoPoroElastic_ALM_conforming"
       plotLevel="2"
       format="binary"/>
-
+    
     <TimeHistory
       name="pressureHistoryOutput"
       sources="{ /Tasks/pressureCollection }"

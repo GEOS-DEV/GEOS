@@ -14,32 +14,32 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsConformingFractures.hpp
+ * @file SinglePhasePoromechanicsConformingFracturesALM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
-#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP
 
-#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFracturesALM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFracturesKernelBase.hpp"
 
 namespace geos
 {
 
-namespace thermalSinglePhasePoromechanicsConformingFracturesKernels
+namespace thermalSinglePhasePoromechanicsConformingFracturesALMKernels
 {
 
 template< integer NUM_EQN, integer NUM_DOF >
 using ConnectorBasedAssemblyKernel =
   thermalConformingFracturesKernels::ThermalConformingFracturesConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF,
-                                                                                             singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel >;
+                                                                                             singlePhasePoromechanicsConformingFracturesALMKernels::ConnectorBasedAssemblyKernel >;
 
 using ConnectorBasedAssemblyKernelFactory =
   thermalConformingFracturesKernels::ThermalConformingFracturesConnectorBasedAssemblyKernelFactory<
-    singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel >;
+    singlePhasePoromechanicsConformingFracturesALMKernels::ConnectorBasedAssemblyKernel >;
 
-} // namespace thermalSinglePhasePoromechanicsConformingFracturesKernels
+} // namespace thermalSinglePhasePoromechanicsConformingFracturesALMKernels
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP

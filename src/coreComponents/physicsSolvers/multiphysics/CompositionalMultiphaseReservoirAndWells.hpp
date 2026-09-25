@@ -104,7 +104,9 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              stdMap< string, localIndex > const * const dR_dAperOffsets );
+                              stdMap< string, localIndex > const * const dR_dAperOffsets,
+                              bool const useAugmentedLagrangianMultiplier = false,
+                              stdMap< string, localIndex > const * const dR_dAperEnergyOffsets = nullptr );
 
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,
