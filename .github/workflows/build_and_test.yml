@@ -378,7 +378,7 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
         if [[ "$EXIT_STATUS" -ne 0 ]]; then
-          tail -n 8 "$RUNNER_TEMP/docker-run.log" | while IFS= read -r line; do
+          grep -E 'error:|CMake Error|fatal error' "$RUNNER_TEMP/docker-run.log" | tail -n 8 | while IFS= read -r line; do
             echo "::error title=Build failed::$line"
           done
         fi

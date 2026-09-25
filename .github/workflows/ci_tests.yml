@@ -580,12 +580,24 @@ jobs:
     - name: Build GEOS
       run: |
         set -euo pipefail
-        brew install cmake
-        python3 scripts/config-build.py \
-          -hc /opt/GEOS/spack-generated.cmake \
-          -bt Release \
-          --buildpath "$RUNNER_TEMP/geos-build"
-        cmake --build "$RUNNER_TEMP/geos-build" -j 2 --target geosx
+        brew install cmake open-mpi openblas python@3.14 binutils
+        log="$RUNNER_TEMP/geos-build.log"
+        set +e
+        {
+          python3 scripts/config-build.py \
+            -hc /opt/GEOS/spack-generated.cmake \
+            -bt Release \
+            --buildpath "$RUNNER_TEMP/geos-build"
+          cmake --build "$RUNNER_TEMP/geos-build" -j 2 --target geosx
+        } >"$log" 2>&1
+        status=$?
+        cat "$log"
+        if [[ "$status" -ne 0 ]]; then
+          grep -E 'error:|CMake Error' "$log" | tail -n 8 | while IFS= read -r line; do
+            echo "::error title=Build GEOS::$line"
+          done
+          exit "$status"
+        fi
 
   # Convenience job - passes when all substantive jobs have passed. A
   # submodule-sync failure is an allowed exception when testing submodule branches.
