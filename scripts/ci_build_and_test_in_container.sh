@@ -434,6 +434,7 @@ if [[ "${USE_SCCACHE}" == true ]]; then
     # We use this file since it's managed by the 'google-github-actions/auth' actions.
     or_die mkdir -p ${HOME}/.config/sccache
     or_die cat <<EOT >> ${HOME}/.config/sccache/config
+basedirs = ["${GEOS_SRC_DIR}"]
 [cache.gcs]
 rw_mode = "READ_WRITE"
 cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
@@ -497,6 +498,9 @@ if [[ "${ENABLE_HYPRE_DEVICE}" == "HIP" ]]; then
   if [[ -n "${HIP_CMAKE_COMPILER}" && -x "${HIP_CMAKE_COMPILER}" ]]; then
     echo "Using direct HIP compiler: ${HIP_CMAKE_COMPILER}"
     CMAKE_HIP_COMPILER_ARGS+=("-DCMAKE_HIP_COMPILER=${HIP_CMAKE_COMPILER}")
+    if [[ -n "${SCCACHE_BIN}" ]]; then
+      SCCACHE_CMAKE_ARGS+=" -DCMAKE_HIP_COMPILER_LAUNCHER=${SCCACHE_BIN}"
+    fi
   fi
 fi
 
