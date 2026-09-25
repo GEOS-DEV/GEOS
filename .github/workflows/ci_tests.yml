@@ -577,10 +577,31 @@ jobs:
           done
           exit "$status"
         fi
+    - id: auth
+      uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+        create_credentials_file: true
     - name: Build GEOS
       run: |
         set -euo pipefail
         brew install cmake open-mpi openblas python@3.14 binutils
+        curl -fsSL -o "$RUNNER_TEMP/sccache.tgz" \
+          https://github.com/mozilla/sccache/releases/download/v0.17.0/sccache-v0.17.0-aarch64-apple-darwin.tar.gz
+        tar -xzf "$RUNNER_TEMP/sccache.tgz" -C "$RUNNER_TEMP" --strip-components=1 \
+          sccache-v0.17.0-aarch64-apple-darwin/sccache
+        chmod +x "$RUNNER_TEMP/sccache"
+        xattr -d com.apple.quarantine "$RUNNER_TEMP/sccache" 2>/dev/null || true
+        mkdir -p "${HOME}/.config/sccache"
+        cat > "${HOME}/.config/sccache/config" <<EOF
+        [cache.gcs]
+        rw_mode = "READ_WRITE"
+        cred_path = "${GOOGLE_GHA_CREDS_PATH}"
+        bucket = "geos-dev"
+        key_prefix = "sccache"
+        EOF
+        python3 -c 'from pathlib import Path; p=Path.home()/".config"/"sccache"/"config"; t=p.read_text().splitlines(); n=len(t[0])-len(t[0].lstrip()); p.write_text("\n".join(line[n:] for line in t)+"\n")'
+        "$RUNNER_TEMP/sccache" --show-stats || true
         /opt/homebrew/opt/python@3.14/bin/python3 -m pip install --upgrade --break-system-packages virtualenv
         # Caliper records the Open MPI Cellar path from the TPL build. Homebrew on this
         # runner may install a different version, so point that path at the one just installed.
@@ -597,16 +618,29 @@ jobs:
           python3 scripts/config-build.py \
             -hc /opt/GEOS/spack-generated.cmake \
             -bt Release \
-            --buildpath "$RUNNER_TEMP/geos-build"
+            --buildpath "$RUNNER_TEMP/geos-build" \
+            -DCMAKE_C_COMPILER_LAUNCHER="$RUNNER_TEMP/sccache" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER="$RUNNER_TEMP/sccache"
           cmake --build "$RUNNER_TEMP/geos-build" -j 2 --target geosx
         } 2>&1 | tee "$log"
         status=$?
         set +o pipefail
+        mkdir -p "${GITHUB_WORKSPACE}/.sccache-runtime"
+        "$RUNNER_TEMP/sccache" --show-adv-stats > "${GITHUB_WORKSPACE}/.sccache-runtime/stats.txt" || true
         if [[ "$status" -ne 0 ]]; then
           grep -E 'error:|CMake Error' "$log" | tail -n 8 | while IFS= read -r line; do
             echo "::error title=Build GEOS::$line"
           done || true
           exit "$status"
+        fi
+    - name: Show sccache summary
+      if: always()
+      run: |
+        SCCACHE_STATS_FILE="${GITHUB_WORKSPACE}/.sccache-runtime/stats.txt"
+        if [[ -f "${SCCACHE_STATS_FILE}" ]]; then
+          grep -E '^(Compile requests|Cache hits|Cache misses|Cache timeouts|Cache read errors|Cache write errors|Compilation failures|Cache errors|Non-cacheable compilations|Non-cacheable calls|Cache location|Cache size|Max cache size|Version \(client\))' "${SCCACHE_STATS_FILE}" || cat "${SCCACHE_STATS_FILE}"
+        else
+          echo "No sccache stats file was captured."
         fi
 
   # Convenience job - passes when all substantive jobs have passed. A
