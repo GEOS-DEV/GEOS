@@ -488,6 +488,12 @@ TEST( VTKImport, redistribute )
     ASSERT_NE( cellValues, nullptr );
     EXPECT_EQ( cellValues->GetDataType(), VTK_INT );
     EXPECT_EQ( cellValues->GetNumberOfComponents(), 3 );
+    expectArrayMetadata( *result->GetCellData(), { { "redistributeCellLabels", VTK_STRING, 2 },
+                           { "redistributeCellValues", VTK_INT, 3 } }, commSize );
+    expectArrayMetadata( *result->GetPointData(), { { "redistributePointLabels", VTK_STRING, 2 },
+                           { "redistributePointValues", VTK_DOUBLE, 4 } }, 1 );
+    expectArrayMetadata( *result->GetFieldData(), { { "redistributeFieldLabels", VTK_STRING, 2 },
+                           { "redistributeFieldValues", VTK_INT, 3 } }, 1 );
   }
   else
   {
