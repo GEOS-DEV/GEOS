@@ -581,6 +581,8 @@ jobs:
       run: |
         set -euo pipefail
         brew install cmake open-mpi openblas python@3.14 binutils
+        # Apple Clang rejects -mtune=native, which the host-config adds for every Clang.
+        sed -i '' 's/ -march=native -mtune=native//' /opt/GEOS/spack-generated.cmake
         log="$RUNNER_TEMP/geos-build.log"
         set +e
         set -o pipefail
