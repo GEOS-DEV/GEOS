@@ -29,6 +29,8 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 namespace geos
 {
 
@@ -412,6 +414,23 @@ protected:
   std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
 
 
+  virtual bool solveMinWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion )override;
+
+  virtual bool solveMaxWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion )override;
 private:
 
   struct ReferenceConditions

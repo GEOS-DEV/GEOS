@@ -70,7 +70,7 @@ bool LiquidRateConstraint::checkViolation( WellConstraintBase const & currentCon
 {
   real64 const currentValue = currentConstraint.liquidRate();
   real64 const constraintValue = this->getConstraintValue( currentTime );
-  return ( LvArray::math::abs( currentValue ) <= LvArray::math::abs( constraintValue ) );
+  return ( LvArray::math::abs( currentValue ) > LvArray::math::abs( constraintValue ) );
 }
 
 } //namespace geos

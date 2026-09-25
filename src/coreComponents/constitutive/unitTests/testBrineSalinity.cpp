@@ -41,6 +41,12 @@ public:
   string getCatalogName() const override { return "FluidModel"; }
   integer getWaterPhaseIndex() const override { return 1; }
   void checkTablesParameters( real64, real64 ) const override {}
+  integer getPhaseIndex( const std::string & phaseName ) const override
+  {
+    GEOS_UNUSED_VAR( phaseName );
+    return 0;
+  }
+
 };
 
 class BrineSalinityTestFixture : public ::testing::Test
