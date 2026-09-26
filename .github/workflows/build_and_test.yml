@@ -142,7 +142,7 @@ jobs:
         fetch-depth: 1
 
     - id: 'auth'
-      if: ${{ (inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET) || (inputs.USE_SCCACHE && !startsWith(inputs.RUNS_ON, 'streak2')) }}
+      if: ${{ (inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET) || inputs.USE_SCCACHE }}
       uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
@@ -239,6 +239,7 @@ jobs:
                 docker_args+=(-e SCCACHE_CACHE_SIZE)
               fi
               script_args+=(--use-sccache)
+              script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
               ;;
             *)
               script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
@@ -366,15 +367,23 @@ jobs:
         # GHA set `-e` to bash scripts by default to fail asap,
         # but for this precise call, we want to deal with it more precisely
         set +e
+        set -o pipefail
         docker run \
           ${docker_args[@]} \
           -h=`hostname` \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
           ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
-          ${script_args[@]}
+          ${script_args[@]} \
+          2>&1 | tee "$RUNNER_TEMP/docker-run.log"
         EXIT_STATUS=$?
+        set +o pipefail
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
+        if [[ "$EXIT_STATUS" -ne 0 ]]; then
+          grep -E 'error:|CMake Error|fatal error|FAIL!|FAIL:' "$RUNNER_TEMP/docker-run.log" | tail -n 12 | while IFS= read -r line; do
+            echo "::error title=Build failed::$line"
+          done || true
+        fi
 
         echo "exit_status=${EXIT_STATUS}" >> "${GITHUB_OUTPUT}"
         echo "data_basename=${DATA_BASENAME}" >> "${GITHUB_OUTPUT}"

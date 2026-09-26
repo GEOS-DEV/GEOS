@@ -15,7 +15,7 @@ Build steps
   This can be done in one of two ways:
 
   * Provide each path via a separate CMake variable (see :ref:`Dependencies` for path variable names).
-  * If you built TPLs from the ``tplMirror`` repository, you can set ``GEOSX_TPL_DIR`` variable in your host-config to point to the TPL installation path, and
+  * If you built TPLs from the ``tplMirror`` repository, you can set ``GEOS_TPL_DIR`` variable in your host-config to point to the TPL installation path, and
 
     .. code-block:: cmake
 

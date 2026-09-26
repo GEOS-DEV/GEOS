@@ -344,7 +344,7 @@ do
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)           HOST_CONFIG=$2;             shift 2;;
-    --install-dir-basename)  GEOS_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
+    --install-dir-basename)  GEOS_DIR=${GEOS_TPL_DIR}/../$2; shift 2;;
     --makefile)              BUILD_GENERATOR="";         shift;;
     --no-install-schema)     GEOS_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
@@ -416,7 +416,7 @@ print_crypto_diagnostics
 # Always pass the requested state so a host-config cannot silently enable
 # hypredrive when the CI job requested OFF. Do not pass -DHYPREDRV_DIR:
 # TPL images install hypredrive under a compiler-prefixed hashed path, which
-# /spack-generated.cmake already sets. ${GEOSX_TPL_DIR}/hypredrive does not
+# /spack-generated.cmake already sets. ${GEOS_TPL_DIR}/hypredrive does not
 # exist and would override that host-config value (CMake -D wins over -C
 # set(... CACHE ...) without FORCE).
 HYPREDRV_CMAKE_ARGS=(-DENABLE_HYPREDRV=${ENABLE_HYPREDRV})
@@ -434,6 +434,7 @@ if [[ "${USE_SCCACHE}" == true ]]; then
     # We use this file since it's managed by the 'google-github-actions/auth' actions.
     or_die mkdir -p ${HOME}/.config/sccache
     or_die cat <<EOT >> ${HOME}/.config/sccache/config
+basedirs = ["${GEOS_SRC_DIR}"]
 [cache.gcs]
 rw_mode = "READ_WRITE"
 cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
@@ -453,6 +454,19 @@ EOT
   fi
 
   # Backend-specific credentials and endpoints are injected through the environment and/or config file.
+  # streak2 Ubuntu containers set OPENSSL_CONF so OpenSSL can start without a
+  # FIPS provider. sccache then rejects the Google token endpoint certificate
+  # as too weak and the server never starts. Launch sccache without that config.
+  sccache_real="${SCCACHE_BIN}"
+  SCCACHE_BIN=/tmp/sccache-launch
+  or_die cat > "${SCCACHE_BIN}" <<EOF
+#!/bin/bash
+unset OPENSSL_CONF
+unset OPENSSL_FORCE_FIPS_MODE
+exec ${sccache_real} "\$@"
+EOF
+  or_die chmod +x "${SCCACHE_BIN}"
+
   SCCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE_BIN}"
 
   if [[ -f /certs/ca-bundle.crt ]]; then
@@ -497,6 +511,9 @@ if [[ "${ENABLE_HYPRE_DEVICE}" == "HIP" ]]; then
   if [[ -n "${HIP_CMAKE_COMPILER}" && -x "${HIP_CMAKE_COMPILER}" ]]; then
     echo "Using direct HIP compiler: ${HIP_CMAKE_COMPILER}"
     CMAKE_HIP_COMPILER_ARGS+=("-DCMAKE_HIP_COMPILER=${HIP_CMAKE_COMPILER}")
+    if [[ -n "${SCCACHE_BIN}" ]]; then
+      SCCACHE_CMAKE_ARGS+=" -DCMAKE_HIP_COMPILER_LAUNCHER=${SCCACHE_BIN}"
+    fi
   fi
 fi
 
@@ -646,8 +663,6 @@ else
     echo "DATA_EXCHANGE_DIR=${DATA_EXCHANGE_DIR}"
     echo "DATA_BASENAME_WE=${DATA_BASENAME_WE}"
     echo "GEOS_TPL_DIR=${GEOS_TPL_DIR}"
-    echo "GEOSX_TPL_DIR=${GEOSX_TPL_DIR}"
-    GEOS_TPL_DIR=${GEOSX_TPL_DIR}
     echo tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
     or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi

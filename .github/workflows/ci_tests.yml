@@ -484,6 +484,169 @@ jobs:
       REQUIRED_LABEL: "ci: run device builds"
     secrets: inherit
 
+  # Native macOS build. The TPL install comes from the published image
+  # geosx/macos-26-apple-clang:${GEOS_TPL_TAG}, the same tag the Linux jobs use.
+  macos_builds:
+    name: macOS 26 - Apple Clang (arm64)
+    needs: [is_not_draft_pull_request]
+    runs-on: macos-26
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        submodules: true
+        lfs: false
+        fetch-depth: 1
+    - name: Load TPL image
+      env:
+        DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+      run: |
+        set -euo pipefail
+        log="$RUNNER_TEMP/load-tpl.log"
+        set +e
+        {
+          curl -fsSL -o "$RUNNER_TEMP/crane.tgz" \
+            https://github.com/google/go-containerregistry/releases/download/v0.20.6/go-containerregistry_Darwin_arm64.tar.gz
+          tar -xzf "$RUNNER_TEMP/crane.tgz" -C "$RUNNER_TEMP" crane
+          chmod +x "$RUNNER_TEMP/crane"
+          xattr -d com.apple.quarantine "$RUNNER_TEMP/crane" 2>/dev/null || true
+          image="geosx/macos-26-apple-clang:${DOCKER_IMAGE_TAG}"
+          "$RUNNER_TEMP/crane" export "$image" "$RUNNER_TEMP/tpl.tar"
+          cat > "$RUNNER_TEMP/extract_tpl.py" <<'PY'
+        import inspect
+        import os
+        import sys
+        import tarfile
+
+        def relocate(name):
+            name = name[2:] if name.startswith("./") else name
+            if name in ("", "."):
+                return None
+            if name == "spack-generated.cmake":
+                return name
+            prefix = "opt/GEOS/"
+            if name.startswith(prefix):
+                return name[len(prefix):]
+            return None
+
+        root = "/opt/GEOS"
+        with tarfile.open(sys.argv[1]) as tar:
+            members = tar.getmembers()
+            kwargs = {}
+            if "filter" in inspect.signature(tar.extractall).parameters:
+                kwargs["filter"] = "fully_trusted"
+            files = []
+            for member in members:
+                if member.islnk():
+                    continue
+                relocated = relocate(member.name)
+                if relocated is None:
+                    continue
+                member.name = relocated
+                files.append(member)
+            try:
+                tar.extractall(root, members=files, **kwargs)
+            except OSError as exc:
+                sys.stderr.write("EXTRACT_ERROR %s: %s\n" % (type(exc).__name__, exc))
+                sys.exit(1)
+            for member in members:
+                if not member.islnk():
+                    continue
+                relocated = relocate(member.name)
+                link = relocate(member.linkname)
+                if relocated is None or link is None:
+                    continue
+                destination = os.path.join(root, relocated)
+                source = os.path.join(root, link)
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                if os.path.lexists(destination):
+                    os.unlink(destination)
+                os.link(source, destination)
+        PY
+          python3 -c 'from pathlib import Path; p=Path("'"$RUNNER_TEMP"'/extract_tpl.py"); t=p.read_text().splitlines(); n=len(t[0])-len(t[0].lstrip()); p.write_text("\n".join(line[n:] for line in t)+"\n")'
+          sudo mkdir -p /opt/GEOS
+          sudo /usr/bin/python3 "$RUNNER_TEMP/extract_tpl.py" "$RUNNER_TEMP/tpl.tar"
+          test -f /opt/GEOS/spack-generated.cmake
+          sudo chown -R "$(id -un)" /opt/GEOS
+        } >"$log" 2>&1
+        status=$?
+        set -e
+        if [[ "$status" -ne 0 ]]; then
+          tail -n 40 "$log" | while IFS= read -r line; do
+            echo "::error title=Load TPL image::$line"
+          done
+          exit "$status"
+        fi
+    - id: auth
+      uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+        create_credentials_file: true
+    - name: Build GEOS
+      run: |
+        set -euo pipefail
+        brew install cmake open-mpi openblas python@3.14 binutils
+        curl -fsSL -o "$RUNNER_TEMP/sccache.tgz" \
+          https://github.com/mozilla/sccache/releases/download/v0.17.0/sccache-v0.17.0-aarch64-apple-darwin.tar.gz
+        tar -xzf "$RUNNER_TEMP/sccache.tgz" -C "$RUNNER_TEMP" --strip-components=1 \
+          sccache-v0.17.0-aarch64-apple-darwin/sccache
+        chmod +x "$RUNNER_TEMP/sccache"
+        xattr -d com.apple.quarantine "$RUNNER_TEMP/sccache" 2>/dev/null || true
+        # sccache reads SCCACHE_CONF first. On macOS the default is
+        # ~/Library/Application Support, so a Linux-style ~/.config file is ignored
+        # and the cache stays on the runner's local disk.
+        export SCCACHE_CONF="${HOME}/.config/sccache/config"
+        mkdir -p "$(dirname "$SCCACHE_CONF")"
+        cat > "$SCCACHE_CONF" <<EOF
+        basedirs = ["${GITHUB_WORKSPACE}"]
+        [cache.gcs]
+        rw_mode = "READ_WRITE"
+        cred_path = "${GOOGLE_GHA_CREDS_PATH}"
+        bucket = "geos-dev"
+        key_prefix = "sccache"
+        EOF
+        "$RUNNER_TEMP/sccache" --show-stats || true
+        /opt/homebrew/opt/python@3.14/bin/python3 -m pip install --upgrade --break-system-packages virtualenv
+        # Caliper records the Open MPI Cellar path from the TPL build. Homebrew on this
+        # runner may install a different version, so point that path at the one just installed.
+        if [[ ! -d /opt/homebrew/Cellar/open-mpi/5.0.11 ]]; then
+          sudo mkdir -p /opt/homebrew/Cellar/open-mpi
+          sudo ln -sfn "$(readlink -f /opt/homebrew/opt/open-mpi)" /opt/homebrew/Cellar/open-mpi/5.0.11
+        fi
+        # Apple Clang rejects -mtune=native, which the host-config adds for every Clang.
+        sed -i '' 's/ -march=native -mtune=native//' /opt/GEOS/spack-generated.cmake
+        log="$RUNNER_TEMP/geos-build.log"
+        set +e
+        set -o pipefail
+        {
+          python3 scripts/config-build.py \
+            -hc /opt/GEOS/spack-generated.cmake \
+            -bt Release \
+            --buildpath "$RUNNER_TEMP/geos-build" \
+            -DCMAKE_C_COMPILER_LAUNCHER="$RUNNER_TEMP/sccache" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER="$RUNNER_TEMP/sccache"
+          cmake --build "$RUNNER_TEMP/geos-build" -j 2 --target geosx
+        } 2>&1 | tee "$log"
+        status=$?
+        set +o pipefail
+        mkdir -p "${GITHUB_WORKSPACE}/.sccache-runtime"
+        "$RUNNER_TEMP/sccache" --show-adv-stats > "${GITHUB_WORKSPACE}/.sccache-runtime/stats.txt" || true
+        if [[ "$status" -ne 0 ]]; then
+          grep -E 'error:|CMake Error' "$log" | tail -n 8 | while IFS= read -r line; do
+            echo "::error title=Build GEOS::$line"
+          done || true
+          exit "$status"
+        fi
+    - name: Show sccache summary
+      if: always()
+      run: |
+        SCCACHE_STATS_FILE="${GITHUB_WORKSPACE}/.sccache-runtime/stats.txt"
+        if [[ -f "${SCCACHE_STATS_FILE}" ]]; then
+          grep -E '^(Compile requests|Cache hits|Cache misses|Cache timeouts|Cache read errors|Cache write errors|Compilation failures|Cache errors|Non-cacheable compilations|Non-cacheable calls|Cache location|Cache size|Max cache size|Version \(client\))' "${SCCACHE_STATS_FILE}" || cat "${SCCACHE_STATS_FILE}"
+        else
+          echo "No sccache stats file was captured."
+        fi
+
   # Convenience job - passes when all substantive jobs have passed. A
   # submodule-sync failure is an allowed exception when testing submodule branches.
   check_that_all_jobs_succeeded:
@@ -497,6 +660,7 @@ jobs:
     - cuda_builds
     - rocm_builds
     - run_integrated_tests
+    - macos_builds
     if: ${{ always() }}
     steps:
     - run: |
@@ -506,7 +670,8 @@ jobs:
         echo "cpu_builds: ${{needs.cpu_builds.result}}"
         echo "cuda_builds: ${{needs.cuda_builds.result}}"
         echo "rocm_builds: ${{needs.rocm_builds.result}}"
-        echo "run_integrated_tests: ${{needs.run_integrated_tests.result}} "
+        echo "run_integrated_tests: ${{needs.run_integrated_tests.result}}"
+        echo "macos_builds: ${{needs.macos_builds.result}}"
         ${{
           needs.if_not_unassigned_pull_request.result == 'success' &&
           (
@@ -517,5 +682,6 @@ jobs:
           needs.cpu_builds.result == 'success' &&
           needs.cuda_builds.result == 'success' && 
           needs.rocm_builds.result == 'success' &&
-          needs.run_integrated_tests.result == 'success'
+          needs.run_integrated_tests.result == 'success' &&
+          needs.macos_builds.result == 'success'
         }}
