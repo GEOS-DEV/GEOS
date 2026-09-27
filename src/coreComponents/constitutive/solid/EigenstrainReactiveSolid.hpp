@@ -61,9 +61,13 @@ public:
                                    ReactivePorosityBase const & porosityModel,
                                    PERM_TYPE const & permModel,
                                    real64 const surfaceAreaDamageExponent,
+                                   real64 const intactPressureCoefficient,
+                                   real64 const crackPorosity,
                                    DIFF_TYPE const * diffModel = nullptr ):
     CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( solidModel, porosityModel, permModel ),
     m_surfaceAreaDamageExponent( surfaceAreaDamageExponent ),
+    m_intactPressureCoefficient( intactPressureCoefficient ),
+    m_crackPorosity( crackPorosity ),
     m_diffUpdate( initDiffUpdate( diffModel ) )
   {}
 
@@ -84,6 +88,7 @@ public:
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n,
                                         mineralReactionMolarIncrements );
+    updateCrackPorosity( k, q );
 
     updateMatrixPermeability( k );
     updateMatrixDiffusivity( k );
@@ -99,6 +104,7 @@ public:
     GEOS_UNUSED_VAR( temperature );
 
     m_porosityUpdate.updateFromReactions( k, q, kineticReactionMolarIncrements );
+    updateCrackPorosity( k, q );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
   }
@@ -129,6 +135,26 @@ public:
     else
     {
       return 0.0;
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  real64 getDegradationValue( localIndex const k, localIndex const q ) const
+  {
+    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > )
+      return m_solidUpdate.getDegradationValue( k, q );
+    else
+      return 1.0;
+  }
+
+  /// Pore space opened by cracking, rising linearly with damage from the initial porosity to crackPorosity
+  GEOS_HOST_DEVICE
+  void updateCrackPorosity( localIndex const k, localIndex const q ) const
+  {
+    real64 const openable = m_crackPorosity - m_porosityUpdate.getInitialPorosity( k, q );
+    if( openable > 0.0 )
+    {
+      m_porosityUpdate.updateCrackPorosity( k, q, getAverageDamage( k ) * openable );
     }
   }
 
@@ -291,6 +317,12 @@ private:
   /// Exponent confining the reactive surface area to damaged cells; 0 leaves the area ungated
   real64 m_surfaceAreaDamageExponent;
 
+  /// Coefficient of the pore pressure on the intact skeleton; it rises to 1 as the cell cracks
+  real64 m_intactPressureCoefficient;
+
+  /// Porosity of a fully cracked cell; at or below the initial porosity it leaves porosity to the reactions
+  real64 m_crackPorosity;
+
   /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
   typename DIFF_TYPE::KernelWrapper m_diffUpdate;
 
@@ -355,8 +387,10 @@ private:
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
-    // Add the contributions of pressure to the total stress
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -pressure );
+    // Pressure acts on the skeleton with b = 1 - g(d) (1 - b0): b0 in intact rock, rising to 1 as the cell
+    // cracks. b0 = 0 keeps pressure that seeps into intact rock from loading it, as the Biot model does with Ks = K.
+    real64 const pressureCoefficient = 1.0 - getDegradationValue( k, q ) * ( 1.0 - m_intactPressureCoefficient );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -pressureCoefficient * pressure );
 
     // Compute effective stress increment for the porosity update
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
@@ -442,7 +476,9 @@ public:
       return KernelWrapper( getSolidModel(),
                             getPorosityModel(),
                             getPermModel(),
-                            m_surfaceAreaDamageExponent );
+                            m_surfaceAreaDamageExponent,
+                            m_intactPressureCoefficient,
+                            m_crackPorosity );
     }
     else
     {
@@ -450,6 +486,8 @@ public:
                             getPorosityModel(),
                             getPermModel(),
                             m_surfaceAreaDamageExponent,
+                            m_intactPressureCoefficient,
+                            m_crackPorosity,
                             &getDiffModel() );
     }
   }
@@ -482,6 +520,12 @@ private:
 
   /// Exponent confining the reactive surface area to damaged cells; 0 leaves the area ungated
   real64 m_surfaceAreaDamageExponent;
+
+  /// Coefficient of the pore pressure on the intact skeleton; it rises to 1 as the cell cracks
+  real64 m_intactPressureCoefficient;
+
+  /// Porosity of a fully cracked cell; at or below the initial porosity it leaves porosity to the reactions
+  real64 m_crackPorosity;
 };
 
 

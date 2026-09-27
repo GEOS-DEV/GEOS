@@ -165,6 +165,28 @@ public:
     }
   }
 
+  /**
+   * @brief Rebuild the porosity from the initial state, adding the pore space opened by cracking
+   * @details phi = phi0 - sum_r ( v_r - v_r0 ) + crackPorosityIncrement. Taken from the initial state rather
+   *          than incremented, because damage changes after the flow solve and an increment would never see it.
+   */
+  GEOS_HOST_DEVICE
+  void updateCrackPorosity( localIndex const k,
+                            localIndex const q,
+                            real64 const crackPorosityIncrement ) const
+  {
+    if( m_fixedPorosity )
+    {
+      return;
+    }
+    real64 porosity = m_initialPorosity[k][q] + crackPorosityIncrement;
+    for( integer r=0; r < m_numKineticReactions; ++r )
+    {
+      porosity -= m_volumeFractions[k][q][r] - m_initialVolumeFractions[k][q][r];
+    }
+    m_newPorosity[k][q] = fmin( fmax( porosity, minPorosity ), 1.0 );
+  }
+
   GEOS_HOST_DEVICE
   void updateSolidBulkModulus( localIndex const k,
                                real64 const bulkModulus ) const
@@ -302,6 +324,8 @@ public:
   /// Lagged mechanics state read by the fixed-stress porosity update, exposed for nonlinear acceleration
   arrayView2d< real64 > getMeanEffectiveStressIncrement_k() const { return m_meanEffectiveStressIncrement_k.toView(); }
   arrayView2d< real64 > getDeltaPressure_k() const { return m_deltaPressure_k.toView(); }
+
+  arrayView3d< real64 const, reactivefluid::USD_SPECIES > getVolumeFractions_n() const { return m_volumeFractions_n.toViewConst(); }
 
   virtual void initializeState() const override;
 

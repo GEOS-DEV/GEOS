@@ -49,6 +49,18 @@ EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::EigenstrainReactiv
     setDescription( "Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. "
                     "The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell." );
 
+  this->registerWrapper( "intactPressureCoefficient", &m_intactPressureCoefficient ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Coefficient b0 of the pore pressure on the intact skeleton in the total stress. "
+                    "It rises with degradation as b = 1 - g(d) (1 - b0), reaching 1 in a fully cracked cell." );
+
+  this->registerWrapper( "crackPorosity", &m_crackPorosity ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Porosity of a fully cracked cell. Porosity rises linearly with damage from the initial value "
+                    "to this one, less the pore space filled by precipitation. The default 0 turns the crack pore space off." );
+
   if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
   {
     this->registerWrapper( "diffusionModelName", &m_diffusionModelName ).

@@ -787,27 +787,57 @@ void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBa
   arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc = subRegion.getField< fields::flow::logPrimarySpeciesConcentration >();
-  arrayView2d< real64 const, compflow::USD_COMP > const surfaceArea = subRegion.getField< fields::flow::surfaceArea >();
+  arrayView2d< real64, compflow::USD_COMP > const surfaceArea = subRegion.getField< fields::flow::surfaceArea >();
+
+  auto updateRates = [&]( auto & fluid ) -> arrayView3d< real64 const, reactivefluid::USD_SPECIES >
+  {
+    constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+    {
+      singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc, surfaceArea.toViewConst() );
+    } );
+    return fluid.kineticReactionRates();
+  };
+
+  // A mineral absent at the start of the step has nothing to dissolve: switch off the surface of any
+  // reaction that would dissolve it and recompute, so the species sources and the mineral update agree.
+  auto updateRatesWithoutDissolvingAbsentMinerals = [&]( auto & fluid )
+  {
+    arrayView3d< real64 const, reactivefluid::USD_SPECIES > const rates = updateRates( fluid );
+    if( !m_isUpdateReactivePorosity )
+    {
+      return;
+    }
+
+    ReactivePorosityBase const & porosity = getConstitutiveModel< ReactivePorosityBase >( subRegion, getConstitutiveName< PorosityBase >( subRegion ) );
+    arrayView3d< real64 const, reactivefluid::USD_SPECIES > const volumeFractions_n = porosity.getVolumeFractions_n();
+    integer const numKineticReactions = m_numKineticReactions;
+
+    RAJA::ReduceSum< parallelDeviceReduce, localIndex > numBlocked( 0 );
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      for( integer r = 0; r < numKineticReactions; ++r )
+      {
+        if( rates[ei][0][r] > 0.0 && volumeFractions_n[ei][0][r] <= 0.0 && surfaceArea[ei][r] > 0.0 )
+        {
+          surfaceArea[ei][r] = 0.0;
+          numBlocked += 1;
+        }
+      }
+    } );
+
+    if( numBlocked.get() > 0 )
+    {
+      updateRates( fluid );
+    }
+  };
 
   if( m_isThermal )
   {
-    reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
-      getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
-
-    constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
-    {
-      singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc, surfaceArea );
-    } );
+    updateRatesWithoutDissolvingAbsentMinerals( getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) ) );
   }
   else
   {
-    reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
-      getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
-
-    constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
-    {
-      singlePhaseReactiveBaseKernels::MixedSystemReactionUpdateKernel::launch( castedFluid, pres, temp, logPrimaryConc, surfaceArea );
-    } );
+    updateRatesWithoutDissolvingAbsentMinerals( getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) ) );
   }
 }
 

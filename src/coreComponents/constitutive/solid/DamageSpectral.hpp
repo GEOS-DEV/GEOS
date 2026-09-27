@@ -54,13 +54,18 @@ public:
                          arrayView1d< real64 > const & inputCompressiveStrength,
                          arrayView1d< real64 > const & inputDeltaCoefficient,
                          arrayView1d< real64 > const & inputBiotCoefficient,
+                         integer const inputHybridSplit,
                          PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputCrackDrivingForce, inputOldCrackDrivingForce, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputFractureModelType,
                                   inputLocalDissipationOption,
                                   inputTensileStrength, inputCompressiveStrength, inputDeltaCoefficient, inputBiotCoefficient,
-                                  std::forward< PARAMS >( baseParams )... )
+                                  std::forward< PARAMS >( baseParams )... ),
+    m_hybridSplit( inputHybridSplit )
   {}
+
+  /// 1: spectral split only in the crack driving force; stress and stiffness are degraded isotropically
+  integer const m_hybridSplit;
 
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
@@ -121,6 +126,16 @@ public:
     real64 mu = m_shearModulus[k];
     real64 lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
     real64 damageFactor = getDegradationValue( k, q );
+
+    // Hybrid split (Ambati et al. 2015): tension still drives the crack through the positive energy below, but the
+    // stress is g C:eps, linear in strain, so the tangent is exact and does not switch as eigenvalues change sign.
+    if( m_hybridSplit )
+    {
+      LvArray::tensorOps::scale< 6 >( stress, damageFactor );
+      LvArray::tensorOps::scale< 6, 6 >( stiffness, damageFactor );
+      m_crackDrivingForce( k, q ) = fmax( positiveStrainEnergyDensity( strain, lambda, mu ), m_oldCrackDrivingForce( k, q ) );
+      return;
+    }
 
     // get eigenvalues and eigenvectors
 
@@ -207,6 +222,24 @@ public:
     m_crackDrivingForce( k, q ) = fmax( sed, m_oldCrackDrivingForce( k, q ) );
   }
 
+  /// Positive (tensile) strain energy density of the spectral split, for a strain with tensorial shear components
+  GEOS_HOST_DEVICE
+  static real64 positiveStrainEnergyDensity( real64 const ( &strain )[6], real64 const lambda, real64 const mu )
+  {
+    real64 eigenValues[3] = {};
+    real64 eigenVectors[3][3] = {};
+    LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectors, strain );
+
+    real64 const tracePlus = LvArray::math::max( strain[0] + strain[1] + strain[2], 0.0 );
+    real64 sumOfSquaredPositiveEigenvalues = 0.0;
+    for( int i = 0; i < 3; ++i )
+    {
+      real64 const eigenPlus = LvArray::math::max( eigenValues[i], 0.0 );
+      sumOfSquaredPositiveEigenvalues += eigenPlus * eigenPlus;
+    }
+    return 0.5 * lambda * tracePlus * tracePlus + mu * sumOfSquaredPositiveEigenvalues;
+  }
+
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
@@ -273,8 +306,19 @@ public:
                                                                        m_tensileStrength.toView(),
                                                                        m_compressiveStrength.toView(),
                                                                        m_deltaCoefficient.toView(),
-                                                                       m_biotCoefficient.toView() );
+                                                                       m_biotCoefficient.toView(),
+                                                                       m_hybridSplit );
   }
+
+  struct viewKeyStruct : public Damage< BASE >::viewKeyStruct
+  {
+    static constexpr char const * hybridSplitString() { return "hybridSplit"; }
+  };
+
+protected:
+
+  /// Flag for the hybrid split: spectral driving force with isotropically degraded stress
+  integer m_hybridSplit;
 
 };
 
