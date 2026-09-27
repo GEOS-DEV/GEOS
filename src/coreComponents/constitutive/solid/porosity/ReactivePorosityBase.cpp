@@ -65,6 +65,10 @@ ReactivePorosityBase::ReactivePorosityBase( string const & name, Group * const p
     setApplyDefaultValue( 0.0 ).
     setDescription( "Mean effective stress increment at quadrature points at the previous sequential iteration" );
 
+  registerWrapper( viewKeyStruct::deltaPressure_kString(), &m_deltaPressure_k ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Pressure increment from the previous time step used by the previous sequential mechanics solve" );
+
   registerWrapper( viewKeyStruct::fixedPorosityString(), &m_fixedPorosity ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -118,6 +122,7 @@ void ReactivePorosityBase::resizeFields( localIndex const size, localIndex const
   m_volumeFractions_n.resize( size, numPts, numKineticReactions );
 
   m_meanEffectiveStressIncrement_k.resize( 0, numPts );
+  m_deltaPressure_k.resize( 0, numPts );
 }
 
 void ReactivePorosityBase::saveConvergedState() const
@@ -126,12 +131,14 @@ void ReactivePorosityBase::saveConvergedState() const
 
   m_volumeFractions_n.setValues< parallelDevicePolicy<> >( m_volumeFractions.toViewConst() );
   m_meanEffectiveStressIncrement_k.zero();
+  m_deltaPressure_k.zero();
 }
 
 void ReactivePorosityBase::ignoreConvergedState() const
 {
   PorosityBase::ignoreConvergedState();
   m_meanEffectiveStressIncrement_k.zero();
+  m_deltaPressure_k.zero();
 }
 
 

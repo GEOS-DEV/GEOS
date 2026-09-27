@@ -413,9 +413,14 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
   {
-    real64 const factor = getDegradationValue( k, 0 ); // Note: this assumes the degradation is the same across all quadrature points in the
-                                                       // element
-    return factor * m_bulkModulus[k];
+    // Degradation averaged over the element's quadrature points: the result is one value per element.
+    integer const quadSize = m_newDamage[k].size();
+    real64 factor = 0.0;
+    for( localIndex q = 0; q < quadSize; ++q )
+    {
+      factor += getDegradationValue( k, q );
+    }
+    return factor / quadSize * m_bulkModulus[k];
   }
 
   GEOS_HOST_DEVICE

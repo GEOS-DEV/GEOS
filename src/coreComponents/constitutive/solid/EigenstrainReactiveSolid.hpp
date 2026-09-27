@@ -112,42 +112,45 @@ public:
       return 0.0;
   }
 
+  /// Damage averaged over the element's quadrature points, so every cell-centered quantity sees the same value
+  GEOS_HOST_DEVICE
+  real64 getAverageDamage( localIndex const k ) const
+  {
+    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > )
+    {
+      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
+      real64 damageAvg = 0.0;
+      for( localIndex i=0; i<quadSize; ++i )
+      {
+        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
+      }
+      return damageAvg / quadSize;
+    }
+    else
+    {
+      return 0.0;
+    }
+  }
+
   GEOS_HOST_DEVICE
   void updateMatrixPermeability( localIndex const k ) const
   {
     if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< PERM_TYPE, DamagePermeability > )
     {
-      // Use the averaged damage value from all quadrature points to get the cell-centered permeability
-      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
-
-      real64 damageAvg = 0.0;
-
-      for( localIndex i=0; i<quadSize; ++i )
-      {
-        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
-      }
-
-      damageAvg = damageAvg/quadSize;
-
-      m_permUpdate.updateDamagePermeability( k, damageAvg );
+      m_permUpdate.updateDamagePermeability( k, getAverageDamage( k ) );
     }
     else if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< PERM_TYPE, DamageCloggingPermeability > )
     {
       integer const quadSize = m_solidUpdate.m_newDamage[k].size();
 
-      real64 damageAvg = 0.0;
       real64 cloggedPoreFractionAvg = 0.0;
-
       for( localIndex i=0; i<quadSize; ++i )
       {
-        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
         cloggedPoreFractionAvg += m_porosityUpdate.getCloggedPoreFraction( k, i );
       }
-
-      damageAvg = damageAvg/quadSize;
       cloggedPoreFractionAvg = cloggedPoreFractionAvg/quadSize;
 
-      m_permUpdate.updateDamageCloggingPermeability( k, damageAvg, cloggedPoreFractionAvg );
+      m_permUpdate.updateDamageCloggingPermeability( k, getAverageDamage( k ), cloggedPoreFractionAvg );
     }
   }
 
@@ -156,18 +159,7 @@ public:
   {
     if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< DIFF_TYPE, DamageDiffusion > )
     {
-      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
-
-      real64 damageAvg = 0.0;
-
-      for( localIndex i=0; i<quadSize; ++i )
-      {
-        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
-      }
-
-      damageAvg = damageAvg / quadSize;
-
-      m_diffUpdate.updateDamageDiffusivity( k, damageAvg );
+      m_diffUpdate.updateDamageDiffusivity( k, getAverageDamage( k ) );
     }
   }
 
@@ -186,7 +178,7 @@ public:
 
       // Confine the reaction to the fractured rock, where the injected fluid actually is. The exponent
       // defaults to zero, which leaves the area ungated since d^0 = 1 even for an intact cell.
-      real64 const damageGate = pow( fmax( fmin( 1.0, getDamage( k, q ) ), 0.0 ), m_surfaceAreaDamageExponent );
+      real64 const damageGate = pow( getAverageDamage( k ), m_surfaceAreaDamageExponent );
 
       for( integer r=0; r < initialSurfaceArea.size(); ++r )
       {
@@ -298,7 +290,7 @@ private:
 
   /// Exponent confining the reactive surface area to damaged cells; 0 leaves the area ungated
   real64 m_surfaceAreaDamageExponent;
-  
+
   /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
   typename DIFF_TYPE::KernelWrapper m_diffUpdate;
 

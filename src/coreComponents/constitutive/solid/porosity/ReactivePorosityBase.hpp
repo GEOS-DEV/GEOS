@@ -47,6 +47,7 @@ public:
                                arrayView1d< real64 const > const & mineralDensities,
                                arrayView1d< real64 > const & bulkModulus,
                                arrayView2d< real64 > const & meanEffectiveStressIncrement_k,
+                               arrayView2d< real64 > const & deltaPressure_k,
                                integer const fixedPorosity ):
     PorosityBaseUpdates( newPorosity,
                          porosity_n,
@@ -62,6 +63,7 @@ public:
     m_mineralDensities( mineralDensities ),
     m_bulkModulus( bulkModulus ),
     m_meanEffectiveStressIncrement_k( meanEffectiveStressIncrement_k ),
+    m_deltaPressure_k( deltaPressure_k ),
     m_fixedPorosity( fixedPorosity )
   {}
 
@@ -171,11 +173,32 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  bool hasMeanEffectiveStressIncrement( localIndex const k ) const
+  {
+    for( localIndex q = 0; q < m_meanEffectiveStressIncrement_k.size( 1 ); ++q )
+    {
+      if( m_meanEffectiveStressIncrement_k[k][q] != 0.0 )
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  GEOS_HOST_DEVICE
   void updateMeanEffectiveStressIncrement( localIndex const k,
                                            localIndex const q,
                                            real64 const & meanEffectiveStressIncrement ) const
   {
     m_meanEffectiveStressIncrement_k[k][q] = meanEffectiveStressIncrement;
+  }
+
+  GEOS_HOST_DEVICE
+  void updateDeltaPressure( localIndex const k,
+                            localIndex const q,
+                            real64 const & deltaPressure ) const
+  {
+    m_deltaPressure_k[k][q] = deltaPressure;
   }
 
   GEOS_HOST_DEVICE
@@ -249,6 +272,7 @@ protected:
 
   arrayView1d< real64 > const m_bulkModulus;
   arrayView2d< real64 > const m_meanEffectiveStressIncrement_k;
+  arrayView2d< real64 > const m_deltaPressure_k;
 
   integer const m_fixedPorosity;
 };
@@ -275,6 +299,10 @@ public:
 
   integer numKineticReactions() const { return m_numKineticReactions; }
 
+  /// Lagged mechanics state read by the fixed-stress porosity update, exposed for nonlinear acceleration
+  arrayView2d< real64 > getMeanEffectiveStressIncrement_k() const { return m_meanEffectiveStressIncrement_k.toView(); }
+  arrayView2d< real64 > getDeltaPressure_k() const { return m_deltaPressure_k.toView(); }
+
   virtual void initializeState() const override;
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
@@ -287,6 +315,7 @@ public:
     static constexpr char const * mineralDensitiesString() { return "mineralDensities"; }
     static constexpr char const * solidBulkModulusString() { return "solidBulkModulus"; }
     static constexpr char const * meanEffectiveStressIncrement_kString() { return "meanEffectiveStressIncrement_k"; }
+    static constexpr char const * deltaPressure_kString() { return "deltaPressure_k"; }
     static constexpr char const * fixedPorosityString() { return "fixedPorosity"; }
   } viewKeys;
 
@@ -313,6 +342,7 @@ public:
                           m_mineralDensities,
                           m_bulkModulus,
                           m_meanEffectiveStressIncrement_k,
+                          m_deltaPressure_k,
                           m_fixedPorosity );
   }
 
@@ -334,6 +364,7 @@ protected:
 
   array1d< real64 > m_bulkModulus;
   array2d< real64 > m_meanEffectiveStressIncrement_k;
+  array2d< real64 > m_deltaPressure_k;
 
   integer m_fixedPorosity;
 };

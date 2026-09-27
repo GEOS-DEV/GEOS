@@ -56,6 +56,12 @@ PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::PorousReactiveSolid( st
     setDescription( "Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. "
                     "The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell." );
 
+  this->registerWrapper( "crackFixedStressCompliance", &m_crackFixedStressCompliance ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Fixed-stress pore compliance of a fully damaged cell [1/Pa], scaled by damage. It stabilizes the "
+                    "sequential split and vanishes at convergence. The default 0 keeps the lagged-strain update." );
+
   this->registerWrapper( "fluidModelName", &m_fluidModelName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid constitutive model. Its (constant) compressibility "

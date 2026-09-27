@@ -47,11 +47,13 @@ public:
                                arrayView1d< real64 > const & biotCoefficient,
                                arrayView1d< real64 > const & bulkModulus,
                                arrayView1d< real64 > const & grainBulkModulus,
+                               arrayView1d< real64 > const & fixedStressCoefficient,
                                arrayView1d< real64 > const & mineralBulkModulus,
                                arrayView1d< real64 > const & mineralPressure,
                                arrayView1d< real64 > const & mineralPressure_n,
                                real64 const fluidCompressibility,
                                arrayView2d< real64 > const & meanEffectiveStressIncrement_k,
+                               arrayView2d< real64 > const & deltaPressure_k,
                                integer const fixedPorosity ): ReactivePorosityBaseUpdates( newPorosity,
                                                                                             porosity_n,
                                                                                             dPorosity_dPressure,
@@ -66,8 +68,10 @@ public:
                                                                                             mineralDensities,
                                                                                             bulkModulus,
                                                                                             meanEffectiveStressIncrement_k,
+                                                                                            deltaPressure_k,
                                                                                             fixedPorosity ),
     m_grainBulkModulus( grainBulkModulus ),
+    m_fixedStressCoefficient( fixedStressCoefficient ),
     m_biotCoefficient( biotCoefficient ),
     m_mineralBulkModulus( mineralBulkModulus ),
     m_mineralPressure( mineralPressure ),
@@ -94,7 +98,6 @@ public:
 
   GEOS_HOST_DEVICE
   void computePorosityFixedStress( real64 const & pressure,
-                                   real64 const & pressure_k,
                                    real64 const & pressure_n,
                                    real64 const & porosity_n,
                                    real64 const & referencePorosity,
@@ -102,14 +105,14 @@ public:
                                    real64 & dPorosity_dPressure,
                                    real64 const & biotCoefficient,
                                    real64 const & meanEffectiveStressIncrement_k,
+                                   real64 const & deltaPressure_k,
                                    real64 const & bulkModulus,
+                                   real64 const & fixedStressCoefficient,
                                    real64 const & grainBulkModulus,
                                    real64 const & mineralBulkModulus,
                                    real64 const & fluidBulkModulus,
                                    real64 const & reactionPorosityIncrement ) const
   {
-    GEOS_UNUSED_VAR( pressure_k );
-
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / grainBulkModulus;
     real64 const porosityMultiplierInverse = 1 / ( 1 + biotSkeletonModulusInverse*mineralBulkModulus/referencePorosity );
     real64 const poreFluidMineralBulkModRatio = ( fluidBulkModulus + mineralBulkModulus ) / fluidBulkModulus;
@@ -124,9 +127,14 @@ public:
                // change due to mineral pressure increment
                + biotSkeletonModulusInverse * 3 * anelasticStrainIncrement * mineralBulkModulus * porosityMultiplierInverse
                // change due to mineral volume fraction increment
-               + reactionPorosityIncrement;  
+               + reactionPorosityIncrement;
 
     dPorosity_dPressure = biotSkeletonModulusInverse * poreFluidMineralBulkModRatio * porosityMultiplierInverse;
+
+    // Fixed-stress term: the given pore compliance times the pressure change since the last mechanics solve.
+    // It stabilizes the lagged-strain split where the true compliance is large and vanishes at convergence.
+    porosity += fixedStressCoefficient * porosityMultiplierInverse * ( ( pressure - pressure_n ) - deltaPressure_k );
+    dPorosity_dPressure += fixedStressCoefficient * porosityMultiplierInverse;
 
     // Keep a minimal pore volume so a fully clogged cell stays well posed in the flow solver
     if( porosity < minPorosity )
@@ -219,18 +227,21 @@ public:
                                                               m_mineralDensities );
 
     // 2. Update the porosity due to solid, pore mineral, and pore fluid pressure
-    // Currently ignore thermal effects
-    GEOS_UNUSED_VAR( temperature, temperature_k, temperature_n );
+    // Currently ignore thermal effects. pressure_k is not refreshed between sequential iterations for this
+    // flow solver, so the fixed-stress term uses the pressure increment stored by the mechanics solve.
+    GEOS_UNUSED_VAR( pressure_k, temperature, temperature_k, temperature_n );
     if( !m_fixedPorosity )
     {
-      computePorosityFixedStress( pressure, pressure_k, pressure_n,
+      computePorosityFixedStress( pressure, pressure_n,
                                   m_porosity_n[k][q],
                                   m_referencePorosity[k],
                                   m_newPorosity[k][q],
                                   m_dPorosity_dPressure[k][q],
                                   m_biotCoefficient[k],
                                   m_meanEffectiveStressIncrement_k[k][q],
+                                  m_deltaPressure_k[k][q],
                                   m_bulkModulus[k],
+                                  m_fixedStressCoefficient[k],
                                   m_grainBulkModulus[k],
                                   m_mineralBulkModulus[k],
                                   getFluidBulkModulus( k ),
@@ -240,11 +251,20 @@ public:
 
   GEOS_HOST_DEVICE
   void updateBiotCoefficientAndAssignModuli( localIndex const k,
-                                             real64 const bulkModulus ) const
+                                             real64 const bulkModulus,
+                                             real64 const fixedStressCoefficient ) const
   {
     m_bulkModulus[k] = bulkModulus;
+    m_fixedStressCoefficient[k] = fixedStressCoefficient;
 
     m_biotCoefficient[k] =  1.0 - bulkModulus / m_grainBulkModulus[k];
+  }
+
+  GEOS_HOST_DEVICE
+  void updateFixedStressCoefficient( localIndex const k,
+                                     real64 const fixedStressCoefficient ) const
+  {
+    m_fixedStressCoefficient[k] = fixedStressCoefficient;
   }
 
 
@@ -253,6 +273,9 @@ protected:
 
   /// View on the grain bulk modulus (read from XML)
   arrayView1d< real64 > const m_grainBulkModulus;
+
+  /// View on the fixed-stress pore compliance [1/Pa] (updated by PorousReactiveSolid)
+  arrayView1d< real64 > const m_fixedStressCoefficient;
 
   /// View on the Biot coefficient (updated by PorousSolid)
   arrayView1d< real64 > const m_biotCoefficient;
@@ -290,6 +313,8 @@ public:
     static constexpr char const *mineralPressureString() { return "mineralPressure"; }
 
     static constexpr char const *defaultGrainBulkModulusString() { return "defaultGrainBulkModulus"; }
+
+    static constexpr char const *fixedStressCoefficientString() { return "fixedStressCoefficient"; }
   };
 
   virtual void initializeState() const override final;
@@ -319,11 +344,13 @@ public:
                           m_biotCoefficient,
                           m_bulkModulus,
                           m_grainBulkModulus,
+                          m_fixedStressCoefficient,
                           m_mineralBulkModulus,
                           m_mineralPressure,
                           m_mineralPressure_n,
                           m_fluidCompressibility,
                           m_meanEffectiveStressIncrement_k,
+                          m_deltaPressure_k,
                           m_fixedPorosity );
   }
 
@@ -345,6 +372,9 @@ protected:
 
   /// Grain bulk modulus (can be specified in XML)
   array1d< real64 > m_grainBulkModulus;
+
+  /// Fixed-stress pore compliance [1/Pa]
+  array1d< real64 > m_fixedStressCoefficient;
 
   /// Mineral bulk modulus (read from XML)
   real64 m_defaultMineralBulkModulus;

@@ -27,6 +27,7 @@
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/solid/porosity/ReactivePorosityBase.hpp"
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
@@ -603,6 +604,69 @@ protected:
     } );
   }
 
+  /* Aitken for the chemo-mechanics branch: the flow update reads the lagged mean effective stress increment and
+     the pressure increment the mechanics solve saw. Both are in Pa and enter the porosity linearly, so they are
+     relaxed together with one factor, the counterpart of the mean total stress increment relaxed above. */
+
+  template< typename LAMBDA >
+  void forEachReactiveFixedStressState( DomainPartition & domain, LAMBDA && lambda )
+  {
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                       MeshLevel & mesh,
+                                                                       string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        string const & solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+        constitutive::CoupledSolidBase & solid =
+          this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, solidName );
+        auto const * porosityModel = dynamic_cast< constitutive::ReactivePorosityBase const * >( &solid.getBasePorosityModel() );
+        if( porosityModel == nullptr )
+        {
+          return;
+        }
+        lambda( porosityModel->getMeanEffectiveStressIncrement_k() );
+        lambda( porosityModel->getDeltaPressure_k() );
+      } );
+    } );
+  }
+
+  void recordReactiveFixedStressState( DomainPartition & domain, array1d< real64 > & state )
+  {
+    state.resize( 0 );
+    forEachReactiveFixedStressState( domain, [&]( arrayView2d< real64 > const & field )
+    {
+      for( localIndex k = 0; k < field.size( 0 ); ++k )
+      {
+        for( localIndex q = 0; q < field.size( 1 ); ++q )
+        {
+          state.emplace_back( field[k][q] );
+        }
+      }
+    } );
+  }
+
+  void applyReactiveFixedStressState( DomainPartition & domain, array1d< real64 > const & state )
+  {
+    localIndex i = 0;
+    forEachReactiveFixedStressState( domain, [&]( arrayView2d< real64 > const & field )
+    {
+      for( localIndex k = 0; k < field.size( 0 ); ++k )
+      {
+        for( localIndex q = 0; q < field.size( 1 ); ++q )
+        {
+          field[k][q] = state[i++];
+        }
+      }
+    } );
+  }
+
+  bool isChemoMechanics() const
+  {
+    return flowSolver()->getCatalogName() == "SinglePhaseReactiveTransport";
+  }
+
   real64 computeAitkenRelaxationFactor( array1d< real64 > const & s0,
                                         array1d< real64 > const & s1,
                                         array1d< real64 > const & s1_tilde,
@@ -615,8 +679,9 @@ protected:
     // diff = r2 - r1
     array1d< real64 > diff = axpy( r2, r1, -1.0 );
 
-    real64 const denom = dot( diff, diff );
-    real64 const numer = dot( r1, diff );
+    // Reduced over ranks so every rank relaxes with the same factor
+    real64 const denom = MpiWrapper::sum( dot( diff, diff ) );
+    real64 const numer = MpiWrapper::sum( dot( r1, diff ) );
 
     real64 omega1 = 1.0;
     if( !isZero( denom ))
@@ -642,7 +707,14 @@ protected:
     {
       if( iter == 0 )
       {
-        recordAverageMeanTotalStressIncrement( domain, m_s1 );
+        if( isChemoMechanics() )
+        {
+          recordReactiveFixedStressState( domain, m_s1 );
+        }
+        else
+        {
+          recordAverageMeanTotalStressIncrement( domain, m_s1 );
+        }
       }
       else
       {
@@ -668,7 +740,15 @@ protected:
       {
         m_omega1 = computeAitkenRelaxationFactor( m_s0, m_s1, m_s1_tilde, m_s2_tilde, m_omega0 );
         m_s2 = computeUpdate( m_s1, m_s2_tilde, m_omega1 );
-        applyAcceleratedAverageMeanTotalStressIncrement( domain, m_s2 );
+        if( isChemoMechanics() )
+        {
+          applyReactiveFixedStressState( domain, m_s2 );
+        }
+        else
+        {
+          applyAcceleratedAverageMeanTotalStressIncrement( domain, m_s2 );
+        }
+        GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver, GEOS_FMT( "        Aitken relaxation factor = {:6.3f}", m_omega1 ) );
       }
     }
   }
@@ -723,8 +803,11 @@ protected:
     if( solverType == static_cast< integer >( SolverType::SolidMechanics ) &&
         this->getNonlinearSolverParameters().m_nonlinearAccelerationType== NonlinearSolverParameters::NonlinearAccelerationType::Aitken )
     {
-      if( flowSolver()->getCatalogName() != "SinglePhaseReactiveTransport" ) // For now, Biot Poromechanics is not considered for
-                                                                             // ChemoMechanics
+      if( isChemoMechanics() )
+      {
+        recordReactiveFixedStressState( domain, m_s2_tilde );
+      }
+      else
       {
         recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
       }
@@ -785,10 +868,7 @@ protected:
 
   virtual void validateNonlinearAcceleration() override
   {
-    if( MpiWrapper::commSize( MPI_COMM_GEOS ) > 1 )
-    {
-      GEOS_ERROR( "Nonlinear acceleration is not implemented for MPI runs" );
-    }
+    // The relaxation factor is reduced over ranks, so MPI runs are supported
   }
 
   /// Flag to determine whether or not this is a thermal simulation

@@ -63,9 +63,11 @@ public:
                               BiotReactivePorosity const & porosityModel,
                               PERM_TYPE const & permModel,
                               real64 const surfaceAreaDamageExponent,
+                              real64 const crackFixedStressCompliance,
                               DIFF_TYPE const * diffModel = nullptr ):
     CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >( solidModel, porosityModel, permModel ),
     m_surfaceAreaDamageExponent( surfaceAreaDamageExponent ),
+    m_crackFixedStressCompliance( crackFixedStressCompliance ),
     m_diffUpdate( initDiffUpdate( diffModel ) )
   {}
 
@@ -80,7 +82,17 @@ public:
                                                 real64 const & temperature_n,
                                                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > mineralReactionMolarIncrements ) const override final
   {
-    updateBiotCoefficientAndAssignModuli( k );
+    // The Biot coefficient and bulk modulus must match the stress increment of the last mechanics solve,
+    // or a damage update since then scales its porosity change by g_old / g_new. The fixed-stress
+    // coefficient anticipates the next mechanics solve, so it follows the newest damage.
+    if( m_porosityUpdate.hasMeanEffectiveStressIncrement( k ) )
+    {
+      m_porosityUpdate.updateFixedStressCoefficient( k, getFixedStressCoefficient( k ) );
+    }
+    else
+    {
+      updateBiotCoefficientAndAssignModuli( k );
+    }
 
     m_porosityUpdate.updateFixedStress( k, q,
                                         pressure, pressure_k, pressure_n,
@@ -114,6 +126,26 @@ public:
       return 0.0;
   }
 
+  /// Damage averaged over the element's quadrature points, so every cell-centered quantity sees the same value
+  GEOS_HOST_DEVICE
+  real64 getAverageDamage( localIndex const k ) const
+  {
+    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > )
+    {
+      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
+      real64 damageAvg = 0.0;
+      for( localIndex i=0; i<quadSize; ++i )
+      {
+        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
+      }
+      return damageAvg / quadSize;
+    }
+    else
+    {
+      return 0.0;
+    }
+  }
+
   GEOS_HOST_DEVICE
   real64 getDegradationValue( localIndex const k, localIndex const q ) const
   {
@@ -128,37 +160,20 @@ public:
   {
     if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< PERM_TYPE, DamagePermeability > )
     {
-      // Use the averaged damage value from all quadrature points to get the cell-centered permeability
-      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
-
-      real64 damageAvg = 0.0;
-
-      for( localIndex i=0; i<quadSize; ++i )
-      {
-        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
-      }
-
-      damageAvg = damageAvg/quadSize;
-
-      m_permUpdate.updateDamagePermeability( k, damageAvg );
+      m_permUpdate.updateDamagePermeability( k, getAverageDamage( k ) );
     }
     else if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< PERM_TYPE, DamageCloggingPermeability > )
     {
       integer const quadSize = m_solidUpdate.m_newDamage[k].size();
 
-      real64 damageAvg = 0.0;
       real64 cloggedPoreFractionAvg = 0.0;
-
       for( localIndex i=0; i<quadSize; ++i )
       {
-        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
         cloggedPoreFractionAvg += m_porosityUpdate.getCloggedPoreFraction( k, i );
       }
-
-      damageAvg = damageAvg/quadSize;
       cloggedPoreFractionAvg = cloggedPoreFractionAvg/quadSize;
 
-      m_permUpdate.updateDamageCloggingPermeability( k, damageAvg, cloggedPoreFractionAvg );
+      m_permUpdate.updateDamageCloggingPermeability( k, getAverageDamage( k ), cloggedPoreFractionAvg );
     }
   }
 
@@ -167,18 +182,7 @@ public:
   {
     if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< DIFF_TYPE, DamageDiffusion > )
     {
-      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
-
-      real64 damageAvg = 0.0;
-
-      for( localIndex i=0; i<quadSize; ++i )
-      {
-        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
-      }
-
-      damageAvg = damageAvg / quadSize;
-
-      m_diffUpdate.updateDamageDiffusivity( k, damageAvg );
+      m_diffUpdate.updateDamageDiffusivity( k, getAverageDamage( k ) );
     }
   }
 
@@ -197,7 +201,7 @@ public:
 
       // Confine the reaction to the fractured rock, where the injected fluid actually is. The exponent
       // defaults to zero, which leaves the area ungated since d^0 = 1 even for an intact cell.
-      real64 const damageGate = pow( fmax( fmin( 1.0, getDamage( k, q ) ), 0.0 ), m_surfaceAreaDamageExponent );
+      real64 const damageGate = pow( getAverageDamage( k ), m_surfaceAreaDamageExponent );
 
       for( integer r=0; r < initialSurfaceArea.size(); ++r )
       {
@@ -209,7 +213,7 @@ public:
       // Dispersed-crystal growth: the surface follows the mineral already present, so the input state
       // has to be seeded with a non-zero volume fraction. Where it is not seeded, fall back to the
       // pore-lining form, which is the same rule ReactiveSolid uses.
-      real64 const damage = fmax( fmin( 1.0, getDamage( k, q ) ), 0.0 );
+      real64 const damage = getAverageDamage( k );
       real64 const porosity = damage + ( 1 - damage ) * m_porosityUpdate.getPorosity( k, q );
       real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
 
@@ -313,6 +317,9 @@ private:
   /// Exponent confining the reactive surface area to damaged cells; 0 leaves the area ungated
   real64 m_surfaceAreaDamageExponent;
 
+  /// Fixed-stress pore compliance of a fully damaged cell [1/Pa]; 0 keeps the lagged-strain split
+  real64 m_crackFixedStressCompliance;
+
   /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
   typename DIFF_TYPE::KernelWrapper m_diffUpdate;
 
@@ -336,6 +343,14 @@ private:
     }
   }
 
+  /// The crack's pore compliance is set by the opening, not the cell's degraded modulus, so it is an input
+  GEOS_HOST_DEVICE
+  inline
+  real64 getFixedStressCoefficient( localIndex const k ) const
+  {
+    return getAverageDamage( k ) * m_crackFixedStressCompliance;
+  }
+
   GEOS_HOST_DEVICE
   inline
   void updateBiotCoefficientAndAssignModuli( localIndex const k ) const
@@ -343,7 +358,7 @@ private:
     // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficientAndAssignModuli( k, bulkModulus );
+    m_porosityUpdate.updateBiotCoefficientAndAssignModuli( k, bulkModulus, getFixedStressCoefficient( k ) );
   }
 
   GEOS_HOST_DEVICE
@@ -401,6 +416,7 @@ private:
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrementNoThermalStrain[0] + strainIncrementNoThermalStrain[1] + strainIncrementNoThermalStrain[2] );
 
     m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
+    m_porosityUpdate.updateDeltaPressure( k, q, deltaPressureFromLastStep );
 
     // Update mineral pressure
     real64 dMineralPres_dMeanEffStressIncre = 0.0;
@@ -513,7 +529,8 @@ public:
       return KernelWrapper( getSolidModel(),
                             getPorosityModel(),
                             getPermModel(),
-                            m_surfaceAreaDamageExponent );
+                            m_surfaceAreaDamageExponent,
+                            m_crackFixedStressCompliance );
     }
     else
     {
@@ -521,6 +538,7 @@ public:
                             getPorosityModel(),
                             getPermModel(),
                             m_surfaceAreaDamageExponent,
+                            m_crackFixedStressCompliance,
                             &getDiffModel() );
     }
   }
@@ -559,6 +577,9 @@ private:
 
   /// Exponent confining the reactive surface area to damaged cells; 0 leaves the area ungated
   real64 m_surfaceAreaDamageExponent;
+
+  /// Fixed-stress pore compliance of a fully damaged cell [1/Pa]
+  real64 m_crackFixedStressCompliance;
 };
 
 

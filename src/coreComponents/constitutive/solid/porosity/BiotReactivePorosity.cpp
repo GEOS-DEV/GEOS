@@ -57,6 +57,10 @@ BiotReactivePorosity::BiotReactivePorosity( string const & name, Group * const p
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Mineral pressure at last time step" );
 
+  registerWrapper( viewKeyStruct::fixedStressCoefficientString(), &m_fixedStressCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Pore compliance used by the fixed-stress porosity update [1/Pa]" );
+
   registerField< fields::porosity::biotCoefficient >( &m_biotCoefficient );
 
   registerField< fields::porosity::grainBulkModulus >( &m_grainBulkModulus );
