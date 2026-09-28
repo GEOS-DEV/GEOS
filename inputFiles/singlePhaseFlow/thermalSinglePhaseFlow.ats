@@ -34,7 +34,7 @@ decks = [
         # restart_step=0: the underlying thermalCompressibleWell deck is not
         # restart-consistent (a full 0->18 run and a 15->18 restart disagree on both
         # the hypredrive and legacy solver paths), so only the full run is checked.
-        restart_step=0,
+        restart_step=15,
         check_step=18,
         # Looser rtol than the suite default: a few small-magnitude deltaPressure
         # entries drift to ~4e-5 relative between the hypredrive and legacy paths.

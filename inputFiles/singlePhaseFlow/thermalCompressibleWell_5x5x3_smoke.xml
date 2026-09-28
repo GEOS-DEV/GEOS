@@ -20,8 +20,8 @@
         name="well_prod1"
         wellRegionName="wellRegion1"
         wellControlsName="wellControls1"
-        polylineNodeCoords="{ { 1.0,1.0, .99 },
-                              { 1.0, 1.0, .01 } }"
+        polylineNodeCoords="{ { 15.0,15.0, .99 },
+                              { 15.0, 15.0, .01 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.1"
         numElementsPerSegment="2">
@@ -38,18 +38,18 @@
         name="well_injector1"
         wellRegionName="wellRegion2"
         wellControlsName="wellControls2"
-        polylineNodeCoords="{ { 90.0,90.0, .99 },
-                              { 90.0, 90.0, .01 } }"
+        polylineNodeCoords="{ { 80.0,80.0, 80.99 },
+                              { 80.0, 80.0, .01 } }"
         polylineSegmentConn="{ { 0, 1 } }"
         radius="0.1"
         numElementsPerSegment="2">
         <Perforation
           name="injector1_perf1"
-          transmissibility="1e-10"
-          distanceFromHead="0.25"/>
+          transmissibility="1e-7"
+          distanceFromHead="79.25"/>
         <Perforation
           name="injector1_perf2"
-          transmissibility="1e-10"
+          transmissibility="1e-7"
           distanceFromHead="0.5"/>  
       </InternalWell>
     </InternalMesh>

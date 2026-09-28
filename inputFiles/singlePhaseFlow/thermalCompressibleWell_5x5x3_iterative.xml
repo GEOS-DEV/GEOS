@@ -14,7 +14,7 @@
       initialDt="1e3"
       targetRegions="{ region , wellRegion1 ,wellRegion2 }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-3"
         maxTimeStepCuts="10"
         lineSearchAction="None"
         timeStepIncreaseIterLimit="0.3"
@@ -45,12 +45,12 @@
       <SinglePhaseWell
         name="wellControls1"
         type="producer"
-        control="BHP"
+        control="totalVolRate"
         enableCrossflow="0"
         useSurfaceConditions="1">
         <ProductionVolumeRateConstraint
           name="maxwatprod"
-          volumeRate="10e-4"/>
+          volumeRate="10e-5"/>
         <MinimumBHPConstraint
           name="minbhp"
           targetBHP="1.2e+5"
@@ -66,12 +66,12 @@
         surfaceTemperature="300.15">
         <MaximumBHPConstraint
           name="maxbhp"
-          targetBHP="1.45e8"
+          targetBHP="1.45e7"
           referenceElevation="-0.01"/>
         <InjectionVolumeRateConstraint
           name="maxvolrateinj"
-          volumeRate="15"
-          injectionStream="{ 1.0, 0.0 }"
+          volumeRate="5"
+          injectionStream="{  1.0 }"
           injectionTemperature="363"/>
       </SinglePhaseWell>
     </WellManager>

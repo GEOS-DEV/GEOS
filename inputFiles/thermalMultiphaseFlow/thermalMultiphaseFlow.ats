@@ -18,7 +18,7 @@ decks = [
         description=
         'Thermal compositional co2-brine flow test (2D co2 injection/production, 2-phase co2-brine, Brooks-Corey relperm curves, thermal)',
         partitions=((1, 1, 1), (2, 2, 1)),
-        restart_step=9,
+        restart_step=3,
         check_step=11,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
@@ -26,7 +26,7 @@ decks = [
         description=
         'Thermal compositional co2-brine flow test (2D co2 production, 2-phase co2-brine, Brooks-Corey relperm curves, thermal)',
         partitions=((1, 1, 1), (2, 2, 1)),
-        restart_step=9,
+        restart_step=3,
         check_step=11,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
@@ -34,7 +34,7 @@ decks = [
         description=
         'Thermal compositional co2-brine flow test (2D co2 injection, 2-phase co2-brine, Brooks-Corey relperm curves, thermal)',
         partitions=((1, 1, 1), (2, 2, 1)),
-        restart_step=9,
+        restart_step=3,
         check_step=11,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
