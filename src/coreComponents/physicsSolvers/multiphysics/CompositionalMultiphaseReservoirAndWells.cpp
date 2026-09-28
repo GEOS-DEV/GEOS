@@ -325,6 +325,8 @@ assembleCouplingTerms( real64 const time_n,
 
   using namespace compositionalMultiphaseUtilities;
 
+  integer areWellsShut = 1;
+
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
                  "The well transmissibility has not been computed yet",
                  geos::RuntimeError, Base::getDataContext());
@@ -337,8 +339,6 @@ assembleCouplingTerms( real64 const time_n,
                                                                                  MeshLevel const & mesh,
                                                                                  string_array const & regionNames )
   {
-    integer areWellsShut = 1;
-
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     integer const numComps = Base::wellSolver()->numFluidComponents();
@@ -425,13 +425,14 @@ assembleCouplingTerms( real64 const time_n,
                                                                WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ));
         }
       }
-
-
-      // update dynamically the MGR recipe to optimize the linear solve if all wells are shut
-      areWellsShut = MpiWrapper::min( areWellsShut );
-      m_linearSolverParameters.get().mgr.areWellsShut = areWellsShut;
     } );
   } );
+
+  // Update the MGR recipe after all wells have been inspected. Shut wells
+  // return early from the assembly callback, so reducing inside that callback
+  // leaves the all-shut case at its default (open-well) setting.
+  areWellsShut = MpiWrapper::min( areWellsShut );
+  m_linearSolverParameters.get().mgr.areWellsShut = areWellsShut;
 }
 
 template< typename RESERVOIR_SOLVER >
