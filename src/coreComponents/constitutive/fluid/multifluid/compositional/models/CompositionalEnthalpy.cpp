@@ -58,10 +58,10 @@ CompositionalEnthalpy::CompositionalEnthalpy( string const & name,
 
   integer const numPhases = m_heatCapacityCoefficients->m_phaseTypes.size();
 
-  m_phaseType = m_heatCapacityCoefficients->m_phaseTypes[phaseIndex];
+  m_phaseType = static_cast< PhaseType >(m_heatCapacityCoefficients->m_phaseTypes[phaseIndex]);
   for( integer ip = 0; ip < numPhases; ip++ )
   {
-    if( m_heatCapacityCoefficients->m_phaseTypes[ip] == PhaseType::VAPOUR )
+    if( isPhaseType( m_heatCapacityCoefficients->m_phaseTypes[ip], PhaseType::VAPOUR ) )
     {
       m_vapourIndex = ip;
     }
