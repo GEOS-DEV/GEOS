@@ -14,7 +14,7 @@
  */
 
 /**
- * @file ErrorHandling.hpp
+ * @file ExternalErrorHandler.hpp
  * @brief This file provides the infrastructure to capture external errors.
  * @note Below is the architecture of the external error managment, in the scenario of a problematic
  *       infrastructure which deviates (thus breaks) stderr.
@@ -52,7 +52,7 @@
 #ifndef LOGGER_EXTERNALERRORHANDLER_HPP
 #define LOGGER_EXTERNALERRORHANDLER_HPP
 
-#include "ErrorHandling.hpp"
+#include "ErrorLogger.hpp"
 
 #include <functional>
 #include <string_view>
