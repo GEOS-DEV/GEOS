@@ -131,10 +131,10 @@ public:
                                                              m_axisStepInv[i],
                                                              m_axisPoints[i],
                                                              axisLows[i], axisStepInv[i], axisMults[i] );
-      std::cout << " axis " << i << " index " << axisIndex << " mul " <<   m_axisHypercubeMults[i] <<std::endl;
+      //std::cout << " axis " << i << " index " << axisIndex << " mul " <<   m_axisHypercubeMults[i] <<std::endl;
       hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
     }
-    std::cout << " hypercubeIndex " << hypercubeIndex << std::endl;
+    //std::cout << " hypercubeIndex " << hypercubeIndex << std::endl;
     interpolatePointWithDerivatives( coordinates,
                                      getHypercubeData( hypercubeIndex ),
                                      &axisLows[0], &axisMults[0],
@@ -184,7 +184,8 @@ protected:
                                real64 & axisMult ) const
   {
     integer axisIntervalIndex=0;
-    std::cout << " coordinate " << coordinate << " axis points " <<  axisCoordinates[0] << " " <<  axisCoordinates[axisPoints-1] << std::endl;
+    //std::cout << " coordinate " << coordinate << " axis points " <<  axisCoordinates[0] << " " <<  axisCoordinates[axisPoints-1] <<
+    // std::endl;
     if( coordinate < axisCoordinates[0] )
     {
       axisIntervalIndex=0;
