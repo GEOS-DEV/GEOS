@@ -16,8 +16,11 @@
 #include "fileIO/timeHistory/HDFHistoryIO.hpp"
 #include "common/TimingMacros.hpp"
 #include "mainInterface/initialization.hpp"
+#include "LvArray/src/system.hpp"
 
 #include <gtest/gtest.h>
+
+#include <fenv.h>
 
 using namespace geos;
 
@@ -95,6 +98,9 @@ int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
   geos::basicSetup( ac, av );
+  // Open MPI's OMPIO path may execute benign floating-point operations while
+  // handling collective metadata. They are outside the scope of this I/O test.
+  LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
   int const result = RUN_ALL_TESTS();
   geos::basicCleanup();
   return result;

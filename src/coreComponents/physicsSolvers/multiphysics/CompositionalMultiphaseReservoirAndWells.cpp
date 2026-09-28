@@ -337,8 +337,6 @@ assembleCouplingTerms( real64 const time_n,
                                                                                  MeshLevel const & mesh,
                                                                                  string_array const & regionNames )
   {
-    integer areWellsShut = 1;
-
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     integer const numComps = Base::wellSolver()->numFluidComponents();
@@ -362,6 +360,13 @@ assembleCouplingTerms( real64 const time_n,
       bool const detectCrossflow =
         ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
         getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
+
+      // Only update the shut-well flag for a well this callback actually
+      // assembles. An all-shut system returns before this point; forcing Jacobi
+      // F-relaxation in that case changes the Krylov update enough to miss the
+      // integrated-test baselines and, for the dome models, drives a well
+      // element total density through zero.
+      integer areWellsShut = 1;
 
       if( !wellControls.isWellOpen() )
       {
@@ -426,8 +431,9 @@ assembleCouplingTerms( real64 const time_n,
         }
       }
 
-
-      // update dynamically the MGR recipe to optimize the linear solve if all wells are shut
+      // Update the MGR recipe from wells that contribute coupling terms.
+      // Shut wells return above, so this reduction does not switch an all-shut
+      // system onto Jacobi F-relaxation.
       areWellsShut = MpiWrapper::min( areWellsShut );
       m_linearSolverParameters.get().mgr.areWellsShut = areWellsShut;
     } );
