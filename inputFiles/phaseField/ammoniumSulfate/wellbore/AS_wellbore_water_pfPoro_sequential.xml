@@ -1,7 +1,8 @@
 <?xml version="1.0" ?>
 
-<!-- Water reference case with sequential flow-mechanics coupling. All physical inputs are shared
-     with AS_wellbore_water_pfPoro.xml; the coupling controls mirror the sequential AS case. -->
+<!-- Water reference case with sequential flow-mechanics coupling. It runs on the reactive-transport
+     path of the sequential AS case, because PorousDamageSolid has no fixed-stress update. The
+     chemistry is inert: dilute AS, zero reactive surface area everywhere, constant 25 C. -->
 <Problem>
   <Included>
     <File name="./AS_wellbore_water_pfPoro_base.xml"/>
@@ -10,7 +11,7 @@
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
 
-    <PhaseFieldPoromechanics
+    <SinglePhaseReactiveTransportPhaseFieldPoromech
       name="pfSolve"
       poromechanicsSolverName="poroSolve"
       damageSolverName="damageSolve"
@@ -21,24 +22,26 @@
         couplingType="Sequential"
         lineSearchAction="None"
         newtonMaxIter="20"/>
-    </PhaseFieldPoromechanics>
+    </SinglePhaseReactiveTransportPhaseFieldPoromech>
 
-    <SinglePhasePoromechanics
+    <SinglePhaseReactiveTransportPoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
       flowSolverName="singlePhaseFlow"
       logLevel="1"
-      targetRegions="{ Source, Rock }"
-      damageFlag="0">
+      targetRegions="{ Source, Rock }">
+      <!-- newtonTol is relative to the fluid mass held in each cell, not to the mass one step injects, so
+           a loose value lets the split error through as lost fluid. -->
       <NonlinearSolverParameters
         couplingType="Sequential"
         lineSearchAction="None"
-        newtonMaxIter="10"
-        newtonTol="1.0e-3"
+        newtonMaxIter="20"
+        newtonTol="1.0e-5"
+        nonlinearAccelerationType="Aitken"
         subcycling="1"
         maxTimeStepCuts="8"
         maxSubSteps="200"/>
-    </SinglePhasePoromechanics>
+    </SinglePhaseReactiveTransportPoromechanics>
 
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
@@ -57,11 +60,13 @@
     <!-- allowNegativePressure: dilation around the pressurizing borehole pulls a few cells to a
          small suction, ordinary for a saturated porous solid; the default check rejects any
          negative pressure and cuts dt indefinitely. -->
-    <SinglePhaseFVM
+    <SinglePhaseReactiveTransport
       name="singlePhaseFlow"
       discretization="singlePhaseTPFA"
       targetRegions="{ Source, Rock }"
       allowNegativePressure="1"
+      isUpdateReactivePorosity="1"
+      isUpdateSurfaceArea="0"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -73,7 +78,7 @@
         solverType="gmres"
         preconditionerType="amg"
         krylovTol="1.0e-6"/>
-    </SinglePhaseFVM>
+    </SinglePhaseReactiveTransport>
 
     <!-- fracturePressureTermFlag = 0 (also the code default) - see the header.
          damageUpperBound must be <= 1: the default 1.5 makes irreversibility inert, since damage
@@ -101,4 +106,57 @@
         krylovTol="1.0e-6"/>
     </PhaseFieldDamageFEM>
   </Solvers>
+
+  <!-- Sequential family from the base deck. -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ 0_hexahedra }"
+      materialList="{ waterReactive, voidMatReactive }"/>
+
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ waterReactive, rockMatReactive }"/>
+  </ElementRegions>
+
+  <FieldSpecifications>
+    <!-- Zero surface area makes every mineral rate zero, so the species are passive tracers. -->
+    <FieldSpecification
+      name="surfaceArea"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="temperatureInitial"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="298.15"/>
+
+    <!-- Uniform dilute composition, 1e-6 mol/kg for both species, as natural logs. Both species
+         must be set: a single-species specification pins the other at the default. -->
+    <FieldSpecification
+      name="initialLog_NH4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-13.81551056"/>
+
+    <FieldSpecification
+      name="initialLog_SO4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-13.81551056"/>
+  </FieldSpecifications>
 </Problem>

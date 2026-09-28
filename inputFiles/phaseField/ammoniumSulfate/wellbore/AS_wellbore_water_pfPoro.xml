@@ -103,4 +103,17 @@
         krylovTol="1.0e-6"/>
     </PhaseFieldDamageFEM>
   </Solvers>
+
+  <!-- Monolithic family from the base deck. -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ 0_hexahedra }"
+      materialList="{ water, voidMat }"/>
+
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ 1_hexahedra }"
+      materialList="{ water, rockMat }"/>
+  </ElementRegions>
 </Problem>

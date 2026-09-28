@@ -6,7 +6,7 @@
      what differs.
 
      Granite from the near-wellbore phase-field report (2-2446, Table 3): E = 40 GPa, nu = 0.23,
-     Gc = 12 J/m2, sigma_ts = 18 MPa, L = 1 mm, phi = 0.05, k = 1e-6 Darcy. AS chemistry and the
+     phi = 0.05; phase field l = 0.5 mm, Gc = 12.5 J/m2; matrix k = 5e-18 m2. AS chemistry and the
      cooling/clogging parameters come from the verified 1D column decks. SI units throughout, as
      the chemistry requires (molality mol/kg, molar weights kg/mol, surface area m2/m3).
 
@@ -23,8 +23,8 @@
      thick, borehole radius 6.35 mm (12.7 mm diameter). regionAttribute SOURCE-MATRIX gives ids 0 (borehole) and 1
      (matrix). In-plane cell size 0.17 mm at the borehole to 0.66 mm at the outer boundary.
 
-     INJECTION: 5 mL/min for 200 s into a 50 mm interval, so the modelled 1 mm slice takes 1/50 of
-     it: 2.075e-6 kg/s. maxTime = 200 s matches the injection duration.
+     INJECTION: 5 mL/min into a 50 mm interval, so the modelled 1 mm slice takes 1/50 of it:
+     1.6667e-6 kg/s at 1000 kg/m3. No notch: the crack nucleates at the wall at +/-90 deg.
      ============================================================================================ -->
 <Problem>
 
@@ -50,11 +50,14 @@
       flowSolverName="reactiveFlow"
       logLevel="1"
       targetRegions="{ Source, Rock }">
+      <!-- newtonTol is relative to the fluid mass held in each cell, not to the mass one step injects, so
+           a loose value lets the split error through as lost fluid. -->
       <NonlinearSolverParameters
-        newtonMaxIter="10"
-        newtonTol="1.0e-4"
+        newtonMaxIter="20"
+        newtonTol="1.0e-5"
         couplingType="Sequential"
         lineSearchAction="None"
+        nonlinearAccelerationType="Aitken"
         subcycling="1"
         maxTimeStepCuts="8"
         maxSubSteps="200"/>
@@ -179,22 +182,28 @@
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
       fluidModelName="water"
-      surfaceAreaDamageExponent="1"/>
+      surfaceAreaDamageExponent="1"
+      crackFixedStressCompliance="5e-9"/>
 
-    <!-- E = 40 GPa, nu = 0.23 => K = 24.6914e9, G = 16.2602e9. Cohesive (Lorentz) degradation
-         carries the tensile strength as psi_c = sigma_ts^2 / (2E) = 4050 J/m3, and requires
-         localDissipationOption="Linear" (AT1) with criticalStrainEnergy > 0. -->
+    <!-- E = 40 GPa, nu = 0.23 => K = 24.6914e9, G = 16.2602e9. Brittle AT1 with l = 0.5 mm, Gc = 12.5 J/m2:
+         the damage threshold psi_c = 3 Gc / (16 l) = 4690 J/m3 is that of l = 0.1 mm, Gc = 2.5, at 5x the
+         toughness, and the band is resolved (h <= l) out to ~50 mm.
+         crackFixedStressCompliance: pore compliance of a fully damaged cell for the fixed-stress split,
+         scaled by damage. It vanishes at convergence.
+         hybridSplit = 1: tension drives the crack through the spectral split, but the stress is degraded
+         isotropically, so the mechanics tangent does not switch as strains change sign. -->
     <DamageSpectralElasticIsotropic
       name="rockSolid"
       defaultDensity="0.0"
       defaultBulkModulus="24.6914e9"
       defaultShearModulus="16.2602e9"
-      lengthScale="0.0001"
-      defaultCriticalFractureEnergy="2.5"
+      lengthScale="0.0005"
+      defaultCriticalFractureEnergy="12.5"
       criticalStrainEnergy="0.0"
       fractureModelType="Brittle"
       localDissipationOption="Linear"
-      degradationLowerLimit="1e-6"/>
+      degradationLowerLimit="1e-6"
+      hybridSplit="1"/>
 
     <!-- one mineral: (NH4)2SO4, M = 0.13214 kg/mol, rho = 1770 kg/m3, no initial AS in the rock -->
     <BiotReactivePorosity
@@ -206,29 +215,14 @@
       defaultGrainBulkModulus="24.6914e9"
       defaultMineralBulkModulus="0.0"/>
 
-    <!-- Matrix permeability RAISED to 5e-16 m2 (0.5 mD) from the granite value of 1e-18 (1e-6
-         Darcy). This is a deliberate numerical choice, not a property of the rock, and it is the
-         only way the coupled behaviour is observable at all:
-
-         At 1e-18 the pressure needed to push 5 mL/min through intact rock is 655 MPa, so the block
-         fractures within ~1 s - while the cooling front needs 200 s to reach 14 mm. Fracture and
-         chemistry are then two orders of magnitude apart in time and precipitation can never
-         influence propagation.
-
-         At 5e-16 the steady borehole pressure is 1.31 MPa, below the ~3.8 MPa needed to drive the
-         notched crack. Clogging then has to do the work: (1-theta)^3 must cut permeability by 2.9x,
-         i.e. theta = 0.30, for pressure to reach breakdown. The 1D column reached theta = 0.96, so
-         this is well within reach - precipitation CAUSES the fracture instead of arriving after it.
-
-         Permeability does not affect where the chemistry goes: the fluid and thermal fronts follow
-         volume balance, r ~ sqrt(Qt/phi), and are independent of k. Only the pressure changes.
-
-         CONFIRM damageDependenceConstant: exp(c) at d = 1 is the fracture/matrix contrast, so
-         c = 15 gives ~3e6, but the report does not give a value. -->
+    <!-- Matrix k = 5e-18 m2. Crack k = k exp(c d) with c = 8, ~1.5e-14 m2 at d = 1: the cubic-law value
+         for a ~5 um opening, w^3/12, spread over a ~1 mm damage band. With c = 5 the crack is ~20x
+         too tight, and most of the pressure drop sits along the crack even without clogging.
+         Clogging multiplies k by (1 - theta)^3. -->
     <DamageCloggingPermeability
       name="rockPerm"
       bulkPermeability="5.0e-18"
-      damageDependenceConstant="5.0"
+      damageDependenceConstant="8.0"
       cloggingExponent="3"
       minCloggingMultiplier="1e-6"/>
 
@@ -250,7 +244,7 @@
       defaultDensity="0.0"
       defaultBulkModulus="24.6914e5"
       defaultShearModulus="16.2602e5"
-      lengthScale="0.0001"
+      lengthScale="0.0005"
       defaultCriticalFractureEnergy="1e12"
       criticalStrainEnergy="0.0"
       fractureModelType="Brittle"
@@ -274,8 +268,8 @@
       minCloggingMultiplier="1e-6"/>
 
     <!-- ================= FLUID =================
-         Saturated AS: rho = 1245, mu = 0.002, solvent mass per solution volume = 706 kg/m3.
-         Case A overrides this block with water (rho = 1000, mu = 0.001). -->
+         rho = 1000, mu = 0.001 for both the AS and water runs, so the two differ only in chemistry.
+         solventMassFraction is the water mass fraction of the saturated AS solution. -->
     <ReactiveCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
@@ -303,10 +297,7 @@
       xMax="{  0.0751,  2.0e-5,  0.0006 }"/>
 
     <!-- Inner core of the borehole disc, used to pin damage. The true wall is at 6.35 mm; this
-         stops well short of it at 4 mm so the wall keeps a free annulus several regularization
-         lengths wide and can still damage. That matters here because this deck has NO notch, so
-         the fracture has to nucleate at the wall. (The eigenstrain deck pins the full disc
-         instead, since its notches supply the flaw.) -->
+         stops at 6.2 mm so the wall stays free to nucleate the crack. -->
     <Cylinder
       name="boreCore"
       firstFaceCenter="{ 0.0, 0.0, -0.001 }"
@@ -359,12 +350,12 @@
       component="0"
       scale="0.0"/>
 
-    <!-- ===== damage pinned to zero in the borehole core =====
-         Needed for solvability as much as for physics: under AT1 the damage operator is
+    <!-- ===== damage: borehole core pinned at d = 0 =====
+         The pin is needed for solvability as much as for physics: under AT1 the damage operator is
          gradient-only, so before the driving force builds it is a singular pure Neumann Laplacian
-         and one Dirichlet value removes the constant null space. Pinning the borehole is also
-         correct physically, and it stops at 4 mm so the wall where the fracture initiates stays
-         free. viscousRegularizationCoeff > 0 is the rate-dependent alternative. -->
+         and one Dirichlet value removes the constant null space. viscousRegularizationCoeff > 0 is
+         the rate-dependent alternative. -->
+
     <FieldSpecification
       name="damagePinBore"
       objectPath="nodeManager"
@@ -438,9 +429,9 @@
          so the injected composition comes entirely from the species Dirichlet and AS enters the
          rock by upwind advection. Do NOT add a pressure Dirichlet on this set - this solver applies
          Dirichlet before SourceFlux, and the two together corrupt the mass row.
-         RATE, from the experiment: 5 mL/min for 200 s. The 2D mesh models a 1 mm slice of a 50 mm
-         injection interval, so the slice takes 1/50 of it: (5e-6/60)*(1/50) m3/s at the AS solution
-         density 1245 kg/m3 = 2.075e-6 kg/s. Regenerate coolingField_tables if this changes - the
+         RATE, from the experiment: 5 mL/min. The 2D mesh models a 1 mm slice of a 50 mm
+         injection interval, so the slice takes 1/50 of it: (5e-6/60)*(1/50) m3/s at 1000 kg/m3
+         = 1.6667e-6 kg/s. Regenerate coolingField_tables if this changes - the
          thermal front position scales with it. -->
     <SourceFlux
       name="massInjection"
@@ -454,7 +445,8 @@
 
     <!-- ===== reactive surface area =====
          Confined to the rock; zero area in the borehole so nothing precipitates in the injection
-         volume. -->
+         volume. 2000 m2/m3 is roughly the two crack faces over a ~1 mm damage band, 2 / w_band;
+         surfaceAreaDamageExponent gates it to cracked cells. Set 0 for the water control. -->
     <FieldSpecification
       name="surfaceArea_rock"
       initialCondition="1"
@@ -462,7 +454,7 @@
       objectPath="ElementRegions/Rock"
       fieldName="initialSurfaceArea"
       component="0"
-      scale="100.0"/>
+      scale="2000.0"/>
 
     <FieldSpecification
       name="surfaceArea_source"
@@ -527,16 +519,16 @@
   </Tasks>
 
   <Events
-    maxTime="200.0">
+    maxTime="40.0">
     <PeriodicEvent
       name="solverApplications0"
-      endTime="20.0"
+      endTime="17.0"
       maxEventDt="0.2"
       target="/Solvers/pfSolve"/>
 
     <PeriodicEvent
       name="solverApplications1"
-      beginTime="20.0"
+      beginTime="17.0"
       maxEventDt="0.01"
       target="/Solvers/pfSolve"/>
 

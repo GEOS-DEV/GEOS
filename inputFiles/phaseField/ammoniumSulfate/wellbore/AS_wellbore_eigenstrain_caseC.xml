@@ -1,13 +1,26 @@
 <?xml version="1.0" ?>
 
-<!-- CASE C, eigenstrain variant: AS with precipitation and clogging, driven by cooling.
+<!-- CASE C, eigenstrain hybrid variant: AS with precipitation and clogging, driven by cooling.
 
-     Pairs with AS_wellbore_caseC_ASprecip.xml, which runs the same case through the phase-field
-     and Biot mineral-pressure route. Running both isolates how much of the response comes from the
-     precipitation itself and how much from the damage/mineral-pressure coupling. -->
+     Pairs with AS_wellbore_caseC_ASprecip.xml, which runs the same case through the Biot
+     fixed-stress route. Its water control is AS_wellbore_eigenstrain_water.xml; screenout is read
+     from AS - water. -->
 <Problem>
   <Included>
     <File name="./AS_wellbore_eigenstrain.xml"/>
     <File name="./AS_wellbore_logConc.xml"/>
   </Included>
+
+  <FieldSpecifications>
+    <!-- 2000 m2/m3 is roughly the two crack faces over a ~1 mm damage band, 2 / w_band; the rock
+         material's surfaceAreaDamageExponent gates it to cracked cells. -->
+    <FieldSpecification
+      name="surfaceArea_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="2000.0"/>
+  </FieldSpecifications>
 </Problem>

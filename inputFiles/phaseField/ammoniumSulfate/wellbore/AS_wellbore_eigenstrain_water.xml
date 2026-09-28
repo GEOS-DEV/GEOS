@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+
+<!-- Water control for AS_wellbore_eigenstrain_caseC.xml: the same deck with no reactive surface area,
+     so nothing precipitates and the species are passive tracers. Screenout is read from AS - water.
+     The AS composition is kept so the fluid, cooling and injection match the AS run exactly. -->
+<Problem>
+  <Included>
+    <File name="./AS_wellbore_eigenstrain.xml"/>
+    <File name="./AS_wellbore_logConc.xml"/>
+  </Included>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="surfaceArea_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="0.0"/>
+  </FieldSpecifications>
+</Problem>

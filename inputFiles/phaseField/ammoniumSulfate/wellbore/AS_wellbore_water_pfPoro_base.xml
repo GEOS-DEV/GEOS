@@ -24,94 +24,88 @@
     </FiniteVolume>
   </NumericalMethods>
 
-  <ElementRegions>
-    <CellElementRegion
-      name="Source"
-      cellBlocks="{ 0_hexahedra }"
-      materialList="{ water, voidMat }"/>
-
-    <CellElementRegion
-      name="Rock"
-      cellBlocks="{ 1_hexahedra }"
-      materialList="{ water, rockMat }"/>
-  </ElementRegions>
-
+  <!-- GEOS reads only the first <Constitutive> and <ElementRegions> blocks, so the case decks cannot
+       add their own. This block holds both porous families on one set of solid and permeability
+       models; each case deck's ElementRegions picks one.
+         rockMat, voidMat, water                         monolithic (PorousDamage, BiotPorosity)
+         rockMatReactive, voidMatReactive, waterReactive  sequential (PorousReactive, fixed stress)
+       PorousDamageSolid has no fixed-stress update, so the sequential case runs on the reactive
+       transport path with inert chemistry. -->
   <Constitutive>
 
     <!-- ================= ROCK ================= -->
-    <PorousDamageSpectralElasticIsotropic
-      name="rockMat"
-      solidModelName="rockSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
-
     <!-- E = 40 GPa, nu = 0.23 => K = 24.6914e9, G = 16.2602e9.
-         BRITTLE / AT2 (Quadratic dissipation): AT2 puts a real zeroth-order term in the damage
-         Jacobian, which the gradient-only AT1 operator lacks. criticalStrainEnergy is unused for
-         Brittle and set to zero.
-         lengthScale = 0.5 mm gives L/h = 2.1 out to r = 15 mm on this mesh - the minimum for a
-         resolved band - then coarsens. A crack running past ~15 mm is mesh-dependent. -->
+         BRITTLE / AT1 (Linear dissipation), l = 0.5 mm, Gc = 12.5 J/m2, as in the AS decks: the same
+         psi_c = 3 Gc / (16 l) as l = 0.1 mm, Gc = 2.5, at 5x the toughness. The mesh is 0.16 mm at the
+         wall and ~0.5 mm at 60 mm, so the band is resolved (h <= l) out to ~50 mm.
+         hybridSplit = 1: tension drives the crack through the spectral split, but the stress is degraded
+         isotropically, so the mechanics tangent is exact and does not switch as strains change sign. -->
     <DamageSpectralElasticIsotropic
       name="rockSolid"
       defaultDensity="0.0"
       defaultBulkModulus="24.6914e9"
       defaultShearModulus="16.2602e9"
-      lengthScale="0.0001"
-      defaultCriticalFractureEnergy="2.5"
+      lengthScale="0.0005"
+      defaultCriticalFractureEnergy="12.5"
       criticalStrainEnergy="0.0"
       fractureModelType="Brittle"
       localDissipationOption="Linear"
-      degradationLowerLimit="1e-6"/>
+      degradationLowerLimit="1e-6"
+      hybridSplit="1"/>
 
-    <BiotPorosity
-      name="rockPorosity"
-      defaultGrainBulkModulus="24.6914e9"
-      defaultReferencePorosity="0.05"/>
-
-    <!-- See the header on bulkPermeability. damageDependenceConstant = 12 is carried over from the
-         AS deck, where it was set so the fracture out-conducts the radial matrix: the conductance
-         ratio at r = 10 mm is 1 at c = 5, 175 at c = 10, 1295 at c = 12. c = 15 is the physically
-         natural value but places a 3.3e6 contrast across one cell and diverged in the AS case. -->
+    <!-- Matrix k = 5e-18 m2. Crack k = k exp(c d) with c = 8, ~1.5e-14 m2 at d = 1: the cubic-law value
+         for a ~5 um opening spread over a ~1 mm damage band, as in the AS decks. -->
     <DamagePermeability
       name="rockPerm"
       bulkPermeability="5.0e-18"
-      damageDependenceConstant="5.0"/>
+      damageDependenceConstant="8.0"/>
 
     <!-- ================= BOREHOLE (soft "void") =================
          Same catalog type as the rock, only softer. At 1e-4 x rock stiffness the disc acts as a
          hole while keeping the stiffness matrix conditioned - do not push it to 1e-12. Biot b -> 1
          as K -> 0, so the region transmits pore pressure to the wall as a traction and no
          <Traction> BC is needed. The damage pin keeps it intact. -->
-    <PorousDamageSpectralElasticIsotropic
-      name="voidMat"
-      solidModelName="voidSolid"
-      porosityModelName="voidPorosity"
-      permeabilityModelName="voidPerm"/>
-
     <DamageSpectralElasticIsotropic
       name="voidSolid"
       defaultDensity="0.0"
       defaultBulkModulus="24.6914e6"
       defaultShearModulus="16.2602e6"
-      lengthScale="0.0001"
-      defaultCriticalFractureEnergy="2.5"
+      lengthScale="0.0005"
+      defaultCriticalFractureEnergy="12.5"
       criticalStrainEnergy="0.0"
       fractureModelType="Brittle"
       localDissipationOption="Linear"
       degradationLowerLimit="1.0"/>
-
-    <BiotPorosity
-      name="voidPorosity"
-      defaultGrainBulkModulus="1e21"
-      defaultReferencePorosity="0.9999"/>
 
     <DamagePermeability
       name="voidPerm"
       bulkPermeability="1.0e-10"
       damageDependenceConstant="0.0"/>
 
-    <!-- ================= FLUID =================
-         Plain water: rho = 1000, mu = 0.001. No chemical system, no solvent mass. -->
+    <!-- ================= MONOLITHIC FAMILY ================= -->
+    <PorousDamageSpectralElasticIsotropic
+      name="rockMat"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="24.6914e9"
+      defaultReferencePorosity="0.05"/>
+
+    <PorousDamageSpectralElasticIsotropic
+      name="voidMat"
+      solidModelName="voidSolid"
+      porosityModelName="voidPorosity"
+      permeabilityModelName="voidPerm"/>
+
+    <BiotPorosity
+      name="voidPorosity"
+      defaultGrainBulkModulus="1e21"
+      defaultReferencePorosity="0.9999"/>
+
+    <!-- Plain water: rho = 1000, mu = 0.001. -->
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
@@ -121,6 +115,57 @@
       referenceViscosity="0.001"
       compressibility="1e-8"
       viscosibility="0.0"/>
+
+    <!-- ================= SEQUENTIAL FAMILY =================
+         Same porosity, grain modulus and fluid as above. The one-mineral entries are only there
+         because the AS chemical system needs them; the case deck zeroes the surface area, so no
+         mineral ever forms. -->
+    <!-- crackFixedStressCompliance: pore compliance of a fully damaged cell for the fixed-stress split,
+         scaled by damage. A crack's compliance comes from its opening, ~1e-9 /Pa for a 5 mm crack here;
+         too small diverges, too large converges slowly. It vanishes at convergence. -->
+    <PorousReactiveDamageSpectralElasticIsotropicDamagePermeability
+      name="rockMatReactive"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosityReactive"
+      permeabilityModelName="rockPerm"
+      fluidModelName="waterReactive"
+      crackFixedStressCompliance="5e-9"/>
+
+    <BiotReactivePorosity
+      name="rockPorosityReactive"
+      defaultReferencePorosity="0.05"
+      defaultInitialVolumeFractions="{ 0.0 }"
+      molarWeights="{ 0.13214 }"
+      mineralDensities="{ 1770.0 }"
+      defaultGrainBulkModulus="24.6914e9"
+      defaultMineralBulkModulus="0.0"/>
+
+    <PorousReactiveDamageSpectralElasticIsotropicDamagePermeability
+      name="voidMatReactive"
+      solidModelName="voidSolid"
+      porosityModelName="voidPorosityReactive"
+      permeabilityModelName="voidPerm"
+      fluidModelName="waterReactive"/>
+
+    <BiotReactivePorosity
+      name="voidPorosityReactive"
+      defaultReferencePorosity="0.9999"
+      defaultInitialVolumeFractions="{ 0.0 }"
+      molarWeights="{ 0.13214 }"
+      mineralDensities="{ 1770.0 }"
+      defaultGrainBulkModulus="1e21"
+      defaultMineralBulkModulus="0.0"/>
+
+    <!-- The default solventMassFraction of 1 is a dilute solution. -->
+    <ReactiveCompressibleSinglePhaseFluid
+      name="waterReactive"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      compressibility="1e-8"
+      viscosibility="0.0"
+      chemicalSystemType="ammoniumSulfate"/>
 
   </Constitutive>
 
@@ -133,15 +178,6 @@
       name="symY"
       xMin="{ -0.0751, -2.0e-5, -0.0006 }"
       xMax="{  0.0751,  2.0e-5,  0.0006 }"/>
-
-    <Box
-      name="notchPlus"
-      xMin="{  0.00635, -0.00002, -0.0006 }"
-      xMax="{  0.00870,  0.00002,  0.0006 }"/>
-    <Box
-      name="notchMinus"
-      xMin="{ -0.00870, -0.00002, -0.0006 }"
-      xMax="{ -0.00635,  0.00002,  0.0006 }"/>
 
     <Cylinder
       name="boreCore"
@@ -199,14 +235,7 @@
       component="0"
       scale="0.0"/>
 
-    <!-- ===== damage: notches seeded at d = 1, borehole pinned at d = 0 ===== -->
-    <!-- <FieldSpecification
-      name="damageNotch"
-      objectPath="nodeManager"
-      fieldName="damage"
-      scale="1.0"
-      setNames="{ notchPlus, notchMinus }"/> -->
-
+    <!-- ===== damage: borehole core pinned at d = 0; no notch, the crack nucleates at the wall ===== -->
     <FieldSpecification
       name="damagePinBore"
       objectPath="nodeManager"
@@ -284,16 +313,16 @@
   </Tasks>
 
   <Events
-    maxTime="200.0">
+    maxTime="40.0">
     <PeriodicEvent
       name="solverApplications0"
-      endTime="20.0"
+      endTime="17.0"
       maxEventDt="0.2"
       target="/Solvers/pfSolve"/>
 
     <PeriodicEvent
       name="solverApplications1"
-      beginTime="20.0"
+      beginTime="17.0"
       endTime="20.7"
       maxEventDt="0.01"
       target="/Solvers/pfSolve"/>
