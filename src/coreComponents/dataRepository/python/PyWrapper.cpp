@@ -108,8 +108,8 @@ static PyMethodDef PyWrapperMethods[] = {
 };
 
 static PyTypeObject PyWrapperType = {
-  PyVarObject_HEAD_INIT( nullptr, 0 )
-    .tp_name = "pygeosx.Wrapper",
+  .ob_base = PyVarObject_HEAD_INIT( nullptr, 0 )
+  .tp_name = "pygeosx.Wrapper",
   .tp_basicsize = sizeof( PyWrapper ),
   .tp_itemsize = 0,
   .tp_repr = PyWrapper_repr,

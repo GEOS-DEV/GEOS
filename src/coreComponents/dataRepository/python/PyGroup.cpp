@@ -321,8 +321,8 @@ static PyMethodDef PyGroup_methods[] = {
 };
 
 static PyTypeObject PyGroupType = {
-  PyVarObject_HEAD_INIT( nullptr, 0 )
-    .tp_name = "pygeosx.Group",
+  .ob_base = PyVarObject_HEAD_INIT( nullptr, 0 )
+  .tp_name = "pygeosx.Group",
   .tp_basicsize = sizeof( PyGroup ),
   .tp_itemsize = 0,
   .tp_repr = PyGroup_repr,

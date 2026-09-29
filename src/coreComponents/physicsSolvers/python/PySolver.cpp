@@ -145,8 +145,8 @@ static PyMethodDef PySolver_methods[] = {
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyTypeObject PySolverType = {
-  PyVarObject_HEAD_INIT( nullptr, 0 )
-    .tp_name = "pygeosx.Solver",
+  .ob_base = PyVarObject_HEAD_INIT( nullptr, 0 )
+  .tp_name = "pygeosx.Solver",
   .tp_basicsize = sizeof( PySolver ),
   .tp_itemsize = 0,
   .tp_repr = PySolver_repr,

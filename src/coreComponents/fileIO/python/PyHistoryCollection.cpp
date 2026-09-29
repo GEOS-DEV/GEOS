@@ -123,8 +123,8 @@ static PyMethodDef PyHistoryCollection_methods[] = {
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyTypeObject PyHistoryCollectionType = {
-  PyVarObject_HEAD_INIT( nullptr, 0 )
-    .tp_name = "pygeosx.HistoryCollection",
+  .ob_base = PyVarObject_HEAD_INIT( nullptr, 0 )
+  .tp_name = "pygeosx.HistoryCollection",
   .tp_basicsize = sizeof( PyHistoryCollection ),
   .tp_itemsize = 0,
   .tp_repr = PyHistoryCollection_repr,
