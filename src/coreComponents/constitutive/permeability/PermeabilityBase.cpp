@@ -54,8 +54,8 @@ void PermeabilityBase::allocateConstitutiveData( Group & parent,
                                                  localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
-  m_permeability.resize( 0, 1, 3 );
-  m_dPerm_dPressure.resize( 0, 1, 3 );
+  m_permeability.resize( 0, 1, 6 );
+  m_dPerm_dPressure.resize( 0, 1, 6 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
