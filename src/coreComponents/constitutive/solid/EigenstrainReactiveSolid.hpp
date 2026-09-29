@@ -63,11 +63,13 @@ public:
                                    real64 const surfaceAreaDamageExponent,
                                    real64 const intactPressureCoefficient,
                                    real64 const crackPorosity,
+                                   real64 const crackPoreCompressibility,
                                    DIFF_TYPE const * diffModel = nullptr ):
     CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( solidModel, porosityModel, permModel ),
     m_surfaceAreaDamageExponent( surfaceAreaDamageExponent ),
     m_intactPressureCoefficient( intactPressureCoefficient ),
     m_crackPorosity( crackPorosity ),
+    m_crackPoreCompressibility( crackPoreCompressibility ),
     m_diffUpdate( initDiffUpdate( diffModel ) )
   {}
 
@@ -88,7 +90,7 @@ public:
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n,
                                         mineralReactionMolarIncrements );
-    updateCrackPorosity( k, q );
+    updateCrackPorosity( k, q, pressure );
 
     updateMatrixPermeability( k );
     updateMatrixDiffusivity( k );
@@ -104,7 +106,7 @@ public:
     GEOS_UNUSED_VAR( temperature );
 
     m_porosityUpdate.updateFromReactions( k, q, kineticReactionMolarIncrements );
-    updateCrackPorosity( k, q );
+    updateCrackPorosity( k, q, pressure );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
   }
@@ -147,14 +149,17 @@ public:
       return 1.0;
   }
 
-  /// Pore space opened by cracking, rising linearly with damage from the initial porosity to crackPorosity
+  /// Pore space opened by cracking: a damage part rising from the initial porosity to crackPorosity, and a
+  /// pressure part d c_crack p, the crack's storage as its opening grows with pressure
   GEOS_HOST_DEVICE
-  void updateCrackPorosity( localIndex const k, localIndex const q ) const
+  void updateCrackPorosity( localIndex const k, localIndex const q, real64 const pressure ) const
   {
-    real64 const openable = m_crackPorosity - m_porosityUpdate.getInitialPorosity( k, q );
-    if( openable > 0.0 )
+    real64 const damage = getAverageDamage( k );
+    real64 const openable = fmax( m_crackPorosity - m_porosityUpdate.getInitialPorosity( k, q ), 0.0 );
+    real64 const poreCompressibility = damage * m_crackPoreCompressibility;
+    if( openable > 0.0 || poreCompressibility > 0.0 )
     {
-      m_porosityUpdate.updateCrackPorosity( k, q, getAverageDamage( k ) * openable );
+      m_porosityUpdate.updateCrackPorosity( k, q, damage * openable, pressure, poreCompressibility );
     }
   }
 
@@ -323,6 +328,9 @@ private:
   /// Porosity of a fully cracked cell; at or below the initial porosity it leaves porosity to the reactions
   real64 m_crackPorosity;
 
+  /// Additional porosity gained per unit gauge pressure in a fully cracked cell [1/Pa]
+  real64 m_crackPoreCompressibility;
+
   /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
   typename DIFF_TYPE::KernelWrapper m_diffUpdate;
 
@@ -478,7 +486,8 @@ public:
                             getPermModel(),
                             m_surfaceAreaDamageExponent,
                             m_intactPressureCoefficient,
-                            m_crackPorosity );
+                            m_crackPorosity,
+                            m_crackPoreCompressibility );
     }
     else
     {
@@ -488,6 +497,7 @@ public:
                             m_surfaceAreaDamageExponent,
                             m_intactPressureCoefficient,
                             m_crackPorosity,
+                            m_crackPoreCompressibility,
                             &getDiffModel() );
     }
   }
@@ -526,6 +536,9 @@ private:
 
   /// Porosity of a fully cracked cell; at or below the initial porosity it leaves porosity to the reactions
   real64 m_crackPorosity;
+
+  /// Additional porosity gained per unit gauge pressure in a fully cracked cell [1/Pa]
+  real64 m_crackPoreCompressibility;
 };
 
 

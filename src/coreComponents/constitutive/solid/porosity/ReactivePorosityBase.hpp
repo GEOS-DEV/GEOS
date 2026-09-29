@@ -167,24 +167,30 @@ public:
 
   /**
    * @brief Rebuild the porosity from the initial state, adding the pore space opened by cracking
-   * @details phi = phi0 - sum_r ( v_r - v_r0 ) + crackPorosityIncrement. Taken from the initial state rather
-   *          than incremented, because damage changes after the flow solve and an increment would never see it.
+   * @details phi = phi0 - sum_r ( v_r - v_r0 ) + crackPorosityIncrement + poreCompressibility * max( p, 0 ).
+   *          Taken from the initial state rather than incremented, because damage changes after the flow solve
+   *          and an increment would never see it. The pressure term is gauge pressure opening the pore space.
    */
   GEOS_HOST_DEVICE
   void updateCrackPorosity( localIndex const k,
                             localIndex const q,
-                            real64 const crackPorosityIncrement ) const
+                            real64 const crackPorosityIncrement,
+                            real64 const pressure,
+                            real64 const poreCompressibility ) const
   {
     if( m_fixedPorosity )
     {
       return;
     }
-    real64 porosity = m_initialPorosity[k][q] + crackPorosityIncrement;
+    real64 const openingPressure = fmax( pressure, 0.0 );
+    real64 porosity = m_initialPorosity[k][q] + crackPorosityIncrement + poreCompressibility * openingPressure;
     for( integer r=0; r < m_numKineticReactions; ++r )
     {
       porosity -= m_volumeFractions[k][q][r] - m_initialVolumeFractions[k][q][r];
     }
     m_newPorosity[k][q] = fmin( fmax( porosity, minPorosity ), 1.0 );
+    bool const pressureActive = pressure > 0.0 && porosity > minPorosity && porosity < 1.0;
+    m_dPorosity_dPressure[k][q] = pressureActive ? poreCompressibility : 0.0;
   }
 
   GEOS_HOST_DEVICE

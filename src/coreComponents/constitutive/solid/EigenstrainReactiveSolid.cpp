@@ -61,6 +61,13 @@ EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::EigenstrainReactiv
     setDescription( "Porosity of a fully cracked cell. Porosity rises linearly with damage from the initial value "
                     "to this one, less the pore space filled by precipitation. The default 0 turns the crack pore space off." );
 
+  this->registerWrapper( "crackPoreCompressibility", &m_crackPoreCompressibility ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Additional porosity gained per unit gauge pressure in a fully cracked cell [1/Pa], scaled by "
+                    "damage: the crack's storage as its opening grows with pressure, ~4(1-nu^2) a / (E w_band) for a "
+                    "crack of half-length a. Default 0." );
+
   if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
   {
     this->registerWrapper( "diffusionModelName", &m_diffusionModelName ).
