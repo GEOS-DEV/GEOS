@@ -22,6 +22,7 @@
 
 #include "PorosityBase.hpp"
 
+#include "codingUtilities/Utilities.hpp"
 #include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
 
 namespace geos
@@ -205,7 +206,7 @@ public:
   {
     for( localIndex q = 0; q < m_meanEffectiveStressIncrement_k.size( 1 ); ++q )
     {
-      if( m_meanEffectiveStressIncrement_k[k][q] != 0.0 )
+      if( !isZero( m_meanEffectiveStressIncrement_k[k][q] ) )
       {
         return true;
       }

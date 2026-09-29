@@ -808,7 +808,8 @@ void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBa
       return;
     }
 
-    ReactivePorosityBase const & porosity = getConstitutiveModel< ReactivePorosityBase >( subRegion, getConstitutiveName< PorosityBase >( subRegion ) );
+    string const porosityName = getConstitutiveName< PorosityBase >( subRegion );
+    ReactivePorosityBase const & porosity = getConstitutiveModel< ReactivePorosityBase >( subRegion, porosityName );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const volumeFractions_n = porosity.getVolumeFractions_n();
     integer const numKineticReactions = m_numKineticReactions;
 
