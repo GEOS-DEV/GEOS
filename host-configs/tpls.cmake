@@ -53,7 +53,8 @@ if(EXISTS ${GEOS_TPL_DIR}/vtk)
 endif()
 
 if(EXISTS ${GEOS_TPL_DIR}/fmt)
-  set(FMT_DIR ${GEOS_TPL_DIR}/fmt CACHE PATH "" FORCE)
+#  set(FMT_DIR ${GEOS_TPL_DIR}/fmt CACHE PATH "" FORCE)
+  set(FMT_DIR ${GEOS_TPL_DIR}/chai CACHE PATH "" FORCE)
 endif()
 
 #

@@ -20,6 +20,7 @@
 #include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
+#include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/ParMETISInterface.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
 
@@ -32,15 +33,6 @@ namespace geos
 {
 namespace vtk
 {
-
-/**
- * @brief Initial distribution strategy for super-cells
- */
-enum class InitialDistributionStrategy
-{
-  MORTON,  ///< Morton Z-curve ordering for spatial locality
-  BLOCK    ///< Contiguous block distribution
-};
 
 /**
  * @brief Super-cell metadata for constrained partitioning
@@ -92,17 +84,18 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
  * @brief Initial redistribution preserving super-cell integrity
  *
  * Distributes super-cells across ranks without graph partitioning.
- * Faster than ParMETIS for initial scatter.
  *
- * @param cells3D Input mesh (non-empty on rank 0 only)
- * @param comm MPI communicator
- * @param strategy Distribution strategy (MORTON or BLOCK)
+ * @param cells3D              Input mesh (non-empty on rank 0 only)
+ * @param comm                 MPI communicator
+ * @param scatterMethod        Partitioning method. @c kdtree is rejected because it cannot preserve atomicity
+ * @param cartesianPartitions  {nx, ny, nz}, only used for @c cartesian.
  * @return Redistributed mesh with preserved SuperCellId array
  */
 vtkSmartPointer< vtkDataSet >
 redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
                                MPI_Comm comm,
-                               InitialDistributionStrategy strategy = InitialDistributionStrategy::MORTON );
+                               ScatterMethod scatterMethod,
+                               arrayView1d< integer const > cartesianPartitions );
 
 /**
  * @brief Build super-cell adjacency graph

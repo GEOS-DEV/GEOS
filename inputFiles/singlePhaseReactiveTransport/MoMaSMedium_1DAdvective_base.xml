@@ -43,7 +43,6 @@
   </ElementRegions>
 
   <Constitutive>
-    <!-- synthetic benchmark: solventMassFraction * defaultDensity = 1, so molality equals concentration per m^3 -->
     <ReactiveCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
@@ -51,8 +50,7 @@
       referencePressure="0.0"
       compressibility="0.0"
       viscosibility="0.0"
-      chemicalSystemType="momasMedium"
-      solventMassFraction="0.001"/>
+      chemicalSystemType="momasMedium"/>
 
     <CompressibleSolidConstantPermeability
       name="rock_a"

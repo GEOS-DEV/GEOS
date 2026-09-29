@@ -29,8 +29,6 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TypeDispatch.hpp"
 
-#include <utility>
-
 /**
  * @brief This macro allows solvers to select a subset of FE_TYPES on which the dispatch is done. If none are selected, by default all the
  * FE_TYPES apply.
@@ -256,12 +254,6 @@ public:
   //END_kernelLauncher
 
 protected:
-  /// The concrete update wrapper returned by the constitutive model factory.
-  /// Using the factory return type preserves final concrete wrappers for
-  /// device compilation while allowing KernelWrapper to remain the base type
-  /// used by derived constitutive models.
-  using KernelWrapper = decltype( std::declval< CONSTITUTIVE_TYPE const & >().createKernelUpdates() );
-
   /// The element to nodes map.
   traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const m_elemsToNodes;
 
@@ -270,7 +262,7 @@ protected:
 
   /// The constitutive update object used to update the constitutive state,
   /// and extract constitutive data.
-  KernelWrapper const m_constitutiveUpdate;
+  typename CONSTITUTIVE_TYPE::KernelWrapper const m_constitutiveUpdate;
 
   /// The finite element space/discretization object for the element type in
   /// the SUBREGION_TYPE.

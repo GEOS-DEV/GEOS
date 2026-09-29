@@ -147,12 +147,9 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLvArray()
 {
-#if defined(GEOS_USE_FPE) && !defined(GEOS_USE_HIP)
+#if defined(GEOS_USE_FPE)
   LvArray::system::setFPE();
 #else
-  // ROCm's HSA runtime raises SIGFPE while unloading HIP when host floating
-  // point traps are enabled. Host FPE trapping is therefore not supported in
-  // HIP builds, even when GEOS_ENABLE_FPE is set.
   LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 #endif
 

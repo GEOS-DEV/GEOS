@@ -128,7 +128,7 @@ public:
   GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
                                     localIndex const q,
-                                    real64 ( &stiffness )[6][6] ) const override final;
+                                    real64 ( &stiffness )[6][6] ) const override;
 
   GEOS_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
@@ -180,7 +180,7 @@ protected:
   virtual void computeElasticStrain( localIndex const k,
                                      localIndex const q,
                                      real64 const ( &stress )[6],
-                                     real64 ( &elasticStrainInc )[6] ) const final;
+                                     real64 ( &elasticStrainInc )[6] ) const;
 
 
   /// A reference to the ArrayView holding the bulk modulus for each element.
@@ -375,45 +375,6 @@ void ElasticIsotropicUpdates::viscousStateUpdate( localIndex const k,
 }
 
 
-/**
- * @class ElasticIsotropicKernelUpdates
- *
- * Final kernel wrapper for the concrete elastic-isotropic model.  The
- * constitutive update interfaces are virtual so that derived material models
- * can extend ElasticIsotropicUpdates.  This wrapper is used only by the
- * non-derived ElasticIsotropic model, so final overrides let device compilers
- * resolve the update calls without emitting device-side virtual dispatch.
- */
-class ElasticIsotropicKernelUpdates final : public ElasticIsotropicUpdates
-{
-public:
-  using ElasticIsotropicUpdates::ElasticIsotropicUpdates;
-
-  GEOS_HOST_DEVICE
-  void smallStrainUpdate_StressOnly( localIndex const k,
-                                     localIndex const q,
-                                     real64 const & timeIncrement,
-                                     real64 const ( &strainIncrement )[6],
-                                     real64 ( & stress )[6] ) const override final
-  {
-    ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
-  }
-
-  GEOS_HOST_DEVICE
-  void smallStrainUpdate( localIndex const k,
-                          localIndex const q,
-                          real64 const & timeIncrement,
-                          real64 const ( &strainIncrement )[6],
-                          real64 ( & stress )[6],
-                          DiscretizationOps & stiffness ) const override final
-  {
-    ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
-    stiffness.m_bulkModulus = m_bulkModulus[k];
-    stiffness.m_shearModulus = m_shearModulus[k];
-  }
-};
-
-
 // TODO: need to confirm stress / strain measures before activating hyper inferface
 /*
    GEOS_HOST_DEVICE
@@ -475,8 +436,7 @@ class ElasticIsotropic : public SolidBase
 {
 public:
 
-  /// Alias for ElasticIsotropicUpdates. This is also the base used by derived
-  /// solid material update wrappers.
+  /// Alias for ElasticIsotropicUpdates
   using KernelWrapper = ElasticIsotropicUpdates;
 
   /**
@@ -566,25 +526,25 @@ public:
    * @param includeState Flag whether to pass state arrays that may not be needed for "no-state" updates
    * @return An instantiation of ElasticIsotropicUpdate.
    */
-  ElasticIsotropicKernelUpdates createKernelUpdates( bool const includeState = true ) const
+  ElasticIsotropicUpdates createKernelUpdates( bool const includeState = true ) const
   {
     if( includeState )
     {
-      return ElasticIsotropicKernelUpdates( m_bulkModulus,
-                                            m_shearModulus,
-                                            m_thermalExpansionCoefficient,
-                                            m_newStress,
-                                            m_oldStress,
-                                            m_disableInelasticity );
+      return ElasticIsotropicUpdates( m_bulkModulus,
+                                      m_shearModulus,
+                                      m_thermalExpansionCoefficient,
+                                      m_newStress,
+                                      m_oldStress,
+                                      m_disableInelasticity );
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
     {
-      return ElasticIsotropicKernelUpdates( m_bulkModulus,
-                                            m_shearModulus,
-                                            m_thermalExpansionCoefficient,
-                                            arrayView3d< real64, solid::STRESS_USD >(),
-                                            arrayView3d< real64, solid::STRESS_USD >(),
-                                            m_disableInelasticity );
+      return ElasticIsotropicUpdates( m_bulkModulus,
+                                      m_shearModulus,
+                                      m_thermalExpansionCoefficient,
+                                      arrayView3d< real64, solid::STRESS_USD >(),
+                                      arrayView3d< real64, solid::STRESS_USD >(),
+                                      m_disableInelasticity );
     }
   }
 

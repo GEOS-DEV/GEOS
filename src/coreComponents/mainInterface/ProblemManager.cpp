@@ -389,6 +389,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
   return beginFromRestart;
 }
 
+
 void ProblemManager::generateDocumentation()
 {
   // Documentation output
