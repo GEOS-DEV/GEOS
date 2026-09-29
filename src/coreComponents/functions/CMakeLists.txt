@@ -35,6 +35,7 @@ set( functions_sources
      FunctionManager.cpp
      TableFunction.cpp
      MultivariableTableFunction.cpp
+     MultivariableNonuniformTableFunction.cpp
    )
 
 if( ENABLE_MATHPRESSO )

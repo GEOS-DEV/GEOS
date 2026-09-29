@@ -162,6 +162,12 @@ integer BlackOilFluidBase::getWaterPhaseIndex() const
   return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
+integer BlackOilFluidBase::getPhaseIndex( const std::string & phaseName ) const
+{
+  string const expectedPhaseName[] = { phaseName };
+  return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedPhaseName, viewKeyStruct::phaseNamesString() );
+}
+
 void BlackOilFluidBase::postInputInitialization()
 {
   m_componentNames = m_phaseNames;
