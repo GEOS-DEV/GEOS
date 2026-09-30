@@ -5,6 +5,11 @@ Benchmarks
 
 In addition to the integrated tests which track code correctness we have a suite of benchmarks that track performance.
 
+.. toctree::
+   :maxdepth: 1
+
+   UniformRefinementScaling
+
 
 Running the benchmarks
 ----------------------

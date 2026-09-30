@@ -179,6 +179,15 @@ By default, we use the ``attribute`` field to define the regions.
 Importing the Mesh
 ==================
 
+``VTKMesh`` can uniformly refine the partitioned coarse mesh before GEOS
+initialization. See :ref:`UniformMeshRefinement` for level semantics, supported
+templates, source-region inheritance and compatibility requirements.
+
+.. toctree::
+   :hidden:
+
+   UniformRefinement
+
 Importing regions
 *****************
 

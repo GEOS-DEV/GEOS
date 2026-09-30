@@ -21,6 +21,7 @@
 #include "mesh/generators/CollocatedNodes.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
+#include "mesh/generators/VTKUniformRefinement.hpp"
 #include "mesh/MeshFields.hpp"
 #include "mesh/generators/VTKSuperCellPartitioning.hpp"
 
@@ -1077,7 +1078,7 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
   GEOS_MARK_FUNCTION;
 
   // Retrieve global cell ID array
-  vtkDataArray * globalCellIds = mesh.GetCellData()->GetGlobalIds();
+  vtkIdTypeArray * globalCellIds = vtkIdTypeArray::SafeDownCast( mesh.GetCellData()->GetGlobalIds() );
   GEOS_ERROR_IF( globalCellIds == nullptr,
                  "Global cell IDs must be present in mesh for 2D-3D neighbor mapping" );
 
@@ -1087,7 +1088,7 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
 
   for( vtkIdType meshIdx : cells3DIndices )
   {
-    int64_t const globalId = static_cast< int64_t >( globalCellIds->GetTuple1( meshIdx ) );
+    int64_t const globalId = globalCellIds->GetValue( meshIdx );
     meshIdxToGlobalId3D.emplace( meshIdx, globalId );
   }
 
@@ -1353,7 +1354,7 @@ extractCellsByIndices( vtkDataSet & mesh,
 static array1d< int64_t >
 extractGlobalIds( vtkDataSet & mesh )
 {
-  vtkDataArray * globalIds = mesh.GetCellData()->GetGlobalIds();
+  vtkIdTypeArray * globalIds = vtkIdTypeArray::SafeDownCast( mesh.GetCellData()->GetGlobalIds() );
   GEOS_ERROR_IF( globalIds == nullptr, "Global IDs not found in mesh" );
 
   vtkIdType const numCells = mesh.GetNumberOfCells();
@@ -1361,7 +1362,7 @@ extractGlobalIds( vtkDataSet & mesh )
 
   for( vtkIdType i = 0; i < numCells; ++i )
   {
-    result[i] = static_cast< int64_t >( globalIds->GetTuple1( i ) );
+    result[i] = globalIds->GetValue( i );
   }
 
   return result;
@@ -1646,8 +1647,8 @@ buildFractureTo3DNeighbors( vtkDataSet & originalMesh,
 
   vtkIdType const numFractureElems = fractureMesh->GetNumberOfCells();
 
-  vtkDataArray * meshGlobalCellIds = originalMesh.GetCellData()->GetGlobalIds();
-  vtkDataArray * meshGlobalNodeIds = originalMesh.GetPointData()->GetGlobalIds();
+  vtkIdTypeArray * meshGlobalCellIds = vtkIdTypeArray::SafeDownCast( originalMesh.GetCellData()->GetGlobalIds() );
+  vtkIdTypeArray * meshGlobalNodeIds = vtkIdTypeArray::SafeDownCast( originalMesh.GetPointData()->GetGlobalIds() );
 
   GEOS_ERROR_IF( meshGlobalCellIds == nullptr, "Original mesh must have cell GlobalIds" );
   GEOS_ERROR_IF( meshGlobalNodeIds == nullptr, "Original mesh must have node GlobalIds" );
@@ -1661,7 +1662,7 @@ buildFractureTo3DNeighbors( vtkDataSet & originalMesh,
   for( localIndex i = 0; i < cells3DIndices.size(); ++i )
   {
     vtkIdType const origIdx = cells3DIndices[i];
-    int64_t const globalId = static_cast< int64_t >( meshGlobalCellIds->GetTuple1( origIdx ) );
+    int64_t const globalId = meshGlobalCellIds->GetValue( origIdx );
     mesh3DIdxToGlobalId.emplace( origIdx, globalId );
   }
 
@@ -1679,7 +1680,7 @@ buildFractureTo3DNeighbors( vtkDataSet & originalMesh,
     for( vtkIdType p = 0; p < ptIds->GetNumberOfIds(); ++p )
     {
       vtkIdType const nodeLocalId = ptIds->GetId( p );
-      vtkIdType const nodeGlobalId = static_cast< vtkIdType >( meshGlobalNodeIds->GetTuple1( nodeLocalId ) );
+      vtkIdType const nodeGlobalId = meshGlobalNodeIds->GetValue( nodeLocalId );
 
       nodeGlobalIdToCells3D.get_inserted( nodeGlobalId ).insert( origCellIdx );
     }
@@ -1962,10 +1963,11 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     output = mesh;
     vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( output->GetCellData()->GetGlobalIds() );
     vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( output->GetPointData()->GetGlobalIds() );
-    GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != output->GetNumberOfCells(),
+    GEOS_ERROR_IF( globalCellId == nullptr || globalPointId == nullptr, "VTK input global IDs must use vtkIdTypeArray storage" );
+    GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 || globalCellId->GetNumberOfTuples() != output->GetNumberOfCells(),
                    GEOS_FMT( "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n{}",
                              generalMeshErrorAdvice ) );
-    GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
+    GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 || globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
                    GEOS_FMT( "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n{}",
                              generalMeshErrorAdvice ) );
 
@@ -3675,6 +3677,33 @@ void writeCells( integer const logLevel,
       }
     }
   }
+}
+
+void writeRefinedCells( integer const logLevel, vtkDataSet & mesh,
+                        std::vector< vtk::RefinementBlockDescriptor > const & blocks,
+                        CellBlockManager & cellBlockManager )
+{
+  SourceCellBlockDescendants descendants;
+  for( auto const & descriptor : blocks )
+  {
+    GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << descriptor.name );
+    CellBlock & block = cellBlockManager.registerCellBlock( descriptor.name, descriptor.attribute );
+    block.setElementType( descriptor.type );
+    block.resize( LvArray::integerConversion< localIndex >( descriptor.cells.size() ) );
+    vtk::fillCellBlock( mesh, descriptor.cells, block );
+    descendants[descriptor.sourceName].insert( descriptor.name );
+    // External properties use the existing SubRegion copy and ghost/restart path.
+    for( char const * name : { "_geosUniformRootCellId", "_geosUniformParentCellId", "_geosUniformGeneration",
+                              "_geosUniformChildOrdinal", "_geosUniformRootOwner", "_geosUniformSourceType", "_geosUniformSourceAttribute" } )
+    {
+      vtkIdTypeArray * const array = vtkIdTypeArray::SafeDownCast( mesh.GetCellData()->GetArray( name ) );
+      GEOS_THROW_IF( array == nullptr, GEOS_FMT( "Missing refinement lineage '{}'", name ), InputError );
+      auto & property = block.addProperty< array1d< globalIndex > >( name );
+      property.resize( block.size() );
+      for( localIndex c = 0; c < block.size(); ++c ) property[c] = array->GetValue( descriptor.cells[c] );
+    }
+  }
+  cellBlockManager.setSourceCellBlockDescendants( descendants );
 }
 
 void writeSurfaces( integer const logLevel,

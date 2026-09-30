@@ -208,6 +208,58 @@ endif()
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTK readers")
+    # Pure refinement kernels intentionally have no MPI/GEOS initialization
+    # dependency, so geometry and topology can be tested independently.
+    set_source_files_properties( generators/VTKRefinementTemplates.cpp generators/VTKRefinementTopology.cpp
+                                generators/VTKRefinementSharing.cpp
+                                generators/VTKRefinementAssociations.cpp
+                                generators/VTKRefinementCommunication.cpp
+                                generators/VTKRefinementFields.cpp
+                                generators/VTKUniformRefinement.cpp
+                                PROPERTIES LANGUAGE CXX )
+    blt_add_library( NAME vtkRefinementTemplates
+                     SOURCES generators/VTKRefinementTemplates.cpp generators/VTKRefinementTopology.cpp
+                             generators/VTKRefinementSharing.cpp
+                             generators/VTKRefinementAssociations.cpp
+                     HEADERS generators/VTKRefinementTemplates.hpp generators/VTKRefinementTopology.hpp
+                             generators/VTKRefinementSharing.hpp
+                             generators/VTKRefinementAssociations.hpp
+                     DEPENDS_ON lvarray VTK::CommonCore VTK::CommonDataModel
+                     OBJECT ${GEOS_BUILD_OBJ_LIBS}
+                     SHARED ${GEOS_BUILD_SHARED_LIBS} )
+    target_include_directories( vtkRefinementTemplates PRIVATE ${CMAKE_SOURCE_DIR}/coreComponents )
+    blt_add_library( NAME vtkRefinementFields
+                     SOURCES generators/VTKRefinementFields.cpp
+                     HEADERS generators/VTKRefinementFields.hpp
+                     DEPENDS_ON vtkRefinementTemplates VTK::CommonCore VTK::CommonDataModel
+                     OBJECT ${GEOS_BUILD_OBJ_LIBS}
+                     SHARED ${GEOS_BUILD_SHARED_LIBS} )
+    install( TARGETS vtkRefinementFields LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+                                        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+    blt_add_library( NAME vtkRefinementCommunication
+                     SOURCES generators/VTKRefinementCommunication.cpp
+                     HEADERS generators/VTKRefinementCommunication.hpp
+                     DEPENDS_ON common vtkRefinementTemplates ${parallelDeps}
+                     OBJECT ${GEOS_BUILD_OBJ_LIBS}
+                     SHARED ${GEOS_BUILD_SHARED_LIBS} )
+    target_include_directories( vtkRefinementCommunication PRIVATE ${CMAKE_SOURCE_DIR}/coreComponents )
+    install( TARGETS vtkRefinementCommunication LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+                                               ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+    blt_add_library( NAME vtkUniformRefinement
+                     SOURCES generators/VTKUniformRefinement.cpp
+                     HEADERS generators/VTKUniformRefinement.hpp
+                     DEPENDS_ON vtkRefinementCommunication vtkRefinementFields
+                     OBJECT ${GEOS_BUILD_OBJ_LIBS}
+                     SHARED ${GEOS_BUILD_SHARED_LIBS} )
+    target_include_directories( vtkUniformRefinement PRIVATE ${CMAKE_SOURCE_DIR}/coreComponents )
+    install( TARGETS vtkUniformRefinement LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+                                         ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+    install( TARGETS vtkRefinementTemplates LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+                                           ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+    list( APPEND dependencyList vtkRefinementTemplates )
+    list( APPEND dependencyList vtkRefinementCommunication )
+    list( APPEND dependencyList vtkRefinementFields )
+    list( APPEND dependencyList vtkUniformRefinement )
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp

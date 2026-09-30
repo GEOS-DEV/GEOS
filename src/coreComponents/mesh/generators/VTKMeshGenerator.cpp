@@ -32,6 +32,7 @@
 #include <vtkAppendFilter.h>
 #include <vtkDataSet.h>
 #include <vtkCellData.h>
+#include <cmath>
 
 namespace geos
 {
@@ -82,6 +83,12 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Method (library) used to refine mesh partitioning" );
 
+  registerWrapper( viewKeyStruct::uniformRefinementString(), &m_uniformRefinement ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Nonnegative number of uniform mesh refinement levels, performed after coarse partitioning" );
+
   registerWrapper( viewKeyStruct::scatterMethodString(), &m_scatterMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( vtk::ScatterMethod::kdtree ).
@@ -114,6 +121,23 @@ void VTKMeshGenerator::postInputInitialization()
 {
   ExternalMeshGeneratorBase::postInputInitialization();
 
+  GEOS_THROW_IF( m_uniformRefinement < 0, "uniformRefinement must be a nonnegative integer", InputError, getDataContext() );
+  m_requestedUniformRefinement = m_uniformRefinement;
+  GEOS_THROW_IF( m_uniformRefinement > 0 && !m_structuredIndexAttributeName.empty(),
+                 "Positive uniformRefinement does not support structuredIndexAttribute", InputError, getDataContext() );
+  if( m_uniformRefinement > 0 )
+  {
+    int negativeAxes = 0;
+    for( int d = 0; d < 3; ++d )
+    {
+      GEOS_THROW_IF( !std::isfinite( m_scale[d] ) || !std::isfinite( m_translate[d] ) || std::abs( m_scale[d] ) <= 0,
+                     "Uniform refinement requires finite, nonzero coordinate scales and finite translation", InputError, getDataContext() );
+      negativeAxes += m_scale[d] < 0;
+    }
+    GEOS_THROW_IF( negativeAxes % 2, "Uniform refinement does not support a coordinate transform that reverses orientation",
+                   InputError, getDataContext() );
+  }
+
   GEOS_ERROR_IF( m_filePath.empty() && m_dataSourceName.empty(),
                  GEOS_FMT( "Either {} or {} must be specified.",
                            viewKeyStruct::filePathString(), viewKeyStruct::dataSourceString() ),
@@ -138,6 +162,12 @@ void VTKMeshGenerator::postInputInitialization()
     m_dataSource->open();
   }
 
+}
+
+void VTKMeshGenerator::postRestartInitialization()
+{
+  GEOS_THROW_IF( m_uniformRefinement != m_requestedUniformRefinement,
+                 "Restart uniformRefinement differs from the input level count", InputError, getDataContext() );
 }
 
 void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
@@ -236,11 +266,28 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
                                                                   m_partitionFractureWeight,
                                                                   m_useGlobalIds,
                                                                   m_structuredIndexAttributeName );
+    vtk::refinement::Participants exactNeighbors;
+    if( m_uniformRefinement > 0 )
+    {
+      allMeshes = vtk::AllMeshes{};
+      vtk::UniformRefinementOptions options;
+      options.regionAttribute = m_regionAttributeName;
+      for( string const & name : m_nodesetNames ) options.fields.pointArrays[name] = vtk::refinement::PointTransferPolicy::nodeSet;
+      auto refined = vtk::refineUniformly( redistributedMeshes, m_uniformRefinement, options, comm );
+      m_refinedBlocks = std::move( refined.blocks );
+      exactNeighbors = std::move( refined.neighbors );
+    }
     m_vtkMesh = redistributedMeshes.getMainMesh();
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
     stdVector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, MPI_COMM_GEOS );
-    stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
+    stdVector< int > neighbors = vtk::findNeighborRanks( std::move( boxes ) );
+    if( m_uniformRefinement > 0 )
+    {
+      neighbors.insert( neighbors.end(), exactNeighbors.begin(), exactNeighbors.end() );
+      std::sort( neighbors.begin(), neighbors.end() );
+      neighbors.erase( std::unique( neighbors.begin(), neighbors.end() ), neighbors.end() );
+    }
     partition.setMetisNeighborList( std::move( neighbors ) );
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
   }
@@ -254,7 +301,8 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, m_translate, m_scale );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing cells...", catalogName(), getName() ) );
-  writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, m_structuredIndexAttributeName, cellBlockManager );
+  if( m_uniformRefinement > 0 ) writeRefinedCells( getLogLevel(), *m_vtkMesh, m_refinedBlocks, cellBlockManager );
+  else writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, m_structuredIndexAttributeName, cellBlockManager );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing surfaces...", catalogName(), getName() ) );
   writeSurfaces( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
@@ -280,6 +328,18 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
                                                   bool isMaterialField,
                                                   dataRepository::WrapperBase & wrapper ) const
 {
+  if( m_uniformRefinement > 0 )
+  {
+    for( auto const & block : m_refinedBlocks )
+      if( block.name == cellBlockName )
+      {
+        vtkDataArray * const array = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
+        if( isMaterialField ) return vtk::importMaterialField( block.cells, array, wrapper );
+        return vtk::importRegularField( block.cells, array, wrapper );
+      }
+    GEOS_THROW( GEOS_FMT( "Could not import field '{}' from refined cell block '{}'", meshFieldName, cellBlockName ),
+                InputError, getDataContext() );
+  }
   for( auto const & typeRegions: m_cellMap )
   {
     // Restrict data import to 3D cells
@@ -362,6 +422,7 @@ void VTKMeshGenerator::freeResources()
   m_vtkMesh = nullptr;
   m_cellMap.clear();
   m_faceBlockMeshes.clear();
+  m_refinedBlocks.clear();
 }
 
 

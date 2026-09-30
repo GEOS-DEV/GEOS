@@ -161,6 +161,12 @@ public:
   stdMap< integer, std::set< string > > const & getRegionAttributesCellBlocks() const override
   { return m_regionAttributesCellBlocks; }
 
+  SourceCellBlockDescendants const & getSourceCellBlockDescendants() const override
+  { return m_sourceCellBlockDescendants; }
+
+  void setSourceCellBlockDescendants( SourceCellBlockDescendants const & descendants )
+  { m_sourceCellBlockDescendants = descendants; }
+
   Group const & getFaceBlocks() const override;
 
   Group & getFaceBlocks() override;
@@ -292,6 +298,8 @@ private:
   stdMap< string, SortedArray< localIndex > > m_nodeSets;
 
   stdMap< integer, std::set< string > > m_regionAttributesCellBlocks;
+
+  SourceCellBlockDescendants m_sourceCellBlockDescendants;
 
   real64 m_globalLength;
   real64 m_globalOffset;

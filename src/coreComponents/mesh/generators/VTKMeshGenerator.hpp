@@ -23,6 +23,7 @@
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
+#include "mesh/generators/VTKUniformRefinement.hpp"
 #include "mesh/generators/VTKHierarchicalDataSource.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
@@ -102,6 +103,7 @@ public:
 
 protected:
   void postInputInitialization() override;
+  void postRestartInitialization() override;
 
 private:
 
@@ -114,6 +116,7 @@ private:
     constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
+    constexpr static char const * uniformRefinementString() { return "uniformRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
     constexpr static char const * partitionFractureWeightString() { return "partitionFractureWeight"; }
     constexpr static char const * scatterMethodString() { return "scatterMethod"; }
@@ -163,6 +166,11 @@ private:
 
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
+
+  /// Uniform h-refinement levels, after the complete coarse partition pipeline.
+  integer m_uniformRefinement = 0;
+  integer m_requestedUniformRefinement = 0;
+  std::vector< vtk::RefinementBlockDescriptor > m_refinedBlocks;
 
   /// Additional weight to fracture-connected super-cells during partitioning
   integer m_partitionFractureWeight = 0;

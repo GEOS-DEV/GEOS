@@ -52,7 +52,8 @@ using namespace geos::dataRepository;
 
 
 template< class V >
-void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="", string const scatterMethod="" )
+void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="", string const scatterMethod="",
+                     string const uniformRefinement="" )
 {
   // Automatically use global IDs when fractures are present
   string const useGlobalIdsStr = fractureName.empty() ? "0" : "1";
@@ -62,6 +63,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   {
     scatterAttr = GEOS_FMT( "scatterMethod=\"{}\"", scatterMethod );
   }
+  if( !uniformRefinement.empty() ) scatterAttr += GEOS_FMT( " uniformRefinement=\"{}\"", uniformRefinement );
 
   string const pattern = R"xml(
     <Mesh>
@@ -714,6 +716,62 @@ TEST( VTKImport, supportedElements )
 
   string const medleyVTK42 = testMeshDir + "/supportedElementsAsVTKPolyhedra.vtk";
   TestMeshImport( medleyVTK42, validate );
+}
+
+TEST( VTKImport, uniformRefinementSupportedElementsAndSourceBlocks )
+{
+  SKIP_TEST_IN_PARALLEL( "The supplied twelve-cell fixture is a serial import oracle" );
+  for( auto const * filename : { "supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk" } )
+    for( int levels : { 1, 2 } )
+    {
+      auto validate = [levels]( CellBlockManagerABC const & manager )
+      {
+        localIndex count = 0;
+        manager.getCellBlocks().forSubGroups< CellBlockABC >( [&]( CellBlockABC const & block ) { count += block.numElements(); } );
+        EXPECT_EQ( count, levels == 1 ? 154 : 1244 );
+        auto const & descendants = manager.getSourceCellBlockDescendants();
+        EXPECT_EQ( descendants.at( "1_pyramids" ), ( std::set< string >{ "1_pyramids", "1_pyramids__refined_tetrahedra" } ) );
+        auto const & blocks = manager.getCellBlocks();
+        EXPECT_EQ( blocks.getGroup< CellBlockABC >( "1_pyramids" ).numElements(), levels == 1 ? 6 : 36 );
+        EXPECT_EQ( blocks.getGroup< CellBlockABC >( "1_pyramids__refined_tetrahedra" ).numElements(), levels == 1 ? 4 : 56 );
+        EXPECT_EQ( blocks.getGroup< CellBlockABC >( "0_tetrahedra" ).numElements(), levels == 1 ? 8 : 64 );
+        auto const & prism = blocks.getGroup< CellBlockABC >( "10_hendecagonalPrisms__refined_hexahedra" );
+        EXPECT_EQ( prism.numElements(), levels == 1 ? 22 : 176 );
+        int lineageCount = 0;
+        prism.forExternalProperties( [&]( WrapperBase const & wrapper )
+        {
+          EXPECT_TRUE( wrapper.getName().starts_with( "_geosUniform" ) );
+          ++lineageCount;
+        } );
+        EXPECT_EQ( lineageCount, 7 );
+      };
+      TestMeshImport( testMeshDir + "/" + filename, validate, "", "", std::to_string( levels ) );
+    }
+}
+
+TEST_F( TestFractureImport, uniformRefinementFractureRelations )
+{
+  auto validate = []( CellBlockManagerABC const & manager )
+  {
+    localIndex cells = 0;
+    manager.getCellBlocks().forSubGroups< CellBlockABC >( [&]( CellBlockABC const & block ) { cells += block.numElements(); } );
+    EXPECT_EQ( MpiWrapper::sum( cells ), 24 );
+    auto const & fracture = manager.getFaceBlocks().getGroup< FaceBlockABC >( 0 );
+    EXPECT_EQ( MpiWrapper::sum( fracture.num2dElements() ), 4 );
+    auto const buckets = fracture.get2dElemsToCollocatedNodesBuckets();
+    for( localIndex cell = 0; cell < buckets.size(); ++cell )
+      for( localIndex point = 0; point < buckets[cell].size(); ++point ) EXPECT_EQ( buckets[cell][point].size(), 2 );
+  };
+  TestMeshImport( m_vtkFile, validate, "fracture", "rcb", "1" );
+}
+
+TEST( VTKImport, uniformRefinementRejectsNegativeAndFractionalXml )
+{
+  auto const validate = []( CellBlockManagerABC const & ) {};
+  for( string const level : { "-1", "1.5", "bad" } )
+  {
+    EXPECT_THROW( TestMeshImport( testMeshDir + "/supportedElements.vtk", validate, "", "", level ), InputError );
+  }
 }
 
 int main( int argc, char * * argv )

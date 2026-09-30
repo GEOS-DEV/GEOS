@@ -15,6 +15,7 @@
 
 #include <map>
 #include <vector>
+#include <limits>
 
 #include "ElementRegionManager.hpp"
 
@@ -128,7 +129,8 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
   { // cellBlocks loading
     Group const & cellBlocks = cellBlockManager.getCellBlocks();
     CellElementRegionSelector cellBlockSelector{ cellBlocks,
-                                                 cellBlockManager.getRegionAttributesCellBlocks() };
+                                                 cellBlockManager.getRegionAttributesCellBlocks(),
+                                                 &cellBlockManager.getSourceCellBlockDescendants() };
     this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
     {
       elemRegion.setCellBlockNames( cellBlockSelector.buildCellBlocksSelection( elemRegion ) );
@@ -186,9 +188,22 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
   // get the offsets to construct local-to-global maps for well nodes and elements
   nodeManager.setMaxGlobalIndex();
+  bool hasWells = false;
+  forElementRegions< WellElementRegion >( [&]( WellElementRegion const & ) { hasWells = true; } );
+  if( !hasWells ) return;
+  GEOS_THROW_IF( nodeManager.maxGlobalIndex() == std::numeric_limits< globalIndex >::max(),
+                 "No representable global node ID remains for well allocation", InputError, getDataContext() );
   globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
-  localIndex const elemOffsetLocal  = this->getNumberOfElements();
-  globalIndex const elemOffsetGlobal = MpiWrapper::sum( elemOffsetLocal );
+  globalIndex localElementMaximum = -1;
+  forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+  {
+    auto const ids = subRegion.localToGlobalMap().toViewConst();
+    for( localIndex i = 0; i < ids.size(); ++i ) localElementMaximum = std::max( localElementMaximum, ids[i] );
+  } );
+  globalIndex const elementMaximum = MpiWrapper::max( localElementMaximum );
+  GEOS_THROW_IF( elementMaximum == std::numeric_limits< globalIndex >::max(),
+                 "No representable global element ID remains for well allocation", InputError, getDataContext() );
+  globalIndex const elemOffsetGlobal = elementMaximum + 1;
 
   globalIndex wellElemCount = 0;
   globalIndex wellNodeCount = 0;

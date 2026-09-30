@@ -27,7 +27,9 @@ using ViewKeys = CellElementRegion::viewKeyStruct;
 
 CellElementRegionSelector::CellElementRegionSelector(
   Group const & cellBlocks,
-  stdMap< integer, std::set< string > > const & regionsCellBlocks )
+  stdMap< integer, std::set< string > > const & regionsCellBlocks,
+  SourceCellBlockDescendants const * sourceDescendants )
+  : m_sourceDescendants( sourceDescendants != nullptr && !sourceDescendants->empty() ? sourceDescendants : nullptr )
 {
   // The owners lists need to be initialized so we will be able to verify later that it is not empty.
 
@@ -43,6 +45,22 @@ CellElementRegionSelector::CellElementRegionSelector(
     m_regionAttributesCellBlocks.emplace( regionAttributeStr, regionCellBlocks.second );
     m_regionAttributesOwners.emplace( regionAttributeStr, stdVector< CellElementRegion const * >() );
   }
+  if( m_sourceDescendants != nullptr )
+  {
+    std::set< string > assigned;
+    for( auto const & [source, descendants] : *m_sourceDescendants )
+    {
+      GEOS_THROW_IF( source.empty() || descendants.empty(), "Empty source-block name or descendant list", InputError, cellBlocks.getDataContext() );
+      for( string const & descendant : descendants )
+      {
+        GEOS_THROW_IF( m_cellBlocksOwners.count( descendant ) == 0 || !assigned.insert( descendant ).second,
+                       GEOS_FMT( "Invalid or multiply assigned source-block descendant '{}'", descendant ),
+                       InputError, cellBlocks.getDataContext() );
+      }
+    }
+    GEOS_THROW_IF( assigned.size() != m_cellBlocksOwners.size(), "Source-block lineage does not cover every final cell block",
+                   InputError, cellBlocks.getDataContext() );
+  }
 }
 
 
@@ -54,6 +72,20 @@ CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & regi
 
   std::set< string > matchedCellBlocks;
   bool matching = false;
+  if( m_sourceDescendants != nullptr )
+  {
+    for( auto const & [source, descendants] : *m_sourceDescendants )
+      if( fnmatch( matchPattern.data(), source.c_str(), 0 ) == 0 )
+      {
+        matching = true;
+        matchedCellBlocks.insert( descendants.begin(), descendants.end() );
+      }
+    GEOS_THROW_IF( !matching,
+                   GEOS_FMT( "No source cellBlock name is satisfying the qualifier '{}'.\nAvailable source cellBlocks: {{ {} }}",
+                             matchPattern, stringutilities::joinLambda( *m_sourceDescendants, ", ", []( auto pair ) { return pair->first; } ) ),
+                   InputError, region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ) );
+    return matchedCellBlocks;
+  }
   for( auto const & [cellBlockName, owners] : m_cellBlocksOwners )
   {
     // if the pattern matches the tested cellBlock name

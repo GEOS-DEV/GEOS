@@ -25,6 +25,9 @@
 namespace geos
 {
 
+/** Original source-block names mapped to their final descendants. Empty for unrefined generators. */
+using SourceCellBlockDescendants = stdMap< string, std::set< string > >;
+
 /**
  * @brief Abstract base class for CellBlockManager.
  */
@@ -125,6 +128,12 @@ public:
    * @return A map of the cellblocks list for each region attribute values.
    */
   virtual stdMap< integer, std::set< string > > const & getRegionAttributesCellBlocks() const = 0;
+
+  virtual SourceCellBlockDescendants const & getSourceCellBlockDescendants() const
+  {
+    static SourceCellBlockDescendants const empty;
+    return empty;
+  }
 
   /**
    * @brief Total number of nodes across all the cell blocks.

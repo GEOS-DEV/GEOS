@@ -44,6 +44,7 @@ set( common_headers
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
      MpiWrapper.hpp
+     MpiChunkedCommunication.hpp
      Path.hpp
      Span.hpp
      StdContainerWrappers.hpp
@@ -85,10 +86,13 @@ set( common_sources
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp
+     MpiChunkedCommunication.cpp
      Path.cpp
      initializeEnvironment.cpp
      Units.cpp
    )
+
+set_source_files_properties( MpiChunkedCommunication.cpp PROPERTIES LANGUAGE CXX )
 
 set( dependencyList ${parallelDeps} lvarray RAJA chai umpire::umpire)
 

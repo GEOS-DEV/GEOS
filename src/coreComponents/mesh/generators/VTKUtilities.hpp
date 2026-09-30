@@ -37,6 +37,7 @@ namespace geos
 namespace vtk
 {
 class CollocatedNodes;
+struct RefinementBlockDescriptor;
 
 /**
  * @brief Choice of advanced mesh partitioner
@@ -297,6 +298,11 @@ void writeCells( integer const logLevel,
                  vtk::CellMapType const & cellMap,
                  string const & structuredIndexAttributeName,
                  CellBlockManager & cellBlockManager );
+
+/** Write source-separated refinement blocks and persistent cell lineage. */
+void writeRefinedCells( integer logLevel, vtkDataSet & mesh,
+                        std::vector< vtk::RefinementBlockDescriptor > const & blocks,
+                        CellBlockManager & cellBlockManager );
 
 /**
  * @brief Build the "surface" node sets from the surface information.

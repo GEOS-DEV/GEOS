@@ -21,6 +21,7 @@
 #define GEOS_MESH_CELLELEMENTREGIONSELECTOR_HPP_
 
 #include "mesh/CellElementRegion.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 
 namespace geos
 {
@@ -39,9 +40,11 @@ public:
    * @brief Construct a new CellElementRegionSelector.
    * @param cellBlocks a Group containing all the available cell-blocks.
    * @param cellBlocksRegion A map of the cellblocks name lists for each region attributes value.
+   * @param sourceDescendants Optional original namespace. Patterns match sources, then expand into final blocks.
    */
   CellElementRegionSelector( dataRepository::Group const & cellBlocks,
-                             stdMap< integer, std::set< string > > const & cellBlocksRegion );
+                             stdMap< integer, std::set< string > > const & cellBlocksRegion,
+                             SourceCellBlockDescendants const * sourceDescendants = nullptr );
 
   /**
    * @brief Select the mesh cell-blocks for the specified region following the user inputs.
@@ -68,6 +71,8 @@ private:
 
   /// @brief A map that link every cell-block name to the CellElementRegion(s) that references it.
   stdMap< string, stdVector< CellElementRegion const * > > m_cellBlocksOwners;
+
+  SourceCellBlockDescendants const * m_sourceDescendants;
 
   /// @brief A map that link every region attribute values to the CellElementRegion(s) that references it.
   stdMap< string, stdVector< CellElementRegion const * > > m_regionAttributesOwners;
