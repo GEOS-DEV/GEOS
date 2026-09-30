@@ -84,6 +84,13 @@ public:
     return m_initialPorosity[k][q];
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  real64 getReferencePorosity( localIndex const k ) const
+  {
+    return m_referencePorosity[k];
+  }
+
 protected:
 
   /// New value of porosity
