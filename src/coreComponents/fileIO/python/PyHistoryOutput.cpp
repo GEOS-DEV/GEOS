@@ -171,7 +171,7 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyTypeObject PyHistoryOutputType = {
   .ob_base = PyVarObject_HEAD_INIT( nullptr, 0 )
-  .tp_name = "pygeosx.HistoryOutput",
+               .tp_name = "pygeosx.HistoryOutput",
   .tp_basicsize = sizeof( PyHistoryOutput ),
   .tp_itemsize = 0,
   .tp_repr = PyHistoryOutput_repr,
