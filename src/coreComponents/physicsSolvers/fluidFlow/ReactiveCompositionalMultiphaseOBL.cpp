@@ -197,6 +197,10 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
                                   m_maxCompFracChange ),
                         InputError, getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
 
+  GEOS_THROW_IF_GT_MSG( m_numComponents, 9,
+                        "OBL table interpolation supports at most nine components.",
+                        InputError, getWrapperDataContext( viewKeyStruct::numComponentsString() ) );
+
   GEOS_THROW_IF_GT_MSG( m_numComponents, MAX_NUM_COMPONENTS,
                         GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
                                   "Rebuild with GEOS_MAX_COMPONENTS >= {}.",

@@ -34,7 +34,15 @@ if( GEOS_ENABLE_MULTIPHYSICS )
   set( componentSmokeInput "${PROJECT_SOURCE_DIR}/../inputFiles/compositionalMultiphaseWell/compositional_multiphase_wells_9comp_smoke.xml" )
   set( componentSmokeOutput "${CMAKE_CURRENT_BINARY_DIR}/componentLimitSmoke" )
   file( MAKE_DIRECTORY "${componentSmokeOutput}" )
-  if( GEOS_MAX_COMPONENTS EQUAL 9 )
+  if( GEOS_MAX_COMPONENTS GREATER_EQUAL 9 )
+    set( oblRejectionOutput "${CMAKE_CURRENT_BINARY_DIR}/oblComponentLimit" )
+    file( MAKE_DIRECTORY "${oblRejectionOutput}" )
+    add_test( NAME testOBLComponentLimit
+              COMMAND ${CMAKE_COMMAND} -DGEOS_EXECUTABLE=$<TARGET_FILE:geosx>
+                      -DINPUT_FILE=${PROJECT_SOURCE_DIR}/../inputFiles/compositionalMultiphaseFlow/deadoil_3ph_staircase_obl_3d.xml
+                      -DOUTPUT_DIRECTORY=${oblRejectionOutput}
+                      -P ${PROJECT_SOURCE_DIR}/cmake/tests/OBLComponentLimitTest.cmake )
+    set_tests_properties( testOBLComponentLimit PROPERTIES TIMEOUT 120 )
     add_test( NAME testNineComponentWells
               COMMAND $<TARGET_FILE:geosx> -i ${componentSmokeInput} -o ${componentSmokeOutput} -n nineComponentWells )
     set_tests_properties( testNineComponentWells PROPERTIES TIMEOUT 120 )
@@ -44,6 +52,23 @@ if( GEOS_ENABLE_MULTIPHYSICS )
     add_test( NAME testNineComponentDirichlet
               COMMAND $<TARGET_FILE:geosx> -i ${componentDirichletInput} -o ${componentDirichletOutput} -n nineComponentDirichlet )
     set_tests_properties( testNineComponentDirichlet PROPERTIES TIMEOUT 120 )
+    if( GEOS_MAX_COMPONENTS EQUAL 20 )
+      set( INPUT_FILE "${componentSmokeInput}" )
+      set( OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/twentyComponentSmoke.xml" )
+      set( DIRICHLET_INPUT_FILE "${componentDirichletInput}" )
+      set( DIRICHLET_OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/twentyComponentDirichletSmoke.xml" )
+      include( "${PROJECT_SOURCE_DIR}/cmake/tests/GenerateTwentyComponentSmoke.cmake" )
+      set( twentyComponentOutput "${CMAKE_CURRENT_BINARY_DIR}/twentyComponentSmoke" )
+      file( MAKE_DIRECTORY "${twentyComponentOutput}" )
+      add_test( NAME testTwentyComponentWells
+                COMMAND $<TARGET_FILE:geosx> -i ${OUTPUT_FILE} -o ${twentyComponentOutput} -n twentyComponentWells )
+      set_tests_properties( testTwentyComponentWells PROPERTIES TIMEOUT 120 )
+      set( twentyComponentDirichletOutput "${CMAKE_CURRENT_BINARY_DIR}/twentyComponentDirichletSmoke" )
+      file( MAKE_DIRECTORY "${twentyComponentDirichletOutput}" )
+      add_test( NAME testTwentyComponentDirichlet
+                COMMAND $<TARGET_FILE:geosx> -i ${DIRICHLET_OUTPUT_FILE} -o ${twentyComponentDirichletOutput} -n twentyComponentDirichlet )
+      set_tests_properties( testTwentyComponentDirichlet PROPERTIES TIMEOUT 120 )
+    endif()
   else()
     add_test( NAME testComponentLimitRejection
               COMMAND ${CMAKE_COMMAND} -DGEOS_EXECUTABLE=$<TARGET_FILE:geosx>

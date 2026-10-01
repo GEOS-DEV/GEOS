@@ -24,6 +24,11 @@ using namespace geos;
 namespace
 {
 
+TEST( ComponentDispatch, FluidStorageCapacity )
+{
+  EXPECT_EQ( constitutive::MultiFluidConstants::MAX_NUM_COMPONENTS, std::max( 9, GEOS_MAX_COMPONENTS ) );
+}
+
 struct HybridDispatchProbe
 {
   template< integer NF, integer NC, integer NP, typename IP >
@@ -71,7 +76,7 @@ TEST( ComponentDispatch, ConfiguredRange )
 
 TEST( ComponentDispatch, OBLRange )
 {
-  for( integer components = 1; components <= GEOS_MAX_COMPONENTS; ++components )
+  for( integer components = 1; components <= GEOS_MAX_OBL_COMPONENTS; ++components )
   {
     for( integer phases = 1; phases <= 3; ++phases )
     {
@@ -80,7 +85,7 @@ TEST( ComponentDispatch, OBLRange )
         reactiveCompositionalMultiphaseOBLKernels::internal::kernelLaunchSelectorEnergySwitch(
           phases, components, energy, [&] ( auto NP, auto NC, auto ENERGY )
         {
-          static_assert( NC() <= GEOS_MAX_COMPONENTS, "Disabled component counts must not be instantiated" );
+          static_assert( NC() <= GEOS_MAX_OBL_COMPONENTS, "Disabled component counts must not be instantiated" );
           EXPECT_EQ( NC(), components );
           EXPECT_EQ( NP(), phases );
           EXPECT_EQ( ENERGY(), energy );

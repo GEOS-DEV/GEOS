@@ -77,10 +77,22 @@ namespace internal
 template< bool ENABLE_ENERGY, integer NUM_PHASES, typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T numComps, LAMBDA && lambda )
 {
-  geos::internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
+  switch( numComps )
   {
-    lambda( std::integral_constant< T, NUM_PHASES >(), NC, std::integral_constant< bool, ENABLE_ENERGY >() );
-  } );
+    #define GEOS_DISPATCH_OBL_COMPONENT( NC ) \
+      case NC: \
+      { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, NC >(), \
+                std::integral_constant< bool, ENABLE_ENERGY >() ); return; \
+      }
+    GEOS_FOR_EACH_OBL_COMPONENT( GEOS_DISPATCH_OBL_COMPONENT )
+#undef GEOS_DISPATCH_OBL_COMPONENT
+    default:
+    {
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of OBL components: {}. This build instantiates 1 through {}.",
+                            numComps, GEOS_MAX_OBL_COMPONENTS ) );
+    }
+  }
 }
 
 template< bool ENABLE_ENERGY, typename T, typename LAMBDA >

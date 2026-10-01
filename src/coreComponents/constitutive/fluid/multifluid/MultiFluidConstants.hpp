@@ -22,6 +22,7 @@
 
 #include "LvArray/src/Macros.hpp"
 #include "common/PhysicsConstants.hpp"
+#include "common/GeosxConfig.hpp"
 
 namespace geos
 {
@@ -32,9 +33,10 @@ struct MultiFluidConstants
 {
   /**
    * @brief Maximum supported number of fluid components (species)
-   * @note This puts an upper bound on memory use, allowing to optimize code better
+   * @note Keep the existing nine-component constitutive capacity in smaller builds,
+   *       and grow working arrays when more solver components are instantiated.
    */
-  static constexpr integer MAX_NUM_COMPONENTS = 9;
+  static constexpr integer MAX_NUM_COMPONENTS = GEOS_MAX_COMPONENTS > 9 ? GEOS_MAX_COMPONENTS : 9;
 
   /**
    * @brief Maximum supported number of fluid phases

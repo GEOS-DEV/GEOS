@@ -74,7 +74,7 @@ Option                          Default   Explanation
 ``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
 ``ENABLE_COV``                  ``OFF``   Enables code coverage
 ``GEOS_ENABLE_TESTS``           ``ON``    Enables unit testing targets
-``GEOS_MAX_COMPONENTS``         ``5``     Maximum component count instantiated in compositional flow solvers (2 to 9)
+``GEOS_MAX_COMPONENTS``         ``5``     Maximum component count instantiated in compositional flow solvers (2 to 20)
 ``GEOS_LA_INTERFACE``           ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOS_BUILD_OBJ_LIBS``         ``ON``    Use CMake Object Libraries build
 ``GEOS_BUILD_SHARED_LIBS``      ``OFF``   Build ``geosx_core`` as a shared library instead of static
@@ -87,18 +87,24 @@ Compositional component limit
 -----------------------------
 
 Set ``GEOS_MAX_COMPONENTS`` in the host configuration or pass, for example,
-``-DGEOS_MAX_COMPONENTS=9`` to CMake to build compositional flow solvers for up to
-nine components. The default of five preserves the existing solver range.
-Values must be integers from two to nine; smaller limits reduce compilation
+``-DGEOS_MAX_COMPONENTS=20`` to CMake to build compositional flow solvers for up to
+twenty components. The default of five preserves the existing solver range.
+Values must be integers from two to twenty; smaller limits reduce compilation
 work and the number of kernel instantiations. One-component kernels remain
-available at every supported setting.
+available at every supported setting. The count includes every modeled fluid
+species, including water when present.
 
 This setting controls both runtime dispatch and explicit instantiations,
-including thermal, hybrid finite-volume, aquifer, CFL, well and reactive OBL
-kernels. Solvers reject models exceeding the configured limit during setup,
+including thermal, hybrid finite-volume, aquifer, CFL and well kernels. Solvers
+reject models exceeding the configured limit during setup,
 with a message identifying the required setting. Changing the option requires
 reconfiguring and rebuilding GEOS.
 
-The constitutive fluid models retain their existing nine-component storage
-capacity, so standalone fluid-property calculations such as the PVT driver
-are independent of this solver instantiation limit.
+The constitutive fluid working arrays have capacity for at least nine components
+and grow with ``GEOS_MAX_COMPONENTS`` above nine. Smaller builds retain existing
+nine-component standalone fluid-property calculations, such as the PVT driver.
+
+The table-based reactive OBL solver uses the smaller of the configured limit and
+nine components. Its interpolation workspace grows exponentially with the
+component count, so increasing ``GEOS_MAX_COMPONENTS`` above nine extends the
+EOS compositional solvers without increasing the OBL limit.
