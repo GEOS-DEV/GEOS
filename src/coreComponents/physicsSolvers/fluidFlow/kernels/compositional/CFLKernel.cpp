@@ -229,29 +229,15 @@ void CFLFluxKernel::
                                        ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux, \
                                        ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux )
 
-INST_CFLFluxKernel( 1, CellElementStencilTPFAWrapper );
-INST_CFLFluxKernel( 2, CellElementStencilTPFAWrapper );
-INST_CFLFluxKernel( 3, CellElementStencilTPFAWrapper );
-INST_CFLFluxKernel( 4, CellElementStencilTPFAWrapper );
-INST_CFLFluxKernel( 5, CellElementStencilTPFAWrapper );
+#define INST_CFLFluxKernels( NC ) \
+  INST_CFLFluxKernel( NC, CellElementStencilTPFAWrapper ); \
+  INST_CFLFluxKernel( NC, SurfaceElementStencilWrapper ); \
+  INST_CFLFluxKernel( NC, EmbeddedSurfaceToCellStencilWrapper ); \
+  INST_CFLFluxKernel( NC, FaceElementToCellStencilWrapper );
 
-INST_CFLFluxKernel( 1, SurfaceElementStencilWrapper );
-INST_CFLFluxKernel( 2, SurfaceElementStencilWrapper );
-INST_CFLFluxKernel( 3, SurfaceElementStencilWrapper );
-INST_CFLFluxKernel( 4, SurfaceElementStencilWrapper );
-INST_CFLFluxKernel( 5, SurfaceElementStencilWrapper );
+GEOS_FOR_EACH_COMPONENT( INST_CFLFluxKernels )
 
-INST_CFLFluxKernel( 1, EmbeddedSurfaceToCellStencilWrapper );
-INST_CFLFluxKernel( 2, EmbeddedSurfaceToCellStencilWrapper );
-INST_CFLFluxKernel( 3, EmbeddedSurfaceToCellStencilWrapper );
-INST_CFLFluxKernel( 4, EmbeddedSurfaceToCellStencilWrapper );
-INST_CFLFluxKernel( 5, EmbeddedSurfaceToCellStencilWrapper );
-
-INST_CFLFluxKernel( 1, FaceElementToCellStencilWrapper );
-INST_CFLFluxKernel( 2, FaceElementToCellStencilWrapper );
-INST_CFLFluxKernel( 3, FaceElementToCellStencilWrapper );
-INST_CFLFluxKernel( 4, FaceElementToCellStencilWrapper );
-INST_CFLFluxKernel( 5, FaceElementToCellStencilWrapper );
+#undef INST_CFLFluxKernels
 
 #undef INST_CFLFluxKernel
 
@@ -442,17 +428,13 @@ CFLKernel::
                       arrayView1d< real64 > const & compCFLNumber, \
                       real64 & maxPhaseCFLNumber, \
                       real64 & maxCompCFLNumber )
-INST_CFLKernel( 1, 2 );
-INST_CFLKernel( 2, 2 );
-INST_CFLKernel( 3, 2 );
-INST_CFLKernel( 4, 2 );
-INST_CFLKernel( 5, 2 );
+#define INST_CFLKernels( NC ) \
+  INST_CFLKernel( NC, 2 ); \
+  INST_CFLKernel( NC, 3 );
 
-INST_CFLKernel( 1, 3 );
-INST_CFLKernel( 2, 3 );
-INST_CFLKernel( 3, 3 );
-INST_CFLKernel( 4, 3 );
-INST_CFLKernel( 5, 3 );
+GEOS_FOR_EACH_COMPONENT( INST_CFLKernels )
+
+#undef INST_CFLKernels
 
 #undef INST_CFLKernel
 

@@ -47,6 +47,12 @@
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
 #cmakedefine GEOS_USE_OPENMP
 
+/// Maximum number of components instantiated in compositional flow solvers
+#define GEOS_MAX_COMPONENTS @GEOS_MAX_COMPONENTS@
+
+/// Apply a single-argument macro to each instantiated component count
+#define GEOS_FOR_EACH_COMPONENT( MACRO ) @GEOS_COMPONENT_INSTANTIATIONS@
+
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #cmakedefine GEOS_USE_CUDA
 

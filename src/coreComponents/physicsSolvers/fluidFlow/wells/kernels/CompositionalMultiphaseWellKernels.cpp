@@ -182,16 +182,14 @@ PressureRelationKernel::
                               CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                               arrayView1d< real64 > const & localRhs )
 
-INST_PressureRelationKernel( 1, 0 );
-INST_PressureRelationKernel( 1, 1 );
-INST_PressureRelationKernel( 2, 0 );
-INST_PressureRelationKernel( 2, 1 );
-INST_PressureRelationKernel( 3, 0 );
-INST_PressureRelationKernel( 3, 1 );
-INST_PressureRelationKernel( 4, 0 );
-INST_PressureRelationKernel( 4, 1 );
-INST_PressureRelationKernel( 5, 0 );
-INST_PressureRelationKernel( 5, 1 );
+#define INST_PressureRelationKernels( NC ) \
+  INST_PressureRelationKernel( NC, 0 ); \
+  INST_PressureRelationKernel( NC, 1 );
+
+GEOS_FOR_EACH_COMPONENT( INST_PressureRelationKernels )
+
+#undef INST_PressureRelationKernels
+#undef INST_PressureRelationKernel
 
 void
 PresTempCompFracInitializationKernel::

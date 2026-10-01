@@ -231,6 +231,11 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
     MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
     m_numPhases = fluid0.numFluidPhases();
     m_numComponents = fluid0.numFluidComponents();
+    GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_MAX_COMPONENTS,
+                          GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
+                                    "Rebuild with GEOS_MAX_COMPONENTS >= {}.",
+                                    m_numComponents, GEOS_MAX_COMPONENTS, m_numComponents ),
+                          InputError, getDataContext() );
   }
 
   WellControls::registerWellDataOnMesh( subRegion );

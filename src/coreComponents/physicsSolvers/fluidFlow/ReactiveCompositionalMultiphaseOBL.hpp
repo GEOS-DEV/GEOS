@@ -54,7 +54,7 @@ public:
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_COMPONENTS = 5;
+  static constexpr integer MAX_NUM_COMPONENTS = GEOS_MAX_COMPONENTS;
 
   /**
    * @brief main constructor for Group Objects

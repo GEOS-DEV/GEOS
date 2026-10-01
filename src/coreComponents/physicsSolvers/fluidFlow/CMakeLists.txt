@@ -197,7 +197,7 @@ set( fluidFlowSolvers_sources
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
-# Remove the old generator-based hybrid flux/dirichlet kernels and switch to macro approach
+# Generate compositional and hybrid kernel instantiations.
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList 
      ReactiveCompositionalMultiphaseOBLKernels.cpp.template
@@ -212,6 +212,18 @@ set( kernelTemplateFileList
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+  # Expand every component range to the build limit, keeping its lower bound.
+  string( JSON firstComponent ERROR_VARIABLE componentError
+          GET "${kernelSpecs}" ${jsonKey} combinations NCOMP 0 )
+  if( NOT componentError )
+    set( componentCounts "[]" )
+    set( componentIndex 0 )
+    foreach( component RANGE ${firstComponent} ${GEOS_MAX_COMPONENTS} )
+      string( JSON componentCounts SET "${componentCounts}" ${componentIndex} ${component} )
+      math( EXPR componentIndex "${componentIndex} + 1" )
+    endforeach()
+    string( JSON kernelSpecs SET "${kernelSpecs}" ${jsonKey} combinations NCOMP "${componentCounts}" )
+  endif()
   generateKernels( TEMPLATE ${kernelTemplateFile}
                    JSON kernelSpecs
                    KEY ${jsonKey}

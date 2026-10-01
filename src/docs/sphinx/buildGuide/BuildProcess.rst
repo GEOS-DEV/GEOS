@@ -74,6 +74,7 @@ Option                          Default   Explanation
 ``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
 ``ENABLE_COV``                  ``OFF``   Enables code coverage
 ``GEOS_ENABLE_TESTS``           ``ON``    Enables unit testing targets
+``GEOS_MAX_COMPONENTS``         ``5``     Maximum component count instantiated in compositional flow solvers (2 to 9)
 ``GEOS_LA_INTERFACE``           ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOS_BUILD_OBJ_LIBS``         ``ON``    Use CMake Object Libraries build
 ``GEOS_BUILD_SHARED_LIBS``      ``OFF``   Build ``geosx_core`` as a shared library instead of static
@@ -81,3 +82,23 @@ Option                          Default   Explanation
 ``GEOS_PARALLEL_LINK_JOBS``               Max. number of link jobs (when using Ninja), in addition to ``-j`` flag
 ``GEOS_INSTALL_SCHEMA``         ``ON``    Enables schema generation and installation
 =============================== ========= ==============================================================================
+
+Compositional component limit
+-----------------------------
+
+Set ``GEOS_MAX_COMPONENTS`` in the host configuration or pass, for example,
+``-DGEOS_MAX_COMPONENTS=9`` to CMake to build compositional flow solvers for up to
+nine components. The default of five preserves the existing solver range.
+Values must be integers from two to nine; smaller limits reduce compilation
+work and the number of kernel instantiations. One-component kernels remain
+available at every supported setting.
+
+This setting controls both runtime dispatch and explicit instantiations,
+including thermal, hybrid finite-volume, aquifer, CFL, well and reactive OBL
+kernels. Solvers reject models exceeding the configured limit during setup,
+with a message identifying the required setting. Changing the option requires
+reconfiguring and rebuilding GEOS.
+
+The constitutive fluid models retain their existing nine-component storage
+capacity, so standalone fluid-property calculations such as the PVT driver
+are independent of this solver instantiation limit.

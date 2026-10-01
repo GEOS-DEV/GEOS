@@ -56,6 +56,15 @@ TEST_F( MultiFluidSelectorTestDeadOilFluid, testValidComponents )
   } );
   EXPECT_TRUE( isExecuted );
 
+  if( GEOS_MAX_COMPONENTS < 3 )
+  {
+    EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 3, []( auto &, auto )
+    {
+      FAIL(); // Disabled component count must not be dispatched
+    } ), InputError );
+    return;
+  }
+
   isExecuted = false;
   constitutiveComponentUpdatePassThru( getFluid(), 3, [&]( auto &, auto NC )
   {
@@ -124,12 +133,13 @@ TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testThermal )
 
 TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testValidComponents )
 {
-  for( integer nc = 2; nc <= 5; nc++ )
+  for( integer nc = 2; nc <= GEOS_MAX_COMPONENTS; nc++ )
   {
     bool isExecuted = false;
     constitutiveComponentUpdatePassThru( getFluid(), nc, [&]( auto &, auto NC )
     {
       integer constexpr numComps = NC();
+      static_assert( numComps <= GEOS_MAX_COMPONENTS, "Disabled components must not be instantiated" );
       EXPECT_EQ( numComps, nc );
       isExecuted = true;
     } );
@@ -144,7 +154,7 @@ TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testInvali
     FAIL(); // Shouldn't be called
   } ), InputError );
 
-  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 6, []( auto &, auto )
+  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), GEOS_MAX_COMPONENTS + 1, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
   } ), InputError );
