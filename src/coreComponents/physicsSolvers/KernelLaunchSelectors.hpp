@@ -124,6 +124,26 @@ void kernelLaunchSelectorCompThermSwitch( T value, bool const isThermal, LAMBDA 
       invokeThermalDispatchLambda( std::integral_constant< T, 5 >(), isThermal, lambda );
       return;
     }
+    case 6:
+    {
+      invokeThermalDispatchLambda( std::integral_constant< T, 6 >(), isThermal, lambda );
+      return;
+    }
+    case 7:
+    {
+      invokeThermalDispatchLambda( std::integral_constant< T, 7 >(), isThermal, lambda );
+      return;
+    }
+    case 8:
+    {
+      invokeThermalDispatchLambda( std::integral_constant< T, 8 >(), isThermal, lambda );
+      return;
+    }
+    case 9:
+    {
+      invokeThermalDispatchLambda( std::integral_constant< T, 9 >(), isThermal, lambda );
+      return;
+    }
     default:
     {
       GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", value ) );
@@ -160,6 +180,26 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
     case 5:
     {
       invokePhaseDispatchLambda( std::integral_constant< T, 5 >(), n_phase, lambda );
+      return;
+    }
+    case 6:
+    {
+      invokePhaseDispatchLambda( std::integral_constant< T, 6 >(), n_phase, lambda );
+      return;
+    }
+    case 7:
+    {
+      invokePhaseDispatchLambda( std::integral_constant< T, 7 >(), n_phase, lambda );
+      return;
+    }
+    case 8:
+    {
+      invokePhaseDispatchLambda( std::integral_constant< T, 8 >(), n_phase, lambda );
+      return;
+    }
+    case 9:
+    {
+      invokePhaseDispatchLambda( std::integral_constant< T, 9 >(), n_phase, lambda );
       return;
     }
     default:

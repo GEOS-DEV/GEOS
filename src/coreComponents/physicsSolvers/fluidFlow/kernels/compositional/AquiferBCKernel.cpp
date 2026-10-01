@@ -261,6 +261,10 @@ INST_AquiferBCKernel( 2 );
 INST_AquiferBCKernel( 3 );
 INST_AquiferBCKernel( 4 );
 INST_AquiferBCKernel( 5 );
+INST_AquiferBCKernel( 6 );
+INST_AquiferBCKernel( 7 );
+INST_AquiferBCKernel( 8 );
+INST_AquiferBCKernel( 9 );
 
 #undef INST_AquiferBCKernel
 

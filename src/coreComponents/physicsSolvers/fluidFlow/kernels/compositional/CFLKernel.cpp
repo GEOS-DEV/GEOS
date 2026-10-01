@@ -234,24 +234,40 @@ INST_CFLFluxKernel( 2, CellElementStencilTPFAWrapper );
 INST_CFLFluxKernel( 3, CellElementStencilTPFAWrapper );
 INST_CFLFluxKernel( 4, CellElementStencilTPFAWrapper );
 INST_CFLFluxKernel( 5, CellElementStencilTPFAWrapper );
+INST_CFLFluxKernel( 6, CellElementStencilTPFAWrapper );
+INST_CFLFluxKernel( 7, CellElementStencilTPFAWrapper );
+INST_CFLFluxKernel( 8, CellElementStencilTPFAWrapper );
+INST_CFLFluxKernel( 9, CellElementStencilTPFAWrapper );
 
 INST_CFLFluxKernel( 1, SurfaceElementStencilWrapper );
 INST_CFLFluxKernel( 2, SurfaceElementStencilWrapper );
 INST_CFLFluxKernel( 3, SurfaceElementStencilWrapper );
 INST_CFLFluxKernel( 4, SurfaceElementStencilWrapper );
 INST_CFLFluxKernel( 5, SurfaceElementStencilWrapper );
+INST_CFLFluxKernel( 6, SurfaceElementStencilWrapper );
+INST_CFLFluxKernel( 7, SurfaceElementStencilWrapper );
+INST_CFLFluxKernel( 8, SurfaceElementStencilWrapper );
+INST_CFLFluxKernel( 9, SurfaceElementStencilWrapper );
 
 INST_CFLFluxKernel( 1, EmbeddedSurfaceToCellStencilWrapper );
 INST_CFLFluxKernel( 2, EmbeddedSurfaceToCellStencilWrapper );
 INST_CFLFluxKernel( 3, EmbeddedSurfaceToCellStencilWrapper );
 INST_CFLFluxKernel( 4, EmbeddedSurfaceToCellStencilWrapper );
 INST_CFLFluxKernel( 5, EmbeddedSurfaceToCellStencilWrapper );
+INST_CFLFluxKernel( 6, EmbeddedSurfaceToCellStencilWrapper );
+INST_CFLFluxKernel( 7, EmbeddedSurfaceToCellStencilWrapper );
+INST_CFLFluxKernel( 8, EmbeddedSurfaceToCellStencilWrapper );
+INST_CFLFluxKernel( 9, EmbeddedSurfaceToCellStencilWrapper );
 
 INST_CFLFluxKernel( 1, FaceElementToCellStencilWrapper );
 INST_CFLFluxKernel( 2, FaceElementToCellStencilWrapper );
 INST_CFLFluxKernel( 3, FaceElementToCellStencilWrapper );
 INST_CFLFluxKernel( 4, FaceElementToCellStencilWrapper );
 INST_CFLFluxKernel( 5, FaceElementToCellStencilWrapper );
+INST_CFLFluxKernel( 6, FaceElementToCellStencilWrapper );
+INST_CFLFluxKernel( 7, FaceElementToCellStencilWrapper );
+INST_CFLFluxKernel( 8, FaceElementToCellStencilWrapper );
+INST_CFLFluxKernel( 9, FaceElementToCellStencilWrapper );
 
 #undef INST_CFLFluxKernel
 
@@ -447,12 +463,20 @@ INST_CFLKernel( 2, 2 );
 INST_CFLKernel( 3, 2 );
 INST_CFLKernel( 4, 2 );
 INST_CFLKernel( 5, 2 );
+INST_CFLKernel( 6, 2 );
+INST_CFLKernel( 7, 2 );
+INST_CFLKernel( 8, 2 );
+INST_CFLKernel( 9, 2 );
 
 INST_CFLKernel( 1, 3 );
 INST_CFLKernel( 2, 3 );
 INST_CFLKernel( 3, 3 );
 INST_CFLKernel( 4, 3 );
 INST_CFLKernel( 5, 3 );
+INST_CFLKernel( 6, 3 );
+INST_CFLKernel( 7, 3 );
+INST_CFLKernel( 8, 3 );
+INST_CFLKernel( 9, 3 );
 
 #undef INST_CFLKernel
 

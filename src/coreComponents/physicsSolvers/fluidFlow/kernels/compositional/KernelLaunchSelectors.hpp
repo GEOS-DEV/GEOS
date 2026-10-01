@@ -54,6 +54,14 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
     { lambda( std::integral_constant< T, 4 >() ); return; }
     case 5:
     { lambda( std::integral_constant< T, 5 >() ); return; }
+    case 6:
+    { lambda( std::integral_constant< T, 6 >() ); return; }
+    case 7:
+    { lambda( std::integral_constant< T, 7 >() ); return; }
+    case 8:
+    { lambda( std::integral_constant< T, 8 >() ); return; }
+    case 9:
+    { lambda( std::integral_constant< T, 9 >() ); return; }
     default:
     { GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", value ) ); }
   }

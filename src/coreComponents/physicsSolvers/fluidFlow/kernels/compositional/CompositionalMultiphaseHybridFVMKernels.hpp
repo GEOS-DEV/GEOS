@@ -1324,6 +1324,26 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
       internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 5, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
+    else if( numComps == 6 )
+    {
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 6, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 7 )
+    {
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 7, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 8 )
+    {
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 8, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 9 )
+    {
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 9, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
     else
     {
       GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", numComps ) );
@@ -1350,6 +1370,26 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
     {
       internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
       { KERNELWRAPPER::template launch< NF(), 5, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 6 )
+    {
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 6, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 7 )
+    {
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 7, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 8 )
+    {
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 8, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 9 )
+    {
+      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 9, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else
     {

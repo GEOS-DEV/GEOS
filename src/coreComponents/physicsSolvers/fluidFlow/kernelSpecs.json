@@ -79,7 +79,7 @@
         "DirichletFluxComputeKernel",
         "DirichletFluxComputeZFormulationKernel"
       ],
-      "NCOMP": [ 2, 3, 4, 5 ],
+      "NCOMP": [ 2, 3, 4, 5, 6, 7, 8, 9 ],
       "FLUID_TYPE": [
         "constitutive::BlackOilFluid",
         "constitutive::CO2BrinePhillipsFluid",
@@ -113,7 +113,7 @@
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP": [ 2, 3, 4, 5 ],
+      "NCOMP": [ 2, 3, 4, 5, 6, 7, 8, 9 ],
       "FLUID_TYPE": [
         "constitutive::CO2BrinePhillipsThermalFluid",
         "constitutive::CO2BrineEzrokhiThermalFluid"

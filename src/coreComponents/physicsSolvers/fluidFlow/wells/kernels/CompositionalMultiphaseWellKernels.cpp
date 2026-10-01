@@ -192,6 +192,14 @@ INST_PressureRelationKernel( 4, 0 );
 INST_PressureRelationKernel( 4, 1 );
 INST_PressureRelationKernel( 5, 0 );
 INST_PressureRelationKernel( 5, 1 );
+INST_PressureRelationKernel( 6, 0 );
+INST_PressureRelationKernel( 6, 1 );
+INST_PressureRelationKernel( 7, 0 );
+INST_PressureRelationKernel( 7, 1 );
+INST_PressureRelationKernel( 8, 0 );
+INST_PressureRelationKernel( 8, 1 );
+INST_PressureRelationKernel( 9, 0 );
+INST_PressureRelationKernel( 9, 1 );
 
 void
 PresTempCompFracInitializationKernel::
