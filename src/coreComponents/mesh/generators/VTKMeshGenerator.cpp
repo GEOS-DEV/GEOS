@@ -83,10 +83,23 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Method (library) used to refine mesh partitioning" );
 
+  // Restart data is loaded into Conduit before constructing the repository.
+  // Cache this new metadata before the normal reader clears WRITE-only nodes;
+  // older checkpoints have no wrapper and represent zero refinement.
+  conduit::Node const & saved = getConduitNode();
+  m_loadedCheckpoint = saved.has_child( "__size__" );
+  string const savedLevel = viewKeyStruct::uniformRefinementString() + string( "/__values__" );
+  if( saved.has_path( savedLevel ) )
+  {
+    conduit::Node const & values = saved.fetch_existing( savedLevel );
+    GEOS_THROW_IF( !values.dtype().is_int32() || values.dtype().number_of_elements() != 1,
+                   "Invalid checkpoint uniformRefinement metadata", InputError, getDataContext() );
+    m_checkpointUniformRefinement = values.as_int32();
+  }
   registerWrapper( viewKeyStruct::uniformRefinementString(), &m_uniformRefinement ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Nonnegative number of uniform mesh refinement levels, performed after coarse partitioning" );
 
   registerWrapper( viewKeyStruct::scatterMethodString(), &m_scatterMethod ).
@@ -96,7 +109,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     "contiguous (cell ID ranges, no geometry), "
                     "cartesian (regular grid using -x/-y/-z partitions), "
                     "rcb (recursive coordinate bisection), "
-                    "kdtree (VTK built-in kd-tree, default; automatically falls back to rcb when fractures are present)" );
+                    "kdtree (VTK built-in kd-tree, default; uses legacy Morton super-cell ordering when fractures are present)" );
 
   registerWrapper( viewKeyStruct::partitionFractureWeightString(), &m_partitionFractureWeight ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -122,7 +135,8 @@ void VTKMeshGenerator::postInputInitialization()
   ExternalMeshGeneratorBase::postInputInitialization();
 
   GEOS_THROW_IF( m_uniformRefinement < 0, "uniformRefinement must be a nonnegative integer", InputError, getDataContext() );
-  m_requestedUniformRefinement = m_uniformRefinement;
+  GEOS_THROW_IF( m_loadedCheckpoint && m_checkpointUniformRefinement != m_uniformRefinement,
+                 "Restart uniformRefinement differs from the input level count", InputError, getDataContext() );
   GEOS_THROW_IF( m_uniformRefinement > 0 && !m_structuredIndexAttributeName.empty(),
                  "Positive uniformRefinement does not support structuredIndexAttribute", InputError, getDataContext() );
   if( m_uniformRefinement > 0 )
@@ -164,12 +178,6 @@ void VTKMeshGenerator::postInputInitialization()
 
 }
 
-void VTKMeshGenerator::postRestartInitialization()
-{
-  GEOS_THROW_IF( m_uniformRefinement != m_requestedUniformRefinement,
-                 "Restart uniformRefinement differs from the input level count", InputError, getDataContext() );
-}
-
 void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
@@ -177,19 +185,14 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
   MPI_Comm const comm = MPI_COMM_GEOS;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
+  struct RestoreGlobalController
+  {
+    vtkSmartPointer< vtkMultiProcessController > previous;
+    ~RestoreGlobalController() { vtkMultiProcessController::SetGlobalController( previous ); }
+  } restoreController{ vtkMultiProcessController::GetGlobalController() };
   vtkMultiProcessController::SetGlobalController( controller );
 
   array1d< int > const & partitions = partition.getPartitions();
-
-  if( m_scatterMethod == vtk::ScatterMethod::cartesian )
-  {
-    int const product = partitions[0] * partitions[1] * partitions[2];
-    GEOS_ERROR_IF( product != MpiWrapper::commSize( comm ),
-                   GEOS_FMT( "scatterMethod=\"cartesian\" requires -x * -y * -z = MPI size. "
-                             "Got {}x{}x{} = {} but MPI size is {}.",
-                             partitions[0], partitions[1], partitions[2],
-                             product, MpiWrapper::commSize( comm ) ) );
-  }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, "  redistributing mesh..." );
   {
@@ -272,8 +275,38 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
       allMeshes = vtk::AllMeshes{};
       vtk::UniformRefinementOptions options;
       options.regionAttribute = m_regionAttributeName;
+      options.reportStatistics = getLogLevel() >= logInfo::VTKSteps::getMinLogLevel();
+      options.requiredPointArrays.emplace();
+      // Ordinary imported fields come from cell data; only declared node sets
+      // consume input point arrays in this importer.
+      options.requiredPointArrays->insert( m_nodesetNames.begin(), m_nodesetNames.end() );
       for( string const & name : m_nodesetNames ) options.fields.pointArrays[name] = vtk::refinement::PointTransferPolicy::nodeSet;
+      options.requiredCellArrays.emplace();
+      options.requiredCellArrays->insert( m_regionAttributeName );
+      for( auto const & [source, target] : m_volumicFields )
+      {
+        GEOS_UNUSED_VAR( target );
+        options.requiredCellArrays->insert( source );
+      }
+      options.requiredFaceBlockCellArrays.emplace();
+      for( auto const & [source, target] : m_surfacicFields )
+      {
+        GEOS_UNUSED_VAR( target );
+        options.requiredFaceBlockCellArrays->insert( source );
+      }
       auto refined = vtk::refineUniformly( redistributedMeshes, m_uniformRefinement, options, comm );
+      bool changedTransform = false;
+      vtk::refinement::Coordinates translation{}, scale{};
+      for( int d = 0; d < 3; ++d )
+      {
+        translation[d] = m_translate[d];
+        scale[d] = m_scale[d];
+        changedTransform = changedTransform || std::abs( translation[d] ) > 0 || std::abs( scale[d] - 1 ) > 0;
+      }
+      if( changedTransform )
+      {
+        vtk::validateRefinedTransform( *redistributedMeshes.getMainMesh(), translation, scale, comm );
+      }
       m_refinedBlocks = std::move( refined.blocks );
       exactNeighbors = std::move( refined.neighbors );
     }

@@ -29,8 +29,10 @@
 #include <vtkPoints.h>
 #include <vtkStringArray.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkUnsignedCharArray.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <map>
 #include <set>
@@ -131,6 +133,8 @@ TEST( VTKUniformRefinement, ZeroBypassesInvalidDataAndLeavesPointersAndArrays )
   EXPECT_EQ( input->GetCellData()->GetNumberOfArrays(), 0 );
   EXPECT_TRUE( result.blocks.empty() );
   EXPECT_TRUE( result.neighbors.empty() );
+  EXPECT_TRUE( result.resources.empty() );
+  EXPECT_TRUE( result.levels.empty() );
 }
 
 TEST( VTKUniformRefinement, ConnectedHexesMarkersFieldsAndLineageThroughTwoLevels )
@@ -172,10 +176,127 @@ TEST( VTKUniformRefinement, ConnectedHexesMarkersFieldsAndLineageThroughTwoLevel
     EXPECT_TRUE( unique.insert( cids->GetValue( c ) ).second );
   }
   EXPECT_EQ( result.communication.directoryExchanges, 5 );
+  ASSERT_EQ( result.resources.size(), 2 );
+  ASSERT_EQ( result.levels.size(), 2 );
+  EXPECT_EQ( result.resources[0].volumeCells, 8 );
+  EXPECT_EQ( result.resources[1].volumeCells, 64 );
+  EXPECT_EQ( result.resources[1].surfaceCellCopies, 16 );
+  EXPECT_GE( result.resources[1].pointCopiesUpperBound, static_cast< std::uint64_t >( output->GetNumberOfPoints() ) );
+  EXPECT_GT( result.resources[1].fieldBytesUpperBound, result.resources[0].fieldBytesUpperBound );
+  EXPECT_EQ( result.levels[0].mainPointCopies, 27 );
+  EXPECT_EQ( result.levels[1].mainPointCopies, 125 );
+  EXPECT_EQ( MpiWrapper::sum( result.levels[1].ownedMainPoints, MPI_COMM_GEOS ), 100 * size + 25 );
+  std::uint64_t bytes = result.coarseCommunication.payloadBytesSent;
+  for( auto const & level : result.levels )
+  {
+    EXPECT_EQ( level.communication.directoryExchanges, 0 );
+    bytes += level.communication.payloadBytesSent;
+  }
+  EXPECT_EQ( bytes, result.communication.payloadBytesSent );
   if( size > 1 )
   {
     EXPECT_FALSE( result.neighbors.empty() );
   }
+}
+
+TEST( VTKUniformRefinement, ForecastsMatchGrowthAndCountSharedUnusedOriginalPoints )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS ), size = MpiWrapper::commSize( MPI_COMM_GEOS );
+  auto input = localCube( rank, false );
+  input->GetPoints()->InsertNextPoint( -3, -3, -3 );
+  vtkIdTypeArray::SafeDownCast( input->GetPointData()->GetGlobalIds() )->InsertNextValue( sparseBase - 7 );
+  vtkDoubleArray::SafeDownCast( input->GetPointData()->GetScalars() )->InsertNextValue( -4 );
+  AllMeshes meshes( input, {} );
+  UniformRefinementOptions options;
+  options.reportStatistics = true;
+  auto const result = refineUniformly( meshes, 2, options, MPI_COMM_GEOS );
+  auto output = meshes.getMainMesh();
+  ASSERT_EQ( result.resources.size(), 2 );
+  EXPECT_EQ( result.resources[0].volumeCells, 8 );
+  EXPECT_EQ( result.resources[1].volumeCells, 64 );
+  EXPECT_EQ( result.resources[0].pointCopiesUpperBound, 28 );
+  EXPECT_EQ( result.resources[1].pointCopiesUpperBound, 180 );
+  std::uint64_t connectivity = 0;
+  for( vtkIdType c = 0; c < output->GetNumberOfCells(); ++c ) connectivity += output->GetCell( c )->GetNumberOfPoints();
+  EXPECT_EQ( result.resources[1].connectivityEntries, connectivity );
+  EXPECT_GT( result.resources[1].modeledRefinerPeakBytes, result.resources[1].vtkBytesUpperBound );
+  EXPECT_TRUE( result.resources[1].geosGhostConnectivityBytesModel.has_value() );
+  EXPECT_EQ( output->GetNumberOfPoints(), 126 );
+  checkAffine( *output );
+  EXPECT_EQ( MpiWrapper::sum( result.levels[1].ownedMainPoints, MPI_COMM_GEOS ), 100 * size + 26 );
+  EXPECT_EQ( MpiWrapper::sum( result.levels[1].sharedMainPointCopies, MPI_COMM_GEOS ), size == 1 ? 0 : 50 * ( size - 1 ) + size );
+}
+
+TEST( VTKUniformRefinement, UnusedOriginalCopyMatchesAnInteriorVertexOnItsOtherRank )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS ), size = MpiWrapper::commSize( MPI_COMM_GEOS );
+  vtkIdType const centerId = sparseBase + 20000 + 7 * 13;
+  vtkSmartPointer< vtkUnstructuredGrid > input;
+  if( rank == 0 )
+  {
+    std::vector< Coordinates > xyz;
+    Connectivity ids, cellIds;
+    std::vector< Cell > cells;
+    for( int z = 0; z < 3; ++z )
+      for( int y = 0; y < 3; ++y )
+        for( int x = 0; x < 3; ++x )
+        {
+          ids.push_back( sparseBase + 20000 + 7 * xyz.size() );
+          xyz.push_back( { double( x - 2 ), double( y - 1 ), double( z - 1 ) } );
+        }
+    auto index = []( int x, int y, int z ) { return vtkIdType( 9 * z + 3 * y + x ); };
+    for( int z = 0; z < 2; ++z )
+      for( int y = 0; y < 2; ++y )
+        for( int x = 0; x < 2; ++x )
+        {
+          cellIds.push_back( sparseBase + 30000 + cells.size() );
+          cells.push_back( { VTK_HEXAHEDRON,
+            { index( x, y, z ), index( x + 1, y, z ), index( x + 1, y + 1, z ), index( x, y + 1, z ),
+              index( x, y, z + 1 ), index( x + 1, y, z + 1 ), index( x + 1, y + 1, z + 1 ), index( x, y + 1, z + 1 ) }, 0 } );
+        }
+    input = makeGrid( xyz, ids, cells, cellIds );
+  }
+  else
+  {
+    input = localCube( 3 * rank, false );
+    input->GetPoints()->InsertNextPoint( -1, 0, 0 );
+    vtkIdTypeArray::SafeDownCast( input->GetPointData()->GetGlobalIds() )->InsertNextValue( centerId );
+    vtkDoubleArray::SafeDownCast( input->GetPointData()->GetScalars() )->InsertNextValue( 3 );
+  }
+  AllMeshes meshes( input, {} );
+  auto const result = refineUniformly( meshes, 1, {}, MPI_COMM_GEOS );
+  ASSERT_EQ( result.levels.size(), 1 );
+  EXPECT_EQ( result.levels[0].mainPointCopies, rank == 0 ? 125 : 28 );
+  EXPECT_EQ( result.levels[0].sharedMainPointCopies, size == 1 ? 0 : 1 );
+  EXPECT_EQ( MpiWrapper::sum( result.levels[0].ownedMainPoints, MPI_COMM_GEOS ), 125 + 27 * ( size - 1 ) );
+  EXPECT_EQ( result.levels[0].communication.directoryExchanges, 0 );
+  checkAffine( *meshes.getMainMesh() );
+}
+
+TEST( VTKUniformRefinement, HugeLevelsWithEmptyRanksFailBeforeFineWork )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  auto input = rank == 0 ? localCube( 0, false ) : makeGrid( {}, {}, {}, {} );
+  AllMeshes meshes( input, {} );
+  EXPECT_THROW( refineUniformly( meshes, std::numeric_limits< int >::max(), {}, MPI_COMM_GEOS ), std::runtime_error );
+  EXPECT_EQ( meshes.getMainMesh().GetPointer(), input.GetPointer() );
+  EXPECT_EQ( input->GetNumberOfCells(), rank == 0 ? 1 : 0 );
+}
+
+TEST( VTKUniformRefinement, DifferentRankLevelsAndReportingFailCollectively )
+{
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) == 1 )
+  {
+    GTEST_SKIP() << "Requires multiple ranks";
+  }
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  auto input = localCube( rank, false );
+  AllMeshes meshes( input, {} );
+  EXPECT_THROW( refineUniformly( meshes, rank == 0 ? 1 : 2, {}, MPI_COMM_GEOS ), std::runtime_error );
+  UniformRefinementOptions options;
+  options.reportStatistics = rank == 0;
+  EXPECT_THROW( refineUniformly( meshes, 1, options, MPI_COMM_GEOS ), std::runtime_error );
+  EXPECT_EQ( meshes.getMainMesh().GetPointer(), input.GetPointer() );
 }
 
 TEST( VTKUniformRefinement, SourcePyramidsRemainSeparateFromOriginalTetrahedra )
@@ -343,6 +464,206 @@ TEST( VTKUniformRefinement, OneRankFailureIsCollectiveAndDoesNotReplaceInput )
   EXPECT_THROW( refineUniformly( meshes, -1, {}, MPI_COMM_GEOS ), std::runtime_error );
 }
 
+TEST( VTKUniformRefinement, InvalidCellDiagnosticsIncludeBlockLevelParentAndType )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  int const failingRank = MpiWrapper::commSize( MPI_COMM_GEOS ) - 1;
+  for( int scenario = 0; scenario < 4; ++scenario )
+  {
+    bool const auxiliary = scenario == 2;
+    bool const fineFailure = scenario == 1;
+    auto input = localCube( 3 * rank, false );
+    AllMeshes meshes( input, {} );
+    vtkIdType const parentId = auxiliary ? sparseBase + 2000 : sparseBase + 1000 + 6 * failingRank;
+    if( rank == failingRank )
+    {
+      if( auxiliary )
+      {
+        // Unsupported auxiliary lines fail before relational metadata is read.
+        meshes.getFaceBlocks()["fault"] = makeGrid( { { 0, 0, 0 }, { 1, 0, 0 } }, { 3, 4 },
+                                                    { { VTK_LINE, { 0, 1 }, 0 } }, { parentId } );
+      }
+      else if( scenario == 3 )
+      {
+        vtkNew< vtkUnsignedCharArray > ghosts;
+        ghosts->SetName( vtkDataSetAttributes::GhostArrayName() );
+        ghosts->InsertNextValue( vtkDataSetAttributes::DUPLICATECELL );
+        input->GetCellData()->AddArray( ghosts );
+      }
+      else
+      {
+        for( vtkIdType p = 0; p < input->GetNumberOfPoints(); ++p )
+        {
+          Coordinates xyz{};
+          input->GetPoint( p, xyz.data() );
+          if( fineFailure )
+          {
+            // The width-two coarse cell is valid, but its x midpoint cannot
+            // be represented at 1e16. Child validation must diagnose level one.
+            xyz[0] = 1e16 + 2 * ( xyz[0] - 3 * rank );
+          }
+          else xyz[2] = 0;
+          input->GetPoints()->SetPoint( p, xyz.data() );
+        }
+      }
+    }
+    try
+    {
+      ( void )refineUniformly( meshes, 2, {}, MPI_COMM_GEOS );
+      FAIL() << "The rank-local invalid cell must fail on every rank";
+    }
+    catch( std::runtime_error const & error )
+    {
+      std::string const diagnostic = error.what();
+      if( scenario == 3 )
+      {
+        EXPECT_NE( diagnostic.find( "unnormalized cell ghosts" ), std::string::npos );
+      }
+      EXPECT_NE( diagnostic.find( "rank " + std::to_string( failingRank ) ), std::string::npos );
+      EXPECT_NE( diagnostic.find( auxiliary ? "block 'fault'" : "block 'main'" ), std::string::npos );
+      EXPECT_NE( diagnostic.find( fineFailure ? "level 1" : "level 0" ), std::string::npos );
+      EXPECT_NE( diagnostic.find( "parent global ID " + std::to_string( parentId ) ), std::string::npos );
+      EXPECT_NE( diagnostic.find( "VTK cell type " + std::to_string( auxiliary ? VTK_LINE : VTK_HEXAHEDRON ) ),
+                 std::string::npos );
+    }
+    EXPECT_EQ( meshes.getMainMesh().GetPointer(), input.GetPointer() );
+    EXPECT_EQ( input->GetNumberOfCells(), 1 );
+  }
+}
+
+TEST( VTKUniformRefinement, RequiredPointArraysIgnoreUnimportedLabels )
+{
+  auto input = localCube( MpiWrapper::commRank( MPI_COMM_GEOS ), false );
+  vtkNew< vtkStringArray > strings;
+  strings->SetName( "unusedStrings" );
+  vtkNew< vtkIntArray > labels;
+  labels->SetName( "unusedLabels" );
+  for( vtkIdType p = 0; p < input->GetNumberOfPoints(); ++p )
+  {
+    strings->InsertNextValue( std::to_string( p ) );
+    labels->InsertNextValue( p );
+  }
+  input->GetPointData()->AddArray( strings );
+  input->GetPointData()->AddArray( labels );
+  UniformRefinementOptions options;
+  options.requiredPointArrays = std::set< std::string >{ "affine" };
+  AllMeshes meshes( input, {} );
+  EXPECT_NO_THROW( refineUniformly( meshes, 2, options, MPI_COMM_GEOS ) );
+  EXPECT_EQ( meshes.getMainMesh()->GetPointData()->GetAbstractArray( "unusedStrings" ), nullptr );
+  EXPECT_EQ( meshes.getMainMesh()->GetPointData()->GetArray( "unusedLabels" ), nullptr );
+  checkAffine( *meshes.getMainMesh() );
+  options.requiredPointArrays->insert( "unusedLabels" );
+  AllMeshes invalid( input, {} );
+  EXPECT_THROW( refineUniformly( invalid, 1, options, MPI_COMM_GEOS ), std::runtime_error );
+}
+
+TEST( VTKUniformRefinement, RequiredCellArraysKeepVolumeAndSurfaceImportsWithoutUnusedCopies )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  std::vector< Coordinates > coordinates;
+  Connectivity pointIds, cellIds;
+  std::vector< Cell > cells;
+  std::array< Connectivity, 2 > const sideFaces{ Connectivity{ 1, 2, 6, 5 }, Connectivity{ 0, 3, 7, 4 } };
+  for( int side = 0; side < 2; ++side )
+  {
+    auto cube = testMeshes::referenceCell( VTK_HEXAHEDRON, 0 );
+    vtkIdType const offset = coordinates.size();
+    for( std::size_t p = 0; p < cube.xyz.size(); ++p )
+    {
+      cube.xyz[p][0] += side;
+      cube.xyz[p][1] += 2 * rank;
+      coordinates.push_back( cube.xyz[p] );
+      pointIds.push_back( sparseBase + 100 * rank + 10 * side + p );
+    }
+    for( auto & point : cube.cell.points ) point += offset;
+    cells.push_back( cube.cell );
+    cellIds.push_back( sparseBase + 10000 + 2 * rank + side );
+  }
+  auto volume = makeGrid( coordinates, pointIds, cells, cellIds );
+  std::vector< Coordinates > surfaceCoordinates;
+  Connectivity surfacePointIds;
+  vtkNew< vtkIdTypeArray > buckets;
+  buckets->SetName( "collocated_nodes" );
+  buckets->SetNumberOfComponents( 2 );
+  for( int p = 0; p < 4; ++p )
+  {
+    surfaceCoordinates.push_back( coordinates[sideFaces[0][p]] );
+    surfacePointIds.push_back( sparseBase + 20000 + 4 * rank + p );
+    vtkIdType const bucket[2] = { pointIds[sideFaces[0][p]], pointIds[8 + sideFaces[1][p]] };
+    buckets->InsertNextTypedTuple( bucket );
+  }
+  auto surface = makeGrid( surfaceCoordinates, surfacePointIds, { { VTK_QUAD, { 0, 1, 2, 3 }, 0 } },
+                          { sparseBase + 30000 + rank } );
+  surface->GetPointData()->AddArray( buckets );
+  for( auto * grid : { volume.GetPointer(), surface.GetPointer() } )
+  {
+    vtkNew< vtkDoubleArray > selected, unused;
+    selected->SetName( "selected" );
+    selected->SetNumberOfTuples( grid->GetNumberOfCells() );
+    selected->FillValue( 7 + rank );
+    grid->GetCellData()->SetScalars( selected );
+    unused->SetName( "unusedWideField" );
+    unused->SetNumberOfComponents( 128 );
+    unused->SetNumberOfTuples( grid->GetNumberOfCells() );
+    unused->FillValue( 42 );
+    grid->GetCellData()->AddArray( unused );
+    vtkNew< vtkStringArray > strings;
+    strings->SetName( "unusedLabels" );
+    for( vtkIdType c = 0; c < grid->GetNumberOfCells(); ++c ) strings->InsertNextValue( "not imported" );
+    grid->GetCellData()->AddArray( strings );
+  }
+  UniformRefinementOptions options;
+  options.requiredPointArrays.emplace();
+  options.requiredCellArrays = std::set< std::string >{ "selected", "attribute" };
+  options.requiredFaceBlockCellArrays = std::set< std::string >{ "selected" };
+  AllMeshes zero( volume, { { "fault", surface } } );
+  EXPECT_NO_THROW( refineUniformly( zero, 0, options, MPI_COMM_GEOS ) );
+  EXPECT_EQ( zero.getMainMesh().GetPointer(), volume.GetPointer() );
+  EXPECT_EQ( zero.getFaceBlocks().at( "fault" ).GetPointer(), surface.GetPointer() );
+  EXPECT_NE( volume->GetCellData()->GetArray( "unusedWideField" ), nullptr );
+  EXPECT_NE( surface->GetCellData()->GetAbstractArray( "unusedLabels" ), nullptr );
+  AllMeshes meshes( volume, { { "fault", surface } } );
+  UniformRefinementResult result;
+  ASSERT_NO_THROW( result = refineUniformly( meshes, 2, options, MPI_COMM_GEOS ) );
+  ASSERT_EQ( result.resources.size(), 2 );
+  // Main children retain one double plus an integer region label; surfaces
+  // retain one double. The 128-component unused field contributes no growth.
+  EXPECT_EQ( result.resources[0].fieldBytesUpperBound, 16 * 12 + 4 * 8 );
+  EXPECT_EQ( result.resources[1].fieldBytesUpperBound, 128 * 12 + 16 * 8 );
+  EXPECT_EQ( meshes.getMainMesh()->GetNumberOfCells(), 128 );
+  EXPECT_EQ( meshes.getFaceBlocks().at( "fault" )->GetNumberOfCells(), 16 );
+  EXPECT_NE( meshes.getMainMesh()->GetCellData()->GetArray( "attribute" ), nullptr );
+  EXPECT_EQ( meshes.getFaceBlocks().at( "fault" )->GetCellData()->GetArray( "attribute" ), nullptr );
+  for( auto const & grid : { meshes.getMainMesh(), meshes.getFaceBlocks().at( "fault" ) } )
+  {
+    EXPECT_EQ( grid->GetCellData()->GetArray( "unusedWideField" ), nullptr );
+    EXPECT_EQ( grid->GetCellData()->GetAbstractArray( "unusedLabels" ), nullptr );
+    auto * selected = vtkDoubleArray::SafeDownCast( grid->GetCellData()->GetScalars() );
+    ASSERT_NE( selected, nullptr );
+    EXPECT_EQ( selected->GetNumberOfTuples(), grid->GetNumberOfCells() );
+    for( vtkIdType c = 0; c < grid->GetNumberOfCells(); ++c ) EXPECT_DOUBLE_EQ( selected->GetValue( c ), 7 + rank );
+  }
+}
+
+TEST( VTKUniformRefinement, CoarseSchemaMismatchFailsBeforeValuesOnlyFineTransfer )
+{
+  int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
+  if( size == 1 )
+  {
+    GTEST_SKIP() << "Requires a shared coarse interface";
+  }
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  auto input = localCube( rank, false );
+  if( rank == size - 1 )
+  {
+    input->GetPointData()->GetScalars()->SetComponentName( 0, "different meaning" );
+  }
+  AllMeshes meshes( input, {} );
+  EXPECT_THROW( refineUniformly( meshes, 2, {}, MPI_COMM_GEOS ), std::runtime_error );
+  EXPECT_EQ( meshes.getMainMesh().GetPointer(), input.GetPointer() );
+  EXPECT_EQ( input->GetNumberOfCells(), 1 );
+}
+
 TEST( VTKUniformRefinement, EverySupportedEncodingThroughThreeLevels )
 {
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
@@ -409,7 +730,7 @@ TEST( VTKUniformRefinement, EverySupportedEncodingThroughThreeLevels )
   }
 }
 
-TEST( VTKUniformRefinement, FlattenedConnectivityOverflowFailsBeforeFineAllocation )
+TEST( VTKUniformRefinement, ConservativeConnectivityBoundFailsBeforeFineAllocation )
 {
   if( sizeof( localIndex ) != 4 )
   {
@@ -418,12 +739,69 @@ TEST( VTKUniformRefinement, FlattenedConnectivityOverflowFailsBeforeFineAllocati
   auto input = localCube( MpiWrapper::commRank( MPI_COMM_GEOS ), false );
   AllMeshes meshes( input, {} );
   // One hex would have 134,217,728 children at level nine. Its cell count
-  // fits int32; flattened face connectivity does not. No huge array is needed
-  // to validate this preflight and its collective failure path.
+  // fits int32; the conservative face-node incidence bound does not. Exact
+  // unique connectivity can be smaller. No huge array is needed to exercise
+  // this preflight bound and its collective failure path.
   EXPECT_THROW( refineUniformly( meshes, 9, {}, MPI_COMM_GEOS ), std::runtime_error );
   EXPECT_EQ( meshes.getMainMesh().GetPointer(), input.GetPointer() );
   EXPECT_EQ( input->GetNumberOfCells(), 1 );
   EXPECT_EQ( input->GetNumberOfPoints(), 8 );
+}
+
+TEST( VTKUniformRefinement, PhysicalTransformIsValidatedWithoutChangingVtkCoordinates )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  auto input = localCube( rank, false );
+  AllMeshes meshes( input, {} );
+  refineUniformly( meshes, 1, {}, MPI_COMM_GEOS );
+  auto output = meshes.getMainMesh();
+  Coordinates original{};
+  output->GetPoint( 0, original.data() );
+  EXPECT_NO_THROW( validateRefinedTransform( *output, { 2000, -4, 9 }, { .1, 2, 3 }, MPI_COMM_GEOS ) );
+  EXPECT_NO_THROW( validateRefinedTransform( *output, {}, { -1, -1, 1 }, MPI_COMM_GEOS ) );
+  EXPECT_THROW( validateRefinedTransform( *output, {}, { -1, 1, 1 }, MPI_COMM_GEOS ), std::runtime_error );
+  EXPECT_THROW( validateRefinedTransform( *output, { 1e30, 1e30, 1e30 }, { 1, 1, 1 }, MPI_COMM_GEOS ), std::runtime_error );
+  Coordinates after{};
+  output->GetPoint( 0, after.data() );
+  EXPECT_EQ( original, after );
+}
+
+TEST( VTKUniformRefinement, SharedCoordinatesUseTheMeshExtent )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS ), size = MpiWrapper::commSize( MPI_COMM_GEOS );
+  auto input = localCube( rank, false );
+  for( vtkIdType p = 0; p < input->GetNumberOfPoints(); ++p )
+  {
+    Coordinates xyz{};
+    input->GetPoint( p, xyz.data() );
+    for( double & x : xyz )
+    {
+      x *= 1e-15;
+    }
+    input->GetPoints()->SetPoint( p, xyz.data() );
+  }
+  AllMeshes meshes( input, {} );
+  EXPECT_NO_THROW( refineUniformly( meshes, 2, {}, MPI_COMM_GEOS ) );
+  if( size > 1 )
+  {
+    // A unit-scale tolerance would silently accept a 0.1% mismatch on
+    // this mesh. The rank-one cell remains valid but its shared vertices
+    // must disagree collectively before replacing any input dataset.
+    if( rank == 1 )
+    {
+      for( vtkIdType p = 0; p < input->GetNumberOfPoints(); ++p )
+      {
+        Coordinates xyz{};
+        input->GetPoint( p, xyz.data() );
+        xyz[1] += 1e-18;
+        input->GetPoints()->SetPoint( p, xyz.data() );
+      }
+    }
+    AllMeshes invalid( input, {} );
+    EXPECT_THROW( refineUniformly( invalid, 1, {}, MPI_COMM_GEOS ), std::runtime_error );
+    EXPECT_EQ( invalid.getMainMesh().GetPointer(), input.GetPointer() );
+    EXPECT_EQ( input->GetNumberOfCells(), 1 );
+  }
 }
 
 int main( int argc, char ** argv )

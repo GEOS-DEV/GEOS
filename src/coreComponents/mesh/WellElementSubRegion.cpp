@@ -15,6 +15,7 @@
 
 #include "WellElementSubRegion.hpp"
 
+#include "dataRepository/ConduitRestart.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -42,6 +43,20 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::wellNodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::nextWellElementIndexString(), &m_nextWellElementIndex );
+  // Older checkpoints used localIndex for this global-ID array. Widen that
+  // one stored field before the normal typed restart reader checks byte sizes.
+  string const savedNext = string( viewKeyStruct::nextWellElementIndexGlobalString() ) + "/__values__";
+  if( getConduitNode().has_path( savedNext ) )
+  {
+    conduit::Node & values = getConduitNode().fetch_existing( savedNext );
+    if( values.dtype().is_signed_integer() &&
+        values.dtype().element_bytes() < static_cast< conduit::index_t >( sizeof( globalIndex ) ) )
+    {
+      conduit::Node widened;
+      values.to_data_type( dataRepository::conduitTypeInfo< globalIndex >::id, widened );
+      values.set( widened );
+    }
+  }
   registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString(), &m_nextWellElementIndexGlobal );
   registerWrapper( viewKeyStruct::topWellElementIndexString(), &m_topWellElementIndex );
   registerWrapper( viewKeyStruct::topRankString(), &m_topRank );

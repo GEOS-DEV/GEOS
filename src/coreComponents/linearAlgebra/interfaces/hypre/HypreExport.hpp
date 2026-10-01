@@ -21,6 +21,7 @@
 #define GEOS_LINEARALGEBRA_INTERFACES_HYPREEXPORT_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {

@@ -17,6 +17,7 @@
 #define GEOS_MESH_MPICOMMUNICATIONS_MPI_ICOMMDATA_HPP_
 
 #include "CommID.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include "mesh/FieldIdentifiers.hpp"
 

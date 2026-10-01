@@ -296,14 +296,18 @@ vtkSmartPointer< vtkCellData > transferCellData( vtkCellData & input, vtkIdType 
   for( std::size_t i = 0; i < parents.size(); ++i )
     if( parents[i] < 0 || parents[i] >= parentCount || !std::isfinite( fractions[i] ) || fractions[i] <= 0 || fractions[i] > 1 )
       throw std::invalid_argument( "Invalid refinement cell parent or measured fraction" );
-  std::map< vtkIdType, long double > sums;
+  // Parent indices are dense and range-checked above. Accumulate in linear
+  // time without allocating a tree node for every parent.
+  std::vector< long double > sums( parentCount, 0 );
   for( std::size_t i = 0; i < parents.size(); ++i )
     sums[parents[i]] += fractions[i];
-  if( sums.size() != static_cast< std::size_t >( parentCount ) )
-    throw std::invalid_argument( "Refinement cell transfer omits an active parent" );
-  for( auto const & sum : sums )
-    if( std::abs( sum.second - 1 ) > 1e-10L )
+  for( long double sum : sums )
+  {
+    if( sum <= 0 )
+      throw std::invalid_argument( "Refinement cell transfer omits an active parent" );
+    if( std::abs( sum - 1 ) > 1e-10L )
       throw std::invalid_argument( "Refinement measured child fractions do not sum to one" );
+  }
   auto output = allocate( input, parents.size(), policies.excludedCellArrays );
   for( std::size_t i = 0; i < parents.size(); ++i )
     output->CopyData( &input, parents[i], i );
@@ -347,11 +351,11 @@ PointFieldLayout::PointFieldLayout( vtkPointData & data ) : m_data( &data )
   }
 }
 
-std::vector< unsigned char > PointFieldLayout::pack( vtkIdType point ) const
+std::vector< unsigned char > PointFieldLayout::pack( vtkIdType point, FieldTupleFormat format ) const
 {
   if( point < 0 || ( !m_arrays.empty() && point >= m_data->GetNumberOfTuples() ) )
     throw std::invalid_argument( "Refinement point-field tuple outside array" );
-  Bytes bytes = m_schema;
+  Bytes bytes = format == FieldTupleFormat::schemaAndValues ? m_schema : Bytes{};
   PackTuple worker{ point, bytes };
   for( auto * array : m_arrays )
     if( !vtkArrayDispatch::Dispatch::Execute( array, worker ) )
@@ -359,11 +363,12 @@ std::vector< unsigned char > PointFieldLayout::pack( vtkIdType point ) const
   return bytes;
 }
 
-void PointFieldLayout::install( vtkIdType point, std::vector< unsigned char > const & tuple ) const
+void PointFieldLayout::install( vtkIdType point, std::vector< unsigned char > const & tuple, FieldTupleFormat format ) const
 {
   if( point < 0 || ( !m_arrays.empty() && point >= m_data->GetNumberOfTuples() ) )
     throw std::invalid_argument( "Refinement point-field tuple outside array" );
-  std::size_t expected = m_schema.size();
+  std::size_t const schemaSize = format == FieldTupleFormat::schemaAndValues ? m_schema.size() : 0;
+  std::size_t expected = schemaSize;
   for( auto * array : m_arrays )
   {
     std::size_t const width = static_cast< std::size_t >( array->GetDataTypeSize() ) * array->GetNumberOfComponents();
@@ -371,9 +376,9 @@ void PointFieldLayout::install( vtkIdType point, std::vector< unsigned char > co
       throw std::overflow_error( "Refinement point tuple length overflow" );
     expected += width;
   }
-  if( tuple.size() != expected || !std::equal( m_schema.begin(), m_schema.end(), tuple.begin() ) )
+  if( tuple.size() != expected || ( schemaSize && !std::equal( m_schema.begin(), m_schema.end(), tuple.begin() ) ) )
     throw std::invalid_argument( "Refinement point-field schema or tuple length mismatch" );
-  std::size_t cursor = m_schema.size();
+  std::size_t cursor = schemaSize;
   InstallTuple worker{ point, tuple, cursor };
   for( auto * array : m_arrays )
     if( !vtkArrayDispatch::Dispatch::Execute( array, worker ) )
@@ -412,11 +417,11 @@ CellFieldLayout::CellFieldLayout( vtkCellData & data ) : m_data( &data )
   }
 }
 
-std::vector< unsigned char > CellFieldLayout::pack( vtkIdType cell ) const
+std::vector< unsigned char > CellFieldLayout::pack( vtkIdType cell, FieldTupleFormat format ) const
 {
   if( cell < 0 || ( !m_arrays.empty() && cell >= m_data->GetNumberOfTuples() ) )
     throw std::invalid_argument( "Refinement cell tuple outside array" );
-  Bytes bytes = m_schema;
+  Bytes bytes = format == FieldTupleFormat::schemaAndValues ? m_schema : Bytes{};
   for( auto * array : m_arrays )
   {
     if( auto * strings = vtkStringArray::SafeDownCast( array ) )
@@ -439,11 +444,12 @@ std::vector< unsigned char > CellFieldLayout::pack( vtkIdType cell ) const
   return bytes;
 }
 
-void CellFieldLayout::install( vtkIdType cell, std::vector< unsigned char > const & tuple ) const
+void CellFieldLayout::install( vtkIdType cell, std::vector< unsigned char > const & tuple, FieldTupleFormat format ) const
 {
   if( cell < 0 || ( !m_arrays.empty() && cell >= m_data->GetNumberOfTuples() ) )
     throw std::invalid_argument( "Refinement cell tuple outside array" );
-  if( tuple.size() < m_schema.size() || !std::equal( m_schema.begin(), m_schema.end(), tuple.begin() ) )
+  std::size_t const schemaSize = format == FieldTupleFormat::schemaAndValues ? m_schema.size() : 0;
+  if( tuple.size() < schemaSize || ( schemaSize && !std::equal( m_schema.begin(), m_schema.end(), tuple.begin() ) ) )
     throw std::invalid_argument( "Refinement cell-field schema mismatch" );
   auto length = [&]( std::size_t & cursor )
   {
@@ -457,7 +463,7 @@ void CellFieldLayout::install( vtkIdType cell, std::vector< unsigned char > cons
     return static_cast< std::size_t >( value );
   };
   // Validate every length before changing any tuple, including variable strings.
-  std::size_t cursor = m_schema.size();
+  std::size_t cursor = schemaSize;
   for( auto * array : m_arrays )
   {
     if( vtkStringArray::SafeDownCast( array ) )
@@ -480,7 +486,7 @@ void CellFieldLayout::install( vtkIdType cell, std::vector< unsigned char > cons
   }
   if( cursor != tuple.size() )
     throw std::invalid_argument( "Trailing refinement cell tuple bytes" );
-  cursor = m_schema.size();
+  cursor = schemaSize;
   for( auto * array : m_arrays )
     if( auto * strings = vtkStringArray::SafeDownCast( array ) )
       for( int c = 0; c < array->GetNumberOfComponents(); ++c )

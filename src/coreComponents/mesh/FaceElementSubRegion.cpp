@@ -1143,9 +1143,13 @@ std::set< std::set< globalIndex > > FaceElementSubRegion::getCollocatedNodes() c
 }
 
 void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
-                                        ElementRegionManager const & elemManager )
+                                        ElementRegionManager const & elemManager,
+                                        bool const refinedTopology )
 {
   arrayView2d< localIndex > const & elems2dToFaces = faceList().toView();
+  arrayView2d< localIndex > const elems2dToRegions = m_2dElemToElems.m_toElementRegion.toView();
+  arrayView2d< localIndex > const elems2dToSubRegions = m_2dElemToElems.m_toElementSubRegion.toView();
+  arrayView2d< localIndex > const elems2dToCells = m_2dElemToElems.m_toElementIndex.toView();
   arrayView2d< localIndex const > const & faceToElementRegionIndex    = faceManager.elementRegionList();
   arrayView2d< localIndex const > const & faceToElementSubRegionIndex = faceManager.elementSubRegionList();
   arrayView2d< localIndex const > const & faceToElementIndex          = faceManager.elementList();
@@ -1174,6 +1178,12 @@ void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
       if( globalIndexElem0 > globalIndexElem1 )
       {
         std::swap( f0, f1 );
+        if( refinedTopology )
+        {
+          std::swap( elems2dToRegions[kfe][0], elems2dToRegions[kfe][1] );
+          std::swap( elems2dToSubRegions[kfe][0], elems2dToSubRegions[kfe][1] );
+          std::swap( elems2dToCells[kfe][0], elems2dToCells[kfe][1] );
+        }
       }
     }
   } );
@@ -1259,7 +1269,8 @@ void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager
 }
 
 void FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0( FaceManager & faceManager,
-                                                             NodeManager const & nodeManager )
+                                                             NodeManager const & nodeManager,
+                                                             bool const refinedTopology )
 {
   arrayView2d< localIndex const > const elems2dToFaces = faceList().toViewConst();
   FaceManager::NodeMapType & faceToNodes = faceManager.nodeList();
@@ -1365,6 +1376,9 @@ void FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0( FaceManager & faceM
       faceToNodes( kf1, a ) = reorderedKf1[a];
     }
   } );
+  // Face order, winding and paired-node order can all change after ghosting.
+  // Keep the face element's two node halves aligned with those final faces.
+  if( refinedTopology ) fixNodesOrder( elems2dToFaces, faceToNodes.base().toViewConst(), m_toNodesRelation.base() );
 }
 
 } /* namespace geos */

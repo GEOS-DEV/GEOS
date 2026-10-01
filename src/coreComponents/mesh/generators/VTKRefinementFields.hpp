@@ -55,16 +55,27 @@ vtkSmartPointer< vtkPointData > transferPointData( vtkPointData & input, PointRe
 vtkSmartPointer< vtkCellData > transferCellData( vtkCellData & input, vtkIdType parentCount, Connectivity const & parents,
                                                  std::vector< double > const & fractions, TransferPolicies const & policies );
 
+/** Values-only records require an already agreed, unchanged field layout.
+ * The controller establishes this agreement on coarse shared vertices/surface
+ * replicas before inheriting their participants and layouts at finer levels.
+ */
+enum class FieldTupleFormat
+{
+  schemaAndValues,
+  valuesOnly
+};
+
 /** Canonical typed tuples for authoritative shared-point records.
- * Full array schema, component names, and active roles are checked on install.
+ * The default format checks full schema, component names and active roles.
  * Integral values never pass through VTK's double-valued tuple interface.
  */
 class PointFieldLayout
 {
 public:
   explicit PointFieldLayout( vtkPointData & data );
-  std::vector< unsigned char > pack( vtkIdType point ) const;
-  void install( vtkIdType point, std::vector< unsigned char > const & tuple ) const;
+  std::vector< unsigned char > pack( vtkIdType point, FieldTupleFormat format = FieldTupleFormat::schemaAndValues ) const;
+  void install( vtkIdType point, std::vector< unsigned char > const & tuple,
+                FieldTupleFormat format = FieldTupleFormat::schemaAndValues ) const;
 
 private:
   vtkSmartPointer< vtkPointData > m_data;
@@ -79,8 +90,9 @@ class CellFieldLayout
 {
 public:
   explicit CellFieldLayout( vtkCellData & data );
-  std::vector< unsigned char > pack( vtkIdType cell ) const;
-  void install( vtkIdType cell, std::vector< unsigned char > const & tuple ) const;
+  std::vector< unsigned char > pack( vtkIdType cell, FieldTupleFormat format = FieldTupleFormat::schemaAndValues ) const;
+  void install( vtkIdType cell, std::vector< unsigned char > const & tuple,
+                FieldTupleFormat format = FieldTupleFormat::schemaAndValues ) const;
 private:
   vtkSmartPointer< vtkCellData > m_data;
   std::vector< vtkAbstractArray * > m_arrays;

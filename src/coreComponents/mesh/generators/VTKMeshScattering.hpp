@@ -65,6 +65,9 @@ computeCellRanks( ScatterMethod method,
                   arrayView1d< integer const > cartesianPartitions,
                   integer numRanks );
 
+/** @brief Conservative block fallback for a coarse mesh, including distributed input. */
+vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm );
+
 /**
  * @brief Ship cells from rank 0 to the ranks specified by @p assignment via a binary-tree exchange.
  *
@@ -82,14 +85,14 @@ scatterByRankAssignment( vtkUnstructuredGrid * inputMesh,
                          MPI_Comm comm );
 
 /**
- * @brief Scatter a mesh held entirely on rank 0 to all MPI ranks.
+ * @brief Scatter a coarse mesh to all MPI ranks.
  *
  * The mesh is first partitioned on rank 0 using the selected method, producing
  * a cell to rank assignment vector. The data is then distributed via a binary-tree
  * scatter pattern.
  *
  * @param[in] method     the partitioning strategy to use
- * @param[in] mesh       the input mesh (must contain all cells on rank 0; empty on other ranks)
+ * @param[in] mesh       the input mesh (kdtree accepts distributed input; custom methods require all cells on rank 0)
  * @param[in] cartesianPartitions additional parameters for the cartesian partitioning method:
  *                        - For @p cartesian: must contain at least 3 values (nx, ny, nz)
  *                          with nx*ny*nz == MPI size.

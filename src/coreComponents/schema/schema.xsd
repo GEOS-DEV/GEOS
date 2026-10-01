@@ -2089,7 +2089,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="nodesetNames" type="groupNameRef_array" default="{}" />
 		<!--partitionFractureWeight => Additional weight to fracture-connected super-cells during partitioning-->
 		<xsd:attribute name="partitionFractureWeight" type="integer" default="0" />
-		<!--partitionMethod => Method (library) used to partition the mesh-->
+		<!--partitionMethod => Method (library) used to refine mesh partitioning-->
 		<xsd:attribute name="partitionMethod" type="geos_vtk_PartitionMethod" default="parmetis" />
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
@@ -2097,6 +2097,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="regionAttribute" type="groupNameRef" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--scatterMethod => Method for initial mesh scatter from rank 0 to all ranks: contiguous (cell ID ranges, no geometry), cartesian (regular grid using -x/-y/-z partitions), rcb (recursive coordinate bisection), kdtree (VTK built-in kd-tree, default; uses legacy Morton super-cell ordering when fractures are present)-->
+		<xsd:attribute name="scatterMethod" type="geos_vtk_ScatterMethod" default="kdtree" />
 		<!--structuredIndexAttribute => Name of the VTK cell attribute containing structured cell index (e.g. Cartesian IJK)-->
 		<xsd:attribute name="structuredIndexAttribute" type="string" default="" />
 		<!--surfacicFieldsInGEOS => Names of the surfacic fields in GEOS to import into-->
@@ -2105,6 +2107,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="surfacicFieldsToImport" type="groupNameRef_array" default="{}" />
 		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
 		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
+		<!--uniformRefinement => Nonnegative number of uniform mesh refinement levels, performed after coarse partitioning-->
+		<xsd:attribute name="uniformRefinement" type="integer" default="0" />
 		<!--useGlobalIds => Controls the use of global IDs in the input file for cells and points. If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise. If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated. If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available-->
 		<xsd:attribute name="useGlobalIds" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2113,6 +2117,11 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:simpleType name="geos_vtk_PartitionMethod">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|parmetis|ptscotch" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_vtk_ScatterMethod">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|contiguous|cartesian|rcb|kdtree" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="NumericalMethodsType">
@@ -8830,6 +8839,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--solventMassFraction => Mass fraction of solvent in the solution [-]. Species molality [mol/kg solvent] times this fraction is the amount per kg of solution, and times the fluid density the amount per m^3 of solution. The default of 1 is a dilute aqueous solution.-->
+		<xsd:attribute name="solventMassFraction" type="real64" default="1" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
 		<!--viscosityModelType => Type of viscosity model. Valid options:
@@ -8922,6 +8933,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referenceTemperature" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--solventMassFraction => Mass fraction of solvent in the solution [-]. Species molality [mol/kg solvent] times this fraction is the amount per kg of solution, and times the fluid density the amount per m^3 of solution. The default of 1 is a dilute aqueous solution.-->
+		<xsd:attribute name="solventMassFraction" type="real64" default="1" />
 		<!--specificHeatCapacity => Fluid heat capacity. Unit: J/kg/K-->
 		<xsd:attribute name="specificHeatCapacity" type="real64" default="0" />
 		<!--temperatureViscosityCoefficient => Fluid viscosity thermal expansion coefficient at the reference temperature. Unit: 1/K-->

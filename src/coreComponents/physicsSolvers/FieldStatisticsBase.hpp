@@ -20,6 +20,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_
 
+#include "common/MpiWrapper.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -112,7 +113,7 @@ protected:
         makeDirsForPath( m_outputDir );
       }
       // wait till the dir is created by rank 0
-      MPI_Barrier( MPI_COMM_WORLD );
+      MpiWrapper::barrier( MPI_COMM_WORLD );
     }
   }
 

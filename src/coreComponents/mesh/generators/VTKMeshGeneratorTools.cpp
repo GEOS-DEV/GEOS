@@ -21,15 +21,117 @@
 
 #include "LvArray/src/system.hpp"
 
+#include <vtkBoundingBox.h>
 #include <vtkAppendFilter.h>
+#include <vtkCellData.h>
+#include <vtkIdTypeArray.h>
+#include <vtkPointData.h>
+#include <vtkVariant.h>
+#include <vtkVersionMacros.h>
+#include <algorithm>
+#include <stdexcept>
+#include <unordered_map>
+#ifdef GEOS_USE_MPI
 #include <vtkDIYGhostUtilities.h>
 #include <vtkDIYUtilities.h>
+#endif
 
-// NOTE: do NOT include anything from GEOS here.
+// Do not include GEOS headers that transitively include Format.hpp here.
 // See full explanation in VTKMeshGeneratorTools.hpp.
 
 namespace geos::vtk
 {
+
+vtkSmartPointer< vtkUnstructuredGrid >
+appendMeshParts( stdVector< vtkUnstructuredGrid * > const & meshes )
+{
+  stdVector< vtkSmartPointer< vtkUnstructuredGrid > > inputs;
+  for( auto * mesh : meshes )
+  {
+    if( !mesh ) continue;
+    vtkSmartPointer< vtkUnstructuredGrid > input = mesh;
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+    input = vtkSmartPointer< vtkUnstructuredGrid >::New();
+    input->ShallowCopy( mesh );
+    // DIY deserialization can change an ID array's concrete class. VTK's
+    // append filter recognizes only vtkIdTypeArray for topological merging.
+    for( vtkDataSetAttributes * attributes : { static_cast< vtkDataSetAttributes * >( input->GetPointData() ),
+                                             static_cast< vtkDataSetAttributes * >( input->GetCellData() ) } )
+    {
+      auto * original = attributes->GetGlobalIds();
+      if( !original || vtkIdTypeArray::SafeDownCast( original ) ) continue;
+      auto ids = vtkSmartPointer< vtkIdTypeArray >::New();
+      ids->SetName( original->GetName() );
+      ids->SetComponentName( 0, original->GetComponentName( 0 ) );
+      ids->SetNumberOfValues( original->GetNumberOfTuples() );
+      for( vtkIdType i = 0; i < original->GetNumberOfTuples(); ++i ) ids->SetValue( i, original->GetVariantValue( i ).ToLongLong() );
+      attributes->SetGlobalIds( ids );
+    }
+#endif
+    inputs.emplace_back( std::move( input ) );
+  }
+  vtkNew< vtkAppendFilter > appender;
+  appender->MergePointsOn();
+  for( auto const & input : inputs ) appender->AddInputDataObject( input );
+  appender->Update();
+  vtkSmartPointer< vtkUnstructuredGrid > result = appender->GetOutput();
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+  // A single nonempty grid is shallow-copied by VTK without tuple conversion.
+  // Keep that path free of additional ID maps and writes to shared arrays.
+  if( std::count_if( inputs.begin(), inputs.end(), []( auto const & input )
+      { return input->GetNumberOfPoints() > 0 || input->GetNumberOfCells() > 0; } ) <= 1 ) return result;
+  // VTK 9.7's CopyTuple fallback copies vtkIdTypeArray through double when
+  // appending multiple inputs. Recopy these arrays with typed access, using
+  // the filter's first-occurrence point order and concatenated cell order.
+  bool const allPointIds = std::all_of( inputs.begin(), inputs.end(), []( auto const & input )
+  { return input->GetNumberOfPoints() == 0 || vtkIdTypeArray::SafeDownCast( input->GetPointData()->GetGlobalIds() ); } );
+  std::unordered_map< vtkIdType, vtkIdType > pointIndices;
+  if( allPointIds )
+  {
+    for( auto const & input : inputs )
+    {
+      auto * ids = vtkIdTypeArray::SafeDownCast( input->GetPointData()->GetGlobalIds() );
+      for( vtkIdType p = 0; p < input->GetNumberOfPoints(); ++p ) pointIndices.emplace( ids->GetValue( p ), pointIndices.size() );
+    }
+    if( pointIndices.size() != static_cast< std::size_t >( result->GetNumberOfPoints() ) )
+      throw std::runtime_error( "VTK append did not preserve the expected global-ID point topology" );
+  }
+  for( bool const points : { true, false } )
+  {
+    if( points && !allPointIds ) continue;
+    vtkDataSetAttributes * output = points ? static_cast< vtkDataSetAttributes * >( result->GetPointData() )
+                                          : static_cast< vtkDataSetAttributes * >( result->GetCellData() );
+    for( int a = 0; a < output->GetNumberOfArrays(); ++a )
+    {
+      auto * target = vtkIdTypeArray::SafeDownCast( output->GetAbstractArray( a ) );
+      if( !target ) continue;
+      vtkIdType offset = 0;
+      for( auto const & input : inputs )
+      {
+        vtkDataSetAttributes * source = points ? static_cast< vtkDataSetAttributes * >( input->GetPointData() )
+                                              : static_cast< vtkDataSetAttributes * >( input->GetCellData() );
+        auto * array = vtkIdTypeArray::SafeDownCast( target == output->GetGlobalIds() ? source->GetGlobalIds()
+                                                     : target->GetName() ? source->GetAbstractArray( target->GetName() ) : nullptr );
+        vtkIdType const count = points ? input->GetNumberOfPoints() : input->GetNumberOfCells();
+        if( array )
+        {
+          auto * ids = vtkIdTypeArray::SafeDownCast( input->GetPointData()->GetGlobalIds() );
+          for( vtkIdType i = 0; i < count; ++i )
+          {
+            vtkIdType const destination = points ? pointIndices.at( ids->GetValue( i ) ) : offset + i;
+            for( int c = 0; c < target->GetNumberOfComponents(); ++c ) target->SetTypedComponent( destination, c, array->GetTypedComponent( i, c ) );
+          }
+        }
+        offset += count;
+      }
+      target->Modified();
+    }
+  }
+#endif
+  return result;
+}
+
+#ifdef GEOS_USE_MPI
 
 vtkSmartPointer< vtkUnstructuredGrid >
 redistribute( vtkPartitionedDataSet & localParts,
@@ -147,36 +249,36 @@ redistribute( vtkPartitionedDataSet & localParts,
       {
         break;
       }
+      // vtkFieldData::GetArray() returns nullptr for vtkStringArray and other
+      // non-vtkDataArray objects. Empty-rank reconstruction uses CreateArray
+      // on the stored VTK type, so the scan must use GetAbstractArray().
       for( int c = 0; c < ug->GetCellData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetCellData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetCellData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::CELL } );
       }
       for( int c = 0; c < ug->GetPointData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetPointData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetPointData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::POINT } );
       }
       for( int c = 0; c < ug->GetFieldData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetFieldData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetFieldData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::FIELD } );
       }
     }
   }
 
-  vtkNew< vtkAppendFilter > appender;
-  appender->MergePointsOn();
+  stdVector< vtkUnstructuredGrid * > meshes;
   for( unsigned int i = 0; i < master.size(); ++i )
   {
     for( vtkUnstructuredGrid * ug: *master.block< BlockType >( i ) )
     {
-      appender->AddInputDataObject( ug );
+      meshes.emplace_back( ug );
     }
   }
-  appender->Update();
-
-  vtkUnstructuredGrid * result = vtkUnstructuredGrid::SafeDownCast( appender->GetOutputDataObject( 0 ) );
+  auto result = appendMeshParts( meshes );
   // Now we register back the field info.
   if( result->GetNumberOfCells() == 0 )
   {
@@ -269,5 +371,26 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
   }
   return boxes;
 }
+
+#else
+
+vtkSmartPointer< vtkUnstructuredGrid >
+redistribute( vtkPartitionedDataSet & localParts, MPI_Comm mpiComm )
+{
+  static_cast< void >( mpiComm );
+  assert( localParts.GetNumberOfPartitions() == 1 );
+  auto result = vtkSmartPointer< vtkUnstructuredGrid >::New();
+  if( auto * part = vtkUnstructuredGrid::SafeDownCast( localParts.GetPartition( 0 ) ) ) result->ShallowCopy( part );
+  return result;
+}
+
+stdVector< vtkBoundingBox >
+exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
+{
+  static_cast< void >( mpiComm );
+  return { vtkBoundingBox( dataSet.GetBounds() ) };
+}
+
+#endif
 
 } // namespace geos::vtk

@@ -19,7 +19,6 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
-#include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/ParMETISInterface.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
@@ -64,7 +63,7 @@ struct SuperCellInfo
  */
 SuperCellInfo tagCellsWithSuperCellIds(
   vtkSmartPointer< vtkUnstructuredGrid > cells3D,
-  stdMap< string, ArrayOfArrays< localIndex, int64_t > > const & fractureNeighbors,
+  stdMap< string, ArrayOfArrays< globalIndex, int64_t > > const & fractureNeighbors,
   integer fractureWeight );
 
 /**
@@ -87,7 +86,7 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
  *
  * @param cells3D              Input mesh (non-empty on rank 0 only)
  * @param comm                 MPI communicator
- * @param scatterMethod        Partitioning method. @c kdtree is rejected because it cannot preserve atomicity
+ * @param scatterMethod        Partitioning method. @c kdtree selects legacy Morton super-cell ordering
  * @param cartesianPartitions  {nx, ny, nz}, only used for @c cartesian.
  * @return Redistributed mesh with preserved SuperCellId array
  */

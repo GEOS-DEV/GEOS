@@ -34,9 +34,11 @@ HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, 
   if( m_mpioFapl )
   {
     m_faplId = H5Pcreate( H5P_FILE_ACCESS );
+#ifdef GEOS_USE_MPI
     H5Pset_fapl_mpio( m_faplId, m_comm, MPI_INFO_NULL );
     H5Pset_all_coll_metadata_ops( m_faplId, 1 );
     H5Pset_coll_metadata_write( m_faplId, 1 );
+#endif
     m_filename = fnm + ".hdf5";
   }
   else

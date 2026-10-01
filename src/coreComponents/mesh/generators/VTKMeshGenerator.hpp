@@ -103,7 +103,6 @@ public:
 
 protected:
   void postInputInitialization() override;
-  void postRestartInitialization() override;
 
 private:
 
@@ -169,7 +168,8 @@ private:
 
   /// Uniform h-refinement levels, after the complete coarse partition pipeline.
   integer m_uniformRefinement = 0;
-  integer m_requestedUniformRefinement = 0;
+  integer m_checkpointUniformRefinement = 0; ///< Zero also denotes a checkpoint predating this option.
+  bool m_loadedCheckpoint = false;
   std::vector< vtk::RefinementBlockDescriptor > m_refinedBlocks;
 
   /// Additional weight to fracture-connected super-cells during partitioning

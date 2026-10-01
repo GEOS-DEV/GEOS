@@ -194,19 +194,41 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
   GEOS_THROW_IF( nodeManager.maxGlobalIndex() == std::numeric_limits< globalIndex >::max(),
                  "No representable global node ID remains for well allocation", InputError, getDataContext() );
   globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
-  globalIndex localElementMaximum = -1;
-  forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+  globalIndex elemOffsetGlobal = MpiWrapper::sum( globalIndex{ getNumberOfElements() } );
+  if( !cellBlockManager.getSourceCellBlockDescendants().empty() )
   {
-    auto const ids = subRegion.localToGlobalMap().toViewConst();
-    for( localIndex i = 0; i < ids.size(); ++i ) localElementMaximum = std::max( localElementMaximum, ids[i] );
-  } );
-  globalIndex const elementMaximum = MpiWrapper::max( localElementMaximum );
-  GEOS_THROW_IF( elementMaximum == std::numeric_limits< globalIndex >::max(),
-                 "No representable global element ID remains for well allocation", InputError, getDataContext() );
-  globalIndex const elemOffsetGlobal = elementMaximum + 1;
+    // Positive refinement has disjoint cell/surface namespaces. Use their
+    // cached maxima without changing SurfaceGenerator's shared manager method.
+    globalIndex localMaximum = -1;
+    forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+    { localMaximum = std::max( localMaximum, subRegion.localMaxGlobalIndex() ); } );
+    globalIndex const maximum = MpiWrapper::max( localMaximum );
+    GEOS_THROW_IF( maximum == std::numeric_limits< globalIndex >::max(),
+                   "No representable global element ID remains for well allocation", InputError, getDataContext() );
+    elemOffsetGlobal = maximum + 1;
+  }
 
   globalIndex wellElemCount = 0;
   globalIndex wellNodeCount = 0;
+
+  // Each rank has the global line topology. Validate every well prefix before
+  // generating any well, including the last ID in each range and the counters.
+  auto checkRange = [&]( globalIndex offset, globalIndex & previous, globalIndex count, char const * kind )
+  {
+    globalIndex const limit = std::numeric_limits< globalIndex >::max();
+    GEOS_THROW_IF( count < 0 || previous > limit - offset || count > limit - previous ||
+                   ( count > 0 && count - 1 > limit - offset - previous ),
+                   GEOS_FMT( "Global well {} ID range exceeds storage", kind ), InputError, getDataContext() );
+    previous += count;
+  };
+  forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion )
+  {
+    LineBlockABC const & lineBlock = cellBlockManager.getLineBlock( wellRegion.getName() );
+    checkRange( nodeOffsetGlobal, wellNodeCount, lineBlock.numNodes(), "node" );
+    checkRange( elemOffsetGlobal, wellElemCount, lineBlock.numElements(), "element" );
+  } );
+  wellElemCount = 0;
+  wellNodeCount = 0;
 
   // construct the wells one by one
   forElementRegions< WellElementRegion >( [&]( WellElementRegion & wellRegion )

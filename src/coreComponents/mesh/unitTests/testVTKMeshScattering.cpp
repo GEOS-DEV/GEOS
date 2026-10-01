@@ -22,7 +22,15 @@
 #include "common/MpiWrapper.hpp"
 #include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/VTKSuperCellPartitioning.hpp"
+#include "mesh/generators/VTKUtilities.hpp"
 
+#include <vtkBitArray.h>
+#include <vtkStringArray.h>
+#include <vtkTypeInt64Array.h>
+#include <vtkDummyController.h>
+#include <vtkMultiProcessController.h>
+#include <vtkExtractCells.h>
+#include <vtkIdList.h>
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCellType.h>
@@ -30,10 +38,12 @@
 #include <vtkNew.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
+#include <vtkSOADataArrayTemplate.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkVersionMacros.h>
 
 #include <gtest/gtest.h>
+#include <set>
 
 using namespace geos;
 using namespace geos::vtk;
@@ -225,6 +235,201 @@ TEST_F( VTKMeshScatteringTest, CellConservation )
   }
 }
 
+TEST_F( VTKMeshScatteringTest, DoubleSoAPointsUseTypedTupleFallback )
+{
+  if( rank == 0 )
+  {
+    vtkNew< vtkSOADataArrayTemplate< double > > coordinates;
+    coordinates->SetNumberOfComponents( 3 );
+    coordinates->SetNumberOfTuples( mesh->GetNumberOfPoints() );
+    for( vtkIdType p = 0; p < mesh->GetNumberOfPoints(); ++p )
+    {
+      double point[3];
+      mesh->GetPoint( p, point );
+      for( int d = 0; d < 3; ++d ) coordinates->SetTypedComponent( p, d, point[d] );
+    }
+    vtkNew< vtkPoints > points;
+    points->SetData( coordinates );
+    mesh->SetPoints( points );
+  }
+  for( auto method : { ScatterMethod::contiguous, ScatterMethod::cartesian, ScatterMethod::rcb } )
+  {
+    auto result = scatter( method, *mesh, parts.toViewConst(), comm );
+    EXPECT_EQ( MpiWrapper::sum( result->GetNumberOfCells(), comm ), totalCells );
+    for( vtkIdType p = 0; p < result->GetNumberOfPoints(); ++p )
+    {
+      double point[3];
+      result->GetPoint( p, point );
+      for( int d = 0; d < 3; ++d )
+      {
+        EXPECT_NEAR( point[d], std::round( point[d] ), 1e-12 );
+        EXPECT_GE( point[d], 0 );
+        EXPECT_LE( point[d], 4 );
+      }
+    }
+  }
+}
+
+TEST_F( VTKMeshScatteringTest, BlockFallbackPreservesDistributedInput )
+{
+  // Feed the already distributed result back into the fallback; it must retain
+  // every input rank's cells instead of shipping only the root's portion.
+  auto root = scatterByBlock( *mesh, comm );
+  EXPECT_EQ( MpiWrapper::sum( root->GetNumberOfCells(), comm ), totalCells );
+  auto result = scatterByBlock( *root, comm );
+  EXPECT_EQ( MpiWrapper::sum( result->GetNumberOfCells(), comm ), totalCells );
+  EXPECT_GT( result->GetNumberOfCells(), 0 );
+}
+
+
+TEST_F( VTKMeshScatteringTest, StringsBitsFieldDataAndRolesSurviveCustomScatter )
+{
+  if( rank == 0 )
+  {
+    vtkNew< vtkStringArray > labels;
+    labels->SetName( "labels" );
+    labels->SetNumberOfComponents( 2 );
+    labels->SetComponentName( 0, "material label" );
+    labels->SetNumberOfTuples( totalCells );
+    vtkNew< vtkBitArray > flags;
+    flags->SetName( "flags" );
+    flags->SetNumberOfComponents( 2 );
+    flags->SetNumberOfTuples( totalCells );
+    vtkNew< vtkTypeInt64Array > wide;
+    wide->SetName( "wide" );
+    wide->SetNumberOfTuples( totalCells );
+    for( vtkIdType i = 0; i < totalCells; ++i )
+    {
+      labels->SetValue( 2*i, std::string( "a\0b", 3 ) + std::to_string( i ) );
+      labels->SetValue( 2*i+1, "other" + std::to_string( i ) );
+      flags->SetValue( 2*i, i % 2 );
+      flags->SetValue( 2*i+1, i % 3 == 0 );
+      wide->SetValue( i, INT64_C(9007199254741001) + i );
+    }
+    mesh->GetCellData()->AddArray( labels );
+    vtkNew< vtkStringArray > pedigree;
+    pedigree->SetName( "pedigree" );
+    for( vtkIdType i = 0; i < totalCells; ++i ) pedigree->InsertNextValue( std::to_string( i ) );
+    mesh->GetCellData()->SetPedigreeIds( pedigree );
+    mesh->GetCellData()->SetScalars( flags );
+    mesh->GetCellData()->AddArray( wide );
+    vtkNew< vtkStringArray > pointLabels;
+    pointLabels->SetName( "pointLabels" );
+    for( vtkIdType i = 0; i < totalPoints; ++i ) pointLabels->InsertNextValue( std::to_string( i ) );
+    mesh->GetPointData()->AddArray( pointLabels );
+    vtkNew< vtkStringArray > metadata;
+    metadata->SetName( "metadata" );
+    metadata->InsertNextValue( std::string( "field\0data", 10 ) );
+    mesh->GetFieldData()->AddArray( metadata );
+  }
+  // Exercise both the ordinary and fracture shipping paths with the same metadata.
+  if( rank == 0 )
+  {
+    vtkNew< vtkIdTypeArray > atoms;
+    atoms->SetName( "SuperCellId" );
+    for( vtkIdType i = 0; i < totalCells; ++i ) atoms->InsertNextValue( i / 2 );
+    mesh->GetCellData()->AddArray( atoms );
+  }
+  for( bool const fractures : { false, true } )
+  for( auto method : { ScatterMethod::contiguous, ScatterMethod::cartesian, ScatterMethod::rcb } )
+  {
+    vtkSmartPointer< vtkDataSet > result;
+    if( fractures ) result = redistributeBySuperCellBlocks( mesh, comm, method, parts.toViewConst() );
+    else result = scatter( method, *mesh, parts.toViewConst(), comm );
+    auto * labels = vtkStringArray::SafeDownCast( result->GetCellData()->GetAbstractArray( "labels" ) );
+    auto * flags = vtkBitArray::SafeDownCast( result->GetCellData()->GetArray( "flags" ) );
+    auto * wide = vtkTypeInt64Array::SafeDownCast( result->GetCellData()->GetArray( "wide" ) );
+    auto * ids = vtkIdTypeArray::SafeDownCast( result->GetCellData()->GetArray( "CellId" ) );
+    ASSERT_NE( labels, nullptr ); ASSERT_NE( flags, nullptr ); ASSERT_NE( wide, nullptr ); ASSERT_NE( ids, nullptr );
+    auto * pedigree = vtkStringArray::SafeDownCast( result->GetCellData()->GetPedigreeIds() );
+    ASSERT_NE( pedigree, nullptr );
+    EXPECT_STREQ( pedigree->GetName(), "pedigree" );
+    EXPECT_EQ( result->GetCellData()->GetScalars(), flags );
+    EXPECT_STREQ( labels->GetComponentName( 0 ), "material label" );
+    for( vtkIdType i = 0; i < result->GetNumberOfCells(); ++i )
+    {
+      auto const id = ids->GetValue( i );
+      EXPECT_EQ( pedigree->GetValue( i ), std::to_string( id ) );
+      EXPECT_EQ( labels->GetValue( 2*i ), std::string( "a\0b", 3 ) + std::to_string( id ) );
+      EXPECT_EQ( labels->GetValue( 2*i+1 ), "other" + std::to_string( id ) );
+      EXPECT_EQ( flags->GetValue( 2*i ), id % 2 );
+      EXPECT_EQ( flags->GetValue( 2*i+1 ), id % 3 == 0 );
+      EXPECT_EQ( wide->GetValue( i ), INT64_C(9007199254741001) + id );
+    }
+    auto * points = vtkStringArray::SafeDownCast( result->GetPointData()->GetAbstractArray( "pointLabels" ) );
+    auto * pointIds = vtkIdTypeArray::SafeDownCast( result->GetPointData()->GetArray( "PointId" ) );
+    ASSERT_NE( points, nullptr ); ASSERT_NE( pointIds, nullptr );
+    for( vtkIdType i = 0; i < result->GetNumberOfPoints(); ++i ) EXPECT_EQ( points->GetValue( i ), std::to_string( pointIds->GetValue( i ) ) );
+    auto * metadata = vtkStringArray::SafeDownCast( result->GetFieldData()->GetAbstractArray( "metadata" ) );
+    ASSERT_NE( metadata, nullptr );
+    EXPECT_EQ( metadata->GetValue( 0 ), std::string( "field\0data", 10 ) );
+  }
+}
+
+TEST_F( VTKMeshScatteringTest, KdtreeAcceptsDistributedInputAndRestoresController )
+{
+  auto full = buildTestMesh( MPI_COMM_SELF );
+  vtkNew< vtkIdList > selected;
+  // Two input pieces across four ranks; the other ranks start empty.
+  if( rank < 2 )
+    for( vtkIdType i = 32*rank; i < 32*(rank+1); ++i ) selected->InsertNextId( i );
+  vtkNew< vtkExtractCells > extract;
+  extract->SetInputData( full );
+  extract->SetCellList( selected );
+  extract->Update();
+  vtkSmartPointer< vtkMultiProcessController > previous = vtkMultiProcessController::GetGlobalController();
+  vtkNew< vtkDummyController > expected;
+  vtkMultiProcessController::SetGlobalController( expected );
+  auto result = scatterMesh( ScatterMethod::kdtree, *extract->GetOutput(), parts.toViewConst(), comm );
+  EXPECT_EQ( MpiWrapper::sum( result->GetNumberOfCells(), comm ), totalCells );
+  EXPECT_EQ( vtkMultiProcessController::GetGlobalController(), expected.GetPointer() );
+  EXPECT_EQ( vtkMultiProcessController::GetGlobalController()->GetNumberOfProcesses(), 1 );
+  vtkMultiProcessController::SetGlobalController( previous );
+}
+
+TEST_F( VTKMeshScatteringTest, Int64GlobalIdsSurviveSurfaceNeighborDistribution )
+{
+  vtkIdType const base = INT64_C(9007199254741001);
+  if( rank == 0 )
+  {
+    vtkIdType const boundary[4]{ 0, 1, 6, 5 };
+    mesh->InsertNextCell( VTK_QUAD, 4, boundary );
+    mesh->GetCellData()->Initialize();
+    mesh->GetPointData()->Initialize();
+    vtkNew< vtkTypeInt64Array > cells;
+    cells->SetName( "GlobalCellIds" );
+    for( vtkIdType i = 0; i <= totalCells; ++i ) cells->InsertNextValue( base + i );
+    mesh->GetCellData()->SetGlobalIds( cells );
+    vtkNew< vtkTypeInt64Array > points;
+    points->SetName( "GlobalPointIds" );
+    for( vtkIdType i = 0; i < totalPoints; ++i ) points->InsertNextValue( base + 1000 + i );
+    mesh->GetPointData()->SetGlobalIds( points );
+    // The XML reader promotes active IDs itself; this raw input exercises the
+    // importer with Int64 arrays whose actual class is not vtkIdTypeArray.
+    EXPECT_EQ( vtkIdTypeArray::SafeDownCast( mesh->GetCellData()->GetGlobalIds() ), nullptr );
+    EXPECT_EQ( vtkIdTypeArray::SafeDownCast( mesh->GetPointData()->GetGlobalIds() ), nullptr );
+  }
+  stdMap< string, vtkSmartPointer< vtkDataSet > > fractures;
+  auto distributed = redistributeMeshes( 0, mesh, fractures, comm, ScatterMethod::kdtree,
+                                        parts.toViewConst(), PartitionMethod::parmetis, 0, 0, 1, "" );
+  auto result = distributed.getMainMesh();
+  auto * cells = vtkIdTypeArray::SafeDownCast( result->GetCellData()->GetGlobalIds() );
+  auto * points = vtkIdTypeArray::SafeDownCast( result->GetPointData()->GetGlobalIds() );
+  ASSERT_NE( cells, nullptr );
+  ASSERT_NE( points, nullptr );
+  array1d< globalIndex > local( result->GetNumberOfCells() );
+  for( vtkIdType i = 0; i < result->GetNumberOfCells(); ++i ) local[i] = cells->GetValue( i );
+  array1d< globalIndex > global;
+  MpiWrapper::allGatherv( local.toViewConst(), global, comm );
+  EXPECT_EQ( global.size(), totalCells + 1 );
+  std::set< globalIndex > ids( global.begin(), global.end() );
+  for( vtkIdType i = 0; i <= totalCells; ++i ) EXPECT_EQ( ids.count( base + i ), 1 );
+  for( vtkIdType i = 0; i < result->GetNumberOfPoints(); ++i )
+  {
+    EXPECT_GE( points->GetValue( i ), base + 1000 );
+    EXPECT_LT( points->GetValue( i ), base + 1000 + totalPoints );
+  }
+}
 
 /// With 64 cells and 4 ranks, every rank must get exactly 16 cells.
 TEST_F( VTKMeshScatteringTest, LoadBalance )
@@ -341,6 +546,7 @@ TEST_F( VTKMeshScatteringTest, SuperCellAtomicity )
   }
 
   stdVector< ScatterMethod > const methods = {
+    ScatterMethod::kdtree,
     ScatterMethod::contiguous,
     ScatterMethod::cartesian,
     ScatterMethod::rcb
@@ -371,6 +577,14 @@ TEST_F( VTKMeshScatteringTest, SuperCellAtomicity )
       ASSERT_GE( s, 0 );
       ASSERT_LT( s, numSuperCells );
       ownership[s] = 1;
+      if( method == ScatterMethod::kdtree )
+      {
+        // Legacy Morton blocks on this regular grid split y and z first.
+        // RCB's x/y split gives different owners, so this pins the default.
+        vtkIdType const y = (s / 2) % 4;
+        vtkIdType const z = s / 8;
+        EXPECT_EQ( rank, ( y >= 2 ? 1 : 0 ) + ( z >= 2 ? 2 : 0 ) );
+      }
     }
 
     array1d< integer > totalOwners( numSuperCells );
@@ -386,10 +600,34 @@ TEST_F( VTKMeshScatteringTest, SuperCellAtomicity )
 }
 
 
-/// A VTK_POLYHEDRON cell is described by its connectivity *and* by a separate pair of face
-/// arrays. Both must survive the scatter: without the faces the receiving rank cannot rebuild
-/// the cells, and VTK either drops them silently or reinterprets the connectivity as a face
-/// stream and reads out of bounds.
+/// Empty rank repair must move whole atoms even when Cartesian or Morton bins are empty.
+TEST_F( VTKMeshScatteringTest, FractureScatterFillsEmptyRanksWithWholeSuperCells )
+{
+  if( rank == 0 )
+  {
+    vtkNew< vtkIdTypeArray > atoms;
+    atoms->SetName( "SuperCellId" );
+    for( vtkIdType i = 0; i < totalCells; ++i ) atoms->InsertNextValue( i % 6 );
+    mesh->GetCellData()->AddArray( atoms );
+  }
+  for( auto method : { ScatterMethod::kdtree, ScatterMethod::cartesian, ScatterMethod::rcb } )
+  {
+    auto result = redistributeBySuperCellBlocks( mesh, comm, method, parts.toViewConst() );
+    EXPECT_GT( result->GetNumberOfCells(), 0 );
+    EXPECT_EQ( MpiWrapper::sum( result->GetNumberOfCells(), comm ), totalCells );
+    auto * ids = vtkIdTypeArray::SafeDownCast( result->GetCellData()->GetArray( "SuperCellId" ) );
+    ASSERT_NE( ids, nullptr );
+    for( vtkIdType atom = 0; atom < 6; ++atom )
+    {
+      bool present = false;
+      for( vtkIdType i = 0; i < result->GetNumberOfCells(); ++i ) present |= ids->GetValue( i ) == atom;
+      auto const minimum = MpiWrapper::min( present ? rank : size, comm );
+      auto const maximum = MpiWrapper::max( present ? rank : -1, comm );
+      EXPECT_EQ( minimum, maximum ) << "An atomic super-cell was split";
+    }
+  }
+}
+
 TEST_F( VTKMeshScatteringTest, PolyhedronFacePreservation )
 {
   auto polyMesh = buildTestMesh( comm, true );

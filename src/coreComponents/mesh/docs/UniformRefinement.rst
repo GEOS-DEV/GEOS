@@ -58,6 +58,11 @@ produce four triangles; quads produce four quads; polygonal prism caps produce
 N quads. The surface and volume templates use the same edge and face points.
 Coincident points with distinct IDs retain their distinct topology.
 
+Coarse face validation diagnoses quad/triangle interfaces with shared corner
+IDs before child construction, as well as crossed cycles, nonmanifold faces
+and inconsistent outward orientations. It does not use coordinates to merge
+different topological entities.
+
 Choose numerical methods that support the generated child types. In particular,
 pyramid refinement introduces tetrahedra and prism refinement introduces hexes.
 
@@ -75,9 +80,15 @@ Ordinary cell values are intensive and copy from parent to child. Total quantiti
 require an explicit extensive transfer policy, which uses measured child-volume
 or child-area fractions. The internal transfer-policy API supplies that policy;
 there is no XML attribute for selecting extensive arrays in this interface.
-Floating point data on points uses the geometry's affine interpolation. Integral
-point labels require equal supporting values; differing labels cause an input
-error. Names, types, components and active VTK attribute roles are preserved.
+GEOS retains point arrays used by ``nodesetNames`` and handles global IDs and
+fracture metadata separately. Unused point labels, including string arrays and
+varying integer labels, do not enter interpolation. Ordinary imported fields
+come from cell data. Positive refinement retains the region attribute and arrays
+declared in ``fieldsToImport`` or ``surfacicFieldsToImport``; unused cell arrays
+are not copied into every child. The refinement API can explicitly select additional point
+arrays: floating point values use affine interpolation, while integral labels
+require equal supporting values. Names, types, components and active VTK
+attribute roles of retained arrays are preserved.
 
 For unsigned node-set masks named by ``nodesetNames``, a new point joins the set
 when every defining support corner is a member. Explicit surface marker labels
@@ -116,10 +127,33 @@ and supported fracture/partitioner combinations.
 
 Work and storage grow quickly with the level count. Hex and tetrahedron cell
 counts multiply by eight each level; pyramids have mixed descendants. Checked
-counts and ID ranges reject representational overflow. Sharing discovery and
+counts and ID ranges reject representational overflow. Connectivity preflight
+uses a conservative incidence bound, which can reject counts near the local
+index limit even when exact shared connectivity would fit. Sharing discovery and
 full-face validation operate on coarse topology once. Later levels retain shared
-interface metadata and use cached neighbors. The existing root memory for coarse
-input reading remains part of the baseline.
+interface metadata and use cached neighbors. Full field layouts are checked on
+coarse shared vertices and surface replicas; fine shared records carry typed
+values using the inherited layout. Fracture support-ID maps are built only when
+auxiliary blocks need them. The existing root memory for coarse input reading
+remains part of the baseline.
+
+Set ``logLevel="2"`` on ``VTKMesh`` to report growth forecasts before child
+construction and counts after each level. Reports include global owned volume
+cells, maximum/mean cells per rank, unique main points, shared point copies,
+and maximum-rank protocol payload bytes/messages. Fine-level records use cached
+neighbors and have zero directory exchanges. Protocol counters exclude scalar
+reductions, MPI-internal traffic and self-routed records; count-control bytes
+are separate from payload bytes.
+
+Forecasts bound point copies without assuming reuse between cells, retained
+point/cell field payloads and VTK array payloads. They also model parent plus
+child state, registries, plans, descriptors, exchange buffers and subsequent
+GEOS owned connectivity. The ghost-connectivity model conservatively assumes
+every other rank contributes its whole dataset. These byte models exclude
+allocator/runtime overhead and solver/material fields; they are not a physical
+memory limit or a prediction of process RSS. Representational checks apply even
+with reporting disabled. There is no fixed refinement-level cap or new XML
+memory budget; choose a workload using these estimates and measured peak RSS.
 
 See :ref:`uniform-refinement-scaling` for component measurements and the
 one-, two- and four-node Dane test workflow. Component timings do not measure

@@ -88,8 +88,8 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
-  const std::set< int > metisNeighborList = partition.getMetisNeighborList();
-  if( metisNeighborList.empty() )
+  std::set< int > const & metisNeighborList = partition.getMetisNeighborList();
+  if( !partition.hasMetisNeighborList() )
   {
 
     //get communicator, rank, and coordinates

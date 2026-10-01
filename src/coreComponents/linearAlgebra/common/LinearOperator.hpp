@@ -21,6 +21,7 @@
 #define GEOS_LINEARALGEBRA_INTERFACES_LINEAROPERATOR_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {

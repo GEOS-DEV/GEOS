@@ -40,7 +40,7 @@ struct PointCreation
   Coordinates position;
   Bytes fields;            ///< Canonically encoded point data, interpreted by GEOS'
                            ///< transfer policies.
-  double supportScale = 1; ///< Support extent for translation-independent coordinate comparisons.
+  double supportScale = 1; ///< Support extent; zero is allowed for isolated existing vertices (roundoff tolerance only).
 };
 
 struct PointRecord
@@ -116,6 +116,7 @@ public:
   Sharing discoverSharing( std::vector< EntityKey > const & entities );
   /** One coarse full-face pass rejects global nonmanifold/equal-orientation
    * incidence, including a locally internal face also used by another rank.
+   * Three-corner quad probes also reject quad/triangle nonmatching interfaces.
    * This validation cost is separate from boundary-only sharing discovery.
    */
   void validateVolumeFaces( std::vector< MainFace > const & faces, std::uint64_t mainNamespace = 0 );
@@ -124,8 +125,11 @@ public:
   std::map< EntityKey, PointRecord > reconcileExistingPoints( std::vector< PointCreation > const & points );
   std::map< EntityKey, PointRecord > resolvePoints( std::uint64_t generation, std::vector< PointCreation > const & points,
                                                     vtkIdType localExistingMaximum );
-  /** Allocate/synchronize replicated marker or auxiliary surface children. */
-  std::map< ChildCellKey, CellRecord > resolveCells( std::uint64_t generation, std::vector< CellCreation > const & cells, vtkIdType base );
+  /** Allocate/synchronize replicated marker or auxiliary surface children.
+   * Optional allocatedRange receives the range total without another collective allocation.
+   */
+  std::map< ChildCellKey, CellRecord > resolveCells( std::uint64_t generation, std::vector< CellCreation > const & cells,
+                                                    vtkIdType base, IdRange * allocatedRange = nullptr );
   std::map< ChildCellKey, CellRecord > reconcileExistingCells( std::vector< CellCreation > const & cells );
   /** Discover actual local/remote coarse side faces once, using vertex-ID routing.
    * Query holders are not treated as owners of main points or faces. The resulting
@@ -153,7 +157,7 @@ private:
   std::map< EntityKey, PointRecord > resolvePointRecords( std::uint64_t generation, std::vector< PointCreation > const & points,
                                                           vtkIdType localExistingMaximum, bool existing );
   std::map< ChildCellKey, CellRecord > resolveCellRecords( std::uint64_t generation, std::vector< CellCreation > const & cells,
-                                                           vtkIdType base, bool existing );
+                                                           vtkIdType base, bool existing, IdRange * allocatedRange = nullptr );
 
   MPI_Comm m_comm;
   MPI_Comm m_neighborComm = MPI_COMM_NULL;

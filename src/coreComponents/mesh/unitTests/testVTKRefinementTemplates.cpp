@@ -685,6 +685,47 @@ TEST( VTKRefinementTemplates, CountsAndOverflowWithoutAllocation )
   EXPECT_THROW( counts.next(), std::overflow_error );
 }
 
+TEST( VTKRefinementTemplates, ThinAndSkewedSupportedShapesThroughTwoLevels )
+{
+  std::vector< ReferenceCell > shapes{ referenceCell( VTK_TETRA, 0 ), referenceCell( VTK_PYRAMID, 0 ),
+                                     referenceCell( VTK_WEDGE, 0 ), referenceCell( VTK_HEXAHEDRON, 0 ) };
+  for( int n = 5; n <= 11; ++n )
+  {
+    ReferenceCell prism;
+    prism.cell = regularPrism( n, prism.xyz );
+    shapes.push_back( std::move( prism ) );
+  }
+  for( auto const & shape : shapes )
+    for( double const thickness : { 1., 1e-4 } )
+    {
+      SCOPED_TRACE( std::to_string( shape.cell.vtkType ) + ":" + std::to_string( shape.cell.prismSides ) +
+                    ":" + std::to_string( thickness ) );
+      std::vector< Coordinates > coordinates;
+      for( auto const & p : shape.xyz )
+        coordinates.push_back( { 3 + .9 * p[0] + .15 * p[1] + .1 * p[2],
+                                -2 + .3 * p[0] + 1.1 * p[1] + .2 * p[2],
+                                7 + thickness * ( 1.2 * p[2] + .05 * p[0] - .1 * p[1] ) } );
+      auto mesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
+      vtkNew< vtkPoints > points;
+      points->SetDataTypeToDouble();
+      for( auto const & p : coordinates ) points->InsertNextPoint( p.data() );
+      mesh->SetPoints( points );
+      if( shape.cell.prismSides )
+      {
+        vtkNew< vtkCellArray > faces;
+        for( auto const & face : cellFaces( shape.cell ) ) faces->InsertNextCell( face.size(), face.data() );
+        mesh->InsertNextCell( VTK_POLYHEDRON, shape.cell.points.size(), shape.cell.points.data(), faces );
+      }
+      else mesh->InsertNextCell( shape.cell.vtkType, shape.cell.points.size(), shape.cell.points.data() );
+      for( int level = 0; level < 2; ++level )
+      {
+        // Each generation gets a registry for all of its now-existing points,
+        // matching the production controller's per-level registry lifecycle.
+        mesh = refine( *mesh );
+      }
+    }
+}
+
 TEST( VTKRefinementTemplates, ScaleTranslationAndInvalidGeometry )
 {
   for( double scale : { 1e-6, 1., 1e6 } )
@@ -704,6 +745,8 @@ TEST( VTKRefinementTemplates, ScaleTranslationAndInvalidGeometry )
   }
   PointRegistry registry( { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, -1 } }, { 0, 1, 2, 3 } );
   EXPECT_THROW( subdivideCell( { VTK_TETRA, { 0, 1, 2, 3 }, 0 }, 0, registry ), std::invalid_argument );
+  PointRegistry flat( { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { .25, .25, 0 } }, { 0, 1, 2, 3 } );
+  EXPECT_THROW( subdivideCell( { VTK_TETRA, { 0, 1, 2, 3 }, 0 }, 0, flat ), std::invalid_argument );
   EXPECT_THROW( PointRegistry( { { std::numeric_limits< double >::infinity(), 0, 0 } }, { 0 } ), std::invalid_argument );
   std::vector< Coordinates > xyz;
   Cell star = regularPrism( 5, xyz );

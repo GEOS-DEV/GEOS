@@ -282,9 +282,9 @@ if( ENABLE_VTK )
          generators/VTKSuperCellPartitioning.cpp
          generators/VTKUtilities.cpp
          )
-    list( APPEND tplDependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
+    list( APPEND tplDependencyList VTK::IOLegacy VTK::IOXML VTK::IOParallelXML VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
-      list( APPEND tplDependencyList VTK::IOParallelXML VTK::ParallelMPI )
+      list( APPEND tplDependencyList VTK::ParallelMPI )
     endif()
 endif()
 
@@ -325,13 +325,21 @@ if( ENABLE_VTK )
     if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13 )
         set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES COMPILE_OPTIONS "-Wno-use-after-free" )
     endif()
+
+    # VTK's bundled DIY coroutine implementation intentionally emits a
+    # preprocessor warning when glibc fortification is enabled.  Keep the
+    # warning visible, but do not let this third-party diagnostic override
+    # GEOS' warnings-as-errors policy for this source file.
+    if( CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|IntelLLVM" )
+        set_property( SOURCE generators/VTKMeshGeneratorTools.cpp APPEND
+                      PROPERTY COMPILE_OPTIONS "-Wno-error=cpp" )
+    endif()
 endif()
 
 if( GEOS_ENABLE_TESTS )
     add_subdirectory( unitTests )
 endif( )
 
-# Add benchmarks subdirectory
-if( ENABLE_VTK )
+if( ENABLE_BENCHMARKS AND ENABLE_VTK )
     add_subdirectory( benchmarks )
 endif()

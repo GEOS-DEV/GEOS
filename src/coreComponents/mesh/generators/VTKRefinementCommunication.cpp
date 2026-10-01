@@ -31,6 +31,7 @@
 #include <set>
 #include <stdexcept>
 #include <tuple>
+#include <unordered_set>
 
 namespace geos::vtk::refinement
 {
@@ -506,9 +507,13 @@ void Communication::includeContactNeighbors( Participants neighbors )
 
 void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, std::uint64_t mainNamespace )
 {
-  GEOS_MARK_SCOPE( "uniformRefinement/coarseVolumeFaceValidation" );
+  GEOS_MARK_SCOPE_STR( "uniformRefinement/coarseVolumeFaceValidation" );
   using Counts = std::array< std::uint64_t, 2 >;
   std::unordered_map< EntityKey, Counts, EntityKeyHash > local;
+  std::unordered_set< EntityKey, EntityKeyHash > quadTriangles;
+  bool const hasTriangles = MpiWrapper::max(
+    std::any_of( faces.begin(), faces.end(), []( MainFace const & face ) { return face.globalCorners.size() == 3; } ) ? 1 : 0,
+    m_comm ) != 0;
   Mail outgoing;
   checked( "coarse owned volume faces",
            [&]
@@ -530,8 +535,23 @@ void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, 
                {
                  throw std::invalid_argument( "Nonmanifold local volume face" );
                }
+               if( hasTriangles && key.corners.size() == 4 )
+               {
+                 // Route each three-corner subset to the triangle's directory
+                 // home in this same coarse pass. A quad against triangular
+                 // volume faces must fail instead of creating a fine crack.
+                 for( std::size_t omitted = 0; omitted < 4; ++omitted )
+                 {
+                   Connectivity triangle;
+                   for( std::size_t c = 0; c < 4; ++c )
+                   {
+                     if( c != omitted ) triangle.push_back( key.corners[c] );
+                   }
+                   quadTriangles.insert( entityKey( EntityKind::face, std::move( triangle ), mainNamespace ) );
+                 }
+               }
              }
-             for( auto const & [key, counts] : local )
+             auto pack = [&]( EntityKey const & key, Counts const & counts )
              {
                EntityKey routing = key;
                std::sort( routing.corners.begin(), routing.corners.end() );
@@ -540,6 +560,14 @@ void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, 
                putKey( bytes, key );
                putInteger( bytes, counts[0] );
                putInteger( bytes, counts[1] );
+             };
+             for( auto const & [key, counts] : local )
+             {
+               pack( key, counts );
+             }
+             for( auto const & key : quadTriangles )
+             {
+               pack( key, { 0, 0 } );
              }
            } );
   auto const incoming = exchangeDirectory( outgoing );
@@ -550,6 +578,7 @@ void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, 
              {
                EntityKey cycle;
                Counts counts{};
+               bool quadTriangle = false;
              };
              std::unordered_map< EntityKey, Incidence, EntityKeyHash > incidence;
              for( auto const & [peer, bytes] : incoming )
@@ -564,7 +593,9 @@ void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, 
                    throw std::invalid_argument( "Invalid volume face record" );
                  }
                  Counts const counts{ reader.integer(), reader.integer() };
-                 if( counts[0] > 2 || counts[1] > 2 || counts[0] + counts[1] < 1 || counts[0] + counts[1] > 2 )
+                 bool const quadTriangle = counts[0] + counts[1] == 0;
+                 if( counts[0] > 2 || counts[1] > 2 || counts[0] + counts[1] > 2 ||
+                     ( quadTriangle && key.corners.size() != 3 ) )
                  {
                    throw std::invalid_argument( "Invalid volume face incidence count" );
                  }
@@ -575,6 +606,7 @@ void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, 
                  {
                    throw std::invalid_argument( "Crossed global volume face cycles" );
                  }
+                 found->second.quadTriangle = found->second.quadTriangle || quadTriangle;
                  for( int orientation = 0; orientation < 2; ++orientation )
                  {
                    found->second.counts[orientation] = checkedSum( found->second.counts[orientation], counts[orientation] );
@@ -588,6 +620,10 @@ void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, 
              for( auto const & [key, record] : incidence )
              {
                GEOS_UNUSED_VAR( key );
+               if( record.quadTriangle && record.counts[0] + record.counts[1] )
+               {
+                 throw std::invalid_argument( "Nonmatching coarse quad/triangle volume interface" );
+               }
                if( record.counts[0] + record.counts[1] == 2 && ( record.counts[0] != 1 || record.counts[1] != 1 ) )
                {
                  throw std::invalid_argument( "Incident volume faces have equal outward orientation" );
@@ -600,7 +636,7 @@ std::vector< std::vector< SurfaceSide > > Communication::discoverSurfaceSides( s
                                                                                std::vector< CoarseSurface > const & surfaces,
                                                                                std::uint64_t mainNamespace )
 {
-  GEOS_MARK_SCOPE( "uniformRefinement/coarseSurfaceAssociations" );
+  GEOS_MARK_SCOPE_STR( "uniformRefinement/coarseSurfaceAssociations" );
   std::vector< EntityKey > anchors;
   std::vector< Connectivity > queryCorners;
   std::vector< std::vector< SurfaceSide > > result;
@@ -814,7 +850,7 @@ std::vector< std::vector< SurfaceSide > > Communication::discoverSurfaceSides( s
 std::vector< vtkIdType > Communication::resolveSupportIds( std::uint64_t generation, std::vector< SupportLookup > const & requests,
                                                            std::unordered_map< EntityKey, vtkIdType, EntityKeyHash > const & localIds )
 {
-  GEOS_MARK_SCOPE( "uniformRefinement/surfaceSupportIds" );
+  GEOS_MARK_SCOPE_STR( "uniformRefinement/surfaceSupportIds" );
   Mail outgoing;
   std::vector< vtkIdType > result;
   checked( "surface support requests",
@@ -912,7 +948,7 @@ std::vector< vtkIdType > Communication::resolveSupportIds( std::uint64_t generat
 
 Sharing Communication::discoverSharing( std::vector< EntityKey > const & entities )
 {
-  GEOS_MARK_SCOPE( "uniformRefinement/coarseDiscovery" );
+  GEOS_MARK_SCOPE_STR( "uniformRefinement/coarseDiscovery" );
   Mail outgoing;
   checked( "coarse entity keys",
            [&]
@@ -1003,7 +1039,7 @@ Sharing Communication::discoverSharing( std::vector< EntityKey > const & entitie
 
 IdRange Communication::allocateRange( std::uint64_t localCount, vtkIdType base ) const
 {
-  GEOS_MARK_SCOPE( "uniformRefinement/pointAndCellIds" );
+  GEOS_MARK_SCOPE_STR( "uniformRefinement/pointAndCellIds" );
   auto const minimum = MpiWrapper::allReduce( base, MpiWrapper::Reduction::Min, m_comm );
   auto const maximum = MpiWrapper::allReduce( base, MpiWrapper::Reduction::Max, m_comm );
   checked( "ID count validation",
@@ -1060,7 +1096,7 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
                                                                        std::vector< PointCreation > const & points,
                                                                        vtkIdType localExistingMaximum, bool existing )
 {
-  GEOS_MARK_SCOPE( "uniformRefinement/sharedEntityExchange" );
+  GEOS_MARK_SCOPE_STR( "uniformRefinement/sharedEntityExchange" );
   auto const minimum = MpiWrapper::allReduce( generation, MpiWrapper::Reduction::Min, m_comm );
   auto const maximum = MpiWrapper::allReduce( generation, MpiWrapper::Reduction::Max, m_comm );
   std::map< EntityKey, PointCreation const * > expected;
@@ -1101,7 +1137,10 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
                {
                  throw std::invalid_argument( "Volume-cell interior point must have one participant" );
                }
-               if( !std::isfinite( point.supportScale ) || point.supportScale <= 0 )
+               // An unused original vertex has no incident cell extent. Its
+               // zero scale permits only coordinate roundoff in the comparison
+               // below; newly created edge/face/cell points require an extent.
+               if( !std::isfinite( point.supportScale ) || ( existing ? point.supportScale < 0 : point.supportScale <= 0 ) )
                {
                  throw std::invalid_argument( "Invalid shared point support extent" );
                }
@@ -1239,9 +1278,9 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
   return records;
 }
 std::map< ChildCellKey, CellRecord > Communication::resolveCells( std::uint64_t generation, std::vector< CellCreation > const & cells,
-                                                                  vtkIdType base )
+                                                                  vtkIdType base, IdRange * allocatedRange )
 {
-  return resolveCellRecords( generation, cells, base, false );
+  return resolveCellRecords( generation, cells, base, false, allocatedRange );
 }
 
 std::map< ChildCellKey, CellRecord > Communication::reconcileExistingCells( std::vector< CellCreation > const & cells )
@@ -1250,9 +1289,9 @@ std::map< ChildCellKey, CellRecord > Communication::reconcileExistingCells( std:
 }
 
 std::map< ChildCellKey, CellRecord > Communication::resolveCellRecords( std::uint64_t generation, std::vector< CellCreation > const & cells,
-                                                                        vtkIdType base, bool existing )
+                                                                        vtkIdType base, bool existing, IdRange * allocatedRange )
 {
-  GEOS_MARK_SCOPE( "uniformRefinement/surfaceCellIds" );
+  GEOS_MARK_SCOPE_STR( "uniformRefinement/surfaceCellIds" );
   auto const minimum = MpiWrapper::allReduce( generation, MpiWrapper::Reduction::Min, m_comm );
   auto const maximum = MpiWrapper::allReduce( generation, MpiWrapper::Reduction::Max, m_comm );
   std::map< ChildCellKey, CellCreation const * > expected;
@@ -1374,6 +1413,7 @@ std::map< ChildCellKey, CellRecord > Communication::resolveCellRecords( std::uin
                }
              }
            } );
+  if( allocatedRange ) *allocatedRange = range;
   return result;
 }
 } // namespace geos::vtk::refinement

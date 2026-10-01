@@ -139,6 +139,7 @@ internal::ManagedResources & internal::getManagedResources()
 
 void internal::ManagedResources::finalize()
 {
+#ifdef GEOS_USE_MPI
   for( MPI_Op resource : m_mpiOps )
   {
     MPI_CHECK_ERROR( MPI_Op_free( &resource ) );
@@ -150,6 +151,7 @@ void internal::ManagedResources::finalize()
     MPI_CHECK_ERROR( MPI_Type_free( &resource ) );
   }
   m_mpiTypes.clear();
+#endif
 }
 
 void MpiWrapper::finalize()
@@ -441,6 +443,7 @@ int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
 
 int MpiWrapper::nodeCommSize()
 {
+#ifdef GEOS_USE_MPI
   // if not initialized then we guess there is no MPI.
   if( !initialized() )
     return 1;
@@ -461,8 +464,12 @@ int MpiWrapper::nodeCommSize()
   MPI_Comm_split( MPI_COMM_WORLD, color, -1, &nodeComm );
   MPI_Comm_size( nodeComm, &nodeCommSize );
   return nodeCommSize;
+#else
+  return 1;
+#endif
 }
 
+#ifdef GEOS_USE_MPI
 namespace internal
 {
 
@@ -518,6 +525,7 @@ template<> MPI_Datatype getMpiPairType< double, double >()
 { return getMpiCustomPairType< double, double >(); }
 
 } /* namespace internal */
+#endif
 
 } /* namespace geos */
 

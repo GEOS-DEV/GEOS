@@ -14,9 +14,9 @@
  */
 
 #include "VTKSuperCellPartitioning.hpp"
-
-// GEOS mesh includes
-#include "mesh/generators/VTKMeshGeneratorTools.hpp"
+#ifdef GEOS_USE_MPI
+#include "VTKMeshGeneratorTools.hpp"
+#endif
 
 // GEOS common includes
 #include "common/MpiWrapper.hpp"
@@ -25,16 +25,19 @@
 
 // LvArray
 #include "LvArray/src/ArrayOfArrays.hpp"
+#include "LvArray/src/system.hpp"
 
 // VTK includes
 #include <vtkUnstructuredGrid.h>
 #include <vtkDataSet.h>
 #include <vtkIdTypeArray.h>
+#include <vtkIdList.h>
 #include <vtkCellData.h>
 #include <vtkPartitionedDataSet.h>
 #include <vtkExtractCells.h>
 
 #include <unordered_set>
+#include <queue>
 
 
 namespace geos
@@ -60,7 +63,7 @@ pmet_idx_t computeSuperCellWeight( vtkIdType numCells, integer fractureWeight )
 
 SuperCellInfo tagCellsWithSuperCellIds(
   vtkSmartPointer< vtkUnstructuredGrid > cells3D,
-  stdMap< string, ArrayOfArrays< localIndex, int64_t > > const & fractureNeighbors,
+  stdMap< string, ArrayOfArrays< globalIndex, int64_t > > const & fractureNeighbors,
 
   integer fractureWeight )
 {
@@ -268,12 +271,27 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
 
-  if( scatterMethod == ScatterMethod::kdtree )
+  vtkIdType const totalCells = MpiWrapper::sum( cells3D->GetNumberOfCells(), comm );
+  vtkIdType rootCells = rank == 0 ? cells3D->GetNumberOfCells() : 0;
+  MpiWrapper::broadcast( rootCells, 0, comm );
+  GEOS_ERROR_IF( rootCells != totalCells,
+                 GEOS_FMT( "Fracture super-cell scatter requires complete coarse input on rank 0 ({} of {} cells)",
+                           rootCells, totalCells ) );
+
+  bool const useMorton = scatterMethod == ScatterMethod::kdtree;
+  if( useMorton ) GEOS_LOG_RANK_0( "Using legacy Morton ordering for initial fracture super-cell distribution" );
+  vtkIdType numAtoms = 0;
+  if( rank == 0 )
   {
-    GEOS_LOG_RANK_0( "scatterMethod=kdtree is not supported with fractures (cannot preserve "
-                     "super-cell atomicity). Automatically falling back to rcb." );
-    scatterMethod = ScatterMethod::rcb;
+    auto * ids = vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );
+    GEOS_ERROR_IF( ids == nullptr, "SuperCellId array not found" );
+    std::unordered_set< vtkIdType > unique;
+    for( vtkIdType i = 0; i < ids->GetNumberOfValues(); ++i ) unique.insert( ids->GetValue( i ) );
+    numAtoms = unique.size();
   }
+  MpiWrapper::broadcast( numAtoms, 0, comm );
+  GEOS_ERROR_IF( numAtoms < numRanks,
+                 GEOS_FMT( "Cannot give every rank a volume cell without splitting {} atomic super-cells across {} ranks", numAtoms, numRanks ) );
 
   // Per-cell rank assignment is computed on rank 0 (empty elsewhere) then consumed by
   // scatterByRankAssignment. Super-cell atomicity is enforced by assigning one rank
@@ -305,6 +323,7 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     // super-cell's centroid (average over all points of all member cells). This lets
     // computeCellRanks() see super-cells as atomic and partition them as such.
     vtkNew< vtkPoints > atomPoints;
+    atomPoints->SetDataTypeToDouble();
     atomPoints->SetNumberOfPoints( numSuperCells );
 
     vtkNew< vtkUnstructuredGrid > atomMesh;
@@ -338,8 +357,13 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
         cellToAtom[cellIdx] = static_cast< integer >( atomIdx );
       }
 
-      real64 const inv = (totalPoints > 0) ? 1.0 / totalPoints : 0.0;
-      atomPoints->SetPoint( atomIdx, cx * inv, cy * inv, cz * inv );
+      if( totalPoints > 0 )
+      {
+        cx /= totalPoints;
+        cy /= totalPoints;
+        cz /= totalPoints;
+      }
+      atomPoints->SetPoint( atomIdx, cx, cy, cz );
 
       vtkIdType const pid = atomIdx;
       atomMesh->InsertNextCell( VTK_VERTEX, 1, &pid );
@@ -348,8 +372,52 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     }
 
     // One rank per super-cell, then expand to per-cell so atomicity is preserved.
-    stdVector< integer > const atomRanks =
-      computeCellRanks( scatterMethod, *atomMesh, cartesianPartitions, numRanks );
+    stdVector< integer > atomRanks;
+    if( useMorton )
+    {
+      // Match develop's 21-bit Morton quantization and ceil-sized blocks.
+      double bounds[6];
+      atomPoints->GetBounds( bounds );
+      stdVector< std::pair< uint64_t, vtkIdType > > order;
+      order.reserve( numSuperCells );
+      for( vtkIdType atom = 0; atom < numSuperCells; ++atom )
+      {
+        double point[3];
+        atomPoints->GetPoint( atom, point );
+        uint64_t code = 0;
+        for( int d = 0; d < 3; ++d )
+        {
+          double const extent = bounds[2*d+1] - bounds[2*d];
+          uint32_t const value = extent < 1e-10 ? 0 : static_cast< uint32_t >(
+            std::clamp( ( point[d] - bounds[2*d] ) / extent, 0.0, 1.0 ) * ( (1u << 21) - 1 ) );
+          for( int bit = 0; bit < 21; ++bit ) code |= static_cast< uint64_t >( ( value >> bit ) & 1u ) << (3*bit+d);
+        }
+        order.emplace_back( code, atom );
+      }
+      std::sort( order.begin(), order.end(), []( auto const & a, auto const & b ) { return a.first < b.first; } );
+      atomRanks.resize( numSuperCells );
+      vtkIdType const blockSize = (numSuperCells + numRanks - 1) / numRanks;
+      for( vtkIdType i = 0; i < numSuperCells; ++i ) atomRanks[order[i].second] = std::min< integer >( i / blockSize, numRanks - 1 );
+    }
+    else atomRanks = computeCellRanks( scatterMethod, *atomMesh, cartesianPartitions, numRanks );
+
+    // Repair empty bins by moving whole atoms, preserving fracture atomicity.
+    stdVector< stdVector< vtkIdType > > bins( numRanks );
+    for( vtkIdType atom = 0; atom < numSuperCells; ++atom ) bins[atomRanks[atom]].push_back( atom );
+    std::priority_queue< std::pair< vtkIdType, integer > > donors;
+    for( integer r = 0; r < numRanks; ++r ) if( bins[r].size() > 1 ) donors.emplace( bins[r].size(), -r );
+    for( integer r = 0; r < numRanks; ++r )
+    {
+      if( !bins[r].empty() ) continue;
+      GEOS_ERROR_IF( donors.empty(), "Insufficient atomic super-cells to fill empty ranks" );
+      integer const donor = -donors.top().second;
+      donors.pop();
+      vtkIdType const atom = bins[donor].back();
+      bins[donor].pop_back();
+      atomRanks[atom] = r;
+      bins[r].push_back( atom );
+      if( bins[donor].size() > 1 ) donors.emplace( bins[donor].size(), -donor );
+    }
 
     cellRanks.resize( numCells );
     for( vtkIdType c = 0; c < numCells; ++c )
@@ -358,9 +426,35 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     }
   }
 
-  // All ranks ship cells
-  vtkSmartPointer< vtkUnstructuredGrid > result =
-    scatterByRankAssignment( cells3D.Get(), std::move( cellRanks ), comm );
+  vtkSmartPointer< vtkUnstructuredGrid > result;
+  if( useMorton )
+  {
+    // Preserve develop's default extraction/shipping and point ordering.
+#ifdef GEOS_USE_MPI
+    vtkNew< vtkPartitionedDataSet > partitions;
+    partitions->SetNumberOfPartitions( numRanks );
+    for( int r = 0; r < numRanks; ++r )
+    {
+      vtkNew< vtkIdList > ids;
+      if( rank == 0 )
+        for( vtkIdType c = 0; c < rootCells; ++c ) if( cellRanks[c] == r ) ids->InsertNextId( c );
+      vtkNew< vtkExtractCells > extractor;
+      extractor->SetInputData( cells3D );
+      extractor->SetCellList( ids );
+      LvArray::system::FloatingPointExceptionGuard guard;
+      extractor->Update();
+      partitions->SetPartition( r, extractor->GetOutput() );
+    }
+    result = vtk::redistribute( *partitions, comm );
+#else
+    result = cells3D;
+#endif
+  }
+  else result = scatterByRankAssignment( cells3D.Get(), std::move( cellRanks ), comm );
+
+  vtkIdType const after = MpiWrapper::sum( result->GetNumberOfCells(), comm );
+  GEOS_ERROR_IF( after != totalCells,
+                 GEOS_FMT( "Cell conservation failed during fracture super-cell scatter ({} -> {})", totalCells, after ) );
 
   if( rank == 0 )
   {

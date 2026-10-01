@@ -389,7 +389,6 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
   return beginFromRestart;
 }
 
-
 void ProblemManager::generateDocumentation()
 {
   // Documentation output
@@ -827,6 +826,8 @@ void ProblemManager::generateMesh()
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
+    bool const refinedTopology = meshBody.hasGroup( keys::cellManager ) &&
+      !meshBody.getCellBlockManager().getSourceCellBlockDescendants().empty();
     if( meshBody.hasGroup( keys::particleManager ) )
     {
       meshBody.deregisterGroup( keys::particleManager );
@@ -852,7 +853,7 @@ void ProblemManager::generateMesh()
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
 
         // 2. Reorder the face map based on global numbering of neighboring cells
-        subRegion.flipFaceMap( faceManager, elementManager );
+        subRegion.flipFaceMap( faceManager, elementManager, refinedTopology );
 
         // 3. We flip the face normals of faces adjacent to the faceElements if they are not pointing in the
         // direction of the fracture.
@@ -860,7 +861,7 @@ void ProblemManager::generateMesh()
 
         //    faceToNodes(kf0, a) and faceToNodes(kf1, a) are geometrically paired (collocated) nodes.
         //    This is required by the conforming contact kernels which assume this pairing.
-        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
+        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager, refinedTopology );
       } );
 
       faceManager.setIsExternal();

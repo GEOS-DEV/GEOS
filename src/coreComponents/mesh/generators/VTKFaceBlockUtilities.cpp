@@ -312,11 +312,11 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
     stdMap< vtkIdType, int > edgeCount;
     for( vtkIdType const & d: allDuplicatedNodesOfEdge )
     {
-      localIndex const dd = LvArray::integerConversion< localIndex >( d );
-      auto n2eIt = n2e.find( dd );
+      // Collocation buckets contain global node IDs, including sparse 64-bit IDs.
+      auto n2eIt = n2e.find( d );
       if( n2eIt != n2e.end() )
       {
-        for( localIndex const & val: n2e.at( dd ) )
+        for( localIndex const & val: n2eIt->second )
         {
           auto [it, inserted] = edgeCount.try_emplace( val, 0 );
           it->second++;
@@ -328,7 +328,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
     // then it means that we're in a corner case where the 2d element is on the boundary of the MPI domain,
     // and maybe some nodes are missing for the 2d element to be properly and consistently defines.
     // In this case, we explicitly set the edge index at `-1`, so we can get back on it later.
-    face2dToEdge[i] = res->second < 2 ? -1: LvArray::integerConversion< localIndex >( res->first );
+    face2dToEdge[i] = res == edgeCount.cend() || res->second < 2 ? -1: LvArray::integerConversion< localIndex >( res->first );
   }
 
   return face2dToEdge;

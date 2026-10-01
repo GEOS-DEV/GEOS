@@ -307,6 +307,7 @@ SCCACHE_BIN=""
 SCCACHE_CREDS=""
 USE_SCCACHE=false
 CMAKE_CUDA_ARCHITECTURES_ARGS=()
+CMAKE_HIP_COMPILER_ARGS=()
 CMAKE_NATIVE_ARCHITECTURE_ARGS=()
 ATS_CMAKE_ARGS=()
 LCOV_CMAKE_ARGS=""
@@ -479,6 +480,26 @@ if [[ -n "${CTEST_PARALLEL_LEVEL_ARG}" ]]; then
   echo "Running ctest with CTEST_PARALLEL_LEVEL=${CTEST_PARALLEL_LEVEL}."
 fi
 
+# CMake 3.28 and newer require CMAKE_HIP_COMPILER to name Clang directly;
+# they reject the hipcc wrapper recorded by older TPL host-configs.  Prefer
+# the compiler from the active ROCm installation and pass it on the command
+# line so it overrides the stale cache entry loaded by -C.
+if [[ "${ENABLE_HYPRE_DEVICE}" == "HIP" ]]; then
+  HIP_CMAKE_COMPILER=""
+  if [[ -n "${ROCM_PATH:-}" && -x "${ROCM_PATH}/bin/amdclang++" ]]; then
+    HIP_CMAKE_COMPILER="${ROCM_PATH}/bin/amdclang++"
+  elif [[ -n "${HIP_PATH:-}" && -x "${HIP_PATH}/bin/amdclang++" ]]; then
+    HIP_CMAKE_COMPILER="${HIP_PATH}/bin/amdclang++"
+  else
+    HIP_CMAKE_COMPILER="$(command -v amdclang++ || true)"
+  fi
+
+  if [[ -n "${HIP_CMAKE_COMPILER}" && -x "${HIP_CMAKE_COMPILER}" ]]; then
+    echo "Using direct HIP compiler: ${HIP_CMAKE_COMPILER}"
+    CMAKE_HIP_COMPILER_ARGS+=("-DCMAKE_HIP_COMPILER=${HIP_CMAKE_COMPILER}")
+  fi
+fi
+
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   phase_start "Set up integrated test environment"
   echo "Running the integrated tests has been requested."
@@ -584,6 +605,7 @@ or_die python3 scripts/config-build.py \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
+               "${CMAKE_HIP_COMPILER_ARGS[@]}" \
                "${CMAKE_CUDA_ARCHITECTURES_ARGS[@]}" \
                "${CMAKE_NATIVE_ARCHITECTURE_ARGS[@]}" \
                ${SCCACHE_CMAKE_ARGS} \

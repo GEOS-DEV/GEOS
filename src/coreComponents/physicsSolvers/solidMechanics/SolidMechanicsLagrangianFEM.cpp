@@ -44,7 +44,9 @@
 #include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#ifdef GEOS_USE_MPI
 #include "fileIO/Outputs/ChomboIO.hpp"
+#endif
 
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
@@ -200,8 +202,12 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     nodes.registerField< solidMechanics::incrementalDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
+    bool requiresDynamicFields = m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic;
+#ifdef GEOS_USE_MPI
     Group const & outputs = Group::getGroupByPath( GEOS_FMT( "/{}", ProblemManager::groupKeysStruct().outputManager.key() ) );
-    if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic || outputs.hasSubGroupOfType< ChomboIO >() )
+    requiresDynamicFields = requiresDynamicFields || outputs.hasSubGroupOfType< ChomboIO >();
+#endif
+    if( requiresDynamicFields )
     {
       nodes.registerField< solidMechanics::velocity >( getName() ).
         reference().resizeDimension< 1 >( 3 );

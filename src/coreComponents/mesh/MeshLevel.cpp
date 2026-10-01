@@ -369,24 +369,29 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   // Add all the collocated nodes of the fracture element.
   auto const addCollocatedFractureNodes = [&]( FaceElementSubRegion const & subRegion )
   {
-    auto const & l2g = nodeManager.localToGlobalMap();
+    if( nodeAdjacencySet.empty() ) return;
+    GEOS_MARK_SCOPE_STR( "geos/MeshLevel/expandCollocatedGhostNodes" );
     auto const & g2l = nodeManager.globalToLocalMap();
 
     std::set< localIndex > newNodes;
-    for( localIndex const & ln: nodeAdjacencySet )
+    // Visit each bucket once instead of rebuilding and scanning all fracture
+    // buckets for every boundary node. Delay insertion to preserve the existing
+    // one-hop expansion for this subregion and adjacency depth.
+    for( std::set< globalIndex > const & bucket: subRegion.getCollocatedNodes() )
     {
-      globalIndex const & gn = l2g[ln];
-      for( std::set< globalIndex > const & bucket: subRegion.getCollocatedNodes() )
+      bool const touchesAdjacency = std::any_of( bucket.cbegin(), bucket.cend(), [&]( globalIndex const gn )
       {
-        if( bucket.find( gn ) != bucket.cend() )
+        auto const it = g2l.find( gn );
+        return it != g2l.cend() && nodeAdjacencySet.count( it->second ) != 0;
+      } );
+      if( touchesAdjacency )
+      {
+        for( globalIndex const n: bucket )
         {
-          for( globalIndex const & n: bucket )
+          auto const it = g2l.find( n );
+          if( it != g2l.cend() )
           {
-            auto it = g2l.find( n );
-            if( it != g2l.cend() )
-            {
-              newNodes.insert( it->second );
-            }
+            newNodes.insert( it->second );
           }
         }
       }

@@ -23,25 +23,42 @@
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 
 // special CMake-generated include
 #include "tests/meshDirName.hpp"
 
 // TPL includes
+#include <vtkAbstractArray.h>
 #include <vtkCellData.h>
+#include <vtkCellType.h>
+#include <vtkDoubleArray.h>
+#include <vtkDataSetReader.h>
+#include <vtkExtractCells.h>
+#include <vtkFieldData.h>
+#include <vtkIntArray.h>
 #include <vtkInformation.h>
+#include <vtkIdList.h>
+#include <vtkIdTypeArray.h>
 #include <vtkMultiBlockDataSet.h>
+#include <vtkPartitionedDataSet.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
+#include <vtkStringArray.h>
+#include <vtkTypeInt64Array.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLMultiBlockDataWriter.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkVersionMacros.h>
 
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
 #include <filesystem>
+#include <chrono>
+#include <fstream>
+#include <stdexcept>
 
 #include <fenv.h>
 
@@ -51,34 +68,121 @@ using namespace geos::testing;
 using namespace geos::dataRepository;
 
 
+namespace
+{
+
+template< typename ARRAY_TYPE >
+void addArray( vtkFieldData & data, char const * name, int const numComponents, vtkIdType const numTuples )
+{
+  vtkNew< ARRAY_TYPE > array;
+  array->SetName( name );
+  array->SetNumberOfComponents( numComponents );
+  array->SetNumberOfTuples( numTuples );
+  data.AddArray( array );
+}
+
+void addRedistributionMetadata( vtkUnstructuredGrid & grid, vtkIdType const numTuples )
+{
+  addArray< vtkStringArray >( *grid.GetCellData(), "redistributeCellLabels", 2, numTuples );
+  addArray< vtkStringArray >( *grid.GetPointData(), "redistributePointLabels", 2, numTuples );
+  addArray< vtkStringArray >( *grid.GetFieldData(), "redistributeFieldLabels", 2, numTuples );
+}
+
+vtkSmartPointer< vtkUnstructuredGrid > makeRedistributionGrid( bool const withCell )
+{
+  vtkSmartPointer< vtkUnstructuredGrid > grid = vtkSmartPointer< vtkUnstructuredGrid >::New();
+  if( withCell )
+  {
+    vtkNew< vtkPoints > points;
+    vtkIdType const point = points->InsertNextPoint( 0.0, 0.0, 0.0 );
+    grid->SetPoints( points );
+    grid->Allocate( 1 );
+    grid->InsertNextCell( VTK_VERTEX, 1, &point );
+
+    vtkNew< vtkIntArray > cellValues;
+    cellValues->SetName( "redistributeCellValues" );
+    cellValues->SetNumberOfComponents( 3 );
+    cellValues->SetNumberOfTuples( 1 );
+    cellValues->SetTuple3( 0, 1, 2, 3 );
+    grid->GetCellData()->AddArray( cellValues );
+
+    vtkNew< vtkDoubleArray > pointValues;
+    pointValues->SetName( "redistributePointValues" );
+    pointValues->SetNumberOfComponents( 4 );
+    pointValues->SetNumberOfTuples( 1 );
+    pointValues->SetTuple4( 0, 1.0, 2.0, 3.0, 4.0 );
+    grid->GetPointData()->AddArray( pointValues );
+
+    vtkNew< vtkIntArray > fieldValues;
+    fieldValues->SetName( "redistributeFieldValues" );
+    fieldValues->SetNumberOfComponents( 3 );
+    fieldValues->SetNumberOfTuples( 1 );
+    fieldValues->SetTuple3( 0, 5, 6, 7 );
+    grid->GetFieldData()->AddArray( fieldValues );
+
+    addRedistributionMetadata( *grid, 1 );
+  }
+  else
+  {
+    addArray< vtkIntArray >( *grid->GetCellData(), "redistributeCellValues", 3, 0 );
+    addArray< vtkDoubleArray >( *grid->GetPointData(), "redistributePointValues", 4, 0 );
+    addArray< vtkIntArray >( *grid->GetFieldData(), "redistributeFieldValues", 3, 0 );
+    addRedistributionMetadata( *grid, 0 );
+  }
+  return grid;
+}
+
+struct ExpectedArray
+{
+  char const * name;
+  int dataType;
+  int numComponents;
+};
+
+void expectArrayMetadata( vtkFieldData & data, std::initializer_list< ExpectedArray > const expectedArrays,
+                          vtkIdType const numTuples )
+{
+  ASSERT_EQ( data.GetNumberOfArrays(), static_cast< int >( expectedArrays.size() ) );
+  for( ExpectedArray const & expected: expectedArrays )
+  {
+    vtkAbstractArray * const array = data.GetAbstractArray( expected.name );
+    ASSERT_NE( array, nullptr ) << expected.name;
+    EXPECT_EQ( array->GetDataType(), expected.dataType ) << expected.name;
+    EXPECT_EQ( array->GetNumberOfComponents(), expected.numComponents ) << expected.name;
+    EXPECT_EQ( array->GetNumberOfTuples(), numTuples ) << expected.name;
+  }
+}
+
+void expectEmptyArrayMetadata( vtkFieldData & data, std::initializer_list< ExpectedArray > const expectedArrays )
+{
+  expectArrayMetadata( data, expectedArrays, 0 );
+}
+} // namespace
+
+
 template< class V >
-void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="", string const scatterMethod="",
-                     string const uniformRefinement="" )
+void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="",
+                     int const partitionRefinement=0, string const scatterMethod="", string const uniformRefinement="" )
 {
   // Automatically use global IDs when fractures are present
   string const useGlobalIdsStr = fractureName.empty() ? "0" : "1";
 
-  string scatterAttr;
-  if( !scatterMethod.empty() )
-  {
-    scatterAttr = GEOS_FMT( "scatterMethod=\"{}\"", scatterMethod );
-  }
-  if( !uniformRefinement.empty() ) scatterAttr += GEOS_FMT( " uniformRefinement=\"{}\"", uniformRefinement );
+  string options;
+  if( !scatterMethod.empty() ) options += GEOS_FMT( " scatterMethod=\"{}\"", scatterMethod );
+  if( !uniformRefinement.empty() ) options += GEOS_FMT( " uniformRefinement=\"{}\"", uniformRefinement );
 
   string const pattern = R"xml(
     <Mesh>
       <VTKMesh
         name="mesh"
         file="{}"
-        partitionRefinement="0"
+        partitionRefinement="{}"
         useGlobalIds="{}"
-        {}
-        {} />
+        {} {} />
     </Mesh>
   )xml";
-  string const meshNode = GEOS_FMT_RUNTIME( pattern, meshFilePath, useGlobalIdsStr,
-                                            scatterAttr,
-                                            fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
+  string const meshNode = GEOS_FMT_RUNTIME( pattern, meshFilePath, partitionRefinement, useGlobalIdsStr,
+                                            fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"", options );
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.loadString( meshNode );
@@ -109,6 +213,9 @@ protected:
 
   std::filesystem::path m_vtkFile;
 
+  virtual globalIndex globalIdBase() const { return 0; }
+  virtual bool includeSurfaceMarker() const { return false; }
+
 private:
 
   /// Folder where the vtk files will be written.
@@ -129,7 +236,7 @@ private:
       m_vtkFolder = folder / subFolder;
       ASSERT_TRUE( fs::create_directory( m_vtkFolder ) );
 
-      m_vtkFile = createFractureMesh( m_vtkFolder );
+      m_vtkFile = createFractureMesh( m_vtkFolder, globalIdBase(), includeSurfaceMarker() );
     }
 
     string vtkFile( m_vtkFile );
@@ -162,7 +269,7 @@ private:
     }
   }
 
-  static std::filesystem::path createFractureMesh( std::filesystem::path const & folder )
+  static std::filesystem::path createFractureMesh( std::filesystem::path const & folder, globalIndex const base, bool const marker )
   {
     // The main mesh - 3 hexahedra
     vtkNew< vtkUnstructuredGrid > main;
@@ -222,24 +329,43 @@ private:
       {
         main->InsertNextCell( VTK_HEXAHEDRON, pointsPerHex, cube );
       }
-
-      vtkNew< vtkIdTypeArray > cellGlobalIds;
-      cellGlobalIds->SetNumberOfComponents( 1 );
-      cellGlobalIds->SetNumberOfTuples( numHexs );
-      for( auto i = 0; i < numHexs; ++i )
+      if( marker )
       {
-        cellGlobalIds->SetValue( i, i );
+        vtkIdType const boundary[4]{ 0, 1, 2, 3 };
+        main->InsertNextCell( VTK_QUAD, 4, boundary );
+      }
+
+      vtkNew< vtkTypeInt64Array > cellGlobalIds;
+      cellGlobalIds->SetName( "GlobalCellIds" );
+      cellGlobalIds->SetNumberOfComponents( 1 );
+      cellGlobalIds->SetNumberOfTuples( main->GetNumberOfCells() );
+      for( vtkIdType i = 0; i < main->GetNumberOfCells(); ++i )
+      {
+        cellGlobalIds->SetValue( i, base + i );
       }
       main->GetCellData()->SetGlobalIds( cellGlobalIds );
 
-      vtkNew< vtkIdTypeArray > pointGlobalIds;
+      vtkNew< vtkTypeInt64Array > pointGlobalIds;
+      pointGlobalIds->SetName( "GlobalPointIds" );
       pointGlobalIds->SetNumberOfComponents( 1 );
       pointGlobalIds->SetNumberOfTuples( numPoints );
       for( auto i = 0; i < numPoints; ++i )
       {
-        pointGlobalIds->SetValue( i, i );
+        pointGlobalIds->SetValue( i, base + i );
       }
       main->GetPointData()->SetGlobalIds( pointGlobalIds );
+
+      vtkNew< vtkIntArray > unusedLabels;
+      unusedLabels->SetName( "unusedPointLabels" );
+      vtkNew< vtkStringArray > unusedStrings;
+      unusedStrings->SetName( "unusedPointStrings" );
+      for( int i = 0; i < numPoints; ++i )
+      {
+        unusedLabels->InsertNextValue( i );
+        unusedStrings->InsertNextValue( std::to_string( i ) );
+      }
+      main->GetPointData()->AddArray( unusedLabels );
+      main->GetPointData()->AddArray( unusedStrings );
     }
 
     // The fracture mesh - 1 fracture connecting only hex 0 and hex 1
@@ -274,21 +400,23 @@ private:
         fracture->InsertNextCell( VTK_QUAD, pointsPerQuad, q );
       }
 
-      vtkNew< vtkIdTypeArray > cellGlobalIds;
+      vtkNew< vtkTypeInt64Array > cellGlobalIds;
+      cellGlobalIds->SetName( "GlobalCellIds" );
       cellGlobalIds->SetNumberOfComponents( 1 );
       cellGlobalIds->SetNumberOfTuples( numQuads );
       for( auto i = 0; i < numQuads; ++i )
       {
-        cellGlobalIds->SetValue( i, i );
+        cellGlobalIds->SetValue( i, base + i );
       }
       fracture->GetCellData()->SetGlobalIds( cellGlobalIds );
 
-      vtkNew< vtkIdTypeArray > pointGlobalIds;
+      vtkNew< vtkTypeInt64Array > pointGlobalIds;
+      pointGlobalIds->SetName( "GlobalPointIds" );
       pointGlobalIds->SetNumberOfComponents( 1 );
       pointGlobalIds->SetNumberOfTuples( numPoints );
       for( auto i = 0; i < numPoints; ++i )
       {
-        pointGlobalIds->SetValue( i, i );
+        pointGlobalIds->SetValue( i, base + i );
       }
       fracture->GetPointData()->SetGlobalIds( pointGlobalIds );
 
@@ -297,10 +425,11 @@ private:
       collocatedNodes->SetName( "collocated_nodes" );
       collocatedNodes->SetNumberOfComponents( 2 );
       collocatedNodes->SetNumberOfTuples( numPoints );
-      collocatedNodes->SetTuple2( 0, 4, 8 ); // Main mesh points 4 and 8
-      collocatedNodes->SetTuple2( 1, 5, 9 ); // Main mesh points 5 and 9
-      collocatedNodes->SetTuple2( 2, 6, 10 ); // Main mesh points 6 and 10
-      collocatedNodes->SetTuple2( 3, 7, 11 ); // Main mesh points 7 and 11
+      for( int i = 0; i < numPoints; ++i )
+      {
+        vtkIdType const pair[2]{ base + 4 + i, base + 8 + i };
+        collocatedNodes->SetTypedTuple( i, pair );
+      }
 
       fracture->GetPointData()->AddArray( collocatedNodes );
     }
@@ -374,6 +503,140 @@ TEST_F( TestFractureImport, fracture )
   };
 
   TestMeshImport( m_vtkFile, validate, "fracture" );
+}
+
+TEST( VTKImport, appendPreservesWideIdsAndCollocation )
+{
+  vtkIdType const base = sizeof( vtkIdType ) == 8 ? INT64_C(9007199254741001) : 10001;
+  for( bool const shared : { false, true } )
+  {
+    stdVector< vtkSmartPointer< vtkUnstructuredGrid > > inputs;
+    for( int part = 0; part < 2; ++part )
+    {
+      auto grid = vtkSmartPointer< vtkUnstructuredGrid >::New();
+      vtkNew< vtkPoints > points;
+      points->SetDataTypeToDouble();
+      real64 const coordinates[8][3] = { {0,0,0}, {1,0,0}, {1,1,0}, {0,1,0},
+                                       {0,0,1}, {1,0,1}, {1,1,1}, {0,1,1} };
+      for( auto const & point : coordinates ) points->InsertNextPoint( point );
+      grid->SetPoints( points );
+      vtkIdType const corners[8] = {0,1,2,3,4,5,6,7};
+      grid->InsertNextCell( VTK_HEXAHEDRON, 8, corners );
+      vtkNew< vtkIdTypeArray > pointIds, cellIds, collocation;
+      pointIds->SetName( "pointIds" );
+      cellIds->SetName( "cellIds" );
+      collocation->SetName( "collocated_nodes" );
+      collocation->SetNumberOfComponents( 3 );
+      collocation->SetNumberOfTuples( 8 );
+      for( vtkIdType p = 0; p < 8; ++p )
+      {
+        vtkIdType const id = base + ( part == 0 || ( shared && p < 4 ) ? p : 8 + p );
+        pointIds->InsertNextValue( id );
+        for( int c = 0; c < 3; ++c ) collocation->SetTypedComponent( p, c, id + 100 + c );
+      }
+      cellIds->InsertNextValue( base + 1000 + part );
+      grid->GetPointData()->SetGlobalIds( pointIds );
+      grid->GetPointData()->AddArray( collocation );
+      grid->GetCellData()->SetGlobalIds( cellIds );
+      inputs.emplace_back( std::move( grid ) );
+    }
+    auto merged = geos::vtk::appendMeshParts( { inputs[0], inputs[1] } );
+    EXPECT_EQ( merged->GetNumberOfCells(), 2 );
+    ASSERT_EQ( merged->GetNumberOfPoints(), shared ? 12 : 16 );
+    auto * pointIds = vtkIdTypeArray::SafeDownCast( merged->GetPointData()->GetGlobalIds() );
+    auto * cellIds = vtkIdTypeArray::SafeDownCast( merged->GetCellData()->GetGlobalIds() );
+    auto * collocation = vtkIdTypeArray::SafeDownCast( merged->GetPointData()->GetArray( "collocated_nodes" ) );
+    ASSERT_NE( pointIds, nullptr );
+    ASSERT_NE( cellIds, nullptr );
+    ASSERT_NE( collocation, nullptr );
+    std::set< vtkIdType > unique;
+    for( vtkIdType p = 0; p < merged->GetNumberOfPoints(); ++p )
+    {
+      EXPECT_TRUE( unique.insert( pointIds->GetValue( p ) ).second );
+      for( int c = 0; c < 3; ++c ) EXPECT_EQ( collocation->GetTypedComponent( p, c ), pointIds->GetValue( p ) + 100 + c );
+    }
+    for( int part = 0; part < 2; ++part )
+    {
+      EXPECT_EQ( cellIds->GetValue( part ), base + 1000 + part );
+      vtkNew< vtkIdList > connectivity;
+      merged->GetCellPoints( part, connectivity );
+      ASSERT_EQ( connectivity->GetNumberOfIds(), 8 );
+      for( vtkIdType p = 0; p < 8; ++p )
+        EXPECT_EQ( pointIds->GetValue( connectivity->GetId( p ) ),
+                   base + ( part == 0 || ( shared && p < 4 ) ? p : 8 + p ) );
+    }
+  }
+}
+
+TEST( VTKImport, redistribute )
+{
+  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+  int const commRank = MpiWrapper::commRank( MPI_COMM_GEOS );
+
+  vtkNew< vtkPartitionedDataSet > localParts;
+  localParts->SetNumberOfPartitions( commSize );
+  for( int destinationRank = 0; destinationRank < commSize; ++destinationRank )
+  {
+    // With one rank, use an empty destination to exercise the metadata
+    // recreation directly. In parallel, rank zero receives cells while the
+    // remaining destinations receive empty partitions. Both nonempty and
+    // empty partitions carry string and numeric metadata.
+    bool const withCell = commSize > 1 && destinationRank == 0;
+    localParts->SetPartition( destinationRank, makeRedistributionGrid( withCell ) );
+  }
+
+  vtkSmartPointer< vtkUnstructuredGrid > result = geos::vtk::redistribute( *localParts, MPI_COMM_GEOS );
+  ASSERT_NE( result, nullptr );
+  if( commSize > 1 && commRank == 0 )
+  {
+    EXPECT_EQ( result->GetNumberOfCells(), commSize );
+    vtkAbstractArray * const cellValues = result->GetCellData()->GetAbstractArray( "redistributeCellValues" );
+    ASSERT_NE( cellValues, nullptr );
+    EXPECT_EQ( cellValues->GetDataType(), VTK_INT );
+    EXPECT_EQ( cellValues->GetNumberOfComponents(), 3 );
+    expectArrayMetadata( *result->GetCellData(), { { "redistributeCellLabels", VTK_STRING, 2 },
+                           { "redistributeCellValues", VTK_INT, 3 } }, commSize );
+    expectArrayMetadata( *result->GetPointData(), { { "redistributePointLabels", VTK_STRING, 2 },
+                           { "redistributePointValues", VTK_DOUBLE, 4 } }, 1 );
+    expectArrayMetadata( *result->GetFieldData(), { { "redistributeFieldLabels", VTK_STRING, 2 },
+                           { "redistributeFieldValues", VTK_INT, 3 } }, 1 );
+  }
+  else
+  {
+    EXPECT_EQ( result->GetNumberOfCells(), 0 );
+    expectEmptyArrayMetadata( *result->GetCellData(),
+                              { { "redistributeCellLabels", VTK_STRING, 2 },
+                                { "redistributeCellValues", VTK_INT, 3 } } );
+    expectEmptyArrayMetadata( *result->GetPointData(),
+                              { { "redistributePointLabels", VTK_STRING, 2 },
+                                { "redistributePointValues", VTK_DOUBLE, 4 } } );
+    expectEmptyArrayMetadata( *result->GetFieldData(),
+                              { { "redistributeFieldLabels", VTK_STRING, 2 },
+                                { "redistributeFieldValues", VTK_INT, 3 } } );
+  }
+}
+
+TEST( VTKImport, structuredPointsStringField )
+{
+  // Original #2821 inline VTK: STRUCTURED_POINTS plus FIELD CellLabels string,
+  // imported through VTKMesh with the default partitionRefinement=1 path.
+  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
+  {
+    localIndex localCells = 0;
+    stdVector< string > const names{ geos::vtk::buildCellBlockName( ElementType::Hexahedron, 0 ),
+                                     geos::vtk::buildCellBlockName( ElementType::Hexahedron, 1 ),
+                                     geos::vtk::buildCellBlockName( ElementType::Hexahedron, 2 ) };
+    for( string const & name: names )
+    {
+      if( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( name ) )
+      {
+        localCells += cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( name ).size();
+      }
+    }
+    ASSERT_EQ( MpiWrapper::sum( localCells ), 25 );
+  };
+
+  TestMeshImport( testMeshDir + "/stringFieldStructuredPoints.vtk", validate, "", 1 );
 }
 
 TEST( VTKImport, cube )
@@ -718,6 +981,144 @@ TEST( VTKImport, supportedElements )
   TestMeshImport( medleyVTK42, validate );
 }
 
+TEST( VTKImport, parallelFileWithFewerPiecesThanRanks )
+{
+  if( MpiWrapper::commSize() <= 2 )
+  {
+    GTEST_SKIP() << "Two input pieces require at least four ranks for this regression";
+  }
+  namespace fs = std::filesystem;
+  string folderName;
+  string fixtureError;
+  if( MpiWrapper::commRank() == 0 )
+  {
+    try
+    {
+      LvArray::system::FloatingPointExceptionGuard guard;
+      auto const stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+      fs::path const folder = fs::temp_directory_path() / ( "tmp-geos-pvtu-" + std::to_string( stamp ) );
+      if( !fs::create_directory( folder ) ) throw std::runtime_error( "PVTU test folder already exists" );
+      folderName = folder.string();
+      vtkNew< vtkDataSetReader > reader;
+      reader->SetFileName( ( testMeshDir + "/cube.vtk" ).c_str() );
+      reader->Update();
+      auto * source = vtkUnstructuredGrid::SafeDownCast( reader->GetOutput() );
+      if( source == nullptr ) throw std::runtime_error( "Missing cube fixture" );
+      vtkNew< vtkIdList > volumeIds;
+      for( vtkIdType c = 0; c < source->GetNumberOfCells(); ++c )
+        if( source->GetCellType( c ) == VTK_HEXAHEDRON ) volumeIds->InsertNextId( c );
+      vtkNew< vtkExtractCells > volume;
+      volume->SetInputData( source );
+      volume->SetCellList( volumeIds );
+      volume->Update();
+      auto * grid = volume->GetOutput();
+      if( grid->GetNumberOfCells() != 27 ) throw std::runtime_error( "Expected 27 volume cells in cube fixture" );
+      grid->GetCellData()->Initialize();
+      grid->GetPointData()->Initialize();
+      grid->GetFieldData()->Initialize();
+      vtkNew< vtkIntArray > attributes;
+      attributes->SetName( "attribute" );
+      attributes->SetNumberOfTuples( 27 );
+      attributes->FillValue( 0 );
+      grid->GetCellData()->SetScalars( attributes );
+      for( int piece = 0; piece < 2; ++piece )
+      {
+        vtkNew< vtkIdList > ids;
+        for( vtkIdType cell = piece == 0 ? 0 : 13; cell < ( piece == 0 ? 13 : 27 ); ++cell ) ids->InsertNextId( cell );
+        vtkNew< vtkExtractCells > extract;
+        extract->SetInputData( grid );
+        extract->SetCellList( ids );
+        extract->Update();
+        vtkNew< vtkXMLUnstructuredGridWriter > writer;
+        writer->SetFileName( ( folder / ( "piece" + std::to_string( piece ) + ".vtu" ) ).c_str() );
+        writer->SetInputData( extract->GetOutput() );
+        if( writer->Write() != 1 ) throw std::runtime_error( "Could not write PVTU test piece" );
+      }
+      std::ofstream summary( folder / "mesh.pvtu" );
+      summary << R"xml(<?xml version="1.0"?>
+  <VTKFile type="PUnstructuredGrid" version="1.0" byte_order="LittleEndian">
+    <PUnstructuredGrid GhostLevel="0">
+      <PPointData/>
+      <PCellData Scalars="attribute"><PDataArray type="Int32" Name="attribute"/></PCellData>
+      <PPoints><PDataArray type="Float32" NumberOfComponents="3"/></PPoints>
+      <Piece Source="piece0.vtu"/><Piece Source="piece1.vtu"/>
+    </PUnstructuredGrid>
+  </VTKFile>
+  )xml";
+      if( !summary.good() ) throw std::runtime_error( "Could not write PVTU summary" );
+    }
+    catch( std::exception const & error )
+    {
+      fixtureError = error.what();
+    }
+  }
+  MpiWrapper::broadcast( fixtureError );
+  ASSERT_TRUE( fixtureError.empty() ) << fixtureError;
+  MpiWrapper::broadcast( folderName );
+  for( int level : { 0, 1 } )
+  {
+    auto const validate = [level]( CellBlockManagerABC const & manager )
+    {
+      localIndex count = 0;
+      manager.getCellBlocks().forSubGroups< CellBlockABC >( [&]( CellBlockABC const & block ) { count += block.numElements(); } );
+      EXPECT_EQ( MpiWrapper::sum( count ), level == 0 ? 27 : 216 );
+    };
+    // Exercise default kdtree scatter followed by normal graph refinement.
+    TestMeshImport( ( fs::path( folderName ) / "mesh.pvtu" ).string(), validate, "", 1, "", std::to_string( level ) );
+  }
+  MpiWrapper::barrier();
+  if( MpiWrapper::commRank() == 0 )
+  {
+    EXPECT_TRUE( fs::remove( fs::path( folderName ) / "piece0.vtu" ) );
+    EXPECT_TRUE( fs::remove( fs::path( folderName ) / "piece1.vtu" ) );
+    EXPECT_TRUE( fs::remove( fs::path( folderName ) / "mesh.pvtu" ) );
+    EXPECT_TRUE( fs::remove( folderName ) );
+  }
+}
+
+class TestInt64FractureImport : public TestFractureImport
+{
+protected:
+  globalIndex globalIdBase() const override { return INT64_C(9007199254741001); }
+  bool includeSurfaceMarker() const override { return true; }
+};
+
+TEST_F( TestInt64FractureImport, preservesExactIdsAndFractureBuckets )
+{
+  globalIndex const base = globalIdBase();
+  auto const validate = [base]( CellBlockManagerABC const & manager )
+  {
+    localIndex cells = 0;
+    manager.getCellBlocks().forSubGroups< CellBlockABC >( [&]( CellBlockABC const & block )
+    {
+      if( getElementDim( block.getElementType() ) != 3 ) return;
+      cells += block.numElements();
+      for( globalIndex id : block.localToGlobalMap() )
+      {
+        EXPECT_GE( id, base );
+        EXPECT_LT( id, base + 3 );
+      }
+    } );
+    EXPECT_EQ( MpiWrapper::sum( cells ), 3 );
+    for( globalIndex id : manager.getNodeLocalToGlobal() )
+    {
+      EXPECT_GE( id, base );
+      EXPECT_LT( id, base + 24 );
+    }
+    auto const & fracture = manager.getFaceBlocks().getGroup< FaceBlockABC >( 0 );
+    EXPECT_EQ( MpiWrapper::sum( fracture.num2dElements() ), 1 );
+    auto const buckets = fracture.get2dElemsToCollocatedNodesBuckets();
+    for( localIndex cell = 0; cell < buckets.size(); ++cell )
+      for( localIndex point = 0; point < buckets[cell].size(); ++point )
+      {
+        auto const bucket = buckets[cell][point];
+        EXPECT_EQ( ( std::set< globalIndex >( bucket.begin(), bucket.end() ) ),
+                   ( std::set< globalIndex >{ base + 4 + point, base + 8 + point } ) );
+      }
+  };
+  TestMeshImport( m_vtkFile, validate, "fracture" );
+}
+
 TEST( VTKImport, uniformRefinementSupportedElementsAndSourceBlocks )
 {
   SKIP_TEST_IN_PARALLEL( "The supplied twelve-cell fixture is a serial import oracle" );
@@ -745,7 +1146,7 @@ TEST( VTKImport, uniformRefinementSupportedElementsAndSourceBlocks )
         } );
         EXPECT_EQ( lineageCount, 7 );
       };
-      TestMeshImport( testMeshDir + "/" + filename, validate, "", "", std::to_string( levels ) );
+      TestMeshImport( testMeshDir + "/" + filename, validate, "", 0, "", std::to_string( levels ) );
     }
 }
 
@@ -762,7 +1163,7 @@ TEST_F( TestFractureImport, uniformRefinementFractureRelations )
     for( localIndex cell = 0; cell < buckets.size(); ++cell )
       for( localIndex point = 0; point < buckets[cell].size(); ++point ) EXPECT_EQ( buckets[cell][point].size(), 2 );
   };
-  TestMeshImport( m_vtkFile, validate, "fracture", "rcb", "1" );
+  TestMeshImport( m_vtkFile, validate, "fracture", 0, "rcb", "1" );
 }
 
 TEST( VTKImport, uniformRefinementRejectsNegativeAndFractionalXml )
@@ -770,7 +1171,7 @@ TEST( VTKImport, uniformRefinementRejectsNegativeAndFractionalXml )
   auto const validate = []( CellBlockManagerABC const & ) {};
   for( string const level : { "-1", "1.5", "bad" } )
   {
-    EXPECT_THROW( TestMeshImport( testMeshDir + "/supportedElements.vtk", validate, "", "", level ), InputError );
+    EXPECT_THROW( TestMeshImport( testMeshDir + "/supportedElements.vtk", validate, "", 0, "", level ), InputError );
   }
 }
 

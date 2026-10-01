@@ -19,6 +19,7 @@
 #define GEOS_DATAREPOSITORY_WRAPPERBASE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/Span.hpp"
 #include "dataRepository/WrapperLimits.hpp"

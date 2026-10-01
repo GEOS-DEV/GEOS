@@ -637,7 +637,7 @@ void HypreMatrix::multiply( HypreMatrix const & src,
   GEOS_LAI_ASSERT_EQ( numLocalCols(), src.numLocalRows() );
 
   // Compute product
-  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParMatmul( m_parcsr_mat, src.m_parcsr_mat );
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatMat( m_parcsr_mat, src.m_parcsr_mat );
 
   // Create IJ layer (with matrix closed)
   dst.parCSRtoIJ( dst_parcsr );
@@ -651,7 +651,7 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
   GEOS_LAI_ASSERT_EQ( numLocalRows(), src.numLocalRows() );
 
   // Compute product
-  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParTMatmul( m_parcsr_mat, src.m_parcsr_mat );
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRTMatMat( m_parcsr_mat, src.m_parcsr_mat );
 
   // Create IJ layer (with matrix closed)
   dst.parCSRtoIJ( dst_parcsr );

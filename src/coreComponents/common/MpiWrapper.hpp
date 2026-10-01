@@ -993,7 +993,7 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgather() for serial run requires send and receive buffers are of the same type" );
   GEOS_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
-  std::copy( sendbuf, sendbuf + sendcount, recvbuf )
+  std::copy( sendbuf, sendbuf + sendcount, recvbuf );
   return 0;
 #endif
 }
@@ -1013,8 +1013,8 @@ int MpiWrapper::allgatherv( T_SEND const * const sendbuf,
 #else
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgatherv() for serial run requires send and receive buffers are of the same type" );
-  GEOS_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
-  std::copy( sendbuf, sendbuf + sendcount, recvbuf )
+  GEOS_ERROR_IF_NE_MSG( sendcount, recvcounts[0], "sendcount is not equal to recvcount." );
+  std::copy( sendbuf, sendbuf + sendcount, recvbuf + displacements[0] );
   return 0;
 #endif
 }
@@ -1120,7 +1120,7 @@ int MpiWrapper::reduce( T const * const sendbuf,
                         T * const recvbuf,
                         int const count,
                         MPI_Op const MPI_PARAM( op ),
-                        int root,
+                        int MPI_PARAM( root ),
                         MPI_Comm const MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
@@ -1227,7 +1227,7 @@ int MpiWrapper::gather( TS const * const sendbuf,
 template< typename T, typename DST_CONTAINER, typename >
 int MpiWrapper::gather( T const & value,
                         DST_CONTAINER & destValuesBuffer,
-                        int root,
+                        int MPI_PARAM( root ),
                         MPI_Comm MPI_PARAM( comm ) )
 {
   if( commRank() == 0 )
@@ -1238,7 +1238,7 @@ int MpiWrapper::gather( T const & value,
                      destValuesBuffer.data(), sizeof( T ), internal::getMpiType< uint8_t >(),
                      root, comm );
 #else
-  memcpy( destValuesBuffer.data(), &value, sendBufferSize );
+  memcpy( destValuesBuffer.data(), &value, sizeof( T ) );
   return 0;
 #endif
 }
@@ -1349,9 +1349,9 @@ int MpiWrapper::iRecv( T * const buf,
 }
 
 template< typename T >
-int MpiWrapper::recv( array1d< T > & buf,
+int MpiWrapper::recv( array1d< T > & MPI_PARAM( buf ),
                       int MPI_PARAM( source ),
-                      int tag,
+                      int MPI_PARAM( tag ),
                       MPI_Comm MPI_PARAM( comm ),
                       MPI_Status * MPI_PARAM( request ) )
 {
@@ -1378,9 +1378,9 @@ int MpiWrapper::recv( array1d< T > & buf,
 }
 
 template< typename T >
-int MpiWrapper::iSend( arrayView1d< T > const & buf,
+int MpiWrapper::iSend( arrayView1d< T > const & MPI_PARAM( buf ),
                        int MPI_PARAM( dest ),
-                       int tag,
+                       int MPI_PARAM( tag ),
                        MPI_Comm MPI_PARAM( comm ),
                        MPI_Request * MPI_PARAM( request ) )
 {
@@ -1401,16 +1401,17 @@ int MpiWrapper::iSend( arrayView1d< T > const & buf,
 }
 
 template< typename T >
-int MpiWrapper::send( T const * const buf,
-                      int count,
-                      int dest,
-                      int tag,
-                      MPI_Comm comm )
+int MpiWrapper::send( T const * const MPI_PARAM( buf ),
+                      int MPI_PARAM( count ),
+                      int MPI_PARAM( dest ),
+                      int MPI_PARAM( tag ),
+                      MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
   return MPI_Send( buf, count, internal::getMpiType< T >(), dest, tag, comm );
 #else
   GEOS_ERROR( "Not implemented without MPI" );
+  return MPI_SUCCESS;
 #endif
 }
 
@@ -1447,19 +1448,19 @@ int MpiWrapper::iSend( T const * const buf,
 }
 
 template< typename U, typename T >
-U MpiWrapper::prefixSum( T const value, MPI_Comm comm )
+U MpiWrapper::prefixSum( T const MPI_PARAM( value ), MPI_Comm MPI_PARAM( comm ) )
 {
-  U localResult;
+  U localResult = 0;
 
 #ifdef GEOS_USE_MPI
   U const convertedValue = value;
   int const error = MPI_Exscan( &convertedValue, &localResult, 1, internal::getMpiType< U >(), MPI_SUM, comm );
   MPI_CHECK_ERROR( error );
-#endif
-  if( commRank() == 0 )
+  if( commRank( comm ) == 0 )
   {
     localResult = 0;
   }
+#endif
 
   return localResult;
 }
@@ -1563,7 +1564,7 @@ void MpiWrapper::reduce( Span< T const > const src, Span< T > const dst, Reducti
 
 template< typename FIRST, typename SECOND, MpiWrapper::PairReduction const OP >
 MpiWrapper::PairType< FIRST, SECOND >
-MpiWrapper::allReduce( PairType< FIRST, SECOND > const & localPair, MPI_Comm comm )
+MpiWrapper::allReduce( PairType< FIRST, SECOND > const & localPair, MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOS_USE_MPI
   auto const type = internal::getMpiPairType< FIRST, SECOND >();

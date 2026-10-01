@@ -491,7 +491,7 @@ private:
   array1d< localIndex > m_nextWellElementIndex;
 
   /// Indices of the next well element (to reconstruct connectivity after ghost exchange)
-  array1d< localIndex > m_nextWellElementIndexGlobal;
+  array1d< globalIndex > m_nextWellElementIndexGlobal;
 
   /// Local index of well's top segment
   localIndex m_topWellElementIndex;

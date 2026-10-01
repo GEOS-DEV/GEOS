@@ -660,6 +660,16 @@ TEST( VTKRefinementCommunication, ExistingVerticesKeepIdsAndValidateCoordinates 
     originals.pop_back();
   }
   EXPECT_NO_THROW( comm.reconcileExistingPoints( originals ) );
+  for( auto & point : originals ) point.supportScale = 0;
+  EXPECT_NO_THROW( comm.reconcileExistingPoints( originals ) );
+  if( comm.size() > 1 )
+  {
+    if( comm.rank() == comm.size() - 1 ) originals[0].position[0] = 1e-15;
+    EXPECT_THROW( comm.reconcileExistingPoints( originals ), std::runtime_error );
+    originals[0].position[0] = 0;
+  }
+  if( comm.rank() == comm.size() - 1 ) originals[0].supportScale = -1;
+  EXPECT_THROW( comm.reconcileExistingPoints( originals ), std::runtime_error );
 }
 
 TEST( VTKRefinementCommunication, SharedTypedFieldsComeFromTheAllocator )
@@ -852,7 +862,13 @@ TEST( VTKRefinementCommunication, ReplicatedSurfaceChildrenUseFullIdentitiesAndD
                             ranks,
                             { static_cast< unsigned char >( comm.rank() ), static_cast< unsigned char >( child ) } } );
     }
-    auto const result = comm.resolveCells( 1, requests, base );
+    IdRange range{};
+    auto const result = comm.resolveCells( 1, requests, base, &range );
+    EXPECT_EQ( range.total, 4 );
+    if( comm.rank() == 0 )
+    {
+      EXPECT_EQ( range.first, base );
+    }
     ASSERT_EQ( result.size(), 4 );
     for( auto const & [key, record] : result )
     {
@@ -1191,6 +1207,27 @@ TEST( VTKRefinementCommunication, CoarseFullFaceValidationFindsHiddenNonmanifold
   }
   EXPECT_THROW( comm.validateVolumeFaces( faces ), std::runtime_error );
   EXPECT_NO_THROW( comm.validateVolumeFaces( {} ) );
+}
+
+TEST( VTKRefinementCommunication, CoarseQuadAgainstTrianglesIsRejectedAcrossRanks )
+{
+  Communication comm( MPI_COMM_GEOS, 5 );
+  std::vector< MainFace > faces;
+  if( comm.rank() == 0 ) faces.push_back( { { 71, 81, 91, 101 }, { 0 } } );
+  int const other = comm.size() == 1 ? 0 : 1;
+  if( comm.rank() == other )
+  {
+    faces.push_back( { { 71, 91, 81 }, { other } } );
+    faces.push_back( { { 71, 101, 91 }, { other } } );
+  }
+  EXPECT_THROW( comm.validateVolumeFaces( faces ), std::runtime_error );
+  // A triangle can meet the quad along a true edge without covering its face.
+  faces.clear();
+  if( comm.rank() == 0 ) faces.push_back( { { 71, 81, 91, 101 }, { 0 } } );
+  if( comm.rank() == other ) faces.push_back( { { 71, 81, 201 }, { other } } );
+  EXPECT_NO_THROW( comm.validateVolumeFaces( faces ) );
+  EXPECT_TRUE( comm.neighbors().empty() );
+  EXPECT_EQ( comm.statistics().directoryExchanges, 2 );
 }
 
 int main( int argc, char ** argv )

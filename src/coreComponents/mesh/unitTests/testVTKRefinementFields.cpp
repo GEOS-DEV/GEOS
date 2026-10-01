@@ -132,7 +132,9 @@ TEST( VTKRefinementFields, TypedAffineFieldsAndNodeSets )
     EXPECT_EQ( labels->GetTypedComponent( i, 0 ), largeLabel );
     EXPECT_EQ( labels->GetTypedComponent( i, 1 ), -largeLabel );
     if( i >= points.originalSize() )
+    {
       EXPECT_DOUBLE_EQ( output->GetArray( "corner" )->GetComponent( i, 0 ), 0 );
+    }
   }
   EXPECT_DOUBLE_EQ( output->GetArray( "base" )->GetComponent( points.face( { 0, 1, 2, 3 } ), 0 ), 1 );
   EXPECT_DOUBLE_EQ( output->GetArray( "base" )->GetComponent( points.edge( 0, 4 ), 0 ), 0 );
@@ -205,6 +207,28 @@ TEST( VTKRefinementFields, IntensiveAndMeasuredExtensivePyramidFields )
   EXPECT_EQ( output->GetArray( "oldCells" ), nullptr );
 }
 
+TEST( VTKRefinementFields, CellFractionsCheckEveryParentInArbitraryOrder )
+{
+  vtkNew< vtkCellData > input;
+  vtkNew< vtkDoubleArray > quantity;
+  quantity->SetName( "quantity" );
+  quantity->InsertNextValue( 3 );
+  quantity->InsertNextValue( 7 );
+  input->AddArray( quantity );
+  TransferPolicies policies;
+  policies.extensiveCellArrays.insert( "quantity" );
+  Connectivity const parents{ 1, 0, 1, 0 };
+  std::vector< double > const fractions{ 0.75, 0.25, 0.25, 0.75 };
+  auto output = transferCellData( *input, 2, parents, fractions, policies );
+  std::vector< double > const expected{ 5.25, 0.75, 1.75, 2.25 };
+  for( vtkIdType i = 0; i < 4; ++i )
+  {
+    EXPECT_DOUBLE_EQ( output->GetArray( "quantity" )->GetComponent( i, 0 ), expected[i] );
+  }
+  EXPECT_THROW( transferCellData( *input, 2, { 0 }, { 1 }, policies ), std::invalid_argument );
+  EXPECT_THROW( transferCellData( *input, 2, parents, { 0.5, 0.25, 0.25, 0.75 }, policies ), std::invalid_argument );
+}
+
 TEST( VTKRefinementFields, CanonicalTuplesPreserveExactIntegersAndCheckSchema )
 {
   auto input = pointData();
@@ -231,6 +255,15 @@ TEST( VTKRefinementFields, CanonicalTuplesPreserveExactIntegersAndCheckSchema )
   destination.install( 7, tuple );
   EXPECT_EQ( label->GetTypedComponent( 7, 0 ), largeLabel );
   EXPECT_EQ( label->GetTypedComponent( 7, 1 ), -largeLabel );
+  EXPECT_EQ( destination.pack( 7 ), tuple );
+  auto const values = original.pack( 7, FieldTupleFormat::valuesOnly );
+  EXPECT_LT( values.size(), tuple.size() );
+  label->SetTypedComponent( 7, 0, 0 );
+  destination.install( 7, values, FieldTupleFormat::valuesOnly );
+  EXPECT_EQ( destination.pack( 7 ), tuple );
+  auto shortValues = values;
+  shortValues.pop_back();
+  EXPECT_THROW( destination.install( 7, shortValues, FieldTupleFormat::valuesOnly ), std::invalid_argument );
   EXPECT_EQ( destination.pack( 7 ), tuple );
   auto truncated = tuple;
   truncated.pop_back();
@@ -343,6 +376,17 @@ TEST( VTKRefinementFields, SurfaceCellTupleCodecPreservesIntegersStringsBitsAndR
   EXPECT_EQ( vtkTypeInt64Array::SafeDownCast( target->GetArray( "category" ) )->GetValue( 0 ), largeLabel );
   EXPECT_EQ( vtkStringArray::SafeDownCast( target->GetAbstractArray( "labels" ) )->GetValue( 0 ), std::string( "a\0b", 3 ) );
   EXPECT_TRUE( std::signbit( target->GetVectors()->GetComponent( 0, 0 ) ) );
+  auto const values = from.pack( 0, FieldTupleFormat::valuesOnly );
+  EXPECT_LT( values.size(), tuple.size() );
+  vtkTypeInt64Array::SafeDownCast( target->GetArray( "category" ) )->SetValue( 0, 0 );
+  vtkStringArray::SafeDownCast( target->GetAbstractArray( "labels" ) )->SetValue( 0, "changed again" );
+  vtkBitArray::SafeDownCast( target->GetArray( "flags" ) )->SetValue( 0, 0 );
+  to.install( 0, values, FieldTupleFormat::valuesOnly );
+  EXPECT_EQ( to.pack( 0 ), tuple );
+  auto shortValues = values;
+  shortValues.pop_back();
+  EXPECT_THROW( to.install( 0, shortValues, FieldTupleFormat::valuesOnly ), std::invalid_argument );
+  EXPECT_EQ( to.pack( 0 ), tuple );
   auto malformed = tuple;
   malformed.pop_back();
   EXPECT_THROW( to.install( 0, malformed ), std::invalid_argument );

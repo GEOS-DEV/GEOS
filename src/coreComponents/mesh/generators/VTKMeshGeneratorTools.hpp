@@ -26,9 +26,14 @@
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 
+#include "common/GeosxConfig.hpp"
+#ifdef GEOS_USE_MPI
 #include <mpi.h>
+#else
+using MPI_Comm = int;
+#endif
 
-// NOTE: do NOT include anything from GEOS here.
+// Only generated configuration and container declarations from GEOS are safe here.
 // In particular, nothing that directly or transitively includes "common/format/Format.hpp".
 // The reason is "diy2" library includes an older version of {fmt} than the one used by GEOS.
 // Collision of includes leads to all kinds of impossible to fix compilation errors.
@@ -36,6 +41,14 @@
 
 namespace geos::vtk
 {
+
+/**
+ * @brief Append mesh pieces while preserving exact integral IDs.
+ * @param meshes Pieces to append, with global IDs already validated by the importer.
+ * @return Combined grid with points merged by their global IDs when available.
+ */
+vtkSmartPointer< vtkUnstructuredGrid >
+appendMeshParts( stdVector< vtkUnstructuredGrid * > const & meshes );
 
 /**
  * @brief Redistribute a dataset partitioned on each rank according to destination.
@@ -47,6 +60,9 @@ namespace geos::vtk
  * Partition with index i represents a piece of mesh that must be shipped off to rank i.
  * Some partitions (usually most of them) can be empty, indicating nothing to send.
  * The return value on each rank is a combination of mesh pieces sent to current rank.
+ *
+ * Empty destination ranks reconstruct cell, point, and field arrays from
+ * vtkAbstractArray metadata, including non-numeric types such as vtkStringArray.
  */
 vtkSmartPointer< vtkUnstructuredGrid >
 redistribute( vtkPartitionedDataSet & localParts, MPI_Comm mpiComm );

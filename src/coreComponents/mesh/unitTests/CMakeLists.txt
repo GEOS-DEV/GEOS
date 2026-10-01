@@ -1,6 +1,7 @@
 # Specify list of tests
 set( mesh_tests
      testCellElementRegionSelector.cpp
+     testMeshAdjacency.cpp
      testMeshObjectPath.cpp
      testComputationalGeometry.cpp
      testGeometricObjects.cpp
@@ -42,6 +43,7 @@ if( ENABLE_VTK )
     VTK_REFINEMENT_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/coreComponents/integrationTests/meshTests" )
   target_include_directories( testVTKUniformRefinement PRIVATE ${PROJECT_SOURCE_DIR}/coreComponents )
   geos_add_test( NAME testVTKUniformRefinement COMMAND testVTKUniformRefinement )
+  set_tests_properties( testVTKUniformRefinement PROPERTIES TIMEOUT 60 )
   if( ENABLE_MPI )
     foreach( ranks 2 4 8 )
       geos_add_test( NAME testVTKRefinementCommunication_${ranks}ranks
@@ -103,6 +105,7 @@ set( nranks 4 )
   endforeach()
 
   # VTKMeshScattering test — 4 MPI ranks
+  if( ENABLE_VTK )
   blt_add_executable( NAME testVTKMeshScattering_mpi
                       SOURCES testVTKMeshScattering.cpp
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
@@ -111,4 +114,6 @@ set( nranks 4 )
   geos_add_test( NAME testVTKMeshScattering_mpi
                  COMMAND testVTKMeshScattering_mpi
                  NUM_MPI_TASKS 4 )
+  set_tests_properties( testVTKMeshScattering_mpi PROPERTIES TIMEOUT 60 )
+  endif()
 endif()

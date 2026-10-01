@@ -36,7 +36,7 @@
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
 #include <vtkVersionMacros.h>
-#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+#if defined( GEOS_USE_MPI ) && VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
 #include <vtkCellCenters.h>
 #include <vtkDIYKdTreeUtilities.h>
 #endif
@@ -199,6 +199,27 @@ bool isMeshStructured( vtkSmartPointer< vtkDataSet > mesh )
          || mesh->IsA( "vtkImageData" );
 }
 
+
+/** Normalize active integer IDs without the double-valued tuple interface. */
+vtkSmartPointer< vtkIdTypeArray > canonicalGlobalIds( vtkDataArray * input, vtkIdType count )
+{
+  GEOS_ERROR_IF( input == nullptr || input->GetNumberOfComponents() != 1 || input->GetNumberOfTuples() != count,
+                 "Global IDs require one component and matching tuple counts" );
+  if( auto * typed = vtkIdTypeArray::SafeDownCast( input ) ) return typed;
+  auto result = vtkSmartPointer< vtkIdTypeArray >::New();
+  result->SetName( input->GetName() );
+  result->SetComponentName( 0, input->GetComponentName( 0 ) );
+  result->SetNumberOfValues( count );
+  bool const copied = vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Integrals >::Execute(
+    input, [&]( auto const * array )
+  {
+    vtkDataArrayAccessor< TYPEOFPTR( array ) > const values( array );
+    for( vtkIdType i = 0; i < count; ++i )
+      result->SetValue( i, LvArray::integerConversion< vtkIdType >( values.Get( i, 0 ) ) );
+  } );
+  GEOS_ERROR_IF( !copied, "Global IDs require integral array storage" );
+  return result;
+}
 
 /**
  * @brief Generate global point and cell ids
@@ -576,6 +597,15 @@ partitionByCellGraph( vtkSmartPointer< vtkDataSet > mesh3D,
   pmet_idx_t const numElems = mesh3D->GetNumberOfCells();
   pmet_idx_t const numRanks = MpiWrapper::commSize( comm );
 
+#ifndef GEOS_USE_MPI
+  // A serial import already owns every cell. No graph backend is needed to
+  // assign its single partition, including the default refinement setting.
+  GEOS_THROW_IF( numParts != 1, "Serial mesh distribution requires one partition", InputError );
+  array1d< int64_t > partition( numElems );
+  partition.setValues< serialPolicy >( 0 );
+  return partition;
+#endif
+
   // Note: elemDist contains 3D cells only. Fractures are assigned later based on 3D neighbors.
   array1d< pmet_idx_t > const elemDist( numRanks + 1 );
   {
@@ -590,6 +620,7 @@ partitionByCellGraph( vtkSmartPointer< vtkDataSet > mesh3D,
 #ifdef GEOS_USE_PARMETIS
   graph = parmetis::meshToDual( elemToNodes.toViewConst(), elemDist, comm, minCommonNodes );
 #else
+  GEOS_UNUSED_VAR( numParts, minCommonNodes, numRefinements );
   GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON)"
               "to use any graph partitioning method for parallel mesh distribution", InputError );
 #endif
@@ -678,6 +709,11 @@ redistributeBySuperCellGraph(
 
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
+
+#ifndef GEOS_USE_MPI
+  // The only serial partition already satisfies every super-cell constraint.
+  return mesh;
+#endif
 
   // -----------------------------------------------------------------------
   // Step 1: Build base cell graph (standard adjacency)
@@ -1070,7 +1106,7 @@ static stdVector< int64_t > find2DTo3DNeighborsByCoordinates(
  * @param[in] cells3DIndices Indices of 3D cells in original mesh
  * @return Mapping from 2D cell index (in cells2DIndices) to global IDs of neighboring 3D cells
  */
-static ArrayOfArrays< localIndex, int64_t >
+static ArrayOfArrays< globalIndex, int64_t >
 build2DTo3DNeighbors( vtkDataSet & mesh,
                       arrayView1d< vtkIdType const > cells2DIndices,
                       arrayView1d< vtkIdType const > cells3DIndices )
@@ -1078,9 +1114,7 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
   GEOS_MARK_FUNCTION;
 
   // Retrieve global cell ID array
-  vtkIdTypeArray * globalCellIds = vtkIdTypeArray::SafeDownCast( mesh.GetCellData()->GetGlobalIds() );
-  GEOS_ERROR_IF( globalCellIds == nullptr,
-                 "Global cell IDs must be present in mesh for 2D-3D neighbor mapping" );
+  auto const globalCellIds = canonicalGlobalIds( mesh.GetCellData()->GetGlobalIds(), mesh.GetNumberOfCells() );
 
   // Build reverse lookup: original mesh index to global cell ID (3D cells only)
   stdUnorderedMap< vtkIdType, int64_t > meshIdxToGlobalId3D;
@@ -1092,7 +1126,7 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
     meshIdxToGlobalId3D.emplace( meshIdx, globalId );
   }
 
-  ArrayOfArrays< localIndex, int64_t > neighbors2Dto3D;
+  ArrayOfArrays< globalIndex, int64_t > neighbors2Dto3D;
   neighbors2Dto3D.reserve( cells2DIndices.size() );
 
   // Build a coordinate lookup for meshes with duplicated/collocated points.
@@ -1212,7 +1246,7 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
  * @return Partition assignments for each input cell
  */
 static array1d< int >
-assignCellsBasedOn3DNeighbors( ArrayOfArrays< localIndex, int64_t > const & neighbors2Dto3D,
+assignCellsBasedOn3DNeighbors( ArrayOfArrays< globalIndex, int64_t > const & neighbors2Dto3D,
                                arrayView1d< int64_t const > local3DGlobalIds,
                                arrayView1d< int const > local3DPartitions,
                                MPI_Comm const comm )
@@ -1398,9 +1432,9 @@ static AllMeshes
 redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
                               vtkSmartPointer< vtkDataSet > originalMesh,
                               arrayView1d< vtkIdType const > cells2DIndices,
-                              ArrayOfArrays< localIndex, int64_t > const & neighbors2Dto3D,
+                              ArrayOfArrays< globalIndex, int64_t > const & neighbors2Dto3D,
                               stdMap< string, vtkSmartPointer< vtkDataSet > > const & unpartitionedFractures,
-                              stdMap< string, ArrayOfArrays< localIndex, int64_t > > const & fractureNeighbors,
+                              stdMap< string, ArrayOfArrays< globalIndex, int64_t > > const & fractureNeighbors,
                               stdVector< string > const & fractureNames,
                               MPI_Comm const comm )
 {
@@ -1419,7 +1453,7 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
   bool const hasLocal2DCells = (rank == 0 && !cells2DIndices.empty());
 
   array1d< int > partitions2D = assignCellsBasedOn3DNeighbors(
-    hasLocal2DCells ? neighbors2Dto3D : ArrayOfArrays< localIndex, int64_t >{},
+    hasLocal2DCells ? neighbors2Dto3D : ArrayOfArrays< globalIndex, int64_t >{},
     local3DGlobalIds.toViewConst(),
     partitions3D.toViewConst(),
     comm );
@@ -1452,7 +1486,7 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
   {
     vtkIdType expectedFractureCells = 0;
 
-    ArrayOfArrays< localIndex, int64_t > localFractureNeighbors;
+    ArrayOfArrays< globalIndex, int64_t > localFractureNeighbors;
     vtkSmartPointer< vtkDataSet > unpartitionedFracture;
 
     if( rank == 0 )
@@ -1516,13 +1550,7 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
 
   if( redistributed2D->GetNumberOfCells() > 0 )
   {
-    vtkNew< vtkAppendFilter > appendFilter;
-    appendFilter->AddInputData( redistributed3D );
-    appendFilter->AddInputData( redistributed2D );
-    appendFilter->MergePointsOn();
-    appendFilter->Update();
-
-    mergedMesh->ShallowCopy( appendFilter->GetOutput() );
+    mergedMesh->ShallowCopy( appendMeshParts( { vtkUnstructuredGrid::SafeDownCast( redistributed3D ), redistributed2D } ) );
   }
   else
   {
@@ -1638,7 +1666,7 @@ stdVector< vtkIdType > findMatchingCellsForFractureElement(
  * @param cells3DIndices Indices of 3D cells in the original mesh
  * @return Mapping: fracture element index -> global IDs of neighboring 3D cells
  */
-static ArrayOfArrays< localIndex, int64_t >
+static ArrayOfArrays< globalIndex, int64_t >
 buildFractureTo3DNeighbors( vtkDataSet & originalMesh,
                             vtkSmartPointer< vtkDataSet > fractureMesh,
                             arrayView1d< vtkIdType const > cells3DIndices )
@@ -1694,7 +1722,7 @@ buildFractureTo3DNeighbors( vtkDataSet & originalMesh,
   // -----------------------------------------------------------------------
   // Step 4: Build fracture-to-3D neighbor mapping
   // -----------------------------------------------------------------------
-  ArrayOfArrays< localIndex, int64_t > result;
+  ArrayOfArrays< globalIndex, int64_t > result;
   result.reserve( numFractureElems );
 
   vtkSmartPointer< vtkIdList > const fracPtIds = vtkSmartPointer< vtkIdList >::New();
@@ -1961,15 +1989,10 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
   else if( useGlobalIds >= 0 && globalIdsAvailable )
   {
     output = mesh;
-    vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( output->GetCellData()->GetGlobalIds() );
-    vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( output->GetPointData()->GetGlobalIds() );
-    GEOS_ERROR_IF( globalCellId == nullptr || globalPointId == nullptr, "VTK input global IDs must use vtkIdTypeArray storage" );
-    GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 || globalCellId->GetNumberOfTuples() != output->GetNumberOfCells(),
-                   GEOS_FMT( "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n{}",
-                             generalMeshErrorAdvice ) );
-    GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 || globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
-                   GEOS_FMT( "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n{}",
-                             generalMeshErrorAdvice ) );
+    auto const globalCellId = canonicalGlobalIds( output->GetCellData()->GetGlobalIds(), output->GetNumberOfCells() );
+    auto const globalPointId = canonicalGlobalIds( output->GetPointData()->GetGlobalIds(), output->GetNumberOfPoints() );
+    output->GetCellData()->SetGlobalIds( globalCellId );
+    output->GetPointData()->SetGlobalIds( globalPointId );
 
     GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
@@ -2116,6 +2139,11 @@ redistributeMeshes( integer const logLevel,
   stdVector< vtkSmartPointer< vtkDataSet > > fractures;
   for( auto & nameToFracture: namesToFractures )
   {
+    auto const & fracture = nameToFracture.second;
+    if( auto * ids = fracture->GetCellData()->GetGlobalIds() )
+      fracture->GetCellData()->SetGlobalIds( canonicalGlobalIds( ids, fracture->GetNumberOfCells() ) );
+    if( auto * ids = fracture->GetPointData()->GetGlobalIds() )
+      fracture->GetPointData()->SetGlobalIds( canonicalGlobalIds( ids, fracture->GetNumberOfPoints() ) );
     fractures.push_back( nameToFracture.second );
   }
 
@@ -2126,6 +2154,30 @@ redistributeMeshes( integer const logLevel,
   if( !mesh || (mesh->GetNumberOfCells() == 0 && mesh->GetNumberOfPoints() == 0) )
   {
     mesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
+  }
+
+  // Fracture associations and atomic coarse super-cells are built on rank 0.
+  // Consolidate distributed coarse input before that stage; never discard a
+  // non-root PVTU piece. Root-complete input retains the existing ordering/path.
+  if( !fractures.empty() )
+  {
+    vtkIdType const total = MpiWrapper::sum( mesh->GetNumberOfCells(), comm );
+    vtkIdType rootCells = rank == 0 ? mesh->GetNumberOfCells() : 0;
+    MpiWrapper::broadcast( rootCells, 0, comm );
+    if( rootCells != total )
+    {
+      array1d< vtkIdType > cells( mesh->GetNumberOfCells() );
+      std::iota( cells.begin(), cells.end(), 0 );
+      vtkNew< vtkPartitionedDataSet > pieces;
+      pieces->SetNumberOfPartitions( numRanks );
+      pieces->SetPartition( 0, extractCellsByIndices( *mesh, cells ) );
+      mesh = vtk::redistribute( *pieces, comm );
+      vtkIdType const after = MpiWrapper::sum( mesh->GetNumberOfCells(), comm );
+      vtkIdType const onRoot = MpiWrapper::sum( rank == 0 ? mesh->GetNumberOfCells() : vtkIdType{ 0 }, comm );
+      GEOS_ERROR_IF( after != total || onRoot != total,
+                     GEOS_FMT( "Fracture coarse input consolidation lost cells ({} -> {}, {} on rank 0)",
+                               total, after, onRoot ) );
+    }
   }
 
   // Verify fractures are on rank 0
@@ -2147,7 +2199,7 @@ redistributeMeshes( integer const logLevel,
   // -----------------------------------------------------------------------
   // Step 2: Build 2D-to-3D neighbor mapping
   // -----------------------------------------------------------------------
-  ArrayOfArrays< localIndex, int64_t > neighbors2Dto3D;
+  ArrayOfArrays< globalIndex, int64_t > neighbors2Dto3D;
   if( !cells2DIndices.empty() )
   {
     neighbors2Dto3D = build2DTo3DNeighbors( *mesh,
@@ -2158,7 +2210,7 @@ redistributeMeshes( integer const logLevel,
   // -----------------------------------------------------------------------
   // Step 3: Build fracture-to-3D neighbor mappings
   // -----------------------------------------------------------------------
-  stdMap< string, ArrayOfArrays< localIndex, int64_t > > fractureNeighbors;
+  stdMap< string, ArrayOfArrays< globalIndex, int64_t > > fractureNeighbors;
   stdVector< string > fractureNames;
 
   // Collect fracture names on rank 0

@@ -17,6 +17,7 @@
 #define GEOS_HDFFILE_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {

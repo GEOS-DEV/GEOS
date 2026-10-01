@@ -324,7 +324,9 @@ void HDFHistoryIO::write()
         H5Sselect_hyperslab( fileHyperslab, H5S_SELECT_SET, &fileOffset[0], nullptr, &bufferedCounts[0], nullptr );
 
         hid_t dxplId = H5Pcreate( H5P_DATASET_XFER );
+#ifdef GEOS_USE_MPI
         H5Pset_dxpl_mpio( dxplId, H5FD_MPIO_COLLECTIVE );
+#endif
         H5Dwrite( dataset, m_hdfType, memspace, fileHyperslab, dxplId, dataBuffer );
         GEOS_LOG_RANK_IF( isLogLevelActive< logInfo::HDF5Writing >( getLogLevel() ),
                           GEOS_FMT( "TimeHistory: wrote row {} of dataset '{}'.", m_writeHead, m_name ) );

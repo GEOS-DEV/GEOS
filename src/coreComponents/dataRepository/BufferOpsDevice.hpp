@@ -17,6 +17,7 @@
 #define GEOS_DATAREPOSITORY_BUFFEROPSDEVICE_H_
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"

@@ -21,6 +21,7 @@
 #define GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/Span.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
 #include "mesh/FieldIdentifiers.hpp"

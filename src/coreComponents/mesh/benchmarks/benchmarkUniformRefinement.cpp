@@ -679,7 +679,8 @@ void run( Options const & opt, Communication & comm )
                                auto const & point = points->points()[i];
                                auto const & participants =
                                    interfaces ? interfaces->participants( { i } ) : inherited->participants( { i } );
-                               creations.push_back( { point.key, participants, point.position, layout->pack( i ) } );
+                               creations.push_back( { point.key, participants, point.position,
+                                                      participants.size() > 1 ? layout->pack( i, FieldTupleFormat::valuesOnly ) : Bytes{} } );
                              }
                            } );
            } );
@@ -709,7 +710,10 @@ void run( Options const & opt, Communication & comm )
                                  auto const & record = records.at( point.key );
                                  next.coordinates.push_back( record.position );
                                  next.pointIds.push_back( record.globalId );
-                                 layout->install( i, record.fields );
+                                 auto const & participants =
+                                     interfaces ? interfaces->participants( { i } ) : inherited->participants( { i } );
+                                 if( participants.size() > 1 )
+                                   layout->install( i, record.fields, FieldTupleFormat::valuesOnly );
                                }
                              }
                              next.cellIds.reserve( next.cells.size() );
@@ -767,6 +771,10 @@ int main( int argc, char ** argv )
   }
   MpiWrapper::init( &argc, &argv );
   MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );
+#ifdef GEOS_USE_CHAI
+  // Match normal GEOS setup and keep allocation diagnostics out of CSV output.
+  chai::ArrayManager::getInstance()->disableCallbacks();
+#endif
   int result = 0;
   try
   {

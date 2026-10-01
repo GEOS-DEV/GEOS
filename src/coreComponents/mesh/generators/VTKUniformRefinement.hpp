@@ -20,6 +20,9 @@
 #include "VTKRefinementCommunication.hpp"
 #include "VTKRefinementFields.hpp"
 #include "mesh/ElementType.hpp"
+#include <optional>
+
+class vtkDataSet;
 
 namespace geos::vtk
 {
@@ -40,7 +43,30 @@ struct UniformRefinementOptions
   std::string regionAttribute = "attribute";
   refinement::TransferPolicies fields;
   std::map< std::string, refinement::TransferPolicies > faceBlockFields;
+  /// Production import selects required arrays; unset preserves all fields for component callers.
+  std::optional< std::set< std::string > > requiredPointArrays;
+  std::optional< std::set< std::string > > requiredCellArrays;
+  std::optional< std::set< std::string > > requiredFaceBlockCellArrays;
   std::uint64_t chunkBytes = UINT64_C( 1 ) << 30;
+  bool reportStatistics = false;
+};
+
+/** Local forecasts. Point/field bounds allow no inter-cell reuse; byte models
+ * exclude allocator/runtime overhead and are not a physical-memory budget.
+ */
+struct RefinementResourceEstimate
+{
+  std::uint64_t volumeCells{}, surfaceCellCopies{}, pointCopiesUpperBound{}, connectivityEntries{};
+  std::uint64_t fieldBytesUpperBound{}, vtkBytesUpperBound{}, geosOwnedConnectivityBytes{};
+  double modeledRefinerPeakBytes{}, exchangeBytesUpperBound{};
+  /// Available with reporting; models whole datasets from all other ranks.
+  std::optional< double > geosGhostConnectivityBytesModel;
+};
+
+struct RefinementLevelStatistics
+{
+  std::uint64_t ownedVolumeCells{}, mainPointCopies{}, ownedMainPoints{}, sharedMainPointCopies{};
+  refinement::CommunicationStatistics communication;
 };
 
 struct UniformRefinementResult
@@ -48,6 +74,9 @@ struct UniformRefinementResult
   std::vector< RefinementBlockDescriptor > blocks;
   refinement::Participants neighbors;
   refinement::CommunicationStatistics communication;
+  refinement::CommunicationStatistics coarseCommunication;
+  std::vector< RefinementResourceEstimate > resources;
+  std::vector< RefinementLevelStatistics > levels;
 };
 
 /** Refine the coupled, already partitioned datasets transactionally.
@@ -55,5 +84,9 @@ struct UniformRefinementResult
  * All new communication uses comm; coarse volume owners never change.
  */
 UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, UniformRefinementOptions const & options, MPI_Comm comm );
+
+/** Check physical coordinates without applying the import transform twice. */
+void validateRefinedTransform( vtkDataSet & mesh, refinement::Coordinates const & translation,
+                               refinement::Coordinates const & scale, MPI_Comm comm );
 } // namespace geos::vtk
 #endif

@@ -29,6 +29,14 @@ set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES} )
+    # Dependency packages may find MPI/VTK for their own libraries even when
+    # GEOS explicitly disables that feature. Match the source/target guards.
+    if( ( DEP STREQUAL "MPI" OR DEP STREQUAL "VTK" )
+        AND NOT ( ENABLE_${DEP} OR GEOS_ENABLE_${DEP} ) )
+        set( USE_${DEP} FALSE )
+        set( GEOS_USE_${DEP} FALSE )
+        continue()
+    endif()
     if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOS_ENABLE_${DEP} )
         set( USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )

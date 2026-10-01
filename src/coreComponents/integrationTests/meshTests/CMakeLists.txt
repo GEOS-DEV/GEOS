@@ -2,7 +2,6 @@
 set( gtest_geosx_tests
      testMeshGeneration.cpp
      testNeighborCommunicator.cpp
-     testElementRegions.cpp
      testSurfaceGenerator.cpp )
 
 set( gtest_geosx_mpi_tests
@@ -10,15 +9,20 @@ set( gtest_geosx_mpi_tests
 
 if( ENABLE_VTK )
   list( APPEND gtest_geosx_tests
+        testElementRegions.cpp
+        testVTKRefinedNodalInitialization.cpp
+        testVTKRefinedFieldImport.cpp
+        testVTKRefinedFractureImport.cpp
         testVTKImport.cpp )
   list( APPEND gtest_geosx_mpi_tests
+        testVTKRefinedNodalInitialization.cpp
+        testVTKRefinedFieldImport.cpp
+        testVTKRefinedFractureImport.cpp
         testVTKImport.cpp )
 endif()
 
-if( ENABLE_VTK )
-  set( TEST_MESH_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
-  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
-endif()
+set( TEST_MESH_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
 
 set( tplDependencyList ${parallelDeps} gtest )
 
@@ -160,6 +164,27 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
                    COMMAND ${test_name} -x ${nranks}
                    NUM_MPI_TASKS ${nranks} )
   endforeach()
+
+  if( ENABLE_VTK )
+    geos_add_test( NAME testVTKImport_pvtu_4ranks
+                   COMMAND testVTKImport_mpi -x 4 --gtest_filter=VTKImport.parallelFileWithFewerPiecesThanRanks
+                   NUM_MPI_TASKS 4 )
+    set_tests_properties( testVTKImport_pvtu_4ranks PROPERTIES TIMEOUT 60 )
+    foreach( ranks IN ITEMS 4 8 )
+      geos_add_test( NAME testVTKRefinedFractureImport_${ranks}ranks
+                     COMMAND testVTKRefinedFractureImport_mpi -x ${ranks}
+                     NUM_MPI_TASKS ${ranks} )
+      set_tests_properties( testVTKRefinedFractureImport_${ranks}ranks PROPERTIES TIMEOUT 60 )
+      geos_add_test( NAME testVTKRefinedNodalInitialization_${ranks}ranks
+                     COMMAND testVTKRefinedNodalInitialization_mpi -x ${ranks}
+                     NUM_MPI_TASKS ${ranks} )
+      set_tests_properties( testVTKRefinedNodalInitialization_${ranks}ranks PROPERTIES TIMEOUT 60 )
+      geos_add_test( NAME testVTKRefinedFieldImport_${ranks}ranks
+                     COMMAND testVTKRefinedFieldImport_mpi -x ${ranks}
+                     NUM_MPI_TASKS ${ranks} )
+      set_tests_properties( testVTKRefinedFieldImport_${ranks}ranks PROPERTIES TIMEOUT 60 )
+    endforeach()
+  endif()
 
   # ---------------------------------------------------------------------------
   # testSurfaceGenerator_mpi — SurfaceGeneratorMpiTest suite (4 MPI ranks)

@@ -79,6 +79,8 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
                                       unsigned int yPartitions,
                                       unsigned int zPartitions )
 {
+  m_hasMetisNeighborList = false;
+  m_metisNeighborList.clear();
   m_Partitions.resize( 3 );
   m_Partitions( 0 ) = xPartitions;
   m_Partitions( 1 ) = yPartitions;
@@ -98,8 +100,9 @@ int SpatialPartition::getColor()
 
 int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
 {
-  // Determine neighbor source
-  bool const useGraphColoring = !fullNeighbors.empty() || !m_metisNeighborList.empty();
+  // The source must be the same on every rank, including isolated ranks.
+  bool const useFullNeighbors = MpiWrapper::max( fullNeighbors.empty() ? 0 : 1 ) != 0;
+  bool const useGraphColoring = useFullNeighbors || m_hasMetisNeighborList;
 
   if( useGraphColoring )
   {
@@ -122,7 +125,8 @@ int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
     int const commRank = MpiWrapper::commRank( MPI_COMM_GEOS );
 
     // Step 1: allgather the sizes of every rank's neighbor list.
-    int const localNeighborCount = static_cast< int >( m_metisNeighborList.size() );
+    std::set< int > const & neighbors = useFullNeighbors ? fullNeighbors : m_metisNeighborList;
+    int const localNeighborCount = static_cast< int >( neighbors.size() );
     stdVector< int > allNeighborCounts( commSize );
     MpiWrapper::allgather( &localNeighborCount, 1, allNeighborCounts.data(), 1, MPI_COMM_GEOS );
 
@@ -134,7 +138,7 @@ int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
     }
     int const totalNeighbors = displacements[commSize - 1] + allNeighborCounts[commSize - 1];
 
-    stdVector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    stdVector< int > localNeighborVec( neighbors.begin(), neighbors.end() );
     stdVector< int > allNeighbors( totalNeighbors );
     MpiWrapper::allgatherv( localNeighborVec.data(), localNeighborCount,
                             allNeighbors.data(), allNeighborCounts.data(),
@@ -143,7 +147,7 @@ int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
     // Step 3: build the symmetrized local adjacency list.
     // Start from the current (possibly incomplete) local list, then add any rank j
     // that lists commRank as its neighbor but is not yet in our list.
-    std::set< int > symmetricNeighbors( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    std::set< int > symmetricNeighbors( neighbors.begin(), neighbors.end() );
     for( int rankJ = 0; rankJ < commSize; ++rankJ )
     {
       if( rankJ == commRank )
@@ -892,8 +896,8 @@ void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > co
                                       commData.commID(),
                                       MPI_COMM_GEOS );
     }
-    MPI_Waitall( nn, sendRequest.data(), sendStatus.data());
-    MPI_Waitall( nn, receiveRequest.data(), receiveStatus.data());
+    MpiWrapper::waitAll( nn, sendRequest.data(), sendStatus.data());
+    MpiWrapper::waitAll( nn, receiveRequest.data(), receiveStatus.data());
   }
 
   // Send/receive the buffer containing the list of coordinates
@@ -921,8 +925,8 @@ void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > co
                                       commData.commID(),
                                       MPI_COMM_GEOS );
     }
-    MPI_Waitall( nn, sendRequest.data(), sendStatus.data());
-    MPI_Waitall( nn, receiveRequest.data(), receiveStatus.data());
+    MpiWrapper::waitAll( nn, sendRequest.data(), sendStatus.data());
+    MpiWrapper::waitAll( nn, receiveRequest.data(), receiveStatus.data());
   }
 
   // Unpack the received coordinate list from each neighbor
@@ -991,8 +995,8 @@ void SpatialPartition::sendListOfIndicesToNeighbors( stdVector< array1d< indexTy
                                       commData.commID(),
                                       MPI_COMM_GEOS );
     }
-    MPI_Waitall( nn, sendRequest.data(), sendStatus.data());
-    MPI_Waitall( nn, receiveRequest.data(), receiveStatus.data());
+    MpiWrapper::waitAll( nn, sendRequest.data(), sendStatus.data());
+    MpiWrapper::waitAll( nn, receiveRequest.data(), receiveStatus.data());
   }
 
   // Send/receive the buffer containing the list of local indices
@@ -1020,8 +1024,8 @@ void SpatialPartition::sendListOfIndicesToNeighbors( stdVector< array1d< indexTy
                                       commData.commID(),
                                       MPI_COMM_GEOS );
     }
-    MPI_Waitall( nn, sendRequest.data(), sendStatus.data());
-    MPI_Waitall( nn, receiveRequest.data(), receiveStatus.data());
+    MpiWrapper::waitAll( nn, sendRequest.data(), sendStatus.data());
+    MpiWrapper::waitAll( nn, receiveRequest.data(), receiveStatus.data());
   }
 
   // Unpack the received list of local indices from each neighbor
@@ -1081,8 +1085,8 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
                                       commData.commID(),
                                       MPI_COMM_GEOS );
     }
-    MPI_Waitall( nn, sendRequest.data(), sendStatus.data() );
-    MPI_Waitall( nn, receiveRequest.data(), receiveStatus.data() );
+    MpiWrapper::waitAll( nn, sendRequest.data(), sendStatus.data() );
+    MpiWrapper::waitAll( nn, receiveRequest.data(), receiveStatus.data() );
   }
 
   // Send/receive the buffer containing the list of local indices
@@ -1109,8 +1113,8 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
                                       commData.commID(),
                                       MPI_COMM_GEOS );
     }
-    MPI_Waitall( nn, sendRequest.data(), sendStatus.data());
-    MPI_Waitall( nn, receiveRequest.data(), receiveStatus.data());
+    MpiWrapper::waitAll( nn, sendRequest.data(), sendStatus.data());
+    MpiWrapper::waitAll( nn, receiveRequest.data(), receiveStatus.data());
   }
 
   // Unpack the received particle data.

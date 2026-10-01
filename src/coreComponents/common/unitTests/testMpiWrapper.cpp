@@ -235,6 +235,43 @@ TEST( MpiWrapperTesting, MpiPairSetReductionTest )
 
 } /* namespace pairSetsTestCases */
 
+TEST( MpiWrapperTesting, GatherCopiesTypedValuesAndHonorsDisplacements )
+{
+  int const rank = MpiWrapper::commRank();
+  int const size = MpiWrapper::commSize();
+  int const value = 17 + rank;
+  stdVector< int > gathered( size, -1 );
+  EXPECT_EQ( MpiWrapper::allgather( &value, 1, gathered.data(), 1, MPI_COMM_GEOS ), MPI_SUCCESS );
+  for( int r = 0; r < size; ++r ) EXPECT_EQ( gathered[r], 17 + r );
+
+  stdVector< int > counts( size, 1 );
+  stdVector< int > offsets( size );
+  stdVector< int > sparse( 2 * size + 1, -1 );
+  for( int r = 0; r < size; ++r ) offsets[r] = 2 * r + 1;
+  EXPECT_EQ( MpiWrapper::allgatherv( &value, 1, sparse.data(), counts.data(), offsets.data(), MPI_COMM_GEOS ), MPI_SUCCESS );
+  for( int r = 0; r < size; ++r )
+  {
+    EXPECT_EQ( sparse[2 * r], -1 );
+    EXPECT_EQ( sparse[2 * r + 1], 17 + r );
+  }
+  EXPECT_EQ( sparse.back(), -1 );
+
+  EXPECT_EQ( MpiWrapper::gather( value, gathered, 0, MPI_COMM_GEOS ), MPI_SUCCESS );
+  if( rank == 0 )
+  {
+    for( int r = 0; r < size; ++r ) EXPECT_EQ( gathered[r], 17 + r );
+  }
+}
+
+TEST( MpiWrapperTesting, PrefixSumUsesTheSuppliedCommunicator )
+{
+  int const rank = MpiWrapper::commRank();
+  int const size = MpiWrapper::commSize();
+  MPI_Comm reverse = MpiWrapper::commSplit( MPI_COMM_GEOS, 0, size - 1 - rank );
+  EXPECT_EQ( MpiWrapper::prefixSum< globalIndex >( 1, reverse ), MpiWrapper::commRank( reverse ) );
+  MpiWrapper::commFree( reverse );
+}
+
 int main( int argc, char * argv[] )
 {
   MpiTestScope testScope{ argc, argv };

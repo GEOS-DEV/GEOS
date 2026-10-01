@@ -14,6 +14,9 @@
  */
 
 #include "mesh/generators/VTKMeshScattering.hpp"
+#ifdef GEOS_USE_MPI
+#include "mesh/generators/VTKMeshGeneratorTools.hpp"
+#endif
 
 #include "common/format/Format.hpp"
 #include "common/logger/Logger.hpp"
@@ -23,6 +26,10 @@
 #include "LvArray/src/math.hpp"
 #include "LvArray/src/system.hpp"
 
+#include <vtkAbstractArray.h>
+#include <vtkBitArray.h>
+#include <vtkFieldData.h>
+#include <vtkStringArray.h>
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkCellType.h>
@@ -33,20 +40,19 @@
 #include <vtkIdTypeArray.h>
 #include <vtkNew.h>
 #include <vtkPointData.h>
+#include <vtkPartitionedDataSet.h>
 #include <vtkPoints.h>
+#include <vtkVersionMacros.h>
+#ifdef GEOS_USE_MPI
 #include <vtkRedistributeDataSetFilter.h>
 #include <vtkMultiProcessController.h>
-#include <vtkVersionMacros.h>
 #if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
 #include <vtkBoundingBox.h>
 #include <vtkCellCenters.h>
 #include <vtkDIYKdTreeUtilities.h>
 #endif
-#ifdef GEOS_USE_MPI
 #include <vtkMPIController.h>
 #include <vtkMPI.h>
-#else
-#include <vtkDummyController.h>
 #endif
 #include <vtkUnsignedCharArray.h>
 #include <vtkUnstructuredGrid.h>
@@ -113,97 +119,124 @@ void mpiRecvLarge( void * buf, int64_t count, integer src, integer tag, MPI_Comm
 
 constexpr int NUM_ATTR_TYPES = vtkDataSetAttributes::NUM_ATTRIBUTES;
 
-void packDataArrays( stdVector< char > & buf, vtkDataSetAttributes * attrs )
+void packString( stdVector< char > & buf, char const * value )
 {
-  // Count only vtkDataArray entries (skip string / abstract arrays)
-  int32_t nArrays = 0;
-  for( int a = 0; a < attrs->GetNumberOfArrays(); ++a )
-  {
-    if( attrs->GetArray( a ) != nullptr )
-    {
-      ++nArrays;
-    }
-  }
-  appendValue( buf, nArrays );
-
-  for( int a = 0; a < attrs->GetNumberOfArrays(); ++a )
-  {
-    vtkDataArray * arr = attrs->GetArray( a );
-    if( arr == nullptr )
-    {
-      continue;
-    }
-    char const * name = arr->GetName() ? arr->GetName() : "";
-    int32_t const nameLen = static_cast< int32_t >( std::strlen( name ) );
-    appendValue( buf, nameLen );
-    appendBytes( buf, name, nameLen );
-
-    int32_t const nComp = arr->GetNumberOfComponents();
-    int32_t const dataType = arr->GetDataType();
-    int64_t const nTuples = arr->GetNumberOfTuples();
-    int32_t const elemSize = arr->GetDataTypeSize();
-
-    appendValue( buf, nComp );
-    appendValue( buf, dataType );
-    appendValue( buf, nTuples );
-    appendValue( buf, elemSize );
-
-    int64_t const dataBytes = nTuples * static_cast< int64_t >( nComp ) * static_cast< int64_t >( elemSize );
-    appendBytes( buf, arr->GetVoidPointer( 0 ), dataBytes );
-  }
-
-  // Serialize active attribute designations (SCALARS=0 .. GLOBALIDS=5).
-  // For each slot store the name length + name (empty string = none).
-  for( int t = 0; t < NUM_ATTR_TYPES; ++t )
-  {
-    vtkDataArray * active = attrs->GetAttribute( t );
-    char const * activeName = ( active && active->GetName() ) ? active->GetName() : "";
-    int32_t const nameLen = static_cast< int32_t >( std::strlen( activeName ) );
-    appendValue( buf, nameLen );
-    if( nameLen > 0 )
-    {
-      appendBytes( buf, activeName, nameLen );
-    }
-  }
+  int64_t const size = value ? static_cast< int64_t >( std::strlen( value ) ) : -1;
+  appendValue( buf, size );
+  if( size > 0 ) appendBytes( buf, value, size );
 }
 
-void unpackDataArrays( char const * & ptr, vtkDataSetAttributes * attrs )
+void packDataArrays( stdVector< char > & buf, vtkFieldData * data )
+{
+  appendValue( buf, static_cast< int32_t >( data->GetNumberOfArrays() ) );
+  for( int a = 0; a < data->GetNumberOfArrays(); ++a )
+  {
+    vtkAbstractArray * arr = data->GetAbstractArray( a );
+    packString( buf, arr->GetName() );
+    appendValue( buf, static_cast< int32_t >( arr->GetNumberOfComponents() ) );
+    appendValue( buf, static_cast< int32_t >( arr->GetDataType() ) );
+    appendValue( buf, static_cast< int64_t >( arr->GetNumberOfTuples() ) );
+    for( int c = 0; c < arr->GetNumberOfComponents(); ++c ) packString( buf, arr->GetComponentName( c ) );
+    if( auto * strings = vtkStringArray::SafeDownCast( arr ) )
+    {
+      for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
+      {
+        auto const & value = strings->GetValue( v );
+        appendValue( buf, static_cast< int64_t >( value.size() ) );
+        if( !value.empty() ) appendBytes( buf, value.data(), value.size() );
+      }
+    }
+    else if( auto * bits = vtkBitArray::SafeDownCast( arr ) )
+    {
+      for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
+        appendValue( buf, static_cast< unsigned char >( bits->GetValue( v ) ) );
+    }
+    else
+    {
+      auto * numeric = vtkDataArray::SafeDownCast( arr );
+      GEOS_ERROR_IF( numeric == nullptr, "Unsupported abstract array in mesh scatter" );
+      int64_t const count = arr->GetNumberOfValues();
+      int64_t const width = arr->GetDataTypeSize();
+      GEOS_ERROR_IF( width <= 0 || count > std::numeric_limits< int64_t >::max() / width,
+                     "Mesh scatter array byte count overflow" );
+      if( count > 0 ) appendBytes( buf, numeric->GetVoidPointer( 0 ), count * width );
+    }
+  }
+  // Indices preserve roles even for unnamed arrays or string pedigree IDs.
+  auto * attrs = vtkDataSetAttributes::SafeDownCast( data );
+  int roles[NUM_ATTR_TYPES];
+  std::fill_n( roles, NUM_ATTR_TYPES, -1 );
+  if( attrs ) attrs->GetAttributeIndices( roles );
+  for( int role : roles ) appendValue( buf, static_cast< int32_t >( role ) );
+}
+
+std::pair< bool, string > unpackString( char const * & ptr )
+{
+  int64_t const size = readValue< int64_t >( ptr );
+  if( size < 0 ) return { false, {} };
+  string value( ptr, size );
+  ptr += size;
+  return { true, std::move( value ) };
+}
+
+void unpackDataArrays( char const * & ptr, vtkFieldData * data )
 {
   int32_t const nArrays = readValue< int32_t >( ptr );
-
   for( int a = 0; a < nArrays; ++a )
   {
-    int32_t const nameLen = readValue< int32_t >( ptr );
-    string name( ptr, nameLen );
-    ptr += nameLen;
-
+    auto const name = unpackString( ptr );
     int32_t const nComp = readValue< int32_t >( ptr );
     int32_t const dataType = readValue< int32_t >( ptr );
     int64_t const nTuples = readValue< int64_t >( ptr );
-    int32_t const elemSize = readValue< int32_t >( ptr );
-
-    vtkSmartPointer< vtkDataArray > arr( vtkDataArray::CreateDataArray( dataType ) );
-    arr->SetName( name.c_str() );
+    vtkSmartPointer< vtkAbstractArray > arr;
+    arr.TakeReference( vtkAbstractArray::CreateArray( dataType ) );
+    GEOS_ERROR_IF( arr == nullptr || nComp <= 0 || nTuples < 0,
+                   "Invalid mesh scatter array metadata" );
+    if( name.first ) arr->SetName( name.second.c_str() );
     arr->SetNumberOfComponents( nComp );
     arr->SetNumberOfTuples( nTuples );
-
-    int64_t const dataBytes = nTuples * static_cast< int64_t >( nComp ) * static_cast< int64_t >( elemSize );
-    std::memcpy( arr->GetVoidPointer( 0 ), ptr, static_cast< size_t >( dataBytes ) );
-    ptr += dataBytes;
-
-    attrs->AddArray( arr );
+    for( int c = 0; c < nComp; ++c )
+    {
+      auto const component = unpackString( ptr );
+      if( component.first ) arr->SetComponentName( c, component.second.c_str() );
+    }
+    if( auto * strings = vtkStringArray::SafeDownCast( arr ) )
+    {
+      for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
+      {
+        int64_t const size = readValue< int64_t >( ptr );
+        GEOS_ERROR_IF( size < 0, "Invalid mesh scatter string length" );
+        strings->SetValue( v, string( ptr, size ) );
+        ptr += size;
+      }
+    }
+    else if( auto * bits = vtkBitArray::SafeDownCast( arr ) )
+    {
+      for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
+      {
+        auto const value = readValue< unsigned char >( ptr );
+        GEOS_ERROR_IF( value > 1, "Invalid mesh scatter bit value" );
+        bits->SetValue( v, value );
+      }
+    }
+    else
+    {
+      auto * numeric = vtkDataArray::SafeDownCast( arr );
+      GEOS_ERROR_IF( numeric == nullptr, "Unsupported abstract array in mesh scatter" );
+      int64_t const count = arr->GetNumberOfValues();
+      int64_t const width = arr->GetDataTypeSize();
+      GEOS_ERROR_IF( width <= 0 || count > std::numeric_limits< int64_t >::max() / width,
+                     "Mesh scatter array byte count overflow" );
+      if( count > 0 ) std::memcpy( numeric->GetVoidPointer( 0 ), ptr, count * width );
+      ptr += count * width;
+    }
+    data->AddArray( arr );
   }
-
-  // Restore active attribute designations
+  auto * attrs = vtkDataSetAttributes::SafeDownCast( data );
   for( int t = 0; t < NUM_ATTR_TYPES; ++t )
   {
-    int32_t const nameLen = readValue< int32_t >( ptr );
-    if( nameLen > 0 )
-    {
-      string activeName( ptr, nameLen );
-      ptr += nameLen;
-      attrs->SetActiveAttribute( activeName.c_str(), t );
-    }
+    int const role = readValue< int32_t >( ptr );
+    if( attrs && role >= 0 ) attrs->SetActiveAttribute( role, t );
   }
 }
 
@@ -282,9 +315,8 @@ void packGrid( vtkUnstructuredGrid * grid,
   if( nPoints > 0 )
   {
     vtkPoints * points = grid->GetPoints();
-    if( points->GetDataType() == VTK_DOUBLE )
+    if( auto * coords = vtkDoubleArray::SafeDownCast( points->GetData() ) )
     {
-      vtkDoubleArray * const coords = vtkDoubleArray::SafeDownCast( points->GetData() );
       appendBytes( buf, coords->GetPointer( 0 ), nPoints * 3 * sizeof( real64 ) );
     }
     else
@@ -332,6 +364,7 @@ void packGrid( vtkUnstructuredGrid * grid,
   // Field data arrays
   packDataArrays( buf, grid->GetCellData() );
   packDataArrays( buf, grid->GetPointData() );
+  packDataArrays( buf, grid->GetFieldData() );
 
   // Assignment vector
   int64_t const assignSize = static_cast< int64_t >( assignment.size() );
@@ -395,6 +428,7 @@ unpackGrid( stdVector< char > const & buf )
   // Field data
   unpackDataArrays( ptr, grid->GetCellData() );
   unpackDataArrays( ptr, grid->GetPointData() );
+  unpackDataArrays( ptr, grid->GetFieldData() );
 
   // Assignment
   int64_t const assignSize = readValue< int64_t >( ptr );
@@ -727,7 +761,10 @@ scatterByRankAssignment( vtkUnstructuredGrid * inputMesh,
       // Receiver: receive from rank lo
 
       int64_t bufSize = 0;
-      MPI_Recv( &bufSize, 1, MPI_INT64_T, lo, 0, comm, MPI_STATUS_IGNORE );
+      MPI_Request request = MPI_REQUEST_NULL;
+      MPI_Status status{};
+      MpiWrapper::iRecv( &bufSize, 1, lo, 0, comm, &request );
+      MpiWrapper::wait( &request, &status );
 
       if( bufSize > 0 )
       {
@@ -809,6 +846,51 @@ computeCellRanks( ScatterMethod method,
 }
 
 
+vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm )
+{
+  GEOS_MARK_FUNCTION;
+  int const rank = MpiWrapper::commRank( comm );
+  int const size = MpiWrapper::commSize( comm );
+  vtkIdType const localCells = mesh.GetNumberOfCells();
+  vtkIdType const totalCells = MpiWrapper::sum( localCells, comm );
+  if( size == 1 || totalCells == 0 )
+  {
+    auto result = vtkSmartPointer< vtkUnstructuredGrid >::New();
+    result->ShallowCopy( &mesh );
+    return result;
+  }
+#ifdef GEOS_USE_MPI
+  vtkIdType firstCell = 0;
+  MpiWrapper::exscan( &localCells, &firstCell, 1, MPI_SUM, comm );
+  if( rank == 0 ) firstCell = 0;
+  vtkIdType const cellsPerRank = totalCells / size;
+  vtkIdType const remainder = totalCells % size;
+  vtkNew< vtkPartitionedDataSet > partitions;
+  partitions->SetNumberOfPartitions( size );
+  for( int r = 0; r < size; ++r )
+  {
+    vtkIdType const begin = r * cellsPerRank + std::min< vtkIdType >( r, remainder );
+    vtkIdType const end = begin + cellsPerRank + ( r < remainder ? 1 : 0 );
+    vtkIdType const localBegin = std::max( begin, firstCell ) - firstCell;
+    vtkIdType const localEnd = std::min( end, firstCell + localCells ) - firstCell;
+    vtkNew< vtkExtractCells > extractor;
+    extractor->SetInputDataObject( &mesh );
+    if( localEnd > localBegin ) extractor->AddCellRange( localBegin, localEnd - 1 );
+    LvArray::system::FloatingPointExceptionGuard guard;
+    extractor->Update();
+    partitions->SetPartition( r, extractor->GetOutput() );
+  }
+  auto result = vtk::redistribute( *partitions, comm );
+  vtkIdType const after = MpiWrapper::sum( result->GetNumberOfCells(), comm );
+  GEOS_ERROR_IF( after != totalCells,
+                 GEOS_FMT( "Cell conservation failed during block fallback ({} -> {})", totalCells, after ) );
+  return result;
+#else
+  GEOS_UNUSED_VAR( rank );
+  return nullptr; // Multiple ranks are unavailable without MPI.
+#endif
+}
+
 vtkSmartPointer< vtkDataSet >
 scatterMesh( ScatterMethod method,
              vtkDataSet & mesh,
@@ -835,11 +917,8 @@ scatterMesh( ScatterMethod method,
     return copy;
   }
 
-  GEOS_ERROR_IF( rank == 0 && localCells != totalCells,
-                 GEOS_FMT( "Rank 0 must have the complete mesh. "
-                           "Rank 0 has {} cells but total is {}", localCells, totalCells ) );
-
   // KdTree: legacy path using VTK's built-in redistribution
+#ifdef GEOS_USE_MPI
   if( method == ScatterMethod::kdtree )
   {
     constexpr vtkIdType largeMeshCellCount = 10000000;
@@ -848,15 +927,18 @@ scatterMesh( ScatterMethod method,
                                "slower than the alternatives on meshes of this size; "
                                "consider scatterMethod=rcb (geometry aware) instead.",
                                totalCells ) );
-#ifdef GEOS_USE_MPI
     vtkNew< vtkMPIController > controller;
     vtkMPICommunicatorOpaqueComm vtkComm( &comm );
     vtkNew< vtkMPICommunicator > communicator;
     communicator->InitializeExternal( &vtkComm );
     controller->SetCommunicator( communicator );
-#else
-    vtkNew< vtkDummyController > controller;
-#endif
+    // VTK's global controller is borrowed. Keep the previous object alive and
+    // restore it before this block's local controller is destroyed.
+    struct RestoreGlobalController
+    {
+      vtkSmartPointer< vtkMultiProcessController > previous;
+      ~RestoreGlobalController() { vtkMultiProcessController::SetGlobalController( previous ); }
+    } restoreController{ vtkMultiProcessController::GetGlobalController() };
     vtkMultiProcessController::SetGlobalController( controller );
 
     vtkNew< vtkRedistributeDataSetFilter > rdsf;
@@ -914,23 +996,24 @@ scatterMesh( ScatterMethod method,
 
     vtkSmartPointer< vtkDataSet > kdResult = vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
 
-    vtkIdType const localAfter = kdResult->GetNumberOfCells();
+    vtkIdType const localAfter = kdResult == nullptr ? 0 : kdResult->GetNumberOfCells();
     vtkIdType const totalAfter = MpiWrapper::allReduce( localAfter, MpiWrapper::Reduction::Sum, comm );
 
     if( totalAfter != totalCells )
     {
       GEOS_WARNING_IF( rank == 0,
-                       GEOS_FMT( "{} cells lost during kdtree scatter ({} -> {}). "
-                                 "Falling back to contiguous scatter.",
-                                 totalCells - totalAfter, totalCells, totalAfter ) );
-      // Fall through to the contiguous path below.
-      method = ScatterMethod::contiguous;
+                       GEOS_FMT( "VTK KdTree redistribution lost {} elements! Falling back to block redistribution.",
+                                 totalCells - totalAfter ) );
+      return scatterByBlock( mesh, comm );
     }
-    else
-    {
-      return kdResult;
-    }
+    return kdResult;
   }
+#endif
+
+  vtkIdType const rootCells = MpiWrapper::allReduce( rank == 0 ? localCells : vtkIdType{ 0 },
+                                                   MpiWrapper::Reduction::Sum, comm );
+  GEOS_ERROR_IF( rootCells != totalCells,
+                 GEOS_FMT( "Custom scatter requires rank 0 to hold the complete mesh ({} of {} cells)", rootCells, totalCells ) );
 
   // Compute cell to rank assignment (rank 0 only)
   stdVector< integer > cellRanks;
@@ -954,9 +1037,8 @@ scatterMesh( ScatterMethod method,
   vtkIdType const localAfter = result->GetNumberOfCells();
   vtkIdType const totalAfter = MpiWrapper::allReduce( localAfter, MpiWrapper::Reduction::Sum, comm );
 
-  GEOS_WARNING_IF( rank == 0 && totalAfter != totalCells,
-                   GEOS_FMT( "{} cells lost during scatter ({} -> {})",
-                             totalCells - totalAfter, totalCells, totalAfter ) );
+  GEOS_ERROR_IF( totalAfter != totalCells,
+                 GEOS_FMT( "Cell conservation failed during scatter ({} -> {})", totalCells, totalAfter ) );
 
   return result;
 }

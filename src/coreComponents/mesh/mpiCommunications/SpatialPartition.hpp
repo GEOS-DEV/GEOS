@@ -130,11 +130,20 @@ public:
   }
 
   /**
+   * @brief Whether an external mesh supplied the partition graph, including an empty neighbor list.
+   */
+  bool hasMetisNeighborList() const
+  {
+    return m_hasMetisNeighborList;
+  }
+
+  /**
    * @brief Sets the list of metis neighbor list.
    * @param metisNeighborList A reference to the Metis neighbor list.
    */
   void setMetisNeighborList( stdVector< int > const & metisNeighborList )
   {
+    m_hasMetisNeighborList = true;
     m_metisNeighborList.clear();
     m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
   }
@@ -215,6 +224,9 @@ private:
    * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.
    */
   std::set< int > m_metisNeighborList;
+
+  /// An isolated rank still belongs to an externally supplied partition graph.
+  bool m_hasMetisNeighborList = false;
 
 };
 
