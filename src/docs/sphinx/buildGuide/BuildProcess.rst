@@ -89,6 +89,17 @@ Compositional component limit
 Set ``GEOS_MAX_FLUID_COMPONENTS`` in the host configuration or pass, for example,
 ``-DGEOS_MAX_FLUID_COMPONENTS=20`` to CMake to build compositional flow solvers for up to
 twenty components. The default of five preserves the existing solver range.
+
+To build for more components:
+
+1. Add ``set( GEOS_MAX_FLUID_COMPONENTS 20 CACHE STRING "" )`` to the host-config
+   file, or pass ``-DGEOS_MAX_FLUID_COMPONENTS=20`` on the CMake command line.
+2. Reconfigure the build directory (``cmake`` or ``config-build.py``).
+3. Rebuild GEOS.
+
+No source changes are needed. In particular, ``kernelSpecs.json`` does not have to be
+edited: each ``NCOMP`` list there gives only the lowest instantiated component count,
+and CMake extends it to ``GEOS_MAX_FLUID_COMPONENTS`` when the build is configured.
 Values must be integers from two to twenty; smaller limits reduce compilation
 work and the number of kernel instantiations. One-component kernels remain
 available at every supported setting. The count includes every modeled fluid

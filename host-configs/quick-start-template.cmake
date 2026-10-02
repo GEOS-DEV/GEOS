@@ -19,6 +19,9 @@ set( LAPACK_LIBRARIES "path-to-lapack" CACHE PATH "" FORCE ) # This is typically
 set( ENABLE_CUDA OFF CACHE PATH "" FORCE )
 set( ENABLE_OPENMP OFF CACHE PATH "" FORCE )
 
+# Maximum number of fluid components in compositional solvers (2-20, default 5)
+# set( GEOS_MAX_FLUID_COMPONENTS 20 CACHE STRING "" )
+
 # TPLs
 set( ENABLE_TRILINOS OFF CACHE PATH "" FORCE )
 set( ENABLE_HYPREDRV ON CACHE BOOL "" )
