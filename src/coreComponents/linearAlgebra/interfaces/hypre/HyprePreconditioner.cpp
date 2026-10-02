@@ -261,11 +261,12 @@ void createILU( LinearSolverParameters const & params,
     GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetDropThreshold( precond.ptr, params.ifact.threshold ) );
   }
 
-  // Disable RCM reordering to avoid problems with mechanics
-  if( params.dofsPerNode > 1 )
-  {
-    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetLocalReordering( precond.ptr, 0 ) );
-  }
+  // Always apply ILU without hypre's internal RCM reordering. hypre defaults to RCM,
+  // which was previously left in place for scalar systems and disabled only for
+  // multi-component ones to avoid problems with mechanics. Every other ILU GEOS
+  // configures (the MGR F-solver and coarse solver) already disables it, so keeping it
+  // here made the scalar case the odd one out.
+  GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetLocalReordering( precond.ptr, 0 ) );
 
   precond.setup = HYPRE_ILUSetup;
   precond.solve = HYPRE_ILUSolve;
@@ -452,6 +453,10 @@ void HyprePreconditioner::clear()
   if( m_mgrData && m_mgrData->mechSolver.ptr && m_mgrData->mechSolver.destroy )
   {
     GEOS_LAI_CHECK_ERROR( m_mgrData->mechSolver.destroy( m_mgrData->mechSolver.ptr ) );
+  }
+  if( m_mgrData && m_mgrData->iluSolver.ptr && m_mgrData->iluSolver.destroy )
+  {
+    GEOS_LAI_CHECK_ERROR( m_mgrData->iluSolver.destroy( m_mgrData->iluSolver.ptr ) );
   }
   if( m_mgrData && m_mgrData->nestedSolver.ptr && m_mgrData->nestedSolver.destroy )
   {
