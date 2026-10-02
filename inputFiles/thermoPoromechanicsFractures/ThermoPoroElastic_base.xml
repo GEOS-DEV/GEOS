@@ -64,12 +64,8 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <!-- <FrictionlessContact
-      name="fractureContact"/> -->
-    <Coulomb
-      name="lmFractureContact"
-      defaultCohesion="0.0"
-      defaultFrictionCoefficient="0.577350269189626"/>
+    <FrictionlessContact
+      name="fractureContact"/>
 
     <HydraulicApertureTable
       name="hApertureModel"

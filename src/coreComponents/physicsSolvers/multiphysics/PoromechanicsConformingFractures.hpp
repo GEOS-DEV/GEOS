@@ -97,7 +97,18 @@ public:
       rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
       if constexpr ( CONTACT_SOLVER::hasContactStabilization )
       {
-        rowLengths[localRow] += mechanicsPattern.numNonZeros( localRow );   // simple sum, see note below
+        //compute overlap to have the exact size
+        auto const flowCols = patternOriginal.getColumns( localRow );
+        auto const mechCols = mechanicsPattern.getColumns( localRow );
+        localIndex i = 0, j = 0, numUnion = 0;
+        while( i < flowCols.size() && j < mechCols.size() )
+        {
+          if( flowCols[i] < mechCols[j] ) { ++i; }
+          else if( mechCols[j] < flowCols[i] ) { ++j; }
+          else { ++i; ++j; }
+          ++numUnion;
+        }
+        rowLengths[localRow] = numUnion + ( flowCols.size() - i ) + ( mechCols.size() - j );
       }
     }
 
