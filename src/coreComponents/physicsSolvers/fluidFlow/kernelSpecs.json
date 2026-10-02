@@ -18,6 +18,12 @@
       "vars" : [ "each value in this list will be used to generate kernel template files",
                  "combinatorally with all other value lists" ]
     },
+    "NCOMP" : [ "Fluid-flow component combinations are expanded at configure time to GEOS_MAX_FLUID_COMPONENTS.",
+                "Each NCOMP list holds only the lowest instantiated component count; set",
+                "GEOS_MAX_FLUID_COMPONENTS at configure time instead of editing it." ],
+    "NCOMP_LIMIT" : [ "Optional name of the CMake variable bounding NCOMP instead of GEOS_MAX_FLUID_COMPONENTS." ],
+    "NCOMP_BOUNDS" : [ "Optional [min, max] component counts per FLUID_TYPE, matching the fluid's",
+                       "min_n_components and max_n_components; combinations outside them are not generated." ],
     "explicit" : [ "specify a specific combination of the variables to generate",
                    "specify by choosing one value from each variable you want generated",
                    "and concating them with '#' (this can by modified internally at the",
@@ -44,13 +50,7 @@
         2,
         3
       ],
-      "NCOMP": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
+      "NCOMP": [ 1 ],
       "ENABLE_ENERGY": [
         "true",
         "false"
@@ -62,6 +62,7 @@
         "FaceElementToCellStencil"
       ]
     },
+    "NCOMP_LIMIT": "GEOS_MAX_OBL_COMPONENTS",
     "explicit": []
   },
 
@@ -79,7 +80,7 @@
         "DirichletFluxComputeKernel",
         "DirichletFluxComputeZFormulationKernel"
       ],
-      "NCOMP": [ 2, 3, 4, 5 ],
+      "NCOMP": [ 2 ],
       "FLUID_TYPE": [
         "constitutive::BlackOilFluid",
         "constitutive::CO2BrinePhillipsFluid",
@@ -95,6 +96,14 @@
         "constitutive::DeadOilFluid",
         "constitutive::InvariantImmiscibleFluid"
       ]
+    },
+    "NCOMP_BOUNDS": {
+      "constitutive::BlackOilFluid": [ 3, 3 ],
+      "constitutive::CO2BrinePhillipsFluid": [ 2, 2 ],
+      "constitutive::CO2BrineEzrokhiFluid": [ 2, 2 ],
+      "constitutive::CO2BrinePhillipsThermalFluid": [ 2, 2 ],
+      "constitutive::CO2BrineEzrokhiThermalFluid": [ 2, 2 ],
+      "constitutive::DeadOilFluid": [ 2, 3 ]
     },
     "explicit": [
     ]
@@ -113,33 +122,41 @@
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP": [ 2, 3, 4, 5 ],
+      "NCOMP": [ 2 ],
       "FLUID_TYPE": [
         "constitutive::CO2BrinePhillipsThermalFluid",
         "constitutive::CO2BrineEzrokhiThermalFluid"
       ]
+    },
+    "NCOMP_BOUNDS": {
+      "constitutive::CO2BrinePhillipsThermalFluid": [ 2, 2 ],
+      "constitutive::CO2BrineEzrokhiThermalFluid": [ 2, 2 ]
     },
     "explicit": []
   },
 
   "CompositionalMultiphaseHybridFVMKernels_flux_grouped": {
     "vars": [
-      "NFACES"
+      "NFACES",
+      "NCOMP"
     ],
     "constants": [],
     "combinations": {
-      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ],
+      "NCOMP": [ 1 ]
     },
     "explicit": []
   },
 
   "CompositionalMultiphaseHybridFVMKernels_dirichlet_grouped": {
     "vars": [
-      "NFACES"
+      "NFACES",
+      "NCOMP"
     ],
     "constants": [],
     "combinations": {
-      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ],
+      "NCOMP": [ 1 ]
     },
     "explicit": []
   },

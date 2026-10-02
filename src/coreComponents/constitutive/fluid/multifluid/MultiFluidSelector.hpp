@@ -117,9 +117,16 @@ void constitutiveComponentUpdatePassThru( constitutive::MultiFluidBase & fluidBa
   {
     using FluidType = TYPEOFREF( fluid );
     static_assert( FluidType::min_n_components <= FluidType::max_n_components );
-    using Components = typename types::IntegerSequence< FluidType::min_n_components, FluidType::max_n_components >::type;
-    if constexpr (!THERMAL || FluidType::isThermalType())
+    integer constexpr maxComponents = std::min( FluidType::max_n_components, GEOS_MAX_FLUID_COMPONENTS );
+    if constexpr (FluidType::min_n_components > maxComponents)
     {
+      GEOS_THROW( GEOS_FMT( "Fluid {} requires at least {} components, but GEOS_MAX_FLUID_COMPONENTS is {}.",
+                            FluidType::catalogName(), FluidType::min_n_components, GEOS_MAX_FLUID_COMPONENTS ),
+                  InputError );
+    }
+    else if constexpr (!THERMAL || FluidType::isThermalType())
+    {
+      using Components = typename types::IntegerSequence< FluidType::min_n_components, maxComponents >::type;
       detail::ComponentSelector< Components >::execute( numComps, fluid, std::forward< LAMBDA >( lambda ));
     }
     else
