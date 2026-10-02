@@ -253,6 +253,14 @@ blt_add_library( NAME       linearAlgebra
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
+# Keep MPI as a public CMake target dependency.  The legacy BLT `mpi` target
+# can flatten FindMPI's libraries while constructing dependent link lines,
+# separating libmpicxx and libmpi under linkers using --as-needed.  Consumers
+# of linearAlgebra must receive the complete MPI C++ link interface directly.
+if( ENABLE_MPI AND TARGET MPI::MPI_CXX )
+  target_link_libraries( linearAlgebra PUBLIC MPI::MPI_CXX )
+endif()
+
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
 install( TARGETS linearAlgebra LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

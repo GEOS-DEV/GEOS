@@ -63,8 +63,10 @@
       phaseNames="{ water, gas }"
       componentNames="{ water, co2 }"
       componentMolarWeight="{ 18e-3, 44e-3 }"
-      phasePVTParaFiles="{ pvtliquid.txt, pvtgas.txt }"
-      flashModelParaFile="co2flash.txt"/>  
+      pressureCoordinates="{5e5, 1.5e7}"
+      pressureInterval="5e4"
+      temperatureCoordinates="{367.15, 369.15}"
+      temperatureInterval="1" />  
     
     <DeadOilFluid
       name="fluidX"

@@ -81,7 +81,7 @@ class PhillipsBrineViscosity : public PVTFunctionBase
 public:
 
   PhillipsBrineViscosity( string const & name,
-                          string_array const & inputPara,
+                          BrineFluidParameters const & brineFluidParameters,
                           string_array const & componentNames,
                           array1d< real64 > const & componentMolarWeight,
                           TableFunction::OutputOptions const pvtOutputOpts );
@@ -111,7 +111,7 @@ public:
 
 private:
 
-  void makeCoefficients( string_array const & inputPara );
+  void makeCoefficients( real64 const salinity );
 
   /// Table with water viscosity tabulated as a function (T)
   TableFunction const * m_waterViscosityTable = nullptr;

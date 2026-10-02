@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./PoroElastic_Mandel_prism6_base_hybrid.xml"/>
+    <File name="./PoroElastic_Mandel_prism6_direct.xml"/>
   </Included>
 
   <!-- SPHINX_MESH -->

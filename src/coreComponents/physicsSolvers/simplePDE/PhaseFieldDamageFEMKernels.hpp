@@ -20,27 +20,23 @@
 #ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
 #define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
 
+#include "constitutive/solid/Damage.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
+#include "physicsSolvers/simplePDE/PhaseFieldDamageFields.hpp"
 
 namespace geos
 {
 
-enum class PhaseFieldDamageKernelLocalDissipation
-{
-  Linear,
-  Quadratic,
-};
+/// Type of local dissipation function used in the phase-field damage model, shared with the
+/// constitutive layer since it also affects degradation-function calibration there.
+using PhaseFieldDamageKernelLocalDissipation = constitutive::LocalDissipationOption;
 
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving the Damage(or phase-field) equation
  * in a phase-field fracture problem.
  * @copydoc geos::finiteElement::KernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
  *
  * ### PhaseFieldDamageKernel Description
  * Implements the KernelBase interface functions required for solving the
@@ -48,13 +44,7 @@ enum class PhaseFieldDamageKernelLocalDissipation
  * It uses the finite element kernel application functions such as
  * geos::finiteElement::RegionBasedKernelApplication.
  *
- * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
- * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
- * @p NUM_TRIAL_SUPPORT_POINTS_PER_ELEM, which are assumed to be equal. This
- * results in the @p UNUSED template parameter as only the NUM_NODES_PER_ELEM
- * is passed to the ImplicitKernelBase template to form the base class.
- *
- * Additionally, the number of degrees of freedom per support point for both
+ * The number of degrees of freedom per support point for both
  * the test and trial spaces are specified as `1` when specifying the base
  * class.
  */
@@ -96,8 +86,8 @@ public:
   /**
    * @brief Constructor
    * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
-   * @param fieldName The name of the primary field
-   *                  (i.e. Temperature, Pressure, etc.)
+   * @param inputViscousRegularizationCoeff The damping coefficient eta of the viscous
+   *                                        regularization of the phase-field evolution
    */
   PhaseFieldDamageKernel( NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
@@ -111,8 +101,7 @@ public:
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
                           real64 const inputDt,
-                          string const fieldName,
-                          LocalDissipation localDissipationOption ):
+                          real64 const inputViscousRegularizationCoeff ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -126,10 +115,9 @@ public:
           inputRhs,
           inputDt ),
     m_X( nodeManager.referencePosition()),
-    m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_quadDamage( inputConstitutiveType.getNewDamage() ),
+    m_nodalDamage( nodeManager.template getField< fields::phaseField::damage >()),
     m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
-    m_localDissipationOption( localDissipationOption )
+    m_viscousRegularizationCoeff( inputViscousRegularizationCoeff )
   {}
 
   //***************************************************************************
@@ -187,7 +175,7 @@ public:
   }
 
   /**
-   * @copydoc geos::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
+   * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    */
   GEOS_HOST_DEVICE
   inline
@@ -196,8 +184,8 @@ public:
                               StackVariables & stack ) const
   {
 
-    real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
-    real64 const ell = m_constitutiveUpdate.getRegularizationLength();
+    real64 const crackDrivingForce = m_constitutiveUpdate.getCrackDrivingForce( k, q );
+    real64 const regularizationLength = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy( k );
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
 
@@ -211,46 +199,61 @@ public:
     real64 qp_grad_damage[3] = {0, 0, 0};
     finiteElement::feOps::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
-    real64 D = 0;                                                                   //max between threshold and
-                                                                                    // Elastic energy
-    if( m_localDissipationOption == LocalDissipation::Linear )
+    LocalDissipation const localDissipationOption = m_constitutiveUpdate.m_localDissipationOption;
+
+    // Crack driving force, floored by the threshold for Linear dissipation.
+    real64 const effectiveCrackDrivingForce = localDissipationOption == LocalDissipation::Linear ?
+                                              fmax( threshold, crackDrivingForce ) :
+                                              crackDrivingForce;
+
+    // Coefficients that differ between the Linear and Quadratic dissipation models.
+    real64 localDissipation;                 // local dissipation contribution to the residual
+    real64 localDissipationDeriv;            // its damage-derivative, for the Jacobian
+    real64 nonlocalDissipationGradientCoeff; // scaling of the damage-gradient term
+    real64 drivingForceCoeff;                // scaling of the driving force terms
+    if( localDissipationOption == LocalDissipation::Linear )
     {
-      D = fmax( threshold, strainEnergyDensity );
+      localDissipation = 3.0 / 16.0;
+      localDissipationDeriv = 0.0;
+      nonlocalDissipationGradientCoeff = 0.375;
+      drivingForceCoeff = 0.5;
     }
+    else
+    {
+      localDissipation = qp_damage;
+      localDissipationDeriv = 1.0;
+      nonlocalDissipationGradientCoeff = 1.0;
+      drivingForceCoeff = 1.0;
+    }
+
+    real64 const degradationDeriv = m_constitutiveUpdate.getDegradationDerivative( k, qp_damage );
+    real64 const degradationSecondDeriv = m_constitutiveUpdate.getDegradationSecondDerivative( k, qp_damage );
+    real64 const scaledDrivingForce = drivingForceCoeff * regularizationLength * effectiveCrackDrivingForce / Gc;
+    // The external driving force only enters the Linear (nucleation) model.
+    real64 const scaledExtDrivingForce = localDissipationOption == LocalDissipation::Linear ?
+                                         0.5 * regularizationLength * m_quadExtDrivingForce[k][q] / Gc :
+                                         0.0;
+
+    // Backward-Euler viscous regularization eta*ddot(d) (Miehe et al., 2010, CMAME, Eq. 48),
+    real64 const scaledViscousCoeff = m_dt > LvArray::NumericLimits< real64 >::epsilon ?
+                                      drivingForceCoeff * regularizationLength * m_viscousRegularizationCoeff / ( Gc * m_dt ) :
+                                      0.0;
+    real64 const qp_damage_n = m_constitutiveUpdate.getOldDamage( k, q );
 
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
-      if( m_localDissipationOption == LocalDissipation::Linear )
-      {
-        stack.localResidual[ a ] -= detJ * ( 3 * N[a] / 16
-                                             + 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                             + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( k, qp_damage ) * N[a]
-                                             + 0.5 * ell * m_quadExtDrivingForce[k][q]/Gc * N[a] );
-      }
-      else
-      {
-        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage
-                                             + ( ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                                 + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( k, qp_damage ) ) );
+      stack.localResidual[ a ] -= detJ * ( localDissipation * N[a]
+                                           + nonlocalDissipationGradientCoeff * regularizationLength * regularizationLength * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
+                                           + scaledDrivingForce * degradationDeriv * N[a]
+                                           + scaledExtDrivingForce * N[a]
+                                           + scaledViscousCoeff * ( qp_damage - qp_damage_n ) * N[a] );
 
-      }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
-        if( m_localDissipationOption == LocalDissipation::Linear )
-        {
-          stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                    + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( k, qp_damage ) * N[a] * N[b] );
-
-        }
-        else
-        {
-          stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                    + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( k, qp_damage ) * ell * strainEnergyDensity/Gc ) );
-        }
+        stack.localJacobian[ a ][ b ] -= detJ * ( nonlocalDissipationGradientCoeff * regularizationLength * regularizationLength * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+                                                  + ( localDissipationDeriv + scaledDrivingForce * degradationSecondDeriv + scaledViscousCoeff ) * N[a] * N[b] );
       }
     }
-
-
   }
 
   /**
@@ -293,13 +296,11 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
 
-  /// The array containing the damage on each quadrature point of all elements
-  arrayView2d< real64 const > const m_quadDamage;
-
   /// The array containing the external driving force on each quadrature point of all elements
   arrayView2d< real64 const > const m_quadExtDrivingForce;
 
-  PhaseFieldDamageKernelLocalDissipation m_localDissipationOption;
+  /// The damping coefficient eta of the viscous regularization of the phase-field evolution
+  real64 const m_viscousRegularizationCoeff;
 
 };
 
@@ -309,8 +310,7 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
                                                                     real64 const,
-                                                                    string const,
-                                                                    PhaseFieldDamageKernelLocalDissipation >;
+                                                                    real64 const >;
 
 } // namespace geos
 
