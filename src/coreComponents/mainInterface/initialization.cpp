@@ -106,12 +106,13 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     MEMORY_USAGE,
     PAUSE_FOR,
     ERRORSOUTPUT,
+    INPUT_CATALOG,
   };
 
   const option::Descriptor usage[] =
   {
     { UNKNOWN, 0, "", "", Arg::unknown, "USAGE: geosx -i input.xml [options]\n"
-                                        "       geosx -s schema-output.xml\n\n"
+                                        "       geosx -s schema-output.xml\n       geosx --capabilities --format=json\n\n"
                                         "Options:" },
     { HELP, 0, "?", "help", Arg::None, "\t-?, --help" },
     { INPUT, 0, "i", "input", Arg::nonEmpty, "\t-i, --input, \t Input xml filename (required)" },
@@ -121,6 +122,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { ZPAR, 0, "z", "zpartitions", Arg::numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction" },
     { SCHEMA, 0, "s", "schema", Arg::nonEmpty, "\t-s, --schema, \t Name of the output schema" },
     { VALIDATE_INPUT, 0, "v", "validate-input", Arg::None, "\t-v, --validate-input, \t Only do the loading phase, and not actual simulation. Useful to validate 'input'." },
+    { INPUT_CATALOG, 0, "", "input-catalog", Arg::nonEmpty, "\t--input-catalog, \t Write global input metadata to a new JSON file; optional -i validates the deck first." },
     { NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication" },
     { PROBLEMNAME, 0, "n", "name", Arg::nonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
     { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned, \t Suppress usage of pinned memory for MPI communication buffers" },
@@ -140,8 +142,19 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
   option::Option buffer[ 100 ];//stats.buffer_max];
   option::Parser parse( usage, argc, argv, options, buffer );
 
+  // Invalid opt-in exports must fail, even if parsing could not retain their
+  // missing argument. Preserve the historical no-input/help behavior otherwise.
+  bool exportRequested = false;
+  for( int i = 0; i < argc; ++i )
+  {
+    string const argument( argv[i] );
+    exportRequested = exportRequested || argument == "--input-catalog" ||
+                      argument.rfind( "--input-catalog=", 0 ) == 0;
+  }
+  GEOS_THROW_IF( parse.error() && exportRequested, "Bad pre-run export command line arguments.", InputError );
+
   // Handle special cases
-  bool const noXML = options[INPUT].count() == 0 && options[SCHEMA].count() == 0;
+  bool const noXML = options[INPUT].count() == 0 && options[SCHEMA].count() == 0 && options[INPUT_CATALOG].count() == 0;
   if( parse.error() || options[HELP] || (argc == 0) || noXML )
   {
     int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 120;
@@ -222,6 +235,11 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
         commandLineOptions->onlyValidateInput = true;
       }
       break;
+      case INPUT_CATALOG:
+      {
+        commandLineOptions->inputCatalog = opt.arg;
+      }
+      break;
       case PROBLEMNAME:
       {
         commandLineOptions->problemName = opt.arg;
@@ -287,6 +305,10 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     }
   }
 
+  GEOS_THROW_IF( !commandLineOptions->inputCatalog.empty() &&
+                 ( !commandLineOptions->schemaName.empty() || commandLineOptions->beginFromRestart ||
+                   commandLineOptions->onlyValidateInput ),
+                 "Input catalog export cannot be combined with --schema, --restart, or --validate-input.", InputError );
   return commandLineOptions;
 }
 

@@ -52,6 +52,9 @@ struct CommandLineOptions
   /// Useful to validate GEOS inputs.
   bool onlyValidateInput = false;
 
+  /// Optional atomic, no-simulation global input catalog output.
+  string inputCatalog;
+
   /// The path to the restart file, if specified.
   string restartFileName;
 

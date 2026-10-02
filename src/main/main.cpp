@@ -23,6 +23,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/version.hpp"
+#include "mainInterface/PreRunExport.hpp"
 
 
 using namespace geos;
@@ -30,11 +31,23 @@ using namespace geos;
 
 int main( int argc, char *argv[] )
 {
+  int informationalExit = 0;
+  if( handleCapabilitiesCommand( argc, argv, informationalExit ) )
+  {
+    return informationalExit;
+  }
   try
   {
     std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
+
+    if( !commandLineOptions->inputCatalog.empty() )
+    {
+      runPreRunExport( std::move( commandLineOptions ) );
+      basicCleanup( false );
+      return 0;
+    }
 
     outputVersionInfo();
 
@@ -79,12 +92,14 @@ int main( int argc, char *argv[] )
   }
   catch( geos::Exception & e )
   { // GEOS generated exceptions management
+    reportPreRunExportError( argc, argv, e.what() );
     ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup( true );
     LvArray::system::callErrorHandler();
   }
   catch( std::exception const & e )
   { // native exceptions management
+    reportPreRunExportError( argc, argv, e.what() );
     ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
                                            MsgType::Exception, e.what(),
                                            ::geos::logger::internal::g_rank )

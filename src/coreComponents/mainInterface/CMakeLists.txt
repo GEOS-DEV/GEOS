@@ -26,6 +26,7 @@ Contains:
 set( mainInterface_headers
      GeosxState.hpp
      ProblemManager.hpp
+     PreRunExport.hpp
      initialization.hpp
      version.hpp
    )
@@ -37,6 +38,7 @@ set( mainInterface_sources
      GeosxState.cpp
      ProblemManager.cpp
      initialization.cpp
+     PreRunExport.cpp
      version.cpp
    )
 
