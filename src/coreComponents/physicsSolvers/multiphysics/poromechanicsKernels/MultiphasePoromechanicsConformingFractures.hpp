@@ -383,7 +383,7 @@ public:
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       // MultiphasePoromechanics supports at most three components; skip larger instantiations.
-      if constexpr( NC() > 3 )
+      if constexpr ( NC() > 3 )
       {
         GEOS_ERROR( GEOS_FMT( "Conforming-fracture poromechanics supports at most 3 components, got {}.", numComps ) );
       }
