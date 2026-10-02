@@ -907,8 +907,13 @@ TEST( VTKRefinementTemplates, InterfaceSharingRequiresClosedIncidenceAndPlannedP
   EXPECT_THROW( InterfaceSharing( registry, inconsistent, 0 ), std::invalid_argument );
   EXPECT_THROW( inherited.participants( {} ), std::invalid_argument );
   EXPECT_THROW( inherited.participants( { -1 } ), std::invalid_argument );
+  // VTK does not require neighbors to use opposite face windings, so two
+  // incidences with equal windings form an internal face: no boundary remains.
   auto duplicateCells = std::vector< Cell >{ reference.cell, reference.cell };
-  EXPECT_THROW( coarseBoundary( duplicateCells, { 500, 501 }, ids, 0 ), std::invalid_argument );
+  CoarseBoundary equalWindings;
+  EXPECT_NO_THROW( equalWindings = coarseBoundary( duplicateCells, { 500, 501 }, ids, 0 ) );
+  EXPECT_TRUE( equalWindings.entities.empty() );
+  // A repeated volume ID is still rejected.
   EXPECT_THROW( coarseBoundary( duplicateCells, { 500, 500 }, ids, 0 ), std::invalid_argument );
 }
 

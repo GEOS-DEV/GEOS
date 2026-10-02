@@ -117,6 +117,34 @@ def make_cases(directory, fixture, levels):
     return paths
 
 
+def locate_roots(centers, fixture):
+    """Coarse cell containing each fine-cell center.
+
+    The fixture cells are vertical extrusions, so a center lies in a cell when it
+    is inside its z range and inside its bottom polygon (winding number test).
+    Refinement keeps only the coarse root ID with the GEOS cells and does not
+    write it to checkpoints, so the checks locate roots from geometry.
+    """
+    import numpy as np
+    points, cells, types, _, _ = fixture
+    roots = np.full(len(centers), -1, dtype=np.int64)
+    for root, (cell, kind) in enumerate(zip(cells, types, strict=True)):
+        arity = {12: 4, 15: 5, 16: 6}[int(kind)]
+        bottom = points[cell[:arity]]
+        low, high = bottom[0, 2], points[cell[arity], 2]
+        x, y = centers[:, 0], centers[:, 1]
+        winding = np.zeros(len(centers), dtype=np.int64)
+        for a, b in zip(bottom, np.roll(bottom, -1, axis=0)):
+            side = (b[0] - a[0]) * (y - a[1]) - (x - a[0]) * (b[1] - a[1])
+            winding += ((a[1] <= y) & (b[1] > y) & (side > 0)).astype(np.int64)
+            winding -= ((a[1] > y) & (b[1] <= y) & (side < 0)).astype(np.int64)
+        inside = (winding != 0) & (centers[:, 2] > min(low, high)) & (centers[:, 2] < max(low, high))
+        assert not np.any(inside & (roots >= 0)), "A fine cell lies in two coarse cells"
+        roots[inside] = root
+    assert np.all(roots >= 0), "Every fine cell must lie in a coarse cell"
+    return roots
+
+
 def values(group):
     """Read the repository wrapper's stored permutation, retaining exact integers."""
     raw = group["__values__"][:]
@@ -168,19 +196,16 @@ def inspect(file, case, level, rank, fixture, records, step):
             volumes = values(subregion["elementVolume"])
             centers = values(subregion["elementCenter"])
             assert np.all(volumes > 0)
+            # Lineage is used during import only. GEOS writes a NO_WRITE wrapper as an
+            # empty placeholder, so no lineage entry may carry values.
+            assert not any(name.startswith("_geosUniform") and isinstance(subregion[name], h5py.Group) for name in subregion)
             if level:
-                roots = values(subregion["_geosUniformRootCellId"])
-                np.testing.assert_array_equal(values(subregion["_geosUniformGeneration"]), level)
-                np.testing.assert_array_equal(values(subregion["_geosUniformRootOwner"])[ghosts < 0], rank)
-                source_attributes = values(subregion["_geosUniformSourceAttribute"])
+                root_indices = locate_roots(centers, fixture)
             else:
-                roots = gids
-                assert "_geosUniformRootCellId" not in subregion
-            root_indices = (roots - ID_BASE - 1000) // 13
-            assert np.all((root_indices >= 0) & (root_indices < len(cells)))
-            np.testing.assert_array_equal(roots, ID_BASE + 1000 + 13 * root_indices)
-            if level:
-                np.testing.assert_array_equal(source_attributes, attributes[root_indices])
+                root_indices = (gids - ID_BASE - 1000) // 13
+                assert np.all((root_indices >= 0) & (root_indices < len(cells)))
+                np.testing.assert_array_equal(gids, ID_BASE + 1000 + 13 * root_indices)
+                np.testing.assert_array_equal(root_indices, locate_roots(centers, fixture))
             field = values(subregion["pressure"]) if case != "fem" else None
             if case != "fem":
                 porosity = values(subregion["porosity/referencePorosity"])
@@ -207,6 +232,7 @@ def inspect(file, case, level, rank, fixture, records, step):
                 if ghosts[i] < 0:
                     root = int(root_indices[i])
                     records["root_counts"][root] += 1
+                    records["root_ranks"].setdefault(root, set()).add(rank)
                     records["root_volumes"][root] += float(volumes[i])
                     key = tuple(np.round(centers[i], 11))
                     assert key not in records["solution"]
@@ -226,6 +252,8 @@ def verify_records(records, fixture, level):
     for root in range(len(cells)):
         expected = 1 if level == 0 else {12: 8, 15: 10, 16: 12}[int(types[root])] * 8**(level - 1)
         assert records["root_counts"][root] == expected, root
+        # Every child keeps the owner of its coarse root.
+        assert len(records["root_ranks"][root]) == 1, (root, "children of one root on several ranks")
         np.testing.assert_allclose(records["root_volumes"][root], volumes[root], rtol=1e-11, atol=1e-14)
     for collection in (records["nodes"], records["cells"]):
         for gid, replicas in collection.items():
@@ -312,7 +340,8 @@ def main():
                     assert "linear solver solve time" in log_path.read_text(), "The oracle must follow an actual solve"
                 final_records = None
                 for step in ([2] if case == "fem" else [0, 1, 2]):
-                    records = {"cells": {}, "nodes": {}, "root_counts": Counter(), "root_volumes": Counter(), "solution": {}}
+                    records = {"cells": {}, "nodes": {}, "root_counts": Counter(), "root_volumes": Counter(),
+                               "root_ranks": {}, "solution": {}}
                     totals = Counter()
                     for rank in range(ranks):
                         file = out / f"{case}-L{level}_restart_{step:09}" / f"rank_{rank:07}.hdf5"

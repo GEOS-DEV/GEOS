@@ -105,16 +105,16 @@ def inspect_checkpoint(file, kind, level, rank):
 
         assert int(data["Problem/Mesh/mesh/uniformRefinement/__values__"][0]) == level
         ghosts = values(sub + "ghostRank")
+        # Lineage is used during import only. GEOS writes a NO_WRITE wrapper as an
+        # empty placeholder, so no lineage entry may carry values.
+        group = data[base + sub]
+        assert not any(name.startswith("_geosUniform") and isinstance(group[name], h5py.Group) for name in group)
         if level:
-            assert np.all(values(sub + "_geosUniformRootOwner")[ghosts < 0] == rank)
-            assert np.all(values(sub + "_geosUniformGeneration") == level)
-            assert np.all(values(sub + "_geosUniformRootCellId") > 2**53)
-            coarse = np.floor(values(sub + "elementCenter")).astype(np.int64)
+            # Every child keeps the owner of its coarse root: each unit coarse cell
+            # owned here has all of its 8**level children owned here.
+            coarse = np.floor(values(sub + "elementCenter")[ghosts < 0]).astype(np.int64)
             coarse_index = (coarse[:, 2] * 2 + coarse[:, 1]) * 4 + coarse[:, 0]
-            expected_roots = 9007199254741001 + 1000 + 13 * coarse_index
-            np.testing.assert_array_equal(values(sub + "_geosUniformRootCellId"), expected_roots)
-        else:
-            assert base + sub + "_geosUniformRootCellId" not in data
+            assert np.all(np.bincount(coarse_index, minlength=16)[np.unique(coarse_index)] == 8**level)
         node_position = values("nodeManager/ReferencePosition")
         old_points = np.all(node_position == np.floor(node_position), axis=1)
         old_position = node_position[old_points].astype(np.int64)
@@ -153,11 +153,10 @@ def inspect_restart(reference, restarted, kind):
     base = "Problem/domain/MeshBodies/mesh/meshLevels/Level0/"
     sub = "ElementRegions/elementRegionsGroup/region/elementSubRegions/1_hexahedra/"
     with h5py.File(reference) as a, h5py.File(restarted) as b:
+        # Lineage is not written to checkpoints; the restored mesh is compared
+        # through its persisted IDs, owners and positions.
         paths = ["nodeManager/ReferencePosition", "nodeManager/localToGlobalMap",
-                 "nodeManager/ghostRank", sub + "localToGlobalMap", sub + "ghostRank"]
-        paths += [sub + "_geosUniform" + name for name in (
-            "RootCellId", "ParentCellId", "Generation", "ChildOrdinal",
-            "RootOwner", "SourceType", "SourceAttribute")]
+                 "nodeManager/ghostRank", sub + "localToGlobalMap", sub + "ghostRank", sub + "elementCenter"]
         for path in paths:
             np.testing.assert_array_equal(a[base + path + "/__values__"][:],
                                           b[base + path + "/__values__"][:], err_msg=path)
@@ -316,7 +315,9 @@ def inspect_fracture_well_ids(files, level):
     assert len(all_reservoir) == len(values["region"]) + len(values["fault"])
     well_ids = values["wellA"] | values["wellB"]
     assert len(well_ids) == 4 and not well_ids & all_reservoir
-    offset = max(all_reservoir) + 1 if level else 20
+    # Well elements start above the largest existing element ID at every level;
+    # surface IDs are sparse, so this is not the element count.
+    offset = max(all_reservoir) + 1
     assert well_ids == set(range(offset, offset + 4)), (level, well_ids, offset)
     return {"volume_cells": len(values["region"]), "surface_cells": len(values["fault"]),
             "minimum_well_element_id": min(well_ids), "maximum_reservoir_element_id": max(all_reservoir)}
@@ -348,7 +349,8 @@ def inspect_well_ids(files, level, compact=False):
     assert all(len(ids) == 2 for ids in wells.values())
     assert not wells["wellA"] & wells["wellB"]
     well_ids = wells["wellA"] | wells["wellB"]
-    offset = max(reservoir) + 1 if level else len(reservoir)
+    # Well elements start above the largest existing element ID at every level.
+    offset = max(reservoir) + 1
     assert min(well_ids) == offset
     assert well_ids == set(range(offset, offset + 4))
     volume_nodes = (4 * 2**level + 1) * (2 * 2**level + 1)**2
@@ -504,14 +506,10 @@ def main():
                      for rank in range(ranks)]
             checks.append({"case": case, **inspect_well_ids(files, 0, compact=True)})
             for kind in ("node", "element"):
+                # Wells start above the largest existing ID, so a near-limit
+                # source ID leaves no room for the well IDs of either kind.
                 run(f"well-{kind}-overflow-p{ranks}", ranks, well_inputs[kind],
-                    expected_error=f"Global well {kind} ID range exceeds storage" if kind == "node" else None)
-                if kind == "element":
-                    # Zero refinement retains develop's count-based offset;
-                    # near-limit source IDs do not force the wells above them.
-                    files = [directory / f"well-{kind}-overflow-p{ranks}" / "well-element-overflow_restart_000000001" /
-                             f"rank_{rank:07}.hdf5" for rank in range(ranks)]
-                    checks.append({"case": f"well-{kind}-overflow-p{ranks}", **inspect_well_ids(files, 0)})
+                    expected_error=f"Global well {kind} ID range exceeds storage")
             legacy = directory / f"legacy-well-width-p{ranks}"
             shutil.copytree(directory / f"wells-L1-p{ranks}", legacy)
             legacy_restart = legacy / "wells-L1_restart_000000000"

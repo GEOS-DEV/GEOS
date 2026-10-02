@@ -109,10 +109,9 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
 /**
  * @brief Check the import transform of a refined mesh without applying it.
  * @details The transform must be finite, nonsingular and orientation preserving,
- * and every transformed coordinate must be finite. Such a transform keeps the
- * validated cells valid, apart from rounding. The cells are checked again only
- * when the translation on an axis exceeds the largest coordinate magnitude,
- * because it can then remove significant digits and collapse cells.
+ * and every transformed coordinate must be finite. When every coordinate is
+ * transformed exactly, the validated cells stay valid. Otherwise rounding can
+ * collapse cells, so every refined cell is checked again.
  * @param mesh The refined mesh.
  * @param translation The import translation.
  * @param scale The import scaling.

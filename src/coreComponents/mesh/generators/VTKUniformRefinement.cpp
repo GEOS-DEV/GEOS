@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
+#include <functional>
 #include <cstring>
 #include <limits>
 #include <memory>
@@ -1632,12 +1633,11 @@ void validateRefinedTransform( vtkDataSet & mesh, Coordinates const & translatio
 {
   Communication comm( communicator );
   // A diagonal transform with positive determinant multiplies every cell
-  // Jacobian by the same positive factor, so the validated refined cells stay
-  // valid, apart from rounding. Scaling only adds a relative rounding error.
-  // A translation that is large compared with the coordinates can remove
-  // their significant digits and collapse cells, so only then is every cell
-  // checked again.
-  std::array< double, 3 > largest{};
+  // Jacobian by the same positive factor. When every transformed coordinate is
+  // computed exactly, the refined cells, which were already validated, stay
+  // valid. Any rounding, in the sum or in the product, can collapse small cells
+  // far from the origin, so the cells are then checked again.
+  int exact = 1;
   comm.checked( "refined physical coordinate transform", [&]
   {
     int negativeAxes = 0;
@@ -1659,18 +1659,24 @@ void validateRefinedTransform( vtkDataSet & mesh, Coordinates const & translatio
       mesh.GetPoint( p, position );
       for( int d = 0; d < 3; ++d )
       {
-        if( !std::isfinite( ( position[d] + translation[d] ) * scale[d] ) )
+        double const sum = position[d] + translation[d];
+        double const product = sum * scale[d];
+        if( !std::isfinite( product ) )
         {
           throw std::overflow_error( "Refined coordinate transform makes a nonfinite coordinate" );
         }
-        largest[d] = std::max( largest[d], std::abs( position[d] ) );
+        // TwoSum error of the addition, and the FMA residual of the product.
+        double const shift = sum - position[d];
+        double const sumError = ( position[d] - ( sum - shift ) ) + ( translation[d] - shift );
+        double const productError = std::fma( sum, scale[d], -product );
+        if( !std::equal_to< double >{} ( sumError, 0. ) || !std::equal_to< double >{} ( productError, 0. ) )
+        {
+          exact = 0;
+        }
       }
     }
   } );
-  std::array< double, 3 > globalLargest{};
-  MpiWrapper::allReduce( largest, globalLargest, MpiWrapper::Reduction::Max, communicator );
-  if( std::abs( translation[0] ) <= globalLargest[0] && std::abs( translation[1] ) <= globalLargest[1] &&
-      std::abs( translation[2] ) <= globalLargest[2] )
+  if( MpiWrapper::min( exact, communicator ) == 1 )
   {
     return;
   }

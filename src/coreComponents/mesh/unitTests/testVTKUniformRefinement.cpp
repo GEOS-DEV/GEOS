@@ -792,6 +792,32 @@ TEST( VTKUniformRefinement, PhysicalTransformIsValidatedWithoutChangingVtkCoordi
   EXPECT_EQ( original, after );
 }
 
+TEST( VTKUniformRefinement, RoundedTransformIsValidatedEvenForSmallTranslations )
+{
+  // A cube spanning x = [1e16, 1e16 + 4]. Refinement adds x = 1e16 + 2, which
+  // is representable. The translation is smaller than the coordinates, but
+  // 2e16 + 2 is not representable, so half of the translated children collapse.
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  auto input = localCube( rank, false );
+  for( vtkIdType p = 0; p < input->GetNumberOfPoints(); ++p )
+  {
+    Coordinates xyz{};
+    input->GetPoint( p, xyz.data() );
+    for( double & x : xyz )
+    {
+      x *= 4;
+    }
+    xyz[0] += 1e16;
+    input->GetPoints()->SetPoint( p, xyz.data() );
+  }
+  AllMeshes meshes( input, {} );
+  refineUniformly( meshes, 1, {}, MPI_COMM_GEOS );
+  auto output = meshes.getMainMesh();
+  EXPECT_THROW( validateRefinedTransform( *output, { 1e16, 0, 0 }, { 1, 1, 1 }, MPI_COMM_GEOS ), std::runtime_error );
+  // An exact transform needs no new check and is accepted.
+  EXPECT_NO_THROW( validateRefinedTransform( *output, { 0, 0, 0 }, { 2, 2, 2 }, MPI_COMM_GEOS ) );
+}
+
 TEST( VTKUniformRefinement, SharedCoordinatesUseTheMeshExtent )
 {
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOS ), size = MpiWrapper::commSize( MPI_COMM_GEOS );

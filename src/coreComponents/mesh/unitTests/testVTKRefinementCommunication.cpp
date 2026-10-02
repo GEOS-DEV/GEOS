@@ -1189,6 +1189,8 @@ TEST( VTKRefinementCommunication, CoarseFullFaceValidationFindsHiddenNonmanifold
     faces.push_back( { forward, { comm.rank() } } );
   }
   EXPECT_THROW( comm.validateVolumeFaces( faces ), std::runtime_error );
+  // Equal windings on two incidences are accepted: VTK does not require
+  // neighbors to use opposite face cycles, and face keys are canonical.
   faces.clear();
   if( comm.rank() == 0 )
   {
@@ -1198,7 +1200,7 @@ TEST( VTKRefinementCommunication, CoarseFullFaceValidationFindsHiddenNonmanifold
   {
     faces.push_back( { forward, { comm.rank() } } );
   }
-  EXPECT_THROW( comm.validateVolumeFaces( faces ), std::runtime_error );
+  EXPECT_NO_THROW( comm.validateVolumeFaces( faces ) );
   faces.clear();
   if( comm.rank() == 0 )
   {
