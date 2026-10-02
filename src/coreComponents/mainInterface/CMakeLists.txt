@@ -57,6 +57,10 @@ blt_add_library( NAME       mainInterface
 
 add_dependencies( mainInterface generate_version )
 
+if( ENABLE_VTK )
+  target_compile_definitions( mainInterface PRIVATE GEOS_PRERUN_USE_VTK )
+endif()
+
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

@@ -1,14 +1,43 @@
 .. _PreRunExports:
 
-Machine-readable capabilities and global input metadata
-=======================================================
+Machine-readable pre-run exports
+================================
 
-``geosx --capabilities --format=json`` returns JSON before runtime/MPI setup.
-The format/schema revision is 1; ``input-catalog`` is true and ``export-mesh``
-is false in this focused PR. Consumers must check the feature booleans and
-contract revision. The input catalog is global, never just the loaded instance.
-Route vendor startup diagnostics to stderr (UCX_LOG_FILE=/dev/stderr when
-applicable) so standalone capability stdout remains JSON.
+These opt-in commands do not change ordinary simulation, restart, schema, or
+``--validate-input`` behavior. They use the selected executable's registered
+objects and native mesh writer; they do not run the event/time loop.
+
+Capability discovery
+--------------------
+
+.. code-block:: sh
+
+   geosx --capabilities --format=json
+
+The standalone query runs before GEOS runtime/MPI initialization. Its JSON
+object has ``formatVersion: 1``, ``version``, ``schemaVersion: 1``, boolean
+``input-catalog`` and ``export-mesh`` keys, ``inputCatalogFormatVersion: 1``,
+``inputCatalogScope: "global"``, ``meshExportFormatVersion: 1`` and
+``meshExportFormat: "vtm"``. Builds without VTK advertise ``export-mesh: false``
+and reject that command. Unknown members may be ignored. Consumers must
+reject unsupported format versions instead of assuming compatibility.
+
+``schemaVersion`` identifies this schema/catalog contract revision, not a
+previously existing GEOS release-wide schema version. ``version`` is the
+normal GEOS version/build string. The catalog adds a fingerprint of its exact
+expanded XSD. Consumers should also identify the actual executable, since a
+local patch may not change the source commit printed by ``getVersion()``.
+
+The query explicitly advertises arbitrary-plane phase initialization,
+generated-set phase initialization, and well-neighborhood refinement as false.
+These physics/mesh extensions are not implemented by the export commands.
+
+An invalid capability query exits 2 and writes a JSON ``error`` object to
+stdout. Some vendor libraries can log *before main()*; route those diagnostics
+to stderr in the launch environment. In particular, UCX supports
+``UCX_LOG_FILE=/dev/stderr``. This preserves its diagnostics without mixing
+them into the JSON response. The capability query is a serial query; do not
+launch one copy per MPI rank.
 
 Global input catalog
 --------------------
@@ -69,18 +98,78 @@ dimensionless quantity uses ``units: "1"`` and ``unitsStatus: "declared"``.
 No units or numeric constraints are guessed from property names, prose,
 defaults, or a loaded simulation. Empty descriptions remain empty.
 
-Publication and regression
+Authoritative pre-run mesh
 --------------------------
 
-The destination must be new and its parent directory must exist. Work happens
-in a hidden staging directory; an exclusive atomic link publishes the completed
-catalog. Existing outputs are never replaced. Schema, restart, and validate-only
-modes cannot be combined with catalog export. Failed exports return nonzero and
-may leave unpublished staging files; only a complete final file is authoritative.
-Caught errors include a JSON error with code ``pre-run-export-failed`` among
-diagnostics; invalid standalone capability syntax uses
-``invalid-capabilities-arguments`` and exits 2.
+.. code-block:: sh
 
-Run ``python3 scripts/testInputCatalog.py --geos /path/to/geosx``. This independent
-regression checks global XSD parity, defaults/enum/bounds/unknown units,
-repeatability with and without an input deck, errors and no-overwrite behavior.
+   geosx -i input.xml --export-mesh new-preview.vtm
+   mpirun -np 2 geosx -i input.xml -x 2 --export-mesh new-preview.vtm
+
+GEOS parses and constructs the normal problem, including its mesh levels,
+numerical methods and imported fields. It stops **before applying initial
+conditions or running events**. Thus it validates mesh construction, not all
+initial-condition physics. This is a geometry export, not a simulation result.
+
+The native GEOS VTK writer supplies the geometry, VTK connectivity convention,
+point ordering, region/subregion cell ordering, named body/level/region blocks
+and per-rank datasets. Shallow-copy levels are omitted as in normal VTK output.
+No rank aggregation, point merging, ghost filtering or decimation is requested.
+Ghost cells are retained, with ``ghostRank`` and ``localToGlobalMap`` identity
+arrays. Normal output using ``writeGhostCells="1"`` is the appropriate ordering
+reference for the same partitioning. Particles/wells/surfaces retain their
+normal native VTK representations. The export preserves real64 coordinates
+(``coordinatePrecision: "float64"``); normal VTK output retains its previous
+precision. This prevents small cells at large coordinates from collapsing
+through a float32 conversion.
+
+The result is ``new-preview.vtm`` and ``new-preview.vtm.data/``. The latter
+contains VTU sidecars and ``metadata.json`` with ``formatVersion: 1``,
+``kind: "geos-pre-run-mesh"``, ``geosVersion``,
+``ordering: "native-vtk-writer"``, ``ghostCells: true``,
+``timeLoopEntered: false`` and ``initialConditionsApplied: false``.
+Coordinate units are explicitly ``null``/``unknown`` because this pin does not
+carry a structured coordinate-unit declaration. Consumers must not silently
+apply a metres conversion. No time metadata, PVD file, result fields or
+simulation timestep is exported. Internal directory names inherited from the
+VTK writer do not represent executed timesteps.
+
+Publication and errors
+----------------------
+
+The destination must be a **new file in an existing directory**. A mesh must
+have the ``.vtm`` suffix and its ``.data`` sibling must not already exist.
+Existing outputs are never replaced. Export modes cannot be combined with
+each other, schema generation, restart, or ``--validate-input``.
+
+Work is confined to a hidden staging directory in the destination filesystem.
+The catalog is published with an exclusive atomic link after completion. For
+a mesh, all complete sidecars are moved into place first; an exclusive atomic
+link publishes the root VTM last as the **commit marker**. Until that marker
+exists, the bundle is not authoritative. Interrupted/failed processes can leave
+hidden staging directories or unreferenced sidecars; consumers must never treat
+those as completed exports. Successful export removes its staging directory.
+Concurrent replacement/overwrite of export destinations is unsupported.
+
+Errors return nonzero and do not publish a success marker. Caught export errors
+also emit a one-line JSON object with ``error.code: "pre-run-export-failed"``
+and ``error.message`` on stdout alongside normal GEOS diagnostics. Fatal
+runtime/OS termination can preclude that diagnostic, so exit status and the
+absence of the output remain authoritative. Capability errors use
+``invalid-capabilities-arguments``. Never accept partial JSON or a VTM with
+missing sidecars as a valid export.
+
+Regression checks
+-----------------
+
+.. code-block:: sh
+
+   python3 scripts/testPreRunExports.py --geos /path/to/geosx --mpiexec mpirun
+
+The test requires Python VTK. It constructs a small real mesh and compares
+geometry, block identities, point/cell ordering and identity arrays against
+normal same-build solver output in serial and with two MPI ranks. It also
+checks catalog scope, repeatability with/without a deck, unknown-unit handling,
+choices/constraints, rejected modes, invalid input, preservation of existing
+outputs, complete sidecars and the absence of simulation metadata. Omitting
+``--mpiexec`` explicitly skips the MPI test rather than claiming it passed.

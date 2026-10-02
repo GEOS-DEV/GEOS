@@ -14,7 +14,7 @@ bool handleCapabilitiesCommand( int argc, char * argv[], int & exitCode );
 /** Emit a JSON diagnostic for a failing opt-in export command; ordinary runs are unchanged. */
 void reportPreRunExportError( int argc, char * argv[], char const * message );
 
-/** Export global input metadata without entering the event/time loop. */
+/** Export global input metadata or the constructed mesh without entering the event/time loop. */
 void runPreRunExport( std::unique_ptr< CommandLineOptions > options );
 }
 #endif

@@ -55,6 +55,9 @@ struct CommandLineOptions
   /// Optional atomic, no-simulation global input catalog output.
   string inputCatalog;
 
+  /// Optional atomic, no-simulation mesh VTM output file.
+  string exportMesh;
+
   /// The path to the restart file, if specified.
   string restartFileName;
 

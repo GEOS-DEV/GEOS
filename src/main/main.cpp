@@ -42,7 +42,7 @@ int main( int argc, char *argv[] )
 
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
 
-    if( !commandLineOptions->inputCatalog.empty() )
+    if( !commandLineOptions->inputCatalog.empty() || !commandLineOptions->exportMesh.empty() )
     {
       runPreRunExport( std::move( commandLineOptions ) );
       basicCleanup( false );

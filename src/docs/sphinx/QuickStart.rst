@@ -377,8 +377,8 @@ This should print out a brief summary of the available command line arguments:
 
     Rank 0: No XML input file nor schema specified. Exiting...
 
-For machine-readable capability discovery and the global input catalog,
-see :doc:`PreRunExports`.
+For machine-readable capability discovery, a global input catalog, or an authoritative
+pre-run mesh export, see :doc:`PreRunExports`.
 
 Obviously this doesn't do much interesting, but it will at least confirm that the executable runs.
 In typical usage, an input XML must be provided describing the problem to be run, e.g.

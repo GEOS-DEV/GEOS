@@ -8,6 +8,9 @@
 #include "dataRepository/xmlWrapper.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "functions/FunctionManager.hpp"
+#ifdef GEOS_PRERUN_USE_VTK
+#include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
+#endif
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/version.hpp"
@@ -259,6 +262,20 @@ void writeCatalog( ProblemManager & problem, fs::path const & schemaPath, fs::pa
   writeFile( output, out.str() );
 }
 
+#ifdef GEOS_PRERUN_USE_VTK
+void rewriteMeshReferences( xmlNode node, fs::path const & sourceRoot, string const & prefix )
+{
+  if( node.attribute( "file" ) )
+  {
+    fs::path const relative( node.attribute( "file" ).value() );
+    if( relative.is_absolute() || relative.string().find( ".." ) != string::npos ||
+        !fs::is_regular_file( sourceRoot / relative ) || fs::file_size( sourceRoot / relative ) == 0 )
+      throw std::runtime_error( "Mesh export has a missing or unsafe sidecar: " + relative.string() );
+    node.attribute( "file" ).set_value( ( prefix + '/' + relative.generic_string() ).c_str() );
+  }
+  for( xmlNode child : node.children() ) rewriteMeshReferences( child, sourceRoot, prefix );
+}
+#endif
 }
 
 bool handleCapabilitiesCommand( int argc, char * argv[], int & exitCode )
@@ -275,9 +292,15 @@ bool handleCapabilitiesCommand( int argc, char * argv[], int & exitCode )
     std::cout << "{\"error\":{\"code\":\"invalid-capabilities-arguments\",\"message\":\"Use --capabilities --format=json as a standalone command\"}}\n";
     return true;
   }
+#ifdef GEOS_PRERUN_USE_VTK
+  char const * meshAvailable = "true";
+#else
+  char const * meshAvailable = "false";
+#endif
   std::cout << "{\"formatVersion\":1,\"version\":" << quote( getVersion() )
-            << ",\"schemaVersion\":1,\"input-catalog\":true,\"export-mesh\":false,"
-            << "\"inputCatalogFormatVersion\":1,\"inputCatalogScope\":\"global\","
+            << ",\"schemaVersion\":1,\"input-catalog\":true,\"export-mesh\":" << meshAvailable << ","
+            << "\"inputCatalogFormatVersion\":1,\"meshExportFormatVersion\":1,"
+            << "\"meshExportFormat\":\"vtm\",\"inputCatalogScope\":\"global\","
             << "\"arbitrary-plane-phase-initialization\":false,\"generated-set-phase-initialization\":false,"
             << "\"well-neighborhood-refinement\":false}\n";
   return true;
@@ -288,8 +311,8 @@ void reportPreRunExportError( int argc, char * argv[], char const * message )
   for( int i = 1; i < argc; ++i )
   {
     string const argument( argv[i] );
-    if( argument == "--input-catalog" ||
-        argument.rfind( "--input-catalog=", 0 ) == 0 )
+    if( argument == "--input-catalog" || argument == "--export-mesh" ||
+        argument.rfind( "--input-catalog=", 0 ) == 0 || argument.rfind( "--export-mesh=", 0 ) == 0 )
     {
       std::cout << "{\"error\":{\"code\":\"pre-run-export-failed\",\"message\":" << quote( message ) << "}}" << std::endl;
       return;
@@ -299,32 +322,69 @@ void reportPreRunExportError( int argc, char * argv[], char const * message )
 
 void runPreRunExport( std::unique_ptr< CommandLineOptions > options )
 {
-  fs::path const target = fs::absolute( options->inputCatalog );
-  if( target.filename().empty() || !fs::is_directory( target.parent_path() ) || fs::exists( target ) )
-    throw std::runtime_error( "Input catalog export requires a new file in an existing directory" );
+  bool const catalog = !options->inputCatalog.empty();
+  fs::path const target = fs::absolute( catalog ? options->inputCatalog : options->exportMesh );
+  fs::path const sidecars = target.string() + ".data";
+  if( target.filename().empty() || !fs::is_directory( target.parent_path() ) || fs::exists( target ) ||
+      ( !catalog && ( target.extension() != ".vtm" || fs::exists( sidecars ) ) ) )
+    throw std::runtime_error( "Export requires a new output file in an existing directory (mesh suffix: .vtm)" );
   int owner = static_cast< int >( ::getpid() );
   MpiWrapper::bcast( &owner, 1, 0 );
   fs::path const stage = target.parent_path() / ( "." + target.filename().string() + ".partial-" + std::to_string( owner ) );
   if( MpiWrapper::commRank() == 0 && !fs::create_directory( stage ) )
     throw std::runtime_error( "Cannot create exclusive export staging directory" );
   MpiWrapper::barrier( MPI_COMM_GEOS );
+  // Input preprocessing may write a combined XML file. Confine it, solver setup
+  // diagnostics, and all generated intermediates to the unpublished staging tree.
   options->outputDirectory = stage.string();
-  if( !options->inputFileNames.empty() )
+  if( catalog )
   {
-    auto validationOptions = std::make_unique< CommandLineOptions >( *options );
-    GeosxState validation( std::move( validationOptions ) );
-    validation.initializeDataRepository();
-    validation.applyInitialConditions();
+    if( !options->inputFileNames.empty() )
+    {
+      auto validationOptions = std::make_unique< CommandLineOptions >( *options );
+      GeosxState validation( std::move( validationOptions ) );
+      validation.initializeDataRepository();
+      validation.applyInitialConditions();
+    }
+    options->inputFileNames.clear();
+    fs::path const schema = stage / ( "schema-" + std::to_string( MpiWrapper::commRank() ) + ".xsd" );
+    options->schemaName = schema.string();
+    GeosxState state( std::move( options ) );
+    state.initializeDataRepository();
+    if( MpiWrapper::commRank() == 0 )
+    {
+      writeCatalog( state.getProblemManager(), schema, stage / "catalog.json" );
+      publishFile( stage / "catalog.json", target );
+    }
   }
-  options->inputFileNames.clear();
-  fs::path const schema = stage / ( "schema-" + std::to_string( MpiWrapper::commRank() ) + ".xsd" );
-  options->schemaName = schema.string();
-  GeosxState state( std::move( options ) );
-  state.initializeDataRepository();
-  if( MpiWrapper::commRank() == 0 )
+  else
   {
-    writeCatalog( state.getProblemManager(), schema, stage / "catalog.json" );
-    publishFile( stage / "catalog.json", target );
+#ifdef GEOS_PRERUN_USE_VTK
+    GeosxState state( std::move( options ) );
+    state.initializeDataRepository();
+    vtk::VTKPolyDataWriterInterface writer( "mesh" );
+    writer.setOutputLocation( stage.string(), "mesh" );
+    writer.writeMesh( state.getProblemManager().getDomainPartition() );
+    MpiWrapper::barrier( MPI_COMM_GEOS );
+    if( MpiWrapper::commRank() == 0 )
+    {
+      xmlWrapper::xmlDocument doc;
+      if( !doc.loadFile( ( stage / "mesh/000000.vtm" ).string() ) )
+        throw std::runtime_error( "Mesh export did not write a VTM manifest" );
+      rewriteMeshReferences( doc.getChild( "VTKFile" ), stage / "mesh", sidecars.filename().string() );
+      if( !doc.saveFile( ( stage / "mesh.vtm" ).string() ) ) throw std::runtime_error( "Cannot write mesh manifest" );
+      writeFile( stage / "mesh/metadata.json",
+                 "{\"formatVersion\":1,\"kind\":\"geos-pre-run-mesh\",\"geosVersion\":" + quote( getVersion() ) +
+                 ",\"coordinateUnits\":null,\"unitsStatus\":\"unknown\",\"ordering\":\"native-vtk-writer\",\"coordinatePrecision\":\"float64\","
+                 "\"ghostCells\":true,\"timeLoopEntered\":false,\"initialConditionsApplied\":false}\n" );
+      fs::remove( stage / "mesh/000000.vtm" );
+      // Publish all completed sidecars first; the authoritative VTM is the commit marker.
+      fs::rename( stage / "mesh", sidecars );
+      publishFile( stage / "mesh.vtm", target );
+    }
+#else
+    throw std::runtime_error( "--export-mesh is unavailable: this executable was built without VTK" );
+#endif
   }
   MpiWrapper::barrier( MPI_COMM_GEOS );
   if( MpiWrapper::commRank() == 0 ) fs::remove_all( stage );

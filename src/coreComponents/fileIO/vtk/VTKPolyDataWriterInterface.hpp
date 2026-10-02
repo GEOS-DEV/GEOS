@@ -212,6 +212,9 @@ public:
    */
   void write( real64 time, integer cycle, DomainPartition const & domain );
 
+  /** @brief Write geometry and identity arrays only, without time metadata or a PVD collection. */
+  void writeMesh( DomainPartition const & domain );
+
   /**
    * @brief Clears the datasets accumulated in the pvd writer
    *
@@ -345,6 +348,9 @@ protected:
 
   /// Should the vtk files contain the ghost cells or not.
   bool m_writeGhostCells;
+
+  /// Opt-in authoritative pre-run mesh export; ordinary result output is unchanged.
+  bool m_meshOnly = false;
 
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;
