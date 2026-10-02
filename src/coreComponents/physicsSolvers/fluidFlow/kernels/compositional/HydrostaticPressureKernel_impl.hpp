@@ -241,7 +241,8 @@ computeHydrostaticPressureAtMultipleElevations( localIndex const & startElevatio
                                                 arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & pressureValues,
                                                 arrayView2d< real64 > const & phaseMassDens,
                                                 arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
-                                                arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac )
+                                                arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac,
+                                                bool const strictPressure )
 {
   // startElevIndex is the reference point
   localIndex const numEntries = LvArray::math::abs( startElevationIndex - endElevationIndex );
@@ -278,7 +279,7 @@ computeHydrostaticPressureAtMultipleElevations( localIndex const & startElevatio
     {
       returnVal = ReturnType::FAILED_TO_CONVERGE;
     }
-    else if( iReturnVal == ReturnType::DETECTED_MULTIPHASE_FLOW )
+    else if( iReturnVal == ReturnType::DETECTED_MULTIPHASE_FLOW && ( !strictPressure || returnVal != ReturnType::FAILED_TO_CONVERGE ) )
     {
       returnVal = ReturnType::DETECTED_MULTIPHASE_FLOW;
     }
@@ -310,7 +311,8 @@ marchBetweenTwoElevations( real64 const & startElevation,
                            arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & pressureValues,
                            arrayView2d< real64 > const & phaseMassDens,
                            arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
-                           arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac )
+                           arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac,
+                           bool const strictPressure )
 {
   // Find the primary and contact phase indices
   integer ipPP;
@@ -355,7 +357,8 @@ marchBetweenTwoElevations( real64 const & startElevation,
                                                     pressureValues,
                                                     phaseMassDens,
                                                     phaseDens,
-                                                    phaseCompFrac );
+                                                    phaseCompFrac, strictPressure );
+  if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
 
   // Compute phase presssures and densities at end elevation using iEnd as the reference
   array3d< real64, constitutive::multifluid::LAYOUT_PHASE > endPressure( 1, 1, numPhases );
@@ -385,10 +388,16 @@ marchBetweenTwoElevations( real64 const & startElevation,
                                 endPhaseMassDens[0][0],
                                 endPhaseDens[0][0],
                                 endPhaseCompFrac[0][0] );
+  if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
   // Compute relative error defined as the relative difference between the phase pressures at end elevation
-  real64 err = LvArray::math::abs( endPressure[0][0][ipCP] - endPressure[0][0][ipPP] ) / endPressure[0][0][ipPP];
+  auto pressureError = [&]()
+  {
+    real64 const difference = LvArray::math::abs( endPressure[0][0][ipCP] - endPressure[0][0][ipPP] );
+    return strictPressure ? difference : difference / endPressure[0][0][ipPP];
+  };
+  real64 err = pressureError();
   int constexpr maxMarchIterations = 10;
-  real64 constexpr pressureTolerance = 1.0e-5;
+  real64 const pressureTolerance = strictPressure ? equilTolerance : 1.0e-5;
 
   // Marching Loop
   for( int marchIter = 1; marchIter < maxMarchIterations; ++marchIter )
@@ -424,6 +433,7 @@ marchBetweenTwoElevations( real64 const & startElevation,
                                   phaseMassDens[iStart],
                                   phaseDens[iStart][0],
                                   phaseCompFrac[iStart][0] );
+    if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
     pressureValues[iStart][0][ipPP] = iStartPrimaryPressure;
     // March from iStart to iEnd
     returnVal =
@@ -447,7 +457,8 @@ marchBetweenTwoElevations( real64 const & startElevation,
                                                       pressureValues,
                                                       phaseMassDens,
                                                       phaseDens,
-                                                      phaseCompFrac );
+                                                      phaseCompFrac, strictPressure );
+    if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
     // Compute phase presssures and densities at the end elevation using iEnd as the reference
     returnVal =
       computeHydrostaticPressure( numComps,
@@ -472,9 +483,11 @@ marchBetweenTwoElevations( real64 const & startElevation,
                                   endPhaseMassDens[0][0],
                                   endPhaseDens[0][0],
                                   endPhaseCompFrac[0][0] );
-    err = LvArray::math::abs( endPressure[0][0][ipCP] - endPressure[0][0][ipPP] ) / endPressure[0][0][ipPP];
+    if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
+    err = pressureError();
   }
 
+  if( strictPressure && !( err <= pressureTolerance ) ) return ReturnType::FAILED_TO_CONVERGE;
   return returnVal;
 }
 
@@ -501,7 +514,8 @@ launch( localIndex const & size,
         arrayView1d< arrayView1d< real64 > const > elevationValues,
         arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & pressureValues,
         arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
-        arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac )
+        arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac,
+        bool const strictPressure )
 {
   ReturnType returnVal = ReturnType::SUCCESS;
 
@@ -592,6 +606,7 @@ launch( localIndex const & size,
   {
     returnVal = ReturnType::DETECTED_MULTIPHASE_FLOW;
   }
+  if( strictPressure && isSinglePhase && returnVal == ReturnType::DETECTED_MULTIPHASE_FLOW ) return returnVal;
 
   if( isSinglePhase )
   {
@@ -616,7 +631,9 @@ launch( localIndex const & size,
                                                                 pressureValues,
                                                                 phaseMassDens,
                                                                 phaseDens,
-                                                                phaseCompFrac );
+                                                                phaseCompFrac, strictPressure );
+    if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
+    if( strictPressure && returnVal == ReturnType::DETECTED_MULTIPHASE_FLOW ) return returnVal;
 
     // compute hydrostatic pressure for each elevation above the reference elevation, compute the pressure
     returnVal = computeHydrostaticPressureAtMultipleElevations( iDatum,
@@ -639,7 +656,9 @@ launch( localIndex const & size,
                                                                 pressureValues,
                                                                 phaseMassDens,
                                                                 phaseDens,
-                                                                phaseCompFrac );
+                                                                phaseCompFrac, strictPressure );
+    if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
+    if( strictPressure && returnVal == ReturnType::DETECTED_MULTIPHASE_FLOW ) return returnVal;
   }
   else
   {
@@ -676,7 +695,8 @@ launch( localIndex const & size,
                                              pressureValues,
                                              phaseMassDens,
                                              phaseDens,
-                                             phaseCompFrac );
+                                             phaseCompFrac, strictPressure );
+      if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
     }
 
     integer iContactFarIndex = iContactCloseIndex;
@@ -709,7 +729,8 @@ launch( localIndex const & size,
                                              pressureValues,
                                              phaseMassDens,
                                              phaseDens,
-                                             phaseCompFrac );
+                                             phaseCompFrac, strictPressure );
+      if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
     }
 
     if( iContactFar == -1 )
@@ -749,7 +770,8 @@ launch( localIndex const & size,
                                                                 pressureValues,
                                                                 phaseMassDens,
                                                                 phaseDens,
-                                                                phaseCompFrac );
+                                                                phaseCompFrac, strictPressure );
+    if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
 
     // compute hydrostatic pressure for each elevation between the bottom contact and the bottom-most elevation
     returnVal = computeHydrostaticPressureAtMultipleElevations( iContactBottom,
@@ -772,7 +794,8 @@ launch( localIndex const & size,
                                                                 pressureValues,
                                                                 phaseMassDens,
                                                                 phaseDens,
-                                                                phaseCompFrac );
+                                                                phaseCompFrac, strictPressure );
+    if( strictPressure && returnVal == ReturnType::FAILED_TO_CONVERGE ) return returnVal;
   }
   return returnVal;
 }

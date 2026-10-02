@@ -99,6 +99,8 @@ set( fluidFlowSolvers_headers
      kernels/compositional/FluxComputeKernel.hpp
      kernels/compositional/FluxComputeKernelBase.hpp
      kernels/compositional/GlobalComponentFractionKernel.hpp
+     kernels/compositional/HydrostaticStateValidation.hpp
+     kernels/compositional/HydrostaticMobility.hpp
      kernels/compositional/HydrostaticPressureKernel.hpp
      kernels/compositional/HydrostaticPressureKernel_impl.hpp
      kernels/compositional/IHUPhaseFlux.hpp
@@ -156,6 +158,8 @@ set( fluidFlowSolvers_headers
 
 # Specify solver sources
 set( fluidFlowSolvers_sources
+     kernels/compositional/HydrostaticStateValidation.cpp
+     kernels/compositional/HydrostaticMobility.cpp
      CompositionalMultiphaseBase.cpp
      CompositionalMultiphaseFVM.cpp
      CompositionalMultiphaseStatisticsAggregator.cpp

@@ -89,7 +89,8 @@ struct HydrostaticPressureKernel
                                                   arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & pressureValues,
                                                   arrayView2d< real64 > const & phaseMassDens,
                                                   arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
-                                                  arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac );
+                                                  arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac,
+                           bool const strictPressure = false );
 
   static ReturnType
   marchBetweenTwoElevations( real64 const & startElevation,
@@ -112,7 +113,8 @@ struct HydrostaticPressureKernel
                              arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & pressureValues,
                              arrayView2d< real64 > const & phaseMassDens,
                              arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
-                             arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac );
+                             arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac,
+                           bool const strictPressure = false );
 
   static ReturnType
   launch( localIndex const & size,
@@ -135,7 +137,8 @@ struct HydrostaticPressureKernel
           arrayView1d< arrayView1d< real64 > const > elevationValues,
           arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & pressureValues,
           arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
-          arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac );
+          arrayView4d< real64, constitutive::multifluid::USD_PHASE_COMP > const & phaseCompFrac,
+                           bool const strictPressure = false );
 
   static ReturnType
   phaseCorrection( integer const & numComps,
