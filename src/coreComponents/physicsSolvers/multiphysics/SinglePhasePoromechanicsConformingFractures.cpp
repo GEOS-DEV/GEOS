@@ -54,7 +54,7 @@ void SinglePhasePoromechanicsConformingFractures<>::setMGRStrategy()
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
-assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_PARAM( meshName ),
                                                     MeshLevel const & mesh,
                                                     string_array const & regionNames,
                                                     DofManager const & dofManager,
@@ -234,11 +234,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       // Energy-balance flux derivative (advective contribution only; the conductive term's not modeled yet
       if( this->m_isThermal )
       {
-        stdMap< string, localIndex > const & energyOffsets = this->getDerivativeFluxResidual_dApertureEnergyOffsets();
-        auto const energyOffsetIt = energyOffsets.find( meshName );
-        if( energyOffsetIt != energyOffsets.end() )
+        localIndex const energyOffset = this->getDerivativeFluxResidual_dApertureEnergyOffset();
+        if( energyOffset >= 0 )
         {
-          localIndex const energyRow = energyOffsetIt->second + kfe;
+          localIndex const energyRow = energyOffset + kfe;
           localIndex const numEnergyColumns = dFluxResidual_dNormalJump.numNonZeros( energyRow );
           arraySlice1d< localIndex const > const & energyColumns = dFluxResidual_dNormalJump.getColumns( energyRow );
           arraySlice1d< real64 const > const & energyValues = dFluxResidual_dNormalJump.getEntries( energyRow );

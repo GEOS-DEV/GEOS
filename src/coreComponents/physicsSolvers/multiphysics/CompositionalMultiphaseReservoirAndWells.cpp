@@ -444,11 +444,10 @@ assembleHydrofracFluxTerms( real64 const time_n,
                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                             arrayView1d< real64 > const & localRhs,
                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                            stdMap< string, localIndex > const * const dR_dAperOffsets,
                             bool const useAugmentedLagrangianMultiplier,
-                            stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
+                            localIndex const dR_dAperEnergyOffset )
 {
-  flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, useAugmentedLagrangianMultiplier, dR_dAperEnergyOffsets );
+  flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, useAugmentedLagrangianMultiplier, dR_dAperEnergyOffset );
 }
 
 template< typename RESERVOIR_SOLVER >

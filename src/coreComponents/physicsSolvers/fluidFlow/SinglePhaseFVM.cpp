@@ -573,21 +573,20 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs,
                                                          CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                         stdMap< string, localIndex > const * const dR_dAperOffsets,
                                                          bool const useAugmentedLagrangianMultiplier,
-                                                         stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
+                                                         localIndex const dR_dAperEnergyOffset )
 {
   if( useAugmentedLagrangianMultiplier )
   {
     assembleHydrofracFluxTermsImpl< singlePhasePoromechanicsConformingFracturesALMKernels::ConnectorBasedAssemblyKernelFactory,
                                     thermalSinglePhasePoromechanicsConformingFracturesALMKernels::ConnectorBasedAssemblyKernelFactory >
-      ( dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, dR_dAperEnergyOffsets );
+      ( dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset );
   }
   else
   {
     assembleHydrofracFluxTermsImpl< singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernelFactory,
                                     thermalSinglePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernelFactory >
-      ( dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets, dR_dAperEnergyOffsets );
+      ( dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset );
   }
 }
 
@@ -599,8 +598,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsImpl( real64 const dt,
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs,
                                                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                             stdMap< string, localIndex > const * const dR_dAperOffsets,
-                                                             stdMap< string, localIndex > const * const dR_dAperEnergyOffsets )
+                                                             localIndex const dR_dAperEnergyOffset )
 {
   GEOS_MARK_FUNCTION;
 
@@ -611,7 +609,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsImpl( real64 const dt,
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
 
-  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
                                                                       string_array const & )
   {
@@ -652,34 +650,10 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsImpl( real64 const dt,
         return;
       }
 
-      // Row offset, in dR_dAper, of the mass-balance block for this mesh target.
-      localIndex const dR_dAperOffset = [&]() -> localIndex
-      {
-        if( dR_dAperOffsets == nullptr )
-        {
-          return localIndex( 0 );
-        }
-        auto const offsetIt = dR_dAperOffsets->find( meshName );
-        GEOS_ERROR_IF( offsetIt == dR_dAperOffsets->end(),
-                       GEOS_FMT( "No dR/dAperture row offset is available for mesh body '{}'", meshName ) );
-        return offsetIt->second;
-      }();
-
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       if( m_isThermal )
       {
-        // Sentinel -1 means "no energy block available" (non-thermal flow solver, or caller didn't build one)
-        localIndex const dR_dAperEnergyOffset = [&]() -> localIndex
-        {
-          if( dR_dAperEnergyOffsets == nullptr )
-          {
-            return -1;
-          }
-          auto const offsetIt = dR_dAperEnergyOffsets->find( meshName );
-          return offsetIt == dR_dAperEnergyOffsets->end() ? -1 : offsetIt->second;
-        }();
-
         THERMAL_FRACTURE_KERNEL_FACTORY::template createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                              dofKey,
                                                                                              this->getName(),
@@ -689,7 +663,6 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsImpl( real64 const dt,
                                                                                              localMatrix.toViewConstSizes(),
                                                                                              localRhs.toView(),
                                                                                              dR_dAper,
-                                                                                             dR_dAperOffset,
                                                                                              dR_dAperEnergyOffset );
       }
       else
@@ -702,8 +675,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTermsImpl( real64 const dt,
                                                                                                 dt,
                                                                                                 localMatrix.toViewConstSizes(),
                                                                                                 localRhs.toView(),
-                                                                                                dR_dAper,
-                                                                                                dR_dAperOffset );
+                                                                                                dR_dAper );
       }
     } );
   } );

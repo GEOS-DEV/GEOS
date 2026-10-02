@@ -179,9 +179,8 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              stdMap< string, localIndex > const * const dR_dAperOffsets,
                               bool const useAugmentedLagrangianMultiplier = false,
-                              stdMap< string, localIndex > const * const dR_dAperEnergyOffsets = nullptr ) override final;
+                              localIndex const dR_dAperEnergyOffset = -1 ) override final;
 
   /**@}*/
 
@@ -227,8 +226,7 @@ private:
                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                        arrayView1d< real64 > const & localRhs,
                                        CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                       stdMap< string, localIndex > const * const dR_dAperOffsets,
-                                       stdMap< string, localIndex > const * const dR_dAperEnergyOffsets );
+                                       localIndex const dR_dAperEnergyOffset );
 
   // no data needed here, see SinglePhaseBase
 

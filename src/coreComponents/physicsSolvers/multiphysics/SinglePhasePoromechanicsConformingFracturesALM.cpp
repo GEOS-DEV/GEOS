@@ -141,7 +141,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   // The mass-balance block of getDerivativeFluxResidual_dNormalJump() below is one row per
   // fracture element, as always. When m_isThermal, a second (advective-only) block for the
   // energy balance is appended after it - see setUpDflux_dApertureMatrix and
-  // getDerivativeFluxResidual_dApertureEnergyOffsets(), scattered further down (Part 3).
+  // getDerivativeFluxResidual_dApertureEnergyOffset(), scattered further down (Part 3).
   using namespace contact;
 
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -154,10 +154,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   // assembly; the traversal below only reads it.
   CRSMatrixView< real64 const, localIndex const > const &
   dFluxResidual_dNormalJump = this->getDerivativeFluxResidual_dNormalJump().toViewConst();
-  auto const derivativeOffsetIt = m_derivativeFluxResidual_dApertureOffsets.find( meshName );
-  GEOS_ERROR_IF( derivativeOffsetIt == m_derivativeFluxResidual_dApertureOffsets.end(),
-                 GEOS_FMT( "No dR/dAperture row offset is available for mesh body '{}'", meshName ) );
-  localIndex const derivativeOffset = derivativeOffsetIt->second;
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   string const & bubbleDofKey = dofManager.getKey( totalBubbleDisplacement::key() );
@@ -293,14 +289,14 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     }
 
     // Flux derivative w.r.t. nodal displacement
-    localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( derivativeOffset + kfe );
-    arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( derivativeOffset + kfe );
-    arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( derivativeOffset + kfe );
+    localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
+    arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
+    arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
 
     for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
     {
       real64 const dR_dAper = values[kfe1];
-      localIndex const kfe2 = columns[kfe1] - derivativeOffset;
+      localIndex const kfe2 = columns[kfe1];
 
       bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
       if( !isOpen && !isFractureOpen )
@@ -381,7 +377,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
     {
       real64 const dR_dAper = values[kfe1];
-      localIndex const kfe2 = columns[kfe1] - derivativeOffset;
+      localIndex const kfe2 = columns[kfe1];
 
       bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
       if( !isOpen && !isFractureOpen )
@@ -420,11 +416,9 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     // The conductive term's aperture sensitivity
     if( this->m_isThermal )
     {
-      stdMap< string, localIndex > const & energyOffsets = this->getDerivativeFluxResidual_dApertureEnergyOffsets();
-      auto const energyOffsetIt = energyOffsets.find( meshName );
-      if( energyOffsetIt != energyOffsets.end() )
+      localIndex const energyOffset = this->getDerivativeFluxResidual_dApertureEnergyOffset();
+      if( energyOffset >= 0 )
       {
-        localIndex const energyOffset = energyOffsetIt->second;
         globalIndex elemDOFEnergy[1];
         elemDOFEnergy[0] = presDofNumber[kfe] + 1; // temperature/energy dof, packed right after pressure
         localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( elemDOFEnergy[0] - rankOffset );
@@ -437,7 +431,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
         {
           real64 const dREnergy_dAper = energyValues[kfe1];
-          localIndex const kfe2 = energyColumns[kfe1] - derivativeOffset;
+          localIndex const kfe2 = energyColumns[kfe1];
 
           bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
           if( !isOpen && !isFractureOpen )
@@ -479,7 +473,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
         {
           real64 const dREnergy_dAper = energyValues[kfe1];
-          localIndex const kfe2 = energyColumns[kfe1] - derivativeOffset;
+          localIndex const kfe2 = energyColumns[kfe1];
 
           bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
           if( !isOpen && !isFractureOpen )

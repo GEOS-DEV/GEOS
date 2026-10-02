@@ -107,7 +107,6 @@ public:
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs,
                                                           CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                          localIndex const dR_dAperOffset,
                                                           localIndex const dR_dAperEnergyOffset )
     : Base( rankOffset,
             stencilWrapper,
@@ -119,8 +118,7 @@ public:
             dt,
             localMatrix,
             localRhs,
-            dR_dAper,
-            dR_dAperOffset ),
+            dR_dAper ),
     m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
@@ -369,7 +367,7 @@ private:
   /// View on dR_dAper
   CRSMatrixView< real64, localIndex const > m_dR_dAper;
 
-  /// Row offset, in m_dR_dAper, of the energy-balance block for this mesh target.
+  /// Row offset, in m_dR_dAper, of the energy-balance block.
   //  Negative (sentinel) means the caller did not build one - skip the energy-row write in complete().
   localIndex const m_dR_dAperEnergyOffset;
 
@@ -407,7 +405,6 @@ struct ThermalConformingFracturesConnectorBasedAssemblyKernelFactory
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                   localIndex const dR_dAperOffset = 0,
                    localIndex const dR_dAperEnergyOffset = -1 )
   {
     integer constexpr NUM_DOF = 2;   // pressure + temperature
@@ -433,7 +430,7 @@ struct ThermalConformingFracturesConnectorBasedAssemblyKernelFactory
                        flowDofNumberAccessor,
                        flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
                        permAccessors, edfmPermAccessors, thermalConductivityAccessors,
-                       dt, localMatrix, localRhs, dR_dAper, dR_dAperOffset, dR_dAperEnergyOffset );
+                       dt, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }

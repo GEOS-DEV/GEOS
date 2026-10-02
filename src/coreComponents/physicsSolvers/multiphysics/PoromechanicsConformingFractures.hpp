@@ -409,9 +409,8 @@ public:
                                                     localMatrix,
                                                     localRhs,
                                                     getDerivativeFluxResidual_dNormalJump(),
-                                                    &m_derivativeFluxResidual_dApertureOffsets,
                                                     CONTACT_SOLVER::hasContactStabilization,
-                                                    &m_derivativeFluxResidual_dApertureEnergyOffsets );
+                                                    m_derivativeFluxResidual_dApertureEnergyOffset );
 
     m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
 
@@ -718,18 +717,14 @@ protected:
   void setUpDflux_dApertureMatrix( DomainPartition & domain )
   {
     integer const numComp = this->flowSolver()->numFluidComponents();
-    localIndex numCols = 0.;//number of outerloop pass (not considering innermost component loop)
 
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
     string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
-    // Build the global row offsets and the row capacities together, so that each
-    // target is visited only once before the matrix is allocated.
-    m_derivativeFluxResidual_dApertureOffsets.clear();
-    m_derivativeFluxResidual_dApertureEnergyOffsets.clear();
-    stdVector< localIndex > rowCapacities;
+
+    localIndex numMeshTargets = 0;
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & regionNames )
@@ -737,30 +732,17 @@ protected:
       GEOS_UNUSED_VAR( regionNames );
       ElementRegionManager const & elemManager = mesh.getElemManager();
 
-      // These offsets are consumed by the flow sub-solver, which walks its own
-      // mesh targets and therefore resolves the discretization level with its own
-      // discretization name. The mesh body name is the only part of a target both
-      // solvers are guaranteed to agree on, so it is the key; that in turn
-      // requires each body to appear exactly once here.
-      GEOS_ERROR_IF( m_derivativeFluxResidual_dApertureOffsets.find( meshName ) !=
-                     m_derivativeFluxResidual_dApertureOffsets.end(),
-                     GEOS_FMT( "{}: mesh body '{}' is targeted at more than one discretization level. The augmented "
-                               "Lagrangian contact formulation supports a single level per mesh body.",
-                               this->getName(), meshName ) );
+      // The matrix and every consumer of it (the flow solver's fracture flux kernels and the
+      // coupling assembly) index it by the raw surface-element index, so a single mesh target
+      // is supported: a second one would alias into the rows of the first.
+      ++numMeshTargets;
+      GEOS_ERROR_IF_GT_MSG( numMeshTargets, 1,
+                            GEOS_FMT( "{}: this solver supports a single mesh target; '{}' is the second.",
+                                      this->getName(), meshName ) );
 
-
-      localIndex const rowOffset = rowCapacities.size();
-      m_derivativeFluxResidual_dApertureOffsets.get_inserted( meshName ) = rowOffset;
-
-      // The stencil sweeps below index rows by the raw surface-element index, so
-      // the contact fracture must be the only face-element region on this target:
-      // a second one would alias into its rows. Embedded-surface regions hold a
-      // different subregion type and contribute no SurfaceElementStencil here, so
-      // they are left alone. The region is required rather than optional because
-      // every consumer of this matrix (assembleCouplingTerms,
-      // assembleFluidMassResidualDerivativeWrtDisplacement) looks it up
-      // unconditionally on every target; skipping a target here would also leave
-      // its offset pointing at the next target's rows.
+      // For the same reason, the contact fracture must be the only face-element region on the
+      // target. Embedded-surface regions hold a different subregion type and contribute no
+      // SurfaceElementStencil here, so they are left alone.
       localIndex numFractureRegions = 0;
       elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
       {
@@ -770,8 +752,8 @@ protected:
         }
       } );
       GEOS_ERROR_IF_NE_MSG( numFractureRegions, 1,
-                            GEOS_FMT( "{}: mesh target '{}' holds {} face-element regions. The augmented Lagrangian "
-                                      "contact formulation requires exactly one, named '{}'.",
+                            GEOS_FMT( "{}: mesh target '{}' holds {} face-element regions. The conforming fracture "
+                                      "formulation requires exactly one, named '{}'.",
                                       this->getName(), meshName, numFractureRegions, fractureRegionName ) );
       GEOS_ERROR_IF( !elemManager.hasRegion( fractureRegionName ),
                      GEOS_FMT( "{}: mesh target '{}' does not hold the fracture region '{}' of the contact solver.",
@@ -779,9 +761,18 @@ protected:
 
       SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
       FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-      rowCapacities.resize( rowOffset + fractureSubRegion.size() * numComp, 0 );
-      numCols += fractureSubRegion.size();
 
+      // Layout: numComp mass-balance rows per fracture element, then (when thermal) one
+      // energy-balance row per fracture element appended as a second block, not interleaved.
+      // Only the advective (enthalpy-carried) energy contribution is assembled; the conductive
+      // term's sensitivity is not modeled (no dConductivity/dDispJump constitutive derivative yet).
+      // One column per fracture element.
+      localIndex const numElems = fractureSubRegion.size();
+      localIndex const numMassRows = numElems * numComp;
+      m_derivativeFluxResidual_dApertureEnergyOffset = this->m_isThermal ? numMassRows : -1;
+      localIndex const numRows = numMassRows + ( this->m_isThermal ? numElems : 0 );
+
+      array1d< localIndex > rowCapacities( numRows );
       fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
       {
         for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
@@ -790,76 +781,29 @@ protected:
           typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
           for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
           {
+            GEOS_ERROR_IF_GE_MSG( sei[iconn][k0], numElems,
+                                  "Surface stencil index exceeds the fracture derivative matrix size." );
             for( integer ic = 0; ic < numComp; ++ic )
             {
-              localIndex const row = rowOffset + sei[iconn][k0] * numComp;
-              GEOS_ERROR_IF_GE_MSG( row,
-                                    LvArray::integerConversion< localIndex >( rowCapacities.size() ),
-                                    "Surface stencil index exceeds the fracture derivative matrix size." );
-              rowCapacities[ row + ic ] += numFluxElems;
+              rowCapacities[ sei[iconn][k0] * numComp + ic ] += numFluxElems;
+            }
+            if( this->m_isThermal )
+            {
+              rowCapacities[ numMassRows + sei[iconn][k0] ] += numFluxElems;
             }
           }
         }
       } );
-    } );
 
-    // Pass 2: energy-balance rows, appended as a second block after all mass rows not interleaved
-    // Only the advective (enthalpy-carried) contribution is assembled here; the conductive term's
-    // sensitivity is not modeled (no dConductivity/dDispJump constitutive derivative exists yet)
-    if( this->m_isThermal )
-    {
-      this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
-                                                                          MeshLevel const & mesh,
-                                                                          string_array const & regionNames )
+      std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
+      derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numElems );
+      derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+      if( numRows > 0 )
       {
-        GEOS_UNUSED_VAR( regionNames );
-        ElementRegionManager const & elemManager = mesh.getElemManager();
-
-        localIndex const rowOffset = rowCapacities.size();
-        m_derivativeFluxResidual_dApertureEnergyOffsets.get_inserted( meshName ) = rowOffset;
-
-        SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( fractureRegionName );
-        FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-        rowCapacities.resize( rowOffset + fractureSubRegion.size(), 0 );
-
-        fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-        {
-          for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-          {
-            localIndex const numFluxElems = stencil.stencilSize( iconn );
-            typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-            for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-            {
-              localIndex const row = rowOffset + sei[iconn][k0];
-              GEOS_ERROR_IF_GE_MSG( row,
-                                    LvArray::integerConversion< localIndex >( rowCapacities.size() ),
-                                    "Surface stencil index exceeds the fracture derivative matrix size." );
-              rowCapacities[ row ] += numFluxElems;
-            }
-          }
-        } );
-      } );
-    }
-
-    //write real data in structure
-    std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
-    localIndex const numRows = rowCapacities.size();
-    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numCols );
-    derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
-    if( numRows > 0 )
-    {
-      derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
-                                                                                       numCols,
-                                                                                       rowCapacities.data() );
-    }
-
-    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
-                                                                        MeshLevel const & mesh,
-                                                                        string_array const & regionNames )
-    {
-      GEOS_UNUSED_VAR( regionNames );
-      localIndex const rowOffset = m_derivativeFluxResidual_dApertureOffsets.at( meshName );
-      localIndex const columnOffset = rowOffset/numComp; //as component-independent indexing
+        derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
+                                                                                         numElems,
+                                                                                         rowCapacities.data() );
+      }
 
       fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
       {
@@ -867,49 +811,22 @@ protected:
         {
           localIndex const numFluxElems = stencil.stencilSize( iconn );
           typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-
           for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
           {
-            for( integer ic = 0; ic<numComp; ++ic )
+            for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
             {
-              localIndex const row = rowOffset + sei[iconn][k0] * numComp + ic;
-              GEOS_ERROR_IF_GE_MSG( row, numRows, "Surface stencil index exceeds the fracture derivative matrix size." );
-              for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
+              for( integer ic = 0; ic < numComp; ++ic )
               {
-                derivativeFluxResidual_dAperture->insertNonZero( row,
-                                                                 columnOffset + sei[iconn][k1],
-                                                                 0.0 );
+                derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic, sei[iconn][k1], 0.0 );
+              }
+              if( this->m_isThermal )
+              {
+                derivativeFluxResidual_dAperture->insertNonZero( numMassRows + sei[iconn][k0], sei[iconn][k1], 0.0 );
               }
             }
           }
         }
       } );
-
-      // Energy block: same connectivity/columns as the mass block above, appended rows.
-      if( this->m_isThermal )
-      {
-        localIndex const energyRowOffset = m_derivativeFluxResidual_dApertureEnergyOffsets.at( meshName );
-        fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
-        {
-          for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
-          {
-            localIndex const numFluxElems = stencil.stencilSize( iconn );
-            typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-
-            for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
-            {
-              localIndex const row = energyRowOffset + sei[iconn][k0];
-              GEOS_ERROR_IF_GE_MSG( row, numRows, "Surface stencil index exceeds the fracture derivative matrix size." );
-              for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
-              {
-                derivativeFluxResidual_dAperture->insertNonZero( row,
-                                                                 columnOffset + sei[iconn][k1],
-                                                                 0.0 );
-              }
-            }
-          }
-        } );
-      }
     } );
   }
 
@@ -1093,13 +1010,12 @@ protected:
   }
 
   /**
-   * @brief Row offset, per mesh body, of the energy-balance block appended after all
-   * mass-balance rows in getDerivativeFluxResidual_dNormalJump(). Only populated when
-   * m_isThermal; empty otherwise.
+   * @brief First row of the energy-balance block appended after all mass-balance rows in
+   * getDerivativeFluxResidual_dNormalJump(), or -1 when the flow solver is not thermal.
    */
-  stdMap< string, localIndex > const & getDerivativeFluxResidual_dApertureEnergyOffsets() const
+  localIndex getDerivativeFluxResidual_dApertureEnergyOffset() const
   {
-    return m_derivativeFluxResidual_dApertureEnergyOffsets;
+    return m_derivativeFluxResidual_dApertureEnergyOffset;
   }
 
   struct viewKeyStruct : public Base::viewKeyStruct
@@ -1108,8 +1024,8 @@ protected:
   static const localIndex m_maxFaceNodes = 11; // Maximum number of nodes on a contact face
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
-  stdMap< string, localIndex > m_derivativeFluxResidual_dApertureOffsets;
-  stdMap< string, localIndex > m_derivativeFluxResidual_dApertureEnergyOffsets;
+  /// First row of the energy-balance block in m_derivativeFluxResidual_dAperture (-1 if not thermal)
+  localIndex m_derivativeFluxResidual_dApertureEnergyOffset = -1;
 
 };
 
