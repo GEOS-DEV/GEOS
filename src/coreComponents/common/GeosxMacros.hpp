@@ -72,10 +72,10 @@
 ///@{
 
 #if defined(__NVCC__)
-/// Suppress nvcc diagnostics 20011/20014 (calling __host__ from __host__ __device__).
-#define GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS _Pragma("nv_diag_suppress 20011") _Pragma("nv_diag_suppress 20014")
-/// Restore nvcc diagnostics 20011/20014 to default.
-#define GEOS_NV_HOST_DEVICE_DIAG_DEFAULT  _Pragma("nv_diag_default 20011")  _Pragma("nv_diag_default 20014")
+/// Suppress nvcc diagnostics 20011/20013/20014 (calling __host__ from __host__ __device__).
+#define GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS _Pragma("nv_diag_suppress 20011") _Pragma("nv_diag_suppress 20013") _Pragma("nv_diag_suppress 20014")
+/// Restore nvcc diagnostics 20011/20013/20014 to default.
+#define GEOS_NV_HOST_DEVICE_DIAG_DEFAULT  _Pragma("nv_diag_default 20011")  _Pragma("nv_diag_default 20013")  _Pragma("nv_diag_default 20014")
 #else
 /// @cond DO_NOT_DOCUMENT
 #define GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS

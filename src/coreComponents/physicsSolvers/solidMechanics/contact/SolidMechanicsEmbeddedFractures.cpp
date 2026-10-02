@@ -62,6 +62,13 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
 
 void SolidMechanicsEmbeddedFractures::postInputInitialization()
 {
+  // Assign the MGR strategy before the base class checks it: the base implementation
+  // downgrades preconditionerType from `mgr` when no strategy has been set.
+  if( !m_useStaticCondensation )
+  {
+    setMGRStrategy();
+  }
+
   ContactSolverBase::postInputInitialization();
 
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
@@ -71,10 +78,6 @@ void SolidMechanicsEmbeddedFractures::postInputInitialization()
     linearSolverParameters.isSymmetric = true;
     linearSolverParameters.amg.separateComponents = true;
     linearSolverParameters.dofsPerNode = 3;
-  }
-  else
-  {
-    setMGRStrategy();
   }
 }
 
