@@ -142,22 +142,26 @@
 
   "CompositionalMultiphaseHybridFVMKernels_flux_grouped": {
     "vars": [
-      "NFACES"
+      "NFACES",
+      "NCOMP"
     ],
     "constants": [],
     "combinations": {
-      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ],
+      "NCOMP": [ 1 ]
     },
     "explicit": []
   },
 
   "CompositionalMultiphaseHybridFVMKernels_dirichlet_grouped": {
     "vars": [
-      "NFACES"
+      "NFACES",
+      "NCOMP"
     ],
     "constants": [],
     "combinations": {
-      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ],
+      "NCOMP": [ 1 ]
     },
     "explicit": []
   },
