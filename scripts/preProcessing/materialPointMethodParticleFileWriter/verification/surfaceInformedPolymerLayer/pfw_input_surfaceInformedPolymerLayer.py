@@ -160,8 +160,7 @@ def temperature_profile_event():
     # reference temperature used by the constitutive cards.
     return f"""
 <TemperatureProfile
-    time="0.0"
-    interval="{stop_time}"
+    startTime="0.0"
     temperatureTable="{{{{0.0, {benchmark_temperature}}}, {{{stop_time}, {benchmark_temperature}}}}}"
     interpolationType="Linear"/>"""
 

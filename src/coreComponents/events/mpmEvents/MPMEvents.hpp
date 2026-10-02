@@ -39,4 +39,5 @@
 #include "events/mpmEvents/TransformParticlesMPMEvent.hpp"
 #include "events/mpmEvents/UpdateSurfacesMPMEvent.hpp"
 #include "events/mpmEvents/RigidBodyMPMEvent.hpp"
+
 #endif /* GEOSX_MPMEVENTS_HPP_ */

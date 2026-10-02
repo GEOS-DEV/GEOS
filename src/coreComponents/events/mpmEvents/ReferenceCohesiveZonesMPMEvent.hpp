@@ -65,12 +65,16 @@ public:
     static constexpr char const * regionNamesString() { return "regionNames"; }
     static constexpr char const * constitutiveModelsString() { return "constitutiveModels"; }
     static constexpr char const * czTagsString() { return "czTags"; }
+    static constexpr char const * startedString() { return "started"; }
     static constexpr char const * czVolumeNormalizationString() { return "czVolumeNormalization"; }
     static constexpr char const * computeNormalsAndPositionsString() { return "computeNormalsAndPositions"; }
     static constexpr char const * normalsAndPositionsMethodString() { return "normalsAndPositionsMethod"; }
     static constexpr char const * czSurfaceDisplacementUpdateString() { return "czSurfaceDisplacementUpdate"; }
   } CohesiveZoneMPMEventViewKeys;
   /// @endcond
+
+  void setStarted( int started ) { m_started = started; }
+  int getStarted() const { return m_started; }
 
   int getCZVolumeNormalization() const { return m_czVolumeNormalization; }
   int getComputeNormalsAndPositions() const { return m_computeNormalsAndPositions; }
@@ -83,6 +87,8 @@ protected:
   virtual void postInputInitialization() override final;
 
   string_array m_regionNames;
+
+  int m_started;
 
   int m_czVolumeNormalization;
   int m_computeNormalsAndPositions;

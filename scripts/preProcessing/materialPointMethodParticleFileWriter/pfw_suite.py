@@ -657,7 +657,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     run = sub.add_parser("run", help="Prepare run directories and invoke particleFileWriter.py")
     add_common_args(run)
-    run.add_argument("--submit", action="store_true", help="Allow pfw to submit generated GEOS batch jobs")
+    run.add_argument(
+        "--submit",
+        action="store_true",
+        help="Allow serial pfw to submit generated GEOS batch jobs; MPI-parallel pfw defers Slurm submission",
+    )
     run.add_argument("--no-submit", dest="submit", action="store_false", help="Generate only; do not submit jobs")
     run.set_defaults(submit=False)
     run.add_argument("--clean", action="store_true", help="Delete existing run directories before preparing")

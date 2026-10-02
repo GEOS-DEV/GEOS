@@ -353,7 +353,17 @@ class MPMJob:
   def __init__(self, job_dir_path: str):
       self.job_dir_path = job_dir_path
       self.job_name = os.path.basename(os.path.normpath(self.job_dir_path))
-      self.job_input_file = 'pfw_input_'+ self.job_name + '.py'
+      for p in os.listdir(self.job_dir_path):
+        match = re.match(".*(pfw_input_.*\\.py)", p)
+        if match:
+          self.job_input_file = match.group(1)
+          break
+      for p in os.listdir(self.job_dir_path):
+        match = re.match(".*(mpmParticleFile_.*)", p)
+        if match:
+          self.particle_file = match.group(1)
+          break
+        
       self.fields = {}
       self.gather_job_metadata()
       
@@ -432,7 +442,7 @@ class MPMJob:
       self.Azz0 = self.sampleX*self.sampleY
       self.V0 = self.sampleX*self.sampleY*self.sampleZ
 
-      self.numParticles = geom.countFileLines( os.path.join(self.job_dir_path, "mpmParticleFile_" + self.job_name) )
+      self.numParticles = geom.countFileLines( os.path.join(self.job_dir_path, self.particle_file) )
 
       self.planeStrain = pfw["planeStrain"] == 1 if "planeStrain" in pfw else False
 
@@ -544,7 +554,8 @@ class MPMJob:
     self.registerField(DataObj("Rszm", -self.fields["Rzm"].getData()/Ax))
     self.registerField(DataObj("Rszp", self.fields["Rzp"].getData()/Ax))
     self.registerField(DataObj("Rszz", 0.5*(self.fields["Rzp"].getData()-self.fields["Rzm"].getData())/Az))   
-        
+    
+
 
 class DataObj:
     def __init__(self, name: str, data, format=".6f"):

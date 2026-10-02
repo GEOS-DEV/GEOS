@@ -2603,8 +2603,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_domainL(),
   m_domainResetType( mpm::DomainResetTypeOption::IsotropicPolar ),
   m_domainStress(),
-  m_domainTemperature(),
-  m_domainTemperatureRate(),
+  m_domainTemperature(0.0),
+  m_domainTemperatureRate(0.0),
   m_effectiveMappedFields(),
   m_effectiveMappedNodes(),
   m_effectiveShapeFunctionGradientValues(),
@@ -3234,11 +3234,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "domainTemperature", &m_domainTemperature ).
     setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( m_domainTemperature ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Stores current target domain temperature as driven by temp table or other event" );
 
   registerWrapper( "domainTemperatureRate", &m_domainTemperatureRate ).
     setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( m_domainTemperatureRate ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Stores current target domain temperature rate as driven by temp table or other event" );
 
@@ -10596,6 +10598,7 @@ void SolidMechanicsMPM::computePairwiseLogisticRegressionSurfaceNormalsAndPositi
                             n0,
                             nAB,
                             sAB );
+        GEOS_UNUSED_VAR( result );
 
         // Tensor equations:
         //   gridBasedSurfacePosition[g][a] = sAB.
@@ -10830,7 +10833,7 @@ mpm::LogisticRegressionResultFlag SolidMechanicsMPM::logisticRegression( int con
   {
     LvArray::tensorOps::fill< 3 >( normal, 0.0 );
     LvArray::tensorOps::fill< 3 >( surfacePosition, 0.0 );
-    return;
+    return mpm::LogisticRegressionResultFlag::Unconverged; // Is this the right result status?
   }
   LvArray::tensorOps::copy< 3 >( normal, fallbackNormal );
   LvArray::tensorOps::fill< 3 >( surfacePosition, 0.0 );
@@ -10839,7 +10842,7 @@ mpm::LogisticRegressionResultFlag SolidMechanicsMPM::logisticRegression( int con
       maxLRIterations <= 0 || !isFinite( LRtolerance ) ||
       LRtolerance < 0.0 )
   {
-    return;
+    return mpm::LogisticRegressionResultFlag::Unconverged; // Is this the right result status?
   }
 
   real64 const maximumCellSize = LvArray::math::max(
@@ -10850,7 +10853,7 @@ mpm::LogisticRegressionResultFlag SolidMechanicsMPM::logisticRegression( int con
       !isFinite( hEl[0] ) || !isFinite( hEl[1] ) ||
       !isFinite( hEl[2] ) )
   {
-    return;
+    return mpm::LogisticRegressionResultFlag::Unconverged;
   }
 
   // Diagonal penalty matrix from paper
@@ -10871,7 +10874,7 @@ mpm::LogisticRegressionResultFlag SolidMechanicsMPM::logisticRegression( int con
                         lambda ) ||
       !( lambda > 0.0 ) )
   {
-    return;
+    return mpm::LogisticRegressionResultFlag::Unconverged;
   }
   real64 const w_p = 1; // Particle weight, was 1 in paper
 
@@ -11372,7 +11375,7 @@ mpm::LogisticRegressionResultFlag SolidMechanicsMPM::logisticRegression( int con
 
  if( converged )
  {
-  return mpm::LogisticRegressionResultFlag::Converged
+  return mpm::LogisticRegressionResultFlag::Converged;
  }
 
  if( errored )
@@ -13694,8 +13697,10 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       bool const eventEnd = time_n >= endTime - dt / 2;
 
       // If start of event set flags to enable and call for initialization
-      if( eventStart )
+      if( eventStart && cohesiveZoneReference.getStarted() == 0 )
       {     
+        cohesiveZoneReference.setStarted( 1 );
+
         // For now these are globally set by the event and done once at start of event
         m_computeParticleSurfaceNormalsAndPositions = cohesiveZoneReference.getComputeNormalsAndPositions();
         m_normalAndPositionMethod = cohesiveZoneReference.getNormalsAndPositionsMethod(); // TODO: Need to add enum to header of czRegion
@@ -22104,7 +22109,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     // Get constitutive model reference
     CohesiveZoneBase & cohesiveZone = czRegion.getConstitutiveModel();
 
-    // Effectively CZ pass through
+    // Effectively CZ passthrough
     if( cohesiveZone.hasWrapper("temperature") )
     {
       arrayView1d< real64 > const constitutiveTemperature = cohesiveZone.getReference< array1d< real64 > >( "temperature" );
@@ -25566,6 +25571,9 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
   RAJA::ReduceMax< parallelDeviceReduce, real64 > maxMaterialContactPenetration( 0.0 );
 
+  RAJA::ReduceSum< parallelDeviceReduce, int > numUnconvergedLogisticRegressionNodalFieldPairs( 0 );
+  RAJA::ReduceSum< parallelDeviceReduce, int > numErroredLogisticRegressionNodalFieldPairs( 0 );
+
   forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
     // Initialize gridContactForce[g] to zero. TODO: This shouldn't be necessary?
@@ -25867,6 +25875,14 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                     n0,
                                     nAB,
                                     dumby );
+                if( result == mpm::LogisticRegressionResultFlag::Unconverged )
+                {
+                  numUnconvergedLogisticRegressionNodalFieldPairs += 1;
+                }
+                if( result == mpm::LogisticRegressionResultFlag::Errored )
+                {
+                  numErroredLogisticRegressionNodalFieldPairs += 1;
+                }
               }
               break;
             default:
@@ -25947,6 +25963,16 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
       }
     }
   } );
+  
+  // Report any convergence or error issues
+  int numUnconvergedLogisticRegressionNodalFieldPairsGlobal = MpiWrapper::sum( numUnconvergedLogisticRegressionNodalFieldPairs.get() );
+  int numErroredLogisticRegressionNodalFieldPairsGlobal = MpiWrapper::sum( numErroredLogisticRegressionNodalFieldPairs.get() );
+
+  GEOS_LOG_RANK_0_IF( numUnconvergedLogisticRegressionNodalFieldPairsGlobal > 0,
+                      "LogisticRegression Warning: " << numUnconvergedLogisticRegressionNodalFieldPairsGlobal << " nodal field pairs did not converge!" );
+
+  GEOS_LOG_RANK_0_IF( numErroredLogisticRegressionNodalFieldPairsGlobal > 0,
+                      "LogisticRegression Error: " << numErroredLogisticRegressionNodalFieldPairsGlobal << " nodal field pairs encountered errors!" );
 
   if( rigidBodyMode == 1 )
   {
@@ -26547,6 +26573,7 @@ void SolidMechanicsMPM::computeCoupledContact(
                                 n0,
                                 nAB,
                                 unusedSurfacePosition );
+            GEOS_UNUSED_VAR( result ); 
             break;
           }
           default:
@@ -28089,6 +28116,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                                     n0,
                                     nAB,
                                     dumby );
+              GEOS_UNUSED_VAR( result );
               }
               break;
             default:

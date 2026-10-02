@@ -1275,7 +1275,8 @@ if generateParticleFile:
   particleFile = open(rank_particleFileName, 'w')
 
   if planeStrain == 1:
-    surfaceDepth = 1.2*np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy) #np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy)
+    # surfaceDepth = 1.2*np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy)
+    surfaceDepth = np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy)
   else:
     surfaceDepth = np.sqrt(dX*dX + dY*dY + dZ*dZ) / min(ppcx, min( ppcy, ppcz))
 

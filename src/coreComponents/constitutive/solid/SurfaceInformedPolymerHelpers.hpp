@@ -78,6 +78,12 @@ real64 temperatureScale( real64 const temperature,
                          real64 const temperatureTransitionMagnitude,
                          real64 const temperatureTransitionWidth )
 {
+  GEOS_LOG_RANK( "temperature: " << temperature << ", " << 
+                 "glassTransitionTemperature: " << glassTransitionTemperature << ", " <<
+                "temperatureColdSlope: " << temperatureColdSlope << ", " << 
+              "temperatureHotSlope: " << temperatureHotSlope << ", " << 
+            "temperatureTransitionMagnitude: " << temperatureTransitionMagnitude << ", " << 
+          "temperatureTransitionWidth: " << temperatureTransitionWidth );
   real64 const below = LvArray::math::max( glassTransitionTemperature - temperature, 0.0 );
   real64 const above = LvArray::math::max( temperature - glassTransitionTemperature, 0.0 );
 

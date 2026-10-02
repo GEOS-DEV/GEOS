@@ -83,7 +83,7 @@ When using manual continuation, keep the mesh partitioning controls consistent w
 \index{PFW check script}
 \index{PFW example!automatic restart}
 
-The PFW automatic-restart path is a scheduler wrapper around the same GEOS restart files.  A submitted job writes periodic restarts.  When \texttt{pfw["autoRestart"] = True} and \texttt{pfw["mSubmitJobs"] = True}, PFW submits a second Slurm job that runs \texttt{pfw\_check.py} after the GEOS job finishes.  The check script scans the Slurm output.  If it sees \texttt{Job complete}, it stops.  If it sees \texttt{Job exited early}, \texttt{TIME LIMIT}, or \texttt{NODE FAILURE}, it finds the most recent \texttt{*\_restart\_*} directory, submits a restart job with \texttt{-r}, and schedules another check job.
+The PFW automatic-restart path is a scheduler wrapper around the same GEOS restart files.  A submitted job writes periodic restarts.  When \texttt{pfw["autoRestart"] = True}, PFW generates both \texttt{*\_runGEOS.sh} and \texttt{*\_runCheck.sh}.  Submit the GEOS script with \texttt{sbatch}; when that job starts, it uses its own \texttt{SLURM\_JOB\_ID} to submit the check script with an \texttt{afterany} dependency.  The check script scans the completed GEOS job's Slurm output.  If it sees \texttt{Job complete}, it stops.  If it sees \texttt{Job exited early}, \texttt{TIME LIMIT}, or \texttt{NODE FAILURE}, it finds the most recent \texttt{*\_restart\_*} directory, submits a restart job with \texttt{-r}, and schedules another check job.
 
 \begin{lstlisting}[language=Python,caption={Automatic Slurm restart workflow.}]
 pfw["mSubmitJobs"] = True
@@ -97,7 +97,13 @@ pfw["mBank"] = "my_bank"
 pfw["restartInterval"] = stopTime / 100.0
 \end{lstlisting}
 
-The current PFW auto-restart wrapper is Slurm-oriented.  The reviewed PFW script prints that auto-restart is not supported for the Flux scheduler path and does not submit the check job in that case.  The suite runner can set the same option from the command line with \texttt{--auto-restart}; internally it appends \texttt{pfw['autoRestart'] = True} to the generated suite input.
+The \texttt{mSubmitJobs} option controls only whether PFW submits the initial GEOS script itself.  It is not required to generate the automatic-restart chain.  In particular, if PFW is launched with more than one MPI rank, it deliberately defers Slurm submission even when \texttt{mSubmitJobs} is true, because calling \texttt{sbatch} from the MPI writer can inherit a launch environment that breaks the submitted job.  After parallel PFW exits, run
+\begin{lstlisting}[language=bash]
+sbatch <timestamp>_runGEOS.sh
+\end{lstlisting}
+from the generated run directory.  That script registers \texttt{<timestamp>\_runCheck.sh} before starting GEOS, so the dependency is in place even if the GEOS job reaches its time limit or encounters a node failure.  A small \texttt{.pfw\_check\_<job-id>.jobid} record prevents a requeued GEOS batch script from registering the same checker twice.
+
+The current PFW auto-restart wrapper is Slurm-oriented.  The PFW script prints that auto-restart is not supported for the Flux scheduler path and does not generate the check job in that case.  The suite runner can set the same option from the command line with \texttt{--auto-restart}; internally it appends \texttt{pfw['autoRestart'] = True} to the generated suite input.
 
 The automatic path depends on log messages and file naming.  If a job exits for a reason not recognized by \texttt{pfw\_check.py}, the checker reports an unknown interruption and stops rather than blindly resubmitting.  If the job stops before any restart file has been written, the checker cannot continue and reports that the restart interval should be reduced.
 

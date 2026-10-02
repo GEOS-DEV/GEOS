@@ -25,9 +25,9 @@ domainWidth = sampleWidth
 domainHeight = sampleHeight
 
 pfw["xmin"] = -0.5*domainWidth # mm
-pfw["xmax"] = 0.5*domainWidth # mm
+pfw["xmax"] =  0.5*domainWidth # mm
 pfw["ymin"] = -0.5*domainHeight # mm
-pfw["ymax"] = 0.5*domainHeight # mm
+pfw["ymax"] =  0.5*domainHeight # mm
 
 pfw["planeStrain"] = 1
 

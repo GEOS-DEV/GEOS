@@ -28,6 +28,7 @@ using namespace dataRepository;
 ReferenceCohesiveZonesMPMEvent::ReferenceCohesiveZonesMPMEvent( const string & name,
                                                               Group * const parent ):
   MPMEventBase( name, parent ),
+  m_started( 0 ),
   m_czVolumeNormalization( 1 ),
   m_computeNormalsAndPositions( 0 ),
   m_normalsAndPositionsMethod( mpm::NormalsAndPositionsMethodOption::LogisticRegression ),
@@ -37,6 +38,12 @@ ReferenceCohesiveZonesMPMEvent::ReferenceCohesiveZonesMPMEvent( const string & n
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Region names for cohesive zones");
+
+  registerWrapper( viewKeyStruct::startedString(), &m_started ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( m_started ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Flag to check if event was started to avoid resetting cohesive zones");
 
   registerWrapper( viewKeyStruct::czVolumeNormalizationString(), &m_czVolumeNormalization ).
     setInputFlag( InputFlags::OPTIONAL ).

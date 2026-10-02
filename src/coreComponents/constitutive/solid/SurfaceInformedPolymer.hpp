@@ -343,6 +343,12 @@ void SurfaceInformedPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
                                                          strainIncrement,
                                                          stress );
 
+  GEOS_LOG_RANK( "temp: " << m_temperature[k] << ", " << 
+                 "temperatureScale: " << temperatureScale << ", " << 
+                 "elasticCrystallinityScale: " << elasticCrystallinityScale << ", " << 
+                 "m_bulkModulus[k]: " << m_bulkModulus[k] << ", " << 
+                 "m_shearModulus[k]: " << m_shearModulus[k] );
+
   m_jacobian[k][q] *= LvArray::math::exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( !m_disableInelasticity )

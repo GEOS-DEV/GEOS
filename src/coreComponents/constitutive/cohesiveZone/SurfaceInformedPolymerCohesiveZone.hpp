@@ -290,6 +290,31 @@ public:
     // by the material surface above.  Thus opening, which has sigmaN>0, returns negative normalStress.
     normalStress = -sigmaN;
     shearStress = -tau;
+
+          GEOS_LOG_RANK( 
+        "k: " << k << ", " << 
+        "thickness: " << thickness << ", " << 
+        "temp: " << m_temperature[k] << ", " << 
+        "dnorm: " << normalDisplacement << ", " << 
+        "dtang: " << tangentialDisplacement << ", " << 
+        "normalStrain: " << normalStrain << ", " << 
+        "tangentialStrain: " << tangentialStrain << ", " << 
+        "m_bulkModulus: " << m_bulkModulus << ", " << 
+        "m_shearModulus: " << m_shearModulus << ", " <<
+        "CE: " << CE << ", " << 
+        "ST: " << ST << ", " << 
+        "K: " << K << ", " << 
+        "G: " << G << ", " << 
+        // "lambda: " << lambda << ", " << 
+        // "maxStretch: " << maxStretch << ", " << 
+        // "Gr: " << Gr << "," << 
+        // "sigma_H: " << sigma_H << ", " << 
+        // "tau: " << tau << ", " << 
+        // "gamma_p: " << gamma_p << ", " << 
+        // "yieldStrength: " << yieldStrength << ", " << 
+        "normalStress: " << normalStress<< ", " << 
+        "shearStress: " << shearStress 
+      );
   }
 
 private:
