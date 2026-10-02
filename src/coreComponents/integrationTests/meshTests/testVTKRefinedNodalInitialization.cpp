@@ -75,7 +75,7 @@ public:
         {
           vtkIdType corners[8];
           constexpr int offsets[8][3] = { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 },
-                                         { 0, 0, 1 }, { 1, 0, 1 }, { 1, 1, 1 }, { 0, 1, 1 } };
+            { 0, 0, 1 }, { 1, 0, 1 }, { 1, 1, 1 }, { 0, 1, 1 } };
           for( int p = 0; p < 8; ++p )
           {
             std::array< int, 4 > const key{ x + offsets[p][0], y + offsets[p][1], z + offsets[p][2], space };
@@ -123,10 +123,10 @@ public:
           unusedString->InsertNextValue( "point" + std::to_string( p ) );
         }
         for( vtkAbstractArray * array : { static_cast< vtkAbstractArray * >( left ),
-                                         static_cast< vtkAbstractArray * >( bottom ),
-                                         static_cast< vtkAbstractArray * >( corner ),
-                                         static_cast< vtkAbstractArray * >( unusedInteger ),
-                                         static_cast< vtkAbstractArray * >( unusedString ) } )
+                                          static_cast< vtkAbstractArray * >( bottom ),
+                                          static_cast< vtkAbstractArray * >( corner ),
+                                          static_cast< vtkAbstractArray * >( unusedInteger ),
+                                          static_cast< vtkAbstractArray * >( unusedString ) } )
           grid->GetPointData()->AddArray( array );
         vtkNew< vtkTypeInt64Array > cellIds;
         cellIds->SetName( "cellIds" );
@@ -188,12 +188,15 @@ void verifyEntityIds( MANAGER const & manager, NodeManager const & nodes, int ar
   {
     TopologyKey key;
     auto const entityNodes = manager.nodeList()[entity];
-    for( localIndex p = 0; p < entityNodes.size(); ++p ) key.push_back( nodeIds[entityNodes[p]] );
+    for( localIndex p = 0; p < entityNodes.size(); ++p )
+      key.push_back( nodeIds[entityNodes[p]] );
     EXPECT_EQ( key.size(), arity );
-    if( key.size() != std::size_t( arity ) ) continue;
+    if( key.size() != std::size_t( arity ) )
+      continue;
     std::sort( key.begin(), key.end() );
     local.emplace_back( entityIds[entity] );
-    for( globalIndex point : key ) local.emplace_back( point );
+    for( globalIndex point : key )
+      local.emplace_back( point );
   }
   array1d< globalIndex > all;
   MpiWrapper::allGatherv( local.toViewConst(), all );
@@ -203,7 +206,8 @@ void verifyEntityIds( MANAGER const & manager, NodeManager const & nodes, int ar
   {
     globalIndex const id = all[offset];
     TopologyKey key;
-    for( int p = 0; p < arity; ++p ) key.push_back( all[offset + 1 + p] );
+    for( int p = 0; p < arity; ++p )
+      key.push_back( all[offset + 1 + p] );
     auto const byId = idToKey.emplace( id, key );
     EXPECT_EQ( byId.first->second, key );
     auto const byKey = keyToId.emplace( key, id );
@@ -218,7 +222,8 @@ std::vector< std::set< TopologyKey > > gatherRankTopology( std::set< TopologyKey
   {
     EXPECT_EQ( key.size(), arity );
     local.emplace_back( MpiWrapper::commRank() );
-    for( auto point : key ) local.emplace_back( point );
+    for( auto point : key )
+      local.emplace_back( point );
   }
   array1d< globalIndex > all;
   MpiWrapper::allGatherv( local.toViewConst(), all );
@@ -226,7 +231,8 @@ std::vector< std::set< TopologyKey > > gatherRankTopology( std::set< TopologyKey
   for( localIndex offset = 0; offset < all.size(); offset += arity + 1 )
   {
     TopologyKey key;
-    for( int p = 0; p < arity; ++p ) key.push_back( all[offset + 1 + p] );
+    for( int p = 0; p < arity; ++p )
+      key.push_back( all[offset + 1 + p] );
     result.at( all[offset] ).insert( key );
   }
   return result;
@@ -243,7 +249,8 @@ void initialize( FixtureFile const & fixture, bool vertex, int copies, int level
 {
   GeosxState state( std::make_unique< CommandLineOptions >( commandLineOptions ) );
   auto & problem = state.getProblemManager();
-  problem.parseInputString( GEOS_FMT( R"xml(<Problem>
+  problem.parseInputString( GEOS_FMT(
+                              R"xml(<Problem>
     <Mesh><VTKMesh name="mesh" file="{}" useGlobalIds="1" scatterMethod="rcb"
       partitionRefinement="0" uniformRefinement="{}" nodesetNames="{{leftMask,bottomMask,cornerMask}}" /></Mesh>
     <Solvers gravityVector="{{0,0,0}}"><SolidMechanicsLagrangianFEM name="solid"
@@ -273,8 +280,8 @@ void initialize( FixtureFile const & fixture, bool vertex, int copies, int level
   int const groups = ( vertex ? 8 : 4 ) * copies;
   int const fillers = std::max( ranks - groups, 0 );
   globalIndex const expectedNodes = copies * ( 2 * subdivisions + 1 ) * ( 2 * subdivisions + 1 ) *
-                                   ( vertex ? 2 * subdivisions + 1 : subdivisions + 1 ) +
-                                   fillers * ( subdivisions + 1 ) * ( subdivisions + 1 ) * ( subdivisions + 1 );
+                                    ( vertex ? 2 * subdivisions + 1 : subdivisions + 1 ) +
+                                    fillers * ( subdivisions + 1 ) * ( subdivisions + 1 ) * ( subdivisions + 1 );
   EXPECT_EQ( dofs.numGlobalDofs(), 3 * expectedNodes );
   verifyMapsAndMaximum( nodes );
   verifyEntityIds( faces, nodes, 4 );
@@ -328,7 +335,8 @@ void initialize( FixtureFile const & fixture, bool vertex, int copies, int level
   for( localIndex i = 0; i < allOwned.size(); i += 3 )
   {
     EXPECT_TRUE( authority.emplace( allOwned[i], std::make_pair( allOwned[i + 1], allOwned[i + 2] ) ).second );
-    for( int component = 0; component < 3; ++component ) EXPECT_TRUE( globalDofs.insert( allOwned[i + 1] + component ).second );
+    for( int component = 0; component < 3; ++component )
+      EXPECT_TRUE( globalDofs.insert( allOwned[i + 1] + component ).second );
   }
   EXPECT_EQ( globalDofs.size(), 3 * expectedNodes );
   if( !globalDofs.empty() )
@@ -339,7 +347,10 @@ void initialize( FixtureFile const & fixture, bool vertex, int copies, int level
   for( localIndex point = 0; point < nodes.size(); ++point )
   {
     auto const found = authority.find( nodeIds[point] );
-    if( found == authority.end() ) { ADD_FAILURE() << "Missing nodal owner"; continue; }
+    if( found == authority.end() )
+    {
+      ADD_FAILURE() << "Missing nodal owner"; continue;
+    }
     EXPECT_EQ( dofNumbers[point], found->second.first );
     EXPECT_EQ( ghosts[point] < 0 ? rank : ghosts[point], found->second.second );
   }
@@ -357,13 +368,15 @@ void initialize( FixtureFile const & fixture, bool vertex, int copies, int level
         // Cell-map rows can be strided in accelerator layouts. Index each
         // slice instead of requiring LvArray's contiguous iterator interface.
         auto const cellNodes = cells.nodeList()[c];
-        for( localIndex p = 0; p < cellNodes.size(); ++p ) ownedNodes.insert( { nodeIds[cellNodes[p]] } );
+        for( localIndex p = 0; p < cellNodes.size(); ++p )
+          ownedNodes.insert( { nodeIds[cellNodes[p]] } );
         auto const cellEdges = cells.edgeList()[c];
         for( localIndex e = 0; e < cellEdges.size(); ++e )
         {
           TopologyKey key;
           auto const edgeNodes = edges.nodeList()[cellEdges[e]];
-          for( localIndex p = 0; p < edgeNodes.size(); ++p ) key.push_back( nodeIds[edgeNodes[p]] );
+          for( localIndex p = 0; p < edgeNodes.size(); ++p )
+            key.push_back( nodeIds[edgeNodes[p]] );
           std::sort( key.begin(), key.end() );
           ownedEdges.insert( key );
         }
@@ -372,7 +385,8 @@ void initialize( FixtureFile const & fixture, bool vertex, int copies, int level
         {
           TopologyKey key;
           auto const faceNodes = faces.nodeList()[cellFaces[f]];
-          for( localIndex p = 0; p < faceNodes.size(); ++p ) key.push_back( nodeIds[faceNodes[p]] );
+          for( localIndex p = 0; p < faceNodes.size(); ++p )
+            key.push_back( nodeIds[faceNodes[p]] );
           std::sort( key.begin(), key.end() );
           ownedFaces.insert( key );
         }
@@ -395,7 +409,10 @@ void initialize( FixtureFile const & fixture, bool vertex, int copies, int level
   if( ranks >= groups )
   {
     EXPECT_TRUE( foundEdgeOnly );
-    if( vertex ) { EXPECT_TRUE( foundVertexOnly ); }
+    if( vertex )
+    {
+      EXPECT_TRUE( foundVertexOnly );
+    }
   }
 
   // Deliberately corrupt ghost values, then use the normal solver communication
@@ -445,7 +462,7 @@ TEST( VTKRefinedNodalInitialization, UnrelatedCoincidentComponentsRetainSeparate
   }
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   commandLineOptions = *geos::basicSetup( argc, argv );

@@ -108,7 +108,7 @@ PointRegistry registryFor( vtkDataSet & mesh )
     mesh.GetPoint( i, xyz[i].data() );
     // Exercise integral topology identity above the double precision limit.
     gids[i] =
-        sizeof( vtkIdType ) == 8 ? static_cast< vtkIdType >( UINT64_C( 9007199254741001 ) + 7 * i ) : static_cast< vtkIdType >( 3 + 7 * i );
+      sizeof( vtkIdType ) == 8 ? static_cast< vtkIdType >( UINT64_C( 9007199254741001 ) + 7 * i ) : static_cast< vtkIdType >( 3 + 7 * i );
   }
   return PointRegistry( std::move( xyz ), std::move( gids ) );
 }
@@ -275,7 +275,7 @@ TEST( VTKRefinementTemplates, ConnectedMixedTriangleAndQuadInterfacesTwoLevels )
   for( int arity : { 3, 4 } )
   {
     std::vector< ReferenceCell > shapes =
-        arity == 3
+      arity == 3
             ? std::vector< ReferenceCell >{ referenceCell( VTK_TETRA, 0 ), referenceCell( VTK_WEDGE, 0 ), referenceCell( VTK_PYRAMID, 1 ) }
             : std::vector< ReferenceCell >{ referenceCell( VTK_HEXAHEDRON, 0 ), referenceCell( VTK_WEDGE, 2 ),
                                             referenceCell( VTK_PYRAMID, 0 ) };
@@ -688,7 +688,7 @@ TEST( VTKRefinementTemplates, CountsAndOverflowWithoutAllocation )
 TEST( VTKRefinementTemplates, ThinAndSkewedSupportedShapesThroughTwoLevels )
 {
   std::vector< ReferenceCell > shapes{ referenceCell( VTK_TETRA, 0 ), referenceCell( VTK_PYRAMID, 0 ),
-                                     referenceCell( VTK_WEDGE, 0 ), referenceCell( VTK_HEXAHEDRON, 0 ) };
+                                       referenceCell( VTK_WEDGE, 0 ), referenceCell( VTK_HEXAHEDRON, 0 ) };
   for( int n = 5; n <= 11; ++n )
   {
     ReferenceCell prism;
@@ -703,20 +703,23 @@ TEST( VTKRefinementTemplates, ThinAndSkewedSupportedShapesThroughTwoLevels )
       std::vector< Coordinates > coordinates;
       for( auto const & p : shape.xyz )
         coordinates.push_back( { 3 + .9 * p[0] + .15 * p[1] + .1 * p[2],
-                                -2 + .3 * p[0] + 1.1 * p[1] + .2 * p[2],
-                                7 + thickness * ( 1.2 * p[2] + .05 * p[0] - .1 * p[1] ) } );
+                                 -2 + .3 * p[0] + 1.1 * p[1] + .2 * p[2],
+                                 7 + thickness * ( 1.2 * p[2] + .05 * p[0] - .1 * p[1] ) } );
       auto mesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
       vtkNew< vtkPoints > points;
       points->SetDataTypeToDouble();
-      for( auto const & p : coordinates ) points->InsertNextPoint( p.data() );
+      for( auto const & p : coordinates )
+        points->InsertNextPoint( p.data() );
       mesh->SetPoints( points );
       if( shape.cell.prismSides )
       {
         vtkNew< vtkCellArray > faces;
-        for( auto const & face : cellFaces( shape.cell ) ) faces->InsertNextCell( face.size(), face.data() );
+        for( auto const & face : cellFaces( shape.cell ) )
+          faces->InsertNextCell( face.size(), face.data() );
         mesh->InsertNextCell( VTK_POLYHEDRON, shape.cell.points.size(), shape.cell.points.data(), faces );
       }
-      else mesh->InsertNextCell( shape.cell.vtkType, shape.cell.points.size(), shape.cell.points.data() );
+      else
+        mesh->InsertNextCell( shape.cell.vtkType, shape.cell.points.size(), shape.cell.points.data() );
       for( int level = 0; level < 2; ++level )
       {
         // Each generation gets a registry for all of its now-existing points,
@@ -730,8 +733,8 @@ TEST( VTKRefinementTemplates, ScaleTranslationAndInvalidGeometry )
 {
   for( double scale : { 1e-6, 1., 1e6 } )
   {
-    std::vector< Coordinates > xyz{ { 0, 0, 0 },   { 1, 0, 0 },   { 1, 1, 0 },     { 0, 1, 0 },
-                                    { .1, .1, 1 }, { 1.2, 0, 1 }, { 1.1, 1.2, 1 }, { 0, 1, 1 } };
+    std::vector< Coordinates > xyz{ { 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 },
+      { .1, .1, 1 }, { 1.2, 0, 1 }, { 1.1, 1.2, 1 }, { 0, 1, 1 } };
     for( auto & p : xyz )
     {
       for( auto & x : p )
@@ -753,6 +756,39 @@ TEST( VTKRefinementTemplates, ScaleTranslationAndInvalidGeometry )
   star.points = { 0, 2, 4, 1, 3, 5, 7, 9, 6, 8 };
   PointRegistry capRegistry( xyz, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 } );
   EXPECT_THROW( subdivideCell( star, 0, capRegistry ), std::invalid_argument );
+}
+
+TEST( VTKRefinementTemplates, FlatWarpedPyramidNamesTheInvertedChild )
+{
+  // A valid but flat pyramid with a warped base, taken from a field mesh. The
+  // template's center child is inverted, and the error must say so.
+  PointRegistry registry( { { 0, 0, 0 }, { -118.14174735, 0.18487936, -10.74911166 },
+                            { -110.41312305, -145.77634666, -51.73707128 }, { 3.47049546, -123.45343273, -45.45207629 },
+                            { -52.29993373, -67.27097194, -23.70069733 } },
+                          { 0, 1, 2, 3, 4 } );
+  try
+  {
+    subdivideCell( { VTK_PYRAMID, { 0, 1, 2, 3, 4 }, 0 }, 545413, registry );
+    FAIL() << "The inverted center child must be rejected";
+  }
+  catch( std::invalid_argument const & error )
+  {
+    std::string const message = error.what();
+    EXPECT_NE( message.find( "the parent pyramid is valid, but child 5 (a pyramid)" ), std::string::npos ) << message;
+    EXPECT_NE( message.find( "too flat for its warped base" ), std::string::npos ) << message;
+    EXPECT_NE( message.find( "parent 6.91e-04" ), std::string::npos ) << message;
+  }
+  // An inverted coarse cell is reported as such.
+  PointRegistry inverted( { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, -1 } }, { 0, 1, 2, 3 } );
+  try
+  {
+    subdivideCell( { VTK_TETRA, { 0, 1, 2, 3 }, 0 }, 0, inverted );
+    FAIL() << "The inverted parent must be rejected";
+  }
+  catch( std::invalid_argument const & error )
+  {
+    EXPECT_NE( std::string( error.what() ).find( "the coarse tetrahedron is degenerate or inverted" ), std::string::npos ) << error.what();
+  }
 }
 
 TEST( VTKRefinementTemplates, SharingFollowsExactSupportRatherThanEndpointOwners )
@@ -838,8 +874,8 @@ TEST( VTKRefinementTemplates, InterfaceSharingRequiresClosedIncidenceAndPlannedP
   ASSERT_EQ( shared.size(), 9 );
   auto missing = shared;
   missing.erase(
-      std::remove_if( missing.begin(), missing.end(), []( EntitySupport const & entity ) { return entity.key.kind == EntityKind::edge; } ),
-      missing.end() );
+    std::remove_if( missing.begin(), missing.end(), []( EntitySupport const & entity ) { return entity.key.kind == EntityKind::edge; } ),
+    missing.end() );
   PointRegistry registry( reference.xyz, ids );
   EXPECT_THROW( InterfaceSharing( registry, missing, 0 ), std::invalid_argument );
   InterfaceSharing inherited( registry, shared, 0 );
@@ -943,27 +979,27 @@ TEST( VTKRefinementTemplates, DatasetMeshWhenRequested )
     {
       switch( cell.vtkType )
       {
-      case VTK_TETRA:
-        ++counts.tetrahedra;
-        break;
-      case VTK_PYRAMID:
-        ++counts.pyramids;
-        break;
-      case VTK_WEDGE:
-        ++counts.wedges;
-        break;
-      case VTK_HEXAHEDRON:
-        ++counts.hexahedra;
-        break;
-      default:
-        FAIL() << "Unexpected normalized volume cell";
+        case VTK_TETRA:
+          ++counts.tetrahedra;
+          break;
+        case VTK_PYRAMID:
+          ++counts.pyramids;
+          break;
+        case VTK_WEDGE:
+          ++counts.wedges;
+          break;
+        case VTK_HEXAHEDRON:
+          ++counts.hexahedra;
+          break;
+        default:
+          FAIL() << "Unexpected normalized volume cell";
       }
     }
   }
   EXPECT_EQ( static_cast< std::uint64_t >( refined->GetNumberOfCells() ), counts.next().total() );
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();

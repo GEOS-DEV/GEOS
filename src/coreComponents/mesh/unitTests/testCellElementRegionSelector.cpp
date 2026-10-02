@@ -121,7 +121,7 @@ TEST( CellElementRegionSelector, EmptyLineagePreservesLegacySelection )
   EXPECT_NO_THROW( selector.checkSelectionConsistency() );
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   MpiWrapper::init( &argc, &argv );
   MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );

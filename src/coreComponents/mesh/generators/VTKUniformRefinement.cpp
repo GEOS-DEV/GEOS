@@ -69,7 +69,7 @@ void withCellContext( std::string const & block, int level, vtkIdType parentId, 
   catch( std::exception const & error )
   {
     throw std::runtime_error( GEOS_FMT( "block '{}', level {}, parent global ID {}, VTK cell type {}: {}",
-                                       block, level, parentId, vtkType, error.what() ) );
+                                        block, level, parentId, vtkType, error.what() ) );
   }
 }
 
@@ -102,7 +102,7 @@ void localCount( std::uint64_t count, char const * description = "local count" )
 struct ReadIds
 {
   Connectivity & ids;
-  template < typename Array > void operator()( Array * array ) const
+  template< typename Array > void operator()( Array * array ) const
   {
     vtkDataArrayAccessor< Array > access( array );
     using Value = typename decltype( access )::APIType;
@@ -111,7 +111,7 @@ struct ReadIds
     for( vtkIdType i = 0; i < array->GetNumberOfTuples(); ++i )
     {
       Value const value = access.Get( i, 0 );
-      if constexpr( std::is_signed_v< Value > )
+      if constexpr ( std::is_signed_v< Value > )
       {
         if( value < 0 )
         {
@@ -147,16 +147,16 @@ Connectivity exactIds( vtkDataArray * array, vtkIdType count )
 struct ReadAttributes
 {
   std::vector< int > & values;
-  template < typename Array > void operator()( Array * array ) const
+  template< typename Array > void operator()( Array * array ) const
   {
     vtkDataArrayAccessor< Array > access( array );
     using Value = typename decltype( access )::APIType;
     for( vtkIdType i = 0; i < array->GetNumberOfTuples(); ++i )
     {
       Value const value = access.Get( i, 0 );
-      if constexpr( std::is_integral_v< Value > )
+      if constexpr ( std::is_integral_v< Value > )
       {
-        if constexpr( std::is_signed_v< Value > )
+        if constexpr ( std::is_signed_v< Value > )
         {
           if( value < -1 )
           {
@@ -192,16 +192,16 @@ ElementType volumeType( Cell const & cell )
   }
   switch( cell.vtkType )
   {
-  case VTK_TETRA:
-    return ElementType::Tetrahedron;
-  case VTK_PYRAMID:
-    return ElementType::Pyramid;
-  case VTK_WEDGE:
-    return ElementType::Wedge;
-  case VTK_HEXAHEDRON:
-    return ElementType::Hexahedron;
-  default:
-    throw std::invalid_argument( "Unsupported normalized uniform refinement volume type" );
+    case VTK_TETRA:
+      return ElementType::Tetrahedron;
+    case VTK_PYRAMID:
+      return ElementType::Pyramid;
+    case VTK_WEDGE:
+      return ElementType::Wedge;
+    case VTK_HEXAHEDRON:
+      return ElementType::Hexahedron;
+    default:
+      throw std::invalid_argument( "Unsupported normalized uniform refinement volume type" );
   }
 }
 bool isSurface( Cell const & cell ) { return cell.vtkType == VTK_TRIANGLE || cell.vtkType == VTK_QUAD || cell.vtkType == VTK_POLYGON; }
@@ -215,20 +215,20 @@ void countCell( CellCounts & counts, Cell const & cell )
   {
     switch( cell.vtkType )
     {
-    case VTK_TETRA:
-      ++counts.tetrahedra;
-      break;
-    case VTK_PYRAMID:
-      ++counts.pyramids;
-      break;
-    case VTK_WEDGE:
-      ++counts.wedges;
-      break;
-    case VTK_HEXAHEDRON:
-      ++counts.hexahedra;
-      break;
-    default:
-      throw std::invalid_argument( "Unsupported uniform refinement count type" );
+      case VTK_TETRA:
+        ++counts.tetrahedra;
+        break;
+      case VTK_PYRAMID:
+        ++counts.pyramids;
+        break;
+      case VTK_WEDGE:
+        ++counts.wedges;
+        break;
+      case VTK_HEXAHEDRON:
+        ++counts.hexahedra;
+        break;
+      default:
+        throw std::invalid_argument( "Unsupported uniform refinement count type" );
     }
   }
 }
@@ -298,7 +298,8 @@ FieldStorage fieldStorage( vtkDataSetAttributes & data )
     {
       // One byte per bit is a conservative bound for packed vtkBitArray storage.
       auto const width = vtkBitArray::SafeDownCast( array ) ? 1 : array->GetDataTypeSize();
-      if( width <= 0 ) throw std::invalid_argument( "Unsupported refinement field storage forecast" );
+      if( width <= 0 )
+        throw std::invalid_argument( "Unsupported refinement field storage forecast" );
       result.tupleBytes = add( result.tupleBytes, multiply( components, width ) );
     }
   }
@@ -309,7 +310,8 @@ std::uint64_t volumeConnectivity( CellCounts const & counts )
 {
   auto value = add( multiply( counts.hexahedra, 8 ), multiply( counts.tetrahedra, 4 ) );
   value = add( value, add( multiply( counts.wedges, 6 ), multiply( counts.pyramids, 5 ) ) );
-  for( int n = 5; n <= 11; ++n ) value = add( value, multiply( counts.prisms[n], 2 * n ) );
+  for( int n = 5; n <= 11; ++n )
+    value = add( value, multiply( counts.prisms[n], 2 * n ) );
   return value;
 }
 
@@ -317,13 +319,14 @@ std::uint64_t newVolumePointsUpperBound( CellCounts const & counts )
 {
   auto value = add( multiply( counts.hexahedra, 19 ), multiply( counts.tetrahedra, 6 ) );
   value = add( value, add( multiply( counts.wedges, 12 ), multiply( counts.pyramids, 9 ) ) );
-  for( int n = 5; n <= 11; ++n ) value = add( value, multiply( counts.prisms[n], 4 * n + 3 ) );
+  for( int n = 5; n <= 11; ++n )
+    value = add( value, multiply( counts.prisms[n], 4 * n + 3 ) );
   return value;
 }
 
 std::vector< RefinementResourceEstimate > resourceForecast( std::vector< State > const & states, int levels,
-                                                           std::uint64_t retainedInputBytes, std::size_t neighbors,
-                                                           std::uint64_t globalBucketWidth )
+                                                            std::uint64_t retainedInputBytes, std::size_t neighbors,
+                                                            std::uint64_t globalBucketWidth )
 {
   std::vector< RefinementResourceEstimate > result( levels );
   for( auto const & state : states )
@@ -333,14 +336,17 @@ std::vector< RefinementResourceEstimate > resourceForecast( std::vector< State >
     for( auto const & cell : state.cells )
     {
       coarseConnectivity = add( coarseConnectivity, cell.points.size() );
-      if( cell.vtkType == VTK_TRIANGLE ) ++triangles;
-      else if( cell.vtkType == VTK_QUAD ) ++quads;
+      if( cell.vtkType == VTK_TRIANGLE )
+        ++triangles;
+      else if( cell.vtkType == VTK_QUAD )
+        ++quads;
       else if( isSurface( cell ) )
       {
         polygonChildren = add( polygonChildren, cell.points.size() );
         polygonPoints = add( polygonPoints, add( cell.points.size(), 1 ) );
       }
-      else countCell( volumes, cell );
+      else
+        countCell( volumes, cell );
     }
     // Final VTK arrays pad buckets to a communicator-wide capacity. A global
     // coarse maximum also bounds every fine bucket's actual volume-side IDs.
@@ -381,20 +387,20 @@ std::vector< RefinementResourceEstimate > resourceForecast( std::vector< State >
       // Mandatory owned-volume face/edge/node incidence; ghosts are a separate
       // worst case in which every coarse neighbor contributes its whole dataset.
       auto const incidence = add( multiply( volumes.hexahedra, 24 ), add( multiply( volumes.tetrahedra, 12 ),
-                                     add( multiply( volumes.wedges, 18 ), multiply( volumes.pyramids, 16 ) ) ) );
+                                                                          add( multiply( volumes.wedges, 18 ), multiply( volumes.pyramids, 16 ) ) ) );
       auto const geosBytes = add( multiply( incidence, 4 * sizeof( localIndex ) + 2 * sizeof( globalIndex ) ),
-                                 multiply( points, 3 * sizeof( real64 ) + sizeof( globalIndex ) + sizeof( localIndex ) ) );
+                                  multiply( points, 3 * sizeof( real64 ) + sizeof( globalIndex ) + sizeof( localIndex ) ) );
       double const childBytes = static_cast< double >( vtkBytes ) + static_cast< double >( cells ) *
                                 ( sizeof( Cell ) + sizeof( Source ) + 7 * sizeof( vtkIdType ) );
       // Registry keys/supports, hash entries, child plans and descriptors. This
       // accounts for their payloads, not allocator-dependent capacities/overhead.
       double const scratch = static_cast< double >( points ) *
-        ( sizeof( PointRecipe ) + 2 * sizeof( EntityKey ) + 44 * sizeof( vtkIdType ) + 6 * sizeof( void * ) ) +
-        static_cast< double >( cells ) * ( 2 * sizeof( vtkIdType ) + sizeof( double ) + sizeof( ChildCellKey ) + sizeof( Participants ) );
+                             ( sizeof( PointRecipe ) + 2 * sizeof( EntityKey ) + 44 * sizeof( vtkIdType ) + 6 * sizeof( void * ) ) +
+                             static_cast< double >( cells ) * ( 2 * sizeof( vtkIdType ) + sizeof( double ) + sizeof( ChildCellKey ) + sizeof( Participants ) );
       double const headerBytes = 256.0 + 8.0 * ( neighbors + 1 );
       double const exchange = 2.0 * neighbors *
-        ( static_cast< double >( points ) * ( headerBytes + pointFields.tupleBytes + bucketWidth * sizeof( vtkIdType ) ) +
-          static_cast< double >( surfaces ) * ( headerBytes + cellFields.tupleBytes ) );
+                              ( static_cast< double >( points ) * ( headerBytes + pointFields.tupleBytes + bucketWidth * sizeof( vtkIdType ) ) +
+                                static_cast< double >( surfaces ) * ( headerBytes + cellFields.tupleBytes ) );
       auto & estimate = result[l];
       estimate.volumeCells = add( estimate.volumeCells, volumes.total() );
       estimate.surfaceCellCopies = add( estimate.surfaceCellCopies, surfaces );
@@ -408,7 +414,8 @@ std::vector< RefinementResourceEstimate > resourceForecast( std::vector< State >
       parentBytes = childBytes;
     }
   }
-  for( auto & estimate : result ) estimate.modeledRefinerPeakBytes += retainedInputBytes;
+  for( auto & estimate : result )
+    estimate.modeledRefinerPeakBytes += retainedInputBytes;
   return result;
 }
 
@@ -456,15 +463,17 @@ void reportForecast( std::vector< RefinementResourceEstimate > & estimates, bool
   std::array< double, 2 * width > model{}, maximumModel{};
   comm.checked( "resource report buffers", [&]
   {
-    if( estimates.size() > width ) throw std::logic_error( "Missing refinement growth preflight" );
+    if( estimates.size() > width )
+      throw std::logic_error( "Missing refinement growth preflight" );
     for( std::size_t l = 0; l < estimates.size(); ++l )
     {
       auto const & estimate = estimates[l];
       volumes[l] = estimate.volumeCells;
       std::size_t offset = 7 * l;
       for( auto value : { estimate.volumeCells, estimate.surfaceCellCopies, estimate.pointCopiesUpperBound,
-                         estimate.connectivityEntries, estimate.fieldBytesUpperBound, estimate.vtkBytesUpperBound,
-                         estimate.geosOwnedConnectivityBytes } ) local[offset++] = value;
+                          estimate.connectivityEntries, estimate.fieldBytesUpperBound, estimate.vtkBytesUpperBound,
+                          estimate.geosOwnedConnectivityBytes } )
+        local[offset++] = value;
       model[2*l] = estimate.modeledRefinerPeakBytes;
       model[2*l+1] = estimate.exchangeBytesUpperBound;
     }
@@ -484,7 +493,8 @@ void reportForecast( std::vector< RefinementResourceEstimate > & estimates, bool
                                    static_cast< std::uint64_t >( std::numeric_limits< globalIndex >::max() ) );
       if( overflow[l] || ( globalVolumes[l] && globalVolumes[l] - 1 > limit ) )
         throw std::overflow_error( "Uniform refinement forecast exceeds global cell ID storage" );
-      if( report ) estimates[l].geosGhostConnectivityBytesModel =
+      if( report )
+        estimates[l].geosGhostConnectivityBytesModel =
           static_cast< double >( maximum[7*l+6] ) * ( comm.size() - 1 );
       if( report && comm.rank() == 0 )
         GEOS_LOG( GEOS_FMT( "Uniform refinement forecast level {}: ownedCells={}, maxOwnedCells={}, maxPointCopiesBound={}, "
@@ -500,11 +510,12 @@ void reportForecast( std::vector< RefinementResourceEstimate > & estimates, bool
 void reportLevel( RefinementLevelStatistics const & stats, int level, bool report, Communication & comm, MPI_Comm communicator )
 {
   GEOS_MARK_SCOPE_STR( "uniformRefinement/statistics" );
-  if( !report ) return;
+  if( !report )
+    return;
   std::array< std::uint64_t, 4 > const localCounts{ stats.ownedVolumeCells, stats.mainPointCopies, stats.ownedMainPoints, stats.sharedMainPointCopies };
   std::array< std::uint64_t, 4 > totals{};
   std::array< std::uint64_t, 6 > const localMax{ stats.ownedVolumeCells, stats.communication.directoryExchanges, stats.communication.neighborExchanges,
-                                 stats.communication.payloadChunksSent, stats.communication.payloadBytesSent, stats.communication.countBytesSent };
+                                                 stats.communication.payloadChunksSent, stats.communication.payloadBytesSent, stats.communication.countBytesSent };
   std::array< std::uint64_t, 6 > maximum{};
   auto const overflow = sumStatistics( localCounts, totals, communicator );
   MpiWrapper::allReduce( localMax, maximum, MpiWrapper::Reduction::Max, communicator );
@@ -512,7 +523,8 @@ void reportLevel( RefinementLevelStatistics const & stats, int level, bool repor
   {
     if( std::any_of( overflow.begin(), overflow.end(), []( bool value ) { return value; } ) )
     {
-      if( comm.rank() == 0 ) GEOS_LOG( "Uniform refinement global statistics exceed uint64_t; local statistics remain available" );
+      if( comm.rank() == 0 )
+        GEOS_LOG( "Uniform refinement global statistics exceed uint64_t; local statistics remain available" );
       return;
     }
     if( report && comm.rank() == 0 )
@@ -685,7 +697,8 @@ State readState( vtkDataSet & input, std::uint64_t ns, std::string name, Uniform
   if( options.requiredPointArrays )
   {
     std::set< std::string > required;
-    if( ns == 0 ) required = *options.requiredPointArrays;
+    if( ns == 0 )
+      required = *options.requiredPointArrays;
     else
       for( auto const & [arrayName, policy] : policies.pointArrays )
       {
@@ -696,7 +709,8 @@ State readState( vtkDataSet & input, std::uint64_t ns, std::string name, Uniform
     {
       auto * array = pointInput->GetAbstractArray( a );
       auto const * arrayName = array->GetName();
-      if( !arrayName || !required.count( arrayName ) ) pointInput->RemoveArray( a );
+      if( !arrayName || !required.count( arrayName ) )
+        pointInput->RemoveArray( a );
     }
   }
   state.pointData = transferPointData( *pointInput, points, policies );
@@ -710,11 +724,12 @@ State readState( vtkDataSet & input, std::uint64_t ns, std::string name, Uniform
     for( int a = cellInput->GetNumberOfArrays() - 1; a >= 0; --a )
     {
       auto const * arrayName = cellInput->GetAbstractArray( a )->GetName();
-      if( !arrayName || !requiredCells->count( arrayName ) ) cellInput->RemoveArray( a );
+      if( !arrayName || !requiredCells->count( arrayName ) )
+        cellInput->RemoveArray( a );
     }
   }
   state.cellData =
-      transferCellData( *cellInput, state.cells.size(), identity, std::vector< double >( identity.size(), 1 ), policies );
+    transferCellData( *cellInput, state.cells.size(), identity, std::vector< double >( identity.size(), 1 ), policies );
   state.roots = state.cellIds;
   state.rootOwners.assign( state.cells.size(), rank );
   if( state.hasSurfaces )
@@ -791,45 +806,47 @@ void coarseSharing( std::vector< State > & states, Communication & comm, MPI_Com
   bool localUnusedPoints = false;
   comm.checked( "coupled coarse sharing candidates",
                 [&]
-                {
-                  candidates.resize( states.size() );
-                  auto const & main = states[0];
-                  std::vector< Cell > volumes;
-                  Connectivity ids;
-                  for( std::size_t c = 0; c < main.cells.size(); ++c )
-                  {
-                    if( !isSurface( main.cells[c] ) )
-                    {
-                      volumes.push_back( main.cells[c] );
-                      ids.push_back( main.cellIds[c] );
-                    }
-                  }
-                  auto boundary = coarseBoundary( volumes, ids, main.pointIds, comm.rank() );
-                  candidates[0] = std::move( boundary.entities );
-                  keys = std::move( boundary.volumeIds );
-                  std::vector< bool > used( main.coordinates.size(), false );
-                  for( auto const & cell : main.cells ) for( vtkIdType p : cell.points ) used[p] = true;
-                  localUnusedPoints = std::find( used.begin(), used.end(), false ) != used.end();
-                  for( std::size_t s = 1; s < states.size(); ++s )
-                  {
-                    candidates[s] = surfaceSupports( states[s], comm.rank() );
-                  }
-                  for( std::size_t s = 0; s < states.size(); ++s )
-                  {
-                    for( auto const & entity : candidates[s] )
-                    {
-                      keys.push_back( entity.key );
-                    }
-                    // ID-only cell records identify actual marker/auxiliary replicas.
-                    for( std::size_t c = 0; c < states[s].cells.size(); ++c )
-                    {
-                      if( isSurface( states[s].cells[c] ) )
-                      {
-                        keys.push_back( { states[s].ns, EntityKind::cell, { states[s].cellIds[c] } } );
-                      }
-                    }
-                  }
-                } );
+  {
+    candidates.resize( states.size() );
+    auto const & main = states[0];
+    std::vector< Cell > volumes;
+    Connectivity ids;
+    for( std::size_t c = 0; c < main.cells.size(); ++c )
+    {
+      if( !isSurface( main.cells[c] ) )
+      {
+        volumes.push_back( main.cells[c] );
+        ids.push_back( main.cellIds[c] );
+      }
+    }
+    auto boundary = coarseBoundary( volumes, ids, main.pointIds, comm.rank() );
+    candidates[0] = std::move( boundary.entities );
+    keys = std::move( boundary.volumeIds );
+    std::vector< bool > used( main.coordinates.size(), false );
+    for( auto const & cell : main.cells )
+      for( vtkIdType p : cell.points )
+        used[p] = true;
+    localUnusedPoints = std::find( used.begin(), used.end(), false ) != used.end();
+    for( std::size_t s = 1; s < states.size(); ++s )
+    {
+      candidates[s] = surfaceSupports( states[s], comm.rank() );
+    }
+    for( std::size_t s = 0; s < states.size(); ++s )
+    {
+      for( auto const & entity : candidates[s] )
+      {
+        keys.push_back( entity.key );
+      }
+      // ID-only cell records identify actual marker/auxiliary replicas.
+      for( std::size_t c = 0; c < states[s].cells.size(); ++c )
+      {
+        if( isSurface( states[s].cells[c] ) )
+        {
+          keys.push_back( { states[s].ns, EntityKind::cell, { states[s].cellIds[c] } } );
+        }
+      }
+    }
+  } );
   if( MpiWrapper::max( localUnusedPoints ? 1 : 0, communicator ) != 0 )
   {
     // Unused copies can refer to another rank's interior vertex. Only this
@@ -837,147 +854,148 @@ void coarseSharing( std::vector< State > & states, Communication & comm, MPI_Com
     // vertices alone. Preserve the existing unused-point authority contract.
     comm.checked( "unused original point directory",
                   [&]
-                  {
-                    auto const & main = states[0];
-                    std::vector< bool > routed( main.coordinates.size(), false );
-                    for( auto const & entity : candidates[0] )
-                      if( entity.key.kind == EntityKind::vertex ) routed[entity.localCorners.front()] = true;
-                    for( std::size_t p = 0; p < routed.size(); ++p )
-                      if( !routed[p] )
-                      {
-                        EntityKey key{ main.ns, EntityKind::vertex, { main.pointIds[p] } };
-                        keys.push_back( key );
-                        candidates[0].push_back( { std::move( key ), { static_cast< vtkIdType >( p ) }, { comm.rank() } } );
-                      }
-                  } );
+    {
+      auto const & main = states[0];
+      std::vector< bool > routed( main.coordinates.size(), false );
+      for( auto const & entity : candidates[0] )
+        if( entity.key.kind == EntityKind::vertex )
+          routed[entity.localCorners.front()] = true;
+      for( std::size_t p = 0; p < routed.size(); ++p )
+        if( !routed[p] )
+        {
+          EntityKey key{ main.ns, EntityKind::vertex, { main.pointIds[p] } };
+          keys.push_back( key );
+          candidates[0].push_back( { std::move( key ), { static_cast< vtkIdType >( p ) }, { comm.rank() } } );
+        }
+    } );
   }
   Sharing sharing = comm.discoverSharing( keys );
   comm.checked( "coupled coarse sharing installation",
                 [&]
-                {
-                  std::unordered_set< vtkIdType > volumeIds;
-                  for( std::size_t c = 0; c < states[0].cells.size(); ++c )
-                  {
-                    if( !isSurface( states[0].cells[c] ) )
-                    {
-                      volumeIds.insert( states[0].cellIds[c] );
-                    }
-                  }
-                  for( auto const & [key, ranks] : sharing )
-                  {
-                    if( key.kind == EntityKind::cell && key.meshNamespace == 0 && ranks.size() != 1 )
-                    {
-                      if( volumeIds.count( key.corners[0] ) )
-                      {
-                        throw std::invalid_argument( "Duplicate distributed volume ownership" );
-                      }
-                    }
-                  }
-                  for( std::size_t s = 0; s < states.size(); ++s )
-                  {
-                    for( auto & entity : candidates[s] )
-                    {
-                      if( sharing.at( entity.key ).size() > 1 )
-                      {
-                        entity.participants = sharing.at( entity.key );
-                        states[s].interfaces.push_back( std::move( entity ) );
-                      }
-                    }
-                  }
-                } );
+  {
+    std::unordered_set< vtkIdType > volumeIds;
+    for( std::size_t c = 0; c < states[0].cells.size(); ++c )
+    {
+      if( !isSurface( states[0].cells[c] ) )
+      {
+        volumeIds.insert( states[0].cellIds[c] );
+      }
+    }
+    for( auto const & [key, ranks] : sharing )
+    {
+      if( key.kind == EntityKind::cell && key.meshNamespace == 0 && ranks.size() != 1 )
+      {
+        if( volumeIds.count( key.corners[0] ) )
+        {
+          throw std::invalid_argument( "Duplicate distributed volume ownership" );
+        }
+      }
+    }
+    for( std::size_t s = 0; s < states.size(); ++s )
+    {
+      for( auto & entity : candidates[s] )
+      {
+        if( sharing.at( entity.key ).size() > 1 )
+        {
+          entity.participants = sharing.at( entity.key );
+          states[s].interfaces.push_back( std::move( entity ) );
+        }
+      }
+    }
+  } );
   // Coarse authoritative tuples are installed before geometry/field planning.
   std::vector< PointCreation > points;
   std::vector< CellCreation > cells;
   comm.checked( "coupled coarse tuples",
                 [&]
-                {
-                  for( auto const & state : states )
-                  {
-                    PointFieldLayout pointFields( *state.pointData );
-                    // Existing vertices have no edge/face recipe. Use their
-                    // incident cell extent, rather than an implicit unit mesh,
-                    // to compare independently read shared coordinates.
-                    std::vector< double > vertexExtents;
-                    if( !state.interfaces.empty() )
-                    {
-                      vertexExtents.resize( state.coordinates.size(), 0 );
-                      for( auto const & cell : state.cells )
-                      {
-                        double const extent = supportExtent( state.coordinates, cell.points );
-                        for( vtkIdType p : cell.points )
-                        {
-                          vertexExtents[p] = std::max( vertexExtents[p], extent );
-                        }
-                      }
-                    }
-                    for( auto const & support : state.interfaces )
-                    {
-                      if( support.key.kind == EntityKind::vertex )
-                      {
-                        points.push_back( { support.key, support.participants, state.coordinates[support.localCorners.front()],
-                                            pointFields.pack( support.localCorners.front() ),
-                                            vertexExtents[support.localCorners.front()] } );
-                      }
-                    }
-                    CellFieldLayout cellFields( *state.cellData );
-                    for( std::size_t c = 0; c < state.cells.size(); ++c )
-                    {
-                      if( isSurface( state.cells[c] ) )
-                      {
-                        cells.push_back( { { state.ns, state.cellIds[c], static_cast< std::uint64_t >( state.cells[c].vtkType ), 0 },
-                                           sharing.at( { state.ns, EntityKind::cell, { state.cellIds[c] } } ),
-                                           cellFields.pack( c ) } );
-                      }
-                    }
-                  }
-                } );
+  {
+    for( auto const & state : states )
+    {
+      PointFieldLayout pointFields( *state.pointData );
+      // Existing vertices have no edge/face recipe. Use their
+      // incident cell extent, rather than an implicit unit mesh,
+      // to compare independently read shared coordinates.
+      std::vector< double > vertexExtents;
+      if( !state.interfaces.empty() )
+      {
+        vertexExtents.resize( state.coordinates.size(), 0 );
+        for( auto const & cell : state.cells )
+        {
+          double const extent = supportExtent( state.coordinates, cell.points );
+          for( vtkIdType p : cell.points )
+          {
+            vertexExtents[p] = std::max( vertexExtents[p], extent );
+          }
+        }
+      }
+      for( auto const & support : state.interfaces )
+      {
+        if( support.key.kind == EntityKind::vertex )
+        {
+          points.push_back( { support.key, support.participants, state.coordinates[support.localCorners.front()],
+                              pointFields.pack( support.localCorners.front() ),
+                              vertexExtents[support.localCorners.front()] } );
+        }
+      }
+      CellFieldLayout cellFields( *state.cellData );
+      for( std::size_t c = 0; c < state.cells.size(); ++c )
+      {
+        if( isSurface( state.cells[c] ) )
+        {
+          cells.push_back( { { state.ns, state.cellIds[c], static_cast< std::uint64_t >( state.cells[c].vtkType ), 0 },
+                             sharing.at( { state.ns, EntityKind::cell, { state.cellIds[c] } } ),
+                             cellFields.pack( c ) } );
+        }
+      }
+    }
+  } );
   auto const pointRecords = comm.reconcileExistingPoints( points );
   auto const cellRecords = comm.reconcileExistingCells( cells );
   comm.checked( "coupled coarse tuple installation",
                 [&]
-                {
-                  for( auto & state : states )
-                  {
-                    PointFieldLayout pointFields( *state.pointData );
-                    for( auto const & support : state.interfaces )
-                    {
-                      if( support.key.kind == EntityKind::vertex )
-                      {
-                        auto const & record = pointRecords.at( support.key );
-                        state.coordinates[support.localCorners.front()] = record.position;
-                        pointFields.install( support.localCorners.front(), record.fields );
-                      }
-                    }
-                    CellFieldLayout cellFields( *state.cellData );
-                    for( std::size_t c = 0; c < state.cells.size(); ++c )
-                    {
-                      if( isSurface( state.cells[c] ) )
-                      {
-                        auto const key =
-                            ChildCellKey{ state.ns, state.cellIds[c], static_cast< std::uint64_t >( state.cells[c].vtkType ), 0 };
-                        cellFields.install( c, cellRecords.at( key ).fields );
-                        state.rootOwners[c] = sharing.at( { state.ns, EntityKind::cell, { state.cellIds[c] } } ).front();
-                      }
-                    }
-                  }
-                } );
+  {
+    for( auto & state : states )
+    {
+      PointFieldLayout pointFields( *state.pointData );
+      for( auto const & support : state.interfaces )
+      {
+        if( support.key.kind == EntityKind::vertex )
+        {
+          auto const & record = pointRecords.at( support.key );
+          state.coordinates[support.localCorners.front()] = record.position;
+          pointFields.install( support.localCorners.front(), record.fields );
+        }
+      }
+      CellFieldLayout cellFields( *state.cellData );
+      for( std::size_t c = 0; c < state.cells.size(); ++c )
+      {
+        if( isSurface( state.cells[c] ) )
+        {
+          auto const key =
+            ChildCellKey{ state.ns, state.cellIds[c], static_cast< std::uint64_t >( state.cells[c].vtkType ), 0 };
+          cellFields.install( c, cellRecords.at( key ).fields );
+          state.rootOwners[c] = sharing.at( { state.ns, EntityKind::cell, { state.cellIds[c] } } ).front();
+        }
+      }
+    }
+  } );
   // Store marker participants in side owners only as a temporary ID-replica map.
   comm.checked( "coarse surface replica participants",
                 [&]
-                {
-                  for( auto & state : states )
-                  {
-                    for( std::size_t c = 0; c < state.cells.size(); ++c )
-                    {
-                      if( isSurface( state.cells[c] ) )
-                      {
-                        state.sides[c].push_back( { { state.ns, EntityKind::cell, { state.cellIds[c] } },
-                                                    {},
-                                                    sharing.at( { state.ns, EntityKind::cell, { state.cellIds[c] } } ) } );
-                      }
-                    }
-                  }
-                } );
+  {
+    for( auto & state : states )
+    {
+      for( std::size_t c = 0; c < state.cells.size(); ++c )
+      {
+        if( isSurface( state.cells[c] ) )
+        {
+          state.sides[c].push_back( { { state.ns, EntityKind::cell, { state.cellIds[c] } },
+                                      {},
+                                      sharing.at( { state.ns, EntityKind::cell, { state.cellIds[c] } } ) } );
+        }
+      }
+    }
+  } );
 }
 
 double surfaceArea( Connectivity const & face, PointRegistry const & points )
@@ -1019,7 +1037,53 @@ struct Level
   std::vector< double > fractions;
   std::vector< ChildCellKey > cellKeys;
   std::vector< Participants > cellParticipants;
+  NodeSetMembers nodeSets;
+  /// Parents that cannot be refined, and the first few reasons.
+  std::uint64_t invalidCells = 0;
+  std::vector< std::string > invalidReasons;
 };
+
+// Domain-boundary faces of the volume cells, in local point indices: faces with
+// one local incident volume that are not shared with another rank.
+std::vector< Connectivity > boundaryFaces( State const & state )
+{
+  std::unordered_set< EntityKey, EntityKeyHash > shared;
+  for( auto const & entity : state.interfaces )
+  {
+    if( entity.key.kind == EntityKind::face )
+    {
+      shared.insert( entity.key );
+    }
+  }
+  std::unordered_map< EntityKey, std::pair< Connectivity, int >, EntityKeyHash > faces;
+  for( auto const & cell : state.cells )
+  {
+    if( isSurface( cell ) )
+    {
+      continue;
+    }
+    for( auto & corners : cellFaces( cell ) )
+    {
+      Connectivity ids;
+      for( vtkIdType p : corners )
+      {
+        ids.push_back( state.pointIds[p] );
+      }
+      auto & face = faces[entityKey( EntityKind::face, std::move( ids ), state.ns )];
+      face.first = std::move( corners );
+      ++face.second;
+    }
+  }
+  std::vector< Connectivity > result;
+  for( auto & [key, face] : faces )
+  {
+    if( face.second == 1 && !shared.count( key ) )
+    {
+      result.push_back( std::move( face.first ) );
+    }
+  }
+  return result;
+}
 
 void planChildren( State const & state, Level & level, int generation, int rank )
 {
@@ -1028,46 +1092,59 @@ void planChildren( State const & state, Level & level, int generation, int rank 
   for( std::size_t p = 0; p < state.cells.size(); ++p )
   {
     auto const & parent = state.cells[p];
-    withCellContext( state.name, generation, state.cellIds[p], parent.vtkType, [&]
+    // Record every parent that cannot be refined, so that the error reports
+    // all of them instead of the first one.
+    try
     {
-      std::vector< Cell > children;
-      std::vector< double > measures;
-      if( isSurface( parent ) )
+      withCellContext( state.name, generation, state.cellIds[p], parent.vtkType, [&]
       {
-        for( auto & face : subdivideFace( parent.points, points ) )
+        std::vector< Cell > children;
+        std::vector< double > measures;
+        if( isSurface( parent ) )
         {
-          measures.push_back( surfaceArea( face, points ) );
-          children.push_back( { face.size() == 3 ? VTK_TRIANGLE : VTK_QUAD, std::move( face ), 0 } );
+          for( auto & face : subdivideFace( parent.points, points ) )
+          {
+            measures.push_back( surfaceArea( face, points ) );
+            children.push_back( { face.size() == 3 ? VTK_TRIANGLE : VTK_QUAD, std::move( face ), 0 } );
+          }
         }
-      }
-      else
+        else
+        {
+          children = subdivideCell( parent, state.cellIds[p], points ).children;
+          for( auto const & child : children )
+          {
+            measures.push_back( signedMeasure( child, points ) );
+          }
+        }
+        double const measure = std::accumulate( measures.begin(), measures.end(), 0. );
+        for( std::size_t c = 0; c < children.size(); ++c )
+        {
+          level.fractions.push_back( measures[c] / measure );
+          level.parentIndices.push_back( p );
+          if( state.hasSurfaces )
+          {
+            level.cellKeys.push_back( { state.ns, state.cellIds[p], static_cast< std::uint64_t >( parent.vtkType ), c } );
+            level.cellParticipants.push_back( isSurface( parent ) ? Participants{ rank } : Participants{} );
+          }
+          level.next.roots.push_back( state.roots[p] );
+          level.next.parents.push_back( state.cellIds[p] );
+          level.next.generations.push_back( generation );
+          level.next.ordinals.push_back( c );
+          level.next.rootOwners.push_back( state.rootOwners[p] );
+          level.next.sources.push_back( state.sources[p] );
+          level.next.reverseSurface.push_back( state.reverseSurface[p] );
+          level.next.cells.push_back( std::move( children[c] ) );
+        }
+      } );
+    }
+    catch( std::exception const & error )
+    {
+      ++level.invalidCells;
+      if( level.invalidReasons.size() < 5 )
       {
-        children = subdivideCell( parent, state.cellIds[p], points ).children;
-        for( auto const & child : children )
-        {
-          measures.push_back( signedMeasure( child, points ) );
-        }
+        level.invalidReasons.push_back( error.what() );
       }
-      double const measure = std::accumulate( measures.begin(), measures.end(), 0. );
-      for( std::size_t c = 0; c < children.size(); ++c )
-      {
-        level.fractions.push_back( measures[c] / measure );
-        level.parentIndices.push_back( p );
-        if( state.hasSurfaces )
-        {
-          level.cellKeys.push_back( { state.ns, state.cellIds[p], static_cast< std::uint64_t >( parent.vtkType ), c } );
-          level.cellParticipants.push_back( isSurface( parent ) ? Participants{ rank } : Participants{} );
-        }
-        level.next.roots.push_back( state.roots[p] );
-        level.next.parents.push_back( state.cellIds[p] );
-        level.next.generations.push_back( generation );
-        level.next.ordinals.push_back( c );
-        level.next.rootOwners.push_back( state.rootOwners[p] );
-        level.next.sources.push_back( state.sources[p] );
-        level.next.reverseSurface.push_back( state.reverseSurface[p] );
-        level.next.cells.push_back( std::move( children[c] ) );
-      }
-    } );
+    }
   }
 }
 
@@ -1080,6 +1157,11 @@ Level planLevel( State const & state, UniformRefinementOptions const & options, 
   level.next.name = state.name;
   level.points = std::make_unique< PointRegistry >( state.coordinates, state.pointIds, state.ns );
   planChildren( state, level, generation, rank );
+  if( level.invalidCells )
+  {
+    // The caller reports these cells collectively; the plan is not used.
+    return level;
+  }
   auto & points = *level.points;
   localCount( level.next.cells.size() );
   localCount( multiply( points.points().size(), 3 ) );
@@ -1087,7 +1169,16 @@ Level planLevel( State const & state, UniformRefinementOptions const & options, 
   auto const policies = policiesFor( state, options );
   {
     GEOS_MARK_SCOPE_STR( "uniformRefinement/transferFields" );
-    level.next.pointData = transferPointData( *state.pointData, points, policies );
+    // Point data is transferred after the participants agree on node-set membership.
+    if( std::any_of( policies.pointArrays.begin(), policies.pointArrays.end(),
+                     []( auto const & policy ) { return policy.second == PointTransferPolicy::nodeSet; } ) )
+    {
+      if( state.ns != 0 )
+      {
+        throw std::invalid_argument( "Refinement node sets are only supported on the main mesh" );
+      }
+      level.nodeSets = boundaryNodeSets( *state.pointData, points, policies, boundaryFaces( state ) );
+    }
     level.next.cellData = transferCellData( *state.cellData, state.cells.size(), level.parentIndices, level.fractions, policies );
   }
   level.next.cellIds.resize( level.next.cells.size(), -1 );
@@ -1115,27 +1206,27 @@ std::set< std::pair< ElementType, int > > sourceSchema( State const & main, Comm
   std::vector< int > local, counts, offsets, gathered;
   comm.checked( "coarse source schema",
                 [&]
-                {
-                  std::set< std::pair< ElementType, int > > unique;
-                  for( auto const & source : main.sources )
-                  {
-                    if( getElementDim( source.type ) == 3 )
-                    {
-                      unique.emplace( source.type, source.attribute );
-                    }
-                  }
-                  if( unique.size() > static_cast< std::size_t >( INT_MAX / 2 ) )
-                  {
-                    throw std::overflow_error( "Too many coarse source blocks" );
-                  }
-                  for( auto const & [type, attribute] : unique )
-                  {
-                    local.push_back( static_cast< int >( type ) );
-                    local.push_back( attribute );
-                  }
-                  counts.resize( comm.size() );
-                  offsets.resize( comm.size() );
-                } );
+  {
+    std::set< std::pair< ElementType, int > > unique;
+    for( auto const & source : main.sources )
+    {
+      if( getElementDim( source.type ) == 3 )
+      {
+        unique.emplace( source.type, source.attribute );
+      }
+    }
+    if( unique.size() > static_cast< std::size_t >( INT_MAX / 2 ) )
+    {
+      throw std::overflow_error( "Too many coarse source blocks" );
+    }
+    for( auto const & [type, attribute] : unique )
+    {
+      local.push_back( static_cast< int >( type ) );
+      local.push_back( attribute );
+    }
+    counts.resize( comm.size() );
+    offsets.resize( comm.size() );
+  } );
   int const count = static_cast< int >( local.size() );
 #ifdef GEOS_USE_MPI
   MPI_Allgather( &count, 1, MPI_INT, counts.data(), 1, MPI_INT, communicator );
@@ -1144,26 +1235,26 @@ std::set< std::pair< ElementType, int > > sourceSchema( State const & main, Comm
 #endif
   comm.checked( "source schema allocation",
                 [&]
-                {
-                  std::uint64_t total = 0;
-                  for( int rank = 0; rank < comm.size(); ++rank )
-                  {
-                    if( counts[rank] < 0 || counts[rank] % 2 )
-                    {
-                      throw std::invalid_argument( "Invalid source schema count" );
-                    }
-                    offsets[rank] = static_cast< int >( total );
-                    total = add( total, counts[rank] );
-                    if( total > INT_MAX )
-                    {
-                      throw std::overflow_error( "Coarse source metadata exceeds MPI count" );
-                    }
-                  }
-                  gathered.resize( total );
-                } );
+  {
+    std::uint64_t total = 0;
+    for( int rank = 0; rank < comm.size(); ++rank )
+    {
+      if( counts[rank] < 0 || counts[rank] % 2 )
+      {
+        throw std::invalid_argument( "Invalid source schema count" );
+      }
+      offsets[rank] = static_cast< int >( total );
+      total = add( total, counts[rank] );
+      if( total > INT_MAX )
+      {
+        throw std::overflow_error( "Coarse source metadata exceeds MPI count" );
+      }
+    }
+    gathered.resize( total );
+  } );
 #ifdef GEOS_USE_MPI
   int empty = 0;
-  MPI_Allgatherv( local.empty() ? &empty : local.data(), count, MPI_INT, gathered.empty() ? &empty : gathered.data(), counts.data(),
+  MPI_Allgatherv( local.empty() ? &empty : local.data(), count, MPI_INT, gathered.empty() ? & empty : gathered.data(), counts.data(),
                   offsets.data(), MPI_INT, communicator );
 #else
   gathered = local;
@@ -1171,30 +1262,30 @@ std::set< std::pair< ElementType, int > > sourceSchema( State const & main, Comm
   std::set< std::pair< ElementType, int > > schema;
   comm.checked( "source schema installation",
                 [&]
-                {
-                  std::set< ElementType > types;
-                  std::set< int > attributes;
-                  for( std::size_t i = 0; i < gathered.size(); i += 2 )
-                  {
-                    auto const type = static_cast< ElementType >( gathered[i] );
-                    if( gathered[i] < static_cast< int >( ElementType::Tetrahedron ) ||
-                        gathered[i] > static_cast< int >( ElementType::Prism11 ) || gathered[i + 1] < -1 )
-                    {
-                      throw std::invalid_argument( "Invalid coarse source block metadata" );
-                    }
-                    types.insert( type );
-                    attributes.insert( gathered[i + 1] );
-                  }
-                  // Existing buildCellMap registers the type/attribute cross product, even
-                  // for empty combinations. Retain that original selector namespace.
-                  for( auto type : types )
-                  {
-                    for( int attribute : attributes )
-                    {
-                      schema.emplace( type, attribute );
-                    }
-                  }
-                } );
+  {
+    std::set< ElementType > types;
+    std::set< int > attributes;
+    for( std::size_t i = 0; i < gathered.size(); i += 2 )
+    {
+      auto const type = static_cast< ElementType >( gathered[i] );
+      if( gathered[i] < static_cast< int >( ElementType::Tetrahedron ) ||
+          gathered[i] > static_cast< int >( ElementType::Prism11 ) || gathered[i + 1] < -1 )
+      {
+        throw std::invalid_argument( "Invalid coarse source block metadata" );
+      }
+      types.insert( type );
+      attributes.insert( gathered[i + 1] );
+    }
+    // Existing buildCellMap registers the type/attribute cross product, even
+    // for empty combinations. Retain that original selector namespace.
+    for( auto type : types )
+    {
+      for( int attribute : attributes )
+      {
+        schema.emplace( type, attribute );
+      }
+    }
+  } );
   return schema;
 }
 
@@ -1216,21 +1307,21 @@ std::vector< RefinementBlockDescriptor > blockDescriptors( State const & main, s
     Cell representative;
     switch( source )
     {
-    case ElementType::Tetrahedron:
-      representative.vtkType = VTK_TETRA;
-      break;
-    case ElementType::Pyramid:
-      representative.vtkType = VTK_PYRAMID;
-      break;
-    case ElementType::Wedge:
-      representative.vtkType = VTK_WEDGE;
-      break;
-    case ElementType::Hexahedron:
-      representative.vtkType = VTK_HEXAHEDRON;
-      break;
-    default:
-      representative.vtkType = VTK_POLYHEDRON;
-      representative.prismSides = static_cast< int >( source ) - static_cast< int >( ElementType::Prism5 ) + 5;
+      case ElementType::Tetrahedron:
+        representative.vtkType = VTK_TETRA;
+        break;
+      case ElementType::Pyramid:
+        representative.vtkType = VTK_PYRAMID;
+        break;
+      case ElementType::Wedge:
+        representative.vtkType = VTK_WEDGE;
+        break;
+      case ElementType::Hexahedron:
+        representative.vtkType = VTK_HEXAHEDRON;
+        break;
+      default:
+        representative.vtkType = VTK_POLYHEDRON;
+        representative.prismSides = static_cast< int >( source ) - static_cast< int >( ElementType::Prism5 ) + 5;
     }
     countCell( counts, representative );
     for( int l = 0; l < levels; ++l )
@@ -1283,24 +1374,24 @@ std::set< std::string > auxiliaryNames( AllMeshes & meshes, Communication & comm
   std::vector< int > counts, offsets;
   comm.checked( "auxiliary block names",
                 [&]
-                {
-                  for( auto const & [name, mesh] : meshes.getFaceBlocks() )
-                  {
-                    GEOS_UNUSED_VAR( mesh );
-                    if( name.empty() || name.find( '\0' ) != std::string::npos )
-                    {
-                      throw std::invalid_argument( "Invalid auxiliary block name" );
-                    }
-                    if( add( local.size(), add( name.size(), 1 ) ) > INT_MAX )
-                    {
-                      throw std::overflow_error( "Auxiliary name metadata exceeds MPI count" );
-                    }
-                    local.insert( local.end(), name.begin(), name.end() );
-                    local.push_back( '\0' );
-                  }
-                  counts.resize( comm.size() );
-                  offsets.resize( comm.size() );
-                } );
+  {
+    for( auto const & [name, mesh] : meshes.getFaceBlocks() )
+    {
+      GEOS_UNUSED_VAR( mesh );
+      if( name.empty() || name.find( '\0' ) != std::string::npos )
+      {
+        throw std::invalid_argument( "Invalid auxiliary block name" );
+      }
+      if( add( local.size(), add( name.size(), 1 ) ) > INT_MAX )
+      {
+        throw std::overflow_error( "Auxiliary name metadata exceeds MPI count" );
+      }
+      local.insert( local.end(), name.begin(), name.end() );
+      local.push_back( '\0' );
+    }
+    counts.resize( comm.size() );
+    offsets.resize( comm.size() );
+  } );
   int const count = static_cast< int >( local.size() );
 #ifdef GEOS_USE_MPI
   MPI_Allgather( &count, 1, MPI_INT, counts.data(), 1, MPI_INT, communicator );
@@ -1309,26 +1400,26 @@ std::set< std::string > auxiliaryNames( AllMeshes & meshes, Communication & comm
 #endif
   comm.checked( "auxiliary name allocation",
                 [&]
-                {
-                  std::uint64_t total = 0;
-                  for( int rank = 0; rank < comm.size(); ++rank )
-                  {
-                    if( counts[rank] < 0 )
-                    {
-                      throw std::invalid_argument( "Invalid auxiliary name count" );
-                    }
-                    offsets[rank] = static_cast< int >( total );
-                    total = add( total, counts[rank] );
-                    if( total > INT_MAX )
-                    {
-                      throw std::overflow_error( "Auxiliary name metadata exceeds MPI count" );
-                    }
-                  }
-                  gathered.resize( total );
-                } );
+  {
+    std::uint64_t total = 0;
+    for( int rank = 0; rank < comm.size(); ++rank )
+    {
+      if( counts[rank] < 0 )
+      {
+        throw std::invalid_argument( "Invalid auxiliary name count" );
+      }
+      offsets[rank] = static_cast< int >( total );
+      total = add( total, counts[rank] );
+      if( total > INT_MAX )
+      {
+        throw std::overflow_error( "Auxiliary name metadata exceeds MPI count" );
+      }
+    }
+    gathered.resize( total );
+  } );
 #ifdef GEOS_USE_MPI
   char empty = 0;
-  MPI_Allgatherv( local.empty() ? &empty : local.data(), count, MPI_CHAR, gathered.empty() ? &empty : gathered.data(), counts.data(),
+  MPI_Allgatherv( local.empty() ? &empty : local.data(), count, MPI_CHAR, gathered.empty() ? & empty : gathered.data(), counts.data(),
                   offsets.data(), MPI_CHAR, communicator );
 #else
   gathered = local;
@@ -1336,29 +1427,29 @@ std::set< std::string > auxiliaryNames( AllMeshes & meshes, Communication & comm
   std::set< std::string > names;
   comm.checked( "auxiliary name installation",
                 [&]
-                {
-                  std::string name;
-                  for( char c : gathered )
-                  {
-                    if( c )
-                    {
-                      name.push_back( c );
-                    }
-                    else
-                    {
-                      if( name.empty() )
-                      {
-                        throw std::invalid_argument( "Empty auxiliary block schema name" );
-                      }
-                      names.insert( std::move( name ) );
-                      name.clear();
-                    }
-                  }
-                  if( !name.empty() )
-                  {
-                    throw std::invalid_argument( "Truncated auxiliary block schema" );
-                  }
-                } );
+  {
+    std::string name;
+    for( char c : gathered )
+    {
+      if( c )
+      {
+        name.push_back( c );
+      }
+      else
+      {
+        if( name.empty() )
+        {
+          throw std::invalid_argument( "Empty auxiliary block schema name" );
+        }
+        names.insert( std::move( name ) );
+        name.clear();
+      }
+    }
+    if( !name.empty() )
+    {
+      throw std::invalid_argument( "Truncated auxiliary block schema" );
+    }
+  } );
   return names;
 }
 
@@ -1478,44 +1569,46 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
   auto const names = auxiliaryNames( meshes, comm, communicator );
   comm.checked( "coupled uniform refinement input",
                 [&]
-                {
-                  GEOS_MARK_SCOPE_STR( "uniformRefinement/preflight" );
-                  if( levels < 0 )
-                  {
-                    throw std::invalid_argument( "uniformRefinement must be nonnegative" );
-                  }
-                  if( !meshes.getMainMesh() )
-                  {
-                    throw std::invalid_argument( "Missing main uniform refinement mesh" );
-                  }
-                  states.push_back( readState( *meshes.getMainMesh(), 0, "main", options, comm.rank() ) );
-                  std::uint64_t ns = 1;
-                  for( auto const & name : names )
-                  {
-                    auto const found = meshes.getFaceBlocks().find( name );
-                    vtkSmartPointer< vtkDataSet > mesh;
-                    if( found == meshes.getFaceBlocks().end() )
-                    {
-                      mesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
-                    }
-                    else
-                    {
-                      mesh = found->second;
-                    }
-                    if( !mesh )
-                    {
-                      throw std::invalid_argument( "Missing auxiliary uniform refinement dataset" );
-                    }
-                    states.push_back( readState( *mesh, ns++, name, options, comm.rank() ) );
-                  }
-                } );
+  {
+    GEOS_MARK_SCOPE_STR( "uniformRefinement/preflight" );
+    if( levels < 0 )
+    {
+      throw std::invalid_argument( "uniformRefinement must be nonnegative" );
+    }
+    if( !meshes.getMainMesh() )
+    {
+      throw std::invalid_argument( "Missing main uniform refinement mesh" );
+    }
+    states.push_back( readState( *meshes.getMainMesh(), 0, "main", options, comm.rank() ) );
+    std::uint64_t ns = 1;
+    for( auto const & name : names )
+    {
+      auto const found = meshes.getFaceBlocks().find( name );
+      vtkSmartPointer< vtkDataSet > mesh;
+      if( found == meshes.getFaceBlocks().end() )
+      {
+        mesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
+      }
+      else
+      {
+        mesh = found->second;
+      }
+      if( !mesh )
+      {
+        throw std::invalid_argument( "Missing auxiliary uniform refinement dataset" );
+      }
+      states.push_back( readState( *mesh, ns++, name, options, comm.rank() ) );
+    }
+  } );
   std::uint64_t localVolumes = 0;
-  for( auto const & cell : states[0].cells ) localVolumes += !isSurface( cell );
+  for( auto const & cell : states[0].cells )
+    localVolumes += !isSurface( cell );
   std::uint64_t localBucketWidth = 0;
   for( auto const & state : states )
-    for( auto const & bucket : state.buckets ) localBucketWidth = std::max( localBucketWidth, static_cast< std::uint64_t >( bucket.size() ) );
+    for( auto const & bucket : state.buckets )
+      localBucketWidth = std::max( localBucketWidth, static_cast< std::uint64_t >( bucket.size() ) );
   std::array< std::uint64_t, 6 > const configuration{ localVolumes, static_cast< std::uint64_t >( levels ),
-    static_cast< std::uint64_t >( INT_MAX - levels ), options.reportStatistics ? 1u : 0u, options.reportStatistics ? 0u : 1u, localBucketWidth };
+                                                      static_cast< std::uint64_t >( INT_MAX - levels ), options.reportStatistics ? 1u : 0u, options.reportStatistics ? 0u : 1u, localBucketWidth };
   std::array< std::uint64_t, 6 > maximumConfiguration{};
   MpiWrapper::allReduce( configuration, maximumConfiguration, MpiWrapper::Reduction::Max, communicator );
   comm.checked( "uniform refinement growth preflight", [&]
@@ -1577,48 +1670,48 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
   std::vector< std::pair< std::size_t, std::size_t > > surfaceIndices;
   comm.checked( "coupled coarse surface queries",
                 [&]
-                {
-                  for( auto const & cell : states[0].cells )
-                  {
-                    if( !isSurface( cell ) )
-                    {
-                      for( auto const & face : cellFaces( cell ) )
-                      {
-                        Connectivity ids;
-                        for( vtkIdType p : face )
-                        {
-                          ids.push_back( states[0].pointIds[p] );
-                        }
-                        mainFaces.push_back( { std::move( ids ), { comm.rank() } } );
-                      }
-                    }
-                  }
-                } );
+  {
+    for( auto const & cell : states[0].cells )
+    {
+      if( !isSurface( cell ) )
+      {
+        for( auto const & face : cellFaces( cell ) )
+        {
+          Connectivity ids;
+          for( vtkIdType p : face )
+          {
+            ids.push_back( states[0].pointIds[p] );
+          }
+          mainFaces.push_back( { std::move( ids ), { comm.rank() } } );
+        }
+      }
+    }
+  } );
   comm.validateVolumeFaces( mainFaces );
   coarseSharing( states, comm, communicator );
   auto const sources = sourceSchema( states[0], comm, communicator );
   comm.checked( "coupled coarse surface buckets",
                 [&]
-                {
-                  for( std::size_t s = 0; s < states.size(); ++s )
-                  {
-                    for( std::size_t c = 0; c < states[s].cells.size(); ++c )
-                    {
-                      if( isSurface( states[s].cells[c] ) )
-                      {
-                        CoarseSurface query;
-                        for( vtkIdType p : states[s].cells[c].points )
-                        {
-                          query.cornerBuckets.push_back( s == 0 ? Connectivity{ states[s].pointIds[p] } : states[s].buckets[p] );
-                        }
-                        surfaces.push_back( std::move( query ) );
-                        surfaceIndices.emplace_back( s, c );
-                      }
-                    }
-                  }
-                } );
+  {
+    for( std::size_t s = 0; s < states.size(); ++s )
+    {
+      for( std::size_t c = 0; c < states[s].cells.size(); ++c )
+      {
+        if( isSurface( states[s].cells[c] ) )
+        {
+          CoarseSurface query;
+          for( vtkIdType p : states[s].cells[c].points )
+          {
+            query.cornerBuckets.push_back( s == 0 ? Connectivity{ states[s].pointIds[p] } : states[s].buckets[p] );
+          }
+          surfaces.push_back( std::move( query ) );
+          surfaceIndices.emplace_back( s, c );
+        }
+      }
+    }
+  } );
   auto const globalSurfaceCount =
-      MpiWrapper::allReduce( static_cast< std::uint64_t >( surfaces.size() ), MpiWrapper::Reduction::Sum, communicator );
+    MpiWrapper::allReduce( static_cast< std::uint64_t >( surfaces.size() ), MpiWrapper::Reduction::Sum, communicator );
   std::vector< std::vector< SurfaceSide > > associations;
   if( globalSurfaceCount )
   {
@@ -1628,27 +1721,27 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
   std::vector< std::vector< Participants > > surfaceParticipants;
   comm.checked( "coupled coarse surface installation",
                 [&]
-                {
-                  surfaceParticipants.resize( states.size() );
-                  for( std::size_t s = 0; s < states.size(); ++s )
-                  {
-                    if( states[s].hasSurfaces )
-                    {
-                      surfaceParticipants[s].resize( states[s].cells.size() );
-                    }
-                  }
-                  for( std::size_t q = 0; q < surfaceIndices.size(); ++q )
-                  {
-                    auto const [s, c] = surfaceIndices[q];
-                    surfaceParticipants[s][c] = states[s].sides[c].front().owners;
-                    states[s].sides[c] = std::move( associations[q] );
-                    if( s == 0 && !std::binary_search( states[s].sides[c].front().owners.begin(), states[s].sides[c].front().owners.end(),
-                                                       comm.rank() ) )
-                    {
-                      throw std::invalid_argument( "Main surface marker is not on a locally owned volume face" );
-                    }
-                  }
-                } );
+  {
+    surfaceParticipants.resize( states.size() );
+    for( std::size_t s = 0; s < states.size(); ++s )
+    {
+      if( states[s].hasSurfaces )
+      {
+        surfaceParticipants[s].resize( states[s].cells.size() );
+      }
+    }
+    for( std::size_t q = 0; q < surfaceIndices.size(); ++q )
+    {
+      auto const [s, c] = surfaceIndices[q];
+      surfaceParticipants[s][c] = states[s].sides[c].front().owners;
+      states[s].sides[c] = std::move( associations[q] );
+      if( s == 0 && !std::binary_search( states[s].sides[c].front().owners.begin(), states[s].sides[c].front().owners.end(),
+                                         comm.rank() ) )
+      {
+        throw std::invalid_argument( "Main surface marker is not on a locally owned volume face" );
+      }
+    }
+  } );
   // Coarse-only face and routing payloads are released before fine growth.
   std::vector< MainFace >{}.swap( mainFaces );
   std::vector< CoarseSurface >{}.swap( surfaces );
@@ -1662,7 +1755,8 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
     for( auto const & [name, mesh] : meshes.getFaceBlocks() )
     {
       GEOS_UNUSED_VAR( name );
-      if( mesh ) retainedBytes = add( retainedBytes, multiply( mesh->GetActualMemorySize(), 1024 ) );
+      if( mesh )
+        retainedBytes = add( retainedBytes, multiply( mesh->GetActualMemorySize(), 1024 ) );
     }
     result.resources = resourceForecast( states, levels, retainedBytes, comm.neighbors().size(), maximumConfiguration[5] );
     result.levels.reserve( levels );
@@ -1691,23 +1785,105 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
     std::vector< Level > plans;
     comm.checked( "coupled level planning",
                   [&]
-                  {
-                    plans.reserve( states.size() );
-                    for( auto const & state : states )
-                    {
-                      plans.push_back( planLevel( state, options, generation, comm.rank() ) );
-                    }
-                    for( std::size_t s = 0; s < plans.size(); ++s )
-                    {
-                      for( std::size_t c = 0; c < plans[s].next.cells.size(); ++c )
-                      {
-                        if( isSurface( plans[s].next.cells[c] ) )
-                        {
-                          plans[s].cellParticipants[c] = surfaceParticipants[s][plans[s].parentIndices[c]];
-                        }
-                      }
-                    }
-                  } );
+    {
+      plans.reserve( states.size() );
+      for( auto const & state : states )
+      {
+        plans.push_back( planLevel( state, options, generation, comm.rank() ) );
+      }
+      for( std::size_t s = 0; s < plans.size(); ++s )
+      {
+        for( std::size_t c = 0; c < plans[s].next.cells.size(); ++c )
+        {
+          if( isSurface( plans[s].next.cells[c] ) )
+          {
+            plans[s].cellParticipants[c] = surfaceParticipants[s][plans[s].parentIndices[c]];
+          }
+        }
+      }
+    } );
+    // Report every parent that cannot be refined, on every rank, before any
+    // further communication uses the incomplete plans.
+    std::uint64_t localInvalid = 0;
+    for( auto const & plan : plans )
+    {
+      localInvalid += plan.invalidCells;
+    }
+    std::uint64_t const globalInvalid = MpiWrapper::sum( localInvalid, communicator );
+    comm.checked( "cell geometry",
+                  [&]
+    {
+      if( localInvalid == 0 )
+      {
+        return;
+      }
+      std::string message = GEOS_FMT( "{} cell(s) cannot be refined at level {} ({} on this rank). "
+                                      "Uniform refinement stops instead of making an invalid cell. "
+                                      "Improve these cells in the coarse mesh, or use uniformRefinement=\"{}\". "
+                                      "First cells on this rank:",
+                                      globalInvalid, generation, localInvalid, generation - 1 );
+      for( auto const & plan : plans )
+      {
+        for( auto const & reason : plan.invalidReasons )
+        {
+          message += "\n  - " + reason;
+        }
+      }
+      throw std::invalid_argument( message );
+    } );
+    // Ranks sharing a new point may see different boundary faces around it.
+    // The point joins a node set when any of its participants places it there.
+    std::vector< SharedFlag > nodeSetFlags;
+    comm.checked( "shared node-set flags",
+                  [&]
+    {
+      for( auto const & plan : plans )
+      {
+        for( vtkIdType p = plan.points->originalSize(); p < static_cast< vtkIdType >( plan.points->points().size() ); ++p )
+        {
+          std::uint64_t label = 0;
+          for( auto const & [name, members] : plan.nodeSets )
+          {
+            GEOS_UNUSED_VAR( name );
+            if( members[p] && plan.interfaces->participants( { p } ).size() > 1 )
+            {
+              nodeSetFlags.push_back( { plan.points->points()[p].key, plan.interfaces->participants( { p } ), label } );
+            }
+            ++label;
+          }
+        }
+      }
+    } );
+    auto const sharedNodeSets = comm.unionSharedFlags( generation, nodeSetFlags );
+    comm.checked( "coupled point fields",
+                  [&]
+    {
+      GEOS_MARK_SCOPE_STR( "uniformRefinement/transferFields" );
+      for( std::size_t s = 0; s < plans.size(); ++s )
+      {
+        auto & plan = plans[s];
+        std::vector< std::vector< bool > * > byLabel;
+        for( auto & [name, members] : plan.nodeSets )
+        {
+          GEOS_UNUSED_VAR( name );
+          byLabel.push_back( &members );
+        }
+        for( auto const & [key, label] : sharedNodeSets )
+        {
+          if( key.meshNamespace != plan.next.ns )
+          {
+            continue;
+          }
+          vtkIdType const p = plan.points->findPoint( key );
+          if( p < plan.points->originalSize() || label >= byLabel.size() )
+          {
+            throw std::invalid_argument( "Shared node-set flag for an unknown refinement point or set" );
+          }
+          ( *byLabel[label] )[p] = true;
+        }
+        plan.next.pointData = transferPointData( *states[s].pointData, *plan.points, policiesFor( states[s], options ), plan.nodeSets );
+      }
+    } );
     std::unordered_map< EntityKey, vtkIdType, EntityKeyHash > mainSupportIds;
     // Point ranges are per dataset namespace. Main IDs and each auxiliary point
     // space preserve their own old IDs; auxiliary cell ranges are separate below.
@@ -1717,92 +1893,92 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
       std::vector< PointCreation > creations;
       comm.checked( "coupled point tuples",
                     [&]
-                    {
-                      PointFieldLayout fields( *plan.next.pointData );
-                      for( vtkIdType p = plan.points->originalSize(); p < static_cast< vtkIdType >( plan.points->points().size() ); ++p )
-                      {
-                        auto const & recipe = plan.points->points()[p];
-                        auto const & participants = plan.interfaces->participants( { p } );
-                        creations.push_back(
-                            { recipe.key, participants, recipe.position,
-                              participants.size() > 1 ? fields.pack( p, FieldTupleFormat::valuesOnly ) : Bytes{},
-                              supportExtent( states[s].coordinates, recipe.support ) } );
-                        if( s == 0 )
-                        {
-                          running.ownedMainPoints += participants.front() == comm.rank();
-                          running.sharedMainPointCopies += participants.size() > 1;
-                        }
-                      }
-                    } );
+      {
+        PointFieldLayout fields( *plan.next.pointData );
+        for( vtkIdType p = plan.points->originalSize(); p < static_cast< vtkIdType >( plan.points->points().size() ); ++p )
+        {
+          auto const & recipe = plan.points->points()[p];
+          auto const & participants = plan.interfaces->participants( { p } );
+          creations.push_back(
+            { recipe.key, participants, recipe.position,
+              participants.size() > 1 ? fields.pack( p, FieldTupleFormat::valuesOnly ) : Bytes{},
+              supportExtent( states[s].coordinates, recipe.support ) } );
+          if( s == 0 )
+          {
+            running.ownedMainPoints += participants.front() == comm.rank();
+            running.sharedMainPointCopies += participants.size() > 1;
+          }
+        }
+      } );
       vtkIdType const maximum = states[s].pointIds.empty() ? -1 : *std::max_element( states[s].pointIds.begin(), states[s].pointIds.end() );
       auto const records = comm.resolvePoints( generation, creations, maximum );
       comm.checked( "coupled point installation",
                     [&]
-                    {
-                      auto & next = plan.next;
-                      next.pointIds = states[s].pointIds;
-                      next.coordinates.reserve( plan.points->points().size() );
-                      PointFieldLayout fields( *next.pointData );
-                      for( vtkIdType p = 0; p < static_cast< vtkIdType >( plan.points->points().size() ); ++p )
-                      {
-                        auto const & recipe = plan.points->points()[p];
-                        if( p < plan.points->originalSize() )
-                        {
-                          next.coordinates.push_back( recipe.position );
-                        }
-                        else
-                        {
-                          auto const & record = records.at( recipe.key );
-                          next.pointIds.push_back( record.globalId );
-                          next.coordinates.push_back( record.position );
-                          if( plan.interfaces->participants( { p } ).size() > 1 )
-                          {
-                            fields.install( p, record.fields, FieldTupleFormat::valuesOnly );
-                          }
-                        }
-                        // Only auxiliary collocation requests use this map.
-                        if( s == 0 && plans.size() > 1 )
-                        {
-                          mainSupportIds.emplace( recipe.key, next.pointIds[p] );
-                        }
-                      }
-                      next.interfaces = plan.interfaces->fineSupports( next.pointIds );
-                    } );
+      {
+        auto & next = plan.next;
+        next.pointIds = states[s].pointIds;
+        next.coordinates.reserve( plan.points->points().size() );
+        PointFieldLayout fields( *next.pointData );
+        for( vtkIdType p = 0; p < static_cast< vtkIdType >( plan.points->points().size() ); ++p )
+        {
+          auto const & recipe = plan.points->points()[p];
+          if( p < plan.points->originalSize() )
+          {
+            next.coordinates.push_back( recipe.position );
+          }
+          else
+          {
+            auto const & record = records.at( recipe.key );
+            next.pointIds.push_back( record.globalId );
+            next.coordinates.push_back( record.position );
+            if( plan.interfaces->participants( { p } ).size() > 1 )
+            {
+              fields.install( p, record.fields, FieldTupleFormat::valuesOnly );
+            }
+          }
+          // Only auxiliary collocation requests use this map.
+          if( s == 0 && plans.size() > 1 )
+          {
+            mainSupportIds.emplace( recipe.key, next.pointIds[p] );
+          }
+        }
+        next.interfaces = plan.interfaces->fineSupports( next.pointIds );
+      } );
     }
     std::uint64_t volumeCount = 0;
     comm.checked( "coupled volume counts",
                   [&]
-                  {
-                    for( auto const & cell : plans[0].next.cells )
-                    {
-                      volumeCount += !isSurface( cell );
-                    }
-                  } );
+    {
+      for( auto const & cell : plans[0].next.cells )
+      {
+        volumeCount += !isSurface( cell );
+      }
+    } );
     auto const volumeRange = comm.allocateRange( volumeCount, 0 );
     running.ownedVolumeCells = volumeCount;
     running.mainPointCopies = plans[0].points->points().size();
     comm.checked( "coupled volume IDs",
                   [&]
-                  {
-                    vtkIdType id = volumeRange.first;
-                    for( std::size_t c = 0; c < plans[0].next.cells.size(); ++c )
-                    {
-                      if( !isSurface( plans[0].next.cells[c] ) )
-                      {
-                        plans[0].next.cellIds[c] = id++;
-                      }
-                    }
-                  } );
+    {
+      vtkIdType id = volumeRange.first;
+      for( std::size_t c = 0; c < plans[0].next.cells.size(); ++c )
+      {
+        if( !isSurface( plans[0].next.cells[c] ) )
+        {
+          plans[0].next.cellIds[c] = id++;
+        }
+      }
+    } );
     vtkIdType surfaceBase = 0;
     comm.checked( "main surface prefix",
                   [&]
-                  {
-                    if( volumeRange.total > static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() ) )
-                    {
-                      throw std::overflow_error( "Volume prefix leaves no representable surface base" );
-                    }
-                    surfaceBase = static_cast< vtkIdType >( volumeRange.total );
-                  } );
+    {
+      if( volumeRange.total > static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() ) )
+      {
+        throw std::overflow_error( "Volume prefix leaves no representable surface base" );
+      }
+      surfaceBase = static_cast< vtkIdType >( volumeRange.total );
+    } );
     vtkIdType auxiliaryBase = 0;
     std::vector< std::vector< Participants > > nextParticipants;
     comm.checked( "surface participant allocation", [&] { nextParticipants.resize( states.size() ); } );
@@ -1812,50 +1988,50 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
       std::vector< CellCreation > creations;
       comm.checked( "coupled surface-cell tuples",
                     [&]
-                    {
-                      CellFieldLayout fields( *plan.next.cellData );
-                      if( plan.next.hasSurfaces )
-                      {
-                        nextParticipants[s].resize( plan.next.cells.size() );
-                      }
-                      for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
-                      {
-                        if( isSurface( plan.next.cells[c] ) )
-                        {
-                          creations.push_back( { plan.cellKeys[c], plan.cellParticipants[c],
-                                                 plan.cellParticipants[c].size() > 1 ? fields.pack( c, FieldTupleFormat::valuesOnly ) : Bytes{} } );
-                          nextParticipants[s][c] = plan.cellParticipants[c];
-                        }
-                      }
-                    } );
+      {
+        CellFieldLayout fields( *plan.next.cellData );
+        if( plan.next.hasSurfaces )
+        {
+          nextParticipants[s].resize( plan.next.cells.size() );
+        }
+        for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
+        {
+          if( isSurface( plan.next.cells[c] ) )
+          {
+            creations.push_back( { plan.cellKeys[c], plan.cellParticipants[c],
+                                   plan.cellParticipants[c].size() > 1 ? fields.pack( c, FieldTupleFormat::valuesOnly ) : Bytes{} } );
+            nextParticipants[s][c] = plan.cellParticipants[c];
+          }
+        }
+      } );
       vtkIdType const base = s == 0 ? surfaceBase : auxiliaryBase;
       IdRange range{};
       auto const records = comm.resolveCells( generation, creations, base, &range );
       comm.checked( "coupled surface-cell installation",
                     [&]
-                    {
-                      CellFieldLayout fields( *plan.next.cellData );
-                      for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
-                      {
-                        if( isSurface( plan.next.cells[c] ) )
-                        {
-                          auto const & record = records.at( plan.cellKeys[c] );
-                          plan.next.cellIds[c] = record.globalId;
-                          if( plan.cellParticipants[c].size() > 1 )
-                          {
-                            fields.install( c, record.fields, FieldTupleFormat::valuesOnly );
-                          }
-                        }
-                      }
-                      if( range.total > static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() ) - base )
-                      {
-                        throw std::overflow_error( "Auxiliary cell prefix exceeds vtkIdType" );
-                      }
-                      if( s )
-                      {
-                        auxiliaryBase = base + static_cast< vtkIdType >( range.total );
-                      }
-                    } );
+      {
+        CellFieldLayout fields( *plan.next.cellData );
+        for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
+        {
+          if( isSurface( plan.next.cells[c] ) )
+          {
+            auto const & record = records.at( plan.cellKeys[c] );
+            plan.next.cellIds[c] = record.globalId;
+            if( plan.cellParticipants[c].size() > 1 )
+            {
+              fields.install( c, record.fields, FieldTupleFormat::valuesOnly );
+            }
+          }
+        }
+        if( range.total > static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() ) - base )
+        {
+          throw std::overflow_error( "Auxiliary cell prefix exceeds vtkIdType" );
+        }
+        if( s )
+        {
+          auxiliaryBase = base + static_cast< vtkIdType >( range.total );
+        }
+      } );
     }
     // Rebuild every auxiliary child side and bucket from actual parent faces.
     // No product of endpoint buckets and no coordinate identity is used.
@@ -1867,88 +2043,89 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
       std::map< Binding, std::size_t > bindings;
       comm.checked( "coupled auxiliary support planning",
                     [&]
-                    {
-                      GEOS_MARK_SCOPE_STR( "uniformRefinement/fractureAssociations" );
-                      for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
-                      {
-                        vtkIdType const parent = plan.parentIndices[c];
-                        for( std::size_t side = 0; side < states[s].sides[parent].size(); ++side )
-                        {
-                          for( vtkIdType point : plan.next.cells[c].points )
-                          {
-                            auto const [found, inserted] = bindings.emplace( Binding{ parent, side, point }, requests.size() );
-                            GEOS_UNUSED_VAR( found );
-                            if( !inserted )
-                            {
-                              continue;
-                            }
-                            auto const & recipe = plan.points->points()[point];
-                            auto const & oldSide = states[s].sides[parent][side];
-                            requests.push_back( { SurfaceAssociations::supportKey( recipe.key.kind, recipe.support,
-                                                                                   states[s].cells[parent].points, oldSide ),
-                                                  oldSide.owners.front() } );
-                          }
-                        }
-                      }
-                    } );
+      {
+        GEOS_MARK_SCOPE_STR( "uniformRefinement/fractureAssociations" );
+        for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
+        {
+          vtkIdType const parent = plan.parentIndices[c];
+          for( std::size_t side = 0; side < states[s].sides[parent].size(); ++side )
+          {
+            for( vtkIdType point : plan.next.cells[c].points )
+            {
+              auto const [found, inserted] = bindings.emplace( Binding{ parent, side, point }, requests.size() );
+              GEOS_UNUSED_VAR( found );
+              if( !inserted )
+              {
+                continue;
+              }
+              auto const & recipe = plan.points->points()[point];
+              auto const & oldSide = states[s].sides[parent][side];
+              requests.push_back( { SurfaceAssociations::supportKey( recipe.key.kind, recipe.support,
+                                                                     states[s].cells[parent].points, oldSide ),
+                                    oldSide.owners.front() } );
+            }
+          }
+        }
+      } );
       auto const ids = comm.resolveSupportIds( generation, requests, mainSupportIds );
       comm.checked( "coupled auxiliary associations",
                     [&]
-                    {
-                      GEOS_MARK_SCOPE_STR( "uniformRefinement/fractureAssociations" );
-                      plan.next.buckets = states[s].buckets;
-                      plan.next.buckets.resize( plan.next.pointIds.size() );
-                      for( auto const & [binding, request] : bindings )
-                      {
-                        auto const [parent, side, point] = binding;
-                        GEOS_UNUSED_VAR( parent, side );
-                        if( point >= plan.points->originalSize() )
-                        {
-                          plan.next.buckets[point].push_back( ids[request] );
-                        }
-                      }
-                      for( auto & bucket : plan.next.buckets )
-                      {
-                        std::sort( bucket.begin(), bucket.end() );
-                        bucket.erase( std::unique( bucket.begin(), bucket.end() ), bucket.end() );
-                      }
-                      for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
-                      {
-                        vtkIdType const parent = plan.parentIndices[c];
-                        for( std::size_t side = 0; side < states[s].sides[parent].size(); ++side )
-                        {
-                          Connectivity corners;
-                          for( vtkIdType point : plan.next.cells[c].points )
-                          {
-                            corners.push_back( ids[bindings.at( { parent, side, point } )] );
-                          }
-                          plan.next.sides[c].push_back(
-                              { entityKey( EntityKind::face, corners ), std::move( corners ), states[s].sides[parent][side].owners } );
-                        }
-                      }
-                    } );
+      {
+        GEOS_MARK_SCOPE_STR( "uniformRefinement/fractureAssociations" );
+        plan.next.buckets = states[s].buckets;
+        plan.next.buckets.resize( plan.next.pointIds.size() );
+        for( auto const & [binding, request] : bindings )
+        {
+          auto const [parent, side, point] = binding;
+          GEOS_UNUSED_VAR( parent, side );
+          if( point >= plan.points->originalSize() )
+          {
+            plan.next.buckets[point].push_back( ids[request] );
+          }
+        }
+        for( auto & bucket : plan.next.buckets )
+        {
+          std::sort( bucket.begin(), bucket.end() );
+          bucket.erase( std::unique( bucket.begin(), bucket.end() ), bucket.end() );
+        }
+        for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
+        {
+          vtkIdType const parent = plan.parentIndices[c];
+          for( std::size_t side = 0; side < states[s].sides[parent].size(); ++side )
+          {
+            Connectivity corners;
+            for( vtkIdType point : plan.next.cells[c].points )
+            {
+              corners.push_back( ids[bindings.at( { parent, side, point } )] );
+            }
+            plan.next.sides[c].push_back(
+              { entityKey( EntityKind::face, corners ), std::move( corners ), states[s].sides[parent][side].owners } );
+          }
+        }
+      } );
     }
     comm.checked( "coupled level output",
                   [&]
-                  {
-                    GEOS_MARK_SCOPE_STR( "uniformRefinement/validation" );
-                    for( auto const & plan : plans )
-                    {
-                      PointRegistry finalPoints( plan.next.coordinates, plan.next.pointIds, plan.next.ns );
-                      for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
-                      {
-                        auto const & cell = plan.next.cells[c];
-                        withCellContext( plan.next.name, generation, plan.next.parents[c], cell.vtkType, [&]
-                        {
-                          if( !isSurface( cell ) ) validateGeometry( cell, finalPoints );
-                        } );
-                      }
-                      if( std::find( plan.next.cellIds.begin(), plan.next.cellIds.end(), -1 ) != plan.next.cellIds.end() )
-                      {
-                        throw std::invalid_argument( "Unassigned refined cell ID" );
-                      }
-                    }
-                  } );
+    {
+      GEOS_MARK_SCOPE_STR( "uniformRefinement/validation" );
+      for( auto const & plan : plans )
+      {
+        PointRegistry finalPoints( plan.next.coordinates, plan.next.pointIds, plan.next.ns );
+        for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
+        {
+          auto const & cell = plan.next.cells[c];
+          withCellContext( plan.next.name, generation, plan.next.parents[c], cell.vtkType, [&]
+          {
+            if( !isSurface( cell ) )
+              validateGeometry( cell, finalPoints );
+          } );
+        }
+        if( std::find( plan.next.cellIds.begin(), plan.next.cellIds.end(), -1 ) != plan.next.cellIds.end() )
+        {
+          throw std::invalid_argument( "Unassigned refined cell ID" );
+        }
+      }
+    } );
     // No old VTK dataset is committed on failure; parent states are released
     // after this collectively successful level, rather than retaining L meshes.
     comm.checked( "level statistics installation", [&]
@@ -1982,47 +2159,47 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
   auto const auxiliaryMaximum = MpiWrapper::allReduce( localAuxiliaryMaximum, MpiWrapper::Reduction::Max, communicator );
   comm.checked( "final auxiliary import offset",
                 [&]
-                {
-                  if( auxiliaryMaximum >= 0 )
-                  {
-                    auto const limit = std::min( static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() ),
-                                                 static_cast< std::uint64_t >( std::numeric_limits< globalIndex >::max() ) );
-                    if( mainMaximum < 0 || add( add( static_cast< std::uint64_t >( mainMaximum ), 1 ), auxiliaryMaximum ) > limit )
-                    {
-                      throw std::overflow_error( "Final fracture import offset exceeds global ID storage" );
-                    }
-                  }
-                } );
+  {
+    if( auxiliaryMaximum >= 0 )
+    {
+      auto const limit = std::min( static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() ),
+                                   static_cast< std::uint64_t >( std::numeric_limits< globalIndex >::max() ) );
+      if( mainMaximum < 0 || add( add( static_cast< std::uint64_t >( mainMaximum ), 1 ), auxiliaryMaximum ) > limit )
+      {
+        throw std::overflow_error( "Final fracture import offset exceeds global ID storage" );
+      }
+    }
+  } );
   for( std::size_t s = 0; s < states.size(); ++s )
   {
     int capacity = 0;
     comm.checked( "collocation capacity",
                   [&]
-                  {
-                    for( auto const & bucket : states[s].buckets )
-                    {
-                      if( bucket.size() > static_cast< std::size_t >( INT_MAX ) )
-                      {
-                        throw std::overflow_error( "Collocation capacity exceeds int" );
-                      }
-                      capacity = std::max( capacity, static_cast< int >( bucket.size() ) );
-                    }
-                  } );
+    {
+      for( auto const & bucket : states[s].buckets )
+      {
+        if( bucket.size() > static_cast< std::size_t >( INT_MAX ) )
+        {
+          throw std::overflow_error( "Collocation capacity exceeds int" );
+        }
+        capacity = std::max( capacity, static_cast< int >( bucket.size() ) );
+      }
+    } );
     capacity = MpiWrapper::allReduce( capacity, MpiWrapper::Reduction::Max, communicator );
     comm.checked( "coupled final VTK construction", [&] { output.push_back( buildGrid( states[s], std::max( capacity, 1 ) ) ); } );
   }
   stdMap< string, vtkSmartPointer< vtkDataSet > > blocks;
   comm.checked( "coupled final commit preparation",
                 [&]
-                {
-                  for( std::size_t s = 1; s < states.size(); ++s )
-                  {
-                    blocks.emplace( states[s].name, output[s] );
-                  }
-                  result.blocks = blockDescriptors( states[0], sources, levels );
-                  result.neighbors = comm.neighbors();
-                  result.communication = comm.statistics();
-                } );
+  {
+    for( std::size_t s = 1; s < states.size(); ++s )
+    {
+      blocks.emplace( states[s].name, output[s] );
+    }
+    result.blocks = blockDescriptors( states[0], sources, levels );
+    result.neighbors = comm.neighbors();
+    result.communication = comm.statistics();
+  } );
   meshes.getFaceBlocks().swap( blocks );
   meshes.setMainMesh( output[0] );
   return result;

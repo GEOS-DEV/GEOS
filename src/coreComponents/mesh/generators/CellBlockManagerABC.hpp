@@ -129,6 +129,10 @@ public:
    */
   virtual stdMap< integer, std::set< string > > const & getRegionAttributesCellBlocks() const = 0;
 
+  /**
+   * @return For each coarse cell block name, the names of the cell blocks refined from it.
+   *         Empty when the mesh was not refined.
+   */
   virtual SourceCellBlockDescendants const & getSourceCellBlockDescendants() const
   {
     static SourceCellBlockDescendants const empty;

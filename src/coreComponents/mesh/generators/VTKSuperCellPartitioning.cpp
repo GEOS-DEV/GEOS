@@ -279,14 +279,16 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
                            rootCells, totalCells ) );
 
   bool const useMorton = scatterMethod == ScatterMethod::kdtree;
-  if( useMorton ) GEOS_LOG_RANK_0( "Using legacy Morton ordering for initial fracture super-cell distribution" );
+  if( useMorton )
+    GEOS_LOG_RANK_0( "Using legacy Morton ordering for initial fracture super-cell distribution" );
   vtkIdType numAtoms = 0;
   if( rank == 0 )
   {
     auto * ids = vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );
     GEOS_ERROR_IF( ids == nullptr, "SuperCellId array not found" );
     std::unordered_set< vtkIdType > unique;
-    for( vtkIdType i = 0; i < ids->GetNumberOfValues(); ++i ) unique.insert( ids->GetValue( i ) );
+    for( vtkIdType i = 0; i < ids->GetNumberOfValues(); ++i )
+      unique.insert( ids->GetValue( i ) );
     numAtoms = unique.size();
   }
   MpiWrapper::broadcast( numAtoms, 0, comm );
@@ -390,25 +392,32 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
           double const extent = bounds[2*d+1] - bounds[2*d];
           uint32_t const value = extent < 1e-10 ? 0 : static_cast< uint32_t >(
             std::clamp( ( point[d] - bounds[2*d] ) / extent, 0.0, 1.0 ) * ( (1u << 21) - 1 ) );
-          for( int bit = 0; bit < 21; ++bit ) code |= static_cast< uint64_t >( ( value >> bit ) & 1u ) << (3*bit+d);
+          for( int bit = 0; bit < 21; ++bit )
+            code |= static_cast< uint64_t >( ( value >> bit ) & 1u ) << (3*bit+d);
         }
         order.emplace_back( code, atom );
       }
       std::sort( order.begin(), order.end(), []( auto const & a, auto const & b ) { return a.first < b.first; } );
       atomRanks.resize( numSuperCells );
       vtkIdType const blockSize = (numSuperCells + numRanks - 1) / numRanks;
-      for( vtkIdType i = 0; i < numSuperCells; ++i ) atomRanks[order[i].second] = std::min< integer >( i / blockSize, numRanks - 1 );
+      for( vtkIdType i = 0; i < numSuperCells; ++i )
+        atomRanks[order[i].second] = std::min< integer >( i / blockSize, numRanks - 1 );
     }
-    else atomRanks = computeCellRanks( scatterMethod, *atomMesh, cartesianPartitions, numRanks );
+    else
+      atomRanks = computeCellRanks( scatterMethod, *atomMesh, cartesianPartitions, numRanks );
 
     // Repair empty bins by moving whole atoms, preserving fracture atomicity.
     stdVector< stdVector< vtkIdType > > bins( numRanks );
-    for( vtkIdType atom = 0; atom < numSuperCells; ++atom ) bins[atomRanks[atom]].push_back( atom );
+    for( vtkIdType atom = 0; atom < numSuperCells; ++atom )
+      bins[atomRanks[atom]].push_back( atom );
     std::priority_queue< std::pair< vtkIdType, integer > > donors;
-    for( integer r = 0; r < numRanks; ++r ) if( bins[r].size() > 1 ) donors.emplace( bins[r].size(), -r );
+    for( integer r = 0; r < numRanks; ++r )
+      if( bins[r].size() > 1 )
+        donors.emplace( bins[r].size(), -r );
     for( integer r = 0; r < numRanks; ++r )
     {
-      if( !bins[r].empty() ) continue;
+      if( !bins[r].empty() )
+        continue;
       GEOS_ERROR_IF( donors.empty(), "Insufficient atomic super-cells to fill empty ranks" );
       integer const donor = -donors.top().second;
       donors.pop();
@@ -416,7 +425,8 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
       bins[donor].pop_back();
       atomRanks[atom] = r;
       bins[r].push_back( atom );
-      if( bins[donor].size() > 1 ) donors.emplace( bins[donor].size(), -donor );
+      if( bins[donor].size() > 1 )
+        donors.emplace( bins[donor].size(), -donor );
     }
 
     cellRanks.resize( numCells );
@@ -437,7 +447,9 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     {
       vtkNew< vtkIdList > ids;
       if( rank == 0 )
-        for( vtkIdType c = 0; c < rootCells; ++c ) if( cellRanks[c] == r ) ids->InsertNextId( c );
+        for( vtkIdType c = 0; c < rootCells; ++c )
+          if( cellRanks[c] == r )
+            ids->InsertNextId( c );
       vtkNew< vtkExtractCells > extractor;
       extractor->SetInputData( cells3D );
       extractor->SetCellList( ids );
@@ -450,7 +462,8 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     result = cells3D;
 #endif
   }
-  else result = scatterByRankAssignment( cells3D.Get(), std::move( cellRanks ), comm );
+  else
+    result = scatterByRankAssignment( cells3D.Get(), std::move( cellRanks ), comm );
 
   vtkIdType const after = MpiWrapper::sum( result->GetNumberOfCells(), comm );
   GEOS_ERROR_IF( after != totalCells,

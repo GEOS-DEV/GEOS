@@ -56,9 +56,11 @@ FUNCTION next( FUNCTION intercepted )
   void * address;
   std::memcpy( &address, &intercepted, sizeof( address ) );
   Dl_info info{};
-  if( !dladdr( address, &info ) || !info.dli_sname ) throw std::runtime_error( "Cannot identify audit symbol" );
+  if( !dladdr( address, &info ) || !info.dli_sname )
+    throw std::runtime_error( "Cannot identify audit symbol" );
   address = dlsym( RTLD_NEXT, info.dli_sname );
-  if( !address ) throw std::runtime_error( std::string( "Cannot forward audit symbol " ) + info.dli_sname );
+  if( !address )
+    throw std::runtime_error( std::string( "Cannot forward audit symbol " ) + info.dli_sname );
   FUNCTION original;
   std::memcpy( &original, &address, sizeof( original ) );
   return original;
@@ -113,18 +115,20 @@ AUDIT_NEW( vtkRedistributeDataSetFilter, repartition )
 
 #if defined(GEOS_USE_MPI)
 extern "C" int MPI_Gather( void const * send, int sendCount, MPI_Datatype sendType,
-                            void * receive, int receiveCount, MPI_Datatype receiveType,
-                            int root, MPI_Comm comm )
+                           void * receive, int receiveCount, MPI_Datatype receiveType,
+                           int root, MPI_Comm comm )
 {
-  if( auto * counters = active.load() ) ++counters->gather;
+  if( auto * counters = active.load() )
+    ++counters->gather;
   return PMPI_Gather( send, sendCount, sendType, receive, receiveCount, receiveType, root, comm );
 }
 
 extern "C" int MPI_Gatherv( void const * send, int sendCount, MPI_Datatype sendType,
-                             void * receive, int const * counts, int const * displacements,
-                             MPI_Datatype receiveType, int root, MPI_Comm comm )
+                            void * receive, int const * counts, int const * displacements,
+                            MPI_Datatype receiveType, int root, MPI_Comm comm )
 {
-  if( auto * counters = active.load() ) ++counters->gather;
+  if( auto * counters = active.load() )
+    ++counters->gather;
   return PMPI_Gatherv( send, sendCount, sendType, receive, counts, displacements, receiveType, root, comm );
 }
 #endif
@@ -134,7 +138,8 @@ namespace geos::vtk
 UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, UniformRefinementOptions const & options, MPI_Comm comm )
 {
   static auto original = next( &refineUniformly );
-  if( levels <= 0 ) return original( meshes, levels, options, comm );
+  if( levels <= 0 )
+    return original( meshes, levels, options, comm );
   Interval interval( levels, comm );
   if( std::getenv( "GEOS_REFINEMENT_AUDIT_PROBE" ) )
   {
@@ -150,17 +155,19 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
 }
 
 vtkSmartPointer< vtkDataSet > scatterMesh( ScatterMethod method, vtkDataSet & mesh,
-                                          arrayView1d< integer const > partitions, MPI_Comm comm )
+                                           arrayView1d< integer const > partitions, MPI_Comm comm )
 {
-  if( auto * counters = active.load() ) ++counters->scatter;
+  if( auto * counters = active.load() )
+    ++counters->scatter;
   static auto original = next( &scatterMesh );
   return original( method, mesh, partitions, comm );
 }
 
 vtkSmartPointer< vtkUnstructuredGrid > scatterByRankAssignment( vtkUnstructuredGrid * mesh,
-                                                               stdVector< integer > assignment, MPI_Comm comm )
+                                                                stdVector< integer > assignment, MPI_Comm comm )
 {
-  if( auto * counters = active.load() ) ++counters->scatter;
+  if( auto * counters = active.load() )
+    ++counters->scatter;
   static auto original = next( &scatterByRankAssignment );
   return original( mesh, std::move( assignment ), comm );
 }
@@ -170,7 +177,8 @@ AllMeshes redistributeMeshes( integer logLevel, vtkSmartPointer< vtkDataSet > me
                               ScatterMethod scatter, arrayView1d< int const > partitions, PartitionMethod method,
                               int partitionRefinement, int fractureWeight, int useIds, string const & indexName )
 {
-  if( auto * counters = active.load() ) ++counters->redistribute;
+  if( auto * counters = active.load() )
+    ++counters->redistribute;
   static auto original = next( &redistributeMeshes );
   return original( logLevel, std::move( mesh ), fractures, comm, scatter, partitions, method,
                    partitionRefinement, fractureWeight, useIds, indexName );
@@ -181,19 +189,21 @@ AllMeshes redistributeMeshes( integer logLevel, vtkSmartPointer< vtkDataSet > me
 namespace geos::parmetis
 {
 array1d< pmet_idx_t > partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
-                                arrayView1d< pmet_idx_t const > const & distribution,
-                                pmet_idx_t parts, MPI_Comm comm, int refinements )
+                                 arrayView1d< pmet_idx_t const > const & distribution,
+                                 pmet_idx_t parts, MPI_Comm comm, int refinements )
 {
-  if( auto * counters = active.load() ) ++counters->repartition;
+  if( auto * counters = active.load() )
+    ++counters->repartition;
   static auto original = next( &partition );
   return original( graph, distribution, parts, comm, refinements );
 }
 array1d< pmet_idx_t > partitionWeighted( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
-                                        arrayView1d< pmet_idx_t const > const & weights,
-                                        arrayView1d< pmet_idx_t const > const & distribution,
-                                        pmet_idx_t parts, MPI_Comm comm, int refinements )
+                                         arrayView1d< pmet_idx_t const > const & weights,
+                                         arrayView1d< pmet_idx_t const > const & distribution,
+                                         pmet_idx_t parts, MPI_Comm comm, int refinements )
 {
-  if( auto * counters = active.load() ) ++counters->repartition;
+  if( auto * counters = active.load() )
+    ++counters->repartition;
   static auto original = next( &partitionWeighted );
   return original( graph, weights, distribution, parts, comm, refinements );
 }
@@ -205,7 +215,8 @@ namespace geos::ptscotch
 {
 array1d< int64_t > partition( ArrayOfArraysView< int64_t const, int64_t > const & graph, int64_t parts, MPI_Comm comm )
 {
-  if( auto * counters = active.load() ) ++counters->repartition;
+  if( auto * counters = active.load() )
+    ++counters->repartition;
   static auto original = next( &partition );
   return original( graph, parts, comm );
 }

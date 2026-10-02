@@ -170,6 +170,10 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
                    COMMAND testVTKImport_mpi -x 4 --gtest_filter=VTKImport.parallelFileWithFewerPiecesThanRanks
                    NUM_MPI_TASKS 4 )
     set_tests_properties( testVTKImport_pvtu_4ranks PROPERTIES TIMEOUT 60 )
+    geos_add_test( NAME testVTKImport_pvtu_surfaces_4ranks
+                   COMMAND testVTKImport_mpi -x 4 --gtest_filter=VTKImport.parallelFileWithSurfacesInAnotherPiece
+                   NUM_MPI_TASKS 4 )
+    set_tests_properties( testVTKImport_pvtu_surfaces_4ranks PROPERTIES TIMEOUT 60 )
     foreach( ranks IN ITEMS 4 8 )
       geos_add_test( NAME testVTKRefinedFractureImport_${ranks}ranks
                      COMMAND testVTKRefinedFractureImport_mpi -x ${ranks}

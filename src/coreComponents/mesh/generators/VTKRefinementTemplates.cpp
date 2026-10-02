@@ -29,6 +29,7 @@
 #include <limits>
 #include <map>
 #include <set>
+#include <sstream>
 #include <stdexcept>
 
 namespace geos::vtk::refinement
@@ -184,6 +185,52 @@ void certifyBox( Cell const & cell, PointRegistry const & registry, Coordinates 
     certifyBox( cell, registry, a, c, tolerance, depth + 1 );
   }
 }
+
+char const * cellTypeName( Cell const & cell )
+{
+  if( cell.prismSides )
+    return "polygonal prism";
+  switch( cell.vtkType )
+  {
+    case VTK_TETRA: return "tetrahedron";
+    case VTK_PYRAMID: return "pyramid";
+    case VTK_WEDGE: return "wedge";
+    case VTK_HEXAHEDRON: return "hexahedron";
+    default: return "cell";
+  }
+}
+
+// Smallest sampled Jacobian, divided by the cube of the cell size. It only
+// explains a rejected cell; validateGeometry is the validity proof.
+std::string sampledScaledJacobian( Cell const & cell, PointRegistry const & registry )
+{
+  double scale = 0;
+  for( vtkIdType p : cell.points )
+    for( double x : subtract( registry.position( p ), registry.position( cell.points[0] ) ) )
+      scale = std::max( scale, std::abs( x ) );
+  double lowest = std::numeric_limits< double >::infinity();
+  try
+  {
+    int constexpr samples = 8;
+    for( int i = 0; i <= samples; ++i )
+      for( int j = 0; j <= samples; ++j )
+        for( int k = 0; k <= samples; ++k )
+        {
+          double const x = double( i ) / samples, y = double( j ) / samples, z = double( k ) / samples;
+          if( cell.vtkType == VTK_WEDGE && x + y > 1 )
+            continue;
+          lowest = std::min( lowest, jacobian( cell, registry, x, y, z ) );
+        }
+  }
+  catch( std::exception const & )
+  {
+    return "not available";
+  }
+  std::ostringstream text;
+  text.precision( 2 );
+  text << std::scientific << lowest / ( scale * scale * scale );
+  return text.str();
+}
 } // namespace
 
 std::vector< Connectivity > cellFaces( Cell const & cell )
@@ -205,20 +252,20 @@ std::vector< Connectivity > cellFaces( Cell const & cell )
   else
     switch( cell.vtkType )
     {
-    case VTK_TETRA:
-      faces = { { 0, 2, 1 }, { 0, 1, 3 }, { 1, 2, 3 }, { 2, 0, 3 } };
-      break;
-    case VTK_HEXAHEDRON:
-      faces = { { 0, 3, 2, 1 }, { 4, 5, 6, 7 }, { 0, 1, 5, 4 }, { 1, 2, 6, 5 }, { 2, 3, 7, 6 }, { 3, 0, 4, 7 } };
-      break;
-    case VTK_WEDGE:
-      faces = { { 0, 1, 2 }, { 3, 5, 4 }, { 0, 3, 4, 1 }, { 1, 4, 5, 2 }, { 2, 5, 3, 0 } };
-      break;
-    case VTK_PYRAMID:
-      faces = { { 0, 3, 2, 1 }, { 0, 1, 4 }, { 1, 2, 4 }, { 2, 3, 4 }, { 3, 0, 4 } };
-      break;
-    default:
-      throw std::invalid_argument( "Unsupported uniform refinement volume cell type" );
+      case VTK_TETRA:
+        faces = { { 0, 2, 1 }, { 0, 1, 3 }, { 1, 2, 3 }, { 2, 0, 3 } };
+        break;
+      case VTK_HEXAHEDRON:
+        faces = { { 0, 3, 2, 1 }, { 4, 5, 6, 7 }, { 0, 1, 5, 4 }, { 1, 2, 6, 5 }, { 2, 3, 7, 6 }, { 3, 0, 4, 7 } };
+        break;
+      case VTK_WEDGE:
+        faces = { { 0, 1, 2 }, { 3, 5, 4 }, { 0, 3, 4, 1 }, { 1, 4, 5, 2 }, { 2, 5, 3, 0 } };
+        break;
+      case VTK_PYRAMID:
+        faces = { { 0, 3, 2, 1 }, { 0, 1, 4 }, { 1, 2, 4 }, { 2, 3, 4 }, { 3, 0, 4 } };
+        break;
+      default:
+        throw std::invalid_argument( "Unsupported uniform refinement volume cell type" );
     }
   for( auto & face : faces )
     for( vtkIdType & i : face )
@@ -256,7 +303,7 @@ std::vector< EntitySupport > cellEntitySupports( Cell const & cell, vtkIdType gl
 }
 
 std::vector< EntitySupport > meshEntitySupports( std::vector< Cell > const & cells, Connectivity const & globalCellIds,
-                                                Connectivity const & globalPointIds, int localRank, std::uint64_t meshNamespace )
+                                                 Connectivity const & globalPointIds, int localRank, std::uint64_t meshNamespace )
 {
   if( cells.size() != globalCellIds.size() )
     throw std::invalid_argument( "Refinement cell ID count does not match local volumes" );
@@ -291,26 +338,26 @@ Cell normalizeCell( vtkCell & cell )
     throw std::invalid_argument( "Repeated refinement cell vertex" );
   switch( result.vtkType )
   {
-  case VTK_TETRA:
-  case VTK_PYRAMID:
-  case VTK_WEDGE:
-  case VTK_HEXAHEDRON:
-    return result;
-  case VTK_VOXEL:
-    std::swap( result.points[2], result.points[3] );
-    std::swap( result.points[6], result.points[7] );
-    result.vtkType = VTK_HEXAHEDRON;
-    return result;
-  case VTK_PENTAGONAL_PRISM:
-    result.prismSides = 5;
-    return result;
-  case VTK_HEXAGONAL_PRISM:
-    result.prismSides = 6;
-    return result;
-  case VTK_POLYHEDRON:
-    break;
-  default:
-    throw std::invalid_argument( "Unsupported uniform refinement cell (including high-order cells)" );
+    case VTK_TETRA:
+    case VTK_PYRAMID:
+    case VTK_WEDGE:
+    case VTK_HEXAHEDRON:
+      return result;
+    case VTK_VOXEL:
+      std::swap( result.points[2], result.points[3] );
+      std::swap( result.points[6], result.points[7] );
+      result.vtkType = VTK_HEXAHEDRON;
+      return result;
+    case VTK_PENTAGONAL_PRISM:
+      result.prismSides = 5;
+      return result;
+    case VTK_HEXAGONAL_PRISM:
+      result.prismSides = 6;
+      return result;
+    case VTK_POLYHEDRON:
+      break;
+    default:
+      throw std::invalid_argument( "Unsupported uniform refinement cell (including high-order cells)" );
   }
 
   std::vector< Connectivity > faces;
@@ -541,7 +588,15 @@ std::vector< Connectivity > subdivideFace( Connectivity const & p, PointRegistry
 
 Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegistry & registry )
 {
-  validateGeometry( cell, registry );
+  try
+  {
+    validateGeometry( cell, registry );
+  }
+  catch( std::exception const & error )
+  {
+    throw std::invalid_argument( std::string( "the coarse " ) + cellTypeName( cell ) + " is degenerate or inverted (" + error.what() +
+                                 "; minimum sampled scaled Jacobian " + sampledScaledJacobian( cell, registry ) + ")" );
+  }
   Subdivision result;
   for( auto const & face : cellFaces( cell ) )
     result.faceChildren.push_back( subdivideFace( face, registry ) );
@@ -571,7 +626,7 @@ Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegis
   else if( cell.vtkType == VTK_HEXAHEDRON )
   {
     constexpr int corners[8][3] = { { 0, 0, 0 }, { 2, 0, 0 }, { 2, 2, 0 }, { 0, 2, 0 },
-                                    { 0, 0, 2 }, { 2, 0, 2 }, { 2, 2, 2 }, { 0, 2, 2 } };
+      { 0, 0, 2 }, { 2, 0, 2 }, { 2, 2, 2 }, { 0, 2, 2 } };
     vtkIdType lattice[3][3][3];
     for( int x = 0; x < 3; ++x )
       for( int y = 0; y < 3; ++y )
@@ -680,8 +735,26 @@ Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegis
   }
   else
     throw std::invalid_argument( "Unsupported volume refinement template" );
-  for( Cell const & c : result.children )
-    validateGeometry( c, registry );
+  for( std::size_t k = 0; k < result.children.size(); ++k )
+  {
+    Cell const & c = result.children[k];
+    try
+    {
+      validateGeometry( c, registry );
+    }
+    catch( std::exception const & error )
+    {
+      std::string message = std::string( "the parent " ) + cellTypeName( cell ) + " is valid, but child " + std::to_string( k ) + " (a " +
+                            cellTypeName( c ) + ") of its refinement template is degenerate or inverted (" + error.what() +
+                            "). Minimum sampled scaled Jacobian: parent " + sampledScaledJacobian( cell, registry ) + ", child " +
+                            sampledScaledJacobian( c, registry ) + ".";
+      // The pyramid template's inverted center child has its apex at the base
+      // center and its base at the midpoints of the lateral edges.
+      if( cell.vtkType == VTK_PYRAMID && c.vtkType == VTK_PYRAMID && k == 5 )
+        message += " The pyramid is too flat for its warped base: the center of its base lies above the midpoints of its lateral edges.";
+      throw std::invalid_argument( message );
+    }
+  }
   double sum = 0;
   for( Cell const & c : result.children )
     sum += signedMeasure( c, registry );

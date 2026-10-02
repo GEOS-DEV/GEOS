@@ -217,7 +217,8 @@ TEST( VTKUniformRefinement, ForecastsMatchGrowthAndCountSharedUnusedOriginalPoin
   EXPECT_EQ( result.resources[0].pointCopiesUpperBound, 28 );
   EXPECT_EQ( result.resources[1].pointCopiesUpperBound, 180 );
   std::uint64_t connectivity = 0;
-  for( vtkIdType c = 0; c < output->GetNumberOfCells(); ++c ) connectivity += output->GetCell( c )->GetNumberOfPoints();
+  for( vtkIdType c = 0; c < output->GetNumberOfCells(); ++c )
+    connectivity += output->GetCell( c )->GetNumberOfPoints();
   EXPECT_EQ( result.resources[1].connectivityEntries, connectivity );
   EXPECT_GT( result.resources[1].modeledRefinerPeakBytes, result.resources[1].vtkBytesUpperBound );
   EXPECT_TRUE( result.resources[1].geosGhostConnectivityBytesModel.has_value() );
@@ -272,8 +273,8 @@ TEST( VTKUniformRefinement, UnusedOriginalCopyMatchesAnInteriorVertexOnItsOtherR
         {
           cellIds.push_back( sparseBase + 30000 + cells.size() );
           cells.push_back( { VTK_HEXAHEDRON,
-            { index( x, y, z ), index( x + 1, y, z ), index( x + 1, y + 1, z ), index( x, y + 1, z ),
-              index( x, y, z + 1 ), index( x + 1, y, z + 1 ), index( x + 1, y + 1, z + 1 ), index( x, y + 1, z + 1 ) }, 0 } );
+                             { index( x, y, z ), index( x + 1, y, z ), index( x + 1, y + 1, z ), index( x, y + 1, z ),
+                               index( x, y, z + 1 ), index( x + 1, y, z + 1 ), index( x + 1, y + 1, z + 1 ), index( x, y + 1, z + 1 ) }, 0 } );
         }
     input = makeGrid( xyz, ids, cells, cellIds );
   }
@@ -523,7 +524,8 @@ TEST( VTKUniformRefinement, InvalidCellDiagnosticsIncludeBlockLevelParentAndType
             // be represented at 1e16. Child validation must diagnose level one.
             xyz[0] = 1e16 + 2 * ( xyz[0] - 3 * rank );
           }
-          else xyz[2] = 0;
+          else
+            xyz[2] = 0;
           input->GetPoints()->SetPoint( p, xyz.data() );
         }
       }
@@ -596,7 +598,8 @@ TEST( VTKUniformRefinement, RequiredCellArraysKeepVolumeAndSurfaceImportsWithout
       coordinates.push_back( cube.xyz[p] );
       pointIds.push_back( sparseBase + 100 * rank + 10 * side + p );
     }
-    for( auto & point : cube.cell.points ) point += offset;
+    for( auto & point : cube.cell.points )
+      point += offset;
     cells.push_back( cube.cell );
     cellIds.push_back( sparseBase + 10000 + 2 * rank + side );
   }
@@ -614,7 +617,7 @@ TEST( VTKUniformRefinement, RequiredCellArraysKeepVolumeAndSurfaceImportsWithout
     buckets->InsertNextTypedTuple( bucket );
   }
   auto surface = makeGrid( surfaceCoordinates, surfacePointIds, { { VTK_QUAD, { 0, 1, 2, 3 }, 0 } },
-                          { sparseBase + 30000 + rank } );
+                           { sparseBase + 30000 + rank } );
   surface->GetPointData()->AddArray( buckets );
   for( auto * grid : { volume.GetPointer(), surface.GetPointer() } )
   {
@@ -630,7 +633,8 @@ TEST( VTKUniformRefinement, RequiredCellArraysKeepVolumeAndSurfaceImportsWithout
     grid->GetCellData()->AddArray( unused );
     vtkNew< vtkStringArray > strings;
     strings->SetName( "unusedLabels" );
-    for( vtkIdType c = 0; c < grid->GetNumberOfCells(); ++c ) strings->InsertNextValue( "not imported" );
+    for( vtkIdType c = 0; c < grid->GetNumberOfCells(); ++c )
+      strings->InsertNextValue( "not imported" );
     grid->GetCellData()->AddArray( strings );
   }
   UniformRefinementOptions options;
@@ -662,7 +666,8 @@ TEST( VTKUniformRefinement, RequiredCellArraysKeepVolumeAndSurfaceImportsWithout
     auto * selected = vtkDoubleArray::SafeDownCast( grid->GetCellData()->GetScalars() );
     ASSERT_NE( selected, nullptr );
     EXPECT_EQ( selected->GetNumberOfTuples(), grid->GetNumberOfCells() );
-    for( vtkIdType c = 0; c < grid->GetNumberOfCells(); ++c ) EXPECT_DOUBLE_EQ( selected->GetValue( c ), 7 + rank );
+    for( vtkIdType c = 0; c < grid->GetNumberOfCells(); ++c )
+      EXPECT_DOUBLE_EQ( selected->GetValue( c ), 7 + rank );
   }
 }
 
@@ -725,25 +730,25 @@ TEST( VTKUniformRefinement, EverySupportedEncodingThroughThreeLevels )
     EXPECT_EQ( described, 10024 );
     EXPECT_EQ( result.communication.directoryExchanges, 3 );
     PointRegistry points(
-        [&]
-        {
-          std::vector< Coordinates > xyz( output->GetNumberOfPoints() );
-          for( vtkIdType p = 0; p < output->GetNumberOfPoints(); ++p )
-          {
-            output->GetPoint( p, xyz[p].data() );
-          }
-          return xyz;
-        }(),
-        [&]
-        {
-          Connectivity ids;
-          auto * active = vtkIdTypeArray::SafeDownCast( output->GetPointData()->GetGlobalIds() );
-          for( vtkIdType p = 0; p < output->GetNumberOfPoints(); ++p )
-          {
-            ids.push_back( active->GetValue( p ) );
-          }
-          return ids;
-        }() );
+      [&]
+    {
+      std::vector< Coordinates > xyz( output->GetNumberOfPoints() );
+      for( vtkIdType p = 0; p < output->GetNumberOfPoints(); ++p )
+      {
+        output->GetPoint( p, xyz[p].data() );
+      }
+      return xyz;
+    }(),
+      [&]
+    {
+      Connectivity ids;
+      auto * active = vtkIdTypeArray::SafeDownCast( output->GetPointData()->GetGlobalIds() );
+      for( vtkIdType p = 0; p < output->GetNumberOfPoints(); ++p )
+      {
+        ids.push_back( active->GetValue( p ) );
+      }
+      return ids;
+    }() );
     for( vtkIdType c = 0; c < output->GetNumberOfCells(); ++c )
     {
       EXPECT_NO_THROW( validateGeometry( normalizeCell( *output->GetCell( c ) ), points ) );
@@ -825,7 +830,7 @@ TEST( VTKUniformRefinement, SharedCoordinatesUseTheMeshExtent )
   }
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   MpiWrapper::init( &argc, &argv );
   MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );

@@ -49,21 +49,21 @@ inline ReferenceCell referenceCell( int type, int face )
   ReferenceCell r{ { type, {}, 0 }, {}, face };
   switch( type )
   {
-  case VTK_TETRA:
-    r.xyz = { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
-    break;
-  case VTK_PYRAMID:
-    r.xyz = { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 }, { .5, .5, 1 } };
-    break;
-  case VTK_WEDGE:
-    r.xyz = { { 0, 0, 0 }, { 0, 1, 0 }, { 1, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, { 1, 0, 1 } };
-    break;
-  case VTK_HEXAHEDRON:
-    r.xyz = { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 }, { 0, 0, 1 }, { 1, 0, 1 }, { 1, 1, 1 }, { 0, 1, 1 } };
-    break;
-  default:
-    r.cell = regularPrism( type, r.xyz );
-    return r;
+    case VTK_TETRA:
+      r.xyz = { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
+      break;
+    case VTK_PYRAMID:
+      r.xyz = { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 }, { .5, .5, 1 } };
+      break;
+    case VTK_WEDGE:
+      r.xyz = { { 0, 0, 0 }, { 0, 1, 0 }, { 1, 0, 0 }, { 0, 0, 1 }, { 0, 1, 1 }, { 1, 0, 1 } };
+      break;
+    case VTK_HEXAHEDRON:
+      r.xyz = { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 1, 0 }, { 0, 1, 0 }, { 0, 0, 1 }, { 1, 0, 1 }, { 1, 1, 1 }, { 0, 1, 1 } };
+      break;
+    default:
+      r.cell = regularPrism( type, r.xyz );
+      return r;
   }
   r.cell.points.resize( r.xyz.size() );
   std::iota( r.cell.points.begin(), r.cell.points.end(), 0 );

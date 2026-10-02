@@ -1378,7 +1378,8 @@ void FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0( FaceManager & faceM
   } );
   // Face order, winding and paired-node order can all change after ghosting.
   // Keep the face element's two node halves aligned with those final faces.
-  if( refinedTopology ) fixNodesOrder( elems2dToFaces, faceToNodes.base().toViewConst(), m_toNodesRelation.base() );
+  if( refinedTopology )
+    fixNodesOrder( elems2dToFaces, faceToNodes.base().toViewConst(), m_toNodesRelation.base() );
 }
 
 } /* namespace geos */

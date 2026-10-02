@@ -27,6 +27,9 @@ class vtkCell;
 namespace geos::vtk::refinement
 {
 
+// Internal implementation of geos::vtk::refineUniformly.
+/// @cond DO_NOT_DOCUMENT
+
 /** GEOS' VTK import ordering throughout; prismSides identifies a polygonal
  * prism. */
 struct Cell
@@ -76,6 +79,8 @@ struct CellCounts
   std::uint64_t total() const;
   CellCounts next() const;
 };
+
+/// @endcond
 
 } // namespace geos::vtk::refinement
 #endif

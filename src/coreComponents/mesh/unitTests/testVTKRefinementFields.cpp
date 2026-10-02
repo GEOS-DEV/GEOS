@@ -103,6 +103,12 @@ TransferPolicies nodeSetPolicies()
   policies.pointArrays = { { "base", PointTransferPolicy::nodeSet }, { "corner", PointTransferPolicy::nodeSet } };
   return policies;
 }
+
+// The single pyramid is the whole mesh, so all its faces are boundary faces.
+vtkSmartPointer< vtkPointData > transferOnPyramid( vtkPointData & input, PointRegistry const & points, TransferPolicies const & policies )
+{
+  return transferPointData( input, points, policies, boundaryNodeSets( input, points, policies, cellFaces( pyramid ) ) );
+}
 } // namespace
 
 TEST( VTKRefinementFields, TypedAffineFieldsAndNodeSets )
@@ -111,7 +117,7 @@ TEST( VTKRefinementFields, TypedAffineFieldsAndNodeSets )
   PointRegistry points( coordinates, { 500, 501, 502, 503, 504 } );
   subdivideCell( pyramid, 900, points );
   auto const center = points.cell( 900, pyramid.points );
-  auto output = transferPointData( *input, points, nodeSetPolicies() );
+  auto output = transferOnPyramid( *input, points, nodeSetPolicies() );
   EXPECT_EQ( output->GetGlobalIds(), nullptr );
   EXPECT_EQ( output->GetArray( "originalIds" ), nullptr );
   EXPECT_EQ( output->GetArray( vtkDataSetAttributes::GhostArrayName() ), nullptr );
@@ -141,8 +147,33 @@ TEST( VTKRefinementFields, TypedAffineFieldsAndNodeSets )
   EXPECT_DOUBLE_EQ( output->GetArray( "base" )->GetComponent( center, 0 ), 0 );
   // Existing input values remain byte-exact, including signed zero.
   vtkDoubleArray::SafeDownCast( input->GetVectors() )->SetTypedComponent( 0, 0, -0. );
-  output = transferPointData( *input, points, nodeSetPolicies() );
+  output = transferOnPyramid( *input, points, nodeSetPolicies() );
   EXPECT_TRUE( std::signbit( output->GetVectors()->GetComponent( 0, 0 ) ) );
+}
+
+TEST( VTKRefinementFields, NodeSetsGrowOnlyAlongBoundaryFaces )
+{
+  auto input = pointData();
+  for( vtkIdType i = 0; i < 5; ++i )
+    vtkUnsignedCharArray::SafeDownCast( input->GetArray( "base" ) )->SetValue( i, 1 );
+  PointRegistry points( coordinates, { 500, 501, 502, 503, 504 } );
+  subdivideCell( pyramid, 900, points );
+  auto const center = points.cell( 900, pyramid.points );
+  // Every corner is in the set, but only the base is on the domain boundary:
+  // the side faces, the apex edges and the cell interior must not join.
+  auto const policies = nodeSetPolicies();
+  auto const members = boundaryNodeSets( *input, points, policies, { { 0, 1, 2, 3 } } );
+  auto output = transferPointData( *input, points, policies, members );
+  auto * base = output->GetArray( "base" );
+  EXPECT_DOUBLE_EQ( base->GetComponent( points.face( { 0, 1, 2, 3 } ), 0 ), 1 );
+  for( vtkIdType i = 0; i < 4; ++i )
+  {
+    EXPECT_DOUBLE_EQ( base->GetComponent( points.edge( i, ( i + 1 ) % 4 ), 0 ), 1 );
+    EXPECT_DOUBLE_EQ( base->GetComponent( points.edge( i, 4 ), 0 ), 0 );
+  }
+  EXPECT_DOUBLE_EQ( base->GetComponent( center, 0 ), 0 );
+  // New points need explicit membership.
+  EXPECT_THROW( transferPointData( *input, points, policies ), std::invalid_argument );
 }
 
 TEST( VTKRefinementFields, IntensiveAndMeasuredExtensivePyramidFields )
@@ -234,7 +265,7 @@ TEST( VTKRefinementFields, CanonicalTuplesPreserveExactIntegersAndCheckSchema )
   auto input = pointData();
   PointRegistry points( coordinates, { 500, 501, 502, 503, 504 } );
   subdivideCell( pyramid, 900, points );
-  auto data = transferPointData( *input, points, nodeSetPolicies() );
+  auto data = transferOnPyramid( *input, points, nodeSetPolicies() );
   PointFieldLayout original( *data );
   auto tuple = original.pack( 7 );
   vtkNew< vtkPointData > reordered;
@@ -284,19 +315,19 @@ TEST( VTKRefinementFields, InvalidOrUnimplementedPoliciesFail )
   subdivideCell( pyramid, 900, points );
   auto policies = nodeSetPolicies();
   vtkTypeInt64Array::SafeDownCast( input->GetArray( "label" ) )->SetTypedComponent( 0, 0, largeLabel + 1 );
-  EXPECT_THROW( transferPointData( *input, points, policies ), std::invalid_argument );
+  EXPECT_THROW( transferOnPyramid( *input, points, policies ), std::invalid_argument );
   vtkTypeInt64Array::SafeDownCast( input->GetArray( "label" ) )->SetTypedComponent( 0, 0, largeLabel );
   policies.pointArrays["label"] = PointTransferPolicy::continuous;
-  EXPECT_THROW( transferPointData( *input, points, policies ), std::invalid_argument );
+  EXPECT_THROW( transferOnPyramid( *input, points, policies ), std::invalid_argument );
   policies = nodeSetPolicies();
   policies.pointArrays["missing"] = PointTransferPolicy::equal;
-  EXPECT_THROW( transferPointData( *input, points, policies ), std::invalid_argument );
+  EXPECT_THROW( transferOnPyramid( *input, points, policies ), std::invalid_argument );
   policies = nodeSetPolicies();
   policies.pointArrays["velocity"] = PointTransferPolicy::nodeSet;
-  EXPECT_THROW( transferPointData( *input, points, policies ), std::invalid_argument );
+  EXPECT_THROW( transferOnPyramid( *input, points, policies ), std::invalid_argument );
   policies = nodeSetPolicies();
   vtkDoubleArray::SafeDownCast( input->GetVectors() )->SetTypedComponent( 0, 0, std::numeric_limits< double >::infinity() );
-  EXPECT_THROW( transferPointData( *input, points, policies ), std::invalid_argument );
+  EXPECT_THROW( transferOnPyramid( *input, points, policies ), std::invalid_argument );
   vtkNew< vtkCellData > cell;
   vtkNew< vtkTypeInt64Array > counts;
   counts->SetName( "integer" );
@@ -327,11 +358,11 @@ TEST( VTKRefinementFields, RelationalArraysRequireTheirSpecializedHandler )
   input->AddArray( associations );
   PointRegistry points( coordinates, { 500, 501, 502, 503, 504 } );
   subdivideCell( pyramid, 900, points );
-  auto output = transferPointData( *input, points, nodeSetPolicies() );
+  auto output = transferOnPyramid( *input, points, nodeSetPolicies() );
   EXPECT_EQ( output->GetAbstractArray( "collocated_nodes" ), nullptr );
   auto policies = nodeSetPolicies();
   policies.pointArrays["collocated_nodes"] = PointTransferPolicy::equal;
-  EXPECT_THROW( transferPointData( *input, points, policies ), std::invalid_argument );
+  EXPECT_THROW( transferOnPyramid( *input, points, policies ), std::invalid_argument );
 }
 
 TEST( VTKRefinementFields, SurfaceCellTupleCodecPreservesIntegersStringsBitsAndRoles )
@@ -400,7 +431,7 @@ TEST( VTKRefinementFields, SurfaceCellTupleCodecPreservesIntegersStringsBitsAndR
   EXPECT_THROW( wrong.install( 0, tuple ), std::invalid_argument );
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();

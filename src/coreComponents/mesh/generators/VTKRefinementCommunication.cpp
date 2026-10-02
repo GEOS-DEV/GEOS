@@ -66,27 +66,27 @@ void validateKey( EntityKey const & key )
   std::size_t const n = key.corners.size();
   switch( key.kind )
   {
-  case EntityKind::vertex:
-  case EntityKind::cell:
-    if( n != 1 )
-    {
-      throw std::invalid_argument( "Vertex/cell refinement key must contain one ID" );
-    }
-    break;
-  case EntityKind::edge:
-    if( n != 2 || key.corners[0] >= key.corners[1] )
-    {
-      throw std::invalid_argument( "Noncanonical refinement edge key" );
-    }
-    break;
-  case EntityKind::face:
-    if( n < 3 || n > 11 || canonicalCycle( key.corners ) != key.corners )
-    {
-      throw std::invalid_argument( "Noncanonical refinement face key" );
-    }
-    break;
-  default:
-    throw std::invalid_argument( "Invalid refinement entity kind" );
+    case EntityKind::vertex:
+    case EntityKind::cell:
+      if( n != 1 )
+      {
+        throw std::invalid_argument( "Vertex/cell refinement key must contain one ID" );
+      }
+      break;
+    case EntityKind::edge:
+      if( n != 2 || key.corners[0] >= key.corners[1] )
+      {
+        throw std::invalid_argument( "Noncanonical refinement edge key" );
+      }
+      break;
+    case EntityKind::face:
+      if( n < 3 || n > 11 || canonicalCycle( key.corners ) != key.corners )
+      {
+        throw std::invalid_argument( "Noncanonical refinement face key" );
+      }
+      break;
+    default:
+      throw std::invalid_argument( "Invalid refinement entity kind" );
   }
   for( vtkIdType id : key.corners )
   {
@@ -99,7 +99,7 @@ void validateKey( EntityKey const & key )
 class Reader
 {
 public:
-  explicit Reader( Bytes const & bytes ) : m_bytes( bytes ) {}
+  explicit Reader( Bytes const & bytes ): m_bytes( bytes ) {}
   bool done() const { return m_cursor == m_bytes.size(); }
   std::uint64_t integer()
   {
@@ -220,8 +220,8 @@ bool ChildCellKey::operator<( ChildCellKey const & other ) const
 }
 
 Communication::Communication( MPI_Comm comm, std::uint64_t chunkBytes )
-    : m_comm( MpiWrapper::commDup( comm ) ), m_rank( MpiWrapper::commRank( m_comm ) ), m_size( MpiWrapper::commSize( m_comm ) ),
-      m_chunkBytes( chunkBytes )
+  : m_comm( MpiWrapper::commDup( comm ) ), m_rank( MpiWrapper::commRank( m_comm ) ), m_size( MpiWrapper::commSize( m_comm ) ),
+  m_chunkBytes( chunkBytes )
 {
   try
   {
@@ -229,12 +229,12 @@ Communication::Communication( MPI_Comm comm, std::uint64_t chunkBytes )
     auto const high = MpiWrapper::allReduce( chunkBytes, MpiWrapper::Reduction::Max, m_comm );
     checked( "communication configuration",
              [&]
-             {
-               if( low != high || chunkBytes == 0 || chunkBytes > INT_MAX )
-               {
-                 throw std::invalid_argument( "Inconsistent or invalid MPI refinement chunk size" );
-               }
-             } );
+    {
+      if( low != high || chunkBytes == 0 || chunkBytes > INT_MAX )
+      {
+        throw std::invalid_argument( "Inconsistent or invalid MPI refinement chunk size" );
+      }
+    } );
   }
   catch( ... )
   {
@@ -253,7 +253,7 @@ Communication::~Communication()
 
 void Communication::checked( std::string const & phase, std::function< void() > const & work ) const
 {
-  char diagnostic[1024]{};
+  char diagnostic[8192]{};
   int failedRank = m_size;
   try
   {
@@ -286,60 +286,60 @@ Communication::Mail Communication::exchangePayloads( Mail const & outgoing, std:
   std::uint64_t bytesSent = m_statistics.payloadBytesSent, chunksSent = m_statistics.payloadChunksSent;
   checked( "receive allocation",
            [&]
-           {
-             std::uint64_t total = 0;
-             for( auto const & [peer, n] : incomingLengths )
-             {
-               total = checkedSum( total, n );
-               if( n > Bytes{}.max_size() || total > std::numeric_limits< std::size_t >::max() )
-               {
-                 throw std::overflow_error( "Refinement receive buffers exceed addressable storage" );
-               }
-             }
-             for( auto const & [peer, n] : incomingLengths )
-             {
-               if( n )
-               {
-                 incoming[peer].resize( static_cast< std::size_t >( n ) );
-               }
-             }
-             auto const self = outgoing.find( m_rank );
-             if( self != outgoing.end() )
-             {
-               incoming[m_rank] = self->second;
-             }
-             for( auto const & mail : outgoing )
-             {
-               if( mail.first != m_rank && !mail.second.empty() )
-               {
-                 peers.insert( mail.first );
-                 bytesSent = checkedSum( bytesSent, mail.second.size() );
-                 chunksSent = checkedSum( chunksSent, mail.second.size() / m_chunkBytes + ( mail.second.size() % m_chunkBytes != 0 ) );
-               }
-             }
-             for( auto const & mail : incoming )
-             {
-               if( mail.first != m_rank && !mail.second.empty() )
-               {
-                 peers.insert( mail.first );
-               }
-             }
-             if( peers.size() > static_cast< std::size_t >( INT_MAX / 2 ) )
-             {
-               throw std::overflow_error( "Too many refinement MPI requests" );
-             }
-             exchanges.reserve( peers.size() );
-             requests.resize( 2 * peers.size() );
-             for( int peer : peers )
-             {
-               auto const send = outgoing.find( peer );
-               auto const receive = incoming.find( peer );
-               exchanges.push_back( { send == outgoing.end() ? nullptr : send->second.data(),
-                                      send == outgoing.end() ? 0 : send->second.size(),
-                                      receive == incoming.end() ? nullptr : receive->second.data(),
-                                      receive == incoming.end() ? 0 : receive->second.size(), peer } );
-             }
-           } );
+  {
+    std::uint64_t total = 0;
+    for( auto const & [peer, n] : incomingLengths )
+    {
+      total = checkedSum( total, n );
+      if( n > Bytes{}.max_size() || total > std::numeric_limits< std::size_t >::max() )
+      {
+        throw std::overflow_error( "Refinement receive buffers exceed addressable storage" );
+      }
+    }
+    for( auto const & [peer, n] : incomingLengths )
+    {
+      if( n )
+      {
+        incoming[peer].resize( static_cast< std::size_t >( n ) );
+      }
+    }
+    auto const self = outgoing.find( m_rank );
+    if( self != outgoing.end() )
+    {
+      incoming[m_rank] = self->second;
+    }
+    for( auto const & mail : outgoing )
+    {
+      if( mail.first != m_rank && !mail.second.empty() )
+      {
+        peers.insert( mail.first );
+        bytesSent = checkedSum( bytesSent, mail.second.size() );
+        chunksSent = checkedSum( chunksSent, mail.second.size() / m_chunkBytes + ( mail.second.size() % m_chunkBytes != 0 ) );
+      }
+    }
+    for( auto const & mail : incoming )
+    {
+      if( mail.first != m_rank && !mail.second.empty() )
+      {
+        peers.insert( mail.first );
+      }
+    }
+    if( peers.size() > static_cast< std::size_t >( INT_MAX / 2 ) )
+    {
+      throw std::overflow_error( "Too many refinement MPI requests" );
+    }
+    exchanges.reserve( peers.size() );
+    requests.resize( 2 * peers.size() );
+    for( int peer : peers )
+    {
+      auto const send = outgoing.find( peer );
+      auto const receive = incoming.find( peer );
+      exchanges.push_back( { send == outgoing.end() ? nullptr : send->second.data(),
+                             send == outgoing.end() ? 0 : send->second.size(),
+                             receive == incoming.end() ? nullptr : receive->second.data(),
+                             receive == incoming.end() ? 0 : receive->second.size(), peer } );
+    }
+  } );
   mpi::exchangeManyBytes( exchanges, requests.data(), 1, m_comm, m_chunkBytes );
   m_statistics.payloadBytesSent = bytesSent;
   m_statistics.payloadChunksSent = chunksSent;
@@ -352,20 +352,20 @@ Communication::Mail Communication::exchangeDirectory( Mail const & outgoing )
   std::uint64_t countBytes = 0, directoryExchanges = 0;
   checked( "directory packing lengths",
            [&]
-           {
-             sending.resize( m_size );
-             receiving.resize( m_size );
-             countBytes = checkedSum( m_statistics.countBytesSent, 8 * static_cast< std::uint64_t >( m_size ) );
-             directoryExchanges = checkedSum( m_statistics.directoryExchanges, 1 );
-             for( auto const & [peer, bytes] : outgoing )
-             {
-               if( peer < 0 || peer >= m_size )
-               {
-                 throw std::invalid_argument( "Invalid refinement directory destination" );
-               }
-               sending[peer] = bytes.size();
-             }
-           } );
+  {
+    sending.resize( m_size );
+    receiving.resize( m_size );
+    countBytes = checkedSum( m_statistics.countBytesSent, 8 * static_cast< std::uint64_t >( m_size ) );
+    directoryExchanges = checkedSum( m_statistics.directoryExchanges, 1 );
+    for( auto const & [peer, bytes] : outgoing )
+    {
+      if( peer < 0 || peer >= m_size )
+      {
+        throw std::invalid_argument( "Invalid refinement directory destination" );
+      }
+      sending[peer] = bytes.size();
+    }
+  } );
 #ifdef GEOS_USE_MPI
   MPI_Alltoall( sending.data(), 1, MPI_UINT64_T, receiving.data(), 1, MPI_UINT64_T, m_comm );
 #else
@@ -374,15 +374,15 @@ Communication::Mail Communication::exchangeDirectory( Mail const & outgoing )
   std::map< int, std::uint64_t > lengths;
   checked( "directory receive lengths",
            [&]
-           {
-             for( int peer = 0; peer < m_size; ++peer )
-             {
-               if( receiving[peer] )
-               {
-                 lengths[peer] = receiving[peer];
-               }
-             }
-           } );
+  {
+    for( int peer = 0; peer < m_size; ++peer )
+    {
+      if( receiving[peer] )
+      {
+        lengths[peer] = receiving[peer];
+      }
+    }
+  } );
   m_statistics.directoryExchanges = directoryExchanges;
   m_statistics.countBytesSent = countBytes;
   return exchangePayloads( outgoing, lengths );
@@ -395,15 +395,15 @@ void Communication::initializeNeighbors( Participants neighbors )
   neighbors.erase( std::remove( neighbors.begin(), neighbors.end(), m_rank ), neighbors.end() );
   checked( "neighbor graph",
            [&]
-           {
-             for( int r : neighbors )
-             {
-               if( r < 0 || r >= m_size )
-               {
-                 throw std::invalid_argument( "Invalid refinement neighbor" );
-               }
-             }
-           } );
+  {
+    for( int r : neighbors )
+    {
+      if( r < 0 || r >= m_size )
+      {
+        throw std::invalid_argument( "Invalid refinement neighbor" );
+      }
+    }
+  } );
   if( m_neighborComm != MPI_COMM_NULL )
   {
     MpiWrapper::commFree( m_neighborComm );
@@ -421,22 +421,22 @@ void Communication::initializeNeighbors( Participants neighbors )
   MPI_Dist_graph_neighbors_count( m_neighborComm, &incoming, &outgoing, &weighted );
   checked( "neighbor graph allocation",
            [&]
-           {
-             m_sources.resize( incoming );
-             m_destinations.resize( outgoing );
-           } );
+  {
+    m_sources.resize( incoming );
+    m_destinations.resize( outgoing );
+  } );
   MPI_Dist_graph_neighbors( m_neighborComm, incoming, m_sources.data(), MPI_UNWEIGHTED, outgoing, m_destinations.data(), MPI_UNWEIGHTED );
   checked( "neighbor symmetry",
            [&]
-           {
-             auto sources = m_sources, destinations = m_destinations;
-             std::sort( sources.begin(), sources.end() );
-             std::sort( destinations.begin(), destinations.end() );
-             if( sources != destinations || destinations != neighbors )
-             {
-               throw std::invalid_argument( "Asymmetric refinement participant graph" );
-             }
-           } );
+  {
+    auto sources = m_sources, destinations = m_destinations;
+    std::sort( sources.begin(), sources.end() );
+    std::sort( destinations.begin(), destinations.end() );
+    if( sources != destinations || destinations != neighbors )
+    {
+      throw std::invalid_argument( "Asymmetric refinement participant graph" );
+    }
+  } );
 #else
   m_sources = neighbors;
   m_destinations = neighbors;
@@ -451,47 +451,47 @@ Communication::Mail Communication::exchangeNeighbors( Mail const & outgoing )
   std::uint64_t countBytes = 0, neighborExchanges = 0;
   checked( "neighbor packing lengths",
            [&]
-           {
-             sending.resize( m_destinations.size() );
-             receiving.resize( m_sources.size() );
-             countBytes = checkedSum( m_statistics.countBytesSent, 8 * m_destinations.size() );
-             neighborExchanges = checkedSum( m_statistics.neighborExchanges, 1 );
-             for( auto const & [peer, bytes] : outgoing )
-             {
-               GEOS_UNUSED_VAR( bytes );
-               if( peer != m_rank && !std::binary_search( m_neighbors.begin(), m_neighbors.end(), peer ) )
-               {
-                 throw std::invalid_argument( "Fine refinement point uses an undiscovered participant" );
-               }
-             }
-             for( std::size_t i = 0; i < m_destinations.size(); ++i )
-             {
-               auto found = outgoing.find( m_destinations[i] );
-               if( found != outgoing.end() )
-               {
-                 sending[i] = found->second.size();
-               }
-             }
-           } );
+  {
+    sending.resize( m_destinations.size() );
+    receiving.resize( m_sources.size() );
+    countBytes = checkedSum( m_statistics.countBytesSent, 8 * m_destinations.size() );
+    neighborExchanges = checkedSum( m_statistics.neighborExchanges, 1 );
+    for( auto const & [peer, bytes] : outgoing )
+    {
+      GEOS_UNUSED_VAR( bytes );
+      if( peer != m_rank && !std::binary_search( m_neighbors.begin(), m_neighbors.end(), peer ) )
+      {
+        throw std::invalid_argument( "Fine refinement point uses an undiscovered participant" );
+      }
+    }
+    for( std::size_t i = 0; i < m_destinations.size(); ++i )
+    {
+      auto found = outgoing.find( m_destinations[i] );
+      if( found != outgoing.end() )
+      {
+        sending[i] = found->second.size();
+      }
+    }
+  } );
 #ifdef GEOS_USE_MPI
   // MPICH validates the pointers when count is nonzero, including ranks with
   // zero graph degree. Such ranks still participate in this collective.
   std::uint64_t emptySend = 0, emptyReceive = 0;
   MPI_Neighbor_alltoall( sending.empty() ? &emptySend : sending.data(), 1, MPI_UINT64_T,
-                         receiving.empty() ? &emptyReceive : receiving.data(), 1, MPI_UINT64_T, m_neighborComm );
+                         receiving.empty() ? & emptyReceive : receiving.data(), 1, MPI_UINT64_T, m_neighborComm );
 #endif
   std::map< int, std::uint64_t > lengths;
   checked( "neighbor receive lengths",
            [&]
-           {
-             for( std::size_t i = 0; i < m_sources.size(); ++i )
-             {
-               if( receiving[i] )
-               {
-                 lengths[m_sources[i]] = receiving[i];
-               }
-             }
-           } );
+  {
+    for( std::size_t i = 0; i < m_sources.size(); ++i )
+    {
+      if( receiving[i] )
+      {
+        lengths[m_sources[i]] = receiving[i];
+      }
+    }
+  } );
   m_statistics.neighborExchanges = neighborExchanges;
   m_statistics.countBytesSent = countBytes;
   return exchangePayloads( outgoing, lengths );
@@ -517,119 +517,120 @@ void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, 
   Mail outgoing;
   checked( "coarse owned volume faces",
            [&]
-           {
-             for( auto const & face : faces )
-             {
-               if( face.owners != Participants{ m_rank } )
-               {
-                 throw std::invalid_argument( "Nonlocal volume-face validation owner" );
-               }
-               EntityKey const key = entityKey( EntityKind::face, face.globalCorners, mainNamespace );
-               validateKey( key );
-               Connectivity directed = face.globalCorners;
-               std::rotate( directed.begin(), std::min_element( directed.begin(), directed.end() ), directed.end() );
-               auto & counts = local[key];
-               auto & count = counts[directed == key.corners ? 0 : 1];
-               count = checkedSum( count, 1 );
-               if( counts[0] + counts[1] > 2 )
-               {
-                 throw std::invalid_argument( "Nonmanifold local volume face" );
-               }
-               if( hasTriangles && key.corners.size() == 4 )
-               {
-                 // Route each three-corner subset to the triangle's directory
-                 // home in this same coarse pass. A quad against triangular
-                 // volume faces must fail instead of creating a fine crack.
-                 for( std::size_t omitted = 0; omitted < 4; ++omitted )
-                 {
-                   Connectivity triangle;
-                   for( std::size_t c = 0; c < 4; ++c )
-                   {
-                     if( c != omitted ) triangle.push_back( key.corners[c] );
-                   }
-                   quadTriangles.insert( entityKey( EntityKind::face, std::move( triangle ), mainNamespace ) );
-                 }
-               }
-             }
-             auto pack = [&]( EntityKey const & key, Counts const & counts )
-             {
-               EntityKey routing = key;
-               std::sort( routing.corners.begin(), routing.corners.end() );
-               int const home = static_cast< int >( stableHash( routing ) % m_size );
-               auto & bytes = outgoing[home];
-               putKey( bytes, key );
-               putInteger( bytes, counts[0] );
-               putInteger( bytes, counts[1] );
-             };
-             for( auto const & [key, counts] : local )
-             {
-               pack( key, counts );
-             }
-             for( auto const & key : quadTriangles )
-             {
-               pack( key, { 0, 0 } );
-             }
-           } );
+  {
+    for( auto const & face : faces )
+    {
+      if( face.owners != Participants{ m_rank } )
+      {
+        throw std::invalid_argument( "Nonlocal volume-face validation owner" );
+      }
+      EntityKey const key = entityKey( EntityKind::face, face.globalCorners, mainNamespace );
+      validateKey( key );
+      Connectivity directed = face.globalCorners;
+      std::rotate( directed.begin(), std::min_element( directed.begin(), directed.end() ), directed.end() );
+      auto & counts = local[key];
+      auto & count = counts[directed == key.corners ? 0 : 1];
+      count = checkedSum( count, 1 );
+      if( counts[0] + counts[1] > 2 )
+      {
+        throw std::invalid_argument( "Nonmanifold local volume face" );
+      }
+      if( hasTriangles && key.corners.size() == 4 )
+      {
+        // Route each three-corner subset to the triangle's directory
+        // home in this same coarse pass. A quad against triangular
+        // volume faces must fail instead of creating a fine crack.
+        for( std::size_t omitted = 0; omitted < 4; ++omitted )
+        {
+          Connectivity triangle;
+          for( std::size_t c = 0; c < 4; ++c )
+          {
+            if( c != omitted )
+              triangle.push_back( key.corners[c] );
+          }
+          quadTriangles.insert( entityKey( EntityKind::face, std::move( triangle ), mainNamespace ) );
+        }
+      }
+    }
+    auto pack = [&]( EntityKey const & key, Counts const & counts )
+    {
+      EntityKey routing = key;
+      std::sort( routing.corners.begin(), routing.corners.end() );
+      int const home = static_cast< int >( stableHash( routing ) % m_size );
+      auto & bytes = outgoing[home];
+      putKey( bytes, key );
+      putInteger( bytes, counts[0] );
+      putInteger( bytes, counts[1] );
+    };
+    for( auto const & [key, counts] : local )
+    {
+      pack( key, counts );
+    }
+    for( auto const & key : quadTriangles )
+    {
+      pack( key, { 0, 0 } );
+    }
+  } );
   auto const incoming = exchangeDirectory( outgoing );
   checked( "global coarse volume face incidence",
            [&]
-           {
-             struct Incidence
-             {
-               EntityKey cycle;
-               Counts counts{};
-               bool quadTriangle = false;
-             };
-             std::unordered_map< EntityKey, Incidence, EntityKeyHash > incidence;
-             for( auto const & [peer, bytes] : incoming )
-             {
-               GEOS_UNUSED_VAR( peer );
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 auto const key = reader.key();
-                 if( key.kind != EntityKind::face || key.meshNamespace != mainNamespace )
-                 {
-                   throw std::invalid_argument( "Invalid volume face record" );
-                 }
-                 Counts const counts{ reader.integer(), reader.integer() };
-                 bool const quadTriangle = counts[0] + counts[1] == 0;
-                 if( counts[0] > 2 || counts[1] > 2 || counts[0] + counts[1] > 2 ||
-                     ( quadTriangle && key.corners.size() != 3 ) )
-                 {
-                   throw std::invalid_argument( "Invalid volume face incidence count" );
-                 }
-                 EntityKey support = key;
-                 std::sort( support.corners.begin(), support.corners.end() );
-                 auto const [found, inserted] = incidence.emplace( std::move( support ), Incidence{ key, {} } );
-                 if( !inserted && !( found->second.cycle == key ) )
-                 {
-                   throw std::invalid_argument( "Crossed global volume face cycles" );
-                 }
-                 found->second.quadTriangle = found->second.quadTriangle || quadTriangle;
-                 for( int orientation = 0; orientation < 2; ++orientation )
-                 {
-                   found->second.counts[orientation] = checkedSum( found->second.counts[orientation], counts[orientation] );
-                 }
-                 if( found->second.counts[0] + found->second.counts[1] > 2 )
-                 {
-                   throw std::invalid_argument( "Nonmanifold global volume face" );
-                 }
-               }
-             }
-             for( auto const & [key, record] : incidence )
-             {
-               GEOS_UNUSED_VAR( key );
-               if( record.quadTriangle && record.counts[0] + record.counts[1] )
-               {
-                 throw std::invalid_argument( "Nonmatching coarse quad/triangle volume interface" );
-               }
-               // VTK meshes do not require neighboring cells to use opposite
-               // face cycles. Face keys and refinement recipes are canonical,
-               // so equal input orientations are harmless as long as the
-               // incidence remains manifold.
-             }
-           } );
+  {
+    struct Incidence
+    {
+      EntityKey cycle;
+      Counts counts{};
+      bool quadTriangle = false;
+    };
+    std::unordered_map< EntityKey, Incidence, EntityKeyHash > incidence;
+    for( auto const & [peer, bytes] : incoming )
+    {
+      GEOS_UNUSED_VAR( peer );
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        auto const key = reader.key();
+        if( key.kind != EntityKind::face || key.meshNamespace != mainNamespace )
+        {
+          throw std::invalid_argument( "Invalid volume face record" );
+        }
+        Counts const counts{ reader.integer(), reader.integer() };
+        bool const quadTriangle = counts[0] + counts[1] == 0;
+        if( counts[0] > 2 || counts[1] > 2 || counts[0] + counts[1] > 2 ||
+            ( quadTriangle && key.corners.size() != 3 ) )
+        {
+          throw std::invalid_argument( "Invalid volume face incidence count" );
+        }
+        EntityKey support = key;
+        std::sort( support.corners.begin(), support.corners.end() );
+        auto const [found, inserted] = incidence.emplace( std::move( support ), Incidence{ key, {} } );
+        if( !inserted && !( found->second.cycle == key ) )
+        {
+          throw std::invalid_argument( "Crossed global volume face cycles" );
+        }
+        found->second.quadTriangle = found->second.quadTriangle || quadTriangle;
+        for( int orientation = 0; orientation < 2; ++orientation )
+        {
+          found->second.counts[orientation] = checkedSum( found->second.counts[orientation], counts[orientation] );
+        }
+        if( found->second.counts[0] + found->second.counts[1] > 2 )
+        {
+          throw std::invalid_argument( "Nonmanifold global volume face" );
+        }
+      }
+    }
+    for( auto const & [key, record] : incidence )
+    {
+      GEOS_UNUSED_VAR( key );
+      if( record.quadTriangle && record.counts[0] + record.counts[1] )
+      {
+        throw std::invalid_argument( "Nonmatching coarse quad/triangle volume interface" );
+      }
+      // VTK meshes do not require neighboring cells to use opposite
+      // face cycles. Face keys and refinement recipes are canonical,
+      // so equal input orientations are harmless as long as the
+      // incidence remains manifold.
+    }
+  } );
 }
 
 std::vector< std::vector< SurfaceSide > > Communication::discoverSurfaceSides( std::vector< MainFace > const & localFaces,
@@ -643,47 +644,47 @@ std::vector< std::vector< SurfaceSide > > Communication::discoverSurfaceSides( s
   std::unique_ptr< SurfaceAssociations > associations;
   checked( "surface association input",
            [&]
-           {
-             associations = std::make_unique< SurfaceAssociations >( localFaces, mainNamespace );
-             std::set< vtkIdType > vertices;
-             for( auto const & face : localFaces )
-             {
-               if( face.owners != Participants{ m_rank } )
-               {
-                 throw std::invalid_argument( "Nonlocal coarse volume-face owner" );
-               }
-               vertices.insert( face.globalCorners.begin(), face.globalCorners.end() );
-             }
-             result.resize( surfaces.size() );
-             queryCorners.resize( surfaces.size() );
-             for( std::size_t q = 0; q < surfaces.size(); ++q )
-             {
-               auto const & buckets = surfaces[q].cornerBuckets;
-               if( buckets.size() < 3 || buckets.size() > 11 )
-               {
-                 throw std::invalid_argument( "Unsupported coarse associated surface arity" );
-               }
-               for( auto const & bucket : buckets )
-               {
-                 if( bucket.empty() || !std::is_sorted( bucket.begin(), bucket.end() ) || bucket.front() < 0 ||
-                     std::adjacent_find( bucket.begin(), bucket.end() ) != bucket.end() )
-                 {
-                   throw std::invalid_argument( "Surface association requires normalized nonempty buckets" );
-                 }
-               }
-               auto & corners = queryCorners[q];
-               for( std::size_t c = 0; c < buckets.size(); ++c )
-               {
-                 corners.push_back( static_cast< vtkIdType >( c ) );
-               }
-               result[q] = associations->match( corners, buckets );
-               vertices.insert( buckets.front().begin(), buckets.front().end() );
-             }
-             for( vtkIdType id : vertices )
-             {
-               anchors.push_back( entityKey( EntityKind::vertex, { id }, mainNamespace ) );
-             }
-           } );
+  {
+    associations = std::make_unique< SurfaceAssociations >( localFaces, mainNamespace );
+    std::set< vtkIdType > vertices;
+    for( auto const & face : localFaces )
+    {
+      if( face.owners != Participants{ m_rank } )
+      {
+        throw std::invalid_argument( "Nonlocal coarse volume-face owner" );
+      }
+      vertices.insert( face.globalCorners.begin(), face.globalCorners.end() );
+    }
+    result.resize( surfaces.size() );
+    queryCorners.resize( surfaces.size() );
+    for( std::size_t q = 0; q < surfaces.size(); ++q )
+    {
+      auto const & buckets = surfaces[q].cornerBuckets;
+      if( buckets.size() < 3 || buckets.size() > 11 )
+      {
+        throw std::invalid_argument( "Unsupported coarse associated surface arity" );
+      }
+      for( auto const & bucket : buckets )
+      {
+        if( bucket.empty() || !std::is_sorted( bucket.begin(), bucket.end() ) || bucket.front() < 0 ||
+            std::adjacent_find( bucket.begin(), bucket.end() ) != bucket.end() )
+        {
+          throw std::invalid_argument( "Surface association requires normalized nonempty buckets" );
+        }
+      }
+      auto & corners = queryCorners[q];
+      for( std::size_t c = 0; c < buckets.size(); ++c )
+      {
+        corners.push_back( static_cast< vtkIdType >( c ) );
+      }
+      result[q] = associations->match( corners, buckets );
+      vertices.insert( buckets.front().begin(), buckets.front().end() );
+    }
+    for( vtkIdType id : vertices )
+    {
+      anchors.push_back( entityKey( EntityKind::vertex, { id }, mainNamespace ) );
+    }
+  } );
   // This separate coarse routing graph includes query-only ranks. It must never
   // become the main registry's participant map.
   Communication routing( m_comm, m_chunkBytes );
@@ -692,158 +693,158 @@ std::vector< std::vector< SurfaceSide > > Communication::discoverSurfaceSides( s
   Mail outgoing;
   checked( "surface association queries",
            [&]
-           {
-             for( std::size_t q = 0; q < surfaces.size(); ++q )
-             {
-               Participants peers;
-               for( vtkIdType anchor : surfaces[q].cornerBuckets.front() )
-               {
-                 auto const & ranks = sharing.at( entityKey( EntityKind::vertex, { anchor }, mainNamespace ) );
-                 peers.insert( peers.end(), ranks.begin(), ranks.end() );
-               }
-               std::sort( peers.begin(), peers.end() );
-               peers.erase( std::unique( peers.begin(), peers.end() ), peers.end() );
-               for( int peer : peers )
-               {
-                 if( peer == m_rank )
-                 {
-                   continue;
-                 }
-                 Bytes & bytes = outgoing[peer];
-                 putInteger( bytes, q );
-                 putInteger( bytes, surfaces[q].cornerBuckets.size() );
-                 for( auto const & bucket : surfaces[q].cornerBuckets )
-                 {
-                   putInteger( bytes, bucket.size() );
-                   for( vtkIdType id : bucket )
-                   {
-                     putInteger( bytes, id );
-                   }
-                 }
-               }
-             }
-           } );
+  {
+    for( std::size_t q = 0; q < surfaces.size(); ++q )
+    {
+      Participants peers;
+      for( vtkIdType anchor : surfaces[q].cornerBuckets.front() )
+      {
+        auto const & ranks = sharing.at( entityKey( EntityKind::vertex, { anchor }, mainNamespace ) );
+        peers.insert( peers.end(), ranks.begin(), ranks.end() );
+      }
+      std::sort( peers.begin(), peers.end() );
+      peers.erase( std::unique( peers.begin(), peers.end() ), peers.end() );
+      for( int peer : peers )
+      {
+        if( peer == m_rank )
+        {
+          continue;
+        }
+        Bytes & bytes = outgoing[peer];
+        putInteger( bytes, q );
+        putInteger( bytes, surfaces[q].cornerBuckets.size() );
+        for( auto const & bucket : surfaces[q].cornerBuckets )
+        {
+          putInteger( bytes, bucket.size() );
+          for( vtkIdType id : bucket )
+          {
+            putInteger( bytes, id );
+          }
+        }
+      }
+    }
+  } );
   auto const incoming = routing.exchangeNeighbors( outgoing );
   outgoing.clear();
   checked( "surface association replies",
            [&]
-           {
-             for( auto const & [peer, bytes] : incoming )
-             {
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 auto const query = reader.integer(), n = reader.integer();
-                 if( n < 3 || n > 11 )
-                 {
-                   throw std::invalid_argument( "Invalid surface query arity" );
-                 }
-                 std::vector< Connectivity > buckets( n );
-                 Connectivity corners;
-                 for( std::uint64_t c = 0; c < n; ++c )
-                 {
-                   corners.push_back( static_cast< vtkIdType >( c ) );
-                   auto const count = reader.integer();
-                   if( count == 0 || count > bytes.size() / 8 )
-                   {
-                     throw std::invalid_argument( "Invalid collocation query length" );
-                   }
-                   for( std::uint64_t i = 0; i < count; ++i )
-                   {
-                     buckets[c].push_back( reader.id() );
-                   }
-                 }
-                 auto const sides = associations->match( corners, buckets );
-                 Bytes & reply = outgoing[peer];
-                 putInteger( reply, query );
-                 putInteger( reply, sides.size() );
-                 for( auto const & side : sides )
-                 {
-                   // Every local face must come from an owned volume on this rank.
-                   if( side.owners != Participants{ m_rank } )
-                   {
-                     throw std::invalid_argument( "Nonlocal coarse volume-face owner" );
-                   }
-                   putInteger( reply, side.mainCornersBySurface.size() );
-                   for( vtkIdType id : side.mainCornersBySurface )
-                   {
-                     putInteger( reply, id );
-                   }
-                 }
-               }
-             }
-           } );
+  {
+    for( auto const & [peer, bytes] : incoming )
+    {
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        auto const query = reader.integer(), n = reader.integer();
+        if( n < 3 || n > 11 )
+        {
+          throw std::invalid_argument( "Invalid surface query arity" );
+        }
+        std::vector< Connectivity > buckets( n );
+        Connectivity corners;
+        for( std::uint64_t c = 0; c < n; ++c )
+        {
+          corners.push_back( static_cast< vtkIdType >( c ) );
+          auto const count = reader.integer();
+          if( count == 0 || count > bytes.size() / 8 )
+          {
+            throw std::invalid_argument( "Invalid collocation query length" );
+          }
+          for( std::uint64_t i = 0; i < count; ++i )
+          {
+            buckets[c].push_back( reader.id() );
+          }
+        }
+        auto const sides = associations->match( corners, buckets );
+        Bytes & reply = outgoing[peer];
+        putInteger( reply, query );
+        putInteger( reply, sides.size() );
+        for( auto const & side : sides )
+        {
+          // Every local face must come from an owned volume on this rank.
+          if( side.owners != Participants{ m_rank } )
+          {
+            throw std::invalid_argument( "Nonlocal coarse volume-face owner" );
+          }
+          putInteger( reply, side.mainCornersBySurface.size() );
+          for( vtkIdType id : side.mainCornersBySurface )
+          {
+            putInteger( reply, id );
+          }
+        }
+      }
+    }
+  } );
   auto const replies = routing.exchangeNeighbors( outgoing );
   checked( "surface association installation",
            [&]
-           {
-             for( auto const & [peer, bytes] : replies )
-             {
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 auto const q = reader.integer(), count = reader.integer();
-                 if( q >= result.size() || count > bytes.size() / 8 )
-                 {
-                   throw std::invalid_argument( "Invalid surface association reply" );
-                 }
-                 for( std::uint64_t s = 0; s < count; ++s )
-                 {
-                   auto const n = reader.integer();
-                   if( n != surfaces[q].cornerBuckets.size() )
-                   {
-                     throw std::invalid_argument( "Surface side reply arity mismatch" );
-                   }
-                   Connectivity mapped;
-                   for( std::uint64_t c = 0; c < n; ++c )
-                   {
-                     vtkIdType const id = reader.id();
-                     auto const & bucket = surfaces[q].cornerBuckets[c];
-                     if( !std::binary_search( bucket.begin(), bucket.end(), id ) )
-                     {
-                       throw std::invalid_argument( "Unrequested main side corner" );
-                     }
-                     mapped.push_back( id );
-                   }
-                   result[q].push_back( { entityKey( EntityKind::face, mapped, mainNamespace ), std::move( mapped ), { peer } } );
-                 }
-               }
-             }
-             for( auto & sides : result )
-             {
-               std::map< EntityKey, SurfaceSide > unique;
-               for( auto & side : sides )
-               {
-                 auto const [found, inserted] = unique.emplace( side.mainFace, side );
-                 if( !inserted )
-                 {
-                   if( found->second.mainCornersBySurface != side.mainCornersBySurface )
-                   {
-                     throw std::invalid_argument( "Inconsistent surface side correspondence" );
-                   }
-                   auto & owners = found->second.owners;
-                   owners.insert( owners.end(), side.owners.begin(), side.owners.end() );
-                   std::sort( owners.begin(), owners.end() );
-                   owners.erase( std::unique( owners.begin(), owners.end() ), owners.end() );
-                 }
-               }
-               if( unique.empty() )
-               {
-                 throw std::invalid_argument( "Surface cell has no actual incident volume face" );
-               }
-               sides.clear();
-               for( auto & [key, side] : unique )
-               {
-                 GEOS_UNUSED_VAR( key );
-                 sides.push_back( std::move( side ) );
-               }
-             }
-             m_statistics.directoryExchanges = checkedSum( m_statistics.directoryExchanges, routing.m_statistics.directoryExchanges );
-             m_statistics.neighborExchanges = checkedSum( m_statistics.neighborExchanges, routing.m_statistics.neighborExchanges );
-             m_statistics.payloadChunksSent = checkedSum( m_statistics.payloadChunksSent, routing.m_statistics.payloadChunksSent );
-             m_statistics.payloadBytesSent = checkedSum( m_statistics.payloadBytesSent, routing.m_statistics.payloadBytesSent );
-             m_statistics.countBytesSent = checkedSum( m_statistics.countBytesSent, routing.m_statistics.countBytesSent );
-           } );
+  {
+    for( auto const & [peer, bytes] : replies )
+    {
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        auto const q = reader.integer(), count = reader.integer();
+        if( q >= result.size() || count > bytes.size() / 8 )
+        {
+          throw std::invalid_argument( "Invalid surface association reply" );
+        }
+        for( std::uint64_t s = 0; s < count; ++s )
+        {
+          auto const n = reader.integer();
+          if( n != surfaces[q].cornerBuckets.size() )
+          {
+            throw std::invalid_argument( "Surface side reply arity mismatch" );
+          }
+          Connectivity mapped;
+          for( std::uint64_t c = 0; c < n; ++c )
+          {
+            vtkIdType const id = reader.id();
+            auto const & bucket = surfaces[q].cornerBuckets[c];
+            if( !std::binary_search( bucket.begin(), bucket.end(), id ) )
+            {
+              throw std::invalid_argument( "Unrequested main side corner" );
+            }
+            mapped.push_back( id );
+          }
+          result[q].push_back( { entityKey( EntityKind::face, mapped, mainNamespace ), std::move( mapped ), { peer } } );
+        }
+      }
+    }
+    for( auto & sides : result )
+    {
+      std::map< EntityKey, SurfaceSide > unique;
+      for( auto & side : sides )
+      {
+        auto const [found, inserted] = unique.emplace( side.mainFace, side );
+        if( !inserted )
+        {
+          if( found->second.mainCornersBySurface != side.mainCornersBySurface )
+          {
+            throw std::invalid_argument( "Inconsistent surface side correspondence" );
+          }
+          auto & owners = found->second.owners;
+          owners.insert( owners.end(), side.owners.begin(), side.owners.end() );
+          std::sort( owners.begin(), owners.end() );
+          owners.erase( std::unique( owners.begin(), owners.end() ), owners.end() );
+        }
+      }
+      if( unique.empty() )
+      {
+        throw std::invalid_argument( "Surface cell has no actual incident volume face" );
+      }
+      sides.clear();
+      for( auto & [key, side] : unique )
+      {
+        GEOS_UNUSED_VAR( key );
+        sides.push_back( std::move( side ) );
+      }
+    }
+    m_statistics.directoryExchanges = checkedSum( m_statistics.directoryExchanges, routing.m_statistics.directoryExchanges );
+    m_statistics.neighborExchanges = checkedSum( m_statistics.neighborExchanges, routing.m_statistics.neighborExchanges );
+    m_statistics.payloadChunksSent = checkedSum( m_statistics.payloadChunksSent, routing.m_statistics.payloadChunksSent );
+    m_statistics.payloadBytesSent = checkedSum( m_statistics.payloadBytesSent, routing.m_statistics.payloadBytesSent );
+    m_statistics.countBytesSent = checkedSum( m_statistics.countBytesSent, routing.m_statistics.countBytesSent );
+  } );
   return result;
 }
 
@@ -855,94 +856,148 @@ std::vector< vtkIdType > Communication::resolveSupportIds( std::uint64_t generat
   std::vector< vtkIdType > result;
   checked( "surface support requests",
            [&]
-           {
-             if( !m_discovered || generation == 0 )
-             {
-               throw std::invalid_argument( "Surface support lookup requires a positive generation and graph" );
-             }
-             result.assign( requests.size(), -1 );
-             for( std::size_t q = 0; q < requests.size(); ++q )
-             {
-               auto const & request = requests[q];
-               validateKey( request.key );
-               if( request.key.kind == EntityKind::cell || request.faceOwner < 0 || request.faceOwner >= m_size )
-               {
-                 throw std::invalid_argument( "Invalid actual surface support request" );
-               }
-               if( request.faceOwner == m_rank )
-               {
-                 result[q] = localIds.at( request.key );
-                 if( result[q] < 0 )
-                 {
-                   throw std::invalid_argument( "Negative local main support ID" );
-                 }
-               }
-               else
-               {
-                 auto & bytes = outgoing[request.faceOwner];
-                 putInteger( bytes, generation );
-                 putInteger( bytes, q );
-                 putKey( bytes, request.key );
-               }
-             }
-           } );
+  {
+    if( !m_discovered || generation == 0 )
+    {
+      throw std::invalid_argument( "Surface support lookup requires a positive generation and graph" );
+    }
+    result.assign( requests.size(), -1 );
+    for( std::size_t q = 0; q < requests.size(); ++q )
+    {
+      auto const & request = requests[q];
+      validateKey( request.key );
+      if( request.key.kind == EntityKind::cell || request.faceOwner < 0 || request.faceOwner >= m_size )
+      {
+        throw std::invalid_argument( "Invalid actual surface support request" );
+      }
+      if( request.faceOwner == m_rank )
+      {
+        result[q] = localIds.at( request.key );
+        if( result[q] < 0 )
+        {
+          throw std::invalid_argument( "Negative local main support ID" );
+        }
+      }
+      else
+      {
+        auto & bytes = outgoing[request.faceOwner];
+        putInteger( bytes, generation );
+        putInteger( bytes, q );
+        putKey( bytes, request.key );
+      }
+    }
+  } );
   auto const incoming = exchangeNeighbors( outgoing );
   outgoing.clear();
   checked( "surface support replies",
            [&]
-           {
-             for( auto const & [peer, bytes] : incoming )
-             {
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 if( reader.integer() != generation )
-                 {
-                   throw std::invalid_argument( "Surface support generation mismatch" );
-                 }
-                 auto const q = reader.integer();
-                 auto const key = reader.key();
-                 vtkIdType const id = localIds.at( key );
-                 if( id < 0 )
-                 {
-                   throw std::invalid_argument( "Negative resolved main support ID" );
-                 }
-                 auto & reply = outgoing[peer];
-                 putInteger( reply, generation );
-                 putInteger( reply, q );
-                 putKey( reply, key );
-                 putInteger( reply, id );
-               }
-             }
-           } );
+  {
+    for( auto const & [peer, bytes] : incoming )
+    {
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        if( reader.integer() != generation )
+        {
+          throw std::invalid_argument( "Surface support generation mismatch" );
+        }
+        auto const q = reader.integer();
+        auto const key = reader.key();
+        vtkIdType const id = localIds.at( key );
+        if( id < 0 )
+        {
+          throw std::invalid_argument( "Negative resolved main support ID" );
+        }
+        auto & reply = outgoing[peer];
+        putInteger( reply, generation );
+        putInteger( reply, q );
+        putKey( reply, key );
+        putInteger( reply, id );
+      }
+    }
+  } );
   auto const replies = exchangeNeighbors( outgoing );
   checked( "surface support installation",
            [&]
-           {
-             for( auto const & [peer, bytes] : replies )
-             {
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 if( reader.integer() != generation )
-                 {
-                   throw std::invalid_argument( "Surface support reply generation mismatch" );
-                 }
-                 auto const q = reader.integer();
-                 auto const key = reader.key();
-                 vtkIdType const id = reader.id();
-                 if( q >= requests.size() || requests[q].faceOwner != peer || !( requests[q].key == key ) || result[q] != -1 )
-                 {
-                   throw std::invalid_argument( "Unexpected or duplicate surface support reply" );
-                 }
-                 result[q] = id;
-               }
-             }
-             if( std::find( result.begin(), result.end(), -1 ) != result.end() )
-             {
-               throw std::invalid_argument( "Missing main surface support ID" );
-             }
-           } );
+  {
+    for( auto const & [peer, bytes] : replies )
+    {
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        if( reader.integer() != generation )
+        {
+          throw std::invalid_argument( "Surface support reply generation mismatch" );
+        }
+        auto const q = reader.integer();
+        auto const key = reader.key();
+        vtkIdType const id = reader.id();
+        if( q >= requests.size() || requests[q].faceOwner != peer || !( requests[q].key == key ) || result[q] != -1 )
+        {
+          throw std::invalid_argument( "Unexpected or duplicate surface support reply" );
+        }
+        result[q] = id;
+      }
+    }
+    if( std::find( result.begin(), result.end(), -1 ) != result.end() )
+    {
+      throw std::invalid_argument( "Missing main surface support ID" );
+    }
+  } );
+  return result;
+}
+
+std::set< std::pair< EntityKey, std::uint64_t > > Communication::unionSharedFlags( std::uint64_t generation,
+                                                                                   std::vector< SharedFlag > const & flags )
+{
+  Mail outgoing;
+  std::set< std::pair< EntityKey, std::uint64_t > > result;
+  checked( "shared flag requests",
+           [&]
+  {
+    if( !m_discovered )
+    {
+      throw std::logic_error( "Refinement coarse sharing discovery must precede shared flags" );
+    }
+    for( auto const & flag : flags )
+    {
+      validateKey( flag.key );
+      if( !std::binary_search( flag.participants.begin(), flag.participants.end(), m_rank ) )
+      {
+        throw std::invalid_argument( "Shared flag without the local participant" );
+      }
+      result.emplace( flag.key, flag.label );
+      for( int r : flag.participants )
+      {
+        if( r != m_rank )
+        {
+          auto & bytes = outgoing[r];
+          putInteger( bytes, generation );
+          putKey( bytes, flag.key );
+          putInteger( bytes, flag.label );
+        }
+      }
+    }
+  } );
+  auto const incoming = exchangeNeighbors( outgoing );
+  checked( "shared flag installation",
+           [&]
+  {
+    for( auto const & [peer, bytes] : incoming )
+    {
+      GEOS_UNUSED_VAR( peer );
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        if( reader.integer() != generation )
+        {
+          throw std::invalid_argument( "Shared flag generation mismatch" );
+        }
+        auto key = reader.key();
+        result.emplace( std::move( key ), reader.integer() );
+      }
+    }
+  } );
   return result;
 }
 
@@ -952,87 +1007,87 @@ Sharing Communication::discoverSharing( std::vector< EntityKey > const & entitie
   Mail outgoing;
   checked( "coarse entity keys",
            [&]
-           {
-             std::set< EntityKey > unique( entities.begin(), entities.end() );
-             for( auto const & key : unique )
-             {
-               validateKey( key );
-               int const home = static_cast< int >( stableHash( faceCornerSet( key ) ) % static_cast< std::uint64_t >( m_size ) );
-               putKey( outgoing[home], key );
-             }
-           } );
+  {
+    std::set< EntityKey > unique( entities.begin(), entities.end() );
+    for( auto const & key : unique )
+    {
+      validateKey( key );
+      int const home = static_cast< int >( stableHash( faceCornerSet( key ) ) % static_cast< std::uint64_t >( m_size ) );
+      putKey( outgoing[home], key );
+    }
+  } );
   Mail const incoming = exchangeDirectory( outgoing );
   std::map< EntityKey, std::set< int > > directory;
   Mail responses;
   checked( "coarse entity directory",
            [&]
-           {
-             std::map< EntityKey, Connectivity > cycles;
-             for( auto const & [peer, bytes] : incoming )
-             {
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 auto const key = reader.key();
-                 directory[key].insert( peer );
-                 if( key.kind == EntityKind::face )
-                 {
-                   auto const [it, inserted] = cycles.emplace( faceCornerSet( key ), key.corners );
-                   if( !inserted && it->second != key.corners )
-                   {
-                     throw std::invalid_argument( "Incompatible shared face edge cycles" );
-                   }
-                 }
-               }
-             }
-             for( auto const & [key, ranks] : directory )
-             {
-               for( int r : ranks )
-               {
-                 auto & bytes = responses[r];
-                 putKey( bytes, key );
-                 putInteger( bytes, ranks.size() );
-                 for( int participant : ranks )
-                 {
-                   putInteger( bytes, participant );
-                 }
-               }
-             }
-           } );
+  {
+    std::map< EntityKey, Connectivity > cycles;
+    for( auto const & [peer, bytes] : incoming )
+    {
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        auto const key = reader.key();
+        directory[key].insert( peer );
+        if( key.kind == EntityKind::face )
+        {
+          auto const [it, inserted] = cycles.emplace( faceCornerSet( key ), key.corners );
+          if( !inserted && it->second != key.corners )
+          {
+            throw std::invalid_argument( "Incompatible shared face edge cycles" );
+          }
+        }
+      }
+    }
+    for( auto const & [key, ranks] : directory )
+    {
+      for( int r : ranks )
+      {
+        auto & bytes = responses[r];
+        putKey( bytes, key );
+        putInteger( bytes, ranks.size() );
+        for( int participant : ranks )
+        {
+          putInteger( bytes, participant );
+        }
+      }
+    }
+  } );
   Mail const replies = exchangeDirectory( responses );
   Sharing result;
   Participants neighbors;
   checked( "coarse directory replies",
            [&]
-           {
-             for( auto const & [peer, bytes] : replies )
-             {
-               GEOS_UNUSED_VAR( peer );
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 auto key = reader.key();
-                 auto ranks = reader.participants( m_size );
-                 if( !std::binary_search( ranks.begin(), ranks.end(), m_rank ) || !result.emplace( key, ranks ).second )
-                 {
-                   throw std::invalid_argument( "Invalid coarse refinement directory reply" );
-                 }
-                 neighbors.insert( neighbors.end(), ranks.begin(), ranks.end() );
-               }
-             }
-             std::set< EntityKey > const expected( entities.begin(), entities.end() );
-             if( result.size() != expected.size() )
-             {
-               throw std::invalid_argument( "Missing coarse refinement entity reply" );
-             }
-             for( auto const & key : expected )
-             {
-               if( !result.count( key ) )
-               {
-                 throw std::invalid_argument( "Unexpected coarse refinement directory reply" );
-               }
-             }
-           } );
+  {
+    for( auto const & [peer, bytes] : replies )
+    {
+      GEOS_UNUSED_VAR( peer );
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        auto key = reader.key();
+        auto ranks = reader.participants( m_size );
+        if( !std::binary_search( ranks.begin(), ranks.end(), m_rank ) || !result.emplace( key, ranks ).second )
+        {
+          throw std::invalid_argument( "Invalid coarse refinement directory reply" );
+        }
+        neighbors.insert( neighbors.end(), ranks.begin(), ranks.end() );
+      }
+    }
+    std::set< EntityKey > const expected( entities.begin(), entities.end() );
+    if( result.size() != expected.size() )
+    {
+      throw std::invalid_argument( "Missing coarse refinement entity reply" );
+    }
+    for( auto const & key : expected )
+    {
+      if( !result.count( key ) )
+      {
+        throw std::invalid_argument( "Unexpected coarse refinement directory reply" );
+      }
+    }
+  } );
   initializeNeighbors( std::move( neighbors ) );
   return result;
 }
@@ -1044,12 +1099,12 @@ IdRange Communication::allocateRange( std::uint64_t localCount, vtkIdType base )
   auto const maximum = MpiWrapper::allReduce( base, MpiWrapper::Reduction::Max, m_comm );
   checked( "ID count validation",
            [&]
-           {
-             if( minimum != maximum || base < 0 )
-             {
-               throw std::invalid_argument( "Invalid collective refinement ID base" );
-             }
-           } );
+  {
+    if( minimum != maximum || base < 0 )
+    {
+      throw std::invalid_argument( "Invalid collective refinement ID base" );
+    }
+  } );
   // Each 32-bit limb summed over at most INT_MAX ranks fits in uint64_t.
   // This detects even uint64_t overflow without O(P) allgather storage or
   // overflowing MPI_SUM before validation. No custom MPI reduction is needed.
@@ -1060,18 +1115,18 @@ IdRange Communication::allocateRange( std::uint64_t localCount, vtkIdType base )
   std::uint64_t total = 0;
   checked( "ID range overflow",
            [&]
-           {
-             std::uint64_t const high = sums[1] + ( sums[0] >> 32 );
-             if( high > mask )
-             {
-               throw std::overflow_error( "Refinement global count overflow" );
-             }
-             total = ( high << 32 ) | ( sums[0] & mask );
-             if( total && total - 1 > static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() - base ) )
-             {
-               throw std::overflow_error( "Refinement active ID range exceeds vtkIdType" );
-             }
-           } );
+  {
+    std::uint64_t const high = sums[1] + ( sums[0] >> 32 );
+    if( high > mask )
+    {
+      throw std::overflow_error( "Refinement global count overflow" );
+    }
+    total = ( high << 32 ) | ( sums[0] & mask );
+    if( total && total - 1 > static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() - base ) )
+    {
+      throw std::overflow_error( "Refinement active ID range exceeds vtkIdType" );
+    }
+  } );
   std::uint64_t offset = 0;
   MpiWrapper::exscan( &localCount, &offset, 1, MPI_SUM, m_comm );
   if( m_rank == 0 )
@@ -1103,64 +1158,64 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
   std::uint64_t allocated = 0;
   checked( "point creation requests",
            [&]
-           {
-             if( minimum != maximum || ( !existing && generation == 0 ) || localExistingMaximum < -1 )
-             {
-               throw std::invalid_argument( "Invalid refinement generation or point maximum" );
-             }
-             if( !m_discovered )
-             {
-               throw std::logic_error( "Refinement coarse sharing discovery must precede point resolution" );
-             }
-             for( auto const & point : points )
-             {
-               validateKey( point.key );
-               if( existing ? point.key.kind != EntityKind::vertex : point.key.kind == EntityKind::vertex )
-               {
-                 throw std::invalid_argument( "Wrong entity kind for existing/new refinement point record" );
-               }
-               auto const & ranks = point.participants;
-               if( ranks.empty() || !std::is_sorted( ranks.begin(), ranks.end() ) ||
-                   std::adjacent_find( ranks.begin(), ranks.end() ) != ranks.end() || ranks.front() < 0 || ranks.back() >= m_size ||
-                   !std::binary_search( ranks.begin(), ranks.end(), m_rank ) )
-               {
-                 throw std::invalid_argument( "Invalid new point participants" );
-               }
-               for( int r : ranks )
-               {
-                 if( r != m_rank && !std::binary_search( m_neighbors.begin(), m_neighbors.end(), r ) )
-                 {
-                   throw std::invalid_argument( "New point participant not discovered on coarse mesh" );
-                 }
-               }
-               if( point.key.kind == EntityKind::cell && ranks.size() != 1 )
-               {
-                 throw std::invalid_argument( "Volume-cell interior point must have one participant" );
-               }
-               // An unused original vertex has no incident cell extent. Its
-               // zero scale permits only coordinate roundoff in the comparison
-               // below; newly created edge/face/cell points require an extent.
-               if( !std::isfinite( point.supportScale ) || ( existing ? point.supportScale < 0 : point.supportScale <= 0 ) )
-               {
-                 throw std::invalid_argument( "Invalid shared point support extent" );
-               }
-               for( double x : point.position )
-               {
-                 if( !std::isfinite( x ) )
-                 {
-                   throw std::invalid_argument( "Nonfinite new point coordinates" );
-                 }
-               }
-               if( !expected.emplace( point.key, &point ).second )
-               {
-                 throw std::invalid_argument( "Duplicate local point creation key" );
-               }
-               if( !existing && ranks.front() == m_rank )
-               {
-                 ++allocated;
-               }
-             }
-           } );
+  {
+    if( minimum != maximum || ( !existing && generation == 0 ) || localExistingMaximum < -1 )
+    {
+      throw std::invalid_argument( "Invalid refinement generation or point maximum" );
+    }
+    if( !m_discovered )
+    {
+      throw std::logic_error( "Refinement coarse sharing discovery must precede point resolution" );
+    }
+    for( auto const & point : points )
+    {
+      validateKey( point.key );
+      if( existing ? point.key.kind != EntityKind::vertex : point.key.kind == EntityKind::vertex )
+      {
+        throw std::invalid_argument( "Wrong entity kind for existing/new refinement point record" );
+      }
+      auto const & ranks = point.participants;
+      if( ranks.empty() || !std::is_sorted( ranks.begin(), ranks.end() ) ||
+          std::adjacent_find( ranks.begin(), ranks.end() ) != ranks.end() || ranks.front() < 0 || ranks.back() >= m_size ||
+          !std::binary_search( ranks.begin(), ranks.end(), m_rank ) )
+      {
+        throw std::invalid_argument( "Invalid new point participants" );
+      }
+      for( int r : ranks )
+      {
+        if( r != m_rank && !std::binary_search( m_neighbors.begin(), m_neighbors.end(), r ) )
+        {
+          throw std::invalid_argument( "New point participant not discovered on coarse mesh" );
+        }
+      }
+      if( point.key.kind == EntityKind::cell && ranks.size() != 1 )
+      {
+        throw std::invalid_argument( "Volume-cell interior point must have one participant" );
+      }
+      // An unused original vertex has no incident cell extent. Its
+      // zero scale permits only coordinate roundoff in the comparison
+      // below; newly created edge/face/cell points require an extent.
+      if( !std::isfinite( point.supportScale ) || ( existing ? point.supportScale < 0 : point.supportScale <= 0 ) )
+      {
+        throw std::invalid_argument( "Invalid shared point support extent" );
+      }
+      for( double x : point.position )
+      {
+        if( !std::isfinite( x ) )
+        {
+          throw std::invalid_argument( "Nonfinite new point coordinates" );
+        }
+      }
+      if( !expected.emplace( point.key, &point ).second )
+      {
+        throw std::invalid_argument( "Duplicate local point creation key" );
+      }
+      if( !existing && ranks.front() == m_rank )
+      {
+        ++allocated;
+      }
+    }
+  } );
   vtkIdType oldMaximum = -1;
   IdRange range{ 0, 0 };
   if( !existing )
@@ -1169,112 +1224,112 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
     std::uint64_t const anyNew = MpiWrapper::allReduce( allocated, MpiWrapper::Reduction::Max, m_comm );
     checked( "new point ID base",
              [&]
-             {
-               if( anyNew && oldMaximum == std::numeric_limits< vtkIdType >::max() )
-               {
-                 throw std::overflow_error( "Refinement max point ID + 1 overflow" );
-               }
-             } );
+    {
+      if( anyNew && oldMaximum == std::numeric_limits< vtkIdType >::max() )
+      {
+        throw std::overflow_error( "Refinement max point ID + 1 overflow" );
+      }
+    } );
     range = allocateRange( allocated, anyNew ? oldMaximum + 1 : 0 );
   }
   Mail outgoing;
   std::map< EntityKey, PointRecord > records;
   checked( "authoritative point records",
            [&]
-           {
-             std::uint64_t ordinal = 0;
-             for( auto const & [key, point] : expected )
-             {
-               if( point->participants.front() == m_rank )
-               {
-                 vtkIdType const id =
-                     existing ? key.corners.front() : static_cast< vtkIdType >( static_cast< std::uint64_t >( range.first ) + ordinal++ );
-                 PointRecord record{ id, point->position, point->fields };
-                 records.emplace( key, record );
-                 for( int r : point->participants )
-                 {
-                   if( r != m_rank )
-                   {
-                     auto & bytes = outgoing[r];
-                     putInteger( bytes, generation );
-                     putKey( bytes, key );
-                     putInteger( bytes, point->participants.size() );
-                     for( int participant : point->participants )
-                     {
-                       putInteger( bytes, participant );
-                     }
-                     putInteger( bytes, record.globalId );
-                     for( double x : record.position )
-                     {
-                       putDouble( bytes, x );
-                     }
-                     putInteger( bytes, record.fields.size() );
-                     bytes.insert( bytes.end(), record.fields.begin(), record.fields.end() );
-                   }
-                 }
-               }
-             }
-           } );
+  {
+    std::uint64_t ordinal = 0;
+    for( auto const & [key, point] : expected )
+    {
+      if( point->participants.front() == m_rank )
+      {
+        vtkIdType const id =
+          existing ? key.corners.front() : static_cast< vtkIdType >( static_cast< std::uint64_t >( range.first ) + ordinal++ );
+        PointRecord record{ id, point->position, point->fields };
+        records.emplace( key, record );
+        for( int r : point->participants )
+        {
+          if( r != m_rank )
+          {
+            auto & bytes = outgoing[r];
+            putInteger( bytes, generation );
+            putKey( bytes, key );
+            putInteger( bytes, point->participants.size() );
+            for( int participant : point->participants )
+            {
+              putInteger( bytes, participant );
+            }
+            putInteger( bytes, record.globalId );
+            for( double x : record.position )
+            {
+              putDouble( bytes, x );
+            }
+            putInteger( bytes, record.fields.size() );
+            bytes.insert( bytes.end(), record.fields.begin(), record.fields.end() );
+          }
+        }
+      }
+    }
+  } );
   auto const incoming = exchangeNeighbors( outgoing );
   checked( "resolved point records",
            [&]
-           {
-             for( auto const & [peer, bytes] : incoming )
-             {
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 if( reader.integer() != generation )
-                 {
-                   throw std::invalid_argument( "Wrong refinement generation in shared point record" );
-                 }
-                 EntityKey const key = reader.key();
-                 auto const found = expected.find( key );
-                 if( found == expected.end() || found->second->participants.front() != peer )
-                 {
-                   throw std::invalid_argument( "Unexpected shared point allocator/support" );
-                 }
-                 if( reader.participants( m_size ) != found->second->participants )
-                 {
-                   throw std::invalid_argument( "Inconsistent shared point participants" );
-                 }
-                 PointRecord record;
-                 record.globalId = reader.id();
-                 for( double & x : record.position )
-                 {
-                   x = reader.real();
-                 }
-                 record.fields = reader.payload();
-                 if( ( existing ? record.globalId != key.corners.front() : record.globalId <= oldMaximum ) ||
-                     !records.emplace( key, std::move( record ) ).second )
-                 {
-                   throw std::invalid_argument( "Repeated/invalid shared point ID record" );
-                 }
-               }
-             }
-             if( records.size() != expected.size() )
-             {
-               throw std::invalid_argument( "Missing shared point creation record" );
-             }
-             std::set< std::pair< std::uint64_t, vtkIdType > > ids;
-             for( auto const & [key, record] : records )
-             {
-               if( !ids.emplace( key.meshNamespace, record.globalId ).second )
-               {
-                 throw std::invalid_argument( "Repeated local refinement point global ID" );
-               }
-               auto const & predicted = expected.at( key )->position;
-               for( int d = 0; d < 3; ++d )
-               {
-                 if( std::abs( record.position[d] - predicted[d] ) >
-                     64 * std::numeric_limits< double >::epsilon() * std::max( std::abs( record.position[d] ), std::abs( predicted[d] ) ) +
-                         1e-12 * expected.at( key )->supportScale )
-                 {
-                   throw std::invalid_argument( "Shared point support coordinate mismatch" );
-                 }
-               }
-             }
-           } );
+  {
+    for( auto const & [peer, bytes] : incoming )
+    {
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        if( reader.integer() != generation )
+        {
+          throw std::invalid_argument( "Wrong refinement generation in shared point record" );
+        }
+        EntityKey const key = reader.key();
+        auto const found = expected.find( key );
+        if( found == expected.end() || found->second->participants.front() != peer )
+        {
+          throw std::invalid_argument( "Unexpected shared point allocator/support" );
+        }
+        if( reader.participants( m_size ) != found->second->participants )
+        {
+          throw std::invalid_argument( "Inconsistent shared point participants" );
+        }
+        PointRecord record;
+        record.globalId = reader.id();
+        for( double & x : record.position )
+        {
+          x = reader.real();
+        }
+        record.fields = reader.payload();
+        if( ( existing ? record.globalId != key.corners.front() : record.globalId <= oldMaximum ) ||
+            !records.emplace( key, std::move( record ) ).second )
+        {
+          throw std::invalid_argument( "Repeated/invalid shared point ID record" );
+        }
+      }
+    }
+    if( records.size() != expected.size() )
+    {
+      throw std::invalid_argument( "Missing shared point creation record" );
+    }
+    std::set< std::pair< std::uint64_t, vtkIdType > > ids;
+    for( auto const & [key, record] : records )
+    {
+      if( !ids.emplace( key.meshNamespace, record.globalId ).second )
+      {
+        throw std::invalid_argument( "Repeated local refinement point global ID" );
+      }
+      auto const & predicted = expected.at( key )->position;
+      for( int d = 0; d < 3; ++d )
+      {
+        if( std::abs( record.position[d] - predicted[d] ) >
+            64 * std::numeric_limits< double >::epsilon() * std::max( std::abs( record.position[d] ), std::abs( predicted[d] ) ) +
+            1e-12 * expected.at( key )->supportScale )
+        {
+          throw std::invalid_argument( "Shared point support coordinate mismatch" );
+        }
+      }
+    }
+  } );
   return records;
 }
 std::map< ChildCellKey, CellRecord > Communication::resolveCells( std::uint64_t generation, std::vector< CellCreation > const & cells,
@@ -1298,122 +1353,123 @@ std::map< ChildCellKey, CellRecord > Communication::resolveCellRecords( std::uin
   std::uint64_t allocated = 0;
   checked( "surface cell requests",
            [&]
-           {
-             if( !m_discovered || ( !existing && generation == 0 ) || minimum != maximum )
-             {
-               throw std::invalid_argument( "Invalid surface refinement generation or missing coarse discovery" );
-             }
-             for( auto const & cell : cells )
-             {
-               auto const & key = cell.key;
-               auto const & ranks = cell.participants;
-               if( key.parentId < 0 || key.templateCode > 255 || key.ordinal >= 22 || ( existing && key.ordinal != 0 ) )
-               {
-                 throw std::invalid_argument( "Invalid surface child identity" );
-               }
-               if( ranks.empty() || !std::is_sorted( ranks.begin(), ranks.end() ) || ranks.front() < 0 || ranks.back() >= m_size ||
-                   std::adjacent_find( ranks.begin(), ranks.end() ) != ranks.end() ||
-                   !std::binary_search( ranks.begin(), ranks.end(), m_rank ) )
-               {
-                 throw std::invalid_argument( "Invalid surface child participants" );
-               }
-               for( int rank : ranks )
-               {
-                 if( rank != m_rank && !std::binary_search( m_neighbors.begin(), m_neighbors.end(), rank ) )
-                 {
-                   throw std::invalid_argument( "Surface child uses an undiscovered participant" );
-                 }
-               }
-               if( !expected.emplace( key, &cell ).second )
-               {
-                 throw std::invalid_argument( "Duplicate local surface child identity" );
-               }
-               allocated += ranks.front() == m_rank;
-             }
-           } );
+  {
+    if( !m_discovered || ( !existing && generation == 0 ) || minimum != maximum )
+    {
+      throw std::invalid_argument( "Invalid surface refinement generation or missing coarse discovery" );
+    }
+    for( auto const & cell : cells )
+    {
+      auto const & key = cell.key;
+      auto const & ranks = cell.participants;
+      if( key.parentId < 0 || key.templateCode > 255 || key.ordinal >= 22 || ( existing && key.ordinal != 0 ) )
+      {
+        throw std::invalid_argument( "Invalid surface child identity" );
+      }
+      if( ranks.empty() || !std::is_sorted( ranks.begin(), ranks.end() ) || ranks.front() < 0 || ranks.back() >= m_size ||
+          std::adjacent_find( ranks.begin(), ranks.end() ) != ranks.end() ||
+          !std::binary_search( ranks.begin(), ranks.end(), m_rank ) )
+      {
+        throw std::invalid_argument( "Invalid surface child participants" );
+      }
+      for( int rank : ranks )
+      {
+        if( rank != m_rank && !std::binary_search( m_neighbors.begin(), m_neighbors.end(), rank ) )
+        {
+          throw std::invalid_argument( "Surface child uses an undiscovered participant" );
+        }
+      }
+      if( !expected.emplace( key, &cell ).second )
+      {
+        throw std::invalid_argument( "Duplicate local surface child identity" );
+      }
+      allocated += ranks.front() == m_rank;
+    }
+  } );
   auto const range = existing ? IdRange{ 0, 0 } : allocateRange( allocated, base );
   Mail outgoing;
   std::map< ChildCellKey, CellRecord > result;
   checked( "surface cell packing",
            [&]
-           {
-             std::uint64_t ordinal = 0;
-             for( auto const & [key, cell] : expected )
-             {
-               if( cell->participants.front() == m_rank )
-               {
-                 CellRecord record{ existing ? key.parentId
+  {
+    std::uint64_t ordinal = 0;
+    for( auto const & [key, cell] : expected )
+    {
+      if( cell->participants.front() == m_rank )
+      {
+        CellRecord record{ existing ? key.parentId
                                              : static_cast< vtkIdType >( static_cast< std::uint64_t >( range.first ) + ordinal++ ),
-                                    cell->fields };
-                 result.emplace( key, record );
-                 for( int rank : cell->participants )
-                 {
-                   if( rank != m_rank )
-                   {
-                     auto & bytes = outgoing[rank];
-                     putInteger( bytes, generation );
-                     putInteger( bytes, key.meshNamespace );
-                     putInteger( bytes, key.parentId );
-                     putInteger( bytes, key.templateCode );
-                     putInteger( bytes, key.ordinal );
-                     putInteger( bytes, cell->participants.size() );
-                     for( int participant : cell->participants )
-                     {
-                       putInteger( bytes, participant );
-                     }
-                     putInteger( bytes, record.globalId );
-                     putInteger( bytes, record.fields.size() );
-                     bytes.insert( bytes.end(), record.fields.begin(), record.fields.end() );
-                   }
-                 }
-               }
-             }
-           } );
+                           cell->fields };
+        result.emplace( key, record );
+        for( int rank : cell->participants )
+        {
+          if( rank != m_rank )
+          {
+            auto & bytes = outgoing[rank];
+            putInteger( bytes, generation );
+            putInteger( bytes, key.meshNamespace );
+            putInteger( bytes, key.parentId );
+            putInteger( bytes, key.templateCode );
+            putInteger( bytes, key.ordinal );
+            putInteger( bytes, cell->participants.size() );
+            for( int participant : cell->participants )
+            {
+              putInteger( bytes, participant );
+            }
+            putInteger( bytes, record.globalId );
+            putInteger( bytes, record.fields.size() );
+            bytes.insert( bytes.end(), record.fields.begin(), record.fields.end() );
+          }
+        }
+      }
+    }
+  } );
   auto const incoming = exchangeNeighbors( outgoing );
   checked( "surface cell records",
            [&]
-           {
-             for( auto const & [peer, bytes] : incoming )
-             {
-               Reader reader( bytes );
-               while( !reader.done() )
-               {
-                 if( reader.integer() != generation )
-                 {
-                   throw std::invalid_argument( "Wrong surface cell generation" );
-                 }
-                 ChildCellKey const key{ reader.integer(), reader.id(), reader.integer(), reader.integer() };
-                 auto const found = expected.find( key );
-                 if( found == expected.end() || found->second->participants.front() != peer )
-                 {
-                   throw std::invalid_argument( "Unexpected surface child allocator or identity" );
-                 }
-                 if( reader.participants( m_size ) != found->second->participants )
-                 {
-                   throw std::invalid_argument( "Inconsistent surface child participants" );
-                 }
-                 CellRecord record{ reader.id(), reader.payload() };
-                 if( ( existing ? record.globalId != key.parentId : record.globalId < base ) ||
-                     !result.emplace( key, std::move( record ) ).second )
-                 {
-                   throw std::invalid_argument( "Repeated or invalid surface child record" );
-                 }
-               }
-             }
-             if( result.size() != expected.size() )
-             {
-               throw std::invalid_argument( "Missing surface child record" );
-             }
-             std::set< std::pair< std::uint64_t, vtkIdType > > ids;
-             for( auto const & [key, record] : result )
-             {
-               if( !ids.emplace( existing ? key.meshNamespace : 0, record.globalId ).second )
-               {
-                 throw std::invalid_argument( "Repeated allocated surface child ID" );
-               }
-             }
-           } );
-  if( allocatedRange ) *allocatedRange = range;
+  {
+    for( auto const & [peer, bytes] : incoming )
+    {
+      Reader reader( bytes );
+      while( !reader.done() )
+      {
+        if( reader.integer() != generation )
+        {
+          throw std::invalid_argument( "Wrong surface cell generation" );
+        }
+        ChildCellKey const key{ reader.integer(), reader.id(), reader.integer(), reader.integer() };
+        auto const found = expected.find( key );
+        if( found == expected.end() || found->second->participants.front() != peer )
+        {
+          throw std::invalid_argument( "Unexpected surface child allocator or identity" );
+        }
+        if( reader.participants( m_size ) != found->second->participants )
+        {
+          throw std::invalid_argument( "Inconsistent surface child participants" );
+        }
+        CellRecord record{ reader.id(), reader.payload() };
+        if( ( existing ? record.globalId != key.parentId : record.globalId < base ) ||
+            !result.emplace( key, std::move( record ) ).second )
+        {
+          throw std::invalid_argument( "Repeated or invalid surface child record" );
+        }
+      }
+    }
+    if( result.size() != expected.size() )
+    {
+      throw std::invalid_argument( "Missing surface child record" );
+    }
+    std::set< std::pair< std::uint64_t, vtkIdType > > ids;
+    for( auto const & [key, record] : result )
+    {
+      if( !ids.emplace( existing ? key.meshNamespace : 0, record.globalId ).second )
+      {
+        throw std::invalid_argument( "Repeated allocated surface child ID" );
+      }
+    }
+  } );
+  if( allocatedRange )
+    *allocatedRange = range;
   return result;
 }
 } // namespace geos::vtk::refinement

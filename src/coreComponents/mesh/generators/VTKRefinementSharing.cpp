@@ -111,7 +111,7 @@ CoarseBoundary coarseBoundary( std::vector< Cell > const & cells, Connectivity c
 }
 
 InterfaceSharing::InterfaceSharing( PointRegistry & points, std::vector< EntitySupport > sharedEntities, int localRank )
-    : m_points( points ), m_local{ localRank }, m_entities( std::move( sharedEntities ) )
+  : m_points( points ), m_local{ localRank }, m_entities( std::move( sharedEntities ) )
 {
   if( localRank < 0 )
     throw std::invalid_argument( "Negative refinement interface rank" );
@@ -200,8 +200,8 @@ Participants const & InterfaceSharing::participants( Connectivity const & fineCo
   {
     auto const & entity = m_entities[index];
     if( !std::all_of(
-            support.begin(), support.end(), [&]( vtkIdType corner )
-            { return std::find( entity.localCorners.begin(), entity.localCorners.end(), corner ) != entity.localCorners.end(); } ) )
+          support.begin(), support.end(), [&]( vtkIdType corner )
+    { return std::find( entity.localCorners.begin(), entity.localCorners.end(), corner ) != entity.localCorners.end(); } ) )
       continue;
     if( best == nullptr || entity.key.kind < best->key.kind )
     {

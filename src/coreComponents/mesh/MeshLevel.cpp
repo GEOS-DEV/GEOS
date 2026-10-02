@@ -369,7 +369,8 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   // Add all the collocated nodes of the fracture element.
   auto const addCollocatedFractureNodes = [&]( FaceElementSubRegion const & subRegion )
   {
-    if( nodeAdjacencySet.empty() ) return;
+    if( nodeAdjacencySet.empty() )
+      return;
     GEOS_MARK_SCOPE_STR( "geos/MeshLevel/expandCollocatedGhostNodes" );
     auto const & g2l = nodeManager.globalToLocalMap();
 

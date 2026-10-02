@@ -22,7 +22,7 @@
 
 namespace geos::vtk::refinement
 {
-SurfaceAssociations::SurfaceAssociations( std::vector< MainFace > faces, std::uint64_t mainNamespace ) : m_namespace( mainNamespace )
+SurfaceAssociations::SurfaceAssociations( std::vector< MainFace > faces, std::uint64_t mainNamespace ): m_namespace( mainNamespace )
 {
   std::unordered_map< EntityKey, std::size_t, EntityKeyHash > unique;
   std::unordered_map< Connectivity, Connectivity, ConnectivityHash > cycles;

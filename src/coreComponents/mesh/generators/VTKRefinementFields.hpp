@@ -20,6 +20,7 @@
 #include "VTKRefinementTopology.hpp"
 #include <vtkSmartPointer.h>
 
+#include <map>
 #include <set>
 #include <string>
 
@@ -30,6 +31,9 @@ class vtkAbstractArray;
 
 namespace geos::vtk::refinement
 {
+
+// Internal implementation of geos::vtk::refineUniformly.
+/// @cond DO_NOT_DOCUMENT
 
 enum class PointTransferPolicy
 {
@@ -51,7 +55,23 @@ struct TransferPolicies
   std::set< std::string > excludedCellArrays;
 };
 
-vtkSmartPointer< vtkPointData > transferPointData( vtkPointData & input, PointRegistry const & points, TransferPolicies const & policies );
+/// For each node-set array, the membership of every point of a registry.
+using NodeSetMembers = std::map< std::string, std::vector< bool > >;
+
+/** Node-set membership of new points. A new point joins a set only when its
+ * parent edge or face lies on a boundary face whose corners all belong to the
+ * set; cell-interior points never join. Existing points keep their values.
+ * boundaryFaces lists the domain-boundary faces of the previous level, in
+ * local point indices. Arrays that are missing are skipped.
+ */
+NodeSetMembers boundaryNodeSets( vtkPointData & input, PointRegistry const & points, TransferPolicies const & policies,
+                                 std::vector< Connectivity > const & boundaryFaces );
+
+/** New points of node-set arrays take their membership from nodeSets, which
+ * must cover every node-set array whenever the registry has new points.
+ */
+vtkSmartPointer< vtkPointData > transferPointData( vtkPointData & input, PointRegistry const & points, TransferPolicies const & policies,
+                                                   NodeSetMembers const & nodeSets = {} );
 vtkSmartPointer< vtkCellData > transferCellData( vtkCellData & input, vtkIdType parentCount, Connectivity const & parents,
                                                  std::vector< double > const & fractions, TransferPolicies const & policies );
 
@@ -98,6 +118,8 @@ private:
   std::vector< vtkAbstractArray * > m_arrays;
   std::vector< unsigned char > m_schema;
 };
+
+/// @endcond
 
 } // namespace geos::vtk::refinement
 #endif

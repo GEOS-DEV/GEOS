@@ -165,7 +165,7 @@ public:
         auto addField = [&]( string const & name, int components, auto value )
         {
           vtkSmartPointer< vtkDataArray > field = singlePrecision ? vtkSmartPointer< vtkDataArray >( vtkSmartPointer< vtkFloatArray >::New() ) :
-                                                                  vtkSmartPointer< vtkDataArray >( vtkSmartPointer< vtkDoubleArray >::New() );
+                                                  vtkSmartPointer< vtkDataArray >( vtkSmartPointer< vtkDoubleArray >::New() );
           field->SetName( name.c_str() );
           field->SetNumberOfComponents( components );
           field->SetNumberOfTuples( grid->GetNumberOfCells() );
@@ -231,7 +231,7 @@ void initialize( FixtureFile const & fixture, int level )
   for( int kind = 0; kind < 4; ++kind )
   {
     regionXml += GEOS_FMT( R"xml(<CellElementRegion name="{}" cellBlocks="{{{}}}" materialList="{{{}}}"/>)xml",
-                          regions[kind], blocks[kind], materials[kind] );
+                           regions[kind], blocks[kind], materials[kind] );
     materialXml += GEOS_FMT( R"xml(<ElasticIsotropic name="{}" defaultDensity="2700"
       defaultBulkModulus="5e9" defaultShearModulus="{}"/>)xml", materials[kind], ( kind + 1 ) * 1e9 );
     fields += "," + materials[kind] + "Stress," + materials[kind] + "Bulk";
@@ -239,7 +239,8 @@ void initialize( FixtureFile const & fixture, int level )
   }
   fields += "}";
   targets += "}";
-  problem.parseInputString( GEOS_FMT( R"xml(<Problem>
+  problem.parseInputString( GEOS_FMT(
+                              R"xml(<Problem>
     <Mesh><VTKMesh name="mesh" file="{}" useGlobalIds="1" scatterMethod="rcb" partitionRefinement="0"
       uniformRefinement="{}" fieldsToImport="{}" fieldNamesInGEOS="{}"/></Mesh>
     <Solvers gravityVector="{{0,0,0}}"><RefinementImportProbe name="probe" discretization="FE1"
@@ -278,19 +279,23 @@ void initialize( FixtureFile const & fixture, int level )
         EXPECT_LT( source, 4 * copies );
         EXPECT_EQ( source % 4, kind );
         EXPECT_DOUBLE_EQ( scalar[c], seed( source, 0 ) );
-        for( int k = 0; k < 3; ++k ) EXPECT_DOUBLE_EQ( vector[c][k], seed( source, k ) );
-        for( int k = 0; k < 9; ++k ) EXPECT_DOUBLE_EQ( tensor[c][k], seed( source, k ) );
+        for( int k = 0; k < 3; ++k )
+          EXPECT_DOUBLE_EQ( vector[c][k], seed( source, k ) );
+        for( int k = 0; k < 9; ++k )
+          EXPECT_DOUBLE_EQ( tensor[c][k], seed( source, k ) );
         EXPECT_DOUBLE_EQ( bulk[c], bulkSeed( source ) );
         EXPECT_DOUBLE_EQ( shear[c], ( kind + 1 ) * 1e9 );
         EXPECT_GT( stress.size( 1 ), 0 );
         for( localIndex q = 0; q < stress.size( 1 ); ++q )
-          for( int k = 0; k < 6; ++k ) EXPECT_DOUBLE_EQ( stress[c][q][k], stressSeed( source, k ) );
+          for( int k = 0; k < 6; ++k )
+            EXPECT_DOUBLE_EQ( stress[c][q][k], stressSeed( source, k ) );
         if( ghosts[c] < 0 )
         {
           ++owned;
           volume += cells.getElementVolume()[c];
         }
-        else ++localGhosts;
+        else
+          ++localGhosts;
       }
     } );
     int const counts[3][4] = { { 1, 1, 1, 1 }, { 8, 10, 8, 10 }, { 64, 92, 64, 80 } };
@@ -298,7 +303,10 @@ void initialize( FixtureFile const & fixture, int level )
     EXPECT_EQ( MpiWrapper::sum( owned ), copies * counts[level][kind] );
     EXPECT_NEAR( MpiWrapper::sum( volume ), copies * volumes[kind], 1e-11 );
   }
-  if( MpiWrapper::commSize() > 1 ) { EXPECT_GT( MpiWrapper::sum( localGhosts ), 0 ); }
+  if( MpiWrapper::commSize() > 1 )
+  {
+    EXPECT_GT( MpiWrapper::sum( localGhosts ), 0 );
+  }
 }
 } // namespace
 
@@ -317,7 +325,7 @@ TEST( VTKRefinedFieldImport, ScalarVectorTensorAndMaterialFieldsKeepSourceAlignm
     }
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   commandLineOptions = *geos::basicSetup( argc, argv );

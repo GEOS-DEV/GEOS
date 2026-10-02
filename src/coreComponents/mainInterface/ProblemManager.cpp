@@ -827,7 +827,7 @@ void ProblemManager::generateMesh()
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     bool const refinedTopology = meshBody.hasGroup( keys::cellManager ) &&
-      !meshBody.getCellBlockManager().getSourceCellBlockDescendants().empty();
+                                 !meshBody.getCellBlockManager().getSourceCellBlockDescendants().empty();
     if( meshBody.hasGroup( keys::particleManager ) )
     {
       meshBody.deregisterGroup( keys::particleManager );

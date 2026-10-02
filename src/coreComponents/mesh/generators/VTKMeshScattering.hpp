@@ -65,6 +65,28 @@ computeCellRanks( ScatterMethod method,
                   arrayView1d< integer const > cartesianPartitions,
                   integer numRanks );
 
+/**
+ * @brief Compute the destination rank of each local cell when the input is distributed.
+ *
+ * Each rank assigns only its own cells; no rank needs the complete mesh.
+ * The contiguous and cartesian methods give the same assignment as computeCellRanks()
+ * applied to the rank-ordered concatenation of the pieces. The rcb method gives the
+ * same cell count per rank, with a distributed exact median search.
+ *
+ * @param[in] method              the partitioning strategy (not kdtree)
+ * @param[in] mesh                the local cells of this rank
+ * @param[in] totalCells          the number of cells over all ranks
+ * @param[in] cartesianPartitions the (nx, ny, nz) grid for the cartesian method
+ * @param[in] comm                the MPI communicator
+ * @return the destination rank of each local cell
+ */
+stdVector< integer >
+computeCellRanksDistributed( ScatterMethod method,
+                             vtkDataSet & mesh,
+                             vtkIdType totalCells,
+                             arrayView1d< integer const > cartesianPartitions,
+                             MPI_Comm comm );
+
 /** @brief Conservative block fallback for a coarse mesh, including distributed input. */
 vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm );
 
@@ -92,7 +114,9 @@ scatterByRankAssignment( vtkUnstructuredGrid * inputMesh,
  * scatter pattern.
  *
  * @param[in] method     the partitioning strategy to use
- * @param[in] mesh       the input mesh (kdtree accepts distributed input; custom methods require all cells on rank 0)
+ * @param[in] mesh       the input mesh. If rank 0 holds every cell, it computes the assignment and
+ *                       ships cells through a binary tree. Otherwise each rank assigns its own cells
+ *                       (computeCellRanksDistributed) and sends them directly to their destination.
  * @param[in] cartesianPartitions additional parameters for the cartesian partitioning method:
  *                        - For @p cartesian: must contain at least 3 values (nx, ny, nz)
  *                          with nx*ny*nz == MPI size.

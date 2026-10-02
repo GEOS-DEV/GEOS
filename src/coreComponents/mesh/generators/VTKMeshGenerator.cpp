@@ -280,7 +280,8 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
       // Ordinary imported fields come from cell data; only declared node sets
       // consume input point arrays in this importer.
       options.requiredPointArrays->insert( m_nodesetNames.begin(), m_nodesetNames.end() );
-      for( string const & name : m_nodesetNames ) options.fields.pointArrays[name] = vtk::refinement::PointTransferPolicy::nodeSet;
+      for( string const & name : m_nodesetNames )
+        options.fields.pointArrays[name] = vtk::refinement::PointTransferPolicy::nodeSet;
       options.requiredCellArrays.emplace();
       options.requiredCellArrays->insert( m_regionAttributeName );
       for( auto const & [source, target] : m_volumicFields )
@@ -334,8 +335,10 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, m_translate, m_scale );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing cells...", catalogName(), getName() ) );
-  if( m_uniformRefinement > 0 ) writeRefinedCells( getLogLevel(), *m_vtkMesh, m_refinedBlocks, cellBlockManager );
-  else writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, m_structuredIndexAttributeName, cellBlockManager );
+  if( m_uniformRefinement > 0 )
+    writeRefinedCells( getLogLevel(), *m_vtkMesh, m_refinedBlocks, cellBlockManager );
+  else
+    writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, m_structuredIndexAttributeName, cellBlockManager );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing surfaces...", catalogName(), getName() ) );
   writeSurfaces( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
@@ -367,7 +370,8 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
       if( block.name == cellBlockName )
       {
         vtkDataArray * const array = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
-        if( isMaterialField ) return vtk::importMaterialField( block.cells, array, wrapper );
+        if( isMaterialField )
+          return vtk::importMaterialField( block.cells, array, wrapper );
         return vtk::importRegularField( block.cells, array, wrapper );
       }
     GEOS_THROW( GEOS_FMT( "Could not import field '{}' from refined cell block '{}'", meshFieldName, cellBlockName ),

@@ -53,16 +53,16 @@ void appendString( Bytes & bytes, char const * text )
     bytes.insert( bytes.end(), text, text + length );
 }
 
-template < typename Value >
+template< typename Value >
 using Bits = std::conditional_t<
-    sizeof( Value ) == 1, std::uint8_t,
-    std::conditional_t< sizeof( Value ) == 2, std::uint16_t, std::conditional_t< sizeof( Value ) == 4, std::uint32_t, std::uint64_t > > >;
+  sizeof( Value ) == 1, std::uint8_t,
+  std::conditional_t< sizeof( Value ) == 2, std::uint16_t, std::conditional_t< sizeof( Value ) == 4, std::uint32_t, std::uint64_t > > >;
 
 struct PackTuple
 {
   vtkIdType point;
   Bytes & bytes;
-  template < typename Array > void operator()( Array * array ) const
+  template< typename Array > void operator()( Array * array ) const
   {
     vtkDataArrayAccessor< Array > access( array );
     using Value = typename decltype( access )::APIType;
@@ -82,7 +82,7 @@ struct InstallTuple
   vtkIdType point;
   Bytes const & bytes;
   std::size_t & cursor;
-  template < typename Array > void operator()( Array * array ) const
+  template< typename Array > void operator()( Array * array ) const
   {
     vtkDataArrayAccessor< Array > access( array );
     using Value = typename decltype( access )::APIType;
@@ -113,7 +113,7 @@ void validateArrays( vtkDataSetAttributes & input, vtkIdType tuples )
   }
 }
 
-template < typename Data > vtkSmartPointer< Data > allocate( Data & input, vtkIdType tuples, std::set< std::string > const & excluded )
+template< typename Data > vtkSmartPointer< Data > allocate( Data & input, vtkIdType tuples, std::set< std::string > const & excluded )
 {
   // VTK allocations index scalar values, not tuples. Prove component products
   // and addressable fixed storage before entering CopyAllocate/SetNumberOfTuples.
@@ -169,7 +169,8 @@ struct InterpolatePoints
 {
   PointRegistry const & points;
   PointTransferPolicy policy;
-  template < typename Source, typename Target > void operator()( Source * source, Target * target ) const
+  std::vector< bool > const * members;
+  template< typename Source, typename Target > void operator()( Source * source, Target * target ) const
   {
     vtkDataArrayAccessor< Source > input( source );
     vtkDataArrayAccessor< Target > output( target );
@@ -180,6 +181,9 @@ struct InterpolatePoints
       throw std::invalid_argument( "Continuous refinement point fields must use floating point storage" );
     if( policy == PointTransferPolicy::nodeSet && ( !std::is_unsigned< Value >::value || source->GetNumberOfComponents() != 1 ) )
       throw std::invalid_argument( "Refinement node-set masks require unsigned scalar storage" );
+    if( policy == PointTransferPolicy::nodeSet && points.points().size() > static_cast< std::size_t >( points.originalSize() ) &&
+        ( members == nullptr || members->size() != points.points().size() ) )
+      throw std::invalid_argument( "Refinement node-set membership was not supplied for every point" );
     for( std::size_t i = 0; i < points.points().size(); ++i )
       for( int c = 0; c < source->GetNumberOfComponents(); ++c )
       {
@@ -188,7 +192,7 @@ struct InterpolatePoints
         Value value = first;
         if( i < static_cast< std::size_t >( points.originalSize() ) )
         {
-          if constexpr( std::is_floating_point< Value >::value )
+          if constexpr ( std::is_floating_point< Value >::value )
             if( policy == PointTransferPolicy::continuous && !std::isfinite( first ) )
               throw std::invalid_argument( "Nonfinite continuous refinement point field" );
           output.Set( i, c, first );
@@ -197,23 +201,17 @@ struct InterpolatePoints
         if( policy == PointTransferPolicy::nodeSet )
         {
           // GEOS' nodeset reader treats exactly one as membership.
-          if constexpr( std::is_unsigned< Value >::value )
-          {
-            bool member = true;
-            for( vtkIdType corner : support )
-              member = member && input.Get( corner, c ) == static_cast< Value >( 1 );
-            value = static_cast< Value >( member );
-          }
+          value = static_cast< Value >( ( *members )[i] ? 1 : 0 );
         }
         else if( policy == PointTransferPolicy::equal )
         {
           for( vtkIdType corner : support )
-            if( !std::equal_to< Value >{}( input.Get( corner, c ), first ) )
+            if( !std::equal_to< Value >{} ( input.Get( corner, c ), first ) )
               throw std::invalid_argument( "Differing categorical point values on refinement support" );
         }
         else
         {
-          if constexpr( std::is_floating_point< Value >::value )
+          if constexpr ( std::is_floating_point< Value >::value )
           {
             long double average = 0;
             for( vtkIdType corner : support )
@@ -236,11 +234,11 @@ struct InterpolatePoints
 struct ScaleExtensive
 {
   std::vector< double > const & fractions;
-  template < typename Array > void operator()( Array * array ) const
+  template< typename Array > void operator()( Array * array ) const
   {
     vtkDataArrayAccessor< Array > access( array );
     using Value = typename decltype( access )::APIType;
-    if constexpr( !std::is_floating_point< Value >::value )
+    if constexpr ( !std::is_floating_point< Value >::value )
       throw std::invalid_argument( "Extensive refinement fields must use floating point storage" );
     else
       for( std::size_t i = 0; i < fractions.size(); ++i )
@@ -256,7 +254,33 @@ struct ScaleExtensive
 
 } // namespace
 
-vtkSmartPointer< vtkPointData > transferPointData( vtkPointData & input, PointRegistry const & points, TransferPolicies const & policies )
+NodeSetMembers boundaryNodeSets( vtkPointData & input, PointRegistry const & points, TransferPolicies const & policies,
+                                 std::vector< Connectivity > const & boundaryFaces )
+{
+  NodeSetMembers result;
+  for( auto const & [name, policy] : policies.pointArrays )
+  {
+    auto * array = input.GetArray( name.c_str() );
+    if( policy != PointTransferPolicy::nodeSet || array == nullptr )
+      continue;
+    std::vector< bool > & members = result[name];
+    members.assign( points.points().size(), false );
+    for( Connectivity const & face : boundaryFaces )
+    {
+      if( !std::all_of( face.begin(), face.end(), [&]( vtkIdType p ) { return std::equal_to< double >{} ( array->GetComponent( p, 0 ), 1. ); } ) )
+        continue;
+      if( vtkIdType const center = points.findFace( face ); center >= 0 )
+        members[center] = true;
+      for( std::size_t i = 0; i < face.size(); ++i )
+        if( vtkIdType const mid = points.findEdge( face[i], face[( i + 1 ) % face.size()] ); mid >= 0 )
+          members[mid] = true;
+    }
+  }
+  return result;
+}
+
+vtkSmartPointer< vtkPointData > transferPointData( vtkPointData & input, PointRegistry const & points, TransferPolicies const & policies,
+                                                   NodeSetMembers const & nodeSets )
 {
   validateArrays( input, points.originalSize() );
   for( auto const & policy : policies.pointArrays )
@@ -275,11 +299,12 @@ vtkSmartPointer< vtkPointData > transferPointData( vtkPointData & input, PointRe
       throw std::invalid_argument( "Refinement point fields require supported numeric arrays" );
     auto const requested = policies.pointArrays.find( source->GetName() );
     PointTransferPolicy const policy =
-        requested == policies.pointArrays.end()
+      requested == policies.pointArrays.end()
             ? ( source->GetDataType() == VTK_FLOAT || source->GetDataType() == VTK_DOUBLE ? PointTransferPolicy::continuous
                                                                                           : PointTransferPolicy::equal )
             : requested->second;
-    InterpolatePoints worker{ points, policy };
+    auto const members = nodeSets.find( source->GetName() );
+    InterpolatePoints worker{ points, policy, members == nodeSets.end() ? nullptr : &members->second };
     if( !vtkArrayDispatch::Dispatch2BySameValueType< vtkArrayDispatch::AllTypes >::Execute( source, target, worker ) )
       throw std::invalid_argument( "Unsupported numeric refinement point-array implementation: " + std::string( source->GetName() ) );
   }
@@ -323,7 +348,7 @@ vtkSmartPointer< vtkCellData > transferCellData( vtkCellData & input, vtkIdType 
   return output;
 }
 
-PointFieldLayout::PointFieldLayout( vtkPointData & data ) : m_data( &data )
+PointFieldLayout::PointFieldLayout( vtkPointData & data ): m_data( &data )
 {
   validateArrays( data, data.GetNumberOfTuples() );
   for( int i = 0; i < data.GetNumberOfArrays(); ++i )
@@ -385,7 +410,7 @@ void PointFieldLayout::install( vtkIdType point, std::vector< unsigned char > co
       throw std::invalid_argument( "Unsupported refinement point tuple array" );
 }
 
-CellFieldLayout::CellFieldLayout( vtkCellData & data ) : m_data( &data )
+CellFieldLayout::CellFieldLayout( vtkCellData & data ): m_data( &data )
 {
   validateArrays( data, data.GetNumberOfTuples() );
   for( int i = 0; i < data.GetNumberOfArrays(); ++i )

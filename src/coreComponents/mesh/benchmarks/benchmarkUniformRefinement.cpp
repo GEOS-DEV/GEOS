@@ -76,12 +76,12 @@ int parseInteger( char const * value, bool zero = false )
 {
   std::size_t consumed = 0;
   long long const parsed = std::stoll( value, &consumed );
-  if( value[consumed] != '\0' || parsed < ( zero ? 0 : 1 ) || parsed > INT_MAX )
+  if( value[consumed] != '\0' || parsed< ( zero ? 0 : 1 ) || parsed > INT_MAX )
     throw std::invalid_argument( "Expected a representable nonnegative/positive integer" );
   return static_cast< int >( parsed );
 }
 
-Options options( int argc, char ** argv, int size )
+Options options( int argc, char * * argv, int size )
 {
   Options result;
   for( int i = 1; i < argc; ++i )
@@ -209,7 +209,7 @@ Mesh generatedMesh( Options const & opt, int rank )
       {
         mesh.coordinates.push_back( { double( x ), double( y ), double( z ) } );
         mesh.pointIds.push_back( x + ( static_cast< vtkIdType >( opt.cells[0] ) + 1 ) *
-                                         ( y + ( static_cast< vtkIdType >( opt.cells[1] ) + 1 ) * z ) );
+                                 ( y + ( static_cast< vtkIdType >( opt.cells[1] ) + 1 ) * z ) );
       }
   for( int z = 0; z < dims[2]; ++z )
     for( int y = 0; y < dims[1]; ++y )
@@ -220,8 +220,8 @@ Mesh generatedMesh( Options const & opt, int rank )
                            node( x + 1, y, z + 1 ), node( x + 1, y + 1, z + 1 ), node( x, y + 1, z + 1 ) },
                          0 };
         vtkIdType const cubeId =
-            x + begin[0] +
-            static_cast< vtkIdType >( opt.cells[0] ) * ( y + begin[1] + static_cast< vtkIdType >( opt.cells[1] ) * ( z + begin[2] ) );
+          x + begin[0] +
+          static_cast< vtkIdType >( opt.cells[0] ) * ( y + begin[1] + static_cast< vtkIdType >( opt.cells[1] ) * ( z + begin[2] ) );
         if( opt.kind == "hex" )
         {
           mesh.cells.push_back( cube );
@@ -231,7 +231,7 @@ Mesh generatedMesh( Options const & opt, int rank )
         {
           // Freudenthal subdivision: consistent face diagonals on the whole grid.
           constexpr int tetrahedra[6][4] = { { 0, 1, 2, 6 }, { 0, 2, 3, 6 }, { 0, 3, 7, 6 },
-                                             { 0, 7, 4, 6 }, { 0, 4, 5, 6 }, { 0, 5, 1, 6 } };
+            { 0, 7, 4, 6 }, { 0, 4, 5, 6 }, { 0, 5, 1, 6 } };
           for( int i = 0; i < 6; ++i )
           {
             Connectivity corners;
@@ -278,7 +278,7 @@ std::vector< EntitySupport > incidence( Mesh const & mesh, int rank )
 
 std::uint64_t memoryKiB( bool peak )
 {
-  struct rusage usage{};
+  struct rusage usage {};
   if( peak )
   {
     if( getrusage( RUSAGE_SELF, &usage ) != 0 )
@@ -315,7 +315,7 @@ std::string csv( std::string const & value )
 class Reporter
 {
 public:
-  Reporter( Communication & comm, Options const & opt ) : m_comm( comm ), m_opt( opt )
+  Reporter( Communication & comm, Options const & opt ): m_comm( comm ), m_opt( opt )
   {
     if( comm.rank() == 0 )
       std::cout << "label,input,kind,weak,ranks,px,py,pz,nx,ny,nz,levels,point_components,chunk_bytes,level,phase,"
@@ -348,10 +348,10 @@ public:
     std::uint64_t currentMemory = 0, peakMemory = 0;
     m_comm.checked( "benchmark memory counters",
                     [&]
-                    {
-                      currentMemory = memoryKiB( false );
-                      peakMemory = memoryKiB( true );
-                    } );
+    {
+      currentMemory = memoryKiB( false );
+      peakMemory = memoryKiB( true );
+    } );
     m_peakResident = std::max( { m_peakResident, currentMemory, peakMemory } );
     auto const rss = reduce( currentMemory, R::Max ), peak = reduce( m_peakResident, R::Max );
     auto const & stats = m_comm.statistics();
@@ -388,14 +388,14 @@ private:
 struct ReadIds
 {
   Connectivity & ids;
-  template < typename Array > void operator()( Array * array ) const
+  template< typename Array > void operator()( Array * array ) const
   {
     vtkDataArrayAccessor< Array > access( array );
     using Value = typename decltype( access )::APIType;
     for( vtkIdType i = 0; i < array->GetNumberOfTuples(); ++i )
     {
       Value const value = access.Get( i, 0 );
-      if constexpr( std::is_signed< Value >::value )
+      if constexpr ( std::is_signed< Value >::value )
         if( value < 0 )
           throw std::invalid_argument( "Negative benchmark active ID" );
       if( static_cast< std::uintmax_t >( value ) > static_cast< std::uintmax_t >( std::numeric_limits< vtkIdType >::max() ) )
@@ -424,161 +424,161 @@ void run( Options const & opt, Communication & comm )
   vtkSmartPointer< vtkUnstructuredGrid > input = vtkSmartPointer< vtkUnstructuredGrid >::New();
   reporter.phase( 0, "input", mesh,
                   [&]
-                  {
-                    comm.checked( "benchmark coarse input",
-                                  [&]
-                                  {
-                                    if( opt.input.empty() )
-                                      mesh = generatedMesh( opt, comm.rank() );
-                                    else if( comm.rank() == 0 )
-                                    {
-                                      vtkNew< vtkXMLUnstructuredGridReader > reader;
-                                      reader->SetFileName( opt.input.c_str() );
-                                      reader->Update();
-                                      if( reader->GetErrorCode() || reader->GetOutput()->GetNumberOfCells() == 0 )
-                                        throw std::runtime_error( "Cannot read nonempty benchmark VTU" );
-                                      input->ShallowCopy( reader->GetOutput() );
-                                      // The benchmark can seed absent IDs before shipping the coarse input.
-                                      if( !input->GetPointData()->GetGlobalIds() )
-                                      {
-                                        vtkNew< vtkIdTypeArray > ids;
-                                        ids->SetName( "benchmarkPointIds" );
-                                        ids->SetNumberOfTuples( input->GetNumberOfPoints() );
-                                        for( vtkIdType i = 0; i < input->GetNumberOfPoints(); ++i )
-                                          ids->SetValue( i, i );
-                                        input->GetPointData()->SetGlobalIds( ids );
-                                      }
-                                      if( !input->GetCellData()->GetGlobalIds() )
-                                      {
-                                        vtkNew< vtkIdTypeArray > ids;
-                                        ids->SetName( "benchmarkCellIds" );
-                                        ids->SetNumberOfTuples( input->GetNumberOfCells() );
-                                        for( vtkIdType i = 0; i < input->GetNumberOfCells(); ++i )
-                                          ids->SetValue( i, i );
-                                        input->GetCellData()->SetGlobalIds( ids );
-                                      }
-                                    }
-                                  } );
-                  } );
+  {
+    comm.checked( "benchmark coarse input",
+                  [&]
+    {
+      if( opt.input.empty() )
+        mesh = generatedMesh( opt, comm.rank() );
+      else if( comm.rank() == 0 )
+      {
+        vtkNew< vtkXMLUnstructuredGridReader > reader;
+        reader->SetFileName( opt.input.c_str() );
+        reader->Update();
+        if( reader->GetErrorCode() || reader->GetOutput()->GetNumberOfCells() == 0 )
+          throw std::runtime_error( "Cannot read nonempty benchmark VTU" );
+        input->ShallowCopy( reader->GetOutput() );
+        // The benchmark can seed absent IDs before shipping the coarse input.
+        if( !input->GetPointData()->GetGlobalIds() )
+        {
+          vtkNew< vtkIdTypeArray > ids;
+          ids->SetName( "benchmarkPointIds" );
+          ids->SetNumberOfTuples( input->GetNumberOfPoints() );
+          for( vtkIdType i = 0; i < input->GetNumberOfPoints(); ++i )
+            ids->SetValue( i, i );
+          input->GetPointData()->SetGlobalIds( ids );
+        }
+        if( !input->GetCellData()->GetGlobalIds() )
+        {
+          vtkNew< vtkIdTypeArray > ids;
+          ids->SetName( "benchmarkCellIds" );
+          ids->SetNumberOfTuples( input->GetNumberOfCells() );
+          for( vtkIdType i = 0; i < input->GetNumberOfCells(); ++i )
+            ids->SetValue( i, i );
+          input->GetCellData()->SetGlobalIds( ids );
+        }
+      }
+    } );
+  } );
   if( !opt.input.empty() )
     reporter.phase( 0, "scatterAndNormalize", mesh,
                     [&]
-                    {
-                      array1d< integer > partitions( 3 );
-                      for( int d = 0; d < 3; ++d )
-                        partitions[d] = opt.grid[d];
-                      auto scattered =
-                          geos::vtk::scatterMesh( geos::vtk::ScatterMethod::cartesian, *input, partitions.toViewConst(), MPI_COMM_GEOS );
-                      comm.checked( "benchmark local input",
-                                    [&]
-                                    {
-                                      auto * pointIds = scattered->GetPointData()->GetGlobalIds();
-                                      auto * cellIds = scattered->GetCellData()->GetGlobalIds();
-                                      if( !pointIds || !cellIds )
-                                        throw std::invalid_argument( "Scatter dropped benchmark global IDs" );
-                                      mesh.pointIds = exactIds( *pointIds, scattered->GetNumberOfPoints() );
-                                      mesh.cellIds = exactIds( *cellIds, scattered->GetNumberOfCells() );
-                                      for( vtkIdType i = 0; i < scattered->GetNumberOfPoints(); ++i )
-                                      {
-                                        Coordinates coordinate;
-                                        scattered->GetPoint( i, coordinate.data() );
-                                        mesh.coordinates.push_back( coordinate );
-                                      }
-                                      PointRegistry points( mesh.coordinates, mesh.pointIds );
-                                      for( vtkIdType i = 0; i < scattered->GetNumberOfCells(); ++i )
-                                      {
-                                        mesh.cells.push_back( normalizeCoarseCell( *scattered->GetCell( i ), points ) );
-                                      }
-                                      mesh.pointData->ShallowCopy( scattered->GetPointData() );
-                                      mesh.cellData->ShallowCopy( scattered->GetCellData() );
-                                    } );
-                      input = nullptr;
-                    } );
+    {
+      array1d< integer > partitions( 3 );
+      for( int d = 0; d < 3; ++d )
+        partitions[d] = opt.grid[d];
+      auto scattered =
+        geos::vtk::scatterMesh( geos::vtk::ScatterMethod::cartesian, *input, partitions.toViewConst(), MPI_COMM_GEOS );
+      comm.checked( "benchmark local input",
+                    [&]
+      {
+        auto * pointIds = scattered->GetPointData()->GetGlobalIds();
+        auto * cellIds = scattered->GetCellData()->GetGlobalIds();
+        if( !pointIds || !cellIds )
+          throw std::invalid_argument( "Scatter dropped benchmark global IDs" );
+        mesh.pointIds = exactIds( *pointIds, scattered->GetNumberOfPoints() );
+        mesh.cellIds = exactIds( *cellIds, scattered->GetNumberOfCells() );
+        for( vtkIdType i = 0; i < scattered->GetNumberOfPoints(); ++i )
+        {
+          Coordinates coordinate;
+          scattered->GetPoint( i, coordinate.data() );
+          mesh.coordinates.push_back( coordinate );
+        }
+        PointRegistry points( mesh.coordinates, mesh.pointIds );
+        for( vtkIdType i = 0; i < scattered->GetNumberOfCells(); ++i )
+        {
+          mesh.cells.push_back( normalizeCoarseCell( *scattered->GetCell( i ), points ) );
+        }
+        mesh.pointData->ShallowCopy( scattered->GetPointData() );
+        mesh.cellData->ShallowCopy( scattered->GetCellData() );
+      } );
+      input = nullptr;
+    } );
   std::vector< EntityKey > discoveryKeys;
   std::vector< EntityKey > volumeKeys;
   reporter.phase( 0, opt.discovery == "boundary" ? "coarseBoundary" : "coarseAllIncidence", mesh,
                   [&]
-                  {
-                    comm.checked( "benchmark coarse incidence",
-                                  [&]
-                                  {
-                                    if( opt.discovery == "boundary" )
-                                    {
-                                      auto boundary = coarseBoundary( mesh.cells, mesh.cellIds, mesh.pointIds, comm.rank() );
-                                      volumeKeys = std::move( boundary.volumeIds );
-                                      discoveryKeys = volumeKeys;
-                                      for( auto const & entity : boundary.entities )
-                                        discoveryKeys.push_back( entity.key );
-                                      mesh.supports =
-                                          opt.sharing == "all" ? incidence( mesh, comm.rank() ) : std::move( boundary.entities );
-                                    }
-                                    else
-                                    {
-                                      mesh.supports = incidence( mesh, comm.rank() );
-                                      for( auto const & entity : mesh.supports )
-                                        discoveryKeys.push_back( entity.key );
-                                    }
-                                    CellCounts counts;
-                                    for( auto const & cell : mesh.cells )
-                                      if( cell.prismSides )
-                                        ++counts.prisms.at( cell.prismSides );
-                                      else
-                                        switch( cell.vtkType )
-                                        {
-                                        case VTK_HEXAHEDRON:
-                                          ++counts.hexahedra;
-                                          break;
-                                        case VTK_TETRA:
-                                          ++counts.tetrahedra;
-                                          break;
-                                        case VTK_PYRAMID:
-                                          ++counts.pyramids;
-                                          break;
-                                        case VTK_WEDGE:
-                                          ++counts.wedges;
-                                          break;
-                                        default:
-                                          throw std::invalid_argument( "Unsupported benchmark cell" );
-                                        }
-                                    for( int level = 0; level < opt.levels && counts.total(); ++level )
-                                    {
-                                      counts = counts.next();
-                                      if( counts.total() > static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() ) )
-                                        throw std::overflow_error( "Benchmark refined cell count exceeds vtkIdType" );
-                                    }
-                                  } );
-                  } );
+  {
+    comm.checked( "benchmark coarse incidence",
+                  [&]
+    {
+      if( opt.discovery == "boundary" )
+      {
+        auto boundary = coarseBoundary( mesh.cells, mesh.cellIds, mesh.pointIds, comm.rank() );
+        volumeKeys = std::move( boundary.volumeIds );
+        discoveryKeys = volumeKeys;
+        for( auto const & entity : boundary.entities )
+          discoveryKeys.push_back( entity.key );
+        mesh.supports =
+          opt.sharing == "all" ? incidence( mesh, comm.rank() ) : std::move( boundary.entities );
+      }
+      else
+      {
+        mesh.supports = incidence( mesh, comm.rank() );
+        for( auto const & entity : mesh.supports )
+          discoveryKeys.push_back( entity.key );
+      }
+      CellCounts counts;
+      for( auto const & cell : mesh.cells )
+        if( cell.prismSides )
+          ++counts.prisms.at( cell.prismSides );
+        else
+          switch( cell.vtkType )
+          {
+            case VTK_HEXAHEDRON:
+              ++counts.hexahedra;
+              break;
+            case VTK_TETRA:
+              ++counts.tetrahedra;
+              break;
+            case VTK_PYRAMID:
+              ++counts.pyramids;
+              break;
+            case VTK_WEDGE:
+              ++counts.wedges;
+              break;
+            default:
+              throw std::invalid_argument( "Unsupported benchmark cell" );
+          }
+      for( int level = 0; level < opt.levels && counts.total(); ++level )
+      {
+        counts = counts.next();
+        if( counts.total() > static_cast< std::uint64_t >( std::numeric_limits< vtkIdType >::max() ) )
+          throw std::overflow_error( "Benchmark refined cell count exceeds vtkIdType" );
+      }
+    } );
+  } );
   reporter.phase( 0, opt.discovery == "boundary" ? "coarseDiscoveryBoundaryAndVolumeIds" : "coarseDiscoveryAllEntities", mesh,
                   [&]
-                  {
-                    auto const sharing = comm.discoverSharing( discoveryKeys );
-                    comm.checked( "benchmark discovery install",
-                                  [&]
-                                  {
-                                    for( auto & entity : mesh.supports )
-                                    {
-                                      auto const found = sharing.find( entity.key );
-                                      if( found != sharing.end() )
-                                        entity.participants = found->second;
-                                      if( entity.key.kind == EntityKind::cell && entity.participants.size() != 1 )
-                                        throw std::invalid_argument( "Duplicate distributed volume owner" );
-                                    }
-                                    for( auto const & key : volumeKeys )
-                                      if( sharing.at( key ).size() != 1 )
-                                        throw std::invalid_argument( "Duplicate distributed volume owner" );
-                                    if( opt.sharing == "interfaces" )
-                                    {
-                                      std::vector< EntitySupport > shared;
-                                      for( auto & entity : mesh.supports )
-                                        if( entity.participants.size() > 1 )
-                                          shared.push_back( std::move( entity ) );
-                                      mesh.supports = std::move( shared );
-                                    }
-                                    mesh.sharingKnown = true;
-                                    std::vector< EntityKey >{}.swap( discoveryKeys );
-                                    std::vector< EntityKey >{}.swap( volumeKeys );
-                                  } );
-                  } );
+  {
+    auto const sharing = comm.discoverSharing( discoveryKeys );
+    comm.checked( "benchmark discovery install",
+                  [&]
+    {
+      for( auto & entity : mesh.supports )
+      {
+        auto const found = sharing.find( entity.key );
+        if( found != sharing.end() )
+          entity.participants = found->second;
+        if( entity.key.kind == EntityKind::cell && entity.participants.size() != 1 )
+          throw std::invalid_argument( "Duplicate distributed volume owner" );
+      }
+      for( auto const & key : volumeKeys )
+        if( sharing.at( key ).size() != 1 )
+          throw std::invalid_argument( "Duplicate distributed volume owner" );
+      if( opt.sharing == "interfaces" )
+      {
+        std::vector< EntitySupport > shared;
+        for( auto & entity : mesh.supports )
+          if( entity.participants.size() > 1 )
+            shared.push_back( std::move( entity ) );
+        mesh.supports = std::move( shared );
+      }
+      mesh.sharingKnown = true;
+      std::vector< EntityKey >{}.swap( discoveryKeys );
+      std::vector< EntityKey >{}.swap( volumeKeys );
+    } );
+  } );
   TransferPolicies policies;
   // VTK extraction provenance is identifier metadata, not a categorical field.
   // The production orchestrator must rebuild lineage; this component harness
@@ -587,36 +587,36 @@ void run( Options const & opt, Communication & comm )
   policies.excludedCellArrays.insert( "vtkOriginalCellIds" );
   reporter.phase( 0, "coarsePointFields", mesh,
                   [&]
-                  {
-                    std::vector< PointCreation > requests;
-                    std::unique_ptr< PointFieldLayout > layout;
-                    comm.checked( "benchmark coarse point fields",
-                                  [&]
-                                  {
-                                    PointRegistry points( mesh.coordinates, mesh.pointIds );
-                                    mesh.pointData = transferPointData( *mesh.pointData, points, policies );
-                                    layout = std::make_unique< PointFieldLayout >( *mesh.pointData );
-                                    for( auto const & entity : mesh.supports )
-                                      if( entity.key.kind == EntityKind::vertex && entity.participants.size() > 1 )
-                                      {
-                                        vtkIdType const local = entity.localCorners.front();
-                                        requests.push_back(
-                                            { entity.key, entity.participants, mesh.coordinates[local], layout->pack( local ) } );
-                                      }
-                                  } );
-                    auto const records = comm.reconcileExistingPoints( requests );
-                    comm.checked( "benchmark coarse point install",
-                                  [&]
-                                  {
-                                    for( auto const & entity : mesh.supports )
-                                      if( entity.key.kind == EntityKind::vertex && entity.participants.size() > 1 )
-                                      {
-                                        auto const & record = records.at( entity.key );
-                                        mesh.coordinates[entity.localCorners.front()] = record.position;
-                                        layout->install( entity.localCorners.front(), record.fields );
-                                      }
-                                  } );
-                  } );
+  {
+    std::vector< PointCreation > requests;
+    std::unique_ptr< PointFieldLayout > layout;
+    comm.checked( "benchmark coarse point fields",
+                  [&]
+    {
+      PointRegistry points( mesh.coordinates, mesh.pointIds );
+      mesh.pointData = transferPointData( *mesh.pointData, points, policies );
+      layout = std::make_unique< PointFieldLayout >( *mesh.pointData );
+      for( auto const & entity : mesh.supports )
+        if( entity.key.kind == EntityKind::vertex && entity.participants.size() > 1 )
+        {
+          vtkIdType const local = entity.localCorners.front();
+          requests.push_back(
+            { entity.key, entity.participants, mesh.coordinates[local], layout->pack( local ) } );
+        }
+    } );
+    auto const records = comm.reconcileExistingPoints( requests );
+    comm.checked( "benchmark coarse point install",
+                  [&]
+    {
+      for( auto const & entity : mesh.supports )
+        if( entity.key.kind == EntityKind::vertex && entity.participants.size() > 1 )
+        {
+          auto const & record = records.at( entity.key );
+          mesh.coordinates[entity.localCorners.front()] = record.position;
+          layout->install( entity.localCorners.front(), record.fields );
+        }
+    } );
+  } );
   for( int level = 1; level <= opt.levels; ++level )
   {
     Mesh next;
@@ -643,122 +643,122 @@ void run( Options const & opt, Communication & comm )
     };
     phase( "levelPlanAndBuildChildren",
            [&]
-           {
-             GEOS_MARK_SCOPE( "uniformRefinement/levelPlan" );
-             comm.checked( "benchmark level planning",
-                           [&]
-                           {
-                             points = std::make_unique< PointRegistry >( mesh.coordinates, mesh.pointIds );
-                             for( std::size_t i = 0; i < mesh.cells.size(); ++i )
-                             {
-                               auto split = subdivideCell( mesh.cells[i], mesh.cellIds[i], *points );
-                               double const measure = signedMeasure( mesh.cells[i], *points );
-                               for( auto const & child : split.children )
-                                 fractions.push_back( signedMeasure( child, *points ) / measure );
-                               parents.insert( parents.end(), split.children.size(), i );
-                               next.cells.insert( next.cells.end(), std::make_move_iterator( split.children.begin() ),
-                                                  std::make_move_iterator( split.children.end() ) );
-                             }
-                             if( opt.sharing == "interfaces" )
-                               interfaces = std::make_unique< InterfaceSharing >( *points, mesh.supports, comm.rank() );
-                             else
-                               inherited = std::make_unique< SharingInheritance >( *points, mesh.supports, comm.rank() );
-                           } );
-           } );
+    {
+      GEOS_MARK_SCOPE( "uniformRefinement/levelPlan" );
+      comm.checked( "benchmark level planning",
+                    [&]
+      {
+        points = std::make_unique< PointRegistry >( mesh.coordinates, mesh.pointIds );
+        for( std::size_t i = 0; i < mesh.cells.size(); ++i )
+        {
+          auto split = subdivideCell( mesh.cells[i], mesh.cellIds[i], *points );
+          double const measure = signedMeasure( mesh.cells[i], *points );
+          for( auto const & child : split.children )
+            fractions.push_back( signedMeasure( child, *points ) / measure );
+          parents.insert( parents.end(), split.children.size(), i );
+          next.cells.insert( next.cells.end(), std::make_move_iterator( split.children.begin() ),
+                             std::make_move_iterator( split.children.end() ) );
+        }
+        if( opt.sharing == "interfaces" )
+          interfaces = std::make_unique< InterfaceSharing >( *points, mesh.supports, comm.rank() );
+        else
+          inherited = std::make_unique< SharingInheritance >( *points, mesh.supports, comm.rank() );
+      } );
+    } );
     phase( "transferPointFieldsAndPack",
            [&]
-           {
-             GEOS_MARK_SCOPE( "uniformRefinement/transferFields" );
-             comm.checked( "benchmark point field transfer",
-                           [&]
-                           {
-                             next.pointData = transferPointData( *mesh.pointData, *points, policies );
-                             layout = std::make_unique< PointFieldLayout >( *next.pointData );
-                             for( vtkIdType i = points->originalSize(); i < static_cast< vtkIdType >( points->points().size() ); ++i )
-                             {
-                               auto const & point = points->points()[i];
-                               auto const & participants =
-                                   interfaces ? interfaces->participants( { i } ) : inherited->participants( { i } );
-                               creations.push_back( { point.key, participants, point.position,
-                                                      participants.size() > 1 ? layout->pack( i, FieldTupleFormat::valuesOnly ) : Bytes{} } );
-                             }
-                           } );
-           } );
+    {
+      GEOS_MARK_SCOPE( "uniformRefinement/transferFields" );
+      comm.checked( "benchmark point field transfer",
+                    [&]
+      {
+        next.pointData = transferPointData( *mesh.pointData, *points, policies );
+        layout = std::make_unique< PointFieldLayout >( *next.pointData );
+        for( vtkIdType i = points->originalSize(); i < static_cast< vtkIdType >( points->points().size() ); ++i )
+        {
+          auto const & point = points->points()[i];
+          auto const & participants =
+            interfaces ? interfaces->participants( { i } ) : inherited->participants( { i } );
+          creations.push_back( { point.key, participants, point.position,
+                                 participants.size() > 1 ? layout->pack( i, FieldTupleFormat::valuesOnly ) : Bytes{} } );
+        }
+      } );
+    } );
     phase( "pointAndCellIdsAndExchange",
            [&]
-           {
-             vtkIdType const maximum = mesh.pointIds.empty() ? -1 : *std::max_element( mesh.pointIds.begin(), mesh.pointIds.end() );
-             records = comm.resolvePoints( level, creations, maximum );
-             cells = comm.allocateRange( next.cells.size(), 0 );
-           } );
+    {
+      vtkIdType const maximum = mesh.pointIds.empty() ? -1 : *std::max_element( mesh.pointIds.begin(), mesh.pointIds.end() );
+      records = comm.resolvePoints( level, creations, maximum );
+      cells = comm.allocateRange( next.cells.size(), 0 );
+    } );
     phase( "installPointsAndTransferCellFields",
            [&]
-           {
-             GEOS_MARK_SCOPE( "uniformRefinement/buildChildren" );
-             comm.checked( "benchmark level construction",
-                           [&]
-                           {
-                             next.pointIds = mesh.pointIds;
-                             next.coordinates.reserve( points->points().size() );
-                             for( vtkIdType i = 0; i < static_cast< vtkIdType >( points->points().size() ); ++i )
-                             {
-                               auto const & point = points->points()[i];
-                               if( i < points->originalSize() )
-                                 next.coordinates.push_back( point.position );
-                               else
-                               {
-                                 auto const & record = records.at( point.key );
-                                 next.coordinates.push_back( record.position );
-                                 next.pointIds.push_back( record.globalId );
-                                 auto const & participants =
-                                     interfaces ? interfaces->participants( { i } ) : inherited->participants( { i } );
-                                 if( participants.size() > 1 )
-                                   layout->install( i, record.fields, FieldTupleFormat::valuesOnly );
-                               }
-                             }
-                             next.cellIds.reserve( next.cells.size() );
-                             for( std::size_t i = 0; i < next.cells.size(); ++i )
-                               next.cellIds.push_back( cells.first + i );
-                             next.cellData = transferCellData( *mesh.cellData, mesh.cells.size(), parents, fractions, policies );
-                           } );
-           } );
+    {
+      GEOS_MARK_SCOPE( "uniformRefinement/buildChildren" );
+      comm.checked( "benchmark level construction",
+                    [&]
+      {
+        next.pointIds = mesh.pointIds;
+        next.coordinates.reserve( points->points().size() );
+        for( vtkIdType i = 0; i < static_cast< vtkIdType >( points->points().size() ); ++i )
+        {
+          auto const & point = points->points()[i];
+          if( i < points->originalSize() )
+            next.coordinates.push_back( point.position );
+          else
+          {
+            auto const & record = records.at( point.key );
+            next.coordinates.push_back( record.position );
+            next.pointIds.push_back( record.globalId );
+            auto const & participants =
+              interfaces ? interfaces->participants( { i } ) : inherited->participants( { i } );
+            if( participants.size() > 1 )
+              layout->install( i, record.fields, FieldTupleFormat::valuesOnly );
+          }
+        }
+        next.cellIds.reserve( next.cells.size() );
+        for( std::size_t i = 0; i < next.cells.size(); ++i )
+          next.cellIds.push_back( cells.first + i );
+        next.cellData = transferCellData( *mesh.cellData, mesh.cells.size(), parents, fractions, policies );
+      } );
+    } );
     phase( opt.sharing == "interfaces" ? "fineInterfacesAndSharing" : "fineIncidenceAndSharing",
            [&]
-           {
-             comm.checked( "benchmark fine incidence",
-                           [&]
-                           {
-                             if( interfaces )
-                               next.supports = interfaces->fineSupports( next.pointIds );
-                             else
-                             {
-                               next.supports = incidence( next, comm.rank() );
-                               for( auto & entity : next.supports )
-                                 if( entity.key.kind != EntityKind::cell )
-                                   entity.participants = inherited->participants( entity.localCorners );
-                             }
-                             next.sharingKnown = true;
-                           } );
-           } );
+    {
+      comm.checked( "benchmark fine incidence",
+                    [&]
+      {
+        if( interfaces )
+          next.supports = interfaces->fineSupports( next.pointIds );
+        else
+        {
+          next.supports = incidence( next, comm.rank() );
+          for( auto & entity : next.supports )
+            if( entity.key.kind != EntityKind::cell )
+              entity.participants = inherited->participants( entity.localCorners );
+        }
+        next.sharingKnown = true;
+      } );
+    } );
     phase( "commitAndReleaseParent",
            [&]
-           {
-             mesh = std::move( next );
-             inherited.reset();
-             interfaces.reset();
-             points.reset();
-             layout.reset();
-             std::vector< PointCreation >{}.swap( creations );
-             std::map< EntityKey, PointRecord >{}.swap( records );
-             Connectivity{}.swap( parents );
-             std::vector< double >{}.swap( fractions );
-           } );
+    {
+      mesh = std::move( next );
+      inherited.reset();
+      interfaces.reset();
+      points.reset();
+      layout.reset();
+      std::vector< PointCreation >{}.swap( creations );
+      std::map< EntityKey, PointRecord >{}.swap( records );
+      Connectivity{}.swap( parents );
+      std::vector< double >{}.swap( fractions );
+    } );
     reporter.row( level, "levelTotal", levelSeconds, mesh, before );
   }
 }
 } // namespace
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   if( argc == 2 && std::string( argv[1] ) == "--help" )
   {

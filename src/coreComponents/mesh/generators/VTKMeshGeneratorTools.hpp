@@ -30,6 +30,7 @@
 #ifdef GEOS_USE_MPI
 #include <mpi.h>
 #else
+/// Placeholder communicator type for builds without MPI.
 using MPI_Comm = int;
 #endif
 

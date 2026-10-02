@@ -104,7 +104,7 @@ struct Fixture
   void hex( double x, double y )
   {
     volume( VTK_HEXAHEDRON, { { x, y, 0 }, { x + 1, y, 0 }, { x + 1, y + 1, 0 }, { x, y + 1, 0 },
-                             { x, y, 1 }, { x + 1, y, 1 }, { x + 1, y + 1, 1 }, { x, y + 1, 1 } } );
+              { x, y, 1 }, { x + 1, y, 1 }, { x + 1, y + 1, 1 }, { x, y + 1, 1 } } );
   }
 
   void ids( vtkUnstructuredGrid & grid )
@@ -148,8 +148,8 @@ struct Fixture
       {
         Point position{};
         main->GetPoint( p, position.data() );
-        bool const match = position == point || ( gap > 0 && std::equal_to< double >{}( position[0], point[0] ) &&
-          std::equal_to< double >{}( position[1], point[1] ) && std::equal_to< double >{}( std::abs( position[2] - point[2] ), gap ) );
+        bool const match = position == point || ( gap > 0 && std::equal_to< double >{} ( position[0], point[0] ) &&
+                                                  std::equal_to< double >{} ( position[1], point[1] ) && std::equal_to< double >{} ( std::abs( position[2] - point[2] ), gap ) );
         if( match ) buckets[index].push_back( mainIds->GetValue( p ) );
       }
       if( buckets[index].size() < 2 ) throw std::runtime_error( "Fixture surface has fewer than two actual sides" );
@@ -210,7 +210,8 @@ Fixture cap( int n )
       top.push_back( n + i );
     }
     std::vector< Corners > faces{ bottom, top };
-    for( int i = 0; i < n; ++i ) faces.push_back( { i, ( i + 1 ) % n, n + ( i + 1 ) % n, n + i } );
+    for( int i = 0; i < n; ++i )
+      faces.push_back( { i, ( i + 1 ) % n, n + ( i + 1 ) % n, n + i } );
     result.volume( VTK_POLYHEDRON, coordinates, faces );
   }
   result.prepareMain();
@@ -222,14 +223,15 @@ Fixture junction()
 {
   Fixture result;
   for( int x : { -1, 0 } )
-    for( int y : { -1, 0 } ) result.hex( x, y );
+    for( int y : { -1, 0 } )
+      result.hex( x, y );
   result.prepareMain();
   result.surface( "faultX", VTK_QUAD,
-    { { { 0, -1, 0 }, { 0, 0, 0 }, { 0, 0, 1 }, { 0, -1, 1 } },
-      { { 0, 0, 0 }, { 0, 1, 0 }, { 0, 1, 1 }, { 0, 0, 1 } } } );
+                  { { { 0, -1, 0 }, { 0, 0, 0 }, { 0, 0, 1 }, { 0, -1, 1 } },
+                    { { 0, 0, 0 }, { 0, 1, 0 }, { 0, 1, 1 }, { 0, 0, 1 } } } );
   result.surface( "faultY", VTK_QUAD,
-    { { { -1, 0, 0 }, { 0, 0, 0 }, { 0, 0, 1 }, { -1, 0, 1 } },
-      { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 0, 1 }, { 0, 0, 1 } } } );
+                  { { { -1, 0, 0 }, { 0, 0, 0 }, { 0, 0, 1 }, { -1, 0, 1 } },
+                    { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 0, 1 }, { 0, 0, 1 } } } );
   return result;
 }
 
@@ -243,7 +245,8 @@ Fixture strip()
     vtkIdType const offset = result.main->GetNumberOfPoints();
     for( int z = 0; z < 2; ++z )
       for( int y = 0; y < 3; ++y )
-        for( int x = 0; x < 2; ++x ) result.main->GetPoints()->InsertNextPoint( side + x - 1, y - 1, z );
+        for( int x = 0; x < 2; ++x )
+          result.main->GetPoints()->InsertNextPoint( side + x - 1, y - 1, z );
     auto index = [offset]( int x, int y, int z ) { return offset + 6 * z + 2 * y + x; };
     for( int y = 0; y < 2; ++y )
     {
@@ -253,11 +256,12 @@ Fixture strip()
     }
   }
   // Exactly one indivisible atom per rank forces the two contact atoms apart.
-  for( int r = 2; r < MpiWrapper::commSize(); ++r ) result.hex( 10 + 2 * r, 5 );
+  for( int r = 2; r < MpiWrapper::commSize(); ++r )
+    result.hex( 10 + 2 * r, 5 );
   result.ids( *result.main );
   result.surface( "strip", VTK_QUAD,
-    { { { 0, -1, 0 }, { 0, 0, 0 }, { 0, 0, 1 }, { 0, -1, 1 } },
-      { { 0, 0, 0 }, { 0, 1, 0 }, { 0, 1, 1 }, { 0, 0, 1 } } } );
+                  { { { 0, -1, 0 }, { 0, 0, 0 }, { 0, 0, 1 }, { 0, -1, 1 } },
+                    { { 0, 0, 0 }, { 0, 1, 0 }, { 0, 1, 1 }, { 0, 0, 1 } } } );
   return result;
 }
 
@@ -293,7 +297,8 @@ public:
             if( writer->Write() != 1 ) throw std::runtime_error( "Could not write parallel main piece" );
           }
           std::ofstream summary( m_folder + "/main.pvtu" );
-          summary << R"xml(<?xml version="1.0"?>
+          summary <<
+            R"xml(<?xml version="1.0"?>
 <VTKFile type="PUnstructuredGrid" version="1.0" byte_order="LittleEndian">
 <PUnstructuredGrid GhostLevel="0">
 <PPointData GlobalIds="GlobalPointIds"><PDataArray type="Int64" Name="GlobalPointIds"/></PPointData>
@@ -376,7 +381,7 @@ void importFixture( FixtureFiles const & files, string const & faceBlocks, int l
   GeosxState state( std::make_unique< CommandLineOptions >( commandLineOptions ) );
   auto const xml = GEOS_FMT( R"xml(<Mesh><VTKMesh name="mesh" file="{}" faceBlocks="{}"
     useGlobalIds="1" scatterMethod="{}" partitionRefinement="0" uniformRefinement="{}" /></Mesh>)xml",
-    files.path(), faceBlocks, scatterMethod, level );
+                             files.path(), faceBlocks, scatterMethod, level );
   xmlWrapper::xmlDocument document;
   document.loadString( xml );
   conduit::Node node;
@@ -395,7 +400,8 @@ double validateLocalRelations( CellBlockManagerABC const & manager, FaceBlockABC
   auto const positions = manager.getNodePositions();
   auto const ids = manager.getNodeLocalToGlobal();
   std::map< globalIndex, Point > nodes;
-  for( localIndex p = 0; p < ids.size(); ++p ) nodes.emplace( ids[p], Point{ positions[p][0], positions[p][1], positions[p][2] } );
+  for( localIndex p = 0; p < ids.size(); ++p )
+    nodes.emplace( ids[p], Point{ positions[p][0], positions[p][1], positions[p][2] } );
   auto const faces = manager.getFaceToNodes();
   auto const elemFaces = block.get2dElemToFaces();
   auto const elemCells = block.get2dElemToElems();
@@ -418,21 +424,31 @@ double validateLocalRelations( CellBlockManagerABC const & manager, FaceBlockABC
     EXPECT_EQ( elemCells.toCellIndex[e].size(), elemFaces[e].size() );
     EXPECT_EQ( elemCells.toBlockIndex[e].size(), elemFaces[e].size() );
     EXPECT_EQ( elemEdges[e].size(), arity );
-    if( elemFaces[e].size() == 2 ) { EXPECT_NE( elemFaces[e][0], elemFaces[e][1] ); }
+    if( elemFaces[e].size() == 2 )
+    {
+      EXPECT_NE( elemFaces[e][0], elemFaces[e][1] );
+    }
     for( localIndex edge : elemEdges[e] )
     {
       EXPECT_GE( edge, 0 );
       EXPECT_LT( edge, manager.numEdges() );
       bool mapped = false;
       for( localIndex f = 0; f < block.num2dFaces(); ++f )
-        for( localIndex element : edgeElements[f] ) mapped = mapped || ( element == e && faceEdges[f] == edge );
+        for( localIndex element : edgeElements[f] )
+          mapped = mapped || ( element == e && faceEdges[f] == edge );
       EXPECT_TRUE( mapped );
     }
     for( auto const & bucket : buckets[e] )
     {
-      if( bucket.empty() ) { ADD_FAILURE() << "Empty collocation bucket"; continue; }
+      if( bucket.empty() )
+      {
+        ADD_FAILURE() << "Empty collocation bucket"; continue;
+      }
       auto const first = nodes.find( bucket[0] );
-      if( first == nodes.end() ) { ADD_FAILURE() << "Missing contact point"; continue; }
+      if( first == nodes.end() )
+      {
+        ADD_FAILURE() << "Missing contact point"; continue;
+      }
       Point const point = first->second;
       bool const onJunction = isJunction && std::abs( point[0] ) < 1e-12 && std::abs( point[1] ) < 1e-12;
       EXPECT_EQ( bucket.size(), onJunction ? 4 : 2 );
@@ -443,34 +459,49 @@ double validateLocalRelations( CellBlockManagerABC const & manager, FaceBlockABC
         EXPECT_GE( id, idBase );
         EXPECT_TRUE( unique.insert( id ).second );
         auto const found = nodes.find( id );
-        if( found == nodes.end() ) { ADD_FAILURE() << "Missing side point"; continue; }
+        if( found == nodes.end() )
+        {
+          ADD_FAILURE() << "Missing side point"; continue;
+        }
         for( int d = 0; d < 3; ++d )
-          if( gap > 0 && d == 2 ) EXPECT_NEAR( std::abs( found->second[d] ), gap, 1e-12 );
-          else EXPECT_NEAR( found->second[d], point[d], 1e-12 );
+          if( gap > 0 && d == 2 )
+            EXPECT_NEAR( std::abs( found->second[d] ), gap, 1e-12 );
+          else
+            EXPECT_NEAR( found->second[d], point[d], 1e-12 );
         sides.insert( found->second[2] );
       }
-      if( gap > 0 ) { EXPECT_EQ( sides.size(), 2 ); }
+      if( gap > 0 )
+      {
+        EXPECT_EQ( sides.size(), 2 );
+      }
     }
     for( localIndex side = 0; side < elemFaces[e].size(); ++side )
     {
       localIndex const f = elemFaces[e][side];
-      if( f < 0 || f >= faces.size() ) { ADD_FAILURE() << "Invalid incident face"; continue; }
+      if( f < 0 || f >= faces.size() )
+      {
+        ADD_FAILURE() << "Invalid incident face"; continue;
+      }
       EXPECT_EQ( faces[f].size(), arity );
       auto const & volume = manager.getCellBlocks().getGroup< CellBlockABC >( elemCells.toBlockIndex[e][side] );
       localIndex const c = elemCells.toCellIndex[e][side];
       EXPECT_GE( c, 0 );
       EXPECT_LT( c, volume.numElements() );
-      if( c < 0 || c >= volume.numElements() ) continue;
+      if( c < 0 || c >= volume.numElements() )
+        continue;
       auto const volumeFaces = volume.getElemToFaces();
       bool matched = false;
-      for( localIndex vf = 0; vf < volumeFaces.size( 1 ); ++vf ) matched = matched || volumeFaces[c][vf] == f;
+      for( localIndex vf = 0; vf < volumeFaces.size( 1 ); ++vf )
+        matched = matched || volumeFaces[c][vf] == f;
       EXPECT_TRUE( matched );
       std::set< globalIndex > faceIds;
-      for( localIndex p : faces[f] ) faceIds.insert( ids[p] );
+      for( localIndex p : faces[f] )
+        faceIds.insert( ids[p] );
       for( auto const & bucket : buckets[e] )
       {
         std::size_t matches = 0;
-        for( globalIndex id : bucket ) matches += faceIds.count( id );
+        for( globalIndex id : bucket )
+          matches += faceIds.count( id );
         EXPECT_EQ( matches, 1 );
       }
       if( side == 0 )
@@ -479,7 +510,8 @@ double validateLocalRelations( CellBlockManagerABC const & manager, FaceBlockABC
         for( localIndex p = 0; p < faces[f].size(); ++p )
         {
           Point const a = nodes.at( ids[faces[f][p]] ), b = nodes.at( ids[faces[f][( p + 1 ) % arity]] );
-          for( int d = 0; d < 3; ++d ) normal[d] += a[( d + 1 ) % 3] * b[( d + 2 ) % 3] - a[( d + 2 ) % 3] * b[( d + 1 ) % 3];
+          for( int d = 0; d < 3; ++d )
+            normal[d] += a[( d + 1 ) % 3] * b[( d + 2 ) % 3] - a[( d + 2 ) % 3] * b[( d + 1 ) % 3];
         }
         area += .5 * std::sqrt( normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2] );
       }
@@ -496,21 +528,25 @@ void validateOriginalPoints( CellBlockManagerABC const & manager, vtkUnstructure
   globalIndex const maximum = idBase + 17 * ( original.GetNumberOfPoints() - 1 );
   for( localIndex p = 0; p < ids.size(); ++p )
   {
-    if( ids[p] > maximum ) continue;
+    if( ids[p] > maximum )
+      continue;
     EXPECT_GE( ids[p], idBase );
     EXPECT_EQ( ( ids[p] - idBase ) % 17, 0 );
     vtkIdType const index = ( ids[p] - idBase ) / 17;
-    if( index < 0 || index >= original.GetNumberOfPoints() ) continue;
+    if( index < 0 || index >= original.GetNumberOfPoints() )
+      continue;
     Point expected{};
     original.GetPoints()->GetPoint( index, expected.data() );
-    for( int d = 0; d < 3; ++d ) EXPECT_NEAR( positions[p][d], expected[d], 1e-12 );
+    for( int d = 0; d < 3; ++d )
+      EXPECT_NEAR( positions[p][d], expected[d], 1e-12 );
     localOriginalIds.emplace_back( ids[p] );
   }
   array1d< globalIndex > allOriginalIds;
   MpiWrapper::allGatherv( localOriginalIds.toViewConst(), allOriginalIds );
   std::set< globalIndex > const unique( allOriginalIds.begin(), allOriginalIds.end() );
   EXPECT_EQ( unique.size(), std::size_t( original.GetNumberOfPoints() ) );
-  for( vtkIdType p = 0; p < original.GetNumberOfPoints(); ++p ) EXPECT_TRUE( unique.count( idBase + 17 * p ) );
+  for( vtkIdType p = 0; p < original.GetNumberOfPoints(); ++p )
+    EXPECT_TRUE( unique.count( idBase + 17 * p ) );
 }
 
 void validate( CellBlockManagerABC const & manager, std::vector< string > const & names, int volumeCount, int surfaceCount,
@@ -522,7 +558,8 @@ void validate( CellBlockManagerABC const & manager, std::vector< string > const 
     localIndex const offset = localVolumeIds.size();
     localVolumeIds.resize( offset + block.numElements() );
     auto const ids = block.localToGlobalMap();
-    for( localIndex e = 0; e < block.numElements(); ++e ) localVolumeIds[offset + e] = ids[e];
+    for( localIndex e = 0; e < block.numElements(); ++e )
+      localVolumeIds[offset + e] = ids[e];
   } );
   array1d< globalIndex > globalVolumeIds;
   MpiWrapper::allGatherv( localVolumeIds.toViewConst(), globalVolumeIds );
@@ -563,14 +600,16 @@ void initializeFixture( FixtureFiles const & files, std::vector< string > const 
   string regions = R"xml(<CellElementRegion name="volume" cellBlocks="{*}" materialList="{}" />)xml";
   for( auto const & name : names )
   {
-    if( faceBlocks.size() > 1 ) faceBlocks += ",";
+    if( faceBlocks.size() > 1 )
+      faceBlocks += ",";
     faceBlocks += name;
     regions += GEOS_FMT( R"xml(<SurfaceElementRegion name="{}" faceBlock="{}" defaultAperture="1e-4" materialList="{{}}" />)xml", name, name );
   }
   faceBlocks += "}";
   auto const xml = GEOS_FMT( R"xml(<Problem><Mesh><VTKMesh name="mesh" file="{}" faceBlocks="{}"
     useGlobalIds="1" scatterMethod="rcb" partitionRefinement="0" uniformRefinement="{}" /></Mesh>
-    <ElementRegions>{}</ElementRegions></Problem>)xml", files.path(), faceBlocks, level, regions );
+    <ElementRegions>{}</ElementRegions></Problem>)xml",
+                             files.path(), faceBlocks, level, regions );
   auto & problem = state.getProblemManager();
   problem.parseInputString( xml );
   problem.problemSetup();
@@ -584,7 +623,8 @@ void initializeFixture( FixtureFiles const & files, std::vector< string > const 
   auto verifyMaps = []( auto const & objects )
   {
     auto const ids = objects.localToGlobalMap();
-    for( localIndex i = 0; i < objects.size(); ++i ) EXPECT_EQ( objects.globalToLocalMap( ids[i] ), i );
+    for( localIndex i = 0; i < objects.size(); ++i )
+      EXPECT_EQ( objects.globalToLocalMap( ids[i] ), i );
   };
   verifyMaps( nodes );
   verifyMaps( faces );
@@ -603,7 +643,10 @@ void initializeFixture( FixtureFiles const & files, std::vector< string > const 
   } );
   EXPECT_EQ( MpiWrapper::sum( ownedVolumes ), volumeCount );
   auto const totalGhostVolumes = MpiWrapper::sum( ghostVolumes );
-  if( requireGhosts && MpiWrapper::commSize() > 1 ) { EXPECT_GT( totalGhostVolumes, 0 ); }
+  if( requireGhosts && MpiWrapper::commSize() > 1 )
+  {
+    EXPECT_GT( totalGhostVolumes, 0 );
+  }
   array1d< globalIndex > localSurfaceIds;
   for( auto const & name : names )
   {
@@ -628,19 +671,30 @@ void initializeFixture( FixtureFiles const & files, std::vector< string > const 
       EXPECT_EQ( buckets[e].size(), arity );
       for( auto const & bucket : buckets[e] )
       {
-        if( bucket.empty() ) { ADD_FAILURE() << "Empty final collocation bucket"; continue; }
+        if( bucket.empty() )
+        {
+          ADD_FAILURE() << "Empty final collocation bucket"; continue;
+        }
         auto const found = nodes.globalToLocalMap().find( bucket[0] );
-        if( found == nodes.globalToLocalMap().end() ) { ADD_FAILURE() << "Missing final contact point"; continue; }
+        if( found == nodes.globalToLocalMap().end() )
+        {
+          ADD_FAILURE() << "Missing final contact point"; continue;
+        }
         auto const point = nodePositions[found->second];
         bool const atJunction = isJunction && std::abs( point[0] ) < 1e-12 && std::abs( point[1] ) < 1e-12;
         EXPECT_EQ( bucket.size(), atJunction ? 4 : 2 );
         for( globalIndex id : bucket )
         {
           auto const side = nodes.globalToLocalMap().find( id );
-          if( side == nodes.globalToLocalMap().end() ) { ADD_FAILURE() << "Missing final side point"; continue; }
+          if( side == nodes.globalToLocalMap().end() )
+          {
+            ADD_FAILURE() << "Missing final side point"; continue;
+          }
           for( int d = 0; d < 3; ++d )
-            if( gap > 0 && d == 2 ) EXPECT_NEAR( std::abs( nodePositions[side->second][d] ), gap, 1e-12 );
-            else EXPECT_NEAR( nodePositions[side->second][d], point[d], 1e-12 );
+            if( gap > 0 && d == 2 )
+              EXPECT_NEAR( std::abs( nodePositions[side->second][d] ), gap, 1e-12 );
+            else
+              EXPECT_NEAR( nodePositions[side->second][d], point[d], 1e-12 );
         }
       }
       for( int side = 0; side < 2; ++side )
@@ -648,14 +702,16 @@ void initializeFixture( FixtureFiles const & files, std::vector< string > const 
         localIndex const f = surfaceFaces[e][side];
         EXPECT_GE( f, 0 );
         EXPECT_LT( f, faces.size() );
-        if( f < 0 || f >= faces.size() ) continue;
+        if( f < 0 || f >= faces.size() )
+          continue;
         EXPECT_EQ( faces.nodeList()[f].size(), arity );
         EXPECT_EQ( surfaceNodes[e].size(), 2 * arity );
         if( surfaceNodes[e].size() == 2 * arity )
         {
           if( level > 0 )
           {
-            for( int p = 0; p < arity; ++p ) EXPECT_EQ( surfaceNodes[e][side * arity + p], faceNodes[f][p] );
+            for( int p = 0; p < arity; ++p )
+              EXPECT_EQ( surfaceNodes[e][side * arity + p], faceNodes[f][p] );
           }
           else
           {
@@ -678,16 +734,19 @@ void initializeFixture( FixtureFiles const & files, std::vector< string > const 
         EXPECT_GE( region, 0 );
         EXPECT_GE( subRegion, 0 );
         EXPECT_GE( cell, 0 );
-        if( region < 0 || subRegion < 0 || cell < 0 ) continue;
+        if( region < 0 || subRegion < 0 || cell < 0 )
+          continue;
         auto const & incident = elements.getRegion( region ).getSubRegion< CellElementSubRegion >( subRegion );
         EXPECT_LT( cell, incident.size() );
         bool matched = false;
         if( cell < incident.size() )
         {
-          for( int cf = 0; cf < incident.faceList().size( 1 ); ++cf ) matched = matched || incident.faceList()[cell][cf] == f;
+          for( int cf = 0; cf < incident.faceList().size( 1 ); ++cf )
+            matched = matched || incident.faceList()[cell][cf] == f;
           auto const cellCenters = incident.getElementCenter();
           double outward = 0;
-          for( int d = 0; d < 3; ++d ) outward += faceNormals[f][d] * ( faceCenters[f][d] - cellCenters[cell][d] );
+          for( int d = 0; d < 3; ++d )
+            outward += faceNormals[f][d] * ( faceCenters[f][d] - cellCenters[cell][d] );
           EXPECT_GT( outward, 0 );
         }
         EXPECT_TRUE( matched );
@@ -702,7 +761,8 @@ void initializeFixture( FixtureFiles const & files, std::vector< string > const 
           // which can differ from an area centroid on polygon-cap child quads.
           double center = 0;
           for( int side = 0; side < 2; ++side )
-            for( localIndex p : faceNodes[surfaceFaces[e][side]] ) center += nodePositions[p][d];
+            for( localIndex p : faceNodes[surfaceFaces[e][side]] )
+              center += nodePositions[p][d];
           EXPECT_NEAR( surfaceCenters[e][d], center / ( 2 * arity ), 1e-12 );
           normalProduct += faceNormals[surfaceFaces[e][0]][d] * faceNormals[surfaceFaces[e][1]][d];
         }
@@ -795,7 +855,7 @@ TEST( VTKRefinedFractureImport, FullInitializationOfNamedJunctionRegions )
   {
     SCOPED_TRACE( "full junction level " + std::to_string( level ) );
     initializeFixture( files, { "faultX", "faultY" }, level,
-      ( MpiWrapper::commSize() + 3 ) * ( level == 1 ? 8 : 64 ), level == 1 ? 8 : 32, 4, 2, true );
+                       ( MpiWrapper::commSize() + 3 ) * ( level == 1 ? 8 : 64 ), level == 1 ? 8 : 32, 4, 2, true );
   }
 }
 
@@ -824,7 +884,7 @@ TEST( VTKRefinedFractureImport, FullInitializationOfAllSevenPolygonCaps )
       SCOPED_TRACE( "full cap " + std::to_string( n ) + " level " + std::to_string( level ) );
       int const volumeCount = 4 * n * ( level == 1 ? 1 : 8 ) + ( MpiWrapper::commSize() - 1 ) * ( level == 1 ? 8 : 64 );
       initializeFixture( files, { "cap" }, level, volumeCount, n * ( level == 1 ? 1 : 4 ), 4,
-        n * .5 * std::sin( 2 * std::acos( -1. ) / n ) );
+                         n * .5 * std::sin( 2 * std::acos( -1. ) / n ) );
     }
   }
 }
@@ -856,7 +916,8 @@ TEST( VTKRefinedFractureImport, DeclaredSurfaceScalarAndVectorImportsSurviveRefi
     vtkNew< vtkDoubleArray > tangent, unused;
     tangent->SetName( "importTangent" );
     tangent->SetNumberOfComponents( 3 );
-    for( vtkIdType c = 0; c < surface->GetNumberOfCells(); ++c ) tangent->InsertNextTuple3( .6, .8, 0 );
+    for( vtkIdType c = 0; c < surface->GetNumberOfCells(); ++c )
+      tangent->InsertNextTuple3( .6, .8, 0 );
     surface->GetCellData()->SetVectors( tangent );
     unused->SetName( "unusedWideField" );
     unused->SetNumberOfComponents( 128 );
@@ -875,19 +936,21 @@ TEST( VTKRefinedFractureImport, DeclaredSurfaceScalarAndVectorImportsSurviveRefi
       surfacicFieldsInGEOS="{{elementAperture,tangentVector1}}" /></Mesh>
       <ElementRegions><CellElementRegion name="volume" cellBlocks="{{*}}" materialList="{{}}" />
       <SurfaceElementRegion name="fault" faceBlock="triangle" defaultAperture="1e-4" materialList="{{}}" />
-      </ElementRegions></Problem>)xml", files.path(), level );
+      </ElementRegions></Problem>)xml",
+                               files.path(), level );
     auto & problem = state.getProblemManager();
     problem.parseInputString( xml );
     problem.problemSetup();
     auto const & mesh = problem.getDomainPartition().getMeshBody( "mesh" ).getBaseDiscretization();
     auto const & surface = mesh.getElemManager().getRegion< SurfaceElementRegion >( "fault" )
-      .getUniqueSubRegion< FaceElementSubRegion >();
+                             .getUniqueSubRegion< FaceElementSubRegion >();
     auto const aperture = surface.getElementAperture();
     auto const tangent = surface.getTangentVector1();
     localIndex owned = 0;
     for( localIndex c = 0; c < surface.size(); ++c )
     {
-      if( surface.ghostRank()[c] >= 0 ) continue;
+      if( surface.ghostRank()[c] >= 0 )
+        continue;
       ++owned;
       EXPECT_DOUBLE_EQ( aperture[c], static_cast< double >( 2e-4f ) );
       EXPECT_DOUBLE_EQ( tangent[c][0], .6 );
@@ -901,7 +964,8 @@ TEST( VTKRefinedFractureImport, DeclaredSurfaceScalarAndVectorImportsSurviveRefi
 TEST( VTKRefinedFractureImport, TwoPieceParallelMainWithFracturesKeepsEveryCell )
 {
   int const ranks = MpiWrapper::commSize();
-  if( ranks < 4 ) GTEST_SKIP() << "Two-piece input with fewer pieces than ranks requires at least four ranks";
+  if( ranks < 4 )
+    GTEST_SKIP() << "Two-piece input with fewer pieces than ranks requires at least four ranks";
   FixtureFiles files( [] { return triangle( 0 ); }, true );
   for( auto method : { geos::vtk::ScatterMethod::kdtree, geos::vtk::ScatterMethod::rcb } )
   {
@@ -916,7 +980,7 @@ TEST( VTKRefinedFractureImport, TwoPieceParallelMainWithFracturesKeepsEveryCell 
     partitions[0] = ranks;
     partitions[1] = partitions[2] = 1;
     auto redistributed = geos::vtk::redistributeMeshes( 0, pieces.getMainMesh(), bundle.getFaceBlocks(), MPI_COMM_GEOS,
-      method, partitions.toViewConst(), geos::vtk::PartitionMethod::parmetis, 0, 0, 1, "" );
+                                                        method, partitions.toViewConst(), geos::vtk::PartitionMethod::parmetis, 0, 0, 1, "" );
     EXPECT_EQ( MpiWrapper::sum( redistributed.getMainMesh()->GetNumberOfCells() ), ranks + 1 );
     EXPECT_GT( redistributed.getMainMesh()->GetNumberOfCells(), 0 );
     geos::vtk::refineUniformly( redistributed, 2, {}, MPI_COMM_GEOS );
@@ -943,7 +1007,8 @@ TEST( VTKRefinedFractureImport, GraphColoringIncludesIsolatedRanksAndCustomNeigh
   partition.setPartitions( 1, 1, ranks );
   EXPECT_FALSE( partition.hasMetisNeighborList() );
   stdVector< int > neighbors;
-  if( ranks > 1 && rank < 2 ) neighbors.push_back( 1 - rank );
+  if( ranks > 1 && rank < 2 )
+    neighbors.push_back( 1 - rank );
   partition.setMetisNeighborList( neighbors );
   EXPECT_TRUE( partition.hasMetisNeighborList() );
   auto verifyColors = [&]( int neighbor )
@@ -953,16 +1018,20 @@ TEST( VTKRefinedFractureImport, GraphColoringIncludesIsolatedRanksAndCustomNeigh
     array1d< int > colors( ranks );
     MpiWrapper::allgather( &color, 1, colors.data(), 1, MPI_COMM_GEOS );
     EXPECT_GE( color, 0 );
-    if( ranks > 1 ) { EXPECT_NE( colors[0], colors[neighbor < 0 ? 1 : neighbor] ); }
+    if( ranks > 1 )
+    {
+      EXPECT_NE( colors[0], colors[neighbor < 0 ? 1 : neighbor] );
+    }
   };
   verifyColors( -1 );
-  if( ranks > 1 ) verifyColors( ranks - 1 );
+  if( ranks > 1 )
+    verifyColors( ranks - 1 );
   partition.setPartitions( 1, 1, ranks );
   EXPECT_FALSE( partition.hasMetisNeighborList() );
   EXPECT_TRUE( partition.getMetisNeighborList().empty() );
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   commandLineOptions = *geos::basicSetup( argc, argv );

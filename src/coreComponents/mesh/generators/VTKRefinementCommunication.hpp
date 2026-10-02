@@ -26,10 +26,14 @@
 
 #include <functional>
 #include <map>
+#include <set>
 #include <string>
 
 namespace geos::vtk::refinement
 {
+
+// Internal implementation of geos::vtk::refineUniformly.
+/// @cond DO_NOT_DOCUMENT
 
 using Bytes = std::vector< unsigned char >;
 
@@ -90,6 +94,14 @@ struct SupportLookup
   int faceOwner; ///< A rank holding this actual incident volume face.
 };
 
+/** A label (e.g. a node-set index) that one participant holds for a shared new point. */
+struct SharedFlag
+{
+  EntityKey key;
+  Participants participants;
+  std::uint64_t label;
+};
+
 struct CommunicationStatistics
 {
   std::uint64_t directoryExchanges{};
@@ -131,7 +143,7 @@ public:
    * Optional allocatedRange receives the range total without another collective allocation.
    */
   std::map< ChildCellKey, CellRecord > resolveCells( std::uint64_t generation, std::vector< CellCreation > const & cells,
-                                                    vtkIdType base, IdRange * allocatedRange = nullptr );
+                                                     vtkIdType base, IdRange * allocatedRange = nullptr );
   std::map< ChildCellKey, CellRecord > reconcileExistingCells( std::vector< CellCreation > const & cells );
   /** Discover actual local/remote coarse side faces once, using vertex-ID routing.
    * Query holders are not treated as owners of main points or faces. The resulting
@@ -140,6 +152,11 @@ public:
   std::vector< std::vector< SurfaceSide > > discoverSurfaceSides( std::vector< MainFace > const & localFaces,
                                                                   std::vector< CoarseSurface > const & surfaces,
                                                                   std::uint64_t mainNamespace = 0 );
+  /** Union of the flags that the participants of shared new points hold.
+   * Each flag is sent to the other participants of its point, so every
+   * participant returns the same labels for the points it shares.
+   */
+  std::set< std::pair< EntityKey, std::uint64_t > > unionSharedFlags( std::uint64_t generation, std::vector< SharedFlag > const & flags );
   /** Resolve surface recipes from an actual face owner, without a fine directory. */
   std::vector< vtkIdType > resolveSupportIds( std::uint64_t generation, std::vector< SupportLookup > const & requests,
                                               std::unordered_map< EntityKey, vtkIdType, EntityKeyHash > const & localIds );
@@ -170,6 +187,8 @@ private:
   bool m_discovered = false;
   CommunicationStatistics m_statistics;
 };
+
+/// @endcond
 
 } // namespace geos::vtk::refinement
 #endif

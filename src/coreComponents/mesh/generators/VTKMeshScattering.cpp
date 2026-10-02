@@ -61,7 +61,9 @@
 #include <cstring>
 #include <functional>
 #include <limits>
+#include <map>
 #include <numeric>
+#include <set>
 
 namespace geos
 {
@@ -123,7 +125,8 @@ void packString( stdVector< char > & buf, char const * value )
 {
   int64_t const size = value ? static_cast< int64_t >( std::strlen( value ) ) : -1;
   appendValue( buf, size );
-  if( size > 0 ) appendBytes( buf, value, size );
+  if( size > 0 )
+    appendBytes( buf, value, size );
 }
 
 void packDataArrays( stdVector< char > & buf, vtkFieldData * data )
@@ -136,14 +139,16 @@ void packDataArrays( stdVector< char > & buf, vtkFieldData * data )
     appendValue( buf, static_cast< int32_t >( arr->GetNumberOfComponents() ) );
     appendValue( buf, static_cast< int32_t >( arr->GetDataType() ) );
     appendValue( buf, static_cast< int64_t >( arr->GetNumberOfTuples() ) );
-    for( int c = 0; c < arr->GetNumberOfComponents(); ++c ) packString( buf, arr->GetComponentName( c ) );
+    for( int c = 0; c < arr->GetNumberOfComponents(); ++c )
+      packString( buf, arr->GetComponentName( c ) );
     if( auto * strings = vtkStringArray::SafeDownCast( arr ) )
     {
       for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
       {
         auto const & value = strings->GetValue( v );
         appendValue( buf, static_cast< int64_t >( value.size() ) );
-        if( !value.empty() ) appendBytes( buf, value.data(), value.size() );
+        if( !value.empty() )
+          appendBytes( buf, value.data(), value.size() );
       }
     }
     else if( auto * bits = vtkBitArray::SafeDownCast( arr ) )
@@ -159,21 +164,25 @@ void packDataArrays( stdVector< char > & buf, vtkFieldData * data )
       int64_t const width = arr->GetDataTypeSize();
       GEOS_ERROR_IF( width <= 0 || count > std::numeric_limits< int64_t >::max() / width,
                      "Mesh scatter array byte count overflow" );
-      if( count > 0 ) appendBytes( buf, numeric->GetVoidPointer( 0 ), count * width );
+      if( count > 0 )
+        appendBytes( buf, numeric->GetVoidPointer( 0 ), count * width );
     }
   }
   // Indices preserve roles even for unnamed arrays or string pedigree IDs.
   auto * attrs = vtkDataSetAttributes::SafeDownCast( data );
   int roles[NUM_ATTR_TYPES];
   std::fill_n( roles, NUM_ATTR_TYPES, -1 );
-  if( attrs ) attrs->GetAttributeIndices( roles );
-  for( int role : roles ) appendValue( buf, static_cast< int32_t >( role ) );
+  if( attrs )
+    attrs->GetAttributeIndices( roles );
+  for( int role : roles )
+    appendValue( buf, static_cast< int32_t >( role ) );
 }
 
 std::pair< bool, string > unpackString( char const * & ptr )
 {
   int64_t const size = readValue< int64_t >( ptr );
-  if( size < 0 ) return { false, {} };
+  if( size < 0 )
+    return { false, {} };
   string value( ptr, size );
   ptr += size;
   return { true, std::move( value ) };
@@ -192,13 +201,15 @@ void unpackDataArrays( char const * & ptr, vtkFieldData * data )
     arr.TakeReference( vtkAbstractArray::CreateArray( dataType ) );
     GEOS_ERROR_IF( arr == nullptr || nComp <= 0 || nTuples < 0,
                    "Invalid mesh scatter array metadata" );
-    if( name.first ) arr->SetName( name.second.c_str() );
+    if( name.first )
+      arr->SetName( name.second.c_str() );
     arr->SetNumberOfComponents( nComp );
     arr->SetNumberOfTuples( nTuples );
     for( int c = 0; c < nComp; ++c )
     {
       auto const component = unpackString( ptr );
-      if( component.first ) arr->SetComponentName( c, component.second.c_str() );
+      if( component.first )
+        arr->SetComponentName( c, component.second.c_str() );
     }
     if( auto * strings = vtkStringArray::SafeDownCast( arr ) )
     {
@@ -227,7 +238,8 @@ void unpackDataArrays( char const * & ptr, vtkFieldData * data )
       int64_t const width = arr->GetDataTypeSize();
       GEOS_ERROR_IF( width <= 0 || count > std::numeric_limits< int64_t >::max() / width,
                      "Mesh scatter array byte count overflow" );
-      if( count > 0 ) std::memcpy( numeric->GetVoidPointer( 0 ), ptr, count * width );
+      if( count > 0 )
+        std::memcpy( numeric->GetVoidPointer( 0 ), ptr, count * width );
       ptr += count * width;
     }
     data->AddArray( arr );
@@ -236,7 +248,8 @@ void unpackDataArrays( char const * & ptr, vtkFieldData * data )
   for( int t = 0; t < NUM_ATTR_TYPES; ++t )
   {
     int const role = readValue< int32_t >( ptr );
-    if( attrs && role >= 0 ) attrs->SetActiveAttribute( role, t );
+    if( attrs && role >= 0 )
+      attrs->SetActiveAttribute( role, t );
   }
 }
 
@@ -587,12 +600,10 @@ computeCellRanksContiguous( vtkIdType nCells, integer size )
 // ============================================================================
 
 stdVector< integer >
-computeCellRanksCartesian( vtkDataSet & mesh, integer nx, integer ny, integer nz )
+computeCellRanksCartesian( vtkDataSet & mesh, integer nx, integer ny, integer nz, real64 const ( &bounds )[6] )
 {
   vtkIdType const numCells = mesh.GetNumberOfCells();
 
-  real64 bounds[6];
-  mesh.GetBounds( bounds );
   real64 const xMin = bounds[0], xMax = bounds[1];
   real64 const yMin = bounds[2], yMax = bounds[3];
   real64 const zMin = bounds[4], zMax = bounds[5];
@@ -689,6 +700,326 @@ computeCellRanksRCB( vtkDataSet & mesh, integer size )
 
   bisect( 0, n, 0, size );
   return ranks;
+}
+
+// ============================================================================
+// Distributed input: every rank assigns its own cells, then cells move once,
+// directly to their destination. No rank collects the whole mesh, and every
+// collective below exchanges data whose size is independent of the cell count.
+// ============================================================================
+
+/// Global index of the first local cell, with cells numbered in rank order.
+vtkIdType firstGlobalCell( vtkIdType localCells, MPI_Comm comm )
+{
+  vtkIdType first = 0;
+#ifdef GEOS_USE_MPI
+  MpiWrapper::exscan( &localCells, &first, 1, MPI_SUM, comm );
+  if( MpiWrapper::commRank( comm ) == 0 )
+  {
+    first = 0;
+  }
+#else
+  GEOS_UNUSED_VAR( localCells, comm );
+#endif
+  return first;
+}
+
+/// Same blocks as computeCellRanksContiguous, applied to the rank-ordered global index.
+stdVector< integer >
+distributedRanksContiguous( vtkIdType localCells, vtkIdType totalCells, integer size, MPI_Comm comm )
+{
+  vtkIdType const first = firstGlobalCell( localCells, comm );
+  vtkIdType const perRank = totalCells / size;
+  vtkIdType const remainder = totalCells % size;
+  vtkIdType const largeBlocks = remainder * ( perRank + 1 );
+  stdVector< integer > ranks( localCells );
+  for( vtkIdType i = 0; i < localCells; ++i )
+  {
+    vtkIdType const g = first + i;
+    ranks[i] = static_cast< integer >( g < largeBlocks ? g / ( perRank + 1 ) : remainder + ( g - largeBlocks ) / perRank );
+  }
+  return ranks;
+}
+
+/// Same grid as the serial method: the global bounds come from one reduction.
+stdVector< integer >
+distributedRanksCartesian( vtkDataSet & mesh, integer nx, integer ny, integer nz, MPI_Comm comm )
+{
+  stdVector< real64 > low( 3, std::numeric_limits< real64 >::max() ), high( 3, -std::numeric_limits< real64 >::max() );
+  if( mesh.GetNumberOfPoints() > 0 )
+  {
+    real64 local[6];
+    mesh.GetBounds( local );
+    for( integer d = 0; d < 3; ++d )
+    {
+      low[d] = local[2 * d];
+      high[d] = local[2 * d + 1];
+    }
+  }
+  stdVector< real64 > globalLow( 3 ), globalHigh( 3 );
+  MpiWrapper::allReduce( low, globalLow, MpiWrapper::Reduction::Min, comm );
+  MpiWrapper::allReduce( high, globalHigh, MpiWrapper::Reduction::Max, comm );
+  real64 const bounds[6] = { globalLow[0], globalHigh[0], globalLow[1], globalHigh[1], globalLow[2], globalHigh[2] };
+  return computeCellRanksCartesian( mesh, nx, ny, nz, bounds );
+}
+
+/// Order-preserving unsigned encoding of a double.
+std::uint64_t orderedBits( real64 const value )
+{
+  std::uint64_t bits;
+  std::memcpy( &bits, &value, sizeof( bits ) );
+  return ( bits >> 63 ) ? ~bits : bits | ( UINT64_C( 1 ) << 63 );
+}
+
+/**
+ * Distributed recursive coordinate bisection.
+ *
+ * The rank ranges of each level depend only on the MPI size, so all ranks hold
+ * the same list of ranges. For each range, one reduction gives its cell count
+ * and centroid box, which select the split dimension and the number of cells
+ * that go left, with the same rule as the serial method. The split key of a
+ * cell is (centroid coordinate, global cell index). The keys are unique, so the
+ * split is exact even when many centroids share a coordinate. A radix selection
+ * finds the split key: each round reduces a 16-bin histogram per range and
+ * keeps only the local cells in the selected bin. A level needs at most 32
+ * rounds, and usually stops early when the selected bin holds one key.
+ */
+stdVector< integer >
+distributedRanksRCB( vtkDataSet & mesh, integer size, MPI_Comm comm )
+{
+  vtkIdType const n = mesh.GetNumberOfCells();
+  auto const centroids = computeCentroids( mesh );
+  vtkIdType const first = firstGlobalCell( n, comm );
+
+  struct Range
+  {
+    integer lo, hi;
+  };
+  stdVector< Range > ranges{ { 0, size } };
+  stdVector< integer > range( n, 0 );
+  constexpr int digitBits = 4;
+  constexpr int bins = 1 << digitBits;
+  constexpr int keyBits = 128;
+
+  while( std::any_of( ranges.begin(), ranges.end(), []( Range const & r ) { return r.hi - r.lo > 1; } ) )
+  {
+    std::size_t const m = ranges.size();
+    stdVector< int64_t > counts( m, 0 ), globalCounts( m );
+    stdVector< real64 > low( 3 * m, std::numeric_limits< real64 >::max() ), high( 3 * m, -std::numeric_limits< real64 >::max() );
+    for( vtkIdType c = 0; c < n; ++c )
+    {
+      std::size_t const j = range[c];
+      ++counts[j];
+      for( integer d = 0; d < 3; ++d )
+      {
+        low[3 * j + d] = std::min( low[3 * j + d], centroids[c][d] );
+        high[3 * j + d] = std::max( high[3 * j + d], centroids[c][d] );
+      }
+    }
+    stdVector< real64 > globalLow( 3 * m ), globalHigh( 3 * m );
+    MpiWrapper::allReduce( counts, globalCounts, MpiWrapper::Reduction::Sum, comm );
+    MpiWrapper::allReduce( low, globalLow, MpiWrapper::Reduction::Min, comm );
+    MpiWrapper::allReduce( high, globalHigh, MpiWrapper::Reduction::Max, comm );
+
+    // Split dimension and left count of each range, as in the serial method.
+    stdVector< integer > dims( m, 0 );
+    stdVector< int64_t > remaining( m, 0 );
+    stdVector< char > active( m, 0 );
+    for( std::size_t j = 0; j < m; ++j )
+    {
+      integer const parts = ranges[j].hi - ranges[j].lo;
+      if( parts < 2 || globalCounts[j] == 0 )
+      {
+        continue;
+      }
+      active[j] = 1;
+      for( integer d = 1; d < 3; ++d )
+      {
+        if( globalHigh[3 * j + d] - globalLow[3 * j + d] > globalHigh[3 * j + dims[j]] - globalLow[3 * j + dims[j]] )
+        {
+          dims[j] = d;
+        }
+      }
+      remaining[j] = globalCounts[j] * ( parts / 2 ) / parts;
+    }
+
+    // 128-bit split keys: centroid coordinate, then global cell index.
+    auto keyWord = [&]( vtkIdType c, int word ) -> std::uint64_t
+    {
+      return word == 0 ? orderedBits( centroids[c][dims[range[c]]] ) : static_cast< std::uint64_t >( first + c );
+    };
+    auto digit = [&]( vtkIdType c, int round ) -> int
+    {
+      int const bit = keyBits - digitBits * ( round + 1 );
+      return static_cast< int >( ( keyWord( c, bit < 64 ? 1 : 0 ) >> ( bit % 64 ) ) & ( bins - 1 ) );
+    };
+
+    // Radix selection of the remaining[j]-th smallest key of every range.
+    stdVector< stdVector< vtkIdType > > candidates( m );
+    for( vtkIdType c = 0; c < n; ++c )
+    {
+      if( active[range[c]] )
+      {
+        candidates[range[c]].push_back( c );
+      }
+    }
+    stdVector< std::uint64_t > pivot( 2 * m, 0 );
+    int rounds = 0;
+    bool unique = false;
+    while( rounds < keyBits / digitBits && !unique )
+    {
+      stdVector< int64_t > histogram( bins * m, 0 ), globalHistogram( bins * m );
+      for( std::size_t j = 0; j < m; ++j )
+      {
+        for( vtkIdType c : candidates[j] )
+        {
+          ++histogram[bins * j + digit( c, rounds )];
+        }
+      }
+      MpiWrapper::allReduce( histogram, globalHistogram, MpiWrapper::Reduction::Sum, comm );
+      unique = true;
+      for( std::size_t j = 0; j < m; ++j )
+      {
+        if( !active[j] )
+        {
+          continue;
+        }
+        int b = 0;
+        while( remaining[j] >= globalHistogram[bins * j + b] )
+        {
+          remaining[j] -= globalHistogram[bins * j + b];
+          ++b;
+        }
+        int const bit = keyBits - digitBits * ( rounds + 1 );
+        pivot[2 * j + ( bit < 64 ? 1 : 0 )] |= static_cast< std::uint64_t >( b ) << ( bit % 64 );
+        unique = unique && globalHistogram[bins * j + b] == 1;
+        auto & list = candidates[j];
+        list.erase( std::remove_if( list.begin(), list.end(), [&]( vtkIdType c ) { return digit( c, rounds ) != b; } ), list.end() );
+      }
+      ++rounds;
+    }
+
+    // Keys whose leading 4*rounds bits precede the pivot go left. The pivot's
+    // prefix identifies a single key, or the whole key after 32 rounds.
+    int const prefixBits = digitBits * rounds;
+    auto prefix = [&]( std::uint64_t high, std::uint64_t low ) -> std::pair< std::uint64_t, std::uint64_t >
+    {
+      if( prefixBits <= 64 )
+      {
+        return { prefixBits == 0 ? 0 : high >> ( 64 - prefixBits ), 0 };
+      }
+      return { high, prefixBits == 128 ? low : low >> ( 128 - prefixBits ) };
+    };
+    stdVector< integer > next( m );
+    stdVector< Range > nextRanges;
+    for( std::size_t j = 0; j < m; ++j )
+    {
+      next[j] = static_cast< integer >( nextRanges.size() );
+      integer const parts = ranges[j].hi - ranges[j].lo;
+      if( parts < 2 )
+      {
+        nextRanges.push_back( ranges[j] );
+      }
+      else
+      {
+        integer const mid = ranges[j].lo + parts / 2;
+        nextRanges.push_back( { ranges[j].lo, mid } );
+        nextRanges.push_back( { mid, ranges[j].hi } );
+      }
+    }
+    for( vtkIdType c = 0; c < n; ++c )
+    {
+      std::size_t const j = range[c];
+      bool left = false;
+      if( active[j] )
+      {
+        left = prefix( keyWord( c, 0 ), keyWord( c, 1 ) ) < prefix( pivot[2 * j], pivot[2 * j + 1] );
+      }
+      range[c] = next[j] + ( ranges[j].hi - ranges[j].lo > 1 && !left ? 1 : 0 );
+    }
+    ranges = std::move( nextRanges );
+  }
+
+  stdVector< integer > ranks( n );
+  for( vtkIdType c = 0; c < n; ++c )
+  {
+    ranks[c] = ranges[range[c]].lo;
+  }
+  return ranks;
+}
+
+/// Split a local mesh into one piece per destination rank, halving the destination range at each step.
+void splitByDestination( vtkSmartPointer< vtkUnstructuredGrid > mesh,
+                         stdVector< integer > assignment,
+                         stdMap< integer, vtkSmartPointer< vtkUnstructuredGrid > > & pieces )
+{
+  if( assignment.empty() )
+  {
+    return;
+  }
+  auto const [low, high] = std::minmax_element( assignment.begin(), assignment.end() );
+  if( *low == *high )
+  {
+    pieces.get_inserted( *low ) = mesh;
+    return;
+  }
+  integer const mid = *low + ( *high - *low + 1 ) / 2;
+  auto split = splitByMid( mesh, assignment, mid );
+  mesh = nullptr;
+  assignment.clear();
+  splitByDestination( std::move( split.loMesh ), std::move( split.loAssignment ), pieces );
+  splitByDestination( std::move( split.hiMesh ), std::move( split.hiAssignment ), pieces );
+}
+
+/**
+ * Send each local cell directly to its assigned rank. Every rank may hold input
+ * cells. Points shared by pieces from different ranks are merged by appendMeshParts.
+ */
+vtkSmartPointer< vtkUnstructuredGrid >
+exchangeByRankAssignment( vtkUnstructuredGrid * mesh, stdVector< integer > assignment, MPI_Comm comm )
+{
+  integer const rank = MpiWrapper::commRank( comm );
+  stdMap< integer, vtkSmartPointer< vtkUnstructuredGrid > > pieces;
+  {
+    auto local = vtkSmartPointer< vtkUnstructuredGrid >::New();
+    local->ShallowCopy( mesh );
+    splitByDestination( std::move( local ), std::move( assignment ), pieces );
+  }
+  stdVector< vtkSmartPointer< vtkUnstructuredGrid > > received;
+  if( pieces.count( rank ) )
+  {
+    received.push_back( pieces.at( rank ) );
+    pieces.erase( rank );
+  }
+  stdMap< int, stdVector< char > > outgoing;
+  for( auto & [peer, piece] : pieces )
+  {
+    packGrid( piece, {}, outgoing.get_inserted( peer ) );
+    piece = nullptr;
+  }
+  pieces.clear();
+  auto incoming = mpi::sparseExchange( outgoing, comm );
+  outgoing.clear();
+  for( auto & [peer, buffer] : incoming )
+  {
+    GEOS_UNUSED_VAR( peer );
+    received.push_back( unpackGrid( buffer ).first );
+    buffer = {};
+  }
+  if( received.empty() )
+  {
+    return vtkSmartPointer< vtkUnstructuredGrid >::New();
+  }
+  if( received.size() == 1 )
+  {
+    return received.front();
+  }
+  stdVector< vtkUnstructuredGrid * > parts;
+  for( auto const & piece : received )
+  {
+    parts.push_back( piece.GetPointer() );
+  }
+  return appendMeshParts( parts );
 }
 
 } // anonymous namespace
@@ -832,7 +1163,9 @@ computeCellRanks( ScatterMethod method,
       GEOS_ERROR_IF( nx * ny * nz != numRanks,
                      GEOS_FMT( "partition grid {}x{}x{} = {} does not match MPI size {}",
                                nx, ny, nz, nx * ny * nz, numRanks ) );
-      cellRanks = computeCellRanksCartesian( mesh, nx, ny, nz );
+      real64 bounds[6];
+      mesh.GetBounds( bounds );
+      cellRanks = computeCellRanksCartesian( mesh, nx, ny, nz, bounds );
       break;
     }
     case ScatterMethod::rcb:
@@ -845,6 +1178,36 @@ computeCellRanks( ScatterMethod method,
   return cellRanks;
 }
 
+
+stdVector< integer >
+computeCellRanksDistributed( ScatterMethod method,
+                             vtkDataSet & mesh,
+                             vtkIdType totalCells,
+                             arrayView1d< integer const > cartesianPartitions,
+                             MPI_Comm comm )
+{
+  integer const numRanks = MpiWrapper::commSize( comm );
+  switch( method )
+  {
+    case ScatterMethod::contiguous:
+      return distributedRanksContiguous( mesh.GetNumberOfCells(), totalCells, numRanks, comm );
+    case ScatterMethod::cartesian:
+    {
+      GEOS_ERROR_IF( cartesianPartitions.size() < 3,
+                     "Cartesian method requires 3 partition values (nx, ny, nz)" );
+      integer const nx = cartesianPartitions[0], ny = cartesianPartitions[1], nz = cartesianPartitions[2];
+      GEOS_ERROR_IF( nx * ny * nz != numRanks,
+                     GEOS_FMT( "partition grid {}x{}x{} = {} does not match MPI size {}",
+                               nx, ny, nz, nx * ny * nz, numRanks ) );
+      return distributedRanksCartesian( mesh, nx, ny, nz, comm );
+    }
+    case ScatterMethod::rcb:
+      return distributedRanksRCB( mesh, numRanks, comm );
+    default:
+      GEOS_ERROR( GEOS_FMT( "No distributed rank assignment for scatter method {}", static_cast< integer >( method ) ) );
+  }
+  return {};
+}
 
 vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm )
 {
@@ -862,7 +1225,8 @@ vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm )
 #ifdef GEOS_USE_MPI
   vtkIdType firstCell = 0;
   MpiWrapper::exscan( &localCells, &firstCell, 1, MPI_SUM, comm );
-  if( rank == 0 ) firstCell = 0;
+  if( rank == 0 )
+    firstCell = 0;
   vtkIdType const cellsPerRank = totalCells / size;
   vtkIdType const remainder = totalCells % size;
   vtkNew< vtkPartitionedDataSet > partitions;
@@ -875,7 +1239,8 @@ vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm )
     vtkIdType const localEnd = std::min( end, firstCell + localCells ) - firstCell;
     vtkNew< vtkExtractCells > extractor;
     extractor->SetInputDataObject( &mesh );
-    if( localEnd > localBegin ) extractor->AddCellRange( localBegin, localEnd - 1 );
+    if( localEnd > localBegin )
+      extractor->AddCellRange( localBegin, localEnd - 1 );
     LvArray::system::FloatingPointExceptionGuard guard;
     extractor->Update();
     partitions->SetPartition( r, extractor->GetOutput() );
@@ -1010,28 +1375,35 @@ scatterMesh( ScatterMethod method,
   }
 #endif
 
-  vtkIdType const rootCells = MpiWrapper::allReduce( rank == 0 ? localCells : vtkIdType{ 0 },
-                                                   MpiWrapper::Reduction::Sum, comm );
-  GEOS_ERROR_IF( rootCells != totalCells,
-                 GEOS_FMT( "Custom scatter requires rank 0 to hold the complete mesh ({} of {} cells)", rootCells, totalCells ) );
-
-  // Compute cell to rank assignment (rank 0 only)
-  stdVector< integer > cellRanks;
-  if( rank == 0 )
+  vtkUnstructuredGrid * inputGrid = vtkUnstructuredGrid::SafeDownCast( &mesh );
+  GEOS_ERROR_IF( localCells > 0 && inputGrid == nullptr,
+                 "input must be a vtkUnstructuredGrid" );
+  vtkNew< vtkUnstructuredGrid > emptyGrid;
+  if( inputGrid == nullptr )
   {
-    cellRanks = computeCellRanks( method, mesh, cartesianPartitions, size );
+    inputGrid = emptyGrid.GetPointer();
   }
 
-  // Scatter via binary tree
-  auto * inputGrid = vtkUnstructuredGrid::SafeDownCast( &mesh );
-  GEOS_ERROR_IF( rank == 0 && inputGrid == nullptr,
-                 "input must be a vtkUnstructuredGrid" );
-
-  // Non-rank-0 passes a dummy; scatterByRankAssignment only uses rank 0's mesh.
-  vtkNew< vtkUnstructuredGrid > dummyGrid;
-  vtkUnstructuredGrid * gridPtr = ( rank == 0 ) ? inputGrid : dummyGrid.GetPointer();
-
-  vtkSmartPointer< vtkUnstructuredGrid > result = scatterByRankAssignment( gridPtr, std::move( cellRanks ), comm );
+  vtkSmartPointer< vtkUnstructuredGrid > result;
+  vtkIdType const rootCells = MpiWrapper::allReduce( rank == 0 ? localCells : vtkIdType{ 0 },
+                                                     MpiWrapper::Reduction::Sum, comm );
+  if( rootCells == totalCells )
+  {
+    // Serial input: rank 0 computes the assignment and ships cells through a binary tree.
+    stdVector< integer > cellRanks;
+    if( rank == 0 )
+    {
+      cellRanks = computeCellRanks( method, *inputGrid, cartesianPartitions, size );
+    }
+    result = scatterByRankAssignment( inputGrid, std::move( cellRanks ), comm );
+  }
+  else
+  {
+    // Distributed input (e.g. a .pvtu read in pieces): each rank assigns and sends its own cells.
+    result = exchangeByRankAssignment( inputGrid,
+                                       computeCellRanksDistributed( method, *inputGrid, totalCells, cartesianPartitions, comm ),
+                                       comm );
+  }
 
   // Validate cell conservation
   vtkIdType const localAfter = result->GetNumberOfCells();

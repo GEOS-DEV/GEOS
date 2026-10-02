@@ -14,9 +14,12 @@
  */
 
 #include "common/MpiWrapper.hpp"
+#include "common/MpiChunkedCommunication.hpp"
 #include "common/initializeEnvironment.hpp"
 
 #include <gtest/gtest.h>
+
+#include <set>
 
 using namespace geos;
 
@@ -242,12 +245,14 @@ TEST( MpiWrapperTesting, GatherCopiesTypedValuesAndHonorsDisplacements )
   int const value = 17 + rank;
   stdVector< int > gathered( size, -1 );
   EXPECT_EQ( MpiWrapper::allgather( &value, 1, gathered.data(), 1, MPI_COMM_GEOS ), MPI_SUCCESS );
-  for( int r = 0; r < size; ++r ) EXPECT_EQ( gathered[r], 17 + r );
+  for( int r = 0; r < size; ++r )
+    EXPECT_EQ( gathered[r], 17 + r );
 
   stdVector< int > counts( size, 1 );
   stdVector< int > offsets( size );
   stdVector< int > sparse( 2 * size + 1, -1 );
-  for( int r = 0; r < size; ++r ) offsets[r] = 2 * r + 1;
+  for( int r = 0; r < size; ++r )
+    offsets[r] = 2 * r + 1;
   EXPECT_EQ( MpiWrapper::allgatherv( &value, 1, sparse.data(), counts.data(), offsets.data(), MPI_COMM_GEOS ), MPI_SUCCESS );
   for( int r = 0; r < size; ++r )
   {
@@ -259,7 +264,8 @@ TEST( MpiWrapperTesting, GatherCopiesTypedValuesAndHonorsDisplacements )
   EXPECT_EQ( MpiWrapper::gather( value, gathered, 0, MPI_COMM_GEOS ), MPI_SUCCESS );
   if( rank == 0 )
   {
-    for( int r = 0; r < size; ++r ) EXPECT_EQ( gathered[r], 17 + r );
+    for( int r = 0; r < size; ++r )
+      EXPECT_EQ( gathered[r], 17 + r );
   }
 }
 
@@ -270,6 +276,43 @@ TEST( MpiWrapperTesting, PrefixSumUsesTheSuppliedCommunicator )
   MPI_Comm reverse = MpiWrapper::commSplit( MPI_COMM_GEOS, 0, size - 1 - rank );
   EXPECT_EQ( MpiWrapper::prefixSum< globalIndex >( 1, reverse ), MpiWrapper::commRank( reverse ) );
   MpiWrapper::commFree( reverse );
+}
+
+TEST( MpiWrapperTesting, SparseExchangeDeliversOnlyAddressedBuffers )
+{
+  int const rank = MpiWrapper::commRank();
+  int const size = MpiWrapper::commSize();
+  // Each rank sends to itself, to the next rank and to the rank three ahead.
+  // Buffer contents identify the sender, the receiver and a length that varies.
+  auto payload = []( int from, int to )
+  {
+    stdVector< char > bytes( 3 + ( from + 2 * to ) % 5 );
+    bytes[0] = static_cast< char >( from );
+    bytes[1] = static_cast< char >( to );
+    for( std::size_t i = 2; i < bytes.size(); ++i )
+      bytes[i] = static_cast< char >( from + to + i );
+    return bytes;
+  };
+  stdMap< int, stdVector< char > > outgoing;
+  for( int const shift : { 0, 1, 3 } )
+  {
+    int const to = ( rank + shift ) % size;
+    outgoing.get_inserted( to ) = payload( rank, to );
+  }
+  auto const incoming = mpi::sparseExchange( outgoing, MPI_COMM_GEOS, 7401, 2 );
+  std::set< int > expected;
+  for( int const shift : { 0, 1, 3 } )
+    expected.insert( ( rank - shift % size + size ) % size );
+  ASSERT_EQ( incoming.size(), expected.size() );
+  for( int const from : expected )
+  {
+    auto const found = incoming.find( from );
+    ASSERT_NE( found, incoming.end() ) << "from rank " << from;
+    EXPECT_EQ( found->second, payload( from, rank ) ) << "from rank " << from;
+  }
+  // A rank without peers still takes part.
+  stdMap< int, stdVector< char > > none;
+  EXPECT_TRUE( mpi::sparseExchange( none, MPI_COMM_GEOS ).empty() );
 }
 
 int main( int argc, char * argv[] )

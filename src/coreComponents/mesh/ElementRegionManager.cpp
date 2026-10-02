@@ -190,7 +190,8 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
   nodeManager.setMaxGlobalIndex();
   bool hasWells = false;
   forElementRegions< WellElementRegion >( [&]( WellElementRegion const & ) { hasWells = true; } );
-  if( !hasWells ) return;
+  if( !hasWells )
+    return;
   GEOS_THROW_IF( nodeManager.maxGlobalIndex() == std::numeric_limits< globalIndex >::max(),
                  "No representable global node ID remains for well allocation", InputError, getDataContext() );
   globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
@@ -216,7 +217,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
   auto checkRange = [&]( globalIndex offset, globalIndex & previous, globalIndex count, char const * kind )
   {
     globalIndex const limit = std::numeric_limits< globalIndex >::max();
-    GEOS_THROW_IF( count < 0 || previous > limit - offset || count > limit - previous ||
+    GEOS_THROW_IF( count< 0 || previous > limit - offset || count > limit - previous ||
                    ( count > 0 && count - 1 > limit - offset - previous ),
                    GEOS_FMT( "Global well {} ID range exceeds storage", kind ), InputError, getDataContext() );
     previous += count;

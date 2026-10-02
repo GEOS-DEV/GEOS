@@ -22,6 +22,9 @@
 namespace geos::vtk::refinement
 {
 
+// Internal implementation of geos::vtk::refineUniformly.
+/// @cond DO_NOT_DOCUMENT
+
 struct CoarseBoundary
 {
   std::vector< EntitySupport > entities; ///< Exposed volume faces and their edges/vertices.
@@ -62,6 +65,8 @@ private:
   std::unordered_map< EntityKey, std::size_t, EntityKeyHash > m_indices;
   std::unordered_map< vtkIdType, std::vector< std::size_t > > m_incident;
 };
+
+/// @endcond
 
 } // namespace geos::vtk::refinement
 #endif

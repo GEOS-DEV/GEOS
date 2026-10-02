@@ -21,6 +21,9 @@
 
 namespace geos::vtk::refinement
 {
+
+// Internal implementation of geos::vtk::refineUniformly.
+/// @cond DO_NOT_DOCUMENT
 struct MainFace
 {
   Connectivity globalCorners;
@@ -52,5 +55,7 @@ private:
   std::vector< MainFace > m_faces;
   std::unordered_map< vtkIdType, std::vector< std::size_t > > m_incident;
 };
+/// @endcond
+
 } // namespace geos::vtk::refinement
 #endif

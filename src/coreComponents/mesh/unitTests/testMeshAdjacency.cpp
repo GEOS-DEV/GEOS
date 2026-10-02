@@ -92,7 +92,7 @@ TEST_F( CollocatedAdjacency, OneHopPerSubregionAndDepth )
 TEST_F( CollocatedAdjacency, JunctionsDuplicatesAndRemoteNodes )
 {
   addFracture( "fault", { { base, base + 1, base + 2, base + 9 },
-                          { base, base + 1, base + 2, base + 9 }, { base + 8, base + 9 }, {} } );
+                 { base, base + 1, base + 2, base + 9 }, { base + 8, base + 9 }, {} } );
   check( { 0 }, 1, { 0, 1, 2 } );
   check( { 1 }, 1, { 0, 1, 2 } );
   check( { 2, 3 }, 1, { 0, 1, 2, 3 } );
@@ -105,7 +105,7 @@ TEST_F( CollocatedAdjacency, NamedSubregionsPreserveSequentialExpansion )
   check( { 0 }, 1, { 0, 1, 2 } );
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   MpiWrapper::init( &argc, &argv );
   MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );

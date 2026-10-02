@@ -145,4 +145,89 @@ void exchangeManyBytes( std::vector< ByteExchange > const & exchanges, MPI_Reque
       throw std::logic_error( "MPI byte exchange requires an MPI build" );
 #endif
 }
+
+stdMap< int, stdVector< char > > sparseExchange( stdMap< int, stdVector< char > > const & outgoing,
+                                                 MPI_Comm comm, int tag, std::uint64_t chunkBytes )
+{
+  int const rank = MpiWrapper::commRank( comm );
+  stdMap< int, stdVector< char > > incoming;
+  auto const self = outgoing.find( rank );
+  if( self != outgoing.end() )
+    incoming.get_inserted( rank ) = self->second;
+#ifdef GEOS_USE_MPI
+  // Handshake: one synchronous size message per peer. A completed synchronous
+  // send means that the peer has received it, so after the nonblocking barrier
+  // completes, every rank knows all of its senders.
+  stdVector< std::uint64_t > sizes;
+  stdVector< MPI_Request > sends;
+  sizes.reserve( outgoing.size() );
+  sends.reserve( outgoing.size() );
+  for( auto const & [peer, bytes] : outgoing )
+  {
+    if( peer == rank )
+      continue;
+    sizes.push_back( bytes.size() );
+    sends.emplace_back();
+    MPI_Issend( &sizes.back(), 1, MPI_UINT64_T, peer, tag, comm, &sends.back() );
+  }
+  stdMap< int, std::uint64_t > incomingSizes;
+  MPI_Request barrier = MPI_REQUEST_NULL;
+  bool barrierStarted = false;
+  while( true )
+  {
+    int arrived = 0;
+    MPI_Status status;
+    MPI_Iprobe( MPI_ANY_SOURCE, tag, comm, &arrived, &status );
+    if( arrived )
+    {
+      std::uint64_t bytes = 0;
+      MPI_Recv( &bytes, 1, MPI_UINT64_T, status.MPI_SOURCE, tag, comm, MPI_STATUS_IGNORE );
+      incomingSizes.get_inserted( status.MPI_SOURCE ) = bytes;
+    }
+    int done = 0;
+    if( !barrierStarted )
+    {
+      MPI_Testall( static_cast< int >( sends.size() ), sends.data(), &done, MPI_STATUSES_IGNORE );
+      if( done )
+      {
+        MPI_Ibarrier( comm, &barrier );
+        barrierStarted = true;
+      }
+    }
+    else
+    {
+      MPI_Test( &barrier, &done, MPI_STATUS_IGNORE );
+      if( done )
+        break;
+    }
+  }
+
+  // Payloads: both sides now know every length.
+  stdMap< int, ByteExchange > exchanges;
+  for( auto const & [peer, bytes] : outgoing )
+    if( peer != rank )
+      exchanges.get_inserted( peer ) = { bytes.data(), bytes.size(), nullptr, 0, peer };
+  for( auto const & [peer, bytes] : incomingSizes )
+  {
+    auto & buffer = incoming.get_inserted( peer );
+    buffer.resize( bytes );
+    auto & exchange = exchanges.emplace( peer, ByteExchange{ nullptr, 0, nullptr, 0, peer } ).first->second;
+    exchange.receiveBuffer = buffer.data();
+    exchange.receiveBytes = bytes;
+  }
+  std::vector< ByteExchange > list;
+  list.reserve( exchanges.size() );
+  for( auto const & entry : exchanges )
+    list.push_back( entry.second );
+  std::vector< MPI_Request > requests( 2 * list.size() );
+  exchangeManyBytes( list, requests.data(), tag + 1, comm, chunkBytes );
+#else
+  GEOS_UNUSED_VAR( comm, tag, chunkBytes );
+  for( auto const & entry : outgoing )
+    if( entry.first != rank )
+      throw std::logic_error( "MPI sparse exchange requires an MPI build" );
+#endif
+  return incoming;
+}
+
 } // namespace geos::mpi

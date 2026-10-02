@@ -67,7 +67,7 @@ LocalMesh cube( int x )
 {
   LocalMesh mesh;
   mesh.coordinates = { { double( x ), 0, 0 }, { double( x + 1 ), 0, 0 }, { double( x + 1 ), 1, 0 }, { double( x ), 1, 0 },
-                       { double( x ), 0, 1 }, { double( x + 1 ), 0, 1 }, { double( x + 1 ), 1, 1 }, { double( x ), 1, 1 } };
+    { double( x ), 0, 1 }, { double( x + 1 ), 0, 1 }, { double( x + 1 ), 1, 1 }, { double( x ), 1, 1 } };
   for( auto const & point : mesh.coordinates )
   {
     mesh.pointIds.push_back( 1001 + 7 * ( 4 * static_cast< vtkIdType >( point[0] ) + 2 * static_cast< vtkIdType >( point[1] ) +
@@ -132,104 +132,104 @@ void refineDistributed( LocalMesh & mesh, Communication & comm, int generation )
   std::vector< PointCreation > creations;
   comm.checked( "connected mesh planning",
                 [&]
-                {
-                  points = std::make_unique< PointRegistry >( mesh.coordinates, mesh.pointIds );
-                  auto const boundary = coarseBoundary( mesh.cells, mesh.cellIds, mesh.pointIds, comm.rank() );
-                  std::set< EntityKey > candidateKeys;
-                  for( auto const & entity : boundary.entities )
-                  {
-                    candidateKeys.insert( entity.key );
-                  }
-                  for( auto const & entity : mesh.supports )
-                  {
-                    if( entity.participants.size() > 1 && entity.key.kind != EntityKind::cell && !candidateKeys.count( entity.key ) )
-                    {
-                      throw std::logic_error( "Boundary candidates omit a shared reference entity" );
-                    }
-                  }
-                  for( std::size_t i = 0; i < mesh.cells.size(); ++i )
-                  {
-                    auto const split = subdivideCell( mesh.cells[i], mesh.cellIds[i], *points );
-                    next.cells.insert( next.cells.end(), split.children.begin(), split.children.end() );
-                  }
-                  inherited = std::make_unique< SharingInheritance >( *points, mesh.supports, comm.rank() );
-                  std::vector< EntitySupport > shared;
-                  for( auto const & entity : mesh.supports )
-                  {
-                    if( entity.participants.size() > 1 && entity.key.kind != EntityKind::cell )
-                    {
-                      shared.push_back( entity );
-                    }
-                  }
-                  interfaces = std::make_unique< InterfaceSharing >( *points, std::move( shared ), comm.rank() );
-                  for( vtkIdType i = points->originalSize(); i < static_cast< vtkIdType >( points->points().size() ); ++i )
-                  {
-                    auto const & point = points->points()[i];
-                    if( interfaces->participants( { i } ) != inherited->participants( { i } ) )
-                    {
-                      throw std::logic_error( "Interface-only point sharing differs from complete incidence" );
-                    }
-                    creations.push_back( { point.key, inherited->participants( { i } ), point.position, {} } );
-                  }
-                } );
+  {
+    points = std::make_unique< PointRegistry >( mesh.coordinates, mesh.pointIds );
+    auto const boundary = coarseBoundary( mesh.cells, mesh.cellIds, mesh.pointIds, comm.rank() );
+    std::set< EntityKey > candidateKeys;
+    for( auto const & entity : boundary.entities )
+    {
+      candidateKeys.insert( entity.key );
+    }
+    for( auto const & entity : mesh.supports )
+    {
+      if( entity.participants.size() > 1 && entity.key.kind != EntityKind::cell && !candidateKeys.count( entity.key ) )
+      {
+        throw std::logic_error( "Boundary candidates omit a shared reference entity" );
+      }
+    }
+    for( std::size_t i = 0; i < mesh.cells.size(); ++i )
+    {
+      auto const split = subdivideCell( mesh.cells[i], mesh.cellIds[i], *points );
+      next.cells.insert( next.cells.end(), split.children.begin(), split.children.end() );
+    }
+    inherited = std::make_unique< SharingInheritance >( *points, mesh.supports, comm.rank() );
+    std::vector< EntitySupport > shared;
+    for( auto const & entity : mesh.supports )
+    {
+      if( entity.participants.size() > 1 && entity.key.kind != EntityKind::cell )
+      {
+        shared.push_back( entity );
+      }
+    }
+    interfaces = std::make_unique< InterfaceSharing >( *points, std::move( shared ), comm.rank() );
+    for( vtkIdType i = points->originalSize(); i < static_cast< vtkIdType >( points->points().size() ); ++i )
+    {
+      auto const & point = points->points()[i];
+      if( interfaces->participants( { i } ) != inherited->participants( { i } ) )
+      {
+        throw std::logic_error( "Interface-only point sharing differs from complete incidence" );
+      }
+      creations.push_back( { point.key, inherited->participants( { i } ), point.position, {} } );
+    }
+  } );
   vtkIdType const maximum = mesh.pointIds.empty() ? -1 : *std::max_element( mesh.pointIds.begin(), mesh.pointIds.end() );
   auto const records = comm.resolvePoints( generation, creations, maximum );
   auto const range = comm.allocateRange( next.cells.size(), 0 );
   comm.checked( "connected mesh construction",
                 [&]
-                {
-                  next.pointIds = mesh.pointIds;
-                  for( vtkIdType i = 0; i < static_cast< vtkIdType >( points->points().size() ); ++i )
-                  {
-                    auto const & point = points->points()[i];
-                    if( i < points->originalSize() )
-                    {
-                      next.coordinates.push_back( point.position );
-                    }
-                    else
-                    {
-                      auto const & record = records.at( point.key );
-                      next.coordinates.push_back( record.position );
-                      next.pointIds.push_back( record.globalId );
-                    }
-                  }
-                  for( std::size_t i = 0; i < next.cells.size(); ++i )
-                  {
-                    next.cellIds.push_back( range.first + i );
-                  }
-                  next.supports = incidence( next, comm.rank() );
-                  for( auto & entity : next.supports )
-                  {
-                    if( entity.key.kind != EntityKind::cell )
-                    {
-                      entity.participants = inherited->participants( entity.localCorners );
-                      if( interfaces->participants( entity.localCorners ) != entity.participants )
-                      {
-                        throw std::logic_error( "Interface-only entity sharing differs from complete incidence" );
-                      }
-                    }
-                  }
-                  auto const sparse = interfaces->fineSupports( next.pointIds );
-                  std::map< EntityKey, Participants > expected;
-                  for( auto const & entity : next.supports )
-                  {
-                    if( entity.participants.size() > 1 )
-                    {
-                      expected.emplace( entity.key, entity.participants );
-                    }
-                  }
-                  if( sparse.size() != expected.size() )
-                  {
-                    throw std::logic_error( "Interface-only fine incidence coverage mismatch" );
-                  }
-                  for( auto const & entity : sparse )
-                  {
-                    if( expected.at( entity.key ) != entity.participants )
-                    {
-                      throw std::logic_error( "Interface-only fine incidence participants mismatch" );
-                    }
-                  }
-                } );
+  {
+    next.pointIds = mesh.pointIds;
+    for( vtkIdType i = 0; i < static_cast< vtkIdType >( points->points().size() ); ++i )
+    {
+      auto const & point = points->points()[i];
+      if( i < points->originalSize() )
+      {
+        next.coordinates.push_back( point.position );
+      }
+      else
+      {
+        auto const & record = records.at( point.key );
+        next.coordinates.push_back( record.position );
+        next.pointIds.push_back( record.globalId );
+      }
+    }
+    for( std::size_t i = 0; i < next.cells.size(); ++i )
+    {
+      next.cellIds.push_back( range.first + i );
+    }
+    next.supports = incidence( next, comm.rank() );
+    for( auto & entity : next.supports )
+    {
+      if( entity.key.kind != EntityKind::cell )
+      {
+        entity.participants = inherited->participants( entity.localCorners );
+        if( interfaces->participants( entity.localCorners ) != entity.participants )
+        {
+          throw std::logic_error( "Interface-only entity sharing differs from complete incidence" );
+        }
+      }
+    }
+    auto const sparse = interfaces->fineSupports( next.pointIds );
+    std::map< EntityKey, Participants > expected;
+    for( auto const & entity : next.supports )
+    {
+      if( entity.participants.size() > 1 )
+      {
+        expected.emplace( entity.key, entity.participants );
+      }
+    }
+    if( sparse.size() != expected.size() )
+    {
+      throw std::logic_error( "Interface-only fine incidence coverage mismatch" );
+    }
+    for( auto const & entity : sparse )
+    {
+      if( expected.at( entity.key ) != entity.participants )
+      {
+        throw std::logic_error( "Interface-only fine incidence participants mismatch" );
+      }
+    }
+  } );
   mesh = std::move( next );
 }
 
@@ -424,7 +424,7 @@ TEST( VTKRefinementCommunication, AllMixedInterfacesConformAcrossRanksAtTwoLevel
   {
     using namespace testMeshes;
     std::vector< ReferenceCell > shapes =
-        arity == 3
+      arity == 3
             ? std::vector< ReferenceCell >{ referenceCell( VTK_TETRA, 0 ), referenceCell( VTK_WEDGE, 0 ), referenceCell( VTK_PYRAMID, 1 ) }
             : std::vector< ReferenceCell >{ referenceCell( VTK_HEXAHEDRON, 0 ), referenceCell( VTK_WEDGE, 2 ),
                                             referenceCell( VTK_PYRAMID, 0 ) };
@@ -618,10 +618,10 @@ TEST( VTKRefinementCommunication, DuplicateVolumeOwnersAreRejectedWithoutCellCen
   }
   EXPECT_THROW( comm.checked( "coarse volume ownership",
                               [&]
-                              {
-                                PointRegistry points( mesh.coordinates, mesh.pointIds );
-                                SharingInheritance inherited( points, mesh.supports, comm.rank() );
-                              } ),
+  {
+    PointRegistry points( mesh.coordinates, mesh.pointIds );
+    SharingInheritance inherited( points, mesh.supports, comm.rank() );
+  } ),
                 std::runtime_error );
 }
 
@@ -633,8 +633,8 @@ TEST( VTKRefinementCommunication, ExistingVerticesKeepIdsAndValidateCoordinates 
   EntityKey const auxiliaryVertex = entityKey( EntityKind::vertex, { large }, 1 );
   auto const sharing = comm.discoverSharing( { mainVertex, auxiliaryVertex } );
   std::vector< PointCreation > originals{
-      { mainVertex, sharing.at( mainVertex ), { 0, 0, 0 }, { static_cast< unsigned char >( comm.rank() ) } },
-      { auxiliaryVertex, sharing.at( auxiliaryVertex ), { 1, 0, 0 }, { static_cast< unsigned char >( comm.rank() + 9 ) } } };
+    { mainVertex, sharing.at( mainVertex ), { 0, 0, 0 }, { static_cast< unsigned char >( comm.rank() ) } },
+    { auxiliaryVertex, sharing.at( auxiliaryVertex ), { 1, 0, 0 }, { static_cast< unsigned char >( comm.rank() + 9 ) } } };
   auto const records = comm.reconcileExistingPoints( originals );
   EXPECT_EQ( records.at( mainVertex ).globalId, large );
   EXPECT_EQ( records.at( auxiliaryVertex ).globalId, large );
@@ -660,15 +660,18 @@ TEST( VTKRefinementCommunication, ExistingVerticesKeepIdsAndValidateCoordinates 
     originals.pop_back();
   }
   EXPECT_NO_THROW( comm.reconcileExistingPoints( originals ) );
-  for( auto & point : originals ) point.supportScale = 0;
+  for( auto & point : originals )
+    point.supportScale = 0;
   EXPECT_NO_THROW( comm.reconcileExistingPoints( originals ) );
   if( comm.size() > 1 )
   {
-    if( comm.rank() == comm.size() - 1 ) originals[0].position[0] = 1e-15;
+    if( comm.rank() == comm.size() - 1 )
+      originals[0].position[0] = 1e-15;
     EXPECT_THROW( comm.reconcileExistingPoints( originals ), std::runtime_error );
     originals[0].position[0] = 0;
   }
-  if( comm.rank() == comm.size() - 1 ) originals[0].supportScale = -1;
+  if( comm.rank() == comm.size() - 1 )
+    originals[0].supportScale = -1;
   EXPECT_THROW( comm.reconcileExistingPoints( originals ), std::runtime_error );
 }
 
@@ -703,11 +706,11 @@ TEST( VTKRefinementCommunication, SharedTypedFieldsComeFromTheAllocator )
   std::vector< PointCreation > creations;
   comm.checked( "typed point-field planning",
                 [&]
-                {
-                  transferred = transferPointData( *input, points, {} );
-                  fields = std::make_unique< PointFieldLayout >( *transferred );
-                  creations = { { edge, sharing.at( edge ), points.position( midpoint ), fields->pack( midpoint ) } };
-                } );
+  {
+    transferred = transferPointData( *input, points, {} );
+    fields = std::make_unique< PointFieldLayout >( *transferred );
+    creations = { { edge, sharing.at( edge ), points.position( midpoint ), fields->pack( midpoint ) } };
+  } );
   auto const result = comm.resolvePoints( 1, creations, 81 );
   comm.checked( "typed point-field installation", [&] { fields->install( midpoint, result.at( edge ).fields ); } );
   EXPECT_EQ( vtkTypeInt64Array::SafeDownCast( transferred->GetArray( "label" ) )->GetValue( midpoint ), large );
@@ -745,10 +748,10 @@ TEST( VTKRefinementCommunication, DirectoryAndPointIdsUseFullKeys )
   EXPECT_EQ( sharing.at( contactSide ), ranks );
   vtkIdType const oldMaximum = sizeof( vtkIdType ) == 8 ? static_cast< vtkIdType >( UINT64_C( 9007199254741091 ) ) : 1000;
   std::vector< PointCreation > points{
-      { edge, ranks, { .5, 0, 0 }, { static_cast< unsigned char >( comm.rank() ) } },
-      { face, ranks, { .5, .5, 0 }, {} },
-      { contactSide, ranks, { .5, 0, 0 }, {} },
-      { { 0, EntityKind::cell, { static_cast< vtkIdType >( 100 + comm.rank() ) } }, { comm.rank() }, { .5, .5, .5 }, {} } };
+    { edge, ranks, { .5, 0, 0 }, { static_cast< unsigned char >( comm.rank() ) } },
+    { face, ranks, { .5, .5, 0 }, {} },
+    { contactSide, ranks, { .5, 0, 0 }, {} },
+    { { 0, EntityKind::cell, { static_cast< vtkIdType >( 100 + comm.rank() ) } }, { comm.rank() }, { .5, .5, .5 }, {} } };
   auto const resolved = comm.resolvePoints( 1, points, oldMaximum );
   ASSERT_EQ( resolved.size(), 4 );
   EXPECT_NE( resolved.at( edge ).globalId, resolved.at( contactSide ).globalId );
@@ -842,7 +845,7 @@ TEST( VTKRefinementCommunication, ReplicatedSurfaceChildrenUseFullIdentitiesAndD
   Communication comm( MPI_COMM_GEOS, 19 );
   vtkIdType const parent = sizeof( vtkIdType ) == 8 ? static_cast< vtkIdType >( UINT64_C( 9007199254741019 ) ) : 10001;
   auto const sharing =
-      comm.discoverSharing( { entityKey( EntityKind::cell, { parent }, 1 ), entityKey( EntityKind::cell, { parent }, 2 ) } );
+    comm.discoverSharing( { entityKey( EntityKind::cell, { parent }, 1 ), entityKey( EntityKind::cell, { parent }, 2 ) } );
   auto const ranks = sharing.at( entityKey( EntityKind::cell, { parent }, 1 ) );
   auto existing = comm.reconcileExistingCells( { { { 1, parent, 204, 0 }, ranks, { static_cast< unsigned char >( comm.rank() ) } },
                                                  { { 2, parent, 204, 0 }, ranks, { static_cast< unsigned char >( comm.rank() ) } } } );
@@ -934,12 +937,12 @@ TEST( VTKRefinementCommunication, OneRankValidationFailureDoesNotHang )
   Communication comm( MPI_COMM_GEOS );
   EXPECT_THROW( comm.checked( "one-rank fixture",
                               [&]
-                              {
-                                if( comm.rank() == comm.size() - 1 )
-                                {
-                                  throw std::invalid_argument( "bad parent 987" );
-                                }
-                              } ),
+  {
+    if( comm.rank() == comm.size() - 1 )
+    {
+      throw std::invalid_argument( "bad parent 987" );
+    }
+  } ),
                 std::runtime_error );
   std::vector< EntityKey > entities{ vertex };
   if( comm.rank() == comm.size() - 1 )
@@ -1213,7 +1216,8 @@ TEST( VTKRefinementCommunication, CoarseQuadAgainstTrianglesIsRejectedAcrossRank
 {
   Communication comm( MPI_COMM_GEOS, 5 );
   std::vector< MainFace > faces;
-  if( comm.rank() == 0 ) faces.push_back( { { 71, 81, 91, 101 }, { 0 } } );
+  if( comm.rank() == 0 )
+    faces.push_back( { { 71, 81, 91, 101 }, { 0 } } );
   int const other = comm.size() == 1 ? 0 : 1;
   if( comm.rank() == other )
   {
@@ -1223,14 +1227,16 @@ TEST( VTKRefinementCommunication, CoarseQuadAgainstTrianglesIsRejectedAcrossRank
   EXPECT_THROW( comm.validateVolumeFaces( faces ), std::runtime_error );
   // A triangle can meet the quad along a true edge without covering its face.
   faces.clear();
-  if( comm.rank() == 0 ) faces.push_back( { { 71, 81, 91, 101 }, { 0 } } );
-  if( comm.rank() == other ) faces.push_back( { { 71, 81, 201 }, { other } } );
+  if( comm.rank() == 0 )
+    faces.push_back( { { 71, 81, 91, 101 }, { 0 } } );
+  if( comm.rank() == other )
+    faces.push_back( { { 71, 81, 201 }, { other } } );
   EXPECT_NO_THROW( comm.validateVolumeFaces( faces ) );
   EXPECT_TRUE( comm.neighbors().empty() );
   EXPECT_EQ( comm.statistics().directoryExchanges, 2 );
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   MpiWrapper::init( &argc, &argv );
   MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );

@@ -31,6 +31,9 @@
 namespace geos::vtk::refinement
 {
 
+// Internal implementation of geos::vtk::refineUniformly.
+/// @cond DO_NOT_DOCUMENT
+
 using Coordinates = std::array< double, 3 >;
 using Connectivity = std::vector< vtkIdType >;
 
@@ -99,6 +102,12 @@ public:
   vtkIdType cell( vtkIdType globalCellId, Connectivity const & corners );
   /** Lookup an already planned point without extending the registry. */
   vtkIdType pointForKey( EntityKey const & key ) const;
+  /** Lookup an already planned point, or -1 when the entity has no point. */
+  vtkIdType findPoint( EntityKey const & key ) const;
+  /** Planned point of the edge between two local points, or -1. */
+  vtkIdType findEdge( vtkIdType a, vtkIdType b ) const;
+  /** Planned point of the face with these local corners, or -1. */
+  vtkIdType findFace( Connectivity const & corners ) const;
   Coordinates const & position( vtkIdType point ) const { return m_points.at( point ).position; }
   std::vector< PointRecipe > const & points() const { return m_points; }
   vtkIdType originalSize() const { return m_globalIds.size(); }
@@ -129,6 +138,8 @@ private:
   std::vector< EntitySupport > m_entities;
   std::vector< std::vector< std::size_t > > m_incident;
 };
+
+/// @endcond
 
 } // namespace geos::vtk::refinement
 #endif

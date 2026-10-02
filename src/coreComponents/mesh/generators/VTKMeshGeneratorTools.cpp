@@ -48,7 +48,8 @@ appendMeshParts( stdVector< vtkUnstructuredGrid * > const & meshes )
   stdVector< vtkSmartPointer< vtkUnstructuredGrid > > inputs;
   for( auto * mesh : meshes )
   {
-    if( !mesh ) continue;
+    if( !mesh )
+      continue;
     vtkSmartPointer< vtkUnstructuredGrid > input = mesh;
 #if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
     input = vtkSmartPointer< vtkUnstructuredGrid >::New();
@@ -56,15 +57,17 @@ appendMeshParts( stdVector< vtkUnstructuredGrid * > const & meshes )
     // DIY deserialization can change an ID array's concrete class. VTK's
     // append filter recognizes only vtkIdTypeArray for topological merging.
     for( vtkDataSetAttributes * attributes : { static_cast< vtkDataSetAttributes * >( input->GetPointData() ),
-                                             static_cast< vtkDataSetAttributes * >( input->GetCellData() ) } )
+                                               static_cast< vtkDataSetAttributes * >( input->GetCellData() ) } )
     {
       auto * original = attributes->GetGlobalIds();
-      if( !original || vtkIdTypeArray::SafeDownCast( original ) ) continue;
+      if( !original || vtkIdTypeArray::SafeDownCast( original ) )
+        continue;
       auto ids = vtkSmartPointer< vtkIdTypeArray >::New();
       ids->SetName( original->GetName() );
       ids->SetComponentName( 0, original->GetComponentName( 0 ) );
       ids->SetNumberOfValues( original->GetNumberOfTuples() );
-      for( vtkIdType i = 0; i < original->GetNumberOfTuples(); ++i ) ids->SetValue( i, original->GetVariantValue( i ).ToLongLong() );
+      for( vtkIdType i = 0; i < original->GetNumberOfTuples(); ++i )
+        ids->SetValue( i, original->GetVariantValue( i ).ToLongLong() );
       attributes->SetGlobalIds( ids );
     }
 #endif
@@ -72,14 +75,16 @@ appendMeshParts( stdVector< vtkUnstructuredGrid * > const & meshes )
   }
   vtkNew< vtkAppendFilter > appender;
   appender->MergePointsOn();
-  for( auto const & input : inputs ) appender->AddInputDataObject( input );
+  for( auto const & input : inputs )
+    appender->AddInputDataObject( input );
   appender->Update();
   vtkSmartPointer< vtkUnstructuredGrid > result = appender->GetOutput();
 #if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
   // A single nonempty grid is shallow-copied by VTK without tuple conversion.
   // Keep that path free of additional ID maps and writes to shared arrays.
   if( std::count_if( inputs.begin(), inputs.end(), []( auto const & input )
-      { return input->GetNumberOfPoints() > 0 || input->GetNumberOfCells() > 0; } ) <= 1 ) return result;
+  { return input->GetNumberOfPoints() > 0 || input->GetNumberOfCells() > 0; } ) <= 1 )
+    return result;
   // VTK 9.7's CopyTuple fallback copies vtkIdTypeArray through double when
   // appending multiple inputs. Recopy these arrays with typed access, using
   // the filter's first-occurrence point order and concatenated cell order.
@@ -91,20 +96,23 @@ appendMeshParts( stdVector< vtkUnstructuredGrid * > const & meshes )
     for( auto const & input : inputs )
     {
       auto * ids = vtkIdTypeArray::SafeDownCast( input->GetPointData()->GetGlobalIds() );
-      for( vtkIdType p = 0; p < input->GetNumberOfPoints(); ++p ) pointIndices.emplace( ids->GetValue( p ), pointIndices.size() );
+      for( vtkIdType p = 0; p < input->GetNumberOfPoints(); ++p )
+        pointIndices.emplace( ids->GetValue( p ), pointIndices.size() );
     }
     if( pointIndices.size() != static_cast< std::size_t >( result->GetNumberOfPoints() ) )
       throw std::runtime_error( "VTK append did not preserve the expected global-ID point topology" );
   }
   for( bool const points : { true, false } )
   {
-    if( points && !allPointIds ) continue;
+    if( points && !allPointIds )
+      continue;
     vtkDataSetAttributes * output = points ? static_cast< vtkDataSetAttributes * >( result->GetPointData() )
                                           : static_cast< vtkDataSetAttributes * >( result->GetCellData() );
     for( int a = 0; a < output->GetNumberOfArrays(); ++a )
     {
       auto * target = vtkIdTypeArray::SafeDownCast( output->GetAbstractArray( a ) );
-      if( !target ) continue;
+      if( !target )
+        continue;
       vtkIdType offset = 0;
       for( auto const & input : inputs )
       {
@@ -119,7 +127,8 @@ appendMeshParts( stdVector< vtkUnstructuredGrid * > const & meshes )
           for( vtkIdType i = 0; i < count; ++i )
           {
             vtkIdType const destination = points ? pointIndices.at( ids->GetValue( i ) ) : offset + i;
-            for( int c = 0; c < target->GetNumberOfComponents(); ++c ) target->SetTypedComponent( destination, c, array->GetTypedComponent( i, c ) );
+            for( int c = 0; c < target->GetNumberOfComponents(); ++c )
+              target->SetTypedComponent( destination, c, array->GetTypedComponent( i, c ) );
           }
         }
         offset += count;
@@ -380,7 +389,8 @@ redistribute( vtkPartitionedDataSet & localParts, MPI_Comm mpiComm )
   static_cast< void >( mpiComm );
   assert( localParts.GetNumberOfPartitions() == 1 );
   auto result = vtkSmartPointer< vtkUnstructuredGrid >::New();
-  if( auto * part = vtkUnstructuredGrid::SafeDownCast( localParts.GetPartition( 0 ) ) ) result->ShallowCopy( part );
+  if( auto * part = vtkUnstructuredGrid::SafeDownCast( localParts.GetPartition( 0 ) ) )
+    result->ShallowCopy( part );
   return result;
 }
 

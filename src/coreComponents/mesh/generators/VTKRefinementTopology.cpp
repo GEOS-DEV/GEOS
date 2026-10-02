@@ -108,7 +108,7 @@ EntityKey entityKey( EntityKind kind, Connectivity corners, std::uint64_t meshNa
 }
 
 PointRegistry::PointRegistry( std::vector< Coordinates > coordinates, Connectivity globalIds, std::uint64_t meshNamespace )
-    : m_namespace( meshNamespace ), m_globalIds( std::move( globalIds ) )
+  : m_namespace( meshNamespace ), m_globalIds( std::move( globalIds ) )
 {
   if( coordinates.size() != m_globalIds.size() )
     throw std::invalid_argument( "Refinement coordinates/global ID tuple counts differ" );
@@ -196,8 +196,29 @@ vtkIdType PointRegistry::pointForKey( EntityKey const & key ) const
   return found->second;
 }
 
+vtkIdType PointRegistry::findPoint( EntityKey const & key ) const
+{
+  auto const found = m_indices.find( key );
+  return found == m_indices.end() ? -1 : found->second;
+}
+
+vtkIdType PointRegistry::findEdge( vtkIdType a, vtkIdType b ) const
+{
+  Connectivity ids{ m_globalIds.at( a ), m_globalIds.at( b ) };
+  std::sort( ids.begin(), ids.end() );
+  return findPoint( { m_namespace, EntityKind::edge, std::move( ids ) } );
+}
+
+vtkIdType PointRegistry::findFace( Connectivity const & corners ) const
+{
+  Connectivity ids;
+  for( vtkIdType corner : corners )
+    ids.push_back( m_globalIds.at( corner ) );
+  return findPoint( { m_namespace, EntityKind::face, canonicalCycle( ids ) } );
+}
+
 SharingInheritance::SharingInheritance( PointRegistry const & points, std::vector< EntitySupport > entities, int localRank )
-    : m_entities( std::move( entities ) ), m_incident( points.originalSize() )
+  : m_entities( std::move( entities ) ), m_incident( points.originalSize() )
 {
   if( localRank < 0 )
     throw std::invalid_argument( "Negative refinement participant rank" );

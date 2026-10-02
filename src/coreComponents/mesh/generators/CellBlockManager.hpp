@@ -164,6 +164,10 @@ public:
   SourceCellBlockDescendants const & getSourceCellBlockDescendants() const override
   { return m_sourceCellBlockDescendants; }
 
+  /**
+   * @brief Record which refined cell blocks descend from each coarse cell block.
+   * @param descendants For each coarse cell block name, the names of its refined cell blocks.
+   */
   void setSourceCellBlockDescendants( SourceCellBlockDescendants const & descendants )
   { m_sourceCellBlockDescendants = descendants; }
 

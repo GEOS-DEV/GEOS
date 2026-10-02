@@ -299,7 +299,13 @@ void writeCells( integer const logLevel,
                  string const & structuredIndexAttributeName,
                  CellBlockManager & cellBlockManager );
 
-/** Write source-separated refinement blocks and persistent cell lineage. */
+/**
+ * @brief Write source-separated refinement blocks and persistent cell lineage.
+ * @param[in] logLevel the log level
+ * @param[in] mesh The refined mesh
+ * @param[in] blocks The refined cell blocks
+ * @param[in] cellBlockManager The instance that stores the cell blocks.
+ */
 void writeRefinedCells( integer logLevel, vtkDataSet & mesh,
                         std::vector< vtk::RefinementBlockDescriptor > const & blocks,
                         CellBlockManager & cellBlockManager );

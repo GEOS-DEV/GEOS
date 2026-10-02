@@ -56,6 +56,7 @@
 #include <conduit.hpp>
 
 #include <filesystem>
+#include <set>
 #include <chrono>
 #include <fstream>
 #include <stdexcept>
@@ -168,8 +169,10 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   string const useGlobalIdsStr = fractureName.empty() ? "0" : "1";
 
   string options;
-  if( !scatterMethod.empty() ) options += GEOS_FMT( " scatterMethod=\"{}\"", scatterMethod );
-  if( !uniformRefinement.empty() ) options += GEOS_FMT( " uniformRefinement=\"{}\"", uniformRefinement );
+  if( !scatterMethod.empty() )
+    options += GEOS_FMT( " scatterMethod=\"{}\"", scatterMethod );
+  if( !uniformRefinement.empty() )
+    options += GEOS_FMT( " uniformRefinement=\"{}\"", uniformRefinement );
 
   string const pattern = R"xml(
     <Mesh>
@@ -507,7 +510,7 @@ TEST_F( TestFractureImport, fracture )
 
 TEST( VTKImport, appendPreservesWideIdsAndCollocation )
 {
-  vtkIdType const base = sizeof( vtkIdType ) == 8 ? INT64_C(9007199254741001) : 10001;
+  vtkIdType const base = sizeof( vtkIdType ) == 8 ? INT64_C( 9007199254741001 ) : 10001;
   for( bool const shared : { false, true } )
   {
     stdVector< vtkSmartPointer< vtkUnstructuredGrid > > inputs;
@@ -516,11 +519,12 @@ TEST( VTKImport, appendPreservesWideIdsAndCollocation )
       auto grid = vtkSmartPointer< vtkUnstructuredGrid >::New();
       vtkNew< vtkPoints > points;
       points->SetDataTypeToDouble();
-      real64 const coordinates[8][3] = { {0,0,0}, {1,0,0}, {1,1,0}, {0,1,0},
-                                       {0,0,1}, {1,0,1}, {1,1,1}, {0,1,1} };
-      for( auto const & point : coordinates ) points->InsertNextPoint( point );
+      real64 const coordinates[8][3] = { {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
+        {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1} };
+      for( auto const & point : coordinates )
+        points->InsertNextPoint( point );
       grid->SetPoints( points );
-      vtkIdType const corners[8] = {0,1,2,3,4,5,6,7};
+      vtkIdType const corners[8] = {0, 1, 2, 3, 4, 5, 6, 7};
       grid->InsertNextCell( VTK_HEXAHEDRON, 8, corners );
       vtkNew< vtkIdTypeArray > pointIds, cellIds, collocation;
       pointIds->SetName( "pointIds" );
@@ -532,7 +536,8 @@ TEST( VTKImport, appendPreservesWideIdsAndCollocation )
       {
         vtkIdType const id = base + ( part == 0 || ( shared && p < 4 ) ? p : 8 + p );
         pointIds->InsertNextValue( id );
-        for( int c = 0; c < 3; ++c ) collocation->SetTypedComponent( p, c, id + 100 + c );
+        for( int c = 0; c < 3; ++c )
+          collocation->SetTypedComponent( p, c, id + 100 + c );
       }
       cellIds->InsertNextValue( base + 1000 + part );
       grid->GetPointData()->SetGlobalIds( pointIds );
@@ -553,7 +558,8 @@ TEST( VTKImport, appendPreservesWideIdsAndCollocation )
     for( vtkIdType p = 0; p < merged->GetNumberOfPoints(); ++p )
     {
       EXPECT_TRUE( unique.insert( pointIds->GetValue( p ) ).second );
-      for( int c = 0; c < 3; ++c ) EXPECT_EQ( collocation->GetTypedComponent( p, c ), pointIds->GetValue( p ) + 100 + c );
+      for( int c = 0; c < 3; ++c )
+        EXPECT_EQ( collocation->GetTypedComponent( p, c ), pointIds->GetValue( p ) + 100 + c );
     }
     for( int part = 0; part < 2; ++part )
     {
@@ -997,22 +1003,26 @@ TEST( VTKImport, parallelFileWithFewerPiecesThanRanks )
       LvArray::system::FloatingPointExceptionGuard guard;
       auto const stamp = std::chrono::steady_clock::now().time_since_epoch().count();
       fs::path const folder = fs::temp_directory_path() / ( "tmp-geos-pvtu-" + std::to_string( stamp ) );
-      if( !fs::create_directory( folder ) ) throw std::runtime_error( "PVTU test folder already exists" );
+      if( !fs::create_directory( folder ) )
+        throw std::runtime_error( "PVTU test folder already exists" );
       folderName = folder.string();
       vtkNew< vtkDataSetReader > reader;
       reader->SetFileName( ( testMeshDir + "/cube.vtk" ).c_str() );
       reader->Update();
       auto * source = vtkUnstructuredGrid::SafeDownCast( reader->GetOutput() );
-      if( source == nullptr ) throw std::runtime_error( "Missing cube fixture" );
+      if( source == nullptr )
+        throw std::runtime_error( "Missing cube fixture" );
       vtkNew< vtkIdList > volumeIds;
       for( vtkIdType c = 0; c < source->GetNumberOfCells(); ++c )
-        if( source->GetCellType( c ) == VTK_HEXAHEDRON ) volumeIds->InsertNextId( c );
+        if( source->GetCellType( c ) == VTK_HEXAHEDRON )
+          volumeIds->InsertNextId( c );
       vtkNew< vtkExtractCells > volume;
       volume->SetInputData( source );
       volume->SetCellList( volumeIds );
       volume->Update();
       auto * grid = volume->GetOutput();
-      if( grid->GetNumberOfCells() != 27 ) throw std::runtime_error( "Expected 27 volume cells in cube fixture" );
+      if( grid->GetNumberOfCells() != 27 )
+        throw std::runtime_error( "Expected 27 volume cells in cube fixture" );
       grid->GetCellData()->Initialize();
       grid->GetPointData()->Initialize();
       grid->GetFieldData()->Initialize();
@@ -1024,7 +1034,8 @@ TEST( VTKImport, parallelFileWithFewerPiecesThanRanks )
       for( int piece = 0; piece < 2; ++piece )
       {
         vtkNew< vtkIdList > ids;
-        for( vtkIdType cell = piece == 0 ? 0 : 13; cell < ( piece == 0 ? 13 : 27 ); ++cell ) ids->InsertNextId( cell );
+        for( vtkIdType cell = piece == 0 ? 0 : 13; cell < ( piece == 0 ? 13 : 27 ); ++cell )
+          ids->InsertNextId( cell );
         vtkNew< vtkExtractCells > extract;
         extract->SetInputData( grid );
         extract->SetCellList( ids );
@@ -1032,10 +1043,11 @@ TEST( VTKImport, parallelFileWithFewerPiecesThanRanks )
         vtkNew< vtkXMLUnstructuredGridWriter > writer;
         writer->SetFileName( ( folder / ( "piece" + std::to_string( piece ) + ".vtu" ) ).c_str() );
         writer->SetInputData( extract->GetOutput() );
-        if( writer->Write() != 1 ) throw std::runtime_error( "Could not write PVTU test piece" );
+        if( writer->Write() != 1 )
+          throw std::runtime_error( "Could not write PVTU test piece" );
       }
-      std::ofstream summary( folder / "mesh.pvtu" );
-      summary << R"xml(<?xml version="1.0"?>
+      char const * const pvtu =
+        R"xml(<?xml version="1.0"?>
   <VTKFile type="PUnstructuredGrid" version="1.0" byte_order="LittleEndian">
     <PUnstructuredGrid GhostLevel="0">
       <PPointData/>
@@ -1045,7 +1057,10 @@ TEST( VTKImport, parallelFileWithFewerPiecesThanRanks )
     </PUnstructuredGrid>
   </VTKFile>
   )xml";
-      if( !summary.good() ) throw std::runtime_error( "Could not write PVTU summary" );
+      std::ofstream summary( folder / "mesh.pvtu" );
+      summary << pvtu;
+      if( !summary.good() )
+        throw std::runtime_error( "Could not write PVTU summary" );
     }
     catch( std::exception const & error )
     {
@@ -1076,10 +1091,121 @@ TEST( VTKImport, parallelFileWithFewerPiecesThanRanks )
   }
 }
 
+TEST( VTKImport, parallelFileWithSurfacesInAnotherPiece )
+{
+  // The second piece holds every surface quad, while half of their volume
+  // neighbors are in the first piece. Before the fix, only rank 0's surfaces
+  // were kept; the quads must now reach the rank of one of their neighbors.
+  if( MpiWrapper::commSize() <= 2 )
+  {
+    GTEST_SKIP() << "Two input pieces require at least four ranks for this regression";
+  }
+  namespace fs = std::filesystem;
+  string folderName;
+  string fixtureError;
+  if( MpiWrapper::commRank() == 0 )
+  {
+    try
+    {
+      LvArray::system::FloatingPointExceptionGuard guard;
+      auto const stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+      fs::path const folder = fs::temp_directory_path() / ( "tmp-geos-pvtu-surfaces-" + std::to_string( stamp ) );
+      if( !fs::create_directory( folder ) )
+        throw std::runtime_error( "PVTU test folder already exists" );
+      folderName = folder.string();
+      vtkNew< vtkDataSetReader > reader;
+      reader->SetFileName( ( testMeshDir + "/cube.vtk" ).c_str() );
+      reader->Update();
+      auto * source = vtkUnstructuredGrid::SafeDownCast( reader->GetOutput() );
+      if( source == nullptr )
+        throw std::runtime_error( "Missing cube fixture" );
+      vtkNew< vtkIdList > pieces[2];
+      vtkIdType hexahedra = 0;
+      for( vtkIdType c = 0; c < source->GetNumberOfCells(); ++c )
+      {
+        if( source->GetCellType( c ) == VTK_HEXAHEDRON )
+          pieces[hexahedra++ < 13 ? 0 : 1]->InsertNextId( c );
+        else if( source->GetCellType( c ) == VTK_QUAD )
+          pieces[1]->InsertNextId( c );
+      }
+      for( int piece = 0; piece < 2; ++piece )
+      {
+        vtkNew< vtkExtractCells > extract;
+        extract->SetInputData( source );
+        extract->SetCellList( pieces[piece] );
+        extract->Update();
+        auto * output = extract->GetOutput();
+        output->GetCellData()->RemoveArray( "vtkOriginalCellIds" );
+        output->GetPointData()->RemoveArray( "vtkOriginalPointIds" );
+        vtkNew< vtkXMLUnstructuredGridWriter > writer;
+        writer->SetFileName( ( folder / ( "piece" + std::to_string( piece ) + ".vtu" ) ).c_str() );
+        writer->SetInputData( output );
+        if( writer->Write() != 1 )
+          throw std::runtime_error( "Could not write PVTU test piece" );
+      }
+      char const * const pvtu =
+        R"xml(<?xml version="1.0"?>
+  <VTKFile type="PUnstructuredGrid" version="1.0" byte_order="LittleEndian">
+    <PUnstructuredGrid GhostLevel="0">
+      <PPointData/>
+      <PCellData Scalars="attribute"><PDataArray type="Int32" Name="attribute"/></PCellData>
+      <PPoints><PDataArray type="Float32" NumberOfComponents="3"/></PPoints>
+      <Piece Source="piece0.vtu"/><Piece Source="piece1.vtu"/>
+    </PUnstructuredGrid>
+  </VTKFile>
+  )xml";
+      std::ofstream summary( folder / "mesh.pvtu" );
+      summary << pvtu;
+      if( !summary.good() )
+        throw std::runtime_error( "Could not write PVTU summary" );
+    }
+    catch( std::exception const & error )
+    {
+      fixtureError = error.what();
+    }
+  }
+  MpiWrapper::broadcast( fixtureError );
+  ASSERT_TRUE( fixtureError.empty() ) << fixtureError;
+  MpiWrapper::broadcast( folderName );
+  auto const validate = []( CellBlockManagerABC const & manager )
+  {
+    localIndex count = 0;
+    manager.getCellBlocks().forSubGroups< CellBlockABC >( [&]( CellBlockABC const & block ) { count += block.numElements(); } );
+    EXPECT_EQ( MpiWrapper::sum( count ), 27 );
+    // Same node sets as the serial cube test: 55 nodes in "2" and 4 nodes in "9".
+    auto const localToGlobal = manager.getNodeLocalToGlobal();
+    for( auto const & [name, expected] : std::array< std::pair< string, localIndex >, 2 >{ { { "2", 55 }, { "9", 4 } } } )
+    {
+      array1d< globalIndex > local;
+      auto const found = manager.getNodeSets().find( name );
+      if( found != manager.getNodeSets().end() )
+        for( localIndex const node : found->second )
+          local.emplace_back( localToGlobal[node] );
+      array1d< globalIndex > all;
+      MpiWrapper::allGatherv( local.toViewConst(), all );
+      std::set< globalIndex > const unique( all.begin(), all.end() );
+      EXPECT_EQ( static_cast< localIndex >( unique.size() ), expected ) << "node set " << name;
+    }
+  };
+  for( string const scatterMethod : { "", "rcb", "contiguous" } )
+  {
+    SCOPED_TRACE( scatterMethod.empty() ? "kdtree" : scatterMethod );
+    TestMeshImport( ( fs::path( folderName ) / "mesh.pvtu" ).string(), validate, "", 1, scatterMethod );
+  }
+  MpiWrapper::barrier();
+  if( MpiWrapper::commRank() == 0 )
+  {
+    EXPECT_TRUE( fs::remove( fs::path( folderName ) / "piece0.vtu" ) );
+    EXPECT_TRUE( fs::remove( fs::path( folderName ) / "piece1.vtu" ) );
+    EXPECT_TRUE( fs::remove( fs::path( folderName ) / "mesh.pvtu" ) );
+    EXPECT_TRUE( fs::remove( folderName ) );
+  }
+}
+
 class TestInt64FractureImport : public TestFractureImport
 {
 protected:
-  globalIndex globalIdBase() const override { return INT64_C(9007199254741001); }
+  globalIndex globalIdBase() const override { return INT64_C( 9007199254741001 ); }
   bool includeSurfaceMarker() const override { return true; }
 };
 
@@ -1091,7 +1217,8 @@ TEST_F( TestInt64FractureImport, preservesExactIdsAndFractureBuckets )
     localIndex cells = 0;
     manager.getCellBlocks().forSubGroups< CellBlockABC >( [&]( CellBlockABC const & block )
     {
-      if( getElementDim( block.getElementType() ) != 3 ) return;
+      if( getElementDim( block.getElementType() ) != 3 )
+        return;
       cells += block.numElements();
       for( globalIndex id : block.localToGlobalMap() )
       {
@@ -1161,7 +1288,8 @@ TEST_F( TestFractureImport, uniformRefinementFractureRelations )
     EXPECT_EQ( MpiWrapper::sum( fracture.num2dElements() ), 4 );
     auto const buckets = fracture.get2dElemsToCollocatedNodesBuckets();
     for( localIndex cell = 0; cell < buckets.size(); ++cell )
-      for( localIndex point = 0; point < buckets[cell].size(); ++point ) EXPECT_EQ( buckets[cell][point].size(), 2 );
+      for( localIndex point = 0; point < buckets[cell].size(); ++point )
+        EXPECT_EQ( buckets[cell][point].size(), 2 );
   };
   TestMeshImport( m_vtkFile, validate, "fracture", 0, "rcb", "1" );
 }
