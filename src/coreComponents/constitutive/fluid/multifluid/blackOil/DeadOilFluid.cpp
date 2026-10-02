@@ -33,6 +33,46 @@ DeadOilFluid::DeadOilFluid( string const & name,
   BlackOilFluidBase( name, parent )
 {}
 
+void DeadOilFluid::validateHydrostaticCapillaryTables( real64 pressure ) const
+{
+  auto validate = [&]( TableFunction const & table, bool formationVolumeFactor )
+  {
+    auto const coordinates = table.getCoordinates();
+    auto const values = table.getValues();
+    GEOS_THROW_IF( coordinates.size() != 1 || values.size() < 2 ||
+                   (coordinates.size() == 1 && coordinates[0].size() != values.size()) ||
+                   table.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+                   "Self-consistent hydrostatic PVT requires one-dimensional linear tables", InputError, getDataContext() );
+    auto const p = coordinates[0];
+    GEOS_THROW_IF( !std::isfinite( pressure ) || pressure < p[0] || pressure > p[p.size()-1],
+                   "Self-consistent hydrostatic primary pressure is outside the PVT table range", InputError, table.getDataContext() );
+    for( localIndex i = 1; i < values.size(); ++i )
+    {
+      GEOS_THROW_IF( !std::isfinite( p[i-1] ) || !std::isfinite( p[i] ) || p[i-1] < 0.0 || p[i] <= p[i-1],
+                     "Self-consistent hydrostatic PVT requires finite increasing non-negative pressure coordinates", InputError, table.getDataContext() );
+      // Conservatively validate every bulk interval, so a coarse hydrostatic
+      // step cannot jump across an invalid unsampled segment. Only the special
+      // first surface-condition interval may be exempt while unused.
+      if( i == 1 && pressure > p[1] ) continue;
+      GEOS_THROW_IF( !std::isfinite( values[i-1] ) || !std::isfinite( values[i] ) || values[i-1] <= 0.0 || values[i] <= 0.0 ||
+                     (formationVolumeFactor && values[i] > values[i-1]),
+                     "Self-consistent hydrostatic PVT requires finite positive properties and nonincreasing formation-volume factors on bulk pressure intervals and any used surface interval", InputError, table.getDataContext() );
+    }
+  };
+  for( auto const * table : m_formationVolFactorTables ) validate( *table, true );
+  for( auto const * table : m_viscosityTables ) validate( *table, false );
+  for( real64 const value : m_surfacePhaseMassDensity )
+    GEOS_THROW_IF( !std::isfinite( value ) || value <= 0.0, "Invalid surface density for self-consistent hydrostatic equilibrium", InputError, getDataContext() );
+  if( m_phaseOrder[PhaseType::WATER] >= 0 )
+  {
+    GEOS_THROW_IF( !std::isfinite( m_waterParams.compressibility ) || m_waterParams.compressibility < 0.0 ||
+                   !std::isfinite( m_waterParams.referencePressure ) || m_waterParams.referencePressure < 0.0 ||
+                   !std::isfinite( m_waterParams.formationVolFactor ) || m_waterParams.formationVolFactor <= 0.0 ||
+                   !std::isfinite( m_waterParams.viscosity ) || m_waterParams.viscosity <= 0.0,
+                   "Invalid water PVT parameters for self-consistent hydrostatic equilibrium", InputError, getDataContext() );
+  }
+}
+
 void DeadOilFluid::postInputInitialization()
 {
   BlackOilFluidBase::postInputInitialization();

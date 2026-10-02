@@ -303,11 +303,14 @@ bool handleCapabilitiesCommand( int argc, char * argv[], int & exitCode )
             << "\"meshExportFormat\":\"vtm\",\"inputCatalogScope\":\"global\","
             << "\"gravity-aligned-hydrostatic-initialization\":true,\"hydrostaticInitializationVersion\":1,"
             << "\"native-set-hydrostatic-initialization\":true,"
+            << "\"self-consistent-capillary-initialization\":true,\"selfConsistentCapillaryInitializationVersion\":1,"
             << "\"hydrostaticInitialization\":{\"coordinateSystems\":[\"elevation\",\"gravityAligned\"],"
             << "\"defaultCoordinateSystem\":\"elevation\",\"gravityAlignedCoordinate\":\"-gravity.dot(position)/|gravity|\","
             << "\"zeroGravityCoordinate\":\"world-z\",\"solverFamilies\":[\"SinglePhaseBase\",\"CompositionalMultiphaseBase\"],"
             << "\"contactMeaning\":\"zero-capillary-pressure equipotential reference surface\","
-            << "\"gravityAlignedCapillaryFluidModels\":[\"InvariantImmiscibleFluid\"],\"capillaryInitialPhaseNameSupported\":false},"
+            << "\"gravityAlignedCapillaryFluidModels\":[\"InvariantImmiscibleFluid\",\"DeadOilFluid\"],"
+            << "\"gravityAlignedCapillaryModels\":[\"TableCapillaryPressure\"],\"historyDependentRelativePermeabilitySupported\":false,"
+            << "\"capillaryInitialPhaseNameSupported\":false,\"realizedStateValidation\":true},"
             << "\"arbitrary-plane-phase-initialization\":false,\"generated-set-phase-initialization\":false,"
             << "\"well-neighborhood-refinement\":false}\n";
   return true;

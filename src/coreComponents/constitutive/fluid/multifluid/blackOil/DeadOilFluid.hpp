@@ -38,6 +38,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  /// Validate authoritative PVT objects for the fixed-composition hydrostatic solve.
+  void validateHydrostaticCapillaryTables( real64 pressure ) const;
+
   static constexpr bool isThermalType(){ return false; }
 
   static constexpr integer min_n_components = 2;

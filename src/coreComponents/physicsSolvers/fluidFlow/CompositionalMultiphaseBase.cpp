@@ -51,6 +51,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/SelfConsistentCapillaryEquilibrium.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticMobility.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticStateValidation.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
@@ -1183,6 +1184,67 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                           globalMaxElevation,
                                           globalMinElevation );
 
+  std::set< string > coupledEquilibria;
+  // A common one-dimensional EOS/capillary equilibrium needs one constitutive
+  // tuple across the entire selected union, including MPI ranks. Per-subregion
+  // TableCapillaryPressure casts alone do not establish spatial uniformity.
+  if( m_hasCapPressure )
+  {
+    stdMap< string, std::set< string > > selectedTuples;
+    stdMap< string, integer > usesCoupledRoute;
+    for( auto const & entry : equilNameToEquilId )
+    {
+      selectedTuples[entry.first];
+      usesCoupledRoute[entry.first] = 0;
+    }
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regions )
+    {
+      fsManager.apply< ElementSubRegionBase, EquilibriumInitialCondition >( 0.0, mesh,
+        EquilibriumInitialCondition::catalogName(),
+        [&]( EquilibriumInitialCondition const & fs, string const &, SortedArrayView< localIndex const > const & targetSet,
+             ElementSubRegionBase & subRegion, string const & )
+      {
+        if( equilNameToEquilId.count( fs.getName() ) == 0 || targetSet.empty() ) return;
+        string const & region = subRegion.getParent().getParent().getName();
+        if( std::find( regions.begin(), regions.end(), region ) == regions.end() ) return;
+        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+        string const & capillaryName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        string const & relativePermeabilityName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+        string tuple;
+        for( string const * name : { &fluidName, &capillaryName, &relativePermeabilityName } )
+          tuple += std::to_string( name->size() ) + ":" + *name;
+        selectedTuples[fs.getName()].insert( tuple );
+        MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+        CapillaryPressureBase & capillary = getConstitutiveModel< CapillaryPressureBase >( subRegion, capillaryName );
+        if( fs.getInitPhaseName().empty() && dynamicCast< TableCapillaryPressure * >( &capillary ) != nullptr &&
+            (dynamicCast< DeadOilFluid * >( &fluid ) != nullptr || dynamicCast< InvariantImmiscibleFluid * >( &fluid ) != nullptr) )
+          usesCoupledRoute[fs.getName()] = 1;
+      } );
+    } );
+    for( auto const & entry : selectedTuples )
+    {
+      array1d< char > localNames, globalNames;
+      for( string const & tuple : entry.second )
+      {
+        for( char const c : tuple ) localNames.emplace_back( c );
+        localNames.emplace_back( '\0' );
+      }
+      MpiWrapper::allGatherv( localNames.toViewConst(), globalNames );
+      integer const coupled = MpiWrapper::max( usesCoupledRoute.at( entry.first ) );
+      if( coupled != 0 ) coupledEquilibria.insert( entry.first );
+      std::set< string > uniqueTuples;
+      string tuple;
+      for( char const c : globalNames )
+      {
+        if( c == '\0' ) { uniqueTuples.insert( tuple ); tuple.clear(); }
+        else tuple += c;
+      }
+      GEOS_THROW_IF( coupled != 0 && uniqueTuples.size() > 1,
+                     GEOS_FMT( "Self-consistent hydrostatic initializer '{}' requires one spatially uniform fluid/capillary/relative-permeability constitutive tuple across its selected union; use separately reviewed interface conditions", entry.first ),
+                     InputError, getDataContext() );
+    }
+  }
+
   // Step 3: for each equil, compute a fine table with hydrostatic pressure vs elevation if the region is a target region
 
   // first compute the region filter
@@ -1210,13 +1272,13 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       // Check if the region is targetted by the solver. Otherwise we cannot guarantee a fluid exists
       Group const & region = subRegion.getParent().getParent();
       if( regionFilter.find( region.getName() ) == regionFilter.end() ||
-          ( fs.usesGravityAlignedCoordinates() &&
+          ( (fs.usesGravityAlignedCoordinates() || coupledEquilibria.count( fs.getName() ) != 0) &&
             std::find( regionNames.begin(), regionNames.end(), region.getName() ) == regionNames.end() ) )
       {
         return;   // the region is not in target, there is nothing to do
       }
 
-      if( fs.usesGravityAlignedCoordinates() && targetSet.empty() ) return;
+      if( (fs.usesGravityAlignedCoordinates() || coupledEquilibria.count( fs.getName() ) != 0) && targetSet.empty() ) return;
       HydrostaticCoordinate const coordinate( gravVector, fs.usesGravityAlignedCoordinates() );
       real64 const coordinateGravity[3] = { 0.0, 0.0, coordinate.gravityComponent };
 
@@ -1228,7 +1290,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const datumPressure = fs.getDatumPressure();
       string const initPhaseName = fs.getInitPhaseName();
       arrayView1d< real64 const > const phaseContacts = fs.getPhaseContacts();
-      bool const strictCoordinates = fs.usesGravityAlignedCoordinates();
+      bool const strictCoordinates = fs.usesGravityAlignedCoordinates() || coupledEquilibria.count( fs.getName() ) != 0;
       if( strictCoordinates )
       {
         GEOS_THROW_IF( !std::isfinite( datumElevation ) || !std::isfinite( datumPressure ) || datumPressure <= 0.0 ||
@@ -1344,9 +1406,18 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      GEOS_THROW_IF( fs.usesGravityAlignedCoordinates() && m_hasCapPressure &&
-                     dynamicCast< InvariantImmiscibleFluid * >( &fluid ) == nullptr,
-                     "gravityAligned capillary initialization currently requires InvariantImmiscibleFluid; pressure-dependent EOS/capillary coupling needs a self-consistent state solve",
+      TableCapillaryPressure * uniformCapillary = nullptr;
+      if( m_hasCapPressure )
+      {
+        CapillaryPressureBase & capillary = getConstitutiveModel< CapillaryPressureBase >(
+          subRegion, subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() ) );
+        uniformCapillary = dynamicCast< TableCapillaryPressure * >( &capillary );
+      }
+      bool const fixedPhaseComposition = dynamicCast< InvariantImmiscibleFluid * >( &fluid ) != nullptr ||
+                                         dynamicCast< DeadOilFluid * >( &fluid ) != nullptr;
+      bool const consistentCapillary = !singlePhaseInitialisation && uniformCapillary != nullptr && fixedPhaseComposition;
+      GEOS_THROW_IF( fs.usesGravityAlignedCoordinates() && m_hasCapPressure && !consistentCapillary,
+                     "gravityAligned capillary initialization requires DeadOilFluid or InvariantImmiscibleFluid with spatially uniform TableCapillaryPressure; general compositional flash and rock-dependent capillarity are not supported",
                      InputError, fs.getDataContext(), fluid.getDataContext() );
 
 
@@ -1431,6 +1502,106 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       integer const ipGas = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
       integer const ipWater = phaseOrder[CapillaryPressureBase::PhaseType::WATER];
       integer const ipOil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
+
+      if( consistentCapillary )
+      {
+        using Consistent = isothermalCompositionalMultiphaseBaseKernels::SelfConsistentCapillaryEquilibrium;
+        RelativePermeabilityBase & relativePermeability = getConstitutiveModel< RelativePermeabilityBase >(
+          subRegion, subRegion.getReference< string >( viewKeyStruct::relPermNamesString() ) );
+        auto const evaluateRelativePermeability = isothermalCompositionalMultiphaseBaseKernels::makeHydrostaticMobility( relativePermeability );
+        // This serial initializer must use the same mass/molar basis as the
+        // subsequent solver flash (set before constructing its kernel wrapper).
+        fluid.setMassFlag( m_useMass );
+        // Explicit host migration is required for this serial path. Unlike a
+        // device-kernel capture, these references are not a device dispatch.
+        fluid.forWrappers( []( WrapperBase const & wrapper ) { wrapper.move( hostMemorySpace, false ); } );
+        uniformCapillary->forWrappers( []( WrapperBase const & wrapper ) { wrapper.move( hostMemorySpace, false ); } );
+        phaseContacts.move( hostMemorySpace, false );
+        compFracTableWrappers.move( hostMemorySpace, false );
+        tempTableWrapper.move( hostMemorySpace, false );
+        auto initialize = [&]( auto & fixedFluid )
+        {
+          auto const fluidWrapper = fixedFluid.createKernelWrapper();
+          auto evaluateFluid = [&]( real64 elevation, real64 primaryPressure, Consistent::State & state )
+          {
+            array2d< real64, compflow::LAYOUT_COMP > composition( 1, numComps );
+            real64 sum = 0.0;
+            for( integer ic = 0; ic < numComps; ++ic )
+            {
+              composition[0][ic] = compFracTableWrappers[ic].compute( &elevation );
+              GEOS_THROW_IF( !std::isfinite( composition[0][ic] ) || composition[0][ic] < 0.0 || composition[0][ic] > 1.0,
+                             "Invalid composition table in self-consistent hydrostatic equilibrium", InputError, fs.getDataContext() );
+              sum += composition[0][ic];
+            }
+            GEOS_THROW_IF( std::abs( sum - 1.0 ) > 1.0e-8,
+                           "Composition tables must sum to one in self-consistent hydrostatic equilibrium", InputError, fs.getDataContext() );
+            real64 const temperature = tempTableWrapper.compute( &elevation );
+            GEOS_THROW_IF( !std::isfinite( temperature ) || temperature <= 0.0,
+                           "Invalid absolute temperature in self-consistent hydrostatic equilibrium", InputError, fs.getDataContext() );
+            if constexpr ( std::is_same_v< TYPEOFREF( fixedFluid ), DeadOilFluid > )
+              fixedFluid.validateHydrostaticCapillaryTables( primaryPressure );
+            fixedFluid.checkTablesParameters( primaryPressure, temperature );
+            array3d< real64, constitutive::multifluid::LAYOUT_PHASE > fraction( 1, 1, numPhases ), density( 1, 1, numPhases ),
+              massDensity( 1, 1, numPhases ), viscosity( 1, 1, numPhases ), enthalpy( 1, 1, numPhases ), energy( 1, 1, numPhases );
+            array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > phaseComposition( 1, 1, numPhases, numComps );
+            real64 totalDensity = 0.0;
+            MultiFluidBase::KernelWrapper::computeValues( fluidWrapper, primaryPressure, temperature, composition[0],
+                                                          fraction[0][0], density[0][0], massDensity[0][0], viscosity[0][0],
+                                                          enthalpy[0][0], energy[0][0], phaseComposition[0][0], totalDensity );
+            for( integer ip = 0; ip < numPhases; ++ip )
+            {
+              GEOS_THROW_IF( !std::isfinite( viscosity[0][0][ip] ) || viscosity[0][0][ip] <= 0.0,
+                             "Non-finite or non-positive EOS viscosity in self-consistent hydrostatic equilibrium", InputError );
+              state.density[ip] = density[0][0][ip];
+              state.massDensity[ip] = massDensity[0][0][ip];
+              for( integer ic = 0; ic < numComps; ++ic ) state.composition[ip][ic] = phaseComposition[0][0][ip][ic];
+            }
+          };
+          Consistent equilibrium( *uniformCapillary, numComps, maxNumEquilIterations, equilTolerance,
+                                  coordinate.gravityComponent, evaluateFluid, evaluateRelativePermeability );
+          std::vector< real64 > coordinates( elevationValues[0].begin(), elevationValues[0].end() );
+          auto const states = equilibrium.solve( coordinates, phaseContacts, datumElevation, datumPressure );
+          auto const elemCenter = subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() ).toViewConst();
+          auto const pressure = subRegion.getReference< array1d< real64 > >( flow::pressure::key() ).toView();
+          auto const temperature = subRegion.getReference< array1d< real64 > >( flow::temperature::key() ).toView();
+          auto const fractions = subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( flow::globalCompFraction::key() ).toView();
+          targetSet.move( hostMemorySpace, false );
+          elemCenter.move( hostMemorySpace, false );
+          pressure.move( hostMemorySpace, true );
+          temperature.move( hostMemorySpace, true );
+          fractions.move( hostMemorySpace, true );
+          for( localIndex const k : targetSet )
+          {
+            real64 const elevation = coordinate.elevation( elemCenter[k] );
+            auto const upper = std::upper_bound( coordinates.begin(), coordinates.end(), elevation );
+            localIndex const next = std::min< localIndex >( std::distance( coordinates.begin(), upper ), coordinates.size()-1 );
+            localIndex const previous = std::max< localIndex >( next-1, 0 );
+            real64 const alpha = next == previous ? 0.0 : (elevation-coordinates[previous])/(coordinates[next]-coordinates[previous]);
+            Consistent::PhaseVector phasePressure{};
+            for( integer ip = 0; ip < numPhases; ++ip )
+              phasePressure[ip] = (1.0-alpha)*states[previous].phasePressure[ip] + alpha*states[next].phasePressure[ip];
+            // Reflash at the actual cell's reconstructed P, never interpolate
+            // EOS densities from neighboring table nodes to reconstruct masses.
+            auto const state = equilibrium.evaluate( elevation, phasePressure );
+            pressure[k] = state.primaryPressure;
+            temperature[k] = tempTableWrapper.compute( &elevation );
+            real64 total = 0.0;
+            for( integer ic = 0; ic < numComps; ++ic )
+            {
+              fractions[k][ic] = 0.0;
+              for( integer ip = 0; ip < numPhases; ++ip )
+                fractions[k][ic] += state.saturation[ip] * state.density[ip] * state.composition[ip][ic];
+              total += fractions[k][ic];
+            }
+            GEOS_THROW_IF( !std::isfinite( total ) || total <= 0.0, "Invalid reconstructed component mass in self-consistent hydrostatic equilibrium", InputError );
+            for( integer ic = 0; ic < numComps; ++ic ) fractions[k][ic] /= total;
+            isothermalCompositionalMultiphaseBaseKernels::recordHydrostaticState( subRegion, k, numPhases, phasePressure, equilTolerance );
+          }
+        };
+        if( auto * deadOil = dynamicCast< DeadOilFluid * >( &fluid ) ) initialize( *deadOil );
+        else initialize( *dynamicCast< InvariantImmiscibleFluid * >( &fluid ) );
+        return;
+      }
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {

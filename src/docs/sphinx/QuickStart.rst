@@ -424,3 +424,6 @@ Please refer to :ref:`IntegratedTests` for further information.
 
 For the focused gas/oil and three-phase hydrostatic capillary corrections,
 including their verification scope, see :doc:`HydrostaticCapillaryCorrectness`.
+
+For coupled fixed-composition EOS/capillary initialization and its numerical
+contract, see :doc:`SelfConsistentCapillaryEquilibrium`.

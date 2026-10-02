@@ -112,14 +112,16 @@ need separate, non-overlapping initializers and physically reviewed interface
 conditions. They are not automatically pressure-matched across separate
 initializer definitions.
 
-In this feature revision, gravity-aligned **active-capillary** initialization
-requires ``InvariantImmiscibleFluid`` and ``phaseContacts``. Pressure-dependent
-EOS/capillary coupling needs a self-consistent common-primary-pressure solve;
-it is rejected rather than advertised as a valid equilibrium. The legacy
-coordinate mode retains its inherited pressure-dependent EOS approximation,
-with the capillary slot/reference corrections described above; its generic
-EOS/capillary rest state is not certified by this feature. Single-phase flow
-without capillary coupling supports its existing compressible fluid models.
+Gravity-aligned **active-capillary** initialization requires
+``phaseContacts``, a spatially uniform ``TableCapillaryPressure`` model,
+and a supported fixed-composition fluid. The self-consistent numerical
+extension supports ``InvariantImmiscibleFluid`` and ``DeadOilFluid`` and
+matches capillarity and EOS at the same primary pressure. See
+:doc:`SelfConsistentCapillaryEquilibrium` for its capability version, closure,
+convergence and constitutive scope. Without that separate extension, only
+the pressure-independent invariant-fluid active-capillary path is certified.
+Single-phase flow without capillary coupling supports its existing
+compressible fluid models.
 
 The implementation is provided by ``SinglePhaseBase`` and
 ``CompositionalMultiphaseBase`` and their supported constitutive dispatches.
@@ -138,6 +140,11 @@ and the authoritative schema enum, before generating the new mode.
 ``native-set-hydrostatic-initialization`` describes selection of existing GEOS
 sets. ``arbitrary-plane-phase-initialization`` and
 ``generated-set-phase-initialization`` remain false.
+Clients requiring compressible active-capillary initialization must separately
+check ``self-consistent-capillary-initialization`` and
+``selfConsistentCapillaryInitializationVersion: 1`` and the reported fluid/model
+scope. Coordinate support alone does not certify a selected constitutive model.
+
 The global input catalog exposes the actual ``coordinateSystem`` enum/default
 and ``setNames`` metadata. Its schema digest changes when this feature is
 added. Structured input unit metadata remains unknown where the wrapper
