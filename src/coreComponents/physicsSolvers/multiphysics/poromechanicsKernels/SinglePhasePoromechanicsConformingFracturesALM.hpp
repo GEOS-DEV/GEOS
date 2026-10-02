@@ -14,11 +14,11 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsConformingFractures.hpp
+ * @file SinglePhasePoromechanicsConformingFracturesALM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
-#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace singlePhasePoromechanicsConformingFracturesKernels
+namespace singlePhasePoromechanicsConformingFracturesALMKernels
 {
 
 template< integer NUM_EQN, integer NUM_DOF >
@@ -265,6 +265,7 @@ private:
 
   CRSMatrixView< real64, localIndex const > m_dR_dAper;
 
+
   ElementViewConst< arrayView4d< real64 const > > const m_dPerm_dDispJump;
 };
 
@@ -323,8 +324,8 @@ public:
   }
 };
 
-} // namespace SinglePhasePoromechanicsConformingFracturesKernels
+} // namespace SinglePhasePoromechanicsConformingFracturesALMKernels
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
+#endif //GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP

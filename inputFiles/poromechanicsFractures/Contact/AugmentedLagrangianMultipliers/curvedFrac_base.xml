@@ -132,7 +132,7 @@
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
-      values="{ 1.0e-3, 1.0e-3 }"/>
+      values="{ 1.0e-6, 1.0e-6 }"/>
 
     <TableFunction
       name="timeFunction"

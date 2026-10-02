@@ -145,6 +145,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::setSparsityPattern( DomainPartit
   pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
+  //TODO appendSparsityPattern(pattern,patternDiag);
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();

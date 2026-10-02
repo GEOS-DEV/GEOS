@@ -61,7 +61,6 @@
       defaultReferencePorosity="1.00"
       referencePressure="0.0"
       compressibility="0.0"/>
-
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 

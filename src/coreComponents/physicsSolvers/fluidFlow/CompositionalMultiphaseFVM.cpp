@@ -1496,12 +1496,13 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs,
                                                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                             stdMap< string, localIndex > const * const dR_dAperOffsets )
+                                                             bool const useAugmentedLagrangianMultiplier,
+                                                             localIndex const GEOS_UNUSED_PARAM ( dR_dAperEnergyOffset ))
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_ERROR_IF( dR_dAperOffsets != nullptr,
-                 "CompositionalMultiphaseFVM does not support mesh-specific dR/dAperture row offsets." );
+  GEOS_ERROR_IF( useAugmentedLagrangianMultiplier,
+                 "Poroelastic fluxes with conforming fractures ALM not yet implemented." );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
