@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./staircase_single_phase_wells_hybrid_3d_base.xml"/>
+  </Included>
+
+  <Solvers>
+    <SinglePhaseReservoir
+      name="reservoirSystem"
+      flowSolverName="SinglePhaseFlow"
+      wellSolverName="SinglePhaseWell"
+      logLevel="1"
+      targetRegions="{ Channel, wellRegion1, wellRegion2 }">
+      <NonlinearSolverParameters
+        lineSearchAction="None"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </SinglePhaseReservoir>
+
+    <SinglePhaseHybridFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseHybridMimetic"
+      targetRegions="{ Channel }"/>
+
+    <WellManager
+      name="SinglePhaseWell"
+      logLevel="1"
+      targetRegions="{ wellRegion1, wellRegion2 }">
+      <SinglePhaseWell
+        name="wellControls1"
+        type="producer"
+        control="BHP">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="5e5"
+          referenceElevation="12"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          volumeRate="1e-4"/>
+      </SinglePhaseWell>
+      <SinglePhaseWell
+        name="wellControls2"
+        type="injector"
+        control="totalVolRate"
+        useSurfaceConditions="1"
+        surfacePressure="101325">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e7"
+          referenceElevation="12"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e-6"/>
+      </SinglePhaseWell>
+    </WellManager>
+  </Solvers>
+
+</Problem>

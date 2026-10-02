@@ -28,7 +28,7 @@ decks = [
         check_step=10,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="PhaseFieldFracture_SpectralSplit",
+        name="PhaseFieldFracture_SpectralSplit_Cohesive",
         description=
         'Testing the spectral split of the stress tensor in PF Fracture',
         partitions=((1, 1, 1), (2, 2, 1)),
@@ -36,12 +36,36 @@ decks = [
         check_step=30,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="PhaseFieldFracture_VolDevSplit",
+        name="PhaseFieldFracture_SpectralSplit_Brittle",
+        description=
+        'Testing the spectral split with the brittle degradation function in PF Fracture',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=15,
+        check_step=30,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="PhaseFieldFracture_VolDevSplit_Brittle",
         description=
         'Testing the volumetric-deviatoric split of the stress tensor in PF Fracture',
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=15,
         check_step=30,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="PhaseFieldFracture_VolDevSplit_Cohesive",
+        description=
+        'Testing the volumetric-deviatoric split with the cohesive degradation function in PF Fracture',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=15,
+        check_step=30,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="PhaseFieldFracture_MultiRegion",
+        description=
+        'Testing PF Fracture on one region of a multi-region problem, with mechanics only elsewhere',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=10,
+        check_step=20,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(name="PhaseFieldFracture_Nucleation_smoke",
              description='Testing the nucleation model for PF Fracture',
