@@ -53,7 +53,10 @@
 /// Apply a single-argument macro to each instantiated component count
 #define GEOS_FOR_EACH_COMPONENT( MACRO ) @GEOS_COMPONENT_INSTANTIATIONS@
 
-// OBL interpolation workspace limits its component range to at most nine.
+/// Largest component count supported by OBL table interpolation in any build
+#define GEOS_OBL_COMPONENT_CAP @GEOS_OBL_COMPONENT_CAP@
+
+/// Maximum number of components instantiated in the OBL solver
 #define GEOS_MAX_OBL_COMPONENTS @GEOS_MAX_OBL_COMPONENTS@
 #define GEOS_FOR_EACH_OBL_COMPONENT( MACRO ) @GEOS_OBL_COMPONENT_INSTANTIATIONS@
 

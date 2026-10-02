@@ -34,15 +34,15 @@ if( GEOS_ENABLE_MULTIPHYSICS )
   set( componentSmokeInput "${PROJECT_SOURCE_DIR}/../inputFiles/compositionalMultiphaseWell/compositional_multiphase_wells_9comp_smoke.xml" )
   set( componentSmokeOutput "${CMAKE_CURRENT_BINARY_DIR}/componentLimitSmoke" )
   file( MAKE_DIRECTORY "${componentSmokeOutput}" )
+  set( oblRejectionOutput "${CMAKE_CURRENT_BINARY_DIR}/oblComponentLimit" )
+  file( MAKE_DIRECTORY "${oblRejectionOutput}" )
+  add_test( NAME testOBLComponentLimit
+            COMMAND ${CMAKE_COMMAND} -DGEOS_EXECUTABLE=$<TARGET_FILE:geosx>
+                    -DINPUT_FILE=${PROJECT_SOURCE_DIR}/../inputFiles/compositionalMultiphaseFlow/deadoil_3ph_staircase_obl_3d.xml
+                    -DOUTPUT_DIRECTORY=${oblRejectionOutput}
+                    -P ${PROJECT_SOURCE_DIR}/cmake/tests/OBLComponentLimitTest.cmake )
+  set_tests_properties( testOBLComponentLimit PROPERTIES TIMEOUT 120 )
   if( GEOS_MAX_FLUID_COMPONENTS GREATER_EQUAL 9 )
-    set( oblRejectionOutput "${CMAKE_CURRENT_BINARY_DIR}/oblComponentLimit" )
-    file( MAKE_DIRECTORY "${oblRejectionOutput}" )
-    add_test( NAME testOBLComponentLimit
-              COMMAND ${CMAKE_COMMAND} -DGEOS_EXECUTABLE=$<TARGET_FILE:geosx>
-                      -DINPUT_FILE=${PROJECT_SOURCE_DIR}/../inputFiles/compositionalMultiphaseFlow/deadoil_3ph_staircase_obl_3d.xml
-                      -DOUTPUT_DIRECTORY=${oblRejectionOutput}
-                      -P ${PROJECT_SOURCE_DIR}/cmake/tests/OBLComponentLimitTest.cmake )
-    set_tests_properties( testOBLComponentLimit PROPERTIES TIMEOUT 120 )
     add_test( NAME testNineComponentWells
               COMMAND $<TARGET_FILE:geosx> -i ${componentSmokeInput} -o ${componentSmokeOutput} -n nineComponentWells )
     set_tests_properties( testNineComponentWells PROPERTIES TIMEOUT 120 )

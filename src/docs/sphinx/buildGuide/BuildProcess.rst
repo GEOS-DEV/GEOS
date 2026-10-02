@@ -105,6 +105,7 @@ and grow with ``GEOS_MAX_FLUID_COMPONENTS`` above nine. Smaller builds retain ex
 nine-component standalone fluid-property calculations, such as the PVT driver.
 
 The table-based reactive OBL solver uses the smaller of the configured limit and
-nine components. Its interpolation workspace grows exponentially with the
-component count, so increasing ``GEOS_MAX_FLUID_COMPONENTS`` above nine extends the
-EOS compositional solvers without increasing the OBL limit.
+seven components. Its per-thread interpolation workspace grows exponentially with
+the component count and would exceed the CUDA local-memory limit at eight, so
+increasing ``GEOS_MAX_FLUID_COMPONENTS`` above seven extends the EOS compositional
+solvers without increasing the OBL limit.

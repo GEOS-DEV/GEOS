@@ -11,6 +11,6 @@ set( rejectionInput "${OUTPUT_DIRECTORY}/oblComponentLimit.xml" )
 file( WRITE "${rejectionInput}" "${input}" )
 execute_process( COMMAND "${GEOS_EXECUTABLE}" -i "${rejectionInput}" -o "${OUTPUT_DIRECTORY}" -n oblComponentLimit
                  RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error )
-if( result EQUAL 0 OR NOT "${output}${error}" MATCHES "OBL table interpolation supports at most nine components" )
+if( result EQUAL 0 OR NOT "${output}${error}" MATCHES "OBL table interpolation supports at most [0-9]+ components" )
   message( FATAL_ERROR "Expected an input error identifying the OBL component limit.\n${output}${error}" )
 endif()

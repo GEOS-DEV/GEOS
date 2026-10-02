@@ -12,11 +12,13 @@ foreach( component RANGE 1 ${GEOS_MAX_FLUID_COMPONENTS} )
   string( APPEND GEOS_COMPONENT_INSTANTIATIONS " MACRO( ${component} )" )
 endforeach()
 
-# OBL table interpolation uses workspace exponential in the component count.
-# Keep its existing upper range while allowing larger EOS fluid models.
+# OBL table interpolation keeps a per-thread workspace of (2^(NC+1)-1) x numOps
+# doubles. Seven components with energy need about 307 KiB, below the 512 KiB
+# CUDA local-memory limit; eight would need about 679 KiB.
+set( GEOS_OBL_COMPONENT_CAP 7 )
 set( GEOS_MAX_OBL_COMPONENTS ${GEOS_MAX_FLUID_COMPONENTS} )
-if( GEOS_MAX_OBL_COMPONENTS GREATER 9 )
-  set( GEOS_MAX_OBL_COMPONENTS 9 )
+if( GEOS_MAX_OBL_COMPONENTS GREATER GEOS_OBL_COMPONENT_CAP )
+  set( GEOS_MAX_OBL_COMPONENTS ${GEOS_OBL_COMPONENT_CAP} )
 endif()
 set( GEOS_OBL_COMPONENT_INSTANTIATIONS "" )
 foreach( component RANGE 1 ${GEOS_MAX_OBL_COMPONENTS} )

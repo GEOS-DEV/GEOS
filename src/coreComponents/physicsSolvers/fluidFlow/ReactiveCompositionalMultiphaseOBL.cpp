@@ -197,8 +197,8 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
                                   m_maxCompFracChange ),
                         InputError, getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
 
-  GEOS_THROW_IF_GT_MSG( m_numComponents, 9,
-                        "OBL table interpolation supports at most nine components.",
+  GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_OBL_COMPONENT_CAP,
+                        GEOS_FMT( "OBL table interpolation supports at most {} components.", GEOS_OBL_COMPONENT_CAP ),
                         InputError, getWrapperDataContext( viewKeyStruct::numComponentsString() ) );
 
   GEOS_THROW_IF_GT_MSG( m_numComponents, MAX_NUM_COMPONENTS,
