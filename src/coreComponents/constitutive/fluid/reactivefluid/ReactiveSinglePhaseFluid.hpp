@@ -114,6 +114,15 @@ public:
   integer numKineticReactions() const { return m_numKineticReactions; }
 
   /**
+   * @brief Mass fraction of solvent in the solution [-].
+   *
+   * HPCReact is a molality based library: concentrations, equilibrium constants and mass-action
+   * quotients are all on the molal scale [mol/kg solvent]. With w this fraction and rho the solution
+   * density, moles per kg of solution are m w and moles per m^3 of solution are m w rho.
+   */
+  real64 solventMassFraction() const { return m_solventMassFraction; }
+
+  /**
    * @brief Kernel wrapper class for ReactiveSinglePhaseFluid.
    */
   template< typename REACTION_PARAMS_TYPE >
@@ -235,7 +244,6 @@ protected:
   {
     using namespace hpcReact::geochemistry;
     using namespace hpcReact::MoMasBenchmark;
-    using namespace hpcReact::bulkGeneric;
     using namespace hpcReact::ChainGeneric;
     switch( m_chemicalSystemType )
     {
@@ -330,6 +338,7 @@ protected:
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * chemicalSystemNameString() { return "chemicalSystemType"; }
+    static constexpr char const * solventMassFractionString() { return "solventMassFraction"; }
   };
 
 protected:
@@ -365,6 +374,10 @@ protected:
   array4d< real64, constitutive::reactivefluid::LAYOUT_SPECIES_DC >  m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations;
 
   ChemicalSystemType m_chemicalSystemType;
+
+  /// Mass fraction of solvent in the solution [-], constant; for the carbonate brine EQ3/6 gives 0.898
+  /// TODO: depends on concentration, w = 1 / (1 + sum_i m_i M_i)
+  real64 m_solventMassFraction;
 };
 
 // these aliases are useful in constitutive dispatch

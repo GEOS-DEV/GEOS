@@ -31,25 +31,60 @@ using namespace geos::stringutilities;
 using namespace geos::constitutive::PVTProps;
 using namespace geos::constitutive::multifluid;
 
-/// Input tables written into temporary files during testing
+template< typename MODEL >
+struct Parameters
+{
+  static void populate( BrineFluidParameters & parameters )
+  {
+    parameters.m_pressureCoordinates.emplace_back( 1.0e6 );
+    parameters.m_pressureCoordinates.emplace_back( 1.5e7 );
+    parameters.m_pressureInterval = 5.0e4;
+    parameters.m_temperatureCoordinates.emplace_back( 367.15 );
+    parameters.m_temperatureCoordinates.emplace_back( 369.15 );
+    parameters.m_temperatureInterval = 1.0;
+    parameters.m_salinity = 0.2;
+    parameters.m_ezrokhiDensityCoefficients.emplace_back( 2.01e-6 );
+    parameters.m_ezrokhiDensityCoefficients.emplace_back( -6.34e-7 );
+    parameters.m_ezrokhiDensityCoefficients.emplace_back( 1e-4 );
+    parameters.m_ezrokhiViscosityCoefficients.emplace_back( 2.42e-7 );
+    parameters.m_ezrokhiViscosityCoefficients.emplace_back( 0.0 );
+    parameters.m_ezrokhiViscosityCoefficients.emplace_back( 1e-4 );
+  }
+};
 
-static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
-                                                    "ViscosityFun PhillipsBrineViscosity 0.1";
+template<>
+struct Parameters< PhillipsBrineViscosity >
+{
+  static void populate( BrineFluidParameters & parameters )
+  {
+    Parameters< NoOpPVTFunction >::populate( parameters );
+    parameters.m_salinity = 0.1;
+  }
+};
 
-// Used also for gas phase
-static const char * pvtLiquidEnthalpyTableContent = "EnthalpyFun BrineEnthalpy 1e6 1.5e7 5e4 367.15 369.15 1 0.2";
+template<>
+struct Parameters< SpanWagnerCO2Density >
+{
+  static void populate( BrineFluidParameters & parameters )
+  {
+    Parameters< NoOpPVTFunction >::populate( parameters );
+    parameters.m_pressureCoordinates[0] = 1.0e5;
+    parameters.m_pressureCoordinates[1] = 7.5e7;
+    parameters.m_temperatureCoordinates[0] = 285.15;
+    parameters.m_temperatureCoordinates[1] = 369.15;
+    parameters.m_temperatureInterval = 4.0;
+  }
+};
 
-// the last are set relatively high (1e-4) to increase derivative value and check it properly
-// This string has some more various whitespace values in it to test if everything goes well anyway.
-static const char * pvtLiquidEzrokhiTableContent = "\tDensityFun   EzrokhiBrineDensity   2.01e-6 -6.34e-7 1e-4\n\r"
-                                                   "\tViscosityFun EzrokhiBrineViscosity 2.42e-7 0        1e-4\n\r\n\r";
-
-static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e5 7.5e7 5e4 285.15 369.15 4.0\n" // we want to test the full
-                                                                                                             // (pres, temp) range here
-                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 367.15 369.15 1.0";
-
-static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e5 7.5e7 5e4 285.15 369.15 4.0 0.15"; // we want to test the full
-                                                                                                            // (pres, temp) range here
+template<>
+struct Parameters< CO2Solubility >
+{
+  static void populate( BrineFluidParameters & parameters )
+  {
+    Parameters< SpanWagnerCO2Density >::populate( parameters );
+    parameters.m_salinity = 0.15;
+  }
+};
 
 template< typename PVT_WRAPPER >
 void testValuesAgainstPreviousImplementation( PVT_WRAPPER const & pvtFunctionWrapper,
@@ -313,128 +348,99 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
       }
     }
   }
-
-}
-
-void writeTableToFile( string const & filename, char const * str )
-{
-  std::ofstream os( filename );
-  ASSERT_TRUE( os.is_open() );
-  os << str;
-  os.close();
-}
-
-void removeFile( string const & filename )
-{
-  int const ret = std::remove( filename.c_str() );
-  ASSERT_TRUE( ret == 0 );
 }
 
 template< typename MODEL >
-std::unique_ptr< MODEL > makePVTFunction( string const & filename,
-                                          string const & key )
+std::unique_ptr< MODEL > makePVTFunction()
 {
   // define component names and molar weight
   string_array componentNames;
   componentNames.resize( 2 );
-  componentNames[0] = "co2"; componentNames[1] = "water";
+  componentNames[0] = "co2";
+  componentNames[1] = "water";
 
   array1d< real64 > componentMolarWeight;
   componentMolarWeight.resize( 2 );
-  componentMolarWeight[0] = 44e-3; componentMolarWeight[1] = 18e-3;
+  componentMolarWeight[0] = 44e-3;
+  componentMolarWeight[1] = 18e-3;
 
-  // read parameters from file
-  std::ifstream is( filename );
-  std::unique_ptr< MODEL > pvtFunction = nullptr;
-  string str;
-  while( std::getline( is, str ) )
-  {
-    string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( str );
+  TableFunction::OutputOptions const outputOpts = {
+    true,   // writeCSV
+    true,   // writeInLog
+  };
 
-    TableFunction::OutputOptions const pvtOutputOpts = {
-      true,// writeCSV
-      true, // writeInLog
-    };
+  // Create parameters
+  BrineFluidParameters parameters;
+  Parameters< MODEL >::populate( parameters );
 
-    if( strs.size()>1 && strs[0] == key )
-    {
-      pvtFunction = std::make_unique< MODEL >( strs[1],
-                                               strs,
-                                               componentNames,
-                                               componentMolarWeight,
-                                               pvtOutputOpts );
-    }
-  }
-  GEOS_ERROR_IF( pvtFunction == nullptr,
-                 GEOS_FMT( "Could not find {} in {}", key, filename ) );
-
-  return pvtFunction;
+  return std::make_unique< MODEL >( MODEL::catalogName(),
+                                    parameters,
+                                    componentNames,
+                                    componentMolarWeight,
+                                    outputOpts );
 }
 
-template< typename MODEL >
-std::unique_ptr< MODEL > makeFlashModel( string const & filename,
-                                         string const & key )
+template<>
+std::unique_ptr< CO2Solubility > makePVTFunction< CO2Solubility >()
 {
   // define phase names
   string_array phaseNames;
   phaseNames.resize( 2 );
-  phaseNames[0] = "gas"; phaseNames[1] = "liquid";
+  phaseNames[0] = "gas";
+  phaseNames[1] = "liquid";
 
   // define component names and molar weight
   string_array componentNames;
   componentNames.resize( 2 );
-  componentNames[0] = "co2"; componentNames[1] = "water";
+  componentNames[0] = "co2";
+  componentNames[1] = "water";
 
   array1d< real64 > componentMolarWeight;
   componentMolarWeight.resize( 2 );
-  componentMolarWeight[0] = 44e-3; componentMolarWeight[1] = 18e-3;
+  componentMolarWeight[0] = 44e-3;
+  componentMolarWeight[1] = 18e-3;
 
-  // read parameters from file
-  std::ifstream is( filename );
-  std::unique_ptr< MODEL > flashModel;
-  string str;
-  while( std::getline( is, str ) )
-  {
-    string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( str );
-    TableFunction::OutputOptions const flashOutputOpts = {
-      true, // writeCSV
-      true, // writeInLog
-    };
-    if( strs.size()>1 && strs[0] == key )
-    {
-      flashModel = std::make_unique< MODEL >( strs[1],
-                                              strs,
-                                              phaseNames,
-                                              componentNames,
-                                              componentMolarWeight,
-                                              flashOutputOpts );
-    }
-  }
-  GEOS_ERROR_IF( flashModel == nullptr,
-                 GEOS_FMT( "Could not find {} in {}", key, filename ) );
+  TableFunction::OutputOptions const outputOpts = {
+    true,   // writeCSV
+    true,   // writeInLog
+  };
 
-  return flashModel;
+  // Create parameters
+  BrineFluidParameters parameters;
+  Parameters< CO2Solubility >::populate( parameters );
+
+  return std::make_unique< CO2Solubility >( CO2Solubility::catalogName(),
+                                            parameters,
+                                            phaseNames,
+                                            componentNames,
+                                            componentMolarWeight,
+                                            outputOpts );
 }
 
-class PhillipsBrineViscosityTest : public ::testing::Test
+template< typename MODEL >
+class CO2BrineModelTestFixture : public ::testing::Test
 {
 public:
-  PhillipsBrineViscosityTest()
+  CO2BrineModelTestFixture()
   {
-    writeTableToFile( filename, pvtLiquidPhillipsTableContent );
-    pvtFunction = makePVTFunction< PhillipsBrineViscosity >( filename, key );
+    pvtFunction = makePVTFunction< MODEL >();
   }
 
-  ~PhillipsBrineViscosityTest() override
-  {
-    removeFile( filename );
-  }
+  ~CO2BrineModelTestFixture() override = default;
 
 protected:
-  string const key = "ViscosityFun";
-  string const filename = "pvtliquid.txt";
-  std::unique_ptr< PhillipsBrineViscosity > pvtFunction;
+  std::unique_ptr< MODEL > pvtFunction{};
 };
+
+using PhillipsBrineViscosityTest = CO2BrineModelTestFixture< PhillipsBrineViscosity >;
+using EzrokhiBrineViscosityTest = CO2BrineModelTestFixture< EzrokhiBrineViscosity >;
+using FenghourCO2ViscosityTest = CO2BrineModelTestFixture< FenghourCO2Viscosity >;
+using PhillipsBrineDensityTest = CO2BrineModelTestFixture< PhillipsBrineDensity >;
+using EzrokhiBrineDensityTest = CO2BrineModelTestFixture< EzrokhiBrineDensity >;
+using SpanWagnerCO2DensityTest = CO2BrineModelTestFixture< SpanWagnerCO2Density >;
+using CO2SolubilityTest = CO2BrineModelTestFixture< CO2Solubility >;
+using BrineEnthalpyTest = CO2BrineModelTestFixture< BrineEnthalpy >;
+using CO2EnthalpyTest = CO2BrineModelTestFixture< CO2Enthalpy >;
 
 TEST_F( PhillipsBrineViscosityTest, brineViscosityValuesAndDeriv )
 {
@@ -475,26 +481,6 @@ TEST_F( PhillipsBrineViscosityTest, brineViscosityValuesAndDeriv )
   }
 }
 
-class EzrokhiBrineViscosityTest : public ::testing::Test
-{
-public:
-  EzrokhiBrineViscosityTest()
-  {
-    writeTableToFile( filename, pvtLiquidEzrokhiTableContent );
-    pvtFunction = makePVTFunction< EzrokhiBrineViscosity >( filename, key );
-  }
-
-  ~EzrokhiBrineViscosityTest() override
-  {
-    removeFile( filename );
-  }
-
-protected:
-  string const key = "ViscosityFun";
-  string const filename = "pvtliquid.txt";
-  std::unique_ptr< EzrokhiBrineViscosity > pvtFunction;
-};
-
 TEST_F( EzrokhiBrineViscosityTest, brineViscosityValuesAndDeriv )
 {
   real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
@@ -521,26 +507,6 @@ TEST_F( EzrokhiBrineViscosityTest, brineViscosityValuesAndDeriv )
     comp[1] = 1 - comp[0];
   }
 }
-
-class FenghourCO2ViscosityTest : public ::testing::Test
-{
-public:
-  FenghourCO2ViscosityTest()
-  {
-    writeTableToFile( filename, pvtGasTableContent );
-    pvtFunction = makePVTFunction< FenghourCO2Viscosity >( filename, key );
-  }
-
-  ~FenghourCO2ViscosityTest() override
-  {
-    removeFile( filename );
-  }
-
-protected:
-  string const key = "ViscosityFun";
-  string const filename = "pvtgas.txt";
-  std::unique_ptr< FenghourCO2Viscosity > pvtFunction;
-};
 
 TEST_F( FenghourCO2ViscosityTest, fenghourCO2ViscosityValuesAndDeriv )
 {
@@ -580,26 +546,6 @@ TEST_F( FenghourCO2ViscosityTest, fenghourCO2ViscosityValuesAndDeriv )
     comp[1] = 1 - comp[0];
   }
 }
-
-class PhillipsBrineDensityTest : public ::testing::Test
-{
-public:
-  PhillipsBrineDensityTest()
-  {
-    writeTableToFile( filename, pvtLiquidPhillipsTableContent );
-    pvtFunction = makePVTFunction< PhillipsBrineDensity >( filename, key );
-  }
-
-  ~PhillipsBrineDensityTest() override
-  {
-    removeFile( filename );
-  }
-
-protected:
-  string const key = "DensityFun";
-  string const filename = "pvtliquid.txt";
-  std::unique_ptr< PhillipsBrineDensity > pvtFunction;
-};
 
 TEST_F( PhillipsBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
 {
@@ -668,26 +614,6 @@ TEST_F( PhillipsBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
   }
 }
 
-class EzrokhiBrineDensityTest : public ::testing::Test
-{
-public:
-  EzrokhiBrineDensityTest()
-  {
-    writeTableToFile( filename, pvtLiquidEzrokhiTableContent );
-    pvtFunction = makePVTFunction< EzrokhiBrineDensity >( filename, key );
-  }
-
-  ~EzrokhiBrineDensityTest() override
-  {
-    removeFile( filename );
-  }
-
-protected:
-  string const key = "DensityFun";
-  string const filename = "pvtliquid.txt";
-  std::unique_ptr< EzrokhiBrineDensity > pvtFunction;
-};
-
 TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
 {
   // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
@@ -745,26 +671,6 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
     comp[1] = 1 - comp[0];
   }
 }
-
-class SpanWagnerCO2DensityTest : public ::testing::Test
-{
-public:
-  SpanWagnerCO2DensityTest()
-  {
-    writeTableToFile( filename, pvtGasTableContent );
-    pvtFunction = makePVTFunction< SpanWagnerCO2Density >( filename, key );
-  }
-
-  ~SpanWagnerCO2DensityTest() override
-  {
-    removeFile( filename );
-  }
-
-protected:
-  string const key = "DensityFun";
-  string const filename = "pvtgas.txt";
-  std::unique_ptr< SpanWagnerCO2Density > pvtFunction;
-};
 
 TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMassValuesAndDeriv )
 {
@@ -845,26 +751,6 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMolarValuesAndDeriv )
   }
 }
 
-class CO2SolubilityTest : public ::testing::Test
-{
-public:
-  CO2SolubilityTest()
-  {
-    writeTableToFile( filename, co2FlashTableContent );
-    flashModel = makeFlashModel< CO2Solubility >( filename, key );
-  }
-
-  ~CO2SolubilityTest() override
-  {
-    removeFile( filename );
-  }
-
-protected:
-  string const key = "FlashModel";
-  string const filename = "co2flash.txt";
-  std::unique_ptr< CO2Solubility > flashModel;
-};
-
 TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
 {
   // when checking numerical derivatives, do not fall on the coordinate points of the tables!!
@@ -890,7 +776,7 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
                                             0.008322701666, 0.008287995083, 0.008259683449, 0.01143341315, 0.0113929227, 0.01135993384,
                                             0.01597786252, 0.01594169644, 0.015912288 };
 
-  CO2Solubility::KernelWrapper flashModelWrapper = flashModel->createKernelWrapper();
+  CO2Solubility::KernelWrapper flashModelWrapper = pvtFunction->createKernelWrapper();
 
   integer counter = 0;
   for( integer iComp = 0; iComp < 3; ++iComp )
@@ -910,26 +796,6 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
     comp[1] = 1 - comp[0];
   }
 }
-
-class BrineEnthalpyTest : public ::testing::Test
-{
-public:
-  BrineEnthalpyTest()
-  {
-    writeTableToFile( filename, pvtLiquidEnthalpyTableContent );
-    pvtFunction = makePVTFunction< BrineEnthalpy >( filename, key );
-  }
-
-  ~BrineEnthalpyTest() override
-  {
-    removeFile( filename );
-  }
-
-protected:
-  string const key = "EnthalpyFun";
-  string const filename = "pvtliquid.txt";
-  std::unique_ptr< BrineEnthalpy > pvtFunction;
-};
 
 TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
 {
@@ -1004,28 +870,6 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )
     comp[1] = 1 - comp[0];
   }
 }
-
-class CO2EnthalpyTest : public ::testing::Test
-{
-public:
-  CO2EnthalpyTest()
-  {
-    // gas enthalpy model repeats liquid parameters (except m), use them here
-    writeTableToFile( filename, pvtLiquidEnthalpyTableContent );
-    pvtFunction = makePVTFunction< CO2Enthalpy >( filename, key );
-
-  }
-
-  ~CO2EnthalpyTest() override
-  {
-    removeFile( filename );
-  }
-
-protected:
-  string const key = "EnthalpyFun";
-  string const filename = "pvtgas.txt";
-  std::unique_ptr< CO2Enthalpy > pvtFunction;
-};
 
 TEST_F( CO2EnthalpyTest, CO2EnthalpyMassValuesAndDeriv )
 {
