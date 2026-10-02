@@ -920,11 +920,19 @@ map< localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const 
  */
 void fixNodesOrder( arrayView2d< localIndex const > const elem2dToFaces,
                     ArrayOfArraysView< localIndex const > const facesToNodes,
-                    ArrayOfArrays< localIndex > & elem2dToNodes )
+                    ArrayOfArrays< localIndex > & elem2dToNodes,
+                    bool const keepIncomplete = false )
 {
   localIndex const num2dElems = elem2dToNodes.size();
   for( localIndex e2d = 0; e2d < num2dElems; ++e2d )
   {
+    // An element with a face missing on this rank keeps its node list: rebuilding
+    // it from one face would drop the collocated half of its nodes.
+    if( keepIncomplete &&
+        std::any_of( elem2dToFaces[e2d].begin(), elem2dToFaces[e2d].end(), []( localIndex const fi ) { return fi == -1; } ) )
+    {
+      continue;
+    }
     stdVector< localIndex > nodesOfFace;
     for( localIndex fi: elem2dToFaces[e2d] )
     {
@@ -1143,8 +1151,7 @@ std::set< std::set< globalIndex > > FaceElementSubRegion::getCollocatedNodes() c
 }
 
 void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
-                                        ElementRegionManager const & elemManager,
-                                        bool const refinedTopology )
+                                        ElementRegionManager const & elemManager )
 {
   arrayView2d< localIndex > const & elems2dToFaces = faceList().toView();
   arrayView2d< localIndex > const elems2dToRegions = m_2dElemToElems.m_toElementRegion.toView();
@@ -1178,12 +1185,10 @@ void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
       if( globalIndexElem0 > globalIndexElem1 )
       {
         std::swap( f0, f1 );
-        if( refinedTopology )
-        {
-          std::swap( elems2dToRegions[kfe][0], elems2dToRegions[kfe][1] );
-          std::swap( elems2dToSubRegions[kfe][0], elems2dToSubRegions[kfe][1] );
-          std::swap( elems2dToCells[kfe][0], elems2dToCells[kfe][1] );
-        }
+        // Keep the incident-cell columns aligned with the reordered faces.
+        std::swap( elems2dToRegions[kfe][0], elems2dToRegions[kfe][1] );
+        std::swap( elems2dToSubRegions[kfe][0], elems2dToSubRegions[kfe][1] );
+        std::swap( elems2dToCells[kfe][0], elems2dToCells[kfe][1] );
       }
     }
   } );
@@ -1379,7 +1384,7 @@ void FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0( FaceManager & faceM
   // Face order, winding and paired-node order can all change after ghosting.
   // Keep the face element's two node halves aligned with those final faces.
   if( refinedTopology )
-    fixNodesOrder( elems2dToFaces, faceToNodes.base().toViewConst(), m_toNodesRelation.base() );
+    fixNodesOrder( elems2dToFaces, faceToNodes.base().toViewConst(), m_toNodesRelation.base(), true );
 }
 
 } /* namespace geos */

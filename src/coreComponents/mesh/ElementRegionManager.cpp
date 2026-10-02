@@ -195,19 +195,17 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
   GEOS_THROW_IF( nodeManager.maxGlobalIndex() == std::numeric_limits< globalIndex >::max(),
                  "No representable global node ID remains for well allocation", InputError, getDataContext() );
   globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
-  globalIndex elemOffsetGlobal = MpiWrapper::sum( globalIndex{ getNumberOfElements() } );
-  if( !cellBlockManager.getSourceCellBlockDescendants().empty() )
-  {
-    // Positive refinement has disjoint cell/surface namespaces. Use their
-    // cached maxima without changing SurfaceGenerator's shared manager method.
-    globalIndex localMaximum = -1;
-    forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
-    { localMaximum = std::max( localMaximum, subRegion.localMaxGlobalIndex() ); } );
-    globalIndex const maximum = MpiWrapper::max( localMaximum );
-    GEOS_THROW_IF( maximum == std::numeric_limits< globalIndex >::max(),
-                   "No representable global element ID remains for well allocation", InputError, getDataContext() );
-    elemOffsetGlobal = maximum + 1;
-  }
+  // Element IDs need not be dense (user IDs, fracture namespaces, refinement),
+  // so well elements start after the largest existing element ID. The cached
+  // sub-region maxima are used without changing SurfaceGenerator's shared
+  // manager method.
+  globalIndex localMaximum = -1;
+  forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+  { localMaximum = std::max( localMaximum, subRegion.localMaxGlobalIndex() ); } );
+  globalIndex const maximum = MpiWrapper::max( localMaximum );
+  GEOS_THROW_IF( maximum == std::numeric_limits< globalIndex >::max(),
+                 "No representable global element ID remains for well allocation", InputError, getDataContext() );
+  globalIndex const elemOffsetGlobal = maximum + 1;
 
   globalIndex wellElemCount = 0;
   globalIndex wellNodeCount = 0;

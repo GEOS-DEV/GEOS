@@ -13,6 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include "common/ByteBuffer.hpp"
 #include "common/MpiChunkedCommunication.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
@@ -89,6 +90,7 @@
 
 #include <numeric>
 #include <array>
+#include <optional>
 #include <cstring>
 #include <unordered_set>
 #include <type_traits>
@@ -222,6 +224,16 @@ vtkSmartPointer< vtkIdTypeArray > canonicalGlobalIds( vtkDataArray * input, vtkI
   } );
   GEOS_ERROR_IF( !copied, "Global IDs require integral array storage" );
   return result;
+}
+
+/** Reject negative user-supplied global IDs, which have no owner or directory rank. */
+static void requireNonnegativeGlobalIds( vtkIdTypeArray const & ids, string const & what )
+{
+  for( vtkIdType i = 0; i < ids.GetNumberOfValues(); ++i )
+  {
+    GEOS_ERROR_IF( ids.GetValue( i ) < 0,
+                   GEOS_FMT( "{} global IDs must be nonnegative, but entry {} is {}", what, i, ids.GetValue( i ) ) );
+  }
 }
 
 /**
@@ -1203,36 +1215,10 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
 
 namespace
 {
-/// Append an integer to a sparse-exchange buffer.
-void putInteger( stdVector< char > & bytes, int64_t const value )
-{
-  unsigned char raw[sizeof( value )];
-  std::memcpy( raw, &value, sizeof( value ) );
-  bytes.insert( bytes.end(), raw, raw + sizeof( value ) );
-}
-
-/// Read the integers of a sparse-exchange buffer in order.
-class IntegerReader
-{
-public:
-  explicit IntegerReader( stdVector< char > const & bytes ): m_bytes( bytes ) {}
-  bool done() const { return m_cursor >= m_bytes.size(); }
-  int64_t next()
-  {
-    int64_t value;
-    GEOS_ERROR_IF( m_cursor + sizeof( value ) > m_bytes.size(), "Truncated mesh redistribution message" );
-    std::memcpy( &value, m_bytes.data() + m_cursor, sizeof( value ) );
-    m_cursor += sizeof( value );
-    return value;
-  }
-private:
-  stdVector< char > const & m_bytes;
-  std::size_t m_cursor = 0;
-};
-
 /// Directory rank of a global ID.
 int homeRank( int64_t const globalId, int const numRanks )
 {
+  GEOS_ERROR_IF( globalId < 0, GEOS_FMT( "Negative global ID {} in mesh redistribution", globalId ) );
   return static_cast< int >( globalId % numRanks );
 }
 } // namespace
@@ -1266,7 +1252,9 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
 
-  if( numRanks == 1 )
+  // A remote neighbor needs input cells on at least two ranks. This skips the
+  // usual case of a complete mesh read on rank 0.
+  if( MpiWrapper::sum( mesh.GetNumberOfCells() > 0 ? 1 : 0, comm ) < 2 )
   {
     return neighbors;
   }
@@ -1325,8 +1313,8 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
       if( used[p] )
       {
         auto & bytes = outgoing.get_inserted( homeRank( pointGids->GetValue( p ), numRanks ) );
-        putInteger( bytes, 0 );
-        putInteger( bytes, pointGids->GetValue( p ) );
+        bytes::append< int64_t >( bytes, 0 );
+        bytes::append< int64_t >( bytes, pointGids->GetValue( p ) );
       }
     }
   }
@@ -1338,8 +1326,8 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
   for( int64_t const anchor : anchors )
   {
     auto & bytes = outgoing.get_inserted( homeRank( anchor, numRanks ) );
-    putInteger( bytes, 1 );
-    putInteger( bytes, anchor );
+    bytes::append< int64_t >( bytes, 1 );
+    bytes::append< int64_t >( bytes, anchor );
   }
   auto incoming = mpi::sparseExchange( outgoing, comm );
   outgoing.clear();
@@ -1350,11 +1338,11 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
     stdVector< std::pair< int, int64_t > > queries;
     for( auto const & [source, bytes] : incoming )
     {
-      IntegerReader reader( bytes );
+      bytes::Reader reader( bytes );
       while( !reader.done() )
       {
-        int64_t const type = reader.next();
-        int64_t const gid = reader.next();
+        int64_t const type = reader.read< int64_t >();
+        int64_t const gid = reader.read< int64_t >();
         if( type == 0 )
         {
           holders.get_inserted( gid ).push_back( source );
@@ -1369,13 +1357,13 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
     {
       auto & bytes = outgoing.get_inserted( source );
       auto const found = holders.find( gid );
-      putInteger( bytes, gid );
-      putInteger( bytes, found == holders.end() ? 0 : static_cast< int64_t >( found->second.size() ) );
+      bytes::append< int64_t >( bytes, gid );
+      bytes::append< int64_t >( bytes, found == holders.end() ? 0 : static_cast< int64_t >( found->second.size() ) );
       if( found != holders.end() )
       {
         for( int const holder : found->second )
         {
-          putInteger( bytes, holder );
+          bytes::append< int64_t >( bytes, holder );
         }
       }
     }
@@ -1386,15 +1374,15 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
   for( auto const & [source, bytes] : incoming )
   {
     GEOS_UNUSED_VAR( source );
-    IntegerReader reader( bytes );
+    bytes::Reader reader( bytes );
     while( !reader.done() )
     {
-      int64_t const gid = reader.next();
-      int64_t const count = reader.next();
+      int64_t const gid = reader.read< int64_t >();
+      int64_t const count = reader.read< int64_t >();
       auto & ranks = holdersOfAnchor.get_inserted( gid );
       for( int64_t k = 0; k < count; ++k )
       {
-        ranks.push_back( static_cast< int >( reader.next() ) );
+        ranks.push_back( static_cast< int >( reader.read< int64_t >() ) );
       }
     }
   }
@@ -1415,11 +1403,11 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
         continue;
       }
       auto & bytes = outgoing.get_inserted( holder );
-      putInteger( bytes, static_cast< int64_t >( k ) );
-      putInteger( bytes, static_cast< int64_t >( gids.size() ) );
+      bytes::append< int64_t >( bytes, static_cast< int64_t >( k ) );
+      bytes::append< int64_t >( bytes, static_cast< int64_t >( gids.size() ) );
       for( int64_t const gid : gids )
       {
-        putInteger( bytes, gid );
+        bytes::append< int64_t >( bytes, gid );
       }
     }
   }
@@ -1438,14 +1426,14 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
     vtkNew< vtkIdList > candidates;
     for( auto const & [source, bytes] : incoming )
     {
-      IntegerReader reader( bytes );
+      bytes::Reader reader( bytes );
       while( !reader.done() )
       {
-        int64_t const request = reader.next();
-        stdVector< int64_t > gids( reader.next() );
+        int64_t const request = reader.read< int64_t >();
+        stdVector< int64_t > gids( reader.read< int64_t >() );
         for( int64_t & gid : gids )
         {
-          gid = reader.next();
+          gid = reader.read< int64_t >();
         }
         stdVector< int64_t > matches;
         auto const first = localPoint.find( gids.front() );
@@ -1483,11 +1471,11 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
         if( !matches.empty() )
         {
           auto & reply = outgoing.get_inserted( source );
-          putInteger( reply, request );
-          putInteger( reply, static_cast< int64_t >( matches.size() ) );
+          bytes::append< int64_t >( reply, request );
+          bytes::append< int64_t >( reply, static_cast< int64_t >( matches.size() ) );
           for( int64_t const gid : matches )
           {
-            putInteger( reply, gid );
+            bytes::append< int64_t >( reply, gid );
           }
         }
       }
@@ -1500,15 +1488,15 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
   for( auto const & [source, bytes] : incoming )
   {
     GEOS_UNUSED_VAR( source );
-    IntegerReader reader( bytes );
+    bytes::Reader reader( bytes );
     while( !reader.done() )
     {
-      auto const request = static_cast< std::size_t >( reader.next() );
-      int64_t const count = reader.next();
+      auto const request = static_cast< std::size_t >( reader.read< int64_t >() );
+      int64_t const count = reader.read< int64_t >();
       GEOS_ERROR_IF( request >= orphans.size(), "Unexpected 2D-to-3D neighbor reply" );
       for( int64_t k = 0; k < count; ++k )
       {
-        found[request].push_back( reader.next() );
+        found[request].push_back( reader.read< int64_t >() );
       }
     }
   }
@@ -1574,111 +1562,120 @@ static void report2DNeighborTopology( ArrayOfArrays< globalIndex, int64_t > cons
 }
 
 /**
- * @brief Assign cells to partitions based on their 3D neighbor locations
+ * @brief Distributed directory of the partition of each 3D cell.
  *
- * Generic function for assigning 2D cells or fracture elements to partitions.
- * Uses deterministic tie-breaking (minimum neighbor global ID) to ensure
- * each cell is co-located with at least one of its 3D neighbors.
- *
- * @param[in] neighborsTo3D Neighbor mapping (cell index -> 3D global IDs)
- * @param[in] local3DGlobalIds Global IDs of 3D cells on this rank
- * @param[in] local3DPartitions Partition assignments for local 3D cells
- * @param[in] comm MPI communicator
- * @return Partition assignments for each input cell
+ * The directory rank of a global ID g is g % P. Each rank publishes its own 3D
+ * cells once; every later lookup sends only the IDs that a rank needs, so the
+ * traffic per rank does not grow with the number of ranks. One directory serves
+ * the 2D cells and every fracture.
  */
-static array1d< int >
-assignCellsBasedOn3DNeighbors( ArrayOfArrays< globalIndex, int64_t > const & neighbors2Dto3D,
-                               arrayView1d< int64_t const > local3DGlobalIds,
-                               arrayView1d< int const > local3DPartitions,
-                               MPI_Comm const comm )
+class PartitionDirectory
 {
-  GEOS_MARK_FUNCTION;
-
-  int const numRanks = MpiWrapper::commSize( comm );
-  localIndex const numCells = neighbors2Dto3D.size();
-  array1d< int > partitions( numCells );
-  if( MpiWrapper::sum( static_cast< int64_t >( numCells ), comm ) == 0 )
+public:
+  /**
+   * @brief Publish the partition of the local 3D cells. Collective.
+   * @param[in] local3DGlobalIds Global IDs of 3D cells on this rank
+   * @param[in] local3DPartitions Partition assignments for local 3D cells
+   * @param[in] comm MPI communicator
+   */
+  PartitionDirectory( arrayView1d< int64_t const > local3DGlobalIds,
+                      arrayView1d< int const > local3DPartitions,
+                      MPI_Comm const comm ):
+    m_comm( comm ),
+    m_numRanks( MpiWrapper::commSize( comm ) )
   {
+    GEOS_MARK_FUNCTION;
+    stdMap< int, stdVector< char > > outgoing;
+    for( localIndex i = 0; i < local3DGlobalIds.size(); ++i )
+    {
+      auto & bytes = outgoing.get_inserted( homeRank( local3DGlobalIds[i], m_numRanks ) );
+      bytes::append< int64_t >( bytes, local3DGlobalIds[i] );
+      bytes::append< int64_t >( bytes, local3DPartitions[i] );
+    }
+    for( auto const & [source, bytes] : mpi::sparseExchange( outgoing, m_comm ) )
+    {
+      GEOS_UNUSED_VAR( source );
+      bytes::Reader reader( bytes );
+      while( !reader.done() )
+      {
+        int64_t const gid = reader.read< int64_t >();
+        m_entries.get_inserted( gid ) = static_cast< int >( reader.read< int64_t >() );
+      }
+    }
+  }
+
+  /**
+   * @brief Assign cells to the partition of their 3D neighbor with the minimum global ID. Collective.
+   *
+   * The deterministic tie-breaking puts each cell with at least one of its 3D neighbors.
+   * @param[in] neighborsTo3D Neighbor mapping (cell index -> 3D global IDs)
+   * @return Partition assignments for each input cell
+   */
+  array1d< int > assign( ArrayOfArrays< globalIndex, int64_t > const & neighborsTo3D ) const
+  {
+    GEOS_MARK_FUNCTION;
+    localIndex const numCells = neighborsTo3D.size();
+    array1d< int > partitions( numCells );
+    if( MpiWrapper::sum( static_cast< int64_t >( numCells ), m_comm ) == 0 )
+    {
+      return partitions;
+    }
+
+    stdVector< int64_t > wanted( numCells );
+    for( localIndex i = 0; i < numCells; ++i )
+    {
+      auto const neighbors = neighborsTo3D[i];
+      GEOS_ERROR_IF( neighbors.size() == 0, "A cell without a 3D neighbor cannot be assigned to a partition" );
+      wanted[i] = *std::min_element( neighbors.begin(), neighbors.end() );
+    }
+    stdMap< int, stdVector< char > > outgoing;
+    std::set< int64_t > const unique( wanted.begin(), wanted.end() );
+    for( int64_t const gid : unique )
+    {
+      bytes::append< int64_t >( outgoing.get_inserted( homeRank( gid, m_numRanks ) ), gid );
+    }
+    auto incoming = mpi::sparseExchange( outgoing, m_comm );
+    outgoing.clear();
+    for( auto const & [source, bytes] : incoming )
+    {
+      bytes::Reader reader( bytes );
+      while( !reader.done() )
+      {
+        int64_t const gid = reader.read< int64_t >();
+        auto const found = m_entries.find( gid );
+        auto & reply = outgoing.get_inserted( source );
+        bytes::append< int64_t >( reply, gid );
+        bytes::append< int64_t >( reply, found == m_entries.end() ? -1 : found->second );
+      }
+    }
+    incoming = mpi::sparseExchange( outgoing, m_comm );
+
+    stdUnorderedMap< int64_t, int > partitionOf;
+    for( auto const & [source, bytes] : incoming )
+    {
+      GEOS_UNUSED_VAR( source );
+      bytes::Reader reader( bytes );
+      while( !reader.done() )
+      {
+        int64_t const gid = reader.read< int64_t >();
+        partitionOf.get_inserted( gid ) = static_cast< int >( reader.read< int64_t >() );
+      }
+    }
+    for( localIndex i = 0; i < numCells; ++i )
+    {
+      auto const found = partitionOf.find( wanted[i] );
+      GEOS_ERROR_IF( found == partitionOf.end() || found->second < 0,
+                     GEOS_FMT( "Partition for 3D neighbor with global ID {} not found", wanted[i] ) );
+      partitions[i] = found->second;
+    }
     return partitions;
   }
 
-  // Deterministic tie-breaking: each cell follows its neighbor with the minimum global ID.
-  stdVector< int64_t > wanted( numCells );
-  for( localIndex i = 0; i < numCells; ++i )
-  {
-    auto const neighbors = neighbors2Dto3D[i];
-    GEOS_ERROR_IF( neighbors.size() == 0, "A cell without a 3D neighbor cannot be assigned to a partition" );
-    wanted[i] = *std::min_element( neighbors.begin(), neighbors.end() );
-  }
-
-  // A directory (rank gid % P) holds the partition of each 3D cell. Each rank
-  // publishes its own 3D cells and asks only for the IDs it needs, so the
-  // traffic per rank does not grow with the number of ranks.
-  stdMap< int, stdVector< char > > outgoing;
-  for( localIndex i = 0; i < local3DGlobalIds.size(); ++i )
-  {
-    auto & bytes = outgoing.get_inserted( homeRank( local3DGlobalIds[i], numRanks ) );
-    putInteger( bytes, 0 );
-    putInteger( bytes, local3DGlobalIds[i] );
-    putInteger( bytes, local3DPartitions[i] );
-  }
-  std::set< int64_t > const unique( wanted.begin(), wanted.end() );
-  for( int64_t const gid : unique )
-  {
-    auto & bytes = outgoing.get_inserted( homeRank( gid, numRanks ) );
-    putInteger( bytes, 1 );
-    putInteger( bytes, gid );
-  }
-  auto incoming = mpi::sparseExchange( outgoing, comm );
-  outgoing.clear();
-
-  stdUnorderedMap< int64_t, int64_t > directory;
-  stdVector< std::pair< int, int64_t > > queries;
-  for( auto const & [source, bytes] : incoming )
-  {
-    IntegerReader reader( bytes );
-    while( !reader.done() )
-    {
-      if( reader.next() == 0 )
-      {
-        int64_t const gid = reader.next();
-        directory.get_inserted( gid ) = reader.next();
-      }
-      else
-      {
-        queries.emplace_back( source, reader.next() );
-      }
-    }
-  }
-  for( auto const & [source, gid] : queries )
-  {
-    auto const found = directory.find( gid );
-    auto & bytes = outgoing.get_inserted( source );
-    putInteger( bytes, gid );
-    putInteger( bytes, found == directory.end() ? -1 : found->second );
-  }
-  incoming = mpi::sparseExchange( outgoing, comm );
-
-  stdUnorderedMap< int64_t, int > partitionOf;
-  for( auto const & [source, bytes] : incoming )
-  {
-    GEOS_UNUSED_VAR( source );
-    IntegerReader reader( bytes );
-    while( !reader.done() )
-    {
-      int64_t const gid = reader.next();
-      partitionOf.get_inserted( gid ) = static_cast< int >( reader.next() );
-    }
-  }
-  for( localIndex i = 0; i < numCells; ++i )
-  {
-    auto const found = partitionOf.find( wanted[i] );
-    GEOS_ERROR_IF( found == partitionOf.end() || found->second < 0,
-                   GEOS_FMT( "Partition for 3D neighbor with global ID {} not found", wanted[i] ) );
-    partitions[i] = found->second;
-  }
-  return partitions;
-}
+private:
+  MPI_Comm m_comm;
+  int m_numRanks;
+  stdUnorderedMap< int64_t, int > m_entries;
+};
 
 /**
  * @brief Extract cells by indices
@@ -1790,11 +1787,17 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
 
   bool const hasLocal2DCells = !cells2DIndices.empty();
 
-  array1d< int > partitions2D = assignCellsBasedOn3DNeighbors(
-    hasLocal2DCells ? neighbors2Dto3D : ArrayOfArrays< globalIndex, int64_t >{},
-    local3DGlobalIds.toViewConst(),
-    partitions3D.toViewConst(),
-    comm );
+  // One directory serves the 2D cells and every fracture. Meshes with neither
+  // (fractures are named on every rank) do not publish their 3D cells.
+  vtkIdType const expected2DCells = MpiWrapper::sum( static_cast< vtkIdType >( cells2DIndices.size() ), comm );
+  std::optional< PartitionDirectory > directory;
+  if( expected2DCells > 0 || !fractureNames.empty() )
+  {
+    directory.emplace( local3DGlobalIds.toViewConst(), partitions3D.toViewConst(), comm );
+  }
+  array1d< int > partitions2D = expected2DCells > 0
+                                ? directory->assign( hasLocal2DCells ? neighbors2Dto3D : ArrayOfArrays< globalIndex, int64_t >{} )
+                                : array1d< int >();
 
   vtkSmartPointer< vtkUnstructuredGrid > cells2D = hasLocal2DCells
       ? extractCellsByIndices( *originalMesh, cells2DIndices )
@@ -1808,8 +1811,6 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
 
   // Conservation check
   vtkIdType const total2DCells = MpiWrapper::sum( redistributed2D->GetNumberOfCells(), comm );
-  vtkIdType const expected2DCells = MpiWrapper::sum( static_cast< vtkIdType >( cells2DIndices.size() ), comm );
-
   GEOS_ERROR_IF( total2DCells != expected2DCells,
                  GEOS_FMT( "2D cell redistribution failed: expected {} cells, got {} cells",
                            expected2DCells, total2DCells ) );
@@ -1843,11 +1844,7 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
       }
     }
 
-    array1d< int > partitionsFracture = assignCellsBasedOn3DNeighbors(
-      localFractureNeighbors,  // Empty on non-root ranks
-      local3DGlobalIds.toViewConst(),
-      partitions3D.toViewConst(),
-      comm );
+    array1d< int > partitionsFracture = directory->assign( localFractureNeighbors );  // Empty on non-root ranks
 
     // Split and redistribute
     vtkSmartPointer< vtkPartitionedDataSet > splitFracture;
@@ -1887,7 +1884,12 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
 
   if( redistributed2D->GetNumberOfCells() > 0 )
   {
-    mergedMesh->ShallowCopy( appendMeshParts( { vtkUnstructuredGrid::SafeDownCast( redistributed3D ), redistributed2D } ) );
+    // appendMeshParts skips null inputs; never drop the 3D cells silently.
+    auto * grid3D = vtkUnstructuredGrid::SafeDownCast( redistributed3D );
+    GEOS_ERROR_IF( grid3D == nullptr && redistributed3D->GetNumberOfCells() > 0,
+                   GEOS_FMT( "Redistributed 3D cells must be a vtkUnstructuredGrid to merge 2D cells, not {}",
+                             redistributed3D->GetClassName() ) );
+    mergedMesh->ShallowCopy( appendMeshParts( { grid3D, redistributed2D } ) );
   }
   else
   {
@@ -2329,6 +2331,8 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     output = mesh;
     auto const globalCellId = canonicalGlobalIds( output->GetCellData()->GetGlobalIds(), output->GetNumberOfCells() );
     auto const globalPointId = canonicalGlobalIds( output->GetPointData()->GetGlobalIds(), output->GetNumberOfPoints() );
+    requireNonnegativeGlobalIds( *globalCellId, "Cell" );
+    requireNonnegativeGlobalIds( *globalPointId, "Point" );
     output->GetCellData()->SetGlobalIds( globalCellId );
     output->GetPointData()->SetGlobalIds( globalPointId );
 
@@ -2479,9 +2483,17 @@ redistributeMeshes( integer const logLevel,
   {
     auto const & fracture = nameToFracture.second;
     if( auto * ids = fracture->GetCellData()->GetGlobalIds() )
-      fracture->GetCellData()->SetGlobalIds( canonicalGlobalIds( ids, fracture->GetNumberOfCells() ) );
+    {
+      auto canonical = canonicalGlobalIds( ids, fracture->GetNumberOfCells() );
+      requireNonnegativeGlobalIds( *canonical, "Fracture cell" );
+      fracture->GetCellData()->SetGlobalIds( canonical );
+    }
     if( auto * ids = fracture->GetPointData()->GetGlobalIds() )
-      fracture->GetPointData()->SetGlobalIds( canonicalGlobalIds( ids, fracture->GetNumberOfPoints() ) );
+    {
+      auto canonical = canonicalGlobalIds( ids, fracture->GetNumberOfPoints() );
+      requireNonnegativeGlobalIds( *canonical, "Fracture point" );
+      fracture->GetPointData()->SetGlobalIds( canonical );
+    }
     fractures.push_back( nameToFracture.second );
   }
 
@@ -3637,7 +3649,7 @@ void fillCellBlock( vtkDataSet & mesh,
   }
 }
 
-void importMaterialField( stdVector< vtkIdType > const & cellIds,
+void importMaterialField( Span< vtkIdType const > const cellIds,
                           vtkDataArray * vtkArray,
                           WrapperBase & wrapper )
 {
@@ -3674,7 +3686,7 @@ void importMaterialField( stdVector< vtkIdType > const & cellIds,
   }, wrapper );
 }
 
-void importRegularField( stdVector< vtkIdType > const & cellIds,
+void importRegularField( Span< vtkIdType const > const cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
@@ -4089,13 +4101,15 @@ void writeRefinedCells( integer const logLevel, vtkDataSet & mesh,
     block.resize( LvArray::integerConversion< localIndex >( descriptor.cells.size() ) );
     vtk::fillCellBlock( mesh, descriptor.cells, block );
     descendants[descriptor.sourceName].insert( descriptor.name );
-    // External properties use the existing SubRegion copy and ghost/restart path.
-    for( char const * name : { "_geosUniformRootCellId", "_geosUniformParentCellId", "_geosUniformGeneration",
-                               "_geosUniformChildOrdinal", "_geosUniformRootOwner", "_geosUniformSourceType", "_geosUniformSourceAttribute" } )
+    // Only the coarse root ID stays with the cells, to map fine cells to their
+    // coarse cell. The other lineage arrays are used during import only. The
+    // mesh is rebuilt on restart, so the root ID is not written to restart files.
     {
+      char const * const name = "_geosUniformRootCellId";
       vtkIdTypeArray * const array = vtkIdTypeArray::SafeDownCast( mesh.GetCellData()->GetArray( name ) );
       GEOS_THROW_IF( array == nullptr, GEOS_FMT( "Missing refinement lineage '{}'", name ), InputError );
       auto & property = block.addProperty< array1d< globalIndex > >( name );
+      block.getWrapperBase( name ).setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
       property.resize( block.size() );
       for( localIndex c = 0; c < block.size(); ++c )
         property[c] = array->GetValue( descriptor.cells[c] );

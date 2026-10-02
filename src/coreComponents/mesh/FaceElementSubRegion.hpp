@@ -192,11 +192,10 @@ public:
    * @details In order to keep a consistent normal between multi processors ranks, we force the faces to be ordered
    * based on the global numbering of the 3d elements attached to each face. The first face is always the one
    * attached to the 3d cell with the smallest globalIndex.
-   * @param refinedTopology Whether to align incident-cell columns for a refined import.
+   * The incident-cell columns are swapped together with the faces.
    */
   void flipFaceMap( FaceManager & faceManager,
-                    ElementRegionManager const & elemManager,
-                    bool refinedTopology = false );
+                    ElementRegionManager const & elemManager );
 
   /**
    * @brief Reorder the node list of the second face (kf1) of each fracture element so that

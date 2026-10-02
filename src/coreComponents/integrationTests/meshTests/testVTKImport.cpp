@@ -1265,13 +1265,15 @@ TEST( VTKImport, uniformRefinementSupportedElementsAndSourceBlocks )
         EXPECT_EQ( blocks.getGroup< CellBlockABC >( "0_tetrahedra" ).numElements(), levels == 1 ? 8 : 64 );
         auto const & prism = blocks.getGroup< CellBlockABC >( "10_hendecagonalPrisms__refined_hexahedra" );
         EXPECT_EQ( prism.numElements(), levels == 1 ? 22 : 176 );
+        // Only the coarse root ID stays with the cells, and it is not written to restarts.
         int lineageCount = 0;
         prism.forExternalProperties( [&]( WrapperBase const & wrapper )
         {
-          EXPECT_TRUE( wrapper.getName().starts_with( "_geosUniform" ) );
+          EXPECT_EQ( wrapper.getName(), "_geosUniformRootCellId" );
+          EXPECT_EQ( wrapper.getRestartFlags(), dataRepository::RestartFlags::NO_WRITE );
           ++lineageCount;
         } );
-        EXPECT_EQ( lineageCount, 7 );
+        EXPECT_EQ( lineageCount, 1 );
       };
       TestMeshImport( testMeshDir + "/" + filename, validate, "", 0, "", std::to_string( levels ) );
     }

@@ -101,8 +101,8 @@ void exchangeManyBytes( std::vector< ByteExchange > const & exchanges, MPI_Reque
  * senders with synchronous sends and a nonblocking barrier (the NBX algorithm),
  * so the cost depends on the number of peers of a rank, not on the size of the
  * communicator. A buffer addressed to the calling rank is returned unchanged.
- * Collective over @p comm. No other messages with @p tag or @p tag + 1 may be
- * pending on @p comm.
+ * Collective over @p comm. Each call communicates on its own duplicate of
+ * @p comm, so consecutive calls cannot exchange each other's messages.
  * @param outgoing The buffer for each destination rank.
  * @param comm The MPI communicator.
  * @param tag The MPI tag of the handshake; payloads use @p tag + 1.

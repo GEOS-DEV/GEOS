@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -1038,6 +1039,8 @@ struct Level
   std::vector< ChildCellKey > cellKeys;
   std::vector< Participants > cellParticipants;
   NodeSetMembers nodeSets;
+  /// New points whose authoritative position differs from the planned one.
+  std::vector< char > movedPoints;
   /// Parents that cannot be refined, and the first few reasons.
   std::uint64_t invalidCells = 0;
   std::vector< std::string > invalidReasons;
@@ -1083,6 +1086,114 @@ std::vector< Connectivity > boundaryFaces( State const & state )
     }
   }
   return result;
+}
+
+/**
+ * Warn about node sets that refinement cannot extend. New points join a node
+ * set only on domain-boundary faces whose corners all belong to it. A member
+ * that is not a corner of such a face (on a line, at a point, on an interior
+ * surface or in a volume) gets no new neighbors in the set. A shared member is
+ * covered if any participant covers it, and each member is counted by its owner.
+ * Collective.
+ */
+void warnUncoveredNodeSets( State const & main, UniformRefinementOptions const & options, Communication & comm, MPI_Comm communicator )
+{
+  auto const policies = policiesFor( main, options );
+  std::vector< std::string > names;
+  for( auto const & [name, policy] : policies.pointArrays )
+  {
+    if( policy == PointTransferPolicy::nodeSet )
+    {
+      names.push_back( name );
+    }
+  }
+  if( names.empty() )
+  {
+    return;
+  }
+  std::size_t const numPoints = main.coordinates.size();
+  std::vector< std::vector< char > > members( names.size() ), covered( names.size() );
+  std::vector< SharedFlag > flags;
+  comm.checked( "node-set coverage", [&]
+  {
+    auto const faces = boundaryFaces( main );
+    for( std::size_t k = 0; k < names.size(); ++k )
+    {
+      members[k].assign( numPoints, 0 );
+      covered[k].assign( numPoints, 0 );
+      vtkDataArray * const array = main.pointData->GetArray( names[k].c_str() );
+      if( array == nullptr )
+      {
+        continue;
+      }
+      for( std::size_t p = 0; p < numPoints; ++p )
+      {
+        members[k][p] = std::equal_to< double >{} ( array->GetComponent( static_cast< vtkIdType >( p ), 0 ), 1. );
+      }
+      for( Connectivity const & face : faces )
+      {
+        if( std::all_of( face.begin(), face.end(), [&]( vtkIdType p ) { return members[k][p] != 0; } ) )
+        {
+          for( vtkIdType p : face )
+          {
+            covered[k][p] = 1;
+          }
+        }
+      }
+    }
+    for( auto const & entity : main.interfaces )
+    {
+      if( entity.key.kind == EntityKind::vertex )
+      {
+        for( std::size_t k = 0; k < names.size(); ++k )
+        {
+          if( covered[k][entity.localCorners.front()] )
+          {
+            flags.push_back( { entity.key, entity.participants, k } );
+          }
+        }
+      }
+    }
+  } );
+  auto const sharedCovered = comm.unionSharedFlags( 0, flags );
+  std::vector< std::uint64_t > uncovered( names.size(), 0 ), globalUncovered( names.size(), 0 );
+  comm.checked( "node-set coverage count", [&]
+  {
+    std::vector< char > owned( numPoints, 1 );
+    for( auto const & entity : main.interfaces )
+    {
+      if( entity.key.kind != EntityKind::vertex )
+      {
+        continue;
+      }
+      vtkIdType const p = entity.localCorners.front();
+      owned[p] = entity.participants.front() == comm.rank();
+      for( std::size_t k = 0; k < names.size(); ++k )
+      {
+        if( sharedCovered.count( { entity.key, k } ) )
+        {
+          covered[k][p] = 1;
+        }
+      }
+    }
+    for( std::size_t k = 0; k < names.size(); ++k )
+    {
+      for( std::size_t p = 0; p < numPoints; ++p )
+      {
+        uncovered[k] += members[k][p] && !covered[k][p] && owned[p];
+      }
+    }
+  } );
+  MpiWrapper::allReduce( uncovered, globalUncovered, MpiWrapper::Reduction::Sum, communicator );
+  for( std::size_t k = 0; k < names.size(); ++k )
+  {
+    GEOS_WARNING_IF( globalUncovered[k] > 0 && comm.rank() == 0,
+                     GEOS_FMT( "Uniform refinement: {} node(s) of node set '{}' are not on a domain-boundary face whose nodes "
+                               "all belong to the set. Refinement adds new nodes to a node set only on such faces, so near "
+                               "these nodes (for example along a line, at a point, on an interior surface or in a volume) "
+                               "the set keeps only its coarse nodes. A geometric set, such as a Box, is evaluated on the "
+                               "refined mesh instead.", globalUncovered[k], names[k] ) );
+  }
 }
 
 void planChildren( State const & state, Level & level, int generation, int rank )
@@ -1520,6 +1631,13 @@ vtkSmartPointer< vtkUnstructuredGrid > buildGrid( State const & state, int bucke
 void validateRefinedTransform( vtkDataSet & mesh, Coordinates const & translation, Coordinates const & scale, MPI_Comm communicator )
 {
   Communication comm( communicator );
+  // A diagonal transform with positive determinant multiplies every cell
+  // Jacobian by the same positive factor, so the validated refined cells stay
+  // valid, apart from rounding. Scaling only adds a relative rounding error.
+  // A translation that is large compared with the coordinates can remove
+  // their significant digits and collapse cells, so only then is every cell
+  // checked again.
+  std::array< double, 3 > largest{};
   comm.checked( "refined physical coordinate transform", [&]
   {
     int negativeAxes = 0;
@@ -1535,6 +1653,29 @@ void validateRefinedTransform( vtkDataSet & mesh, Coordinates const & translatio
     {
       throw std::invalid_argument( "Refined coordinate transform reverses orientation" );
     }
+    for( vtkIdType p = 0; p < mesh.GetNumberOfPoints(); ++p )
+    {
+      double position[3];
+      mesh.GetPoint( p, position );
+      for( int d = 0; d < 3; ++d )
+      {
+        if( !std::isfinite( ( position[d] + translation[d] ) * scale[d] ) )
+        {
+          throw std::overflow_error( "Refined coordinate transform makes a nonfinite coordinate" );
+        }
+        largest[d] = std::max( largest[d], std::abs( position[d] ) );
+      }
+    }
+  } );
+  std::array< double, 3 > globalLargest{};
+  MpiWrapper::allReduce( largest, globalLargest, MpiWrapper::Reduction::Max, communicator );
+  if( std::abs( translation[0] ) <= globalLargest[0] && std::abs( translation[1] ) <= globalLargest[1] &&
+      std::abs( translation[2] ) <= globalLargest[2] )
+  {
+    return;
+  }
+  comm.checked( "refined physical coordinate precision", [&]
+  {
     std::vector< Coordinates > physical( mesh.GetNumberOfPoints() );
     for( vtkIdType p = 0; p < mesh.GetNumberOfPoints(); ++p )
     {
@@ -1774,6 +1915,7 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
   } );
   reportForecast( result.resources, options.reportStatistics, comm, communicator );
   reportLevel( running, 0, options.reportStatistics, comm, communicator );
+  warnUncoveredNodeSets( states[0], options, comm, communicator );
   auto previousCommunication = result.coarseCommunication;
   for( int generation = 1; generation <= levels; ++generation )
   {
@@ -1918,6 +2060,7 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
         auto & next = plan.next;
         next.pointIds = states[s].pointIds;
         next.coordinates.reserve( plan.points->points().size() );
+        plan.movedPoints.assign( plan.points->points().size(), 0 );
         PointFieldLayout fields( *next.pointData );
         for( vtkIdType p = 0; p < static_cast< vtkIdType >( plan.points->points().size() ); ++p )
         {
@@ -1931,6 +2074,8 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
             auto const & record = records.at( recipe.key );
             next.pointIds.push_back( record.globalId );
             next.coordinates.push_back( record.position );
+            // Bitwise: a signed zero also counts as moved, which is conservative.
+            plan.movedPoints[p] = std::memcmp( record.position.data(), recipe.position.data(), sizeof( Coordinates ) ) != 0;
             if( plan.interfaces->participants( { p } ).size() > 1 )
             {
               fields.install( p, record.fields, FieldTupleFormat::valuesOnly );
@@ -2110,14 +2255,29 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
       GEOS_MARK_SCOPE_STR( "uniformRefinement/validation" );
       for( auto const & plan : plans )
       {
-        PointRegistry finalPoints( plan.next.coordinates, plan.next.pointIds, plan.next.ns );
+        // subdivideCell validated every child with the planned positions. Only
+        // a cell with a shared point whose owner's position differs by roundoff
+        // is checked again, with a registry of its own points.
         for( std::size_t c = 0; c < plan.next.cells.size(); ++c )
         {
           auto const & cell = plan.next.cells[c];
+          if( isSurface( cell ) ||
+              std::none_of( cell.points.begin(), cell.points.end(), [&]( vtkIdType p ) { return plan.movedPoints[p] != 0; } ) )
+          {
+            continue;
+          }
           withCellContext( plan.next.name, generation, plan.next.parents[c], cell.vtkType, [&]
           {
-            if( !isSurface( cell ) )
-              validateGeometry( cell, finalPoints );
+            std::vector< Coordinates > coordinates;
+            Connectivity ids;
+            Cell local = cell;
+            for( std::size_t k = 0; k < cell.points.size(); ++k )
+            {
+              coordinates.push_back( plan.next.coordinates[cell.points[k]] );
+              ids.push_back( plan.next.pointIds[cell.points[k]] );
+              local.points[k] = static_cast< vtkIdType >( k );
+            }
+            validateGeometry( local, PointRegistry( std::move( coordinates ), std::move( ids ), plan.next.ns ) );
           } );
         }
         if( std::find( plan.next.cellIds.begin(), plan.next.cellIds.end(), -1 ) != plan.next.cellIds.end() )

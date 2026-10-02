@@ -155,6 +155,10 @@ stdMap< int, stdVector< char > > sparseExchange( stdMap< int, stdVector< char > 
   if( self != outgoing.end() )
     incoming.get_inserted( rank ) = self->second;
 #ifdef GEOS_USE_MPI
+  // Each call uses its own communicator. A rank that leaves the barrier early
+  // can start the next exchange while a slower rank still probes for this
+  // one's handshakes; separate communicators keep the two calls apart.
+  MPI_Comm const callComm = MpiWrapper::commDup( comm );
   // Handshake: one synchronous size message per peer. A completed synchronous
   // send means that the peer has received it, so after the nonblocking barrier
   // completes, every rank knows all of its senders.
@@ -168,7 +172,7 @@ stdMap< int, stdVector< char > > sparseExchange( stdMap< int, stdVector< char > 
       continue;
     sizes.push_back( bytes.size() );
     sends.emplace_back();
-    MPI_Issend( &sizes.back(), 1, MPI_UINT64_T, peer, tag, comm, &sends.back() );
+    MPI_Issend( &sizes.back(), 1, MPI_UINT64_T, peer, tag, callComm, &sends.back() );
   }
   stdMap< int, std::uint64_t > incomingSizes;
   MPI_Request barrier = MPI_REQUEST_NULL;
@@ -177,11 +181,11 @@ stdMap< int, stdVector< char > > sparseExchange( stdMap< int, stdVector< char > 
   {
     int arrived = 0;
     MPI_Status status;
-    MPI_Iprobe( MPI_ANY_SOURCE, tag, comm, &arrived, &status );
+    MPI_Iprobe( MPI_ANY_SOURCE, tag, callComm, &arrived, &status );
     if( arrived )
     {
       std::uint64_t bytes = 0;
-      MPI_Recv( &bytes, 1, MPI_UINT64_T, status.MPI_SOURCE, tag, comm, MPI_STATUS_IGNORE );
+      MPI_Recv( &bytes, 1, MPI_UINT64_T, status.MPI_SOURCE, tag, callComm, MPI_STATUS_IGNORE );
       incomingSizes.get_inserted( status.MPI_SOURCE ) = bytes;
     }
     int done = 0;
@@ -190,7 +194,7 @@ stdMap< int, stdVector< char > > sparseExchange( stdMap< int, stdVector< char > 
       MPI_Testall( static_cast< int >( sends.size() ), sends.data(), &done, MPI_STATUSES_IGNORE );
       if( done )
       {
-        MPI_Ibarrier( comm, &barrier );
+        MPI_Ibarrier( callComm, &barrier );
         barrierStarted = true;
       }
     }
@@ -220,7 +224,9 @@ stdMap< int, stdVector< char > > sparseExchange( stdMap< int, stdVector< char > 
   for( auto const & entry : exchanges )
     list.push_back( entry.second );
   std::vector< MPI_Request > requests( 2 * list.size() );
-  exchangeManyBytes( list, requests.data(), tag + 1, comm, chunkBytes );
+  exchangeManyBytes( list, requests.data(), tag + 1, callComm, chunkBytes );
+  MPI_Comm toFree = callComm;
+  MpiWrapper::commFree( toFree );
 #else
   GEOS_UNUSED_VAR( comm, tag, chunkBytes );
   for( auto const & entry : outgoing )

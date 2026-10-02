@@ -18,6 +18,7 @@
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #endif
 
+#include "common/ByteBuffer.hpp"
 #include "common/format/Format.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/MpiWrapper.hpp"
@@ -77,27 +78,7 @@ namespace
 // Buffer serialization helpers
 // ============================================================================
 
-void appendBytes( stdVector< char > & buf, void const * data, int64_t n )
-{
-  int64_t const pos = static_cast< int64_t >( buf.size() );
-  buf.resize( static_cast< size_t >( pos + n ) );
-  std::memcpy( buf.data() + pos, data, static_cast< size_t >( n ) );
-}
-
-template< typename T >
-void appendValue( stdVector< char > & buf, T val )
-{
-  appendBytes( buf, &val, sizeof( T ) );
-}
-
-template< typename T >
-T readValue( char const * & ptr )
-{
-  T val;
-  std::memcpy( &val, ptr, sizeof( T ) );
-  ptr += sizeof( T );
-  return val;
-}
+// Buffers use the shared helpers of common/ByteBuffer.hpp; reads are bounds-checked.
 
 // ============================================================================
 // MPI large-message helpers (handles buffers > 2 GB)
@@ -124,21 +105,21 @@ constexpr int NUM_ATTR_TYPES = vtkDataSetAttributes::NUM_ATTRIBUTES;
 void packString( stdVector< char > & buf, char const * value )
 {
   int64_t const size = value ? static_cast< int64_t >( std::strlen( value ) ) : -1;
-  appendValue( buf, size );
+  bytes::append( buf, size );
   if( size > 0 )
-    appendBytes( buf, value, size );
+    bytes::appendRaw( buf, value, size );
 }
 
 void packDataArrays( stdVector< char > & buf, vtkFieldData * data )
 {
-  appendValue( buf, static_cast< int32_t >( data->GetNumberOfArrays() ) );
+  bytes::append( buf, static_cast< int32_t >( data->GetNumberOfArrays() ) );
   for( int a = 0; a < data->GetNumberOfArrays(); ++a )
   {
     vtkAbstractArray * arr = data->GetAbstractArray( a );
     packString( buf, arr->GetName() );
-    appendValue( buf, static_cast< int32_t >( arr->GetNumberOfComponents() ) );
-    appendValue( buf, static_cast< int32_t >( arr->GetDataType() ) );
-    appendValue( buf, static_cast< int64_t >( arr->GetNumberOfTuples() ) );
+    bytes::append( buf, static_cast< int32_t >( arr->GetNumberOfComponents() ) );
+    bytes::append( buf, static_cast< int32_t >( arr->GetDataType() ) );
+    bytes::append( buf, static_cast< int64_t >( arr->GetNumberOfTuples() ) );
     for( int c = 0; c < arr->GetNumberOfComponents(); ++c )
       packString( buf, arr->GetComponentName( c ) );
     if( auto * strings = vtkStringArray::SafeDownCast( arr ) )
@@ -146,15 +127,15 @@ void packDataArrays( stdVector< char > & buf, vtkFieldData * data )
       for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
       {
         auto const & value = strings->GetValue( v );
-        appendValue( buf, static_cast< int64_t >( value.size() ) );
+        bytes::append( buf, static_cast< int64_t >( value.size() ) );
         if( !value.empty() )
-          appendBytes( buf, value.data(), value.size() );
+          bytes::appendRaw( buf, value.data(), value.size() );
       }
     }
     else if( auto * bits = vtkBitArray::SafeDownCast( arr ) )
     {
       for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
-        appendValue( buf, static_cast< unsigned char >( bits->GetValue( v ) ) );
+        bytes::append( buf, static_cast< unsigned char >( bits->GetValue( v ) ) );
     }
     else
     {
@@ -165,7 +146,7 @@ void packDataArrays( stdVector< char > & buf, vtkFieldData * data )
       GEOS_ERROR_IF( width <= 0 || count > std::numeric_limits< int64_t >::max() / width,
                      "Mesh scatter array byte count overflow" );
       if( count > 0 )
-        appendBytes( buf, numeric->GetVoidPointer( 0 ), count * width );
+        bytes::appendRaw( buf, numeric->GetVoidPointer( 0 ), count * width );
     }
   }
   // Indices preserve roles even for unnamed arrays or string pedigree IDs.
@@ -175,28 +156,27 @@ void packDataArrays( stdVector< char > & buf, vtkFieldData * data )
   if( attrs )
     attrs->GetAttributeIndices( roles );
   for( int role : roles )
-    appendValue( buf, static_cast< int32_t >( role ) );
+    bytes::append( buf, static_cast< int32_t >( role ) );
 }
 
-std::pair< bool, string > unpackString( char const * & ptr )
+std::pair< bool, string > unpackString( bytes::Reader & reader )
 {
-  int64_t const size = readValue< int64_t >( ptr );
+  int64_t const size = reader.read< int64_t >();
   if( size < 0 )
     return { false, {} };
-  string value( ptr, size );
-  ptr += size;
+  string value( reader.view( size ), size );
   return { true, std::move( value ) };
 }
 
-void unpackDataArrays( char const * & ptr, vtkFieldData * data )
+void unpackDataArrays( bytes::Reader & reader, vtkFieldData * data )
 {
-  int32_t const nArrays = readValue< int32_t >( ptr );
+  int32_t const nArrays = reader.read< int32_t >();
   for( int a = 0; a < nArrays; ++a )
   {
-    auto const name = unpackString( ptr );
-    int32_t const nComp = readValue< int32_t >( ptr );
-    int32_t const dataType = readValue< int32_t >( ptr );
-    int64_t const nTuples = readValue< int64_t >( ptr );
+    auto const name = unpackString( reader );
+    int32_t const nComp = reader.read< int32_t >();
+    int32_t const dataType = reader.read< int32_t >();
+    int64_t const nTuples = reader.read< int64_t >();
     vtkSmartPointer< vtkAbstractArray > arr;
     arr.TakeReference( vtkAbstractArray::CreateArray( dataType ) );
     GEOS_ERROR_IF( arr == nullptr || nComp <= 0 || nTuples < 0,
@@ -207,7 +187,7 @@ void unpackDataArrays( char const * & ptr, vtkFieldData * data )
     arr->SetNumberOfTuples( nTuples );
     for( int c = 0; c < nComp; ++c )
     {
-      auto const component = unpackString( ptr );
+      auto const component = unpackString( reader );
       if( component.first )
         arr->SetComponentName( c, component.second.c_str() );
     }
@@ -215,17 +195,16 @@ void unpackDataArrays( char const * & ptr, vtkFieldData * data )
     {
       for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
       {
-        int64_t const size = readValue< int64_t >( ptr );
+        int64_t const size = reader.read< int64_t >();
         GEOS_ERROR_IF( size < 0, "Invalid mesh scatter string length" );
-        strings->SetValue( v, string( ptr, size ) );
-        ptr += size;
+        strings->SetValue( v, string( reader.view( size ), size ) );
       }
     }
     else if( auto * bits = vtkBitArray::SafeDownCast( arr ) )
     {
       for( vtkIdType v = 0; v < arr->GetNumberOfValues(); ++v )
       {
-        auto const value = readValue< unsigned char >( ptr );
+        auto const value = reader.read< unsigned char >();
         GEOS_ERROR_IF( value > 1, "Invalid mesh scatter bit value" );
         bits->SetValue( v, value );
       }
@@ -238,16 +217,14 @@ void unpackDataArrays( char const * & ptr, vtkFieldData * data )
       int64_t const width = arr->GetDataTypeSize();
       GEOS_ERROR_IF( width <= 0 || count > std::numeric_limits< int64_t >::max() / width,
                      "Mesh scatter array byte count overflow" );
-      if( count > 0 )
-        std::memcpy( numeric->GetVoidPointer( 0 ), ptr, count * width );
-      ptr += count * width;
+      reader.readRaw( count > 0 ? numeric->GetVoidPointer( 0 ) : nullptr, count * width );
     }
     data->AddArray( arr );
   }
   auto * attrs = vtkDataSetAttributes::SafeDownCast( data );
   for( int t = 0; t < NUM_ATTR_TYPES; ++t )
   {
-    int const role = readValue< int32_t >( ptr );
+    int const role = reader.read< int32_t >();
     if( attrs && role >= 0 )
       attrs->SetActiveAttribute( role, t );
   }
@@ -267,7 +244,7 @@ void appendCellArray( stdVector< char > & buf, vtkCellArray * cells )
 {
   if( cells == nullptr )
   {
-    appendValue( buf, int64_t( -1 ) );
+    bytes::append( buf, int64_t( -1 ) );
     return;
   }
 
@@ -279,31 +256,29 @@ void appendCellArray( stdVector< char > & buf, vtkCellArray * cells )
   int64_t const nOffsets = offsets->GetNumberOfValues();
   int64_t const connSize = conn->GetNumberOfValues();
 
-  appendValue( buf, nOffsets );
-  appendValue( buf, connSize );
-  appendBytes( buf, offsets->GetVoidPointer( 0 ), nOffsets * sizeof( vtkIdType ) );
-  appendBytes( buf, conn->GetVoidPointer( 0 ), connSize * sizeof( vtkIdType ) );
+  bytes::append( buf, nOffsets );
+  bytes::append( buf, connSize );
+  bytes::appendRaw( buf, offsets->GetVoidPointer( 0 ), nOffsets * sizeof( vtkIdType ) );
+  bytes::appendRaw( buf, conn->GetVoidPointer( 0 ), connSize * sizeof( vtkIdType ) );
 }
 
-vtkSmartPointer< vtkCellArray > readCellArray( char const * & ptr )
+vtkSmartPointer< vtkCellArray > readCellArray( bytes::Reader & reader )
 {
-  int64_t const nOffsets = readValue< int64_t >( ptr );
+  int64_t const nOffsets = reader.read< int64_t >();
   if( nOffsets < 0 )
   {
     return nullptr;
   }
 
-  int64_t const connSize = readValue< int64_t >( ptr );
+  int64_t const connSize = reader.read< int64_t >();
 
   vtkNew< vtkIdTypeArray > offsets;
   offsets->SetNumberOfValues( nOffsets );
-  std::memcpy( offsets->GetVoidPointer( 0 ), ptr, nOffsets * sizeof( vtkIdType ) );
-  ptr += nOffsets * sizeof( vtkIdType );
+  reader.readRaw( offsets->GetVoidPointer( 0 ), nOffsets * sizeof( vtkIdType ) );
 
   vtkNew< vtkIdTypeArray > conn;
   conn->SetNumberOfValues( connSize );
-  std::memcpy( conn->GetVoidPointer( 0 ), ptr, connSize * sizeof( vtkIdType ) );
-  ptr += connSize * sizeof( vtkIdType );
+  reader.readRaw( conn->GetVoidPointer( 0 ), connSize * sizeof( vtkIdType ) );
 
   auto cells = vtkSmartPointer< vtkCellArray >::New();
   cells->SetData( offsets, conn );
@@ -321,8 +296,8 @@ void packGrid( vtkUnstructuredGrid * grid,
 
   int64_t const nPoints = grid->GetNumberOfPoints();
   int64_t const nCells = grid->GetNumberOfCells();
-  appendValue( buf, nPoints );
-  appendValue( buf, nCells );
+  bytes::append( buf, nPoints );
+  bytes::append( buf, nCells );
 
   // Points (always serialized as real64)
   if( nPoints > 0 )
@@ -330,7 +305,7 @@ void packGrid( vtkUnstructuredGrid * grid,
     vtkPoints * points = grid->GetPoints();
     if( auto * coords = vtkDoubleArray::SafeDownCast( points->GetData() ) )
     {
-      appendBytes( buf, coords->GetPointer( 0 ), nPoints * 3 * sizeof( real64 ) );
+      bytes::appendRaw( buf, coords->GetPointer( 0 ), nPoints * 3 * sizeof( real64 ) );
     }
     else
     {
@@ -338,7 +313,7 @@ void packGrid( vtkUnstructuredGrid * grid,
       {
         real64 p[3];
         points->GetPoint( i, p );
-        appendBytes( buf, p, sizeof( p ) );
+        bytes::appendRaw( buf, p, sizeof( p ) );
       }
     }
   }
@@ -353,7 +328,7 @@ void packGrid( vtkUnstructuredGrid * grid,
 #endif
     if( types != nullptr )
     {
-      appendBytes( buf, types->GetPointer( 0 ), nCells * sizeof( unsigned char ) );
+      bytes::appendRaw( buf, types->GetPointer( 0 ), nCells * sizeof( unsigned char ) );
     }
     else
     {
@@ -362,7 +337,7 @@ void packGrid( vtkUnstructuredGrid * grid,
       {
         cellTypes[i] = static_cast< unsigned char >( grid->GetCellType( i ) );
       }
-      appendBytes( buf, cellTypes.data(), nCells * sizeof( unsigned char ) );
+      bytes::appendRaw( buf, cellTypes.data(), nCells * sizeof( unsigned char ) );
     }
 
     appendCellArray( buf, grid->GetCells() );
@@ -381,10 +356,10 @@ void packGrid( vtkUnstructuredGrid * grid,
 
   // Assignment vector
   int64_t const assignSize = static_cast< int64_t >( assignment.size() );
-  appendValue( buf, assignSize );
+  bytes::append( buf, assignSize );
   if( assignSize > 0 )
   {
-    appendBytes( buf, assignment.data(), assignSize * sizeof( integer ) );
+    bytes::appendRaw( buf, assignment.data(), assignSize * sizeof( integer ) );
   }
 }
 
@@ -392,10 +367,10 @@ void packGrid( vtkUnstructuredGrid * grid,
 std::pair< vtkSmartPointer< vtkUnstructuredGrid >, stdVector< integer > >
 unpackGrid( stdVector< char > const & buf )
 {
-  char const * ptr = buf.data();
+  bytes::Reader reader( buf );
 
-  int64_t const nPoints = readValue< int64_t >( ptr );
-  int64_t const nCells = readValue< int64_t >( ptr );
+  int64_t const nPoints = reader.read< int64_t >();
+  int64_t const nCells = reader.read< int64_t >();
 
   auto grid = vtkSmartPointer< vtkUnstructuredGrid >::New();
 
@@ -406,8 +381,7 @@ unpackGrid( stdVector< char > const & buf )
     points->SetDataTypeToDouble();
     points->SetNumberOfPoints( nPoints );
     vtkDoubleArray * const coords = vtkDoubleArray::SafeDownCast( points->GetData() );
-    std::memcpy( coords->GetPointer( 0 ), ptr, nPoints * 3 * sizeof( real64 ) );
-    ptr += nPoints * 3 * sizeof( real64 );
+    reader.readRaw( coords->GetPointer( 0 ), nPoints * 3 * sizeof( real64 ) );
     grid->SetPoints( points );
   }
 
@@ -416,12 +390,11 @@ unpackGrid( stdVector< char > const & buf )
   {
     vtkNew< vtkUnsignedCharArray > types;
     types->SetNumberOfValues( nCells );
-    std::memcpy( types->GetVoidPointer( 0 ), ptr, nCells * sizeof( unsigned char ) );
-    ptr += nCells * sizeof( unsigned char );
+    reader.readRaw( types->GetVoidPointer( 0 ), nCells * sizeof( unsigned char ) );
 
-    vtkSmartPointer< vtkCellArray > cellArray = readCellArray( ptr );
-    vtkSmartPointer< vtkCellArray > faceLocations = readCellArray( ptr );
-    vtkSmartPointer< vtkCellArray > faces = readCellArray( ptr );
+    vtkSmartPointer< vtkCellArray > cellArray = readCellArray( reader );
+    vtkSmartPointer< vtkCellArray > faceLocations = readCellArray( reader );
+    vtkSmartPointer< vtkCellArray > faces = readCellArray( reader );
 
     if( faces == nullptr )
     {
@@ -439,17 +412,16 @@ unpackGrid( stdVector< char > const & buf )
   }
 
   // Field data
-  unpackDataArrays( ptr, grid->GetCellData() );
-  unpackDataArrays( ptr, grid->GetPointData() );
-  unpackDataArrays( ptr, grid->GetFieldData() );
+  unpackDataArrays( reader, grid->GetCellData() );
+  unpackDataArrays( reader, grid->GetPointData() );
+  unpackDataArrays( reader, grid->GetFieldData() );
 
   // Assignment
-  int64_t const assignSize = readValue< int64_t >( ptr );
+  int64_t const assignSize = reader.read< int64_t >();
   stdVector< integer > assignment( assignSize );
   if( assignSize > 0 )
   {
-    std::memcpy( assignment.data(), ptr, assignSize * sizeof( integer ) );
-    ptr += assignSize * sizeof( integer );
+    reader.readRaw( assignment.data(), assignSize * sizeof( integer ) );
   }
 
   return { grid, std::move( assignment ) };
@@ -708,27 +680,12 @@ computeCellRanksRCB( vtkDataSet & mesh, integer size )
 // collective below exchanges data whose size is independent of the cell count.
 // ============================================================================
 
-/// Global index of the first local cell, with cells numbered in rank order.
-vtkIdType firstGlobalCell( vtkIdType localCells, MPI_Comm comm )
-{
-  vtkIdType first = 0;
-#ifdef GEOS_USE_MPI
-  MpiWrapper::exscan( &localCells, &first, 1, MPI_SUM, comm );
-  if( MpiWrapper::commRank( comm ) == 0 )
-  {
-    first = 0;
-  }
-#else
-  GEOS_UNUSED_VAR( localCells, comm );
-#endif
-  return first;
-}
-
 /// Same blocks as computeCellRanksContiguous, applied to the rank-ordered global index.
 stdVector< integer >
 distributedRanksContiguous( vtkIdType localCells, vtkIdType totalCells, integer size, MPI_Comm comm )
 {
-  vtkIdType const first = firstGlobalCell( localCells, comm );
+  // Global index of the first local cell, with cells numbered in rank order.
+  vtkIdType const first = MpiWrapper::prefixSum< vtkIdType >( localCells, comm );
   vtkIdType const perRank = totalCells / size;
   vtkIdType const remainder = totalCells % size;
   vtkIdType const largeBlocks = remainder * ( perRank + 1 );
@@ -789,7 +746,7 @@ distributedRanksRCB( vtkDataSet & mesh, integer size, MPI_Comm comm )
 {
   vtkIdType const n = mesh.GetNumberOfCells();
   auto const centroids = computeCentroids( mesh );
-  vtkIdType const first = firstGlobalCell( n, comm );
+  vtkIdType const first = MpiWrapper::prefixSum< vtkIdType >( n, comm );
 
   struct Range
   {
@@ -1212,7 +1169,6 @@ computeCellRanksDistributed( ScatterMethod method,
 vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm )
 {
   GEOS_MARK_FUNCTION;
-  int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
   vtkIdType const localCells = mesh.GetNumberOfCells();
   vtkIdType const totalCells = MpiWrapper::sum( localCells, comm );
@@ -1223,10 +1179,7 @@ vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm )
     return result;
   }
 #ifdef GEOS_USE_MPI
-  vtkIdType firstCell = 0;
-  MpiWrapper::exscan( &localCells, &firstCell, 1, MPI_SUM, comm );
-  if( rank == 0 )
-    firstCell = 0;
+  vtkIdType const firstCell = MpiWrapper::prefixSum< vtkIdType >( localCells, comm );
   vtkIdType const cellsPerRank = totalCells / size;
   vtkIdType const remainder = totalCells % size;
   vtkNew< vtkPartitionedDataSet > partitions;
@@ -1251,7 +1204,6 @@ vtkSmartPointer< vtkDataSet > scatterByBlock( vtkDataSet & mesh, MPI_Comm comm )
                  GEOS_FMT( "Cell conservation failed during block fallback ({} -> {})", totalCells, after ) );
   return result;
 #else
-  GEOS_UNUSED_VAR( rank );
   return nullptr; // Multiple ranks are unavailable without MPI.
 #endif
 }

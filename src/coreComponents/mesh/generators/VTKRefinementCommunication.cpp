@@ -18,6 +18,7 @@
  */
 
 #include "VTKRefinementCommunication.hpp"
+#include "common/ByteBuffer.hpp"
 
 #include "common/MpiChunkedCommunication.hpp"
 #include "common/TimingMacros.hpp"
@@ -39,17 +40,11 @@ namespace
 {
 void putInteger( Bytes & bytes, std::uint64_t value )
 {
-  for( int i = 0; i < 8; ++i )
-  {
-    bytes.push_back( static_cast< unsigned char >( value >> ( 8 * i ) ) );
-  }
+  bytes::append( bytes, value );
 }
 void putDouble( Bytes & bytes, double value )
 {
-  static_assert( sizeof( double ) == sizeof( std::uint64_t ) );
-  std::uint64_t bits;
-  std::memcpy( &bits, &value, sizeof( bits ) );
-  putInteger( bytes, bits );
+  bytes::append( bytes, value );
 }
 void putKey( Bytes & bytes, EntityKey const & key )
 {
@@ -99,20 +94,15 @@ void validateKey( EntityKey const & key )
 class Reader
 {
 public:
-  explicit Reader( Bytes const & bytes ): m_bytes( bytes ) {}
-  bool done() const { return m_cursor == m_bytes.size(); }
+  explicit Reader( Bytes const & bytes ): m_reader( bytes ) {}
+  bool done() const { return m_reader.done(); }
   std::uint64_t integer()
   {
-    if( m_bytes.size() - m_cursor < 8 )
+    if( m_reader.remaining() < sizeof( std::uint64_t ) )
     {
       throw std::invalid_argument( "Truncated refinement integral record" );
     }
-    std::uint64_t value = 0;
-    for( int i = 0; i < 8; ++i )
-    {
-      value |= static_cast< std::uint64_t >( m_bytes[m_cursor++] ) << ( 8 * i );
-    }
-    return value;
+    return m_reader.read< std::uint64_t >();
   }
   vtkIdType id()
   {
@@ -125,9 +115,11 @@ public:
   }
   double real()
   {
-    auto const bits = integer();
-    double value;
-    std::memcpy( &value, &bits, sizeof( value ) );
+    if( m_reader.remaining() < sizeof( double ) )
+    {
+      throw std::invalid_argument( "Truncated refinement integral record" );
+    }
+    double const value = m_reader.read< double >();
     if( !std::isfinite( value ) )
     {
       throw std::invalid_argument( "Nonfinite refinement point record" );
@@ -182,18 +174,16 @@ public:
   Bytes payload()
   {
     auto const n = integer();
-    if( n > m_bytes.size() - m_cursor )
+    if( n > m_reader.remaining() )
     {
       throw std::invalid_argument( "Truncated refinement field record" );
     }
-    Bytes result( m_bytes.begin() + m_cursor, m_bytes.begin() + m_cursor + static_cast< std::size_t >( n ) );
-    m_cursor += n;
-    return result;
+    char const * const first = m_reader.view( static_cast< std::size_t >( n ) );
+    return Bytes( first, first + n );
   }
 
 private:
-  Bytes const & m_bytes;
-  std::size_t m_cursor{};
+  bytes::Reader m_reader;
 };
 std::uint64_t checkedSum( std::uint64_t a, std::uint64_t b )
 {
@@ -1127,12 +1117,7 @@ IdRange Communication::allocateRange( std::uint64_t localCount, vtkIdType base )
       throw std::overflow_error( "Refinement active ID range exceeds vtkIdType" );
     }
   } );
-  std::uint64_t offset = 0;
-  MpiWrapper::exscan( &localCount, &offset, 1, MPI_SUM, m_comm );
-  if( m_rank == 0 )
-  {
-    offset = 0;
-  }
+  std::uint64_t const offset = MpiWrapper::prefixSum< std::uint64_t >( localCount, m_comm );
   return { localCount ? static_cast< vtkIdType >( static_cast< std::uint64_t >( base ) + offset ) : 0, total };
 }
 

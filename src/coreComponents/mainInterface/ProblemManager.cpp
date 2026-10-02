@@ -853,7 +853,7 @@ void ProblemManager::generateMesh()
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
 
         // 2. Reorder the face map based on global numbering of neighboring cells
-        subRegion.flipFaceMap( faceManager, elementManager, refinedTopology );
+        subRegion.flipFaceMap( faceManager, elementManager );
 
         // 3. We flip the face normals of faces adjacent to the faceElements if they are not pointing in the
         // direction of the fracture.

@@ -224,11 +224,11 @@ string buildCellBlockName( ElementType const type, int const regionId );
 
 /**
  * @brief Imports 2d and 3d arrays from @p vtkArray to @p wrapper, only for @p cellIds
- * @param cellIds The cells for which we should copy the data.
+ * @param cellIds The cells for which we should copy the data (a view; nothing is copied).
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importMaterialField( stdVector< vtkIdType > const & cellIds,
+void importMaterialField( Span< vtkIdType const > const cellIds,
                           vtkDataArray * vtkArray,
                           dataRepository::WrapperBase & wrapper );
 
@@ -238,7 +238,7 @@ void importMaterialField( stdVector< vtkIdType > const & cellIds,
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importRegularField( stdVector< vtkIdType > const & cellIds,
+void importRegularField( Span< vtkIdType const > const cellIds,
                          vtkDataArray * vtkArray,
                          dataRepository::WrapperBase & wrapper );
 

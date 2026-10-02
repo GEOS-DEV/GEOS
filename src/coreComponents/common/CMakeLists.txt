@@ -44,6 +44,7 @@ set( common_headers
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
      MpiWrapper.hpp
+     ByteBuffer.hpp
      MpiChunkedCommunication.hpp
      Path.hpp
      Span.hpp
