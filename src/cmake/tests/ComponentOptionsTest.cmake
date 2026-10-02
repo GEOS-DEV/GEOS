@@ -4,12 +4,12 @@ cmake_minimum_required( VERSION 3.24 )
 
 set( optionsFile "${CMAKE_CURRENT_LIST_DIR}/../GeosComponentOptions.cmake" )
 include( "${optionsFile}" )
-if( NOT GEOS_MAX_COMPONENTS EQUAL 5 )
+if( NOT GEOS_MAX_FLUID_COMPONENTS EQUAL 5 )
   message( FATAL_ERROR "The default component limit must remain five." )
 endif()
 
 foreach( limit RANGE 2 20 )
-  set( GEOS_MAX_COMPONENTS ${limit} CACHE STRING "" FORCE )
+  set( GEOS_MAX_FLUID_COMPONENTS ${limit} CACHE STRING "" FORCE )
   include( "${optionsFile}" )
   string( REGEX MATCHALL "MACRO\\( [0-9]+ \\)" counts "${GEOS_COMPONENT_INSTANTIATIONS}" )
   list( LENGTH counts count )
@@ -34,9 +34,9 @@ foreach( limit RANGE 2 20 )
 endforeach()
 
 foreach( invalid IN ITEMS 0 1 21 100 -1 2.5 abc 02 015 "" )
-  execute_process( COMMAND "${CMAKE_COMMAND}" "-DGEOS_MAX_COMPONENTS=${invalid}" -P "${optionsFile}"
+  execute_process( COMMAND "${CMAKE_COMMAND}" "-DGEOS_MAX_FLUID_COMPONENTS=${invalid}" -P "${optionsFile}"
                    RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error )
-  if( result EQUAL 0 OR NOT error MATCHES "GEOS_MAX_COMPONENTS must be an integer from 2 to 20" )
+  if( result EQUAL 0 OR NOT error MATCHES "GEOS_MAX_FLUID_COMPONENTS must be an integer from 2 to 20" )
     message( FATAL_ERROR "Invalid component limit '${invalid}' was not rejected: ${output}${error}" )
   endif()
 endforeach()

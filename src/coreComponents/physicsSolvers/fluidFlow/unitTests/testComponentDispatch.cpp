@@ -26,7 +26,7 @@ namespace
 
 TEST( ComponentDispatch, FluidStorageCapacity )
 {
-  EXPECT_EQ( constitutive::MultiFluidConstants::MAX_NUM_COMPONENTS, std::max( 9, GEOS_MAX_COMPONENTS ) );
+  EXPECT_EQ( constitutive::MultiFluidConstants::MAX_NUM_COMPONENTS, std::max( 9, GEOS_MAX_FLUID_COMPONENTS ) );
 }
 
 struct HybridDispatchProbe
@@ -34,7 +34,7 @@ struct HybridDispatchProbe
   template< integer NF, integer NC, integer NP, typename IP >
   static void launch( integer & faces, integer & components, integer & phases )
   {
-    static_assert( NC <= GEOS_MAX_COMPONENTS, "Disabled component counts must not be instantiated" );
+    static_assert( NC <= GEOS_MAX_FLUID_COMPONENTS, "Disabled component counts must not be instantiated" );
     faces = NF;
     components = NC;
     phases = NP;
@@ -43,12 +43,12 @@ struct HybridDispatchProbe
 
 TEST( ComponentDispatch, ConfiguredRange )
 {
-  for( integer components = 1; components <= GEOS_MAX_COMPONENTS; ++components )
+  for( integer components = 1; components <= GEOS_MAX_FLUID_COMPONENTS; ++components )
   {
     integer calls = 0;
     geos::internal::kernelLaunchSelectorCompSwitch( components, [&] ( auto NC )
     {
-      static_assert( NC() <= GEOS_MAX_COMPONENTS, "Disabled component counts must not be instantiated" );
+      static_assert( NC() <= GEOS_MAX_FLUID_COMPONENTS, "Disabled component counts must not be instantiated" );
       EXPECT_EQ( NC(), components );
       ++calls;
     } );
@@ -97,7 +97,7 @@ TEST( ComponentDispatch, OBLRange )
 
 TEST( ComponentDispatch, HybridRange )
 {
-  for( integer components = 1; components <= GEOS_MAX_COMPONENTS; ++components )
+  for( integer components = 1; components <= GEOS_MAX_FLUID_COMPONENTS; ++components )
   {
     for( integer phases : { 2, 3 } )
     {

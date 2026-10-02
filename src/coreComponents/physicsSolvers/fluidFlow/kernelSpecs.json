@@ -18,7 +18,7 @@
       "vars" : [ "each value in this list will be used to generate kernel template files",
                  "combinatorally with all other value lists" ]
     },
-    "NCOMP" : [ "Fluid-flow component combinations are expanded at configure time to GEOS_MAX_COMPONENTS.",
+    "NCOMP" : [ "Fluid-flow component combinations are expanded at configure time to GEOS_MAX_FLUID_COMPONENTS.",
                 "The first listed component count supplies the lower bound; OBL is capped at nine." ],
     "explicit" : [ "specify a specific combination of the variables to generate",
                    "specify by choosing one value from each variable you want generated",

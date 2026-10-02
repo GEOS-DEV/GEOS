@@ -100,7 +100,7 @@ void kernelLaunchSelectorThermalSwitch( T value, LAMBDA && lambda )
 
 /**
  * @brief Dispatch a runtime component count to a compile-time constant.
- * @note Counts above GEOS_MAX_COMPONENTS are not instantiated.
+ * @note Counts above GEOS_MAX_FLUID_COMPONENTS are not instantiated.
  */
 template< typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
@@ -116,8 +116,8 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 #undef GEOS_DISPATCH_COMPONENT
     default:
     {
-      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}. This build instantiates 1 through {} (GEOS_MAX_COMPONENTS).",
-                            value, GEOS_MAX_COMPONENTS ) );
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}. This build instantiates 1 through {} (GEOS_MAX_FLUID_COMPONENTS).",
+                            value, GEOS_MAX_FLUID_COMPONENTS ) );
     }
   }
 }

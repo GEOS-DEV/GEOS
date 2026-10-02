@@ -36,7 +36,7 @@ struct MultiFluidConstants
    * @note Keep the existing nine-component constitutive capacity in smaller builds,
    *       and grow working arrays when more solver components are instantiated.
    */
-  static constexpr integer MAX_NUM_COMPONENTS = GEOS_MAX_COMPONENTS > 9 ? GEOS_MAX_COMPONENTS : 9;
+  static constexpr integer MAX_NUM_COMPONENTS = GEOS_MAX_FLUID_COMPONENTS > 9 ? GEOS_MAX_FLUID_COMPONENTS : 9;
 
   /**
    * @brief Maximum supported number of fluid phases

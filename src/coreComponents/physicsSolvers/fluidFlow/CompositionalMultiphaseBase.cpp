@@ -345,10 +345,10 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
     m_numPhases = referenceFluid.numFluidPhases();
     m_numComponents = referenceFluid.numFluidComponents();
-    GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_MAX_COMPONENTS,
+    GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_MAX_FLUID_COMPONENTS,
                           GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
-                                    "Rebuild with GEOS_MAX_COMPONENTS >= {}.",
-                                    m_numComponents, GEOS_MAX_COMPONENTS, m_numComponents ),
+                                    "Rebuild with GEOS_MAX_FLUID_COMPONENTS >= {}.",
+                                    m_numComponents, GEOS_MAX_FLUID_COMPONENTS, m_numComponents ),
                           InputError, getDataContext() );
     m_isThermal = referenceFluid.isThermal();
   }

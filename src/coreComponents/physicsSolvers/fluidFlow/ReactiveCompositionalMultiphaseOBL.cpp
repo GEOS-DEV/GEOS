@@ -203,7 +203,7 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
 
   GEOS_THROW_IF_GT_MSG( m_numComponents, MAX_NUM_COMPONENTS,
                         GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
-                                  "Rebuild with GEOS_MAX_COMPONENTS >= {}.",
+                                  "Rebuild with GEOS_MAX_FLUID_COMPONENTS >= {}.",
                                   m_numComponents, MAX_NUM_COMPONENTS, m_numComponents ),
                         InputError, getWrapperDataContext( viewKeyStruct::numComponentsString() ) );
 

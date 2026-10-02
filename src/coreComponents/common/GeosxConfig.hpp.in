@@ -48,7 +48,7 @@
 #cmakedefine GEOS_USE_OPENMP
 
 /// Maximum number of components instantiated in compositional flow solvers
-#define GEOS_MAX_COMPONENTS @GEOS_MAX_COMPONENTS@
+#define GEOS_MAX_FLUID_COMPONENTS @GEOS_MAX_FLUID_COMPONENTS@
 
 /// Apply a single-argument macro to each instantiated component count
 #define GEOS_FOR_EACH_COMPONENT( MACRO ) @GEOS_COMPONENT_INSTANTIATIONS@

@@ -69,7 +69,7 @@ public:
    * @note This is the maxinum number of components that can be used for dispatch in a kernel launch specific for
    *       this fluid type.
    */
-  static constexpr integer max_n_components = GEOS_MAX_COMPONENTS;
+  static constexpr integer max_n_components = GEOS_MAX_FLUID_COMPONENTS;
 
   /**
    * @return number of fluid components (species) in the model

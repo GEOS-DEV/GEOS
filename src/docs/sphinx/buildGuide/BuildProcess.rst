@@ -74,7 +74,7 @@ Option                          Default   Explanation
 ``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
 ``ENABLE_COV``                  ``OFF``   Enables code coverage
 ``GEOS_ENABLE_TESTS``           ``ON``    Enables unit testing targets
-``GEOS_MAX_COMPONENTS``         ``5``     Maximum component count instantiated in compositional flow solvers (2 to 20)
+``GEOS_MAX_FLUID_COMPONENTS``   ``5``     Maximum component count instantiated in compositional flow solvers (2 to 20)
 ``GEOS_LA_INTERFACE``           ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOS_BUILD_OBJ_LIBS``         ``ON``    Use CMake Object Libraries build
 ``GEOS_BUILD_SHARED_LIBS``      ``OFF``   Build ``geosx_core`` as a shared library instead of static
@@ -86,8 +86,8 @@ Option                          Default   Explanation
 Compositional component limit
 -----------------------------
 
-Set ``GEOS_MAX_COMPONENTS`` in the host configuration or pass, for example,
-``-DGEOS_MAX_COMPONENTS=20`` to CMake to build compositional flow solvers for up to
+Set ``GEOS_MAX_FLUID_COMPONENTS`` in the host configuration or pass, for example,
+``-DGEOS_MAX_FLUID_COMPONENTS=20`` to CMake to build compositional flow solvers for up to
 twenty components. The default of five preserves the existing solver range.
 Values must be integers from two to twenty; smaller limits reduce compilation
 work and the number of kernel instantiations. One-component kernels remain
@@ -101,10 +101,10 @@ with a message identifying the required setting. Changing the option requires
 reconfiguring and rebuilding GEOS.
 
 The constitutive fluid working arrays have capacity for at least nine components
-and grow with ``GEOS_MAX_COMPONENTS`` above nine. Smaller builds retain existing
+and grow with ``GEOS_MAX_FLUID_COMPONENTS`` above nine. Smaller builds retain existing
 nine-component standalone fluid-property calculations, such as the PVT driver.
 
 The table-based reactive OBL solver uses the smaller of the configured limit and
 nine components. Its interpolation workspace grows exponentially with the
-component count, so increasing ``GEOS_MAX_COMPONENTS`` above nine extends the
+component count, so increasing ``GEOS_MAX_FLUID_COMPONENTS`` above nine extends the
 EOS compositional solvers without increasing the OBL limit.
