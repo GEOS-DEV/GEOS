@@ -227,6 +227,27 @@ TEST( VTKUniformRefinement, ForecastsMatchGrowthAndCountSharedUnusedOriginalPoin
   EXPECT_EQ( MpiWrapper::sum( result.levels[1].sharedMainPointCopies, MPI_COMM_GEOS ), size == 1 ? 0 : 50 * ( size - 1 ) + size );
 }
 
+TEST( VTKUniformRefinement, EqualOrientedVolumeFacesAreAccepted )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  std::vector< Coordinates > xyz{ { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 }, { 0, 0, 2 } };
+  Connectivity pointIds;
+  for( std::size_t p = 0; p < xyz.size(); ++p )
+  {
+    xyz[p][0] += 3 * rank;
+    pointIds.push_back( sparseBase + 100 * rank + p );
+  }
+  std::vector< Cell > const cells{
+    { VTK_TETRA, { 0, 1, 2, 3 }, 0 },
+    { VTK_TETRA, { 0, 1, 2, 4 }, 0 }
+  };
+  Connectivity cellIds{ sparseBase + 1000 + 2 * rank, sparseBase + 1001 + 2 * rank };
+  auto input = makeGrid( xyz, pointIds, cells, cellIds );
+  AllMeshes meshes( input, {} );
+  EXPECT_NO_THROW( refineUniformly( meshes, 1, {}, MPI_COMM_GEOS ) );
+  EXPECT_EQ( meshes.getMainMesh()->GetNumberOfCells(), 16 );
+}
+
 TEST( VTKUniformRefinement, UnusedOriginalCopyMatchesAnInteriorVertexOnItsOtherRank )
 {
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOS ), size = MpiWrapper::commSize( MPI_COMM_GEOS );

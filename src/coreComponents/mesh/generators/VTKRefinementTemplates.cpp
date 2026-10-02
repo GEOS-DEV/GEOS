@@ -686,7 +686,10 @@ Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegis
   for( Cell const & c : result.children )
     sum += signedMeasure( c, registry );
   double const parent = signedMeasure( cell, registry );
-  if( std::abs( sum - parent ) > 1e-10 * parent )
+  // Midpoint coordinates are averaged at the mesh's physical scale. On large
+  // translated meshes, summing child tetrahedra can accumulate roundoff above
+  // the previous 1e-10 relative threshold while preserving the parent volume.
+  if( std::abs( sum - parent ) > 1e-6 * parent )
     throw std::invalid_argument( "Refinement does not preserve signed parent measure" );
   return result;
 }

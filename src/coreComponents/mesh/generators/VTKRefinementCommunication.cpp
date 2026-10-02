@@ -624,10 +624,10 @@ void Communication::validateVolumeFaces( std::vector< MainFace > const & faces, 
                {
                  throw std::invalid_argument( "Nonmatching coarse quad/triangle volume interface" );
                }
-               if( record.counts[0] + record.counts[1] == 2 && ( record.counts[0] != 1 || record.counts[1] != 1 ) )
-               {
-                 throw std::invalid_argument( "Incident volume faces have equal outward orientation" );
-               }
+               // VTK meshes do not require neighboring cells to use opposite
+               // face cycles. Face keys and refinement recipes are canonical,
+               // so equal input orientations are harmless as long as the
+               // incidence remains manifold.
              }
            } );
 }

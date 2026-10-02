@@ -114,9 +114,11 @@ public:
 
   void checked( std::string const & phase, std::function< void() > const & work ) const;
   Sharing discoverSharing( std::vector< EntityKey > const & entities );
-  /** One coarse full-face pass rejects global nonmanifold/equal-orientation
+  /** One coarse full-face pass rejects global nonmanifold and crossed-cycle
    * incidence, including a locally internal face also used by another rank.
    * Three-corner quad probes also reject quad/triangle nonmatching interfaces.
+   * Neighboring volume cells need not use consistently oriented face cycles:
+   * refinement keys canonicalize face orientation independently of the input.
    * This validation cost is separate from boundary-only sharing discovery.
    */
   void validateVolumeFaces( std::vector< MainFace > const & faces, std::uint64_t mainNamespace = 0 );

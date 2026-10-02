@@ -58,7 +58,6 @@ CoarseBoundary coarseBoundary( std::vector< Cell > const & cells, Connectivity c
   struct Face
   {
     EntitySupport entity;
-    bool orientation;
     int count = 1;
   };
   std::vector< Face > faces;
@@ -76,12 +75,10 @@ CoarseBoundary coarseBoundary( std::vector< Cell > const & cells, Connectivity c
     {
       Connectivity cycle = globalCorners( corners, globalPointIds );
       EntityKey const key = entityKey( EntityKind::face, cycle, meshNamespace );
-      std::rotate( cycle.begin(), std::min_element( cycle.begin(), cycle.end() ), cycle.end() );
-      bool const orientation = cycle == key.corners;
       std::sort( cycle.begin(), cycle.end() );
       auto const [previous, inserted] = faceIndices.emplace( cycle, faces.size() );
       if( inserted )
-        faces.push_back( { { key, corners, { localRank } }, orientation, 1 } );
+        faces.push_back( { { key, corners, { localRank } }, 1 } );
       else
       {
         Face & face = faces[previous->second];
@@ -89,8 +86,6 @@ CoarseBoundary coarseBoundary( std::vector< Cell > const & cells, Connectivity c
           throw std::invalid_argument( "Incompatible local volume face edge cycles" );
         if( ++face.count > 2 )
           throw std::invalid_argument( "Nonmanifold local volume face incidence" );
-        if( face.orientation == orientation )
-          throw std::invalid_argument( "Local volume faces have equal outward orientations" );
       }
     }
   }
