@@ -21,6 +21,8 @@
     "NCOMP" : [ "Fluid-flow component combinations are expanded at configure time to GEOS_MAX_FLUID_COMPONENTS.",
                 "The first listed component count supplies the lower bound." ],
     "NCOMP_LIMIT" : [ "Optional name of the CMake variable bounding NCOMP instead of GEOS_MAX_FLUID_COMPONENTS." ],
+    "NCOMP_BOUNDS" : [ "Optional [min, max] component counts per FLUID_TYPE, matching the fluid's",
+                       "min_n_components and max_n_components; combinations outside them are not generated." ],
     "explicit" : [ "specify a specific combination of the variables to generate",
                    "specify by choosing one value from each variable you want generated",
                    "and concating them with '#' (this can by modified internally at the",
@@ -100,6 +102,14 @@
         "constitutive::InvariantImmiscibleFluid"
       ]
     },
+    "NCOMP_BOUNDS": {
+      "constitutive::BlackOilFluid": [ 3, 3 ],
+      "constitutive::CO2BrinePhillipsFluid": [ 2, 2 ],
+      "constitutive::CO2BrineEzrokhiFluid": [ 2, 2 ],
+      "constitutive::CO2BrinePhillipsThermalFluid": [ 2, 2 ],
+      "constitutive::CO2BrineEzrokhiThermalFluid": [ 2, 2 ],
+      "constitutive::DeadOilFluid": [ 2, 3 ]
+    },
     "explicit": [
     ]
   },
@@ -122,6 +132,10 @@
         "constitutive::CO2BrinePhillipsThermalFluid",
         "constitutive::CO2BrineEzrokhiThermalFluid"
       ]
+    },
+    "NCOMP_BOUNDS": {
+      "constitutive::CO2BrinePhillipsThermalFluid": [ 2, 2 ],
+      "constitutive::CO2BrineEzrokhiThermalFluid": [ 2, 2 ]
     },
     "explicit": []
   },
