@@ -18,6 +18,7 @@
  */
 
 #include "SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -111,6 +112,24 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
+    // When thermal, the energy accumulation term energy = vol * ( phi*rho*u_f + (1-phi)*u_rock ),
+    // is dependent on the displacement through the volume, so we need to compute energy/vol for each element 
+    array1d< real64 > energyPerVolume( subRegion.size() );
+    if( this->m_isThermal )
+    {
+      arrayView1d< real64 const > const energy = subRegion.getField< flow::energy >();
+      arrayView1d< real64 const > const deltaVolume = subRegion.getField< flow::deltaVolume >();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      // energy.move( hostMemorySpace, false );
+      // deltaVolume.move( hostMemorySpace, false );
+      // volume.move( hostMemorySpace, false );
+      for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
+      {
+        real64 const vol = volume[kfe] + deltaVolume[kfe];
+        energyPerVolume[kfe] = vol > 0.0 ? energy[kfe] / vol : 0.0;
+      }
+    }
+
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
@@ -126,6 +145,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
       stackArray1d< real64, 2*3*m_maxFaceNodes > dRdU( 2*3*m_maxFaceNodes );
+      stackArray1d< real64, 2*3*m_maxFaceNodes > dVol_dU( 2*3*m_maxFaceNodes );
 
       bool const isFractureOpen = ( fractureState[kfe] == FractureState::Open );
 
@@ -152,13 +172,14 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
-            real64 const dAccumulationResidualdAperture = density[kfe][0] * nodalArea[a];
             for( localIndex i=0; i<3; ++i )
             {
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
                                                         + LvArray::integerConversion< globalIndex >( i );
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
-              dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
+              //reminder: the volume of the fault element is the area of the fracture times the aperture, so dVol_dAperture is nodalArea
+              dVol_dU( kf*3*numNodesPerFace + 3*a+i ) = nodalArea[a] * dAper_dU;
+              dRdU( kf*3*numNodesPerFace + 3*a+i ) = density[kfe][0] * dVol_dU( kf*3*numNodesPerFace + 3*a+i );
             }
           }
         }
@@ -172,6 +193,25 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
                                                                     nodeDOF,
                                                                     dRdU.data(),
                                                                     2 * 3 * numNodesPerFace );
+        }
+
+        // Energy accumulation derivative, on the temperature/energy row packed right after pressure
+        if( this->m_isThermal )
+        {
+          for( localIndex j = 0; j < 2 * 3 * numNodesPerFace; ++j )
+          {
+            dRdU( j ) = energyPerVolume[kfe] * dVol_dU( j );
+          }
+
+          localIndex const localRowEnergy = localRow + 1;
+
+          if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
+                                                                      nodeDOF,
+                                                                      dRdU.data(),
+                                                                      2 * 3 * numNodesPerFace );
+          }
         }
       }
 

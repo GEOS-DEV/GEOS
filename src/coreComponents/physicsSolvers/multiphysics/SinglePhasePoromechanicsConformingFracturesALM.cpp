@@ -239,6 +239,21 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   // For flux: dR_flux/du = dR/dAperture * (1/area) * unitNormal^T * Atu (with 1/area factor)
   arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
+
+  // energy is dependent on the displacement through the volume, by chain rule dR_energy/dU = dR_energy/dVol * dVol/dAperture * dAperturedU
+  array1d< real64 > energyPerVolume( numElems );
+  if( this->m_isThermal )
+  {
+    arrayView1d< real64 const > const energy = subRegion.getField< flow::energy >();
+    arrayView1d< real64 const > const deltaVolume = subRegion.getField< flow::deltaVolume >();
+    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+    for( localIndex kfe = 0; kfe < numElems; ++kfe )
+    {
+      real64 const vol = volume[kfe] + deltaVolume[kfe];
+      energyPerVolume[kfe] = vol > 0.0 ? energy[kfe] / vol : 0.0;
+    }
+  }
+
   forAll< serialPolicy >( numElems, [&]( localIndex const kfe )
   {
     localIndex const kf0 = elemsToFaces[kfe][0];
@@ -285,6 +300,25 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
                                                                   nodeDOF,
                                                                   dRdU.data(),
                                                                   numUdofs );
+      }
+
+      // Energy accumulation derivative, on the temperature/energy row packed right after pressure
+      if( this->m_isThermal )
+      {
+        for( localIndex j = 0; j < numUdofs; ++j )
+        {
+          dRdU( j ) = energyPerVolume[kfe] * dAperturedU( kfe, j ) * area[kfe];
+        }
+
+        localIndex const localRowEnergy = localRow + 1;
+
+        if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
+        {
+          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
+                                                                    nodeDOF,
+                                                                    dRdU.data(),
+                                                                    numUdofs );
+        }
       }
     }
 
@@ -370,6 +404,25 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
                                                                   bubbleDOF,
                                                                   dRdB,
                                                                   numBdofs );
+      }
+
+      // Energy accumulation derivative, on the temperature/energy row packed right after pressure
+      if( this->m_isThermal )
+      {
+        for( localIndex j = 0; j < numBdofs; ++j )
+        {
+          dRdB[j] = energyPerVolume[kfe] * dAperturedB( kfe, j ) * area[kfe];
+        }
+
+        localIndex const localRowEnergy = localRow + 1;
+
+        if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
+        {
+          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
+                                                                    bubbleDOF,
+                                                                    dRdB,
+                                                                    numBdofs );
+        }
       }
     }
 
