@@ -8,8 +8,39 @@ if(POLICY CMP0146)
   cmake_policy(SET CMP0146 OLD)
 endif()
 cmake_policy(SET CMP0074 NEW) # dont ignore <PackageName>_ROOT env vars when searching for packages via find_package()
+if(POLICY CMP0144)
+  cmake_policy(SET CMP0144 NEW)
+endif()
 cmake_policy(SET CMP0066 NEW) # use CMAKE_<LANG>_FLAGS_<BUILD_TYPE> for try_compile() instead of only CMAKE_<LANG>_FLAGS
 cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in addition to CMAKE_<LANG>_FLAGS
+
+# A legacy geos-tpl installation can provide a generated host config.  The
+# filename identifies its compiler and accelerator toolchain. Load it before
+# project() so compiler, MPI, and accelerator settings are present when CMake
+# enables the corresponding languages.
+if( DEFINED GEOS_TPL_DIR AND IS_DIRECTORY "${GEOS_TPL_DIR}" )
+  file( GLOB _geos_tpl_named_host_configs CONFIGURE_DEPENDS
+        "${GEOS_TPL_DIR}/host-config-*.cmake" )
+  list( LENGTH _geos_tpl_named_host_configs _geos_tpl_host_config_count )
+  if( _geos_tpl_host_config_count GREATER 1 )
+    string( JOIN "\n  " _geos_tpl_host_config_choices ${_geos_tpl_named_host_configs} )
+    message( FATAL_ERROR
+             "Multiple generated GEOS TPL host configs were found in ${GEOS_TPL_DIR}:\n  ${_geos_tpl_host_config_choices}\nSelect one explicitly with -C <host-config>." )
+  elseif( _geos_tpl_host_config_count EQUAL 1 )
+    list( GET _geos_tpl_named_host_configs 0 _geos_tpl_host_config )
+  elseif( EXISTS "${GEOS_TPL_DIR}/host-config.cmake" )
+    # Keep accepting host-config.cmake from older geos-tpl installations.
+    set( _geos_tpl_host_config "${GEOS_TPL_DIR}/host-config.cmake" )
+  endif()
+  if( DEFINED _geos_tpl_host_config AND EXISTS "${_geos_tpl_host_config}" )
+    message( STATUS "Loading generated TPL host config: ${_geos_tpl_host_config}" )
+    include( "${_geos_tpl_host_config}" )
+  endif()
+  unset( _geos_tpl_host_config )
+  unset( _geos_tpl_named_host_configs )
+  unset( _geos_tpl_host_config_count )
+  unset( _geos_tpl_host_config_choices )
+endif()
 
 ################################
 # GEOSX
@@ -68,10 +99,10 @@ if( ENABLE_HIP AND ENABLE_TESTS AND NOT GEOS_ENABLE_HIP_DEVICE_PRINTF_TESTS
 endif()
 
 # BLT's bundled GoogleTest currently uses an implicit char8_t-to-char32_t
-# conversion that Clang 22 diagnoses as -Wcharacter-conversion. Keep GEOS'
+# conversion that Clang 21 and newer diagnose as -Wcharacter-conversion. Keep GEOS'
 # warnings-as-errors policy intact while limiting the compatibility flag to
 # the third-party test target.
-if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 22 )
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 21 )
   foreach( _geos_gtest_target gtest gtest_main gmock gmock_main )
     if( TARGET ${_geos_gtest_target} )
       target_compile_options( ${_geos_gtest_target} PRIVATE -Wno-error=character-conversion )
@@ -382,6 +413,18 @@ if ( ENABLE_ATS )
                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        DEPENDS ats_environment
                      )
+
+    if( ENABLE_HYPREDRV )
+        # Re-run the suite through the legacy hypre path on a hypredrive-enabled build.
+        # Together with a regular ats_run this verifies that the hypredrive and legacy
+        # paths produce the same results against the shared baselines.
+        add_custom_target( ats_run_force_legacy
+                           COMMAND ${CMAKE_COMMAND} -E env GEOS_HYPREDRV_FORCE_LEGACY=1
+                                   ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh
+                           WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                           DEPENDS ats_environment
+                         )
+    endif()
 
     add_custom_target( ats_clean
                        COMMAND ${CMAKE_BINARY_DIR}/integratedTests/geos_ats.sh -a veryclean

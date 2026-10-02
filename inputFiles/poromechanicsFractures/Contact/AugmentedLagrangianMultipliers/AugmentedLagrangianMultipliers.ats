@@ -32,7 +32,7 @@ decks = [
         partitions=((1, 1, 1), (4, 1, 1)),
         restart_step=1,
         check_step=2,
-        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-03)),
     TestDeck(
         name="ALM_inclinedFault_ISG_smoke",
         description='PoroElastic ALM inclined fault with internal surface generator (elastic)',

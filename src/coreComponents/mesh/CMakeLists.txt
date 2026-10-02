@@ -271,9 +271,17 @@ if( ENABLE_VTK )
     if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13 )
         set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES COMPILE_OPTIONS "-Wno-use-after-free" )
     endif()
+
+    # VTK's bundled DIY coroutine implementation intentionally emits a
+    # preprocessor warning when glibc fortification is enabled.  Keep the
+    # warning visible, but do not let this third-party diagnostic override
+    # GEOS' warnings-as-errors policy for this source file.
+    if( CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|IntelLLVM" )
+        set_property( SOURCE generators/VTKMeshGeneratorTools.cpp APPEND
+                      PROPERTY COMPILE_OPTIONS "-Wno-error=cpp" )
+    endif()
 endif()
 
 if( GEOS_ENABLE_TESTS )
     add_subdirectory( unitTests )
 endif( )
-

@@ -24,6 +24,15 @@ decks = [
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
 
     TestDeck(
+        name="ChainSerial_1DAllKinetic_smoke",
+        description=
+        '1D serial chain reaction, all kinetic with no equilibrium reactions (1D, kineticReaction)',
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=20,
+        check_step=20,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+
+    TestDeck(
         name="mixedReactionCarbonateSystem_1D_smoke",
         description=
         '1D Carbonate mixed reaction (1D, mixedReaction)',

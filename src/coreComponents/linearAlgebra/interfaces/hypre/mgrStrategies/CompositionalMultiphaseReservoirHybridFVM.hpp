@@ -45,14 +45,22 @@ namespace mgr
  *                       ... = ... (densities)
  *             numLabels - 1 = well rate
  *
- * 4-level MGR reduction strategy inspired from CompositionalMultiphaseReservoir
+ * 2-level MGR reduction strategy
  *   - 1st level: eliminate the well block
- *   - 2nd level: eliminate the reservoir density associated with the volume constraint
- *   - 3rd level: eliminate the remaining the reservoir densities
- *   - 4th level: eliminate the cell-centered pressure
+ *   - 2nd level: eliminate all cell-centered reservoir dofs (pressure and densities);
+ *     the cell-centered block is block-diagonal (cell dofs couple only within a cell
+ *     and to the faces), so block-Jacobi interpolation with a Galerkin coarse grid
+ *     yields the exact face-pressure Schur complement, and an ILU F-relaxation
+ *     solves the block-diagonal F system at linear cost.
  *   - The coarse grid is the face pressure system and is solved with BoomerAMG
+ *
+ * Note: a multi-level variant that eliminates the densities first cannot use the
+ * True-IMPES (blockColLumped) restriction: it requires every C point to pair
+ * positionally with one F block of uniform size, while the intermediate C spaces
+ * contain both cell and face pressures (hypre's block column-lumped helper fails
+ * on the resulting row/column block-count mismatch).
  */
-class CompositionalMultiphaseReservoirHybridFVM : public MGRStrategyBase< 4 >
+class CompositionalMultiphaseReservoirHybridFVM : public MGRStrategyBase< 2 >
 {
 public:
   /**
@@ -69,17 +77,9 @@ public:
     // Level 0: eliminate the well block
     m_labels[0].resize( numResLabels );
     std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
-    // Level 1: eliminate the last density of the reservoir block
-    m_labels[1].resize( numResLabels - 1 );
-    std::iota( m_labels[1].begin(), m_labels[1].begin() + numResCellCenteredLabels - 1, 0 );
-    m_labels[1][numResCellCenteredLabels-1] = numResCellCenteredLabels;
-    // Level 2: eliminate remaining densities of the reservoir block
-    m_labels[2].resize( 2 );
-    m_labels[2][0] = 0;
-    m_labels[2][1] = numResCellCenteredLabels;
-    // Level 3: eliminate reservoir cell centered pressure
-    m_labels[3].resize( 1 );
-    m_labels[3][0] = numResCellCenteredLabels;
+    // Level 1: eliminate all cell-centered reservoir dofs, keep the face-centered pressure
+    m_labels[1].resize( 1 );
+    m_labels[1][0] = numResCellCenteredLabels;
 
     setupLabels();
 
@@ -92,28 +92,12 @@ public:
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
 
     // Level 1
-    m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
+    m_levelFRelaxType[1]          = MGRFRelaxationType::ilu;
     m_levelFRelaxIters[1]         = 1;
-    m_levelInterpType[1]          = MGRInterpolationType::jacobi;
+    m_levelInterpType[1]          = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[1]        = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
-
-    // Level 2
-    m_levelFRelaxType[2]          = MGRFRelaxationType::none;
-    m_levelInterpType[2]          = MGRInterpolationType::injection;
-    m_levelRestrictType[2]        = MGRRestrictionType::blockColLumped; // True-IMPES
-    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::none;
-
-    // Level 3
-    m_levelFRelaxType[3]          = MGRFRelaxationType::jacobi;
-    m_levelFRelaxIters[3]         = 1;
-    m_levelInterpType[3]          = MGRInterpolationType::jacobi;
-    m_levelRestrictType[3]        = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[3]    = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[3]  = MGRGlobalSmootherType::blockGaussSeidel;
-    m_levelGlobalSmootherIters[3] = 1;
   }
 
   /**
@@ -122,18 +106,18 @@ public:
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
-  void setup( LinearSolverParameters::MGR const & mgrParams,
+  void setup( LinearSolverParameters::MGR const & GEOS_UNUSED_PARAM( mgrParams ),
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
-    // in that case, we just use Jacobi
-    if( mgrParams.areWellsShut )
-    {
-      m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
-    }
-
+    // Note: unlike other reservoir strategies, the well-block F-relaxation is not downgraded
+    // to Jacobi when the wells are shut: a single Jacobi sweep on the shut well block leads
+    // to Krylov stagnation for this hybrid FVM reduction, while exact elimination of the
+    // small well block is cheap.
     setReduction( precond, mgrData );
+
+    // Attach an explicitly configured ILU F-solver for the cell-centered block elimination
+    setILUFSolverAtLevel( 1, precond, mgrData );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
