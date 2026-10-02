@@ -33,6 +33,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "physicsSolvers/fluidFlow/kernels/HydrostaticCoordinate.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -1123,15 +1124,33 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
+    if( bc.usesGravityAlignedCoordinates() )
+    {
+      integer relevant = 0;
+      forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regions )
+      {
+        bc.getMeshObjectPaths().forObjectsInPath< ElementSubRegionBase >( mesh, [&]( ElementSubRegionBase const & subRegion )
+        {
+          string const & name = subRegion.getParent().getParent().getName();
+          if( std::find( regions.begin(), regions.end(), name ) != regions.end() ) relevant = 1;
+        } );
+      } );
+      if( MpiWrapper::max( relevant ) == 0 ) return;
+    }
     // Collect all the equilibrium names to idx
     equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
-    // check that the gravity vector is aligned with the z-axis
-    GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+    GEOS_THROW_IF( bc.usesGravityAlignedCoordinates() &&
+                   ( !std::isfinite( gravVector[0] ) || !std::isfinite( gravVector[1] ) || !std::isfinite( gravVector[2] ) ||
+                     !std::isfinite( std::hypot( gravVector[0], gravVector[1], gravVector[2] ) ) ),
+                   "gravityAligned hydrostatic initialization requires a finite actual gravity vector", InputError, getDataContext() );
+    // Legacy elevations remain world z. New projected coordinates are explicit.
+    GEOS_THROW_IF( !bc.usesGravityAlignedCoordinates() && ( !isZero( gravVector[0] ) || !isZero( gravVector[1] ) ),
                    GEOS_FMT( "The gravity vector specified in this simulation ({} {} {}) is not aligned with the z-axis. \n"
                              "This is incompatible with the {} used in this simulation. To proceed, you can either: \n"
                              "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n"
+                             "   - Select coordinateSystem=gravityAligned and express all scalar/table coordinates as potential distances\n"
                              "   - Remove the hydrostatic equilibrium initial condition from the XML file",
                              gravVector[0],
                              gravVector[1],
@@ -1187,12 +1206,19 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                           ElementSubRegionBase & subRegion,
                                                           string const & )
     {
+      if( equilNameToEquilId.count( fs.getName() ) == 0 ) return;
       // Check if the region is targetted by the solver. Otherwise we cannot guarantee a fluid exists
       Group const & region = subRegion.getParent().getParent();
-      if( regionFilter.find( region.getName() ) == regionFilter.end() )
+      if( regionFilter.find( region.getName() ) == regionFilter.end() ||
+          ( fs.usesGravityAlignedCoordinates() &&
+            std::find( regionNames.begin(), regionNames.end(), region.getName() ) == regionNames.end() ) )
       {
         return;   // the region is not in target, there is nothing to do
       }
+
+      if( fs.usesGravityAlignedCoordinates() && targetSet.empty() ) return;
+      HydrostaticCoordinate const coordinate( gravVector, fs.usesGravityAlignedCoordinates() );
+      real64 const coordinateGravity[3] = { 0.0, 0.0, coordinate.gravityComponent };
 
       // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
@@ -1202,11 +1228,29 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const datumPressure = fs.getDatumPressure();
       string const initPhaseName = fs.getInitPhaseName();
       arrayView1d< real64 const > const phaseContacts = fs.getPhaseContacts();
+      bool const strictCoordinates = fs.usesGravityAlignedCoordinates();
+      if( strictCoordinates )
+      {
+        GEOS_THROW_IF( !std::isfinite( datumElevation ) || !std::isfinite( datumPressure ) || datumPressure <= 0.0 ||
+                       !std::isfinite( fs.getElevationIncrement() ) || fs.getElevationIncrement() <= 0.0 ||
+                       !std::isfinite( equilTolerance ) || equilTolerance <= 0.0 || maxNumEquilIterations <= 0,
+                       "Hydrostatic initialization requires finite datum coordinates, positive finite pressure/increment/tolerance and positive iteration count",
+                       InputError, fs.getDataContext() );
+        for( real64 const contact : phaseContacts )
+          GEOS_THROW_IF( !std::isfinite( contact ), "Hydrostatic phase contacts must be finite", InputError, fs.getDataContext() );
+      }
 
       localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
       real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
       real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
       real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
+      real64 const requestedPoints = elevationIncrement > 0.0 ? std::ceil( ( maxElevation - minElevation ) / elevationIncrement ) + 3.0 : 1.0;
+      GEOS_THROW_IF( strictCoordinates &&
+                     ( !std::isfinite( requestedPoints ) || requestedPoints > std::numeric_limits< localIndex >::max() ||
+                       ( maxElevation > minElevation &&
+                         ( !( minElevation + elevationIncrement > minElevation ) || !( maxElevation + elevationIncrement > maxElevation ) ) ) ),
+                     "The hydrostatic table increment is unresolvable at this coordinate scale or exceeds the representable table size",
+                     InputError, fs.getDataContext() );
       real64 const eps = 0.1 * (maxElevation - minElevation);   // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                           getCatalogName() << " " << getDataContext() <<
@@ -1219,6 +1263,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       // Check if we are targetting single or multiple phase initialisation
       bool singlePhaseInitialisation = !initPhaseName.empty();
+      GEOS_THROW_IF( fs.usesGravityAlignedCoordinates() && singlePhaseInitialisation && m_hasCapPressure,
+                     "gravityAligned initialPhaseName with active capillarity is not supported; use phaseContacts for capillary equilibration",
+                     InputError, fs.getDataContext() );
       if( !singlePhaseInitialisation )
       {
         // Check that we have number of contacts equal to one less that number of phases
@@ -1297,6 +1344,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      GEOS_THROW_IF( fs.usesGravityAlignedCoordinates() && m_hasCapPressure &&
+                     dynamicCast< InvariantImmiscibleFluid * >( &fluid ) == nullptr,
+                     "gravityAligned capillary initialization currently requires InvariantImmiscibleFluid; pressure-dependent EOS/capillary coupling needs a self-consistent state solve",
+                     InputError, fs.getDataContext(), fluid.getDataContext() );
+
 
       string_array const & componentNames = fs.getComponentNames();
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
@@ -1368,7 +1420,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         {
           auto const phaseType = toPhaseType( phaseNames[ip] );
           temporaryMinVolumeFraction[ip] = 0.0;
-          temporaryPhaseOrder[phaseType] = ip;
+          GEOS_THROW_IF( phaseType < 0 && !singlePhaseInitialisation,
+                         "Multiphase hydrostatic contacts require declared gas, oil, and/or water phase roles", InputError, fluid.getDataContext() );
+          if( phaseType >= 0 ) temporaryPhaseOrder[phaseType] = ip;
         }
         phaseMinVolumeFraction = temporaryMinVolumeFraction.toViewConst();
         phaseOrder = temporaryPhaseOrder.toViewConst();
@@ -1397,7 +1451,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                              phaseContacts,
                                                              phaseMinVolumeFraction,
                                                              equilTolerance,
-                                                             gravVector,
+                                                             coordinateGravity,
                                                              datumElevation,
                                                              datumPressure,
                                                              fluidWrapper,
@@ -1407,7 +1461,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                              pressureValues.toView(),
                                                              phaseDens.toView(),
                                                              phaseCompFrac.toView(),
-                                                             m_hasCapPressure && !singlePhaseInitialisation );
+                                                             fs.usesGravityAlignedCoordinates() || ( m_hasCapPressure && !singlePhaseInitialisation ) );
 
         GEOS_THROW_IF( returnValue == KernelReturnType::FAILED_TO_CONVERGE,
                        GEOS_FMT( "hydrostatic pressure initialization failed to converge in region {}! \n"
@@ -1418,6 +1472,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
         if( singlePhaseInitialisation )
         {
+          GEOS_THROW_IF( fs.usesGravityAlignedCoordinates() && returnValue == KernelReturnType::DETECTED_MULTIPHASE_FLOW,
+                         "gravityAligned initialPhaseName requires a single-phase fluid state throughout the target; the supplied pressure, temperature and composition create multiple phases. Use physically reviewed phaseContacts/capillary initialization instead",
+                         InputError, fs.getDataContext(), subRegion.getDataContext() );
           GEOS_LOG_RANK_0_IF( returnValue == KernelReturnType::DETECTED_MULTIPHASE_FLOW,
                               getCatalogName() << " " << getDataContext() <<
                               ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
@@ -1427,7 +1484,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         }
       } );
 
-      if( m_hasCapPressure && !singlePhaseInitialisation )
+      if( ( fs.usesGravityAlignedCoordinates() || m_hasCapPressure ) && !singlePhaseInitialisation )
       {
         integer const ordered[3] = { ipWater >= 0 ? ipWater : ipOil,
                                     numPhases == 3 ? ipOil : ( ipGas >= 0 ? ipGas : ipOil ), ipGas };
@@ -1445,7 +1502,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       // Step: create table wrappers for the phase pressures and mass density
       // Create a wrapper for the elevations
-      string const elevationIndexTableName = GEOS_FMT( "{}_{}_Elevation_index_table", fs.getName(), subRegion.getName() );
+      string const elevationIndexTableName = fs.usesGravityAlignedCoordinates()
+        ? scopedHydrostaticTableName( fs.getName() + "_Elevation_index_table", subRegion.getPath() )
+        : GEOS_FMT( "{}_{}_Elevation_index_table", fs.getName(), subRegion.getName() );
       if( !functionManager.hasGroup< TableFunction >( elevationIndexTableName ))
       {
         array1d< real64 > indexValues( numPointsInTable );
@@ -1520,6 +1579,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       // Assign pressure and temperature to cells
       forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                            elemCenter,
+                                                           coordinate,
                                                            numPhases,
                                                            numComps,
                                                            pres,
@@ -1535,16 +1595,17 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                            phaseIndexView] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const k = targetSet[i];
-        real64 const elevation = elemCenter[k][2];
+        real64 const elevation = coordinate.elevation( elemCenter[k] );
 
         real64 ea = elevationIndexTableWrapper.compute( &elevation );
-        integer const en = LvArray::math::min( static_cast< integer >(ea), numPointsInTable - 2 );
-        ea -= en;
+        integer const en = LvArray::math::max( 0, LvArray::math::min( static_cast< integer >(ea), numPointsInTable - 2 ) );
+        integer const next = LvArray::math::min( en + 1, numPointsInTable - 1 );
+        ea = numPointsInTable == 1 ? 0.0 : ea - en;
 
         integer const phaseIndex = [&]() -> integer {
           for( integer ip = 0; ip < numPhases; ip++ )
           {
-            if( elevation < elevationsView[ip] )
+            if( coordinate.isBelow( elevation, elevationsView[ip], coordinate.projectionErrorBound( elemCenter[k] ) ) )
             {
               return phaseIndexView[ip];
             }
@@ -1553,7 +1614,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         }();
 
         real64 const p0 = pressureValuesView[en][0][phaseIndex];
-        real64 const p1 = pressureValuesView[en+1][0][phaseIndex];
+        real64 const p1 = pressureValuesView[next][0][phaseIndex];
         pres[k] = (1.0-ea)*p0 + ea*p1;
         temp[k] = tempTableWrapper.compute( &elevation );
         for( integer ic = 0; ic < numComps; ++ic )
@@ -1613,6 +1674,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                                                                castCapPressure,
                                                                                                phaseOrder,
                                                                                                elemCenter,
+                                                                                               coordinate,
+                                                                                               phaseContacts,
                                                                                                elevationIndexTable.createKernelWrapper(),
                                                                                                pressureValues,
                                                                                                phaseDens,
@@ -1629,7 +1692,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
           indexTable.move( hostMemorySpace, false );
           for( localIndex const k : targetSet )
           {
-            real64 const elevation = elemCenter[k][2];
+            real64 const elevation = coordinate.elevation( elemCenter[k] );
             real64 const index = indexTable.compute( &elevation );
             integer const previous = std::max( 0, std::min( static_cast< integer >( index ), numPointsInTable-2 ) );
             integer const next = std::min( previous+1, numPointsInTable-1 );
@@ -1650,6 +1713,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                                                              noOpCapillaryPressure,
                                                                                              phaseOrder,
                                                                                              elemCenter,
+                                                                                             coordinate,
+                                                                                             phaseContacts,
                                                                                              elevationIndexTable.createKernelWrapper(),
                                                                                              pressureValues,
                                                                                              phaseDens,

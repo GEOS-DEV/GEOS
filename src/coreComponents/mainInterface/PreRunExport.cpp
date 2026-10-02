@@ -301,6 +301,13 @@ bool handleCapabilitiesCommand( int argc, char * argv[], int & exitCode )
             << ",\"schemaVersion\":1,\"input-catalog\":true,\"export-mesh\":" << meshAvailable << ","
             << "\"inputCatalogFormatVersion\":1,\"meshExportFormatVersion\":1,"
             << "\"meshExportFormat\":\"vtm\",\"inputCatalogScope\":\"global\","
+            << "\"gravity-aligned-hydrostatic-initialization\":true,\"hydrostaticInitializationVersion\":1,"
+            << "\"native-set-hydrostatic-initialization\":true,"
+            << "\"hydrostaticInitialization\":{\"coordinateSystems\":[\"elevation\",\"gravityAligned\"],"
+            << "\"defaultCoordinateSystem\":\"elevation\",\"gravityAlignedCoordinate\":\"-gravity.dot(position)/|gravity|\","
+            << "\"zeroGravityCoordinate\":\"world-z\",\"solverFamilies\":[\"SinglePhaseBase\",\"CompositionalMultiphaseBase\"],"
+            << "\"contactMeaning\":\"zero-capillary-pressure equipotential reference surface\","
+            << "\"gravityAlignedCapillaryFluidModels\":[\"InvariantImmiscibleFluid\"],\"capillaryInitialPhaseNameSupported\":false},"
             << "\"arbitrary-plane-phase-initialization\":false,\"generated-set-phase-initialization\":false,"
             << "\"well-neighborhood-refinement\":false}\n";
   return true;

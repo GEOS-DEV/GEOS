@@ -19,6 +19,7 @@ Contains:
 # Specify solver headers
 set( fluidFlowSolvers_headers
      FlowSolverBase.hpp
+     kernels/HydrostaticCoordinate.hpp
      FlowSolverBaseFields.hpp
      CompositionalMultiphaseBase.hpp
      CompositionalMultiphaseBaseFields.hpp

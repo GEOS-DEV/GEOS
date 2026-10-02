@@ -22,9 +22,18 @@
 #define GEOS_FIELDSPECIFICATION_EQUILIBRIUMINITIALCONDITION_HPP
 
 #include "FieldSpecification.hpp"
+#include "common/format/EnumStrings.hpp"
 
 namespace geos
 {
+
+enum class HydrostaticCoordinateSystem
+{
+  Elevation,
+  GravityAligned
+};
+ENUM_STRINGS( HydrostaticCoordinateSystem, "elevation", "gravityAligned" );
+
 
 /**
  * @class EquilibriumInitialCondition
@@ -33,6 +42,10 @@ namespace geos
 class EquilibriumInitialCondition : public FieldSpecification
 {
 public:
+
+  /// Explicit opt-in to potential-distance coordinates along the actual gravity vector.
+  bool usesGravityAlignedCoordinates() const
+  { return m_coordinateSystem == HydrostaticCoordinateSystem::GravityAligned; }
 
   /// @copydoc FieldSpecification(string const &, dataRepository::Group *)
   EquilibriumInitialCondition( string const & name, Group * parent );
@@ -179,6 +192,8 @@ protected:
   virtual void initializePreSubGroups() override final;
 
 private:
+
+  HydrostaticCoordinateSystem m_coordinateSystem = HydrostaticCoordinateSystem::Elevation;
 
   /// Maximum number of equilibration iterations
   integer m_maxNumEquilibrationIterations;

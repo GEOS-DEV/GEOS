@@ -21,6 +21,8 @@
 
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
+#include <cmath>
+#include <set>
 
 namespace geos
 {
@@ -30,9 +32,16 @@ using namespace dataRepository;
 EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, Group * parent ):
   FieldSpecification( name, parent )
 {
+  registerWrapper( "coordinateSystem", &m_coordinateSystem ).
+    setApplyDefaultValue( HydrostaticCoordinateSystem::Elevation ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Coordinates for datumElevation, phaseContacts and every temperature/composition table: "
+                    "elevation preserves legacy world z; gravityAligned uses potential distance -gravity.dot(position)/|gravity|. "
+                    "Zero gravity uses world z and constant pressure. The solver gravity is unchanged." );
+
   registerWrapper( viewKeyStruct::datumElevationString(), &m_datumElevation ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Datum elevation [m]" );
+    setDescription( "Datum coordinate [m]: world z for elevation mode or potential distance for gravityAligned mode" );
 
   registerWrapper( viewKeyStruct::datumPressureString(), &m_datumPressure ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -46,12 +55,12 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
   registerWrapper( viewKeyStruct::equilibrationToleranceString(), &m_equilibrationTolerance ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1e-3 ).
-    setDescription( "Tolerance in the fixed-point iteration scheme used for hydrostatic initialization" );
+    setDescription( "Absolute pressure tolerance [Pa] in hydrostatic fixed-point iteration; gravityAligned and active-capillary initialization also enforce this tolerance at phase contacts" );
 
   registerWrapper( viewKeyStruct::elevationIncrementString(), &m_elevationIncrement ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.6096 ). // 2 feet
-    setDescription( "Elevation increment [m] in the hydrostatic pressure table constructed internally" );
+    setDescription( "Coordinate increment [m] in the internal hydrostatic table, using the selected coordinateSystem" );
 
   registerWrapper( viewKeyStruct::initPhaseNameString(), &m_initPhaseName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -67,16 +76,16 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Names of the tables specifying the (component fraction vs elevation) relationship for each component" );
+    setDescription( "Names of the tables specifying component fraction versus the selected coordinateSystem for each component" );
 
   registerWrapper( viewKeyStruct::temperatureVsElevationTableNameString(), &m_temperatureVsElevationTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the table specifying the (temperature [K] vs elevation) relationship" );
+    setDescription( "Name of the table specifying temperature [K] versus the selected coordinateSystem" );
 
   registerWrapper( viewKeyStruct::phaseContactsString(), &m_phaseContacts ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Phase contacts' elevations [m]" );
+    setDescription( "Phase contacts [m] in the selected coordinateSystem; zero-capillary-pressure reference surfaces" );
 
   getWrapper< string >( FieldSpecification::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
@@ -90,13 +99,41 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
   initialCondition( false ); // to make sure this is not called by applyInitialConditions
 
   getWrapper< string_array >( FieldSpecification::viewKeyStruct::setNamesString() ).
+    setDefaultValue( "all" ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::FALSE );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Existing authoritative element sets to initialize. Subset selection requires coordinateSystem=gravityAligned; "
+                    "legacy elevation mode supports only {all}. Native set membership is retained, with no GUI-derived membership inference." );
   addSetName( "all" );
 }
 
 void EquilibriumInitialCondition::postInputInitialization()
 {
+  GEOS_THROW_IF( getSetNames().empty(), "HydrostaticEquilibrium requires a nonempty setNames selection", InputError, getDataContext() );
+  GEOS_THROW_IF( !usesGravityAlignedCoordinates() && ( getSetNames().size() != 1 || getSetNames()[0] != "all" ),
+                 "Selecting hydrostatic element sets requires coordinateSystem=gravityAligned; legacy elevation mode accepts only {all}",
+                 InputError, getDataContext() );
+  if( usesGravityAlignedCoordinates() )
+  {
+    GEOS_THROW_IF( !std::isfinite( m_datumElevation ) || !std::isfinite( m_datumPressure ) ||
+                   !std::isfinite( m_elevationIncrement ) || m_elevationIncrement <= 0.0 ||
+                   !std::isfinite( m_equilibrationTolerance ) || m_equilibrationTolerance <= 0.0 || m_maxNumEquilibrationIterations <= 0,
+                   "gravityAligned initialization requires finite datum coordinates/pressure and positive finite increment, tolerance and iteration count",
+                   InputError, getDataContext() );
+    std::set< string > uniqueSets;
+    for( string const & name : getSetNames() )
+    {
+      GEOS_THROW_IF( name.empty() || !uniqueSets.insert( name ).second,
+                     "gravityAligned setNames must contain unique, nonempty native element-set names", InputError, getDataContext() );
+    }
+    for( real64 const contact : m_phaseContacts )
+    {
+      GEOS_THROW_IF( !std::isfinite( contact ), "gravityAligned phaseContacts must be finite potential distances", InputError, getDataContext() );
+    }
+    GEOS_THROW_IF( !m_initPhaseName.empty() && !m_phaseContacts.empty(),
+                   "gravityAligned initialization accepts initialPhaseName or phaseContacts, not both", InputError, getDataContext() );
+  }
+
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -188,6 +225,28 @@ void EquilibriumInitialCondition::postInputInitialization()
 
 void EquilibriumInitialCondition::initializePreSubGroups()
 {
+  if( usesGravityAlignedCoordinates() )
+  {
+    FunctionManager const & manager = FunctionManager::getInstance();
+    auto validateTable = [&]( string const & name, bool const composition )
+    {
+      TableFunction const & table = manager.getGroup< TableFunction >( name );
+      auto const coordinates = table.getCoordinates();
+      auto const values = table.getValues();
+      GEOS_THROW_IF( coordinates.size() != 1 || coordinates[0].size() != values.size() || values.empty(),
+                     "gravityAligned initialization tables must be nonempty one-dimensional potential-distance tables", InputError, table.getDataContext() );
+      for( localIndex i = 0; i < values.size(); ++i )
+      {
+        GEOS_THROW_IF( !std::isfinite( coordinates[0][i] ) || !std::isfinite( values[i] ) ||
+                       ( i > 0 && coordinates[0][i] <= coordinates[0][i-1] ) ||
+                       ( composition ? ( values[i] < 0.0 || values[i] > 1.0 ) : values[i] <= 0.0 ),
+                       "gravityAligned tables require finite, strictly increasing potential-distance coordinates, component fractions in [0,1], and positive absolute temperature",
+                       InputError, table.getDataContext() );
+      }
+    };
+    for( string const & name : m_componentFractionVsElevationTableNames ) validateTable( name, true );
+    if( !m_temperatureVsElevationTableName.empty() ) validateTable( m_temperatureVsElevationTableName, false );
+  }
 
   if( !m_componentFractionVsElevationTableNames.empty() )
   {

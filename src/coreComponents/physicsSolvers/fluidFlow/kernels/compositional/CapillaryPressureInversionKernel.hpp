@@ -24,6 +24,7 @@
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "HydrostaticMobility.hpp"
+#include "physicsSolvers/fluidFlow/kernels/HydrostaticCoordinate.hpp"
 
 namespace geos
 {
@@ -43,6 +44,8 @@ struct CapillaryPressureInversionKernel
                       CAP_PRESSURE & capPressure,
                       arrayView1d< integer const > const & phaseOrder,
                       arrayView2d< real64 const > const & elementCenter,
+                      HydrostaticCoordinate const & coordinate,
+                      arrayView1d< real64 const > const & phaseContacts,
                       TableFunction::KernelWrapper elevationIndexTable,
                       arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & pressureValues,
                       arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDensityValues,
@@ -56,6 +59,7 @@ struct CapillaryPressureInversionKernel
     targetSet.move( hostMemorySpace, false );
     elementCenter.move( hostMemorySpace, false );
     phaseOrder.move( hostMemorySpace, false );
+    phaseContacts.move( hostMemorySpace, false );
     elevationIndexTable.move( hostMemorySpace, false );
     pressureValues.move( hostMemorySpace, false );
     phaseDensityValues.move( hostMemorySpace, false );
@@ -114,6 +118,8 @@ struct CapillaryPressureInversionKernel
 
     forAll< serialPolicy >( targetSet.size(), [targetSet,
                                                          elementCenter,
+                                                         coordinate,
+                                                         phaseContacts,
                                                          capPressureWrapper,
                                                          forwardCapPressureWrapper,
                                                          initializationFailure,
@@ -133,7 +139,7 @@ struct CapillaryPressureInversionKernel
                                                          globalComponentFractions] ( localIndex const i )
     {
       localIndex const k = targetSet[i];
-      real64 const elevation = elementCenter[k][2];
+      real64 const elevation = coordinate.elevation( elementCenter[k] );
 
       real64 ea = elevationIndexTable.compute( &elevation );
       integer const en = LvArray::math::max( 0, LvArray::math::min( static_cast< integer >(ea), numPoints - 2 ) );
@@ -149,7 +155,7 @@ struct CapillaryPressureInversionKernel
                                                targetPhaseCapPressure[0][0] );
       if constexpr ( numPhases == 2 )
       {
-        if( !std::is_same_v< CAP_PRESSURE, constitutive::NoOpCapillaryPressure > &&
+        if( ( coordinate.gravityAligned || !std::is_same_v< CAP_PRESSURE, constitutive::NoOpCapillaryPressure > ) &&
             ipWater < 0 && ipGas >= 0 && ipOil >= 0 )
         {
           // Oil is the primary-pressure phase for gas/oil: p_g = P - Pc_g.
@@ -168,7 +174,22 @@ struct CapillaryPressureInversionKernel
       localIndex const jFunctionIndex = isJFunction ? k : 0;
       if constexpr ( std::is_same_v< CAP_PRESSURE, constitutive::NoOpCapillaryPressure > )
       {
-        capPressureWrapper.compute( targetPhaseCapPressure[0][0], jFuncMultiplier[jFunctionIndex], targetPhaseVolumeFraction[0] );
+        if( coordinate.gravityAligned )
+        {
+          // Without capillarity the authored potential-distance contacts define
+          // a sharp partition, including the zero-gravity degenerate case.
+          integer selected = phases[numPhases-1];
+          for( integer contact = 0; contact < phaseContacts.size(); ++contact )
+          {
+            if( coordinate.isBelow( elevation, phaseContacts[contact], coordinate.projectionErrorBound( elementCenter[k] ) ) ) break;
+            selected = phases[numPhases-2-contact];
+          }
+          for( integer ip = 0; ip < numPhases; ++ip ) targetPhaseVolumeFraction[0][ip] = ip == selected ? 1.0 : 0.0;
+        }
+        else
+        {
+          capPressureWrapper.compute( targetPhaseCapPressure[0][0], jFuncMultiplier[jFunctionIndex], targetPhaseVolumeFraction[0] );
+        }
       }
       else
       {
@@ -258,7 +279,7 @@ struct CapillaryPressureInversionKernel
           totalMass += componentMass;
         }
       }
-      if( !std::is_same_v< CAP_PRESSURE, constitutive::NoOpCapillaryPressure > &&
+      if( ( coordinate.gravityAligned || !std::is_same_v< CAP_PRESSURE, constitutive::NoOpCapillaryPressure > ) &&
           ( !isFinite( totalMass ) || totalMass <= 0.0 ) )
       { initializationFailure.max( 4 ); return; }
       for( integer ic = 0; ic < numComps; ++ic )

@@ -379,6 +379,7 @@ This should print out a brief summary of the available command line arguments:
 
 For machine-readable capability discovery, a global input catalog, or an authoritative
 pre-run mesh export, see :doc:`PreRunExports`.
+For opt-in gravity-aligned hydrostatic initialization, see :doc:`GravityAlignedEquilibrium`.
 
 Obviously this doesn't do much interesting, but it will at least confirm that the executable runs.
 In typical usage, an input XML must be provided describing the problem to be run, e.g.

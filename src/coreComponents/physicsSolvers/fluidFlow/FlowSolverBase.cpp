@@ -18,6 +18,8 @@
  */
 
 #include "FlowSolverBase.hpp"
+#include "CompositionalMultiphaseBase.hpp"
+#include "SinglePhaseBase.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
@@ -26,6 +28,7 @@
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "physicsSolvers/fluidFlow/kernels/HydrostaticCoordinate.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -495,6 +498,25 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
+  if( dynamicCast< SinglePhaseBase * >( this ) == nullptr && dynamicCast< CompositionalMultiphaseBase * >( this ) == nullptr )
+  {
+    FieldSpecificationManager & specifications = FieldSpecificationManager::getInstance();
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regions )
+    {
+      specifications.forSubGroups< EquilibriumInitialCondition >( [&]( EquilibriumInitialCondition const & fs )
+      {
+        if( !fs.usesGravityAlignedCoordinates() ) return;
+        fs.getMeshObjectPaths().forObjectsInPath< ElementSubRegionBase >( mesh, [&]( ElementSubRegionBase const & subRegion )
+        {
+          string const & name = subRegion.getParent().getParent().getName();
+          GEOS_THROW_IF( std::find( regions.begin(), regions.end(), name ) != regions.end(),
+                         "This flow solver does not implement gravityAligned hydrostatic initialization; use a supported SinglePhaseBase or CompositionalMultiphaseBase solver",
+                         InputError, getDataContext(), fs.getDataContext() );
+        } );
+      } );
+    } );
+  }
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -731,6 +753,13 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
+  bool hasLegacy = false;
+  fsManager.forSubGroups< EquilibriumInitialCondition >( [&]( EquilibriumInitialCondition const & fs )
+  {
+    hasLegacy = hasLegacy || !fs.usesGravityAlignedCoordinates();
+  } );
+  if( hasLegacy )
+  {
   fsManager.apply< ElementSubRegionBase,
                    EquilibriumInitialCondition >( 0.0,
                                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
@@ -741,6 +770,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
                                                         ElementSubRegionBase & subRegion,
                                                         string const & )
   {
+    if( fs.usesGravityAlignedCoordinates() ) return;
     RAJA::ReduceMax< parallelDeviceReduce, real64 > targetSetMaxElevation( -1e99 );
     RAJA::ReduceMin< parallelDeviceReduce, real64 > targetSetMinElevation( 1e99 );
 
@@ -759,6 +789,136 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
     localMinElevation[equilIndex] = LvArray::math::min( targetSetMinElevation.get(), localMinElevation[equilIndex] );
 
   } );
+
+  }
+
+  real64 const gravity[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+  stdMap< ElementSubRegionBase const *, array1d< integer > > owners;
+  stdMap< std::pair< string, string >, integer > setPresence;
+  stdMap< string, integer > relevantEquilibria;
+  stdMap< string, std::set< string > > selectedFluidNames;
+  array1d< real64 > localProjectionError( equilNameToEquilId.size() );
+  localProjectionError.setValues< parallelHostPolicy >( 0.0 );
+  bool hasGravityAligned = false;
+  fsManager.forSubGroups< EquilibriumInitialCondition >( [&]( EquilibriumInitialCondition const & fs )
+  {
+    if( fs.usesGravityAlignedCoordinates() && equilNameToEquilId.count( fs.getName() ) != 0 )
+    {
+      hasGravityAligned = true;
+      relevantEquilibria[fs.getName()] = 0;
+      selectedFluidNames[fs.getName()];
+      for( string const & name : fs.getSetNames() ) setPresence[{ fs.getName(), name }] = 0;
+    }
+  } );
+  if( hasGravityAligned )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regions )
+    {
+      fsManager.forSubGroups< EquilibriumInitialCondition >( [&]( EquilibriumInitialCondition const & fs )
+      {
+        if( !fs.usesGravityAlignedCoordinates() || equilNameToEquilId.count( fs.getName() ) == 0 ) return;
+        fs.getMeshObjectPaths().forObjectsInPath< ElementSubRegionBase >( mesh, [&]( ElementSubRegionBase const & subRegion )
+        {
+          string const & name = subRegion.getParent().getParent().getName();
+          if( std::find( regions.begin(), regions.end(), name ) != regions.end() ) relevantEquilibria[fs.getName()] = 1;
+        } );
+      } );
+      fsManager.apply< ElementSubRegionBase, EquilibriumInitialCondition >( 0.0, mesh,
+        EquilibriumInitialCondition::catalogName(),
+        [&]( EquilibriumInitialCondition const & fs, string const & setName,
+             SortedArrayView< localIndex const > const & targetSet,
+             ElementSubRegionBase & subRegion, string const & )
+      {
+        if( equilNameToEquilId.count( fs.getName() ) == 0 ) return;
+        string const & regionName = subRegion.getParent().getParent().getName();
+        if( std::find( regions.begin(), regions.end(), regionName ) == regions.end() ) return;
+        bool const aligned = fs.usesGravityAlignedCoordinates();
+        localIndex const index = equilNameToEquilId.at( fs.getName() );
+        // Native set membership may overlap within one initializer, but two
+        // distinct initializers must not silently overwrite a gravity-aligned state.
+        array1d< integer > & ownerArray = owners[&subRegion];
+        if( ownerArray.empty() ) { ownerArray.resize( subRegion.size() ); ownerArray.setValues< parallelHostPolicy >( 0 ); }
+        arrayView1d< integer > const owner = ownerArray.toView();
+        integer const tag = ( aligned ? 1 : -1 ) * ( index + 1 );
+        RAJA::ReduceMax< parallelDeviceReduce, integer > conflict( 0 );
+        arrayView2d< real64 const > const centers = subRegion.getElementCenter();
+        HydrostaticCoordinate const coordinate( gravity, aligned );
+        RAJA::ReduceMax< parallelDeviceReduce, real64 > maximum( -1e99 );
+        RAJA::ReduceMin< parallelDeviceReduce, real64 > minimum( 1e99 );
+        RAJA::ReduceMax< parallelDeviceReduce, real64 > projectionError( 0.0 );
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+        {
+          localIndex const k = targetSet[i];
+          integer const previous = owner[k];
+          if( previous != 0 && previous != tag && ( previous > 0 || tag > 0 ) ) conflict.max( 1 );
+          owner[k] = tag;
+          real64 const value = coordinate.elevation( centers[k] );
+          maximum.max( value ); minimum.min( value );
+          projectionError.max( coordinate.projectionErrorBound( centers[k] ) );
+        } );
+        GEOS_THROW_IF( conflict.get() != 0,
+                       "Overlapping hydrostatic initializers target the same cell; gravityAligned initialization requires unambiguous assignments",
+                       InputError, fs.getDataContext(), subRegion.getDataContext() );
+        if( !aligned ) return;
+        localProjectionError[index] = LvArray::math::max( localProjectionError[index], projectionError.get() );
+        if( !targetSet.empty() )
+        {
+          setPresence[{ fs.getName(), setName }] = 1;
+          selectedFluidNames[fs.getName()].insert( subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+        }
+        localMaxElevation[index] = LvArray::math::max( maximum.get(), localMaxElevation[index] );
+        localMinElevation[index] = LvArray::math::min( minimum.get(), localMinElevation[index] );
+      } );
+    } );
+    fsManager.forSubGroups< EquilibriumInitialCondition >( [&]( EquilibriumInitialCondition const & fs )
+    {
+      auto const found = equilNameToEquilId.find( fs.getName() );
+      if( !fs.usesGravityAlignedCoordinates() || found == equilNameToEquilId.end() ) return;
+      real64 const projectionError = MpiWrapper::max( localProjectionError[found->second] );
+      GEOS_THROW_IF( !std::isfinite( projectionError ), "The gravityAligned projection exceeds finite coordinate precision", InputError, fs.getDataContext() );
+      auto const contacts = fs.getPhaseContacts();
+      for( localIndex i = 1; i < contacts.size(); ++i )
+      {
+        real64 const gap = contacts[i] - contacts[i-1];
+        real64 const scale = std::max( std::abs( contacts[i] ), std::abs( contacts[i-1] ) );
+        real64 const bound = projectionError + 2.0 * std::numeric_limits< real64 >::epsilon() * scale;
+        GEOS_THROW_IF( gap > 0.0 && gap <= 4.0 * bound,
+                       "Distinct gravityAligned contacts are too close to resolve at this geometry's floating-point projection precision; use a better-conditioned coordinate origin or resolve the layer before initialization",
+                       InputError, fs.getDataContext() );
+      }
+    } );
+    // All ranks must agree on the fluid of the selected union. Empty local
+    // sets do not constrain it; different models on different ranks still do.
+    for( auto const & entry : selectedFluidNames )
+    {
+      array1d< char > localNames;
+      for( string const & name : entry.second )
+      {
+        for( char const c : name ) localNames.emplace_back( c );
+        localNames.emplace_back( '\0' );
+      }
+      array1d< char > globalNames;
+      MpiWrapper::allGatherv( localNames.toViewConst(), globalNames );
+      std::set< string > uniqueNames;
+      string name;
+      for( char const c : globalNames )
+      {
+        if( c == '\0' ) { uniqueNames.insert( name ); name.clear(); }
+        else name += c;
+      }
+      GEOS_THROW_IF( uniqueNames.size() > 1,
+                     GEOS_FMT( "gravityAligned initializer '{}' selects different fluid models; use separate non-overlapping equilibria with reviewed interface conditions", entry.first ),
+                     InputError, getDataContext() );
+    }
+    for( auto const & entry : setPresence )
+    {
+      integer const globalPresence = MpiWrapper::max( entry.second );
+      integer const relevant = MpiWrapper::max( relevantEquilibria.at( entry.first.first ) );
+      GEOS_THROW_IF( relevant != 0 && globalPresence == 0,
+                     GEOS_FMT( "gravityAligned initializer '{}' has no target cells in native set '{}' on this solver's target regions",
+                               entry.first.first, entry.first.second ), InputError, getDataContext() );
+    }
+  }
 
   MpiWrapper::allReduce( localMaxElevation.toView(),
                          maxElevation,

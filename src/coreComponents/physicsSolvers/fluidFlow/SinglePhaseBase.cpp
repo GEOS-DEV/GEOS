@@ -29,6 +29,7 @@
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "physicsSolvers/fluidFlow/kernels/HydrostaticCoordinate.hpp"
 #include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
@@ -410,15 +411,33 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
+    if( bc.usesGravityAlignedCoordinates() )
+    {
+      integer relevant = 0;
+      forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regions )
+      {
+        bc.getMeshObjectPaths().forObjectsInPath< ElementSubRegionBase >( mesh, [&]( ElementSubRegionBase const & subRegion )
+        {
+          string const & name = subRegion.getParent().getParent().getName();
+          if( std::find( regions.begin(), regions.end(), name ) != regions.end() ) relevant = 1;
+        } );
+      } );
+      if( MpiWrapper::max( relevant ) == 0 ) return;
+    }
     // collect all the equil name to idx
     equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
-    // check that the gravity vector is aligned with the z-axis
-    GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+    GEOS_THROW_IF( bc.usesGravityAlignedCoordinates() &&
+                   ( !std::isfinite( gravVector[0] ) || !std::isfinite( gravVector[1] ) || !std::isfinite( gravVector[2] ) ||
+                     !std::isfinite( std::hypot( gravVector[0], gravVector[1], gravVector[2] ) ) ),
+                   "gravityAligned hydrostatic initialization requires a finite actual gravity vector", InputError, getDataContext() );
+    // Legacy elevations remain world z. New projected coordinates are explicit.
+    GEOS_THROW_IF( !bc.usesGravityAlignedCoordinates() && ( !isZero( gravVector[0] ) || !isZero( gravVector[1] ) ),
                    GEOS_FMT( "The gravity vector specified in this simulation ({} {} {}) is not aligned with the z-axis. \n"
                              "This is incompatible with the {} {}used in this simulation. To proceed, you can either: \n"
                              "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n"
+                             "   - Select coordinateSystem=gravityAligned and express all scalar/table coordinates as potential distances\n"
                              "   - Remove the hydrostatic equilibrium initial condition from the XML file",
                              gravVector[0],
                              gravVector[1],
@@ -471,10 +490,13 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     }
   } );
 
-  // then start the actual table construction
+  // Preserve the legacy base-level route; projected initialization follows
+  // each solver-owned discretization and its exact region/set selection.
+  auto initializeOnMesh = [&]( MeshLevel & mesh, string_array const * regions, bool const alignedOnly )
+  {
   fsManager.apply< ElementSubRegionBase,
                    EquilibriumInitialCondition >( 0.0,
-                                                  domain.getMeshBody( 0 ).getBaseDiscretization(),
+                                                  mesh,
                                                   EquilibriumInitialCondition::catalogName(),
                                                   [&] ( EquilibriumInitialCondition const & fs,
                                                         string const &,
@@ -482,6 +504,14 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                                                         ElementSubRegionBase & subRegion,
                                                         string const & )
   {
+    if( equilNameToEquilId.count( fs.getName() ) == 0 ) return;
+    if( fs.usesGravityAlignedCoordinates() != alignedOnly ) return;
+    if( alignedOnly && targetSet.empty() ) return;
+    string const & targetRegion = subRegion.getParent().getParent().getName();
+    if( regions && std::find( regions->begin(), regions->end(), targetRegion ) == regions->end() ) return;
+    HydrostaticCoordinate const coordinate( gravVector, fs.usesGravityAlignedCoordinates() );
+    real64 const coordinateGravity[3] = { 0.0, 0.0, coordinate.gravityComponent };
+
     // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
     integer const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
@@ -493,7 +523,14 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
     real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
     real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
-    localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
+    real64 const requestedPoints = elevationIncrement > 0.0 ? std::ceil( ( maxElevation - minElevation ) / elevationIncrement ) + 1.0 : 1.0;
+    GEOS_THROW_IF( fs.usesGravityAlignedCoordinates() &&
+                   ( !std::isfinite( requestedPoints ) || requestedPoints > std::numeric_limits< localIndex >::max() ||
+                     ( maxElevation > minElevation &&
+                       ( !( minElevation + elevationIncrement > minElevation ) || !( maxElevation + elevationIncrement > maxElevation ) ) ) ),
+                   "The gravityAligned table increment is unresolvable at this coordinate scale or exceeds the representable table size",
+                   InputError, fs.getDataContext() );
+    localIndex const numPointsInTable = static_cast< localIndex >( requestedPoints );
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
     GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
@@ -542,6 +579,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     }
     SingleFluidBase & singleFluid = dynamicCast< SingleFluidBase & >( fluid );
 
+
     // Step 3.3: compute the hydrostatic pressure values
 
     constitutiveUpdatePassThru( singleFluid, [&] ( auto & castedFluid )
@@ -555,7 +593,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                                        HydrostaticPressureKernel::launch( numPointsInTable,
                                                                           maxNumEquilIterations,
                                                                           equilTolerance,
-                                                                          gravVector,
+                                                                          coordinateGravity,
                                                                           minElevation,
                                                                           elevationIncrement,
                                                                           datumElevation,
@@ -568,7 +606,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                                        HydrostaticPressureKernel::launch( numPointsInTable,
                                                                           maxNumEquilIterations,
                                                                           equilTolerance,
-                                                                          gravVector,
+                                                                          coordinateGravity,
                                                                           minElevation,
                                                                           elevationIncrement,
                                                                           datumElevation,
@@ -585,8 +623,12 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
     // Step 3.4: create hydrostatic pressure table
 
-    string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
-    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
+    string const tableName = fs.usesGravityAlignedCoordinates()
+      ? scopedHydrostaticTableName( fs.getName() + "_pressure_table", subRegion.getPath() )
+      : fs.getName() + "_" + subRegion.getName() + "_table";
+    TableFunction * const presTable = fs.usesGravityAlignedCoordinates() && functionManager.hasGroup< TableFunction >( tableName )
+      ? &functionManager.getGroup< TableFunction >( tableName )
+      : dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     presTable->setTableCoordinates( elevationValues, { units::Distance } );
     presTable->setTableValues( pressureValues, units::Pressure );
     presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
@@ -604,7 +646,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     forAll< parallelHostPolicy >( targetSet.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
-      real64 const elevation = elemCenter[k][2];
+      real64 const elevation = coordinate.elevation( elemCenter[k] );
       pres[k] = presTableWrapper.compute( &elevation );
       if( m_isThermal )
       {
@@ -617,6 +659,17 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     GEOS_WARNING_IF( minPressure.get() <= 0.0,
                      GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
                                minPressure.get(), region.getName(), subRegion.getName() ) );
+  } );
+  };
+  bool hasLegacy = false;
+  fsManager.forSubGroups< EquilibriumInitialCondition >( [&]( EquilibriumInitialCondition const & fs )
+  {
+    hasLegacy = hasLegacy || !fs.usesGravityAlignedCoordinates();
+  } );
+  if( hasLegacy ) initializeOnMesh( domain.getMeshBody( 0 ).getBaseDiscretization(), nullptr, false );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regions )
+  {
+    initializeOnMesh( mesh, &regions, true );
   } );
 }
 
