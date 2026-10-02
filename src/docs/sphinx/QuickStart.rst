@@ -417,3 +417,6 @@ Please refer to :ref:`IntegratedTests` for further information.
    Refer to the FAQs above for how best to proceed in this situation.
    If only a few tests fail, it is possible that your platform configuration has exposed some issue that our existing platform tests do not catch.
    If you suspect this is the case, please consider posting an issue to our issue tracker (after first checking whether other users have encountered a similar issue).
+
+For the focused gas/oil and three-phase hydrostatic capillary corrections,
+including their verification scope, see :doc:`HydrostaticCapillaryCorrectness`.

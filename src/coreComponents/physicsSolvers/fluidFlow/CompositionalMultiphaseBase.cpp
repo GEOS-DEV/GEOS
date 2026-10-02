@@ -50,6 +50,8 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticMobility.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticStateValidation.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseVolumeFractionZFormulationKernel.hpp"
 
@@ -1046,6 +1048,11 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
         getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
       capPressure.initializeRockState( porosity, permeability );   // this needs to happen before calling updateCapPressureModel
       updateCapPressureModel( subRegion );
+      // Validate the state the ordinary solver will actually advance, including
+      // component-density chopping and the normal EOS/saturation roundtrip.
+      if( isothermalCompositionalMultiphaseBaseKernels::hasHydrostaticStateRecords( subRegion ) )
+        isothermalCompositionalMultiphaseBaseKernels::realizeSelectedHydrostaticState( subRegion, [&]() { updateFluidState( subRegion ); } );
+      isothermalCompositionalMultiphaseBaseKernels::validateRealizedHydrostaticState( subRegion, capPressure );
     }
 
     // If the diffusion and/or dispersion is/are supported, initialize the two models
@@ -1399,7 +1406,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                              elevationValues.toNestedView(),
                                                              pressureValues.toView(),
                                                              phaseDens.toView(),
-                                                             phaseCompFrac.toView() );
+                                                             phaseCompFrac.toView(),
+                                                             m_hasCapPressure && !singlePhaseInitialisation );
 
         GEOS_THROW_IF( returnValue == KernelReturnType::FAILED_TO_CONVERGE,
                        GEOS_FMT( "hydrostatic pressure initialization failed to converge in region {}! \n"
@@ -1418,6 +1426,22 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                               "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
         }
       } );
+
+      if( m_hasCapPressure && !singlePhaseInitialisation )
+      {
+        integer const ordered[3] = { ipWater >= 0 ? ipWater : ipOil,
+                                    numPhases == 3 ? ipOil : ( ipGas >= 0 ? ipGas : ipOil ), ipGas };
+        for( localIndex contact = 0; contact < phaseContacts.size(); ++contact )
+        {
+          localIndex const k = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(), elevationValues[0].size(), phaseContacts[contact] );
+          real64 const first = pressureValues[k][0][ordered[contact]];
+          real64 const second = pressureValues[k][0][ordered[contact+1]];
+          GEOS_THROW_IF( !std::isfinite( first ) || !std::isfinite( second ) ||
+                         std::abs( first - second ) > equilTolerance,
+                         "Hydrostatic contact phase pressures did not converge to continuity at the zero-capillary reference surface",
+                         InputError, fs.getDataContext(), subRegion.getDataContext() );
+        }
+      }
 
       // Step: create table wrappers for the phase pressures and mass density
       // Create a wrapper for the elevations
@@ -1547,6 +1571,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       // the capillary pressure curves to calculate new saturations.
       if( !singlePhaseInitialisation )
       {
+        RelativePermeabilityBase & relativePermeability = getConstitutiveModel< RelativePermeabilityBase >(
+          subRegion, subRegion.getReference< string >( viewKeyStruct::relPermNamesString() ) );
+        auto const evaluateRelativePermeability = m_hasCapPressure
+          ? isothermalCompositionalMultiphaseBaseKernels::makeHydrostaticMobility( relativePermeability )
+          : isothermalCompositionalMultiphaseBaseKernels::HydrostaticMobility{};
         if( m_hasCapPressure )
         {
           // Initialise porosity and permeability for capillary pressure computaion
@@ -1588,8 +1617,28 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                                                                pressureValues,
                                                                                                phaseDens,
                                                                                                phaseCompFrac,
-                                                                                               compFrac );
+                                                                                               compFrac,
+                                                                                               pres,
+                                                                                               evaluateRelativePermeability,
+                                                                                               equilTolerance );
           } );
+          targetSet.move( hostMemorySpace, false );
+          elemCenter.move( hostMemorySpace, false );
+          pressureValues.move( hostMemorySpace, false );
+          auto indexTable = elevationIndexTable.createKernelWrapper();
+          indexTable.move( hostMemorySpace, false );
+          for( localIndex const k : targetSet )
+          {
+            real64 const elevation = elemCenter[k][2];
+            real64 const index = indexTable.compute( &elevation );
+            integer const previous = std::max( 0, std::min( static_cast< integer >( index ), numPointsInTable-2 ) );
+            integer const next = std::min( previous+1, numPointsInTable-1 );
+            real64 const alpha = numPointsInTable == 1 ? 0.0 : index-previous;
+            isothermalCompositionalMultiphaseBaseKernels::HydrostaticPhaseVector integrated{};
+            for( integer ip = 0; ip < numPhases; ++ip )
+              integrated[ip] = (1.0-alpha)*pressureValues[previous][0][ip] + alpha*pressureValues[next][0][ip];
+            isothermalCompositionalMultiphaseBaseKernels::recordHydrostaticState( subRegion, k, numPhases, integrated, equilTolerance );
+          }
         }
         else
         {
@@ -1605,7 +1654,10 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                                                              pressureValues,
                                                                                              phaseDens,
                                                                                              phaseCompFrac,
-                                                                                             compFrac );
+                                                                                             compFrac,
+                                                                                             pres,
+                                                                                             evaluateRelativePermeability,
+                                                                                             equilTolerance );
         }
       }
     } );
