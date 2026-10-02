@@ -167,3 +167,22 @@ TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testTherma
     FAIL(); // Shouldn't be called
   } ), InputError );
 }
+
+TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testFluidStorageLimitDiagnostic )
+{
+  integer const requested = std::max( 15, MultiFluidBase::MAX_NUM_COMPONENTS + 1 );
+  getFluid().getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() ).resize( requested );
+
+  try
+  {
+    getFluid().postInputInitializationRecursive();
+    FAIL() << "An oversized fluid model must be rejected during input initialization";
+  }
+  catch( InputError const & error )
+  {
+    string const message = error.what();
+    EXPECT_NE( message.find( GEOS_FMT( "requires {} components", requested ) ), string::npos );
+    EXPECT_NE( message.find( GEOS_FMT( "storage capacity of {}", MultiFluidBase::MAX_NUM_COMPONENTS ) ), string::npos );
+    EXPECT_NE( message.find( GEOS_FMT( "GEOS_MAX_FLUID_COMPONENTS={}", GEOS_MAX_FLUID_COMPONENTS ) ), string::npos );
+  }
+}
