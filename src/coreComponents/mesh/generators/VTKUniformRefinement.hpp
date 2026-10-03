@@ -53,6 +53,8 @@ struct UniformRefinementOptions
   std::optional< std::set< std::string > > requiredFaceBlockCellArrays;
   std::uint64_t chunkBytes = UINT64_C( 1 ) << 30; ///< Largest MPI message chunk, in bytes.
   bool reportStatistics = false;                  ///< Log forecasts and per-level statistics.
+  /// Component callers can inspect full lineage; production import needs only the root ID.
+  bool diagnosticLineage = true;
 };
 
 /** Local forecasts. Point/field bounds allow no inter-cell reuse; byte models
@@ -109,9 +111,8 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
 /**
  * @brief Check the import transform of a refined mesh without applying it.
  * @details The transform must be finite, nonsingular and orientation preserving,
- * and every transformed coordinate must be finite. When every coordinate is
- * transformed exactly, the validated cells stay valid. Otherwise rounding can
- * collapse cells, so every refined cell is checked again.
+ * and every transformed coordinate must be finite. Check the transformed
+ * geometry because rounding and underflow can collapse distinct vertices.
  * @param mesh The refined mesh.
  * @param translation The import translation.
  * @param scale The import scaling.

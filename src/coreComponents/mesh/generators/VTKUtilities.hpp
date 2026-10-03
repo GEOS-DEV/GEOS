@@ -160,6 +160,7 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
  * @param[in] partitionFractureWeight additional weight to fracture-connected super-cells during partitioning
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
+ * @param[in] uniformRefinementLevels Positive levels weight the coarse graph by descendant counts.
  * @return the vtk grid redistributed
  */
 AllMeshes
@@ -173,7 +174,8 @@ redistributeMeshes( integer const logLevel,
                     int const partitionRefinement,
                     int const partitionFractureWeight,
                     int const useGlobalIds,
-                    string const & structuredIndexAttributeName );
+                    string const & structuredIndexAttributeName,
+                    int const uniformRefinementLevels = 0 );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.
@@ -300,7 +302,8 @@ void writeCells( integer const logLevel,
                  CellBlockManager & cellBlockManager );
 
 /**
- * @brief Write source-separated refinement blocks and persistent cell lineage.
+ * @brief Write source-separated refinement blocks and the coarse root ID.
+ * @details The root ID is runtime metadata and is rebuilt on restart.
  * @param[in] logLevel the log level
  * @param[in] mesh The refined mesh
  * @param[in] blocks The refined cell blocks
@@ -309,6 +312,14 @@ void writeCells( integer const logLevel,
 void writeRefinedCells( integer logLevel, vtkDataSet & mesh,
                         std::vector< vtk::RefinementBlockDescriptor > const & blocks,
                         CellBlockManager & cellBlockManager );
+
+/// @cond DO_NOT_DOCUMENT
+namespace vtk::detail
+{
+/** Directory routing only: full integral IDs remain the identity. */
+int homeRank( int64_t globalId, int numRanks );
+}
+/// @endcond
 
 /**
  * @brief Build the "surface" node sets from the surface information.

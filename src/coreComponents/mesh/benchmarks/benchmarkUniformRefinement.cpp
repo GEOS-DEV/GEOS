@@ -608,10 +608,11 @@ void run( Options const & opt, Communication & comm )
     comm.checked( "benchmark coarse point install",
                   [&]
     {
+      std::size_t pointIndex = 0;
       for( auto const & entity : mesh.supports )
         if( entity.key.kind == EntityKind::vertex && entity.participants.size() > 1 )
         {
-          auto const & record = records.at( entity.key );
+          auto const & record = records.at( pointIndex++ );
           mesh.coordinates[entity.localCorners.front()] = record.position;
           layout->install( entity.localCorners.front(), record.fields );
         }
@@ -627,7 +628,7 @@ void run( Options const & opt, Communication & comm )
     Connectivity parents;
     std::vector< double > fractions;
     std::vector< PointCreation > creations;
-    std::map< EntityKey, PointRecord > records;
+    std::vector< PointRecord > records;
     IdRange cells{};
     CommunicationStatistics const before = comm.statistics();
     double levelSeconds = 0;
@@ -649,9 +650,21 @@ void run( Options const & opt, Communication & comm )
                     [&]
       {
         points = std::make_unique< PointRegistry >( mesh.coordinates, mesh.pointIds );
+        std::uint64_t count = 0;
+        for( auto const & cell : mesh.cells )
+        {
+          auto const children = refinedCellCount( cell, 1 );
+          if( children > std::numeric_limits< std::uint64_t >::max() - count )
+            throw std::overflow_error( "Benchmark child count overflow" );
+          count += children;
+        }
+        auto const capacity = LvArray::integerConversion< std::size_t >( count );
+        next.cells.reserve( capacity );
+        parents.reserve( capacity );
+        fractions.reserve( capacity );
         for( std::size_t i = 0; i < mesh.cells.size(); ++i )
         {
-          auto split = subdivideCell( mesh.cells[i], mesh.cellIds[i], *points );
+          auto split = subdivideCell( mesh.cells[i], mesh.cellIds[i], *points, false );
           double const measure = signedMeasure( mesh.cells[i], *points );
           for( auto const & child : split.children )
             fractions.push_back( signedMeasure( child, *points ) / measure );
@@ -674,6 +687,7 @@ void run( Options const & opt, Communication & comm )
       {
         next.pointData = transferPointData( *mesh.pointData, *points, policies );
         layout = std::make_unique< PointFieldLayout >( *next.pointData );
+        creations.reserve( points->points().size() - points->originalSize() );
         for( vtkIdType i = points->originalSize(); i < static_cast< vtkIdType >( points->points().size() ); ++i )
         {
           auto const & point = points->points()[i];
@@ -699,6 +713,7 @@ void run( Options const & opt, Communication & comm )
                     [&]
       {
         next.pointIds = mesh.pointIds;
+        next.pointIds.reserve( points->points().size() );
         next.coordinates.reserve( points->points().size() );
         for( vtkIdType i = 0; i < static_cast< vtkIdType >( points->points().size() ); ++i )
         {
@@ -707,7 +722,7 @@ void run( Options const & opt, Communication & comm )
             next.coordinates.push_back( point.position );
           else
           {
-            auto const & record = records.at( point.key );
+            auto const & record = records.at( i - points->originalSize() );
             next.coordinates.push_back( record.position );
             next.pointIds.push_back( record.globalId );
             auto const & participants =
@@ -749,7 +764,7 @@ void run( Options const & opt, Communication & comm )
       points.reset();
       layout.reset();
       std::vector< PointCreation >{}.swap( creations );
-      std::map< EntityKey, PointRecord >{}.swap( records );
+      std::vector< PointRecord >{}.swap( records );
       Connectivity{}.swap( parents );
       std::vector< double >{}.swap( fractions );
     } );

@@ -74,10 +74,12 @@ SuperCellInfo tagCellsWithSuperCellIds(
  *
  * @param mesh Distributed mesh with SuperCellId array
  * @param fractureWeight Weight boost for multi-cell super-cells
+ * @param cellWeights Optional positive per-cell descendant counts; empty uses coarse counts.
  * @return Local super-cell metadata
  */
 SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > mesh,
-                                        integer fractureWeight );
+                                        integer fractureWeight,
+                                        arrayView1d< pmet_idx_t const > const & cellWeights = {} );
 
 /**
  * @brief Initial redistribution preserving super-cell integrity

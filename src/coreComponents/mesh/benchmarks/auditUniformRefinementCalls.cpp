@@ -175,13 +175,13 @@ vtkSmartPointer< vtkUnstructuredGrid > scatterByRankAssignment( vtkUnstructuredG
 AllMeshes redistributeMeshes( integer logLevel, vtkSmartPointer< vtkDataSet > mesh,
                               stdMap< string, vtkSmartPointer< vtkDataSet > > & fractures, MPI_Comm comm,
                               ScatterMethod scatter, arrayView1d< int const > partitions, PartitionMethod method,
-                              int partitionRefinement, int fractureWeight, int useIds, string const & indexName )
+                              int partitionRefinement, int fractureWeight, int useIds, string const & indexName, int uniformLevels )
 {
   if( auto * counters = active.load() )
     ++counters->redistribute;
   static auto original = next( &redistributeMeshes );
   return original( logLevel, std::move( mesh ), fractures, comm, scatter, partitions, method,
-                   partitionRefinement, fractureWeight, useIds, indexName );
+                   partitionRefinement, fractureWeight, useIds, indexName, uniformLevels );
 }
 } // namespace geos::vtk
 
@@ -213,12 +213,13 @@ array1d< pmet_idx_t > partitionWeighted( ArrayOfArraysView< pmet_idx_t const, pm
 #if defined(GEOS_USE_SCOTCH)
 namespace geos::ptscotch
 {
-array1d< int64_t > partition( ArrayOfArraysView< int64_t const, int64_t > const & graph, int64_t parts, MPI_Comm comm )
+array1d< int64_t > partition( ArrayOfArraysView< int64_t const, int64_t > const & graph, int64_t parts, MPI_Comm comm,
+                             arrayView1d< int64_t const > const & weights )
 {
   if( auto * counters = active.load() )
     ++counters->repartition;
   static auto original = next( &partition );
-  return original( graph, parts, comm );
+  return original( graph, parts, comm, weights );
 }
 } // namespace geos::ptscotch
 #endif

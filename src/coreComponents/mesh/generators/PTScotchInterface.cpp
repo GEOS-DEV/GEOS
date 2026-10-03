@@ -40,9 +40,13 @@ namespace ptscotch
 array1d< int64_t >
 partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
            int64_t const numParts,
-           MPI_Comm comm )
+           MPI_Comm comm,
+           arrayView1d< int64_t const > const & vertexWeights )
 {
   SCOTCH_Num const numVerts = graph.size();
+  GEOS_ERROR_IF( !vertexWeights.empty() && vertexWeights.size() != numVerts, "Scotch vertex weight size mismatch" );
+  for( int64_t weight : vertexWeights )
+    GEOS_ERROR_IF( weight <= 0, "Scotch vertex weights must be positive" );
 
   array1d< int64_t > part( numVerts ); // all 0 by default
   if( numParts == 1 )
@@ -65,7 +69,7 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
                                          numVerts,     // vertlocmax
                                          offsets,      // vertloctab
                                          offsets + 1,  // vendloctab
-                                         nullptr,      // veloloctab
+                                         vertexWeights.empty() ? nullptr : const_cast< SCOTCH_Num * >( vertexWeights.data() ), // veloloctab
                                          nullptr,      // vlblloctab
                                          numEdges,     // edgelocnbr
                                          numEdges,     // edgelocsiz

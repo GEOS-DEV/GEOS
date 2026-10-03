@@ -149,15 +149,15 @@ only for checkpoint inspection::
     --launcher "srun --cpu-bind=cores --cpus-per-task=1" --ranks 1 4 --wells
 
 It runs FVM and FEM at levels zero through two with sparse IDs above ``2^53``.
-Checks include ghost ownership, lineage, partition-independent solutions, an
-analytic uniaxial elastic patch with a ramped load, matching restart continuation
+Checks include ghost ownership, geometric coarse-parent recovery, partition-independent
+solutions, an analytic uniaxial elastic patch with a ramped load, matching restart continuation
 versus two uninterrupted steps, changed-level rejection, and a zero-level checkpoint with
 the new optional wrapper removed to represent an older checkpoint.
 The checkpoint for continuation precedes the second solve; the harness requires
 solver iterations in the resumed log as well as agreement of final state.
 ``--wells`` adds two coupled wells at all three levels, including a fractured
-reservoir with sparse surface IDs. Zero-level well elements keep develop's
-element-count offset; refined wells start above all imported element IDs.
+reservoir with sparse surface IDs. At every level, well elements start above
+the maximum existing element ID, including surface elements.
 Checks cover exact element/node ranges and behavior near the limits of the
 global-ID type. That optional well
 regression uses the normal FGMRES/MGR reservoir/well solver configuration. It
@@ -166,8 +166,8 @@ compares its values with the original 64-bit array.
 
 The connected mixed-mesh correctness harness uses the committed hex/pentagonal-
 prism/hexagonal-prism fixture. It verifies production pressure/porosity import
-against source IDs, parent-volume recovery, constant-state flow, closed-boundary
-mass conservation with nonzero internal fluxes, and an affine elasticity patch::
+against coarse parents located from geometry, parent-volume recovery, constant-state
+flow, closed-boundary mass conservation with nonzero internal fluxes, and an affine elasticity patch::
 
   python3 benchmarks/verifyUniformRefinementMixedSolvers.py \
     "$GEOS_DANE_BUILD/bin/geosx" "$GEOS_DANE_RESULTS/mixed-correctness" \

@@ -44,16 +44,15 @@ Connectivity canonicalCycle( Connectivity const & corners )
   std::sort( sorted.begin(), sorted.end() );
   if( corners.size() < 3 || std::adjacent_find( sorted.begin(), sorted.end() ) != sorted.end() )
     throw std::invalid_argument( "Refinement face requires at least three distinct corners" );
-  Connectivity best = corners;
-  for( int direction : { -1, 1 } )
-    for( std::size_t start = 0; start < corners.size(); ++start )
-    {
-      Connectivity candidate;
-      for( std::size_t i = 0; i < corners.size(); ++i )
-        candidate.push_back( corners[( start + ( direction == 1 ? i : corners.size() - i ) ) % corners.size()] );
-      best = std::min( best, candidate );
-    }
-  return best;
+  // Distinct corners give one minimum start. The smaller adjacent ID then
+  // determines the lexicographically smaller of the two directions.
+  std::size_t const n = corners.size();
+  std::size_t const start = std::min_element( corners.begin(), corners.end() ) - corners.begin();
+  bool const forward = corners[( start + 1 ) % n] < corners[( start + n - 1 ) % n];
+  Connectivity result( n );
+  for( std::size_t i = 0; i < n; ++i )
+    result[i] = corners[( start + ( forward ? i : n - i ) ) % n];
+  return result;
 }
 
 std::uint64_t stableHash( EntityKey const & key )

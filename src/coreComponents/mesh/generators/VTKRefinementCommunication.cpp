@@ -29,6 +29,7 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <set>
 #include <stdexcept>
 #include <tuple>
@@ -1121,25 +1122,25 @@ IdRange Communication::allocateRange( std::uint64_t localCount, vtkIdType base )
   return { localCount ? static_cast< vtkIdType >( static_cast< std::uint64_t >( base ) + offset ) : 0, total };
 }
 
-std::map< EntityKey, PointRecord > Communication::resolvePoints( std::uint64_t generation, std::vector< PointCreation > const & points,
-                                                                 vtkIdType localExistingMaximum )
+std::vector< PointRecord > Communication::resolvePoints( std::uint64_t generation, std::vector< PointCreation > const & points,
+                                                        vtkIdType localExistingMaximum )
 {
   return resolvePointRecords( generation, points, localExistingMaximum, false );
 }
 
-std::map< EntityKey, PointRecord > Communication::reconcileExistingPoints( std::vector< PointCreation > const & points )
+std::vector< PointRecord > Communication::reconcileExistingPoints( std::vector< PointCreation > const & points )
 {
   return resolvePointRecords( 0, points, -1, true );
 }
 
-std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint64_t generation,
-                                                                       std::vector< PointCreation > const & points,
-                                                                       vtkIdType localExistingMaximum, bool existing )
+std::vector< PointRecord > Communication::resolvePointRecords( std::uint64_t generation,
+                                                              std::vector< PointCreation > const & points,
+                                                              vtkIdType localExistingMaximum, bool existing )
 {
   GEOS_MARK_SCOPE_STR( "uniformRefinement/sharedEntityExchange" );
   auto const minimum = MpiWrapper::allReduce( generation, MpiWrapper::Reduction::Min, m_comm );
   auto const maximum = MpiWrapper::allReduce( generation, MpiWrapper::Reduction::Max, m_comm );
-  std::map< EntityKey, PointCreation const * > expected;
+  std::vector< std::size_t > expected;
   std::uint64_t allocated = 0;
   checked( "point creation requests",
            [&]
@@ -1191,15 +1192,18 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
           throw std::invalid_argument( "Nonfinite new point coordinates" );
         }
       }
-      if( !expected.emplace( point.key, &point ).second )
-      {
-        throw std::invalid_argument( "Duplicate local point creation key" );
-      }
       if( !existing && ranks.front() == m_rank )
       {
         ++allocated;
       }
     }
+    expected.resize( points.size() );
+    std::iota( expected.begin(), expected.end(), 0 );
+    std::sort( expected.begin(), expected.end(),
+               [&]( std::size_t a, std::size_t b ) { return points[a].key < points[b].key; } );
+    if( std::adjacent_find( expected.begin(), expected.end(),
+                           [&]( std::size_t a, std::size_t b ) { return points[a].key == points[b].key; } ) != expected.end() )
+      throw std::invalid_argument( "Duplicate local point creation key" );
   } );
   vtkIdType oldMaximum = -1;
   IdRange range{ 0, 0 };
@@ -1218,28 +1222,31 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
     range = allocateRange( allocated, anyNew ? oldMaximum + 1 : 0 );
   }
   Mail outgoing;
-  std::map< EntityKey, PointRecord > records;
+  std::vector< PointRecord > records;
   checked( "authoritative point records",
            [&]
   {
     std::uint64_t ordinal = 0;
-    for( auto const & [key, point] : expected )
+    records.resize( points.size() );
+    for( std::size_t index : expected )
     {
-      if( point->participants.front() == m_rank )
+      auto const & point = points[index];
+      auto const & key = point.key;
+      if( point.participants.front() == m_rank )
       {
         vtkIdType const id =
           existing ? key.corners.front() : static_cast< vtkIdType >( static_cast< std::uint64_t >( range.first ) + ordinal++ );
-        PointRecord record{ id, point->position, point->fields };
-        records.emplace( key, record );
-        for( int r : point->participants )
+        PointRecord & record = records[index];
+        record = { id, point.position, point.fields };
+        for( int r : point.participants )
         {
           if( r != m_rank )
           {
             auto & bytes = outgoing[r];
             putInteger( bytes, generation );
             putKey( bytes, key );
-            putInteger( bytes, point->participants.size() );
-            for( int participant : point->participants )
+            putInteger( bytes, point.participants.size() );
+            for( int participant : point.participants )
             {
               putInteger( bytes, participant );
             }
@@ -1269,12 +1276,13 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
           throw std::invalid_argument( "Wrong refinement generation in shared point record" );
         }
         EntityKey const key = reader.key();
-        auto const found = expected.find( key );
-        if( found == expected.end() || found->second->participants.front() != peer )
+        auto const found = std::lower_bound( expected.begin(), expected.end(), key,
+                                             [&]( std::size_t index, EntityKey const & value ) { return points[index].key < value; } );
+        if( found == expected.end() || !( points[*found].key == key ) || points[*found].participants.front() != peer )
         {
           throw std::invalid_argument( "Unexpected shared point allocator/support" );
         }
-        if( reader.participants( m_size ) != found->second->participants )
+        if( reader.participants( m_size ) != points[*found].participants )
         {
           throw std::invalid_argument( "Inconsistent shared point participants" );
         }
@@ -1286,34 +1294,35 @@ std::map< EntityKey, PointRecord > Communication::resolvePointRecords( std::uint
         }
         record.fields = reader.payload();
         if( ( existing ? record.globalId != key.corners.front() : record.globalId <= oldMaximum ) ||
-            !records.emplace( key, std::move( record ) ).second )
+            records[*found].globalId >= 0 )
         {
           throw std::invalid_argument( "Repeated/invalid shared point ID record" );
         }
+        records[*found] = std::move( record );
       }
     }
-    if( records.size() != expected.size() )
+    std::vector< std::pair< std::uint64_t, vtkIdType > > ids;
+    ids.reserve( records.size() );
+    for( std::size_t i = 0; i < records.size(); ++i )
     {
-      throw std::invalid_argument( "Missing shared point creation record" );
-    }
-    std::set< std::pair< std::uint64_t, vtkIdType > > ids;
-    for( auto const & [key, record] : records )
-    {
-      if( !ids.emplace( key.meshNamespace, record.globalId ).second )
-      {
-        throw std::invalid_argument( "Repeated local refinement point global ID" );
-      }
-      auto const & predicted = expected.at( key )->position;
+      auto const & record = records[i];
+      if( record.globalId < 0 )
+        throw std::invalid_argument( "Missing shared point creation record" );
+      ids.emplace_back( points[i].key.meshNamespace, record.globalId );
+      auto const & predicted = points[i].position;
       for( int d = 0; d < 3; ++d )
       {
         if( std::abs( record.position[d] - predicted[d] ) >
             64 * std::numeric_limits< double >::epsilon() * std::max( std::abs( record.position[d] ), std::abs( predicted[d] ) ) +
-            1e-12 * expected.at( key )->supportScale )
+            1e-12 * points[i].supportScale )
         {
           throw std::invalid_argument( "Shared point support coordinate mismatch" );
         }
       }
     }
+    std::sort( ids.begin(), ids.end() );
+    if( std::adjacent_find( ids.begin(), ids.end() ) != ids.end() )
+      throw std::invalid_argument( "Repeated local refinement point global ID" );
   } );
   return records;
 }

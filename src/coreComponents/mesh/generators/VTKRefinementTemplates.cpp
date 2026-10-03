@@ -586,7 +586,7 @@ std::vector< Connectivity > subdivideFace( Connectivity const & p, PointRegistry
   return children;
 }
 
-Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegistry & registry )
+Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegistry & registry, bool includeFaceChildren )
 {
   try
   {
@@ -598,8 +598,10 @@ Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegis
                                  "; minimum sampled scaled Jacobian " + sampledScaledJacobian( cell, registry ) + ")" );
   }
   Subdivision result;
-  for( auto const & face : cellFaces( cell ) )
-    result.faceChildren.push_back( subdivideFace( face, registry ) );
+  result.children.reserve( refinedCellCount( cell, 1 ) );
+  if( includeFaceChildren )
+    for( auto const & face : cellFaces( cell ) )
+      result.faceChildren.push_back( subdivideFace( face, registry ) );
   auto const & p = cell.points;
   auto edge = [&]( int a, int b ) { return registry.edge( p[a], p[b] ); };
   auto child = [&]( int type, Connectivity corners ) { result.children.push_back( { type, std::move( corners ), 0 } ); };
@@ -905,6 +907,47 @@ void validateGeometry( Cell const & cell, PointRegistry const & registry )
         throw std::invalid_argument( "Self-intersecting or overlapping polygonal prism cap fan" );
     }
   }
+}
+
+void CellCounts::include( Cell const & cell )
+{
+  if( cell.prismSides )
+  {
+    if( cell.prismSides < 5 || cell.prismSides > 11 )
+      throw std::invalid_argument( "Unsupported prism arity in refinement growth counts" );
+    prisms[cell.prismSides] = add( prisms[cell.prismSides], 1 );
+    return;
+  }
+  switch( cell.vtkType )
+  {
+    case VTK_HEXAHEDRON: hexahedra = add( hexahedra, 1 ); break;
+    case VTK_TETRA: tetrahedra = add( tetrahedra, 1 ); break;
+    case VTK_WEDGE: wedges = add( wedges, 1 ); break;
+    case VTK_PYRAMID: pyramids = add( pyramids, 1 ); break;
+    default: throw std::invalid_argument( "Unsupported uniform refinement count type" );
+  }
+}
+
+std::uint64_t refinedCellCount( Cell const & cell, int levels )
+{
+  if( levels < 0 )
+    throw std::invalid_argument( "Negative uniform refinement level" );
+  if( levels == 0 )
+    return 1;
+  if( cell.vtkType == VTK_TRIANGLE || cell.vtkType == VTK_QUAD || cell.vtkType == VTK_POLYGON )
+  {
+    if( cell.vtkType == VTK_POLYGON && cell.points.size() < 3 )
+      throw std::invalid_argument( "Refinement polygon requires at least three corners" );
+    std::uint64_t count = cell.vtkType == VTK_POLYGON && cell.points.size() > 4 ? cell.points.size() : 4;
+    for( int l = 1; l < levels; ++l )
+      count = multiply( count, 4 );
+    return count;
+  }
+  CellCounts counts;
+  counts.include( cell );
+  for( int l = 0; l < levels; ++l )
+    counts = counts.next();
+  return counts.total();
 }
 
 std::uint64_t CellCounts::total() const

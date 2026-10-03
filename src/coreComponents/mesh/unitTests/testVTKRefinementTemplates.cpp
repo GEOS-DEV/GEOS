@@ -242,6 +242,42 @@ TEST( VTKRefinementTemplates, ReportedShapesBothEncodingsThreeLevels )
   }
 }
 
+TEST( VTKRefinementTemplates, ChildOnlyConstructionPreservesKeysAndGeometry )
+{
+  for( auto const * name : { "supportedElements.vtk", "supportedElementsAsVTKPolyhedra.vtk" } )
+  {
+    vtkNew< vtkDataSetReader > reader;
+    reader->SetFileName( ( std::string( VTK_REFINEMENT_FIXTURE_DIR ) + "/" + name ).c_str() );
+    reader->Update();
+    auto * mesh = reader->GetOutput();
+    ASSERT_EQ( mesh->GetNumberOfCells(), 12 );
+    for( vtkIdType c = 0; c < mesh->GetNumberOfCells(); ++c )
+    {
+      SCOPED_TRACE( std::string( name ) + " cell " + std::to_string( c ) );
+      auto fullPoints = registryFor( *mesh ), childPoints = registryFor( *mesh );
+      auto const parent = normalizeCell( *mesh->GetCell( c ) );
+      auto const full = subdivideCell( parent, c, fullPoints );
+      auto const children = subdivideCell( parent, c, childPoints, false );
+      EXPECT_TRUE( children.faceChildren.empty() );
+      ASSERT_EQ( children.children.size(), full.children.size() );
+      EXPECT_EQ( children.children.size(), refinedCellCount( parent, 1 ) );
+      EXPECT_EQ( childPoints.points().size(), fullPoints.points().size() );
+      for( std::size_t i = 0; i < full.children.size(); ++i )
+      {
+        EXPECT_EQ( children.children[i].vtkType, full.children[i].vtkType );
+        ASSERT_EQ( children.children[i].points.size(), full.children[i].points.size() );
+        for( std::size_t p = 0; p < full.children[i].points.size(); ++p )
+        {
+          auto const & a = fullPoints.points()[full.children[i].points[p]];
+          auto const & b = childPoints.points()[children.children[i].points[p]];
+          EXPECT_TRUE( a.key == b.key );
+          EXPECT_EQ( a.position, b.position );
+        }
+      }
+    }
+  }
+}
+
 TEST( VTKRefinementTemplates, PolygonalPrismsAndAffineRecipes )
 {
   for( int n = 5; n <= 11; ++n )
@@ -666,6 +702,13 @@ TEST( VTKRefinementTemplates, PyramidUnequalFractions )
 
 TEST( VTKRefinementTemplates, CountsAndOverflowWithoutAllocation )
 {
+  for( int corners : { 3, 4, 5, 11 } )
+  {
+    Cell const face{ VTK_POLYGON, Connectivity( corners ), 0 };
+    EXPECT_EQ( refinedCellCount( face, 1 ), corners <= 4 ? 4 : corners );
+    EXPECT_EQ( refinedCellCount( face, 2 ), corners <= 4 ? 16 : 4 * corners );
+  }
+  EXPECT_THROW( refinedCellCount( { VTK_POLYGON, {}, 0 }, 1 ), std::invalid_argument );
   CellCounts counts;
   counts.tetrahedra = 1;
   counts.pyramids = 1;

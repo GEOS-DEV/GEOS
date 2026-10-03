@@ -34,12 +34,14 @@ namespace ptscotch
  * @param graph the input graph (edges of locally owned nodes)
  * @param numParts target number of partitions
  * @param comm the MPI communicator of processes to partition over
+ * @param vertexWeights Optional positive vertex weights; empty selects equal weights.
  * @return an array of target partitions for each element in local mesh
  */
 array1d< int64_t >
 partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
            int64_t const numParts,
-           MPI_Comm comm );
+           MPI_Comm comm,
+           arrayView1d< int64_t const > const & vertexWeights = {} );
 
 } // namespace ptscotch
 } // namespace geos

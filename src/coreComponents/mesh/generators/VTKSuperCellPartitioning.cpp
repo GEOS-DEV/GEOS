@@ -38,6 +38,8 @@
 
 #include <unordered_set>
 #include <queue>
+#include <limits>
+#include <stdexcept>
 
 
 namespace geos
@@ -215,7 +217,8 @@ SuperCellInfo tagCellsWithSuperCellIds(
 // =============================================================================================
 // SECTION 2: SUPER-CELL RECONSTRUCTION (after redistribution)
 // =============================================================================================
-SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > mesh, integer fractureWeight )
+SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > mesh, integer fractureWeight,
+                                        arrayView1d< pmet_idx_t const > const & cellWeights )
 {
   SuperCellInfo info;
 
@@ -234,18 +237,35 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
 
   // Build map: super-cell ID -> vector of cell global IDs
   stdMap< vtkIdType, stdVector< vtkIdType > > localSuperCells;
+  stdMap< vtkIdType, pmet_idx_t > localWeights;
+  if( !cellWeights.empty() && cellWeights.size() != mesh->GetNumberOfCells() )
+    throw std::invalid_argument( "Super-cell weight size mismatch" );
 
   for( vtkIdType i = 0; i < mesh->GetNumberOfCells(); ++i )
   {
     vtkIdType scId = superCellIdArray->GetValue( i );
     vtkIdType globalId = globalIds->GetValue( i );
     localSuperCells.get_inserted( scId ).push_back( globalId );
+    if( !cellWeights.empty() )
+    {
+      auto & weight = localWeights.get_inserted( scId );
+      if( cellWeights[i] <= 0 || weight > std::numeric_limits< pmet_idx_t >::max() - cellWeights[i] )
+        throw std::overflow_error( "Invalid or overflowing super-cell refinement weight" );
+      weight += cellWeights[i];
+    }
   }
 
   for( auto const & [scId, cells] : localSuperCells )
   {
     info.superCellToOriginalCells.try_emplace( scId, cells );
-    info.vertexWeights.try_emplace( scId, computeSuperCellWeight( cells.size(), fractureWeight ) );
+    pmet_idx_t weight = cellWeights.empty() ? computeSuperCellWeight( cells.size(), fractureWeight ) : localWeights.at( scId );
+    if( !cellWeights.empty() && cells.size() > 1 )
+    {
+      if( fractureWeight < 0 || weight > std::numeric_limits< pmet_idx_t >::max() - fractureWeight )
+        throw std::overflow_error( "Invalid or overflowing fracture refinement weight" );
+      weight += fractureWeight;
+    }
+    info.vertexWeights.try_emplace( scId, weight );
 
     if( cells.size() > 1 )
     {

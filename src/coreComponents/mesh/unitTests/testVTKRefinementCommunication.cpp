@@ -188,7 +188,7 @@ void refineDistributed( LocalMesh & mesh, Communication & comm, int generation )
       }
       else
       {
-        auto const & record = records.at( point.key );
+        auto const & record = records.at( i - points->originalSize() );
         next.coordinates.push_back( record.position );
         next.pointIds.push_back( record.globalId );
       }
@@ -636,10 +636,10 @@ TEST( VTKRefinementCommunication, ExistingVerticesKeepIdsAndValidateCoordinates 
     { mainVertex, sharing.at( mainVertex ), { 0, 0, 0 }, { static_cast< unsigned char >( comm.rank() ) } },
     { auxiliaryVertex, sharing.at( auxiliaryVertex ), { 1, 0, 0 }, { static_cast< unsigned char >( comm.rank() + 9 ) } } };
   auto const records = comm.reconcileExistingPoints( originals );
-  EXPECT_EQ( records.at( mainVertex ).globalId, large );
-  EXPECT_EQ( records.at( auxiliaryVertex ).globalId, large );
-  EXPECT_EQ( records.at( mainVertex ).fields, ( Bytes{ 0 } ) );
-  EXPECT_EQ( records.at( auxiliaryVertex ).fields, ( Bytes{ 9 } ) );
+  EXPECT_EQ( records.at( 0 ).globalId, large );
+  EXPECT_EQ( records.at( 1 ).globalId, large );
+  EXPECT_EQ( records.at( 0 ).fields, ( Bytes{ 0 } ) );
+  EXPECT_EQ( records.at( 1 ).fields, ( Bytes{ 9 } ) );
   EXPECT_EQ( comm.statistics().directoryExchanges, 2 );
   if( comm.size() > 1 )
   {
@@ -712,7 +712,7 @@ TEST( VTKRefinementCommunication, SharedTypedFieldsComeFromTheAllocator )
     creations = { { edge, sharing.at( edge ), points.position( midpoint ), fields->pack( midpoint ) } };
   } );
   auto const result = comm.resolvePoints( 1, creations, 81 );
-  comm.checked( "typed point-field installation", [&] { fields->install( midpoint, result.at( edge ).fields ); } );
+  comm.checked( "typed point-field installation", [&] { fields->install( midpoint, result.at( 0 ).fields ); } );
   EXPECT_EQ( vtkTypeInt64Array::SafeDownCast( transferred->GetArray( "label" ) )->GetValue( midpoint ), large );
   for( int c = 0; c < 3; ++c )
   {
@@ -726,7 +726,7 @@ TEST( VTKRefinementCommunication, SharedTypedFieldsComeFromTheAllocator )
       transferred->GetVectors()->SetComponentName( 0, "different meaning" );
     }
     PointFieldLayout altered( *transferred );
-    EXPECT_THROW( comm.checked( "one-rank field schema", [&] { altered.install( midpoint, result.at( edge ).fields ); } ),
+    EXPECT_THROW( comm.checked( "one-rank field schema", [&] { altered.install( midpoint, result.at( 0 ).fields ); } ),
                   std::runtime_error );
   }
   if( comm.rank() == comm.size() - 1 )
@@ -754,27 +754,37 @@ TEST( VTKRefinementCommunication, DirectoryAndPointIdsUseFullKeys )
     { { 0, EntityKind::cell, { static_cast< vtkIdType >( 100 + comm.rank() ) } }, { comm.rank() }, { .5, .5, .5 }, {} } };
   auto const resolved = comm.resolvePoints( 1, points, oldMaximum );
   ASSERT_EQ( resolved.size(), 4 );
-  EXPECT_NE( resolved.at( edge ).globalId, resolved.at( contactSide ).globalId );
-  EXPECT_GT( resolved.at( edge ).globalId, oldMaximum );
-  ASSERT_EQ( resolved.at( edge ).fields.size(), 1 );
-  EXPECT_EQ( resolved.at( edge ).fields[0], 0 );
-  auto const low = MpiWrapper::allReduce( resolved.at( edge ).globalId, MpiWrapper::Reduction::Min, MPI_COMM_GEOS );
-  auto const high = MpiWrapper::allReduce( resolved.at( edge ).globalId, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+  EXPECT_NE( resolved.at( 0 ).globalId, resolved.at( 2 ).globalId );
+  EXPECT_GT( resolved.at( 0 ).globalId, oldMaximum );
+  ASSERT_EQ( resolved.at( 0 ).fields.size(), 1 );
+  EXPECT_EQ( resolved.at( 0 ).fields[0], 0 );
+  auto const low = MpiWrapper::allReduce( resolved.at( 0 ).globalId, MpiWrapper::Reduction::Min, MPI_COMM_GEOS );
+  auto const high = MpiWrapper::allReduce( resolved.at( 0 ).globalId, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
   EXPECT_EQ( low, high );
   auto const directoryExchanges = comm.statistics().directoryExchanges;
   vtkIdType maximum = oldMaximum;
   for( auto const & record : resolved )
   {
-    maximum = std::max( maximum, record.second.globalId );
+    maximum = std::max( maximum, record.globalId );
   }
-  EntityKey const childEdge{ 0, EntityKind::edge, { 71, resolved.at( edge ).globalId } };
+  EntityKey const childEdge{ 0, EntityKind::edge, { 71, resolved.at( 0 ).globalId } };
   auto const fine = comm.resolvePoints( 2, { { childEdge, ranks, { .25, 0, 0 }, {} } }, maximum );
-  EXPECT_GT( fine.at( childEdge ).globalId, MpiWrapper::allReduce( maximum, MpiWrapper::Reduction::Max, MPI_COMM_GEOS ) );
+  EXPECT_GT( fine.at( 0 ).globalId, MpiWrapper::allReduce( maximum, MpiWrapper::Reduction::Max, MPI_COMM_GEOS ) );
   EXPECT_EQ( comm.statistics().directoryExchanges, directoryExchanges );
   EXPECT_EQ( comm.statistics().neighborExchanges, 2 );
   EXPECT_EQ( directoryExchanges, 2 );
   auto const repeat = comm.resolvePoints( 2, { { childEdge, ranks, { .25, 0, 0 }, {} } }, maximum );
-  EXPECT_EQ( repeat.at( childEdge ).globalId, fine.at( childEdge ).globalId );
+  EXPECT_EQ( repeat.at( 0 ).globalId, fine.at( 0 ).globalId );
+  // Request order and local point insertion order must not change IDs.
+  auto reordered = points;
+  std::reverse( reordered.begin(), reordered.end() );
+  auto const reversed = comm.resolvePoints( 1, reordered, oldMaximum );
+  for( std::size_t i = 0; i < reversed.size(); ++i )
+  {
+    EXPECT_EQ( reversed[i].globalId, resolved[resolved.size() - 1 - i].globalId );
+    EXPECT_EQ( reversed[i].fields, resolved[resolved.size() - 1 - i].fields );
+  }
+  EXPECT_EQ( comm.statistics().directoryExchanges, directoryExchanges );
 }
 
 TEST( VTKRefinementCommunication, EdgeOnlyAndVertexOnlyParticipants )
@@ -832,7 +842,7 @@ TEST( VTKRefinementCommunication, SharedEdgeAllocatorIsAnActualParticipant )
   auto const result = comm.resolvePoints( 1, points, 100 );
   if( !points.empty() )
   {
-    EXPECT_EQ( result.at( edge ).fields[0], allocator );
+    EXPECT_EQ( result.at( 0 ).fields[0], allocator );
   }
   else
   {

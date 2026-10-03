@@ -814,8 +814,39 @@ TEST( VTKUniformRefinement, RoundedTransformIsValidatedEvenForSmallTranslations 
   refineUniformly( meshes, 1, {}, MPI_COMM_GEOS );
   auto output = meshes.getMainMesh();
   EXPECT_THROW( validateRefinedTransform( *output, { 1e16, 0, 0 }, { 1, 1, 1 }, MPI_COMM_GEOS ), std::runtime_error );
-  // An exact transform needs no new check and is accepted.
+  // The representable scaled cells remain valid.
   EXPECT_NO_THROW( validateRefinedTransform( *output, { 0, 0, 0 }, { 2, 2, 2 }, MPI_COMM_GEOS ) );
+}
+
+TEST( VTKUniformRefinement, ProductUnderflowCannotBypassTransformValidation )
+{
+  auto input = localCube( MpiWrapper::commRank( MPI_COMM_GEOS ), false );
+  AllMeshes meshes( input, {} );
+  refineUniformly( meshes, 1, {}, MPI_COMM_GEOS );
+  // Half-integer x coordinates round to the same subnormal as a neighbor.
+  // The FMA residual of that rounded product also underflows to zero.
+  EXPECT_THROW( validateRefinedTransform( *meshes.getMainMesh(), {},
+                                         { std::numeric_limits< double >::denorm_min(), 1, 1 }, MPI_COMM_GEOS ), std::runtime_error );
+}
+
+TEST( VTKUniformRefinement, ImportCanOmitDiagnosticLineage )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  auto input = localCube( rank, true );
+  AllMeshes meshes( input, {} );
+  UniformRefinementOptions options;
+  options.diagnosticLineage = false;
+  auto const result = refineUniformly( meshes, 2, options, MPI_COMM_GEOS );
+  auto output = meshes.getMainMesh();
+  ASSERT_EQ( output->GetNumberOfCells(), 80 );
+  auto * roots = vtkIdTypeArray::SafeDownCast( output->GetCellData()->GetArray( "_geosUniformRootCellId" ) );
+  ASSERT_NE( roots, nullptr );
+  for( vtkIdType c = 0; c < output->GetNumberOfCells(); ++c )
+    EXPECT_EQ( roots->GetValue( c ), sparseBase + 1000 + 2 * rank + ( output->GetCellType( c ) == VTK_QUAD ) );
+  for( char const * name : { "_geosUniformParentCellId", "_geosUniformGeneration", "_geosUniformChildOrdinal",
+                            "_geosUniformRootOwner", "_geosUniformSourceType", "_geosUniformSourceAttribute" } )
+    EXPECT_EQ( output->GetCellData()->GetAbstractArray( name ), nullptr );
+  EXPECT_EQ( result.levels[1].ownedVolumeCells, 64 );
 }
 
 TEST( VTKUniformRefinement, SharedCoordinatesUseTheMeshExtent )

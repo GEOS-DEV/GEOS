@@ -207,34 +207,6 @@ ElementType volumeType( Cell const & cell )
   }
 }
 bool isSurface( Cell const & cell ) { return cell.vtkType == VTK_TRIANGLE || cell.vtkType == VTK_QUAD || cell.vtkType == VTK_POLYGON; }
-void countCell( CellCounts & counts, Cell const & cell )
-{
-  if( cell.prismSides )
-  {
-    ++counts.prisms[cell.prismSides];
-  }
-  else
-  {
-    switch( cell.vtkType )
-    {
-      case VTK_TETRA:
-        ++counts.tetrahedra;
-        break;
-      case VTK_PYRAMID:
-        ++counts.pyramids;
-        break;
-      case VTK_WEDGE:
-        ++counts.wedges;
-        break;
-      case VTK_HEXAHEDRON:
-        ++counts.hexahedra;
-        break;
-      default:
-        throw std::invalid_argument( "Unsupported uniform refinement count type" );
-    }
-  }
-}
-
 void validateVolumeStorage( CellCounts const & counts )
 {
   // GEOS arrays use localIndex for flattened offsets as well as object IDs.
@@ -259,13 +231,15 @@ struct State
 {
   std::uint64_t ns;
   bool hasSurfaces = false;
+  bool diagnosticLineage = true;
+  int generation = 0;
   std::string name;
   std::vector< Coordinates > coordinates;
   Connectivity pointIds, cellIds;
   std::vector< Cell > cells;
   std::vector< bool > reverseSurface;
   std::vector< Source > sources;
-  Connectivity roots, parents, generations, ordinals, rootOwners;
+  Connectivity roots, parents, ordinals, rootOwners;
   vtkSmartPointer< vtkPointData > pointData;
   vtkSmartPointer< vtkCellData > cellData;
   std::vector< EntitySupport > interfaces;
@@ -348,7 +322,7 @@ std::vector< RefinementResourceEstimate > resourceForecast( std::vector< State >
         polygonPoints = add( polygonPoints, add( cell.points.size(), 1 ) );
       }
       else
-        countCell( volumes, cell );
+        volumes.include( cell );
     }
     // Final VTK arrays pad buckets to a communicator-wide capacity. A global
     // coarse maximum also bounds every fine bucket's actual volume-side IDs.
@@ -356,7 +330,8 @@ std::vector< RefinementResourceEstimate > resourceForecast( std::vector< State >
     FieldStorage const pointFields = fieldStorage( *state.pointData ), cellFields = fieldStorage( *state.cellData );
     auto points = static_cast< std::uint64_t >( state.coordinates.size() );
     double parentBytes = static_cast< double >( coarseConnectivity ) * sizeof( vtkIdType ) +
-                         static_cast< double >( state.cells.size() ) * ( sizeof( Cell ) + 8 * sizeof( vtkIdType ) + cellFields.tupleBytes ) +
+                         static_cast< double >( state.cells.size() ) * ( sizeof( Cell ) + sizeof( Source ) +
+                           ( state.diagnosticLineage ? 5 : 2 ) * sizeof( vtkIdType ) + sizeof( bool ) + cellFields.tupleBytes ) +
                          static_cast< double >( points ) * ( sizeof( Coordinates ) + sizeof( vtkIdType ) + pointFields.tupleBytes );
     for( int l = 0; l < levels; ++l )
     {
@@ -383,7 +358,8 @@ std::vector< RefinementResourceEstimate > resourceForecast( std::vector< State >
       auto vtkBytes = add( fieldBytes, collocationBytes );
       vtkBytes = add( vtkBytes, multiply( points, sizeof( Coordinates ) + sizeof( vtkIdType ) ) );
       vtkBytes = add( vtkBytes, multiply( connectivity, sizeof( vtkIdType ) ) );
-      vtkBytes = add( vtkBytes, add( multiply( cells, 9 * sizeof( vtkIdType ) + sizeof( unsigned char ) ), sizeof( vtkIdType ) ) );
+      vtkBytes = add( vtkBytes, add( multiply( cells, ( state.diagnosticLineage ? 9 : 3 ) * sizeof( vtkIdType ) +
+                                                      sizeof( unsigned char ) ), sizeof( vtkIdType ) ) );
       if( vtkBytes > std::numeric_limits< std::size_t >::max() )
         throw std::overflow_error( "Uniform refinement data forecast exceeds addressable storage" );
       // Mandatory owned-volume face/edge/node incidence; ghosts are a separate
@@ -393,7 +369,7 @@ std::vector< RefinementResourceEstimate > resourceForecast( std::vector< State >
       auto const geosBytes = add( multiply( incidence, 4 * sizeof( localIndex ) + 2 * sizeof( globalIndex ) ),
                                   multiply( points, 3 * sizeof( real64 ) + sizeof( globalIndex ) + sizeof( localIndex ) ) );
       double const childBytes = static_cast< double >( vtkBytes ) + static_cast< double >( cells ) *
-                                ( sizeof( Cell ) + sizeof( Source ) + 7 * sizeof( vtkIdType ) );
+                                ( sizeof( Cell ) + sizeof( Source ) + ( state.diagnosticLineage ? 5 : 2 ) * sizeof( vtkIdType ) + sizeof( bool ) );
       // Registry keys/supports, hash entries, child plans and descriptors. This
       // accounts for their payloads, not allocator-dependent capacities/overhead.
       double const scratch = static_cast< double >( points ) *
@@ -593,6 +569,7 @@ State readState( vtkDataSet & input, std::uint64_t ns, std::string name, Uniform
 {
   State state;
   state.ns = ns;
+  state.diagnosticLineage = options.diagnosticLineage;
   state.name = std::move( name );
   localCount( multiply( input.GetNumberOfPoints(), 3 ) );
   localCount( input.GetNumberOfCells() );
@@ -733,7 +710,8 @@ State readState( vtkDataSet & input, std::uint64_t ns, std::string name, Uniform
   state.cellData =
     transferCellData( *cellInput, state.cells.size(), identity, std::vector< double >( identity.size(), 1 ), policies );
   state.roots = state.cellIds;
-  state.rootOwners.assign( state.cells.size(), rank );
+  if( state.diagnosticLineage )
+    state.rootOwners.assign( state.cells.size(), rank );
   if( state.hasSurfaces )
   {
     state.sides.resize( state.cells.size() );
@@ -956,6 +934,7 @@ void coarseSharing( std::vector< State > & states, Communication & comm, MPI_Com
   comm.checked( "coupled coarse tuple installation",
                 [&]
   {
+    std::size_t pointIndex = 0;
     for( auto & state : states )
     {
       PointFieldLayout pointFields( *state.pointData );
@@ -963,7 +942,7 @@ void coarseSharing( std::vector< State > & states, Communication & comm, MPI_Com
       {
         if( support.key.kind == EntityKind::vertex )
         {
-          auto const & record = pointRecords.at( support.key );
+          auto const & record = pointRecords.at( pointIndex++ );
           state.coordinates[support.localCorners.front()] = record.position;
           pointFields.install( support.localCorners.front(), record.fields );
         }
@@ -976,7 +955,8 @@ void coarseSharing( std::vector< State > & states, Communication & comm, MPI_Com
           auto const key =
             ChildCellKey{ state.ns, state.cellIds[c], static_cast< std::uint64_t >( state.cells[c].vtkType ), 0 };
           cellFields.install( c, cellRecords.at( key ).fields );
-          state.rootOwners[c] = sharing.at( { state.ns, EntityKind::cell, { state.cellIds[c] } } ).front();
+          if( state.diagnosticLineage )
+            state.rootOwners[c] = sharing.at( { state.ns, EntityKind::cell, { state.cellIds[c] } } ).front();
         }
       }
     }
@@ -1201,6 +1181,27 @@ void planChildren( State const & state, Level & level, int generation, int rank 
 {
   GEOS_MARK_SCOPE_STR( "uniformRefinement/buildChildren" );
   auto & points = *level.points;
+  std::uint64_t count = 0;
+  for( auto const & cell : state.cells )
+    count = add( count, refinedCellCount( cell, 1 ) );
+  localCount( count );
+  level.next.cells.reserve( count );
+  level.next.roots.reserve( count );
+  level.next.sources.reserve( count );
+  level.next.reverseSurface.reserve( count );
+  level.parentIndices.reserve( count );
+  level.fractions.reserve( count );
+  if( state.diagnosticLineage )
+  {
+    level.next.parents.reserve( count );
+    level.next.ordinals.reserve( count );
+    level.next.rootOwners.reserve( count );
+  }
+  if( state.hasSurfaces )
+  {
+    level.cellKeys.reserve( count );
+    level.cellParticipants.reserve( count );
+  }
   for( std::size_t p = 0; p < state.cells.size(); ++p )
   {
     auto const & parent = state.cells[p];
@@ -1222,7 +1223,7 @@ void planChildren( State const & state, Level & level, int generation, int rank 
         }
         else
         {
-          children = subdivideCell( parent, state.cellIds[p], points ).children;
+          children = subdivideCell( parent, state.cellIds[p], points, false ).children;
           for( auto const & child : children )
           {
             measures.push_back( signedMeasure( child, points ) );
@@ -1239,10 +1240,12 @@ void planChildren( State const & state, Level & level, int generation, int rank 
             level.cellParticipants.push_back( isSurface( parent ) ? Participants{ rank } : Participants{} );
           }
           level.next.roots.push_back( state.roots[p] );
-          level.next.parents.push_back( state.cellIds[p] );
-          level.next.generations.push_back( generation );
-          level.next.ordinals.push_back( c );
-          level.next.rootOwners.push_back( state.rootOwners[p] );
+          if( state.diagnosticLineage )
+          {
+            level.next.parents.push_back( state.cellIds[p] );
+            level.next.ordinals.push_back( c );
+            level.next.rootOwners.push_back( state.rootOwners[p] );
+          }
           level.next.sources.push_back( state.sources[p] );
           level.next.reverseSurface.push_back( state.reverseSurface[p] );
           level.next.cells.push_back( std::move( children[c] ) );
@@ -1266,6 +1269,8 @@ Level planLevel( State const & state, UniformRefinementOptions const & options, 
   Level level;
   level.next.ns = state.ns;
   level.next.hasSurfaces = state.hasSurfaces;
+  level.next.diagnosticLineage = state.diagnosticLineage;
+  level.next.generation = generation;
   level.next.name = state.name;
   level.points = std::make_unique< PointRegistry >( state.coordinates, state.pointIds, state.ns );
   planChildren( state, level, generation, rank );
@@ -1435,7 +1440,7 @@ std::vector< RefinementBlockDescriptor > blockDescriptors( State const & main, s
         representative.vtkType = VTK_POLYHEDRON;
         representative.prismSides = static_cast< int >( source ) - static_cast< int >( ElementType::Prism5 ) + 5;
     }
-    countCell( counts, representative );
+    counts.include( representative );
     for( int l = 0; l < levels; ++l )
     {
       counts = counts.next();
@@ -1577,33 +1582,49 @@ vtkSmartPointer< vtkUnstructuredGrid > buildGrid( State const & state, int bucke
     points->SetPoint( p, state.coordinates[p].data() );
   }
   grid->SetPoints( points );
-  grid->Allocate( state.cells.size() );
+  std::uint64_t connectivity = 0;
+  for( auto const & cell : state.cells )
+    connectivity = add( connectivity, cell.points.size() );
+  grid->AllocateExact( LvArray::integerConversion< vtkIdType >( state.cells.size() ),
+                       LvArray::integerConversion< vtkIdType >( connectivity ) );
   for( std::size_t c = 0; c < state.cells.size(); ++c )
   {
-    auto corners = state.cells[c].points;
+    auto const & cell = state.cells[c];
     if( state.reverseSurface[c] )
     {
+      auto corners = cell.points;
       std::reverse( corners.begin() + 1, corners.end() );
+      grid->InsertNextCell( cell.vtkType, corners.size(), corners.data() );
     }
-    grid->InsertNextCell( state.cells[c].vtkType, corners.size(), corners.data() );
+    else
+      grid->InsertNextCell( cell.vtkType, cell.points.size(), cell.points.data() );
   }
   grid->GetPointData()->ShallowCopy( state.pointData );
   grid->GetCellData()->ShallowCopy( state.cellData );
   grid->GetPointData()->SetGlobalIds( idArray( "GlobalPointIds", state.pointIds ) );
   grid->GetCellData()->SetGlobalIds( idArray( "GlobalCellIds", state.cellIds ) );
   grid->GetCellData()->AddArray( idArray( rootCellName, state.roots ) );
-  grid->GetCellData()->AddArray( idArray( parentCellName, state.parents ) );
-  grid->GetCellData()->AddArray( idArray( generationName, state.generations ) );
-  grid->GetCellData()->AddArray( idArray( childName, state.ordinals ) );
-  grid->GetCellData()->AddArray( idArray( ownerName, state.rootOwners ) );
-  Connectivity sourceTypes, attributes;
-  for( auto const & source : state.sources )
+  if( state.diagnosticLineage )
   {
-    sourceTypes.push_back( static_cast< vtkIdType >( source.type ) );
-    attributes.push_back( source.attribute );
+    grid->GetCellData()->AddArray( idArray( parentCellName, state.parents ) );
+    auto generations = vtkSmartPointer< vtkIdTypeArray >::New();
+    generations->SetName( generationName );
+    generations->SetNumberOfTuples( state.cells.size() );
+    generations->FillValue( state.generation );
+    grid->GetCellData()->AddArray( generations );
+    grid->GetCellData()->AddArray( idArray( childName, state.ordinals ) );
+    grid->GetCellData()->AddArray( idArray( ownerName, state.rootOwners ) );
+    Connectivity sourceTypes, attributes;
+    sourceTypes.reserve( state.sources.size() );
+    attributes.reserve( state.sources.size() );
+    for( auto const & source : state.sources )
+    {
+      sourceTypes.push_back( static_cast< vtkIdType >( source.type ) );
+      attributes.push_back( source.attribute );
+    }
+    grid->GetCellData()->AddArray( idArray( sourceTypeName, sourceTypes ) );
+    grid->GetCellData()->AddArray( idArray( sourceAttributeName, attributes ) );
   }
-  grid->GetCellData()->AddArray( idArray( sourceTypeName, sourceTypes ) );
-  grid->GetCellData()->AddArray( idArray( sourceAttributeName, attributes ) );
   if( state.ns != 0 )
   {
     if( bucketCapacity < 1 )
@@ -1632,12 +1653,9 @@ vtkSmartPointer< vtkUnstructuredGrid > buildGrid( State const & state, int bucke
 void validateRefinedTransform( vtkDataSet & mesh, Coordinates const & translation, Coordinates const & scale, MPI_Comm communicator )
 {
   Communication comm( communicator );
-  // A diagonal transform with positive determinant multiplies every cell
-  // Jacobian by the same positive factor. When every transformed coordinate is
-  // computed exactly, the refined cells, which were already validated, stay
-  // valid. Any rounding, in the sum or in the product, can collapse small cells
-  // far from the origin, so the cells are then checked again.
-  int exact = 1;
+  // The importer calls this only for changed transforms. A zero FMA residual
+  // does not establish exactness when the residual itself can underflow.
+  // Validate the actual transformed geometry instead of relying on it.
   comm.checked( "refined physical coordinate transform", [&]
   {
     int negativeAxes = 0;
@@ -1653,33 +1671,7 @@ void validateRefinedTransform( vtkDataSet & mesh, Coordinates const & translatio
     {
       throw std::invalid_argument( "Refined coordinate transform reverses orientation" );
     }
-    for( vtkIdType p = 0; p < mesh.GetNumberOfPoints(); ++p )
-    {
-      double position[3];
-      mesh.GetPoint( p, position );
-      for( int d = 0; d < 3; ++d )
-      {
-        double const sum = position[d] + translation[d];
-        double const product = sum * scale[d];
-        if( !std::isfinite( product ) )
-        {
-          throw std::overflow_error( "Refined coordinate transform makes a nonfinite coordinate" );
-        }
-        // TwoSum error of the addition, and the FMA residual of the product.
-        double const shift = sum - position[d];
-        double const sumError = ( position[d] - ( sum - shift ) ) + ( translation[d] - shift );
-        double const productError = std::fma( sum, scale[d], -product );
-        if( !std::equal_to< double >{} ( sumError, 0. ) || !std::equal_to< double >{} ( productError, 0. ) )
-        {
-          exact = 0;
-        }
-      }
-    }
   } );
-  if( MpiWrapper::min( exact, communicator ) == 1 )
-  {
-    return;
-  }
   comm.checked( "refined physical coordinate precision", [&]
   {
     std::vector< Coordinates > physical( mesh.GetNumberOfPoints() );
@@ -1689,6 +1681,8 @@ void validateRefinedTransform( vtkDataSet & mesh, Coordinates const & translatio
       for( int d = 0; d < 3; ++d )
       {
         physical[p][d] = ( physical[p][d] + translation[d] ) * scale[d];
+        if( !std::isfinite( physical[p][d] ) )
+          throw std::overflow_error( "Refined coordinate transform makes a nonfinite coordinate" );
       }
     }
     PointRegistry points( std::move( physical ), exactIds( mesh.GetPointData()->GetGlobalIds(), mesh.GetNumberOfPoints() ) );
@@ -1754,16 +1748,17 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
   for( auto const & state : states )
     for( auto const & bucket : state.buckets )
       localBucketWidth = std::max( localBucketWidth, static_cast< std::uint64_t >( bucket.size() ) );
-  std::array< std::uint64_t, 6 > const configuration{ localVolumes, static_cast< std::uint64_t >( levels ),
-                                                      static_cast< std::uint64_t >( INT_MAX - levels ), options.reportStatistics ? 1u : 0u, options.reportStatistics ? 0u : 1u, localBucketWidth };
-  std::array< std::uint64_t, 6 > maximumConfiguration{};
+  std::array< std::uint64_t, 8 > const configuration{ localVolumes, static_cast< std::uint64_t >( levels ),
+                                                      static_cast< std::uint64_t >( INT_MAX - levels ), options.reportStatistics ? 1u : 0u, options.reportStatistics ? 0u : 1u, localBucketWidth,
+                                                      options.diagnosticLineage ? 1u : 0u, options.diagnosticLineage ? 0u : 1u };
+  std::array< std::uint64_t, 8 > maximumConfiguration{};
   MpiWrapper::allReduce( configuration, maximumConfiguration, MpiWrapper::Reduction::Max, communicator );
   comm.checked( "uniform refinement growth preflight", [&]
   {
     GEOS_MARK_SCOPE_STR( "uniformRefinement/preflight" );
     if( maximumConfiguration[1] + maximumConfiguration[2] != INT_MAX ||
-        ( maximumConfiguration[3] && maximumConfiguration[4] ) )
-      throw std::invalid_argument( "Uniform refinement levels/statistics configuration differs across ranks" );
+        ( maximumConfiguration[3] && maximumConfiguration[4] ) || ( maximumConfiguration[6] && maximumConfiguration[7] ) )
+      throw std::invalid_argument( "Uniform refinement levels/statistics/lineage configuration differs across ranks" );
     if( maximumConfiguration[0] == 0 )
       throw std::invalid_argument( "Positive uniform refinement requires coarse volume cells" );
     // All supported volume templates grow by at least six. Check this common
@@ -1796,7 +1791,7 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
         }
         else
         {
-          countCell( counts, cell );
+          counts.include( cell );
         }
       }
       for( int l = 0; l < levels; ++l )
@@ -2043,6 +2038,7 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
                     [&]
       {
         PointFieldLayout fields( *plan.next.pointData );
+        creations.reserve( plan.points->points().size() - plan.points->originalSize() );
         for( vtkIdType p = plan.points->originalSize(); p < static_cast< vtkIdType >( plan.points->points().size() ); ++p )
         {
           auto const & recipe = plan.points->points()[p];
@@ -2065,6 +2061,7 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
       {
         auto & next = plan.next;
         next.pointIds = states[s].pointIds;
+        next.pointIds.reserve( plan.points->points().size() );
         next.coordinates.reserve( plan.points->points().size() );
         plan.movedPoints.assign( plan.points->points().size(), 0 );
         PointFieldLayout fields( *next.pointData );
@@ -2077,7 +2074,7 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
           }
           else
           {
-            auto const & record = records.at( recipe.key );
+            auto const & record = records.at( p - plan.points->originalSize() );
             next.pointIds.push_back( record.globalId );
             next.coordinates.push_back( record.position );
             // Bitwise: a signed zero also counts as moved, which is conservative.
@@ -2259,8 +2256,9 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
                   [&]
     {
       GEOS_MARK_SCOPE_STR( "uniformRefinement/validation" );
-      for( auto const & plan : plans )
+      for( std::size_t s = 0; s < plans.size(); ++s )
       {
+        auto const & plan = plans[s];
         // subdivideCell validated every child with the planned positions. Only
         // a cell with a shared point whose owner's position differs by roundoff
         // is checked again, with a registry of its own points.
@@ -2272,7 +2270,7 @@ UniformRefinementResult refineUniformly( AllMeshes & meshes, int levels, Uniform
           {
             continue;
           }
-          withCellContext( plan.next.name, generation, plan.next.parents[c], cell.vtkType, [&]
+          withCellContext( plan.next.name, generation, states[s].cellIds[plan.parentIndices[c]], cell.vtkType, [&]
           {
             std::vector< Coordinates > coordinates;
             Connectivity ids;

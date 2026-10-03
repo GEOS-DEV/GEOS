@@ -20,6 +20,12 @@ children again. The default is zero, which preserves the existing import path.
 Negative and fractional values are input errors.
 
 ``partitionRefinement`` controls the existing coarse graph partitioning.
+At positive ``uniformRefinement`` levels, graph weights use the predicted number
+of volume descendants. Atomic fracture groups use the sum of their member
+weights and the existing fracture weight boost. These weights account for the
+different growth rates of mixed element types. Zero-level graph weights keep
+their existing meaning.
+
 ``uniformRefinement`` runs after scatter, optional graph partitioning and
 redistribution of surfaces and fractures. Each volume child stays on its
 parent's rank. Fine connectivity is constructed locally and shared point IDs are
@@ -59,9 +65,10 @@ N quads. The surface and volume templates use the same edge and face points.
 Coincident points with distinct IDs retain their distinct topology.
 
 Coarse face validation diagnoses quad/triangle interfaces with shared corner
-IDs before child construction, as well as crossed cycles, nonmanifold faces
-and inconsistent outward orientations. It does not use coordinates to merge
-different topological entities.
+IDs before child construction, as well as crossed cycles and nonmanifold faces.
+Equal face winding on adjacent cells is accepted. Refinement uses unoriented
+face keys and validates cell geometry separately. It does not use coordinates
+to merge different topological entities.
 
 Choose numerical methods that support the generated child types. In particular,
 pyramid refinement introduces tetrahedra and prism refinement introduces hexes.
@@ -91,14 +98,19 @@ require equal supporting values. Names, types, components and active VTK
 attribute roles of retained arrays are preserved.
 
 For unsigned node-set masks named by ``nodesetNames``, a new point joins the set
-when every defining support corner is a member. Explicit surface marker labels
-copy to each surface child. Geometric sets such as ``Box`` evaluate the final
+only on a domain-boundary face whose corners all belong to the set. Shared
+participants combine membership from such faces. Interior, line and isolated
+point sets keep their coarse nodes; use a geometric set to select new nodes there.
+Explicit surface marker labels copy to each surface child. Geometric sets such
+as ``Box`` evaluate the final
 GEOS mesh in the normal initialization phase.
 
 Original main point IDs survive refinement. New points receive exact integral
 IDs and shared copies agree. Active child cell IDs are allocated in new ranges;
-root and immediate-parent lineage is stored separately. IDs, ghost flags,
-extraction provenance and ``collocated_nodes`` use specialized handling, rather
+the coarse root ID stays with the GEOS cells as runtime metadata. It is rebuilt,
+not stored in checkpoints. Component callers can request diagnostic parent,
+generation, child, owner and source arrays; production import omits those arrays.
+IDs, ghost flags, extraction provenance and ``collocated_nodes`` use specialized handling, rather
 than ordinary numerical interpolation.
 
 Fractures and restart
@@ -121,8 +133,10 @@ Compatibility and scaling
 
 Positive refinement currently rejects ``structuredIndexAttribute``: a parent's
 logical IJK cannot describe all its children. Coordinate transforms must have
-finite, nonzero scales and preserve orientation. Refinement does not relax the
-coarse partitioner's restrictions, including nonempty coarse volume partitions
+finite, nonzero scales and preserve orientation. Changed transforms are validated
+on the transformed coordinates, including rounding and underflow effects.
+Refinement does not relax the coarse partitioner's restrictions, including
+nonempty coarse volume partitions
 and supported fracture/partitioner combinations.
 
 Work and storage grow quickly with the level count. Hex and tetrahedron cell

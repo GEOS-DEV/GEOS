@@ -24,6 +24,7 @@
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/generators/VTKUniformRefinement.hpp"
+#include "mesh/generators/VTKRefinementTemplates.hpp"
 #include "mesh/MeshFields.hpp"
 #include "mesh/generators/VTKSuperCellPartitioning.hpp"
 
@@ -588,6 +589,43 @@ AllMeshes loadAllMeshes( Path const & filePath,
 }
 
 
+namespace
+{
+void validateWeightTotal( arrayView1d< pmet_idx_t const > const & weights, refinement::Communication & validation )
+{
+  std::uint64_t total = 0;
+  validation.checked( "coarse graph weight total", [&]
+  {
+    for( pmet_idx_t weight : weights )
+    {
+      if( weight <= 0 || static_cast< std::uint64_t >( weight ) > std::numeric_limits< std::uint64_t >::max() - total )
+        throw std::overflow_error( "Invalid or overflowing coarse graph weight" );
+      total += weight;
+    }
+  } );
+  // The checked prefix/range routine also bounds the global weight sum before
+  // a partition backend can overflow its signed integral accumulators.
+  validation.allocateRange( total, 0 );
+}
+
+array1d< pmet_idx_t > refinementWeights( vtkDataSet & mesh, int levels, MPI_Comm comm )
+{
+  if( levels == 0 )
+    return {};
+  refinement::Communication validation( comm );
+  array1d< pmet_idx_t > weights;
+  validation.checked( "coarse refinement weights", [&]
+  {
+    weights.resize( mesh.GetNumberOfCells() );
+    for( vtkIdType c = 0; c < mesh.GetNumberOfCells(); ++c )
+      weights[c] = LvArray::integerConversion< pmet_idx_t >(
+        refinement::refinedCellCount( refinement::normalizeCell( *mesh.GetCell( c ) ), levels ) );
+  } );
+  validateWeightTotal( weights.toViewConst(), validation );
+  return weights;
+}
+} // namespace
+
 /**
  * @brief Partition the mesh using cell graph methods (ParMETIS or PTScotch)
  *
@@ -597,6 +635,7 @@ AllMeshes loadAllMeshes( Path const & filePath,
  * @param[in] numParts the number of partitions
  * @param[in] minCommonNodes the minimum number of shared nodes for adding a graph edge
  * @param[in] numRefinements the number of refinements for PTScotch
+ * @param[in] uniformRefinementLevels Number of mesh refinement levels, used for vertex weights.
  * @return the cell partitioning array
  */
 array1d< int64_t >
@@ -605,7 +644,8 @@ partitionByCellGraph( vtkSmartPointer< vtkDataSet > mesh3D,
                       MPI_Comm const comm,
                       int const numParts,
                       int const minCommonNodes,
-                      int const numRefinements )
+                      int const numRefinements,
+                      int const uniformRefinementLevels = 0 )
 {
   GEOS_MARK_FUNCTION;
 
@@ -640,11 +680,14 @@ partitionByCellGraph( vtkSmartPointer< vtkDataSet > mesh3D,
               "to use any graph partitioning method for parallel mesh distribution", InputError );
 #endif
 
+  array1d< pmet_idx_t > const weights = refinementWeights( *mesh3D, uniformRefinementLevels, comm );
   switch( method )
   {
     case PartitionMethod::parmetis:
     {
 #ifdef GEOS_USE_PARMETIS
+      if( uniformRefinementLevels > 0 )
+        return parmetis::partitionWeighted( graph.toViewConst(), weights.toViewConst(), elemDist, numParts, comm, numRefinements );
       return parmetis::partition( graph.toViewConst(), elemDist, numParts, comm, numRefinements );
 #else
       GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON) to use 'parmetis' partitioning method", InputError );
@@ -655,7 +698,7 @@ partitionByCellGraph( vtkSmartPointer< vtkDataSet > mesh3D,
     {
 #ifdef GEOS_USE_SCOTCH
       GEOS_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by 'ptscotch' partitioning method" );
-      return ptscotch::partition( graph.toViewConst(), numParts, comm );
+      return ptscotch::partition( graph.toViewConst(), numParts, comm, weights.toViewConst() );
 #else
       GEOS_THROW( "GEOS must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
       return {};
@@ -683,14 +726,15 @@ vtkSmartPointer< vtkDataSet >
 redistributeByCellGraph( vtkSmartPointer< vtkDataSet > mesh3D,
                          PartitionMethod const method,
                          MPI_Comm const comm,
-                         int const numRefinements )
+                         int const numRefinements,
+                         int const uniformRefinementLevels )
 {
   GEOS_MARK_FUNCTION;
 
   int const numRanks = MpiWrapper::commSize( comm );
 
   // Partition the 3D main mesh only
-  array1d< int64_t > newPartitions = partitionByCellGraph( mesh3D, method, comm, numRanks, 3, numRefinements );
+  array1d< int64_t > newPartitions = partitionByCellGraph( mesh3D, method, comm, numRanks, 3, numRefinements, uniformRefinementLevels );
 
   // Split and redistribute the 3D mesh
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh =
@@ -718,7 +762,8 @@ redistributeBySuperCellGraph(
   PartitionMethod const method,
   MPI_Comm comm,
   int const numRefinementIterations,
-  int const fractureWeight )
+  int const fractureWeight,
+  int const uniformRefinementLevels )
 {
   GEOS_MARK_FUNCTION;
 
@@ -767,7 +812,19 @@ redistributeBySuperCellGraph(
   // -----------------------------------------------------------------------
   // Step 2: Reconstruct super-cell info on all ranks (from SuperCellId array)
   // -----------------------------------------------------------------------
-  SuperCellInfo localSuperCellInfo = reconstructSuperCellInfo( ugrid, fractureWeight );
+  SuperCellInfo localSuperCellInfo;
+  std::optional< refinement::Communication > weightValidation;
+  if( uniformRefinementLevels > 0 )
+  {
+    auto const weights = refinementWeights( *ugrid, uniformRefinementLevels, comm );
+    weightValidation.emplace( comm );
+    weightValidation->checked( "super-cell refinement weights", [&]
+    {
+      localSuperCellInfo = reconstructSuperCellInfo( ugrid, fractureWeight, weights.toViewConst() );
+    } );
+  }
+  else
+    localSuperCellInfo = reconstructSuperCellInfo( ugrid, fractureWeight );
 
   // -----------------------------------------------------------------------
   // Step 3: Build super-cell graph
@@ -779,6 +836,8 @@ redistributeBySuperCellGraph(
     localSuperCellInfo,
     comm
     );
+  if( weightValidation )
+    validateWeightTotal( superVertexWeights.toViewConst(), *weightValidation );
 
   // -----------------------------------------------------------------------
   // Step 4: Compute super-cell element distribution
@@ -1213,15 +1272,24 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
   return neighbors2Dto3D;
 }
 
-namespace
+namespace detail
 {
 /// Directory rank of a global ID.
 int homeRank( int64_t const globalId, int const numRanks )
 {
   GEOS_ERROR_IF( globalId < 0, GEOS_FMT( "Negative global ID {} in mesh redistribution", globalId ) );
-  return static_cast< int >( globalId % numRanks );
+  GEOS_ERROR_IF( numRanks <= 0, "Mesh directory requires a positive rank count" );
+  // Sparse input IDs can have a stride divisible by the rank count. Mix every
+  // bit before selecting a directory rank; full IDs still determine equality.
+  std::uint64_t mixed = static_cast< std::uint64_t >( globalId );
+  mixed ^= mixed >> 30;
+  mixed *= UINT64_C( 0xbf58476d1ce4e5b9 );
+  mixed ^= mixed >> 27;
+  mixed *= UINT64_C( 0x94d049bb133111eb );
+  mixed ^= mixed >> 31;
+  return static_cast< int >( mixed % numRanks );
 }
-} // namespace
+} // namespace detail
 
 /**
  * @brief Find the 3D neighbors of 2D cells whose neighbors are in another input piece.
@@ -1229,7 +1297,7 @@ int homeRank( int64_t const globalId, int const numRanks )
  * With distributed input (e.g. a .pvtu file), a 2D cell and its 3D neighbors can
  * be in different pieces, so the local search finds fewer than two neighbors.
  * The 2D cells with zero or one local neighbor are also matched by point global
- * IDs, so the result is the same as for the complete mesh. A point directory (rank gid % P) names the ranks
+ * IDs, so the result is the same as for the complete mesh. A point directory routes mixed IDs to ranks and names the ranks
  * whose 3D cells use the smallest point ID of the 2D cell, and these ranks
  * search the faces of their 3D cells. All exchanges are sparse. Nothing is
  * exchanged when every 2D cell found two local neighbors, or on a single rank.
@@ -1312,7 +1380,7 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
     {
       if( used[p] )
       {
-        auto & bytes = outgoing.get_inserted( homeRank( pointGids->GetValue( p ), numRanks ) );
+        auto & bytes = outgoing.get_inserted( detail::homeRank( pointGids->GetValue( p ), numRanks ) );
         bytes::append< int64_t >( bytes, 0 );
         bytes::append< int64_t >( bytes, pointGids->GetValue( p ) );
       }
@@ -1325,7 +1393,7 @@ completeCrossPiece2DNeighbors( vtkDataSet & mesh,
   }
   for( int64_t const anchor : anchors )
   {
-    auto & bytes = outgoing.get_inserted( homeRank( anchor, numRanks ) );
+    auto & bytes = outgoing.get_inserted( detail::homeRank( anchor, numRanks ) );
     bytes::append< int64_t >( bytes, 1 );
     bytes::append< int64_t >( bytes, anchor );
   }
@@ -1588,7 +1656,7 @@ public:
     stdMap< int, stdVector< char > > outgoing;
     for( localIndex i = 0; i < local3DGlobalIds.size(); ++i )
     {
-      auto & bytes = outgoing.get_inserted( homeRank( local3DGlobalIds[i], m_numRanks ) );
+      auto & bytes = outgoing.get_inserted( detail::homeRank( local3DGlobalIds[i], m_numRanks ) );
       bytes::append< int64_t >( bytes, local3DGlobalIds[i] );
       bytes::append< int64_t >( bytes, local3DPartitions[i] );
     }
@@ -1632,7 +1700,7 @@ public:
     std::set< int64_t > const unique( wanted.begin(), wanted.end() );
     for( int64_t const gid : unique )
     {
-      bytes::append< int64_t >( outgoing.get_inserted( homeRank( gid, m_numRanks ) ), gid );
+      bytes::append< int64_t >( outgoing.get_inserted( detail::homeRank( gid, m_numRanks ) ), gid );
     }
     auto incoming = mpi::sparseExchange( outgoing, m_comm );
     outgoing.clear();
@@ -2170,7 +2238,8 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
                                  string const & indexArrayName,
                                  MPI_Comm const comm,
                                  int const numPartZ,
-                                 int const numRefinements )
+                                 int const numRefinements,
+                                 int const uniformRefinementLevels )
 {
   GEOS_MARK_FUNCTION;
 
@@ -2198,7 +2267,7 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
   if( haveLayer0 )
   {
     AllMeshes layer0input( layer0, {} ); // fracture mesh not supported yet
-    layer0Parts = partitionByCellGraph( layer0input.getMainMesh(), method, subComm, numPartA, 3, numRefinements );
+    layer0Parts = partitionByCellGraph( layer0input.getMainMesh(), method, subComm, numPartA, 3, numRefinements, uniformRefinementLevels );
     MpiWrapper::commFree( subComm );
   }
 
@@ -2470,7 +2539,8 @@ redistributeMeshes( integer const logLevel,
                     int const partitionRefinement,
                     int const partitionFractureWeight,
                     int const useGlobalIds,
-                    string const & structuredIndexAttributeName )
+                    string const & structuredIndexAttributeName,
+                    int const uniformRefinementLevels )
 {
   GEOS_MARK_FUNCTION;
   int const numRanks = MpiWrapper::commSize( comm );
@@ -2694,7 +2764,8 @@ redistributeMeshes( integer const logLevel,
         method,
         comm,
         partitionRefinement - 1,
-        partitionFractureWeight );
+        partitionFractureWeight,
+        uniformRefinementLevels );
     }
     else if( !structuredIndexAttributeName.empty() )
     {
@@ -2712,7 +2783,8 @@ redistributeMeshes( integer const logLevel,
         structuredIndexAttributeName,
         comm,
         numPartZ,
-        partitionRefinement - 1 );
+        partitionRefinement - 1,
+        uniformRefinementLevels );
 
       redistributed3D = tempWrapper.getMainMesh();
     }
@@ -2725,7 +2797,8 @@ redistributeMeshes( integer const logLevel,
         redistributed3D,
         method,
         comm,
-        partitionRefinement - 1 );
+        partitionRefinement - 1,
+        uniformRefinementLevels );
     }
   }
 

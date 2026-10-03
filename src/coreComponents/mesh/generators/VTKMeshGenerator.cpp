@@ -268,12 +268,14 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
                                                                   m_partitionRefinement,
                                                                   m_partitionFractureWeight,
                                                                   m_useGlobalIds,
-                                                                  m_structuredIndexAttributeName );
+                                                                  m_structuredIndexAttributeName,
+                                                                  m_uniformRefinement );
     vtk::refinement::Participants exactNeighbors;
     if( m_uniformRefinement > 0 )
     {
       allMeshes = vtk::AllMeshes{};
       vtk::UniformRefinementOptions options;
+      options.diagnosticLineage = false;
       options.regionAttribute = m_regionAttributeName;
       options.reportStatistics = getLogLevel() >= logInfo::VTKSteps::getMinLogLevel();
       options.requiredPointArrays.emplace();

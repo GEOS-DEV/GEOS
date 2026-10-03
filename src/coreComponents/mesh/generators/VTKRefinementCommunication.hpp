@@ -49,7 +49,7 @@ struct PointCreation
 
 struct PointRecord
 {
-  vtkIdType globalId;
+  vtkIdType globalId = -1;
   Coordinates position;
   Bytes fields;
 };
@@ -135,10 +135,15 @@ public:
    */
   void validateVolumeFaces( std::vector< MainFace > const & faces, std::uint64_t mainNamespace = 0 );
   IdRange allocateRange( std::uint64_t localCount, vtkIdType base ) const;
-  /** Validate/synchronize existing shared vertices while preserving their IDs. */
-  std::map< EntityKey, PointRecord > reconcileExistingPoints( std::vector< PointCreation > const & points );
-  std::map< EntityKey, PointRecord > resolvePoints( std::uint64_t generation, std::vector< PointCreation > const & points,
-                                                    vtkIdType localExistingMaximum );
+  /** Validate/synchronize existing shared vertices while preserving their IDs.
+   * Records follow request order; no full-key record map is retained.
+   */
+  std::vector< PointRecord > reconcileExistingPoints( std::vector< PointCreation > const & points );
+  /** Allocate IDs in sorted full-key order, returning records in request order.
+   * Only points with multiple participants enter the neighbor exchange.
+   */
+  std::vector< PointRecord > resolvePoints( std::uint64_t generation, std::vector< PointCreation > const & points,
+                                           vtkIdType localExistingMaximum );
   /** Allocate/synchronize replicated marker or auxiliary surface children.
    * Optional allocatedRange receives the range total without another collective allocation.
    */
@@ -173,8 +178,8 @@ private:
   Mail exchangePayloads( Mail const & outgoing, std::map< int, std::uint64_t > const & incomingLengths );
   void initializeNeighbors( Participants neighbors );
   void includeContactNeighbors( Participants neighbors );
-  std::map< EntityKey, PointRecord > resolvePointRecords( std::uint64_t generation, std::vector< PointCreation > const & points,
-                                                          vtkIdType localExistingMaximum, bool existing );
+  std::vector< PointRecord > resolvePointRecords( std::uint64_t generation, std::vector< PointCreation > const & points,
+                                                 vtkIdType localExistingMaximum, bool existing );
   std::map< ChildCellKey, CellRecord > resolveCellRecords( std::uint64_t generation, std::vector< CellCreation > const & cells,
                                                            vtkIdType base, bool existing, IdRange * allocatedRange = nullptr );
 

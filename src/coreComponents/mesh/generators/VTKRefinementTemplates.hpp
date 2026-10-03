@@ -65,7 +65,10 @@ std::vector< EntitySupport > cellEntitySupports( Cell const & cell, vtkIdType gl
 std::vector< EntitySupport > meshEntitySupports( std::vector< Cell > const & cells, Connectivity const & globalCellIds,
                                                  Connectivity const & globalPointIds, int localRank, std::uint64_t meshNamespace = 0 );
 std::vector< Connectivity > subdivideFace( Connectivity const & corners, PointRegistry & points );
-Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegistry & points );
+/** Build volume children, optionally including oriented boundary traces.
+ * The importer skips traces; component callers retain them by default.
+ */
+Subdivision subdivideCell( Cell const & cell, vtkIdType globalCellId, PointRegistry & points, bool includeFaceChildren = true );
 
 /** Signed measure of first-order maps, with a common bilinear quad fan on
  * polygonal caps. */
@@ -76,9 +79,13 @@ struct CellCounts
 {
   std::uint64_t hexahedra{}, tetrahedra{}, wedges{}, pyramids{};
   std::array< std::uint64_t, 12 > prisms{};
+  void include( Cell const & cell );
   std::uint64_t total() const;
   CellCounts next() const;
 };
+
+/** Number of descendants, including surface cells, without allocating children. */
+std::uint64_t refinedCellCount( Cell const & cell, int levels );
 
 /// @endcond
 

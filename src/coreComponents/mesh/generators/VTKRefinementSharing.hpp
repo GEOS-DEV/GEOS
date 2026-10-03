@@ -32,8 +32,8 @@ struct CoarseBoundary
 };
 
 /** Local coarse boundary extraction for conforming manifold volumes.
- * Rejects duplicate IDs, crossed local face cycles, equal internal-face
- * orientations and more than two local incident volumes. Global manifold and
+ * Rejects duplicate IDs, crossed local face cycles and more than two local
+ * incident volumes. Equal face winding is accepted; keys are unoriented. Global manifold and
  * attachment validation remain the orchestrator's responsibility. ID-only
  * volume records are separate from boundary geometry and must be accounted for.
  */

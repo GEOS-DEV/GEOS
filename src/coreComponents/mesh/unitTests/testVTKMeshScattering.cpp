@@ -23,6 +23,7 @@
 #include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/VTKSuperCellPartitioning.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
+#include "VTKRefinementTestMeshes.hpp"
 
 #include <vtkBitArray.h>
 #include <vtkStringArray.h>
@@ -233,6 +234,59 @@ TEST_F( VTKMeshScatteringTest, CellConservation )
     EXPECT_EQ( globalCells, totalCells )
       << "Cell conservation failed for method " << toString( method );
   }
+}
+
+TEST( VTKMeshScattering, DirectoryDistributesStridedSparseIds )
+{
+  constexpr int count = 65536;
+  for( int ranks : { 3, 16, 32, 64 } )
+  {
+    std::vector< int > entries( ranks, 0 );
+    for( int i = 0; i < count; ++i )
+    {
+      int const home = geos::vtk::detail::homeRank( INT64_C( 9007199254740992 ) + 64 * i, ranks );
+      ASSERT_GE( home, 0 );
+      ASSERT_LT( home, ranks );
+      ++entries[home];
+    }
+    // Raw gid % ranks puts all entries on one rank for 16/32/64.
+    EXPECT_GT( *std::min_element( entries.begin(), entries.end() ), 0 );
+    EXPECT_LT( *std::max_element( entries.begin(), entries.end() ), 1.25 * count / ranks );
+  }
+}
+
+TEST( VTKMeshScattering, SuperCellWeightsSumMixedDescendants )
+{
+  vtkNew< vtkUnstructuredGrid > grid;
+  vtkNew< vtkPoints > points;
+  points->SetDataTypeToDouble();
+  grid->SetPoints( points );
+  vtkNew< vtkIdTypeArray > ids, groups;
+  groups->SetName( "SuperCellId" );
+  array1d< pmet_idx_t > weights( 3 );
+  int index = 0;
+  for( int type : { VTK_HEXAHEDRON, VTK_PYRAMID, VTK_TETRA } )
+  {
+    auto shape = refinement::testMeshes::referenceCell( type, 0 );
+    for( std::size_t p = 0; p < shape.xyz.size(); ++p )
+      shape.cell.points[p] = points->InsertNextPoint( shape.xyz[p].data() );
+    grid->InsertNextCell( type, shape.cell.points.size(), shape.cell.points.data() );
+    ids->InsertNextValue( 100 + 64 * index );
+    groups->InsertNextValue( index < 2 ? 7 : 8 );
+    weights[index++] = refinement::refinedCellCount( shape.cell, 2 );
+  }
+  grid->GetCellData()->SetGlobalIds( ids );
+  grid->GetCellData()->AddArray( groups );
+  auto const coarse = reconstructSuperCellInfo( grid, 10 );
+  auto const fine = reconstructSuperCellInfo( grid, 10, weights.toViewConst() );
+  EXPECT_EQ( coarse.vertexWeights.at( 7 ), 12 );
+  EXPECT_EQ( coarse.vertexWeights.at( 8 ), 1 );
+  EXPECT_EQ( fine.vertexWeights.at( 7 ), 64 + 92 + 10 );
+  EXPECT_EQ( fine.vertexWeights.at( 8 ), 64 );
+  EXPECT_EQ( fine.atomicSuperCells, coarse.atomicSuperCells );
+  EXPECT_EQ( fine.superCellToOriginalCells, coarse.superCellToOriginalCells );
+  weights[0] = std::numeric_limits< pmet_idx_t >::max();
+  EXPECT_THROW( reconstructSuperCellInfo( grid, 10, weights.toViewConst() ), std::overflow_error );
 }
 
 TEST_F( VTKMeshScatteringTest, DoubleSoAPointsUseTypedTupleFallback )
