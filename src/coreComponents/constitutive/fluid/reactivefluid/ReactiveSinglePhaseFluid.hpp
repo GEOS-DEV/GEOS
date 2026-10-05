@@ -101,13 +101,13 @@ public:
   integer numKineticReactions() const { return m_numKineticReactions; }
 
   /**
-   * @brief Mass of solvent per unit volume of solution [kg/m^3].
+   * @brief Mass fraction of solvent in the solution [-].
    *
-   * Converts species molality [mol/kg solvent] to molarity [mol/m^3 solution]. HPCReact is a
-   * molality-based library: concentrations, equilibrium constants and mass-action quotients are all
-   * on the molal scale.
+   * HPCReact is a molality based library: concentrations, equilibrium constants and mass-action
+   * quotients are all on the molal scale [mol/kg solvent]. With w this fraction and rho the solution
+   * density, moles per kg of solution are m w and moles per m^3 of solution are m w rho.
    */
-  real64 solventMassPerSolutionVolume() const { return m_solventMassPerSolutionVolume; }
+  real64 solventMassFraction() const { return m_solventMassFraction; }
 
   /**
    * @brief Kernel wrapper class for ReactiveSinglePhaseFluid.
@@ -277,7 +277,7 @@ protected:
   {
     static constexpr char const * chemicalSystemNameString() { return "chemicalSystemType"; }
     static constexpr char const * activityModelNameString() { return "activityModelType"; }
-    static constexpr char const * solventMassPerSolutionVolumeString() { return "solventMassPerSolutionVolume"; }
+    static constexpr char const * solventMassFractionString() { return "solventMassFraction"; }
   };
 
 protected:
@@ -339,16 +339,9 @@ protected:
 
   ActivityModelType m_activityModelType;
 
-  /// TODO: prescribed as a constant for now. The exact factor is
-  ///
-  ///         rho_s = rho * w
-  ///
-  ///       where rho_s is this quantity [kg/m^3], rho the solution density [kg/m^3] and w the
-  ///       solvent mass fraction [-]. For the carbonate brine EQ3/6 gives 1070.9 * 0.898 = 961.6,
-  ///       not the 1000 defaulted here. Ideally rho is a function of pressure, temperature and
-  ///       species concentration, and w a function of concentration. The update methods and where
-  ///       they should be launched are TBD.
-  real64 m_solventMassPerSolutionVolume;
+  /// Mass fraction of solvent in the solution [-], constant; for the carbonate brine EQ3/6 gives 0.898
+  /// TODO: depends on concentration, w = 1 / (1 + sum_i m_i M_i)
+  real64 m_solventMassFraction;
 };
 
 // these aliases are useful in constitutive dispatch

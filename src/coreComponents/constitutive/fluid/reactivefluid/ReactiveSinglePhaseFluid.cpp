@@ -30,11 +30,6 @@ namespace constitutive
 namespace reactivefluid
 {
 
-using namespace hpcReact::bulkGeneric;
-using namespace hpcReact::geochemistry;
-using namespace hpcReact::ChainGeneric;
-using namespace hpcReact::MoMasBenchmark;
-
 template< typename BASE >
 ReactiveSinglePhaseFluid< BASE >::
 ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
@@ -54,12 +49,12 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
                     ". ``bdot`` requires ion size and b-dot parameters, which only the geochemical "
                     "systems carry." );
 
-  this->registerWrapper( viewKeyStruct::solventMassPerSolutionVolumeString(), &m_solventMassPerSolutionVolume ).
-    setApplyDefaultValue( 1000.0 ).
+  this->registerWrapper( viewKeyStruct::solventMassFractionString(), &m_solventMassFraction ).
+    setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Mass of solvent per unit volume of solution [kg/m^3], used to convert species "
-                    "molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 "
-                    "approximates an aqueous solution by the density of pure water." );
+    setDescription( "Mass fraction of solvent in the solution [-]. Species molality [mol/kg solvent] "
+                    "times this fraction is the amount per kg of solution, and times the fluid density "
+                    "the amount per m^3 of solution. The default of 1 is a dilute aqueous solution." );
 
   this->template registerField< fields::reactivefluid::initialPrimarySpeciesConcentration >( &m_initialPrimarySpeciesConcentration );
   this->template registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
@@ -88,7 +83,7 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies;
   newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies;
   newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
-  newConstitutiveRelation.m_solventMassPerSolutionVolume = m_solventMassPerSolutionVolume;
+  newConstitutiveRelation.m_solventMassFraction = m_solventMassFraction;
 
   return clone;
 }
@@ -118,10 +113,10 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
     }
   } );
 
-  GEOS_THROW_IF_LE_MSG( m_solventMassPerSolutionVolume, 0.0,
-                        GEOS_FMT( "invalid value of attribute '{}'",
-                                  viewKeyStruct::solventMassPerSolutionVolumeString() ),
-                        InputError, this->getDataContext() );
+  GEOS_THROW_IF( m_solventMassFraction <= 0.0 || m_solventMassFraction > 1.0,
+                 GEOS_FMT( "{}: invalid value of attribute '{}', expected a value in (0, 1]",
+                           this->getDataContext(), viewKeyStruct::solventMassFractionString() ),
+                 InputError );
 }
 
 template< typename BASE >

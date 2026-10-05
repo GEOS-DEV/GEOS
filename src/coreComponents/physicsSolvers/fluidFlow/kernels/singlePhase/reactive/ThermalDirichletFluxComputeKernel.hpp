@@ -86,7 +86,9 @@ public:
   using Base::m_sei;
   using Base::m_facePres;
   using Base::m_faceGravCoef;
-  using Base::m_solventMassPerSolutionVolume;
+  using Base::m_solventMassFraction;
+  using Base::m_primarySpeciesMobileAggregateConc;
+  using Base::m_mobilePrimarySpeciesFlags;
 
   using ReactiveSinglePhaseFlowAccessors = typename Base::ReactiveSinglePhaseFlowAccessors;
   using ReactiveSinglePhaseFluidAccessors = typename Base::ReactiveSinglePhaseFluidAccessors;
@@ -138,7 +140,7 @@ public:
                               PermeabilityAccessors const & permeabilityAccessors,
                               ThermalConductivityAccessors const & thermalConductivityAccessors,
                               arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
-                              real64 const & solventMassPerSolutionVolume,
+                              real64 const & solventMassFraction,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
@@ -154,7 +156,7 @@ public:
             reactiveSinglePhaseFluidAccessors,
             permeabilityAccessors,
             mobilePrimarySpeciesFlags,
-            solventMassPerSolutionVolume,
+            solventMassFraction,
             dt,
             localMatrix,
             localRhs ),
@@ -233,10 +235,11 @@ public:
 
       // Compute the derivatives of the (upwinded) energy flux wrt pressure and temperature
 
+      real64 dFlux_dT = mobility_up * dF_dT;
       if( f >= 0 ) // the element is upstream
       {
         real64 const dFlux_dP = mobility_up * dF_dP + dMobility_dP_up * f;
-        real64 const dFlux_dT = mobility_up * dF_dT + m_dMob[er][esr][ei][DerivOffset::dT] * f;
+        dFlux_dT += m_dMob[er][esr][ei][DerivOffset::dT] * f;
 
         stack.dEnergyFlux_dP += dFlux_dP * enthalpy + flux * m_dEnthalpy[er][esr][ei][0][DerivOffset::dP];
         stack.dEnergyFlux_dT += dFlux_dT * enthalpy + flux * m_dEnthalpy[er][esr][ei][0][DerivOffset::dT];
@@ -244,10 +247,16 @@ public:
       else
       {
         real64 const dFlux_dP = mobility_up * dF_dP;
-        real64 const dFlux_dT = mobility_up * dF_dT;
 
         stack.dEnergyFlux_dP += dFlux_dP * enthalpy;
         stack.dEnergyFlux_dT += dFlux_dT * enthalpy;
+      }
+
+      // derivative of the species flux, molality * solvent mass fraction * mass flux, wrt temperature
+      for( integer is = 0; is < numSpecies; ++is )
+      {
+        real64 const aggregateConcPerMass_i = m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is] * m_solventMassFraction;
+        stack.localFluxJacobian[numEqn - numSpecies + is][numDof - numSpecies - 1] += m_dt * aggregateConcPerMass_i * dFlux_dT * m_mobilePrimarySpeciesFlags[is];
       }
 
       // Contribution of energy conduction through the solid phase
@@ -395,7 +404,7 @@ public:
                            permeabilityAccessors,
                            thermalConductivityAccessors,
                            mobilePrimarySpeciesFlags,
-                           reactiveFluid.solventMassPerSolutionVolume(),
+                           reactiveFluid.solventMassFraction(),
                            dt,
                            localMatrix,
                            localRhs );

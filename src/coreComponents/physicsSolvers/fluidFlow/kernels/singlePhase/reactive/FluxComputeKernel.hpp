@@ -122,7 +122,7 @@ public:
    * @param[in] porosityAccessors
    * @param[in] hasDiffusion the flag to turn on diffusion calculation
    * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
-   * @param[in] solventMassPerSolutionVolume mass of solvent per unit volume of solution [kg/m3]
+   * @param[in] solventMassFraction mass fraction of solvent in the solution [-]
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -139,7 +139,7 @@ public:
                      PorosityAccessors const & porosityAccessors,
                      integer const & hasDiffusion,
                      arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
-                     real64 const & solventMassPerSolutionVolume,
+                     real64 const & solventMassFraction,
                      real64 const & dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
@@ -162,7 +162,7 @@ public:
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
     m_hasDiffusion( hasDiffusion ),
     m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags ),
-    m_solventMassPerSolutionVolume( solventMassPerSolutionVolume )
+    m_solventMassFraction( solventMassFraction )
   {}
 
   /**
@@ -211,7 +211,6 @@ public:
                     StackVariables & stack,
                     FUNC && kernelOp = NoOpFunc{} ) const
   {
-    using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
     // ***********************************************
     // First, we call the base computeFlux to compute:
     //  1) massFlux and its derivatives,
@@ -246,28 +245,22 @@ public:
       localIndex const esr_up = sesri[k_up];
       localIndex const ei_up  = sei[k_up];
 
-      real64 const fluidDens_up = m_dens[er_up][esr_up][ei_up][0];
-      real64 const dDens_dPres = m_dDens[er_up][esr_up][ei_up][0][DerivOffset::dP];
-
-      // compute species fluxes and derivatives using upstream cell concentration
+      // compute species fluxes and derivatives using upstream cell concentration: the mass flux carries
+      // molality * solvent mass fraction moles per kg of solution, so the density does not enter
       for( integer is = 0; is < numSpecies; ++is )
       {
-        real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is]
-                                               * m_solventMassPerSolutionVolume; // convert from mol/kg to mol/m3
-        speciesFlux[is] = aggregateConcMolarity_i / fluidDens_up * fluxVal;
+        real64 const aggregateConcPerMass_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is] * m_solventMassFraction;
+        speciesFlux[is] = aggregateConcPerMass_i * fluxVal;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
-          dSpeciesFlux_dP[ke][is] += aggregateConcMolarity_i / fluidDens_up * dFlux_dP[ke];
+          dSpeciesFlux_dP[ke][is] += aggregateConcPerMass_i * dFlux_dP[ke];
         }
-
-        dSpeciesFlux_dP[k_up][is] += -aggregateConcMolarity_i * fluxVal * dDens_dPres / (fluidDens_up * fluidDens_up);
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js]
-                                                             * m_solventMassPerSolutionVolume; // convert from mol/kg to mol/m3
-          dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConcMolarity_i_dLogConc_j / fluidDens_up * fluxVal;
+          real64 const dAggregateConcPerMass_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er_up][esr_up][ei_up][0][is][js] * m_solventMassFraction;
+          dSpeciesFlux_dLogConc[k_up][is][js] += dAggregateConcPerMass_i_dLogConc_j * fluxVal;
         }
       }
 
@@ -296,7 +289,7 @@ public:
       }
 
       // Customize the kernel with this lambda
-      kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP, fluidDens_up );
+      kernelOp( k, seri, sesri, sei, connectionIndex, alpha, mobility, potGrad, fluxVal, dFlux_dP );
     } );
   }
 
@@ -313,6 +306,7 @@ public:
                          StackVariables & stack,
                          FUNC && kernelOp = NoOpFunc{} ) const
   {
+    using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
     if( m_hasDiffusion )
     {
       // *****************************************************
@@ -339,7 +333,7 @@ public:
           // clear working arrays
           real64 diffusionFlux[numSpecies]{};
           real64 speciesGrad[numSpecies]{};
-          // real64 dDiffusionFlux_dP[numFluxSupportPoints][numSpecies]{}; // Turn on if diffusionFlux is pressure-dependent
+          real64 dDiffusionFlux_dP[numFluxSupportPoints][numSpecies]{};
           real64 dDiffusionFlux_dLogConc[numFluxSupportPoints][numSpecies][numSpecies]{};
 
           real64 const diffusionTrans[numFluxSupportPoints] = { stack.diffusionTransmissibility[connectionIndex][0],
@@ -349,26 +343,27 @@ public:
           // loop over primary species
           for( integer is = 0; is < numSpecies; ++is )
           {
-            // real64 dSpeciesGrad_i_dP[numFluxSupportPoints]{}; // Turn on if speciesGrad is pressure-dependent
+            real64 dSpeciesGrad_i_dP[numFluxSupportPoints]{};
             real64 dSpeciesGrad_i_dLogConc[numFluxSupportPoints][numSpecies]{};
 
-            // Step 2: compute species gradient
+            // Step 2: compute the gradient of the molarity, molality * solvent mass fraction * density
             for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
             {
               localIndex const er  = seri[ke];
               localIndex const esr = sesri[ke];
               localIndex const ei  = sei[ke];
 
-              real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is]
-                                                     * m_solventMassPerSolutionVolume; // convert from mol/kg to mol/m3
+              real64 const aggregateConcPerMass_i = m_primarySpeciesMobileAggregateConc[er][esr][ei][0][is] * m_solventMassFraction;
+              real64 const dens = m_dens[er][esr][ei][0];
 
-              speciesGrad[is] += diffusionTrans[ke] * aggregateConcMolarity_i;
+              speciesGrad[is] += diffusionTrans[ke] * aggregateConcPerMass_i * dens;
+              dSpeciesGrad_i_dP[ke] += diffusionTrans[ke] * aggregateConcPerMass_i * m_dDens[er][esr][ei][0][DerivOffset::dP];
 
               for( integer js = 0; js < numSpecies; ++js )
               {
-                real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js] * m_solventMassPerSolutionVolume;
+                real64 const dAggregateConcPerMass_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[er][esr][ei][0][is][js] * m_solventMassFraction;
 
-                dSpeciesGrad_i_dLogConc[ke][js] += diffusionTrans[ke] * dAggregateConcMolarity_i_dLogConc_j;
+                dSpeciesGrad_i_dLogConc[ke][js] += diffusionTrans[ke] * dAggregateConcPerMass_i_dLogConc_j * dens;
               }
             }
 
@@ -385,6 +380,7 @@ public:
             // add contributions of the derivatives of component fractions wrt pressure/component fractions
             for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
             {
+              dDiffusionFlux_dP[ke][is] += m_referencePorosity[er_up][esr_up][ei_up] * dSpeciesGrad_i_dP[ke];
               for( integer js = 0; js < numSpecies; ++js )
               {
                 dDiffusionFlux_dLogConc[ke][is][js] += m_referencePorosity[er_up][esr_up][ei_up] * dSpeciesGrad_i_dLogConc[ke][js];
@@ -401,8 +397,8 @@ public:
             for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
             {
               localIndex const localDofIndexPres = k[ke] * numDof;
-              // stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dDiffusionFlux_dP[ke][is] * m_mobilePrimarySpeciesFlags[is];
-              // stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dDiffusionFlux_dP[ke][is] * m_mobilePrimarySpeciesFlags[is];
+              stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dDiffusionFlux_dP[ke][is] * m_mobilePrimarySpeciesFlags[is];
+              stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dDiffusionFlux_dP[ke][is] * m_mobilePrimarySpeciesFlags[is];
 
               for( integer js = 0; js < numSpecies; ++js )
               {
@@ -507,8 +503,8 @@ protected:
   /// Array of flags to indicate mobile primary species
   arrayView1d< integer const > const m_mobilePrimarySpeciesFlags;
 
-  /// Mass of solvent per unit volume of solution [kg/m3], converting molality [mol/kg] to molarity [mol/m3]
-  real64 const m_solventMassPerSolutionVolume;
+  /// Mass fraction of solvent in the solution [-]; molality times this fraction is the amount per kg of solution
+  real64 const m_solventMassFraction;
 };
 
 /**
@@ -525,7 +521,7 @@ public:
    * @param[in] numSpecies the number of primary species
    * @param[in] hasDiffusion the flag of adding diffusion term
    * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
-   * @param[in] solventMassPerSolutionVolume mass of solvent per unit volume of solution [kg/m3]
+   * @param[in] solventMassFraction mass fraction of solvent in the solution [-]
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] solverName name of the solver (to name accessors)
@@ -540,7 +536,7 @@ public:
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,
                    arrayView1d< integer const > const mobilePrimarySpeciesFlags,
-                   real64 const solventMassPerSolutionVolume,
+                   real64 const solventMassFraction,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -572,7 +568,7 @@ public:
       KernelType kernel( rankOffset, stencilWrapper, dofNumberAccessor,
                          flowAccessors, reactiveFlowAccessors, fluidAccessors, reactiveFluidAccessors,
                          permAccessors, diffusionAccessors, porosityAccessors, hasDiffusion, mobilePrimarySpeciesFlags,
-                         solventMassPerSolutionVolume, dt, localMatrix, localRhs );
+                         solventMassFraction, dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

@@ -45,10 +45,6 @@ public:
   using Base::numDof;
   using Base::numEqn;
   using Base::m_sizeScalingFactor;
-  using Base::m_solventMassPerSolutionVolume;
-  using Base::m_primarySpeciesAggregateConcentration;
-  using Base::m_density;
-  using Base::m_dDensity;
   using Base::m_localMatrix;
   using Base::m_localRhs;
 
@@ -120,13 +116,6 @@ public:
     stack.localEnergyRhs += m_enthalpy[ei][0] * scaledInflowMass;
     stack.localEnergyJacobian[0] = scaledInflowMass * m_dEnthalpy[ei][0][DerivOffset::dP];
     stack.localEnergyJacobian[numDof-numSpecies-1] = scaledInflowMass * m_dEnthalpy[ei][0][DerivOffset::dT];
-
-    for( integer i = 0; i < numSpecies; ++i )
-    {
-      stack.localSpeciesJacobian[i][numDof-numSpecies-1] += -m_primarySpeciesAggregateConcentration[ei][0][i] * m_solventMassPerSolutionVolume * m_dDensity[ei][0][DerivOffset::dT] /
-                                                            (m_density[ei][0] * m_density[ei][0]) *
-                                                            scaledInflowMass;
-    }
   }
 
   /**
