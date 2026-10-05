@@ -23,7 +23,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
-#include "common/PhysicsConstants.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -73,6 +73,8 @@ void HeatCapacityCoefficients::registerParametersImpl( MultiFluidBase * fluid )
 void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                             ComponentProperties const & componentProperties )
 {
+  GEOS_UNUSED_VAR( componentProperties );
+
   integer const numPhases = fluid->numFluidPhases();
   integer const numComps = fluid->numFluidComponents();
 
@@ -181,25 +183,9 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
                                   m_referenceTemperature ),
                         InputError );
 
-  // Determine temperature range
-  constexpr real64 zeroC = constants::zeroDegreesCelsiusInKelvin;
-  real64 minTemperature = LvArray::math::min( zeroC, m_referenceTemperature );
-  real64 maxTemperature = LvArray::math::max( zeroC, m_referenceTemperature );
-  auto const criticalTemperature = componentProperties.getComponentCriticalTemperature();
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    minTemperature = LvArray::math::min( minTemperature, criticalTemperature[ic] );
-    maxTemperature = LvArray::math::max( maxTemperature, criticalTemperature[ic] );
-  }
-
-  // Extend interval by 10% in each direction
-  real64 const dt = LvArray::math::max( maxTemperature - minTemperature, 100.0 );
-  minTemperature -= 0.1 * dt;
-  maxTemperature += 0.1 * dt;
-
-  // Transform to reference temperature space
-  minTemperature -= m_referenceTemperature;
-  maxTemperature -= m_referenceTemperature;
+  // Follow the CO2 brine example and validate in the range [10,200] deg C
+  real64 const minTemperature = units::convertCToK( 10.0 ) - m_referenceTemperature;
+  real64 const maxTemperature = units::convertCToK( 200.0 ) - m_referenceTemperature;
 
   real64 negT = 0.0;
   real64 negHT = 0.0;

@@ -116,8 +116,11 @@ struct FluidData< 6 >
       }
     }
     coefficients->m_phaseTypes.resize( numPhases );
-    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::LIQUID)] = PhaseType::LIQUID;
-    coefficients->m_phaseTypes[static_cast< integer >(PhaseType::VAPOUR)] = PhaseType::VAPOUR;
+    for( PhaseType const phaseType : {PhaseType::LIQUID, PhaseType::VAPOUR} )
+    {
+      integer const phase = static_cast< integer >(phaseType);
+      coefficients->m_phaseTypes[phase] = phase;
+    }
   }
 };
 
