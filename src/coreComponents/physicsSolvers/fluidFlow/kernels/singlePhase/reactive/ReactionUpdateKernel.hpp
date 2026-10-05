@@ -36,28 +36,45 @@ namespace singlePhaseReactiveBaseKernels
 struct EquilibriumReactionUpdateKernel
 {
 
+  /**
+   * @return whether the equilibrium solve converged in every cell
+   */
   template< typename REACTION_WRAPPER_TYPE >
-  static void helper( REACTION_WRAPPER_TYPE const & reactionWrapper,
+  static bool helper( REACTION_WRAPPER_TYPE const & reactionWrapper,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & temp,
                       arrayView2d< real64, compflow::USD_COMP > const logPrimaryConc )
   {
+    RAJA::ReduceMax< parallelDeviceReduce, integer > anyNotConverged( 0 );
+
     forAll< parallelDevicePolicy<> >( reactionWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      reactionWrapper.updateEquilibriumReaction( k, pres[k], temp[k], logPrimaryConc[k] );
+      if( !reactionWrapper.updateEquilibriumReaction( k, pres[k], temp[k], logPrimaryConc[k] ) )
+      {
+        anyNotConverged.max( 1 );
+      }
     } );
+
+    return anyNotConverged.get() == 0;
   }
 
+  /**
+   * @return whether the equilibrium solve converged in every cell, for the caller to report
+   */
   template< typename REACTIVE_FLUID >
-  static void launch( REACTIVE_FLUID const & fluid,
+  static bool launch( REACTIVE_FLUID const & fluid,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & temp,
                       arrayView2d< real64, compflow::USD_COMP > const logPrimaryConc )
   {
+    bool converged = true;
+
     std::visit( [&]( auto const & reactionWrapper )
     {
-      helper( reactionWrapper, pres, temp, logPrimaryConc );
+      converged = helper( reactionWrapper, pres, temp, logPrimaryConc );
     }, fluid.createReactionKernelWrapper());
+
+    return converged;
   }
 };
 
