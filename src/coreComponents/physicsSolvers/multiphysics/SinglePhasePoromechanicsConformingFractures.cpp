@@ -113,7 +113,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
     // When thermal, the energy accumulation term energy = vol * ( phi*rho*u_f + (1-phi)*u_rock ),
-    // is dependent on the displacement through the volume, so we need to compute energy/vol for each element 
+    // is dependent on the displacement through the volume, so we need to compute energy/vol for each element
     array1d< real64 > energyPerVolume( subRegion.size() );
     if( this->m_isThermal )
     {
