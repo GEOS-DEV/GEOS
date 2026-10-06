@@ -331,7 +331,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
     preconditioner = standalonePreconditioner ? standalonePreconditioner.get() : m_precond.get();
   }
   GeneralizedEigenProblem< ParallelVector > problem{ m_matrix, massOperator, needsInverse ? &shiftedInverse : nullptr, preconditioner,
-                                                     m_solution.globalSize() - numConstrained };
+                                                     m_solution.globalSize() - numConstrained, &freeMask };
 
   std::unique_ptr< GeneralizedEigenSolver< ParallelVector > > eigenSolver =
     GeneralizedEigenSolver< ParallelVector >::create( eigenParams );

@@ -269,6 +269,12 @@ void SolidMechanicsLagrangianFEM::postInputInitialization()
     GEOS_ERROR_IF( m_contactRelationName != viewKeyStruct::noContactRelationNameString(),
                    "The Modal time integration option does not support contact",
                    getDataContext() );
+
+    // Size the result arrays up front so that they can be collected by history outputs
+    m_modalEigenvalues.resize( m_modalNumModes );
+    m_modalFrequencies.resize( m_modalNumModes );
+    m_modalResiduals.resize( m_modalNumModes );
+    m_modalParticipationFactors.resize( m_modalNumModes, 3 );
   }
 
   m_surfaceGenerator = this->getParent().getGroupPointer< PhysicsSolverBase >( m_surfaceGeneratorName );

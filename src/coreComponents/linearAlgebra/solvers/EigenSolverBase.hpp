@@ -82,6 +82,10 @@ struct GeneralizedEigenProblem
   /// Dimension of the space on which the problem lives, if smaller than the vector size (e.g. when constrained
   /// unknowns are kept in the vectors with zero rows). Zero means the vector size.
   globalIndex numUnknowns = 0;
+
+  /// Optional vector with 1 on the unknowns of the problem and 0 on the constrained ones, used to generate
+  /// starting vectors that vanish on constrained unknowns. Null if there is none.
+  VECTOR const * freeMask = nullptr;
 };
 
 /**

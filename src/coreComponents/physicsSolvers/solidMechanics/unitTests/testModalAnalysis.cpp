@@ -90,6 +90,7 @@ string makeInput( string const & constraints, integer const numModes, integer co
                                  modalShiftFrequency="@SHIFT@"
                                  modalBlockSize="@BLOCK@"
                                  modalSolverType="@EIGENSOLVER@"
+                                 modalSubspaceSize="@SUBSPACE@"
                                  modalTolerance="1e-9">
       <LinearSolverParameters solverType="cg"
                               preconditionerType="jacobi"
@@ -137,6 +138,8 @@ string makeInput( string const & constraints, integer const numModes, integer co
   xml = replaceAll( xml, "@SHIFT@", shiftFrequency );
   xml = replaceAll( xml, "@BLOCK@", std::to_string( blockSize ) );
   xml = replaceAll( xml, "@EIGENSOLVER@", solverType );
+  // LOBPCG: guard vectors keep it from cutting a cluster of repeated eigenvalues at the last requested mode
+  xml = replaceAll( xml, "@SUBSPACE@", solverType == "lobpcg" ? std::to_string( numModes + 6 ) : "0" );
   xml = replaceAll( xml, "@LENGTH@", std::to_string( barLength ) );
   xml = replaceAll( xml, "@NX@", std::to_string( numElements ) );
   xml = replaceAll( xml, "@CONSTRAINTS@", constraints );

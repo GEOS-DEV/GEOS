@@ -46,12 +46,14 @@ real64 constexpr svqbTolerance = 1.0e-8;
  * @param[in] wanted number of lowest Ritz pairs requested
  * @param[out] coefficients (size(S) x wanted) coefficients of the Ritz vectors on S, M-orthonormal
  * @param[out] theta the wanted Ritz values, ascending
+ * @return the dimension of the search space after removal of the dependent directions. If it is smaller than
+ *         @p wanted, nothing is extracted and the caller needs to enlarge the basis.
  *
  * The basis is M-orthonormalized with SVQB: the Gram matrix is scaled to a unit diagonal, diagonalized, and the
  * directions with a negligible eigenvalue are dropped. The Ritz problem is then a standard symmetric eigenproblem.
  */
 template< typename VECTOR >
-void rayleighRitz( std::vector< VECTOR * > const & S,
+integer rayleighRitz( std::vector< VECTOR * > const & S,
                    std::vector< VECTOR * > const & KS,
                    std::vector< VECTOR * > const & MS,
                    integer const wanted,
@@ -100,7 +102,10 @@ void rayleighRitz( std::vector< VECTOR * > const & S,
     }
   }
   integer const r = LvArray::integerConversion< integer >( kept.size() );
-  GEOS_ERROR_IF( r < wanted, GEOS_FMT( "LOBPCG: the search space collapsed to {} directions, {} are needed", r, wanted ) );
+  if( r < wanted )
+  {
+    return r;
+  }
 
   // C = D U Sigma^{-1/2} (m x r) satisfies C^T G C = I
   DenseMatrix C( m, r );
@@ -160,6 +165,7 @@ void rayleighRitz( std::vector< VECTOR * > const & S,
       coefficients( i, c ) = sum;
     }
   }
+  return r;
 }
 
 /// out = sum_{j >= first} coefficients(j, column) * src[j]
@@ -228,20 +234,57 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   std::vector< Vector > KW = makeBlock();
   std::vector< Vector > MW = makeBlock();
 
-  integer numOperatorApplications = 0;
-
-  // Starting vectors: random, passed through the preconditioner so that they live in its range
-  for( integer i = 0; i < n; ++i )
-  {
-    X[i].rand( static_cast< unsigned >( params.seed ) + 7919u * static_cast< unsigned >( i ) );
-    problem.mass.apply( X[i], MX[i] );
-    X[i].zero();
-    preconditioner.apply( MX[i], X[i] );
-    ++numOperatorApplications;
-  }
-
   DenseMatrix coefficients;
   std::vector< real64 > theta;
+  integer numOperatorApplications = 0;
+  unsigned randomCount = 0;
+
+  // Random vector that vanishes on the constrained unknowns
+  auto randomize = [&]( Vector & v )
+  {
+    v.rand( static_cast< unsigned >( params.seed ) + 7919u * randomCount++ );
+    if( problem.freeMask != nullptr )
+    {
+      v.pointwiseProduct( *problem.freeMask );
+    }
+  };
+
+  // Rayleigh-Ritz extraction. If the search space has fewer than n independent directions, it is enlarged with
+  // random vectors, which are kept in padding for the duration of the call.
+  std::vector< std::unique_ptr< Vector > > padding;
+  auto extract = [&]( std::vector< Vector * > & S, std::vector< Vector * > & KS, std::vector< Vector * > & MS )
+  {
+    padding.clear();
+    for( int attempt = 0; attempt < 10; ++attempt )
+    {
+      integer const rank = rayleighRitz( S, KS, MS, n, coefficients, theta );
+      if( rank >= n )
+      {
+        return;
+      }
+      for( integer t = rank; t <= n; ++t )
+      {
+        padding.push_back( std::make_unique< Vector >( Base::makeVector( prototype ) ) );
+        padding.push_back( std::make_unique< Vector >( Base::makeVector( prototype ) ) );
+        padding.push_back( std::make_unique< Vector >( Base::makeVector( prototype ) ) );
+        Vector & z = *padding[padding.size() - 3];
+        randomize( z );
+        problem.stiffness.apply( z, *padding[padding.size() - 2] );
+        problem.mass.apply( z, *padding[padding.size() - 1] );
+        S.push_back( &z );
+        KS.push_back( padding[padding.size() - 2].get() );
+        MS.push_back( padding[padding.size() - 1].get() );
+      }
+    }
+    GEOS_ERROR( "LOBPCG: the search space has too few independent directions" );
+  };
+
+  // Starting vectors: random, with a unit-diagonal-scaled orthonormalization performed by the first extraction
+  for( integer i = 0; i < n; ++i )
+  {
+    randomize( X[i] );
+  }
+
   {
     std::vector< Vector * > S;
     std::vector< Vector * > KS;
@@ -254,7 +297,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       KS.push_back( &KX[i] );
       MS.push_back( &MX[i] );
     }
-    rayleighRitz( S, KS, MS, n, coefficients, theta );
+    extract( S, KS, MS );
     for( integer c = 0; c < n; ++c )
     {
       combine( S, coefficients, c, 0, Xn[c] );
@@ -339,7 +382,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       }
     }
 
-    rayleighRitz( S, KS, MS, n, coefficients, theta );
+    extract( S, KS, MS );
 
     for( integer c = 0; c < n; ++c )
     {
