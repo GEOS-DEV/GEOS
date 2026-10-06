@@ -5618,6 +5618,25 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
+		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
+		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
+		<xsd:attribute name="modalNumModes" type="integer" default="10" />
+		<!--modalSeed => Seed of the random starting vectors of the eigensolver.-->
+		<xsd:attribute name="modalSeed" type="integer" default="1" />
+		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
+		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
+		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
+* arnoldi-->
+		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
@@ -5637,7 +5656,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--timeIntegrationOption => Time integration method. Options are:
 * QuasiStatic
 * ImplicitDynamic
-* ExplicitDynamic-->
+* ExplicitDynamic
+* Modal-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--tolJumpN => Factor to adjust the tolerance for normal jump-->
 		<xsd:attribute name="tolJumpN" type="real64" default="1e-07" />
@@ -5658,9 +5678,14 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_EigenSolverParameters_SolverType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|arnoldi" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic" />
+			<xsd:pattern value=".*[\[\]`$].*|QuasiStatic|ImplicitDynamic|ExplicitDynamic|Modal" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="SolidMechanicsEmbeddedFracturesType">
@@ -5696,6 +5721,25 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
+		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
+		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
+		<xsd:attribute name="modalNumModes" type="integer" default="10" />
+		<!--modalSeed => Seed of the random starting vectors of the eigensolver.-->
+		<xsd:attribute name="modalSeed" type="integer" default="1" />
+		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
+		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
+		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
+* arnoldi-->
+		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
@@ -5711,7 +5755,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--timeIntegrationOption => Time integration method. Options are:
 * QuasiStatic
 * ImplicitDynamic
-* ExplicitDynamic-->
+* ExplicitDynamic
+* Modal-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
@@ -5761,6 +5806,25 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
+		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
+		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
+		<xsd:attribute name="modalNumModes" type="integer" default="10" />
+		<!--modalSeed => Seed of the random starting vectors of the eigensolver.-->
+		<xsd:attribute name="modalSeed" type="integer" default="1" />
+		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
+		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
+		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
+* arnoldi-->
+		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
@@ -5780,7 +5844,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--timeIntegrationOption => Time integration method. Options are:
 * QuasiStatic
 * ImplicitDynamic
-* ExplicitDynamic-->
+* ExplicitDynamic
+* Modal-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--useLocalYieldAcceleration => Flag to enable local acceleration for yield (to accelerate configuration loop convergence).-->
 		<xsd:attribute name="useLocalYieldAcceleration" type="integer" default="0" />
@@ -5828,6 +5893,25 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
+		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
+		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
+		<xsd:attribute name="modalNumModes" type="integer" default="10" />
+		<!--modalSeed => Seed of the random starting vectors of the eigensolver.-->
+		<xsd:attribute name="modalSeed" type="integer" default="1" />
+		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
+		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
+		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
+* arnoldi-->
+		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
@@ -5843,7 +5927,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--timeIntegrationOption => Time integration method. Options are:
 * QuasiStatic
 * ImplicitDynamic
-* ExplicitDynamic-->
+* ExplicitDynamic
+* Modal-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
@@ -5889,6 +5974,25 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="massDamping" type="real64" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
+		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
+		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
+		<xsd:attribute name="modalNumModes" type="integer" default="10" />
+		<!--modalSeed => Seed of the random starting vectors of the eigensolver.-->
+		<xsd:attribute name="modalSeed" type="integer" default="1" />
+		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
+		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
+		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
+* arnoldi-->
+		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
@@ -5906,7 +6010,8 @@ Information output from lower logLevels is added with the desired log level
 		<!--timeIntegrationOption => Time integration method. Options are:
 * QuasiStatic
 * ImplicitDynamic
-* ExplicitDynamic-->
+* ExplicitDynamic
+* Modal-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
@@ -8830,8 +8935,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
-		<!--solventMassPerSolutionVolume => Mass of solvent per unit volume of solution [kg/m^3], used to convert species molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 approximates an aqueous solution by the density of pure water.-->
-		<xsd:attribute name="solventMassPerSolutionVolume" type="real64" default="1000" />
+		<!--solventMassFraction => Mass fraction of solvent in the solution [-]. Species molality [mol/kg solvent] times this fraction is the amount per kg of solution, and times the fluid density the amount per m^3 of solution. The default of 1 is a dilute aqueous solution.-->
+		<xsd:attribute name="solventMassFraction" type="real64" default="1" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
 		<!--viscosityModelType => Type of viscosity model. Valid options:
