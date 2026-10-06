@@ -62,14 +62,17 @@ class KrylovSchurState
 public:
 
   using Problem = GeneralizedEigenProblem< VECTOR >;
+  using Constraints = typename GeneralizedEigenSolver< VECTOR >::ConstraintSpace;
 
   KrylovSchurState( EigenSolverParameters const & params,
                     Problem const & problem,
+                    Constraints const & constraints,
                     VECTOR const & prototype,
                     integer const ncv,
                     integer const blockSize ):
     m_params( params ),
     m_problem( problem ),
+    m_constraints( constraints ),
     m_ncv( ncv ),
     m_b( blockSize ),
     m_ld( ncv + blockSize ),
@@ -80,13 +83,13 @@ public:
     m_MV.reserve( numBasis );
     for( size_t i = 0; i < numBasis; ++i )
     {
-      m_V.push_back( makeVector( prototype ) );
-      m_MV.push_back( makeVector( prototype ) );
+      m_V.push_back( GeneralizedEigenSolver< VECTOR >::makeVector( prototype ) );
+      m_MV.push_back( GeneralizedEigenSolver< VECTOR >::makeVector( prototype ) );
     }
     m_X.reserve( static_cast< size_t >( ncv ) );
     for( integer i = 0; i < ncv; ++i )
     {
-      m_X.push_back( makeVector( prototype ) );
+      m_X.push_back( GeneralizedEigenSolver< VECTOR >::makeVector( prototype ) );
     }
   }
 
@@ -193,7 +196,8 @@ public:
    */
   integer countConverged( RitzPairs const & r, integer const wanted ) const
   {
-    real64 const floor = std::pow( DBL_EPSILON, 2.0 / 3.0 );
+    // Relative to the largest Ritz value, so that the test does not depend on the units of the problem
+    real64 const floor = std::pow( DBL_EPSILON, 2.0 / 3.0 ) * std::fabs( r.theta[0] );
     integer n = 0;
     for( integer i = 0; i < wanted; ++i )
     {
@@ -272,14 +276,6 @@ public:
 
 private:
 
-  static VECTOR makeVector( VECTOR const & prototype )
-  {
-    VECTOR v;
-    v.create( prototype.localSize(), prototype.comm() );
-    v.zero();
-    return v;
-  }
-
   real64 & h( integer const i, integer const j ) { return m_H[ i + static_cast< size_t >( j ) * m_ld ]; }
   real64 h( integer const i, integer const j ) const { return m_H[ i + static_cast< size_t >( j ) * m_ld ]; }
 
@@ -325,6 +321,7 @@ private:
 
     for( int pass = 0; pass < 2; ++pass )
     {
+      m_constraints.project( w );
       for( integer i = 0; i < index; ++i )
       {
         real64 const c = m_MV[i].dot( w );
@@ -369,6 +366,7 @@ private:
 
   EigenSolverParameters const & m_params;
   Problem const & m_problem;
+  Constraints const & m_constraints;
   integer const m_ncv;
   integer const m_b;
   integer const m_ld;
@@ -396,15 +394,32 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
 
   Stopwatch watch;
 
-  integer const nev = params.numEigenvalues;
+  // Deflate the known eigenvectors: the iteration runs in their M-orthogonal complement
+  ConstraintSpace constraints = this->makeConstraintSpace( problem, prototype );
+  integer const numConstraints = constraints.size();
+  integer const nev = params.numEigenvalues - numConstraints;
   integer const b = params.blockSize;
+  if( nev <= 0 )
+  {
+    EigenSolverResult trivial;
+    modes.clear();
+    for( integer i = 0; i < params.numEigenvalues && i < numConstraints; ++i )
+    {
+      modes.push_back( std::move( constraints.vectors[i] ) );
+    }
+    trivial.converged = true;
+    trivial.numConverged = LvArray::integerConversion< integer >( modes.size() );
+    this->finalizeResult( problem, modes, trivial );
+    trivial.solveTime = watch.elapsedTime();
+    return trivial;
+  }
 
   // Basis dimension: a multiple of the block size, large enough to hold the wanted vectors and a block, and
   // small enough for the basis to be linearly independent
   integer ncv = params.subspaceSize > 0 ? params.subspaceSize : std::max( 2 * nev, nev + 2 * b );
   ncv = std::max( ncv, nev + b );
   ncv = ( ncv + b - 1 ) / b * b;
-  globalIndex const maxBasis = problem.numUnknowns > 0 ? problem.numUnknowns : prototype.globalSize();
+  globalIndex const maxBasis = ( problem.numUnknowns > 0 ? problem.numUnknowns : prototype.globalSize() ) - numConstraints;
   if( static_cast< globalIndex >( ncv + b ) > maxBasis )
   {
     ncv = LvArray::integerConversion< integer >( ( maxBasis - b ) / b * b );
@@ -413,7 +428,7 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
                  GEOS_FMT( "The problem has {} unknowns, which is too small for {} eigenpairs with block size {}",
                            maxBasis, nev, b ) );
 
-  KrylovSchurState< Vector > state( params, problem, prototype, ncv, b );
+  KrylovSchurState< Vector > state( params, problem, constraints, prototype, ncv, b );
   state.initialize();
 
   integer constexpr maxCompletenessChecks = 3;
@@ -483,10 +498,13 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
   }
 
   state.extractModes( nev, ritz, modes );
+  modes.insert( modes.begin(),
+                std::make_move_iterator( constraints.vectors.begin() ),
+                std::make_move_iterator( constraints.vectors.end() ) );
 
   EigenSolverResult result;
   result.converged = ( numConverged == nev );
-  result.numConverged = numConverged;
+  result.numConverged = numConverged + numConstraints;
   result.numIterations = restarts;
   result.numOperatorApplications = state.numOperatorApplications();
   this->finalizeResult( problem, modes, result );

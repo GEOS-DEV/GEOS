@@ -76,7 +76,7 @@ string const clampedEnd =
 )xml";
 
 string makeInput( string const & constraints, integer const numModes, integer const blockSize,
-                  string const & solverType = "arnoldi" )
+                  string const & solverType = "arnoldi", integer const deflateRigidBodyModes = 0 )
 {
   string xml =
     R"xml(
@@ -91,6 +91,7 @@ string makeInput( string const & constraints, integer const numModes, integer co
                                  modalBlockSize="@BLOCK@"
                                  modalSolverType="@EIGENSOLVER@"
                                  modalSubspaceSize="@SUBSPACE@"
+                                 modalDeflateRigidBodyModes="@DEFLATE@"
                                  modalTolerance="1e-9">
       <LinearSolverParameters solverType="cg"
                               preconditionerType="jacobi"
@@ -138,6 +139,7 @@ string makeInput( string const & constraints, integer const numModes, integer co
   xml = replaceAll( xml, "@SHIFT@", shiftFrequency );
   xml = replaceAll( xml, "@BLOCK@", std::to_string( blockSize ) );
   xml = replaceAll( xml, "@EIGENSOLVER@", solverType );
+  xml = replaceAll( xml, "@DEFLATE@", std::to_string( deflateRigidBodyModes ) );
   // LOBPCG: guard vectors keep it from cutting a cluster of repeated eigenvalues at the last requested mode
   xml = replaceAll( xml, "@SUBSPACE@", solverType == "lobpcg" ? std::to_string( numModes + 6 ) : "0" );
   xml = replaceAll( xml, "@LENGTH@", std::to_string( barLength ) );
@@ -369,6 +371,39 @@ TEST( SolidMechanicsModal, freeBodyRigidModes )
       sum += lobpcg.participation[k][d] * lobpcg.participation[k][d];
     }
     EXPECT_NEAR( sum, barLength, 1.0e-6 * barLength ) << "LOBPCG direction " << d;
+  }
+}
+
+TEST( SolidMechanicsModal, deflatedRigidBodyModes )
+{
+  // The rigid-body modes are computed analytically and deflated: the spectrum is the one of the free body
+  integer const numModes = 14;
+  ModalResult const reference = runModalAnalysis( makeInput( "", numModes, 1 ) );
+  ASSERT_EQ( reference.eigenvalues.size(), static_cast< size_t >( numModes ) );
+
+  for( string const solverType : { "arnoldi", "lobpcg" } )
+  {
+    SCOPED_TRACE( solverType );
+    ModalResult const result = runModalAnalysis( makeInput( "", numModes, 1, solverType, 1 ) );
+    ASSERT_EQ( result.eigenvalues.size(), static_cast< size_t >( numModes ) );
+    for( size_t k = 0; k < 6; ++k )
+    {
+      EXPECT_NEAR( result.eigenvalues[k], 0.0, 1.0e-8 ) << "rigid mode " << k + 1;
+    }
+    for( size_t k = 6; k < result.eigenvalues.size(); ++k )
+    {
+      EXPECT_NEAR( result.eigenvalues[k], reference.eigenvalues[k], 1.0e-6 * reference.eigenvalues[k] ) << "mode " << k + 1;
+      EXPECT_LT( result.residuals[k], 1.0e-6 ) << "mode " << k + 1;
+    }
+    for( integer d = 0; d < 3; ++d )
+    {
+      real64 sum = 0.0;
+      for( integer k = 0; k < 6; ++k )
+      {
+        sum += result.participation[k][d] * result.participation[k][d];
+      }
+      EXPECT_NEAR( sum, barLength, 1.0e-10 * barLength ) << "direction " << d;
+    }
   }
 }
 

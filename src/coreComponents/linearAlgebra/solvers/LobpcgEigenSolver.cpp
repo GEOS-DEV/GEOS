@@ -54,11 +54,11 @@ real64 constexpr svqbTolerance = 1.0e-8;
  */
 template< typename VECTOR >
 integer rayleighRitz( std::vector< VECTOR * > const & S,
-                   std::vector< VECTOR * > const & KS,
-                   std::vector< VECTOR * > const & MS,
-                   integer const wanted,
-                   DenseMatrix & coefficients,
-                   std::vector< real64 > & theta )
+                      std::vector< VECTOR * > const & KS,
+                      std::vector< VECTOR * > const & MS,
+                      integer const wanted,
+                      DenseMatrix & coefficients,
+                      std::vector< real64 > & theta )
 {
   integer const m = LvArray::integerConversion< integer >( S.size() );
 
@@ -200,9 +200,26 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
 
   Stopwatch watch;
 
-  integer const nev = params.numEigenvalues;
-  integer const n = std::max( nev, params.subspaceSize );
-  globalIndex const dimension = problem.numUnknowns > 0 ? problem.numUnknowns : prototype.globalSize();
+  // Deflate the known eigenvectors: the iteration runs in their M-orthogonal complement
+  ConstraintSpace constraints = this->makeConstraintSpace( problem, prototype );
+  integer const numConstraints = constraints.size();
+  integer const nev = params.numEigenvalues - numConstraints;
+  if( nev <= 0 )
+  {
+    EigenSolverResult trivial;
+    modes.clear();
+    for( integer i = 0; i < params.numEigenvalues && i < numConstraints; ++i )
+    {
+      modes.push_back( std::move( constraints.vectors[i] ) );
+    }
+    trivial.converged = true;
+    trivial.numConverged = LvArray::integerConversion< integer >( modes.size() );
+    this->finalizeResult( problem, modes, trivial );
+    trivial.solveTime = watch.elapsedTime();
+    return trivial;
+  }
+  integer const n = std::max( nev, params.subspaceSize - numConstraints );
+  globalIndex const dimension = ( problem.numUnknowns > 0 ? problem.numUnknowns : prototype.globalSize() ) - numConstraints;
   GEOS_ERROR_IF( static_cast< globalIndex >( n ) >= dimension,
                  GEOS_FMT( "The problem has {} unknowns, which is too small for {} eigenpairs with LOBPCG", dimension, n ) );
 
@@ -269,6 +286,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
         padding.push_back( std::make_unique< Vector >( Base::makeVector( prototype ) ) );
         Vector & z = *padding[padding.size() - 3];
         randomize( z );
+        constraints.project( z );
         problem.stiffness.apply( z, *padding[padding.size() - 2] );
         problem.mass.apply( z, *padding[padding.size() - 1] );
         S.push_back( &z );
@@ -283,6 +301,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   for( integer i = 0; i < n; ++i )
   {
     randomize( X[i] );
+    constraints.project( X[i] );
   }
 
   {
@@ -301,6 +320,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
     for( integer c = 0; c < n; ++c )
     {
       combine( S, coefficients, c, 0, Xn[c] );
+      constraints.project( Xn[c] );
       problem.mass.apply( Xn[c], MXn[c] );
       problem.stiffness.apply( Xn[c], KXn[c] );
     }
@@ -328,6 +348,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       W[i].zero();
       preconditioner.apply( KW[i], W[i] );
       ++numOperatorApplications;
+      constraints.project( W[i] );
       problem.mass.apply( W[i], MW[i] );
       real64 const xNorm = std::sqrt( std::max( X[i].dot( MX[i] ), 0.0 ) );
       real64 const wNorm = std::sqrt( std::max( W[i].dot( MW[i] ), 0.0 ) );
@@ -348,6 +369,16 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
                                   iteration, numConverged, nev,
                                   *std::max_element( errorEstimate.begin(), errorEstimate.begin() + nev ),
                                   numOperatorApplications ) );
+
+    if( params.logLevel >= 2 )
+    {
+      string line;
+      for( integer i = 0; i < nev; ++i )
+      {
+        line += GEOS_FMT( " {:.1e}", errorEstimate[i] );
+      }
+      GEOS_LOG_RANK_0( GEOS_FMT( "    error estimates:{}", line ) );
+    }
 
     if( numConverged == nev || iteration >= params.maxIterations )
     {
@@ -389,6 +420,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       // The images of the iterates are recomputed instead of being updated with the coefficients: the
       // recurrences drift when the search directions become nearly dependent, which limits the accuracy.
       combine( S, coefficients, c, 0, Xn[c] );
+      constraints.project( Xn[c] );
       problem.mass.apply( Xn[c], MXn[c] );
       problem.stiffness.apply( Xn[c], KXn[c] );
       combine( S, coefficients, c, n, Pn[c] );
@@ -405,7 +437,11 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   }
 
   modes.clear();
-  modes.reserve( static_cast< size_t >( nev ) );
+  modes.reserve( static_cast< size_t >( nev + numConstraints ) );
+  for( integer i = 0; i < numConstraints; ++i )
+  {
+    modes.push_back( std::move( constraints.vectors[i] ) );
+  }
   for( integer i = 0; i < nev; ++i )
   {
     modes.push_back( std::move( X[i] ) );
@@ -413,7 +449,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
 
   EigenSolverResult result;
   result.converged = ( numConverged == nev );
-  result.numConverged = numConverged;
+  result.numConverged = numConverged + numConstraints;
   result.numIterations = iteration;
   result.numOperatorApplications = numOperatorApplications;
   this->finalizeResult( problem, modes, result );

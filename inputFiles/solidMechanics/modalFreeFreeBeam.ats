@@ -2,7 +2,8 @@ from geos.ats.test_builder import generate_geos_tests, TestDeck, CurveCheckParam
 
 # The mass-normalized bending mode shapes along the axis of the beam are compared with the Euler-Bernoulli
 # solution of a free-free beam. The tolerance is the L2 norm of the difference divided by the number of values.
-# The finite element solution has shear locking, which changes the shapes by a few percent.
+# The shapes of the finite element solution agree with the beam theory to about 1e-6 in this norm. The shear
+# locking of the trilinear elements mostly raises the frequencies, by about 5 percent for the first mode.
 curvecheck_params = CurveCheckParameters(
     filename='modal_history.hdf5',
     tolerance=[5.0e-6, 5.0e-6],

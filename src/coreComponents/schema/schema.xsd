@@ -5622,6 +5622,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
+		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
 		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
@@ -5726,6 +5728,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
+		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
 		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
@@ -5812,6 +5816,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
+		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
 		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
@@ -5900,6 +5906,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
+		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
 		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
@@ -5982,6 +5990,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
+		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
 		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->

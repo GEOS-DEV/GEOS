@@ -80,7 +80,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_modalSubspaceSize( 0 ),
   m_modalBlockSize( 1 ),
   m_modalCompletenessCheck( 1 ),
-  m_modalSeed( 1 )
+  m_modalSeed( 1 ),
+  m_modalDeflateRigidBodyModes( 0 )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -201,6 +202,15 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Seed of the random starting vectors of the eigensolver." );
+
+  registerWrapper( viewKeyStruct::modalDeflateRigidBodyModesString(), &m_modalDeflateRigidBodyModes ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "If 1, the rigid-body modes of a free structure (three translations and three rotations) are "
+                    "computed analytically and deflated from the eigensolve. They are the first modes of the result, "
+                    "with a zero eigenvalue, and they count in the number of modes. "
+                    "This avoids the rounding noise of the rigid modes in the convergence test, which is "
+                    "useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied." );
 
   registerWrapper( viewKeyStruct::modalEigenvaluesString(), &m_modalEigenvalues ).
     setInputFlag( InputFlags::FALSE ).
@@ -1350,6 +1360,10 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
     }
     else
     {
+      GEOS_ERROR_IF( m_timeIntegrationOption == TimeIntegrationOption::Modal && !m_isModalAssembly,
+                     "The Modal time integration option is only available to a standalone solver, "
+                     "not to a solver that is driven by a coupled solver",
+                     getDataContext() );
       if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic ||
           m_timeIntegrationOption == TimeIntegrationOption::Modal )
       {

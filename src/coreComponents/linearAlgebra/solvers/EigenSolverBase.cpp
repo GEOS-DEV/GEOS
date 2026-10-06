@@ -59,6 +59,39 @@ VECTOR GeneralizedEigenSolver< VECTOR >::makeVector( VECTOR const & prototype )
 }
 
 template< typename VECTOR >
+typename GeneralizedEigenSolver< VECTOR >::ConstraintSpace
+GeneralizedEigenSolver< VECTOR >::makeConstraintSpace( Problem const & problem, VECTOR const & prototype )
+{
+  ConstraintSpace space;
+  space.vectors.reserve( problem.constraints.size() );
+  space.massVectors.reserve( problem.constraints.size() );
+  for( VECTOR const * constraint : problem.constraints )
+  {
+    VECTOR v = makeVector( prototype );
+    v.copy( *constraint );
+    VECTOR mv = makeVector( prototype );
+    problem.mass.apply( v, mv );
+    real64 const norm0 = std::sqrt( std::max( v.dot( mv ), 0.0 ) );
+    if( norm0 <= 0.0 )
+    {
+      continue;
+    }
+    space.project( v );
+    problem.mass.apply( v, mv );
+    real64 const norm = std::sqrt( std::max( v.dot( mv ), 0.0 ) );
+    if( norm <= 1.0e-8 * norm0 )
+    {
+      continue;
+    }
+    v.scale( 1.0 / norm );
+    mv.scale( 1.0 / norm );
+    space.vectors.push_back( std::move( v ) );
+    space.massVectors.push_back( std::move( mv ) );
+  }
+  return space;
+}
+
+template< typename VECTOR >
 void GeneralizedEigenSolver< VECTOR >::finalizeResult( Problem const & problem,
                                                        std::vector< VECTOR > & modes,
                                                        EigenSolverResult & result ) const

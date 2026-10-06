@@ -30,6 +30,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "linearAlgebra/solvers/EigenSolverBase.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/utilities/DiagonalOperator.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -186,7 +187,9 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   m_rhs.zero();
   {
     arrayView1d< real64 > const localRhs = m_rhs.open();
+    m_isModalAssembly = true;
     assembleSystem( time_n, dt, domain, m_dofManager, m_localMatrix.toViewConstSizes(), localRhs );
+    m_isModalAssembly = false;
     m_rhs.close();
   }
   m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
@@ -321,7 +324,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   eigenParams.blockSize = m_modalBlockSize;
   eigenParams.completenessCheck = m_modalCompletenessCheck;
   eigenParams.seed = m_modalSeed;
-  eigenParams.logLevel = getLogLevel() >= 1 ? 1 : 0;
+  eigenParams.logLevel = getLogLevel() >= 2 ? 2 : ( getLogLevel() >= 1 ? 1 : 0 );
 
   DiagonalOperator< ParallelVector > massOperator( massDiag );
   // Preconditioned methods use one application of a set-up preconditioner (e.g. one multigrid cycle)
@@ -332,6 +335,34 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   }
   GeneralizedEigenProblem< ParallelVector > problem{ m_matrix, massOperator, needsInverse ? &shiftedInverse : nullptr, preconditioner,
                                                      m_solution.globalSize() - numConstrained, &freeMask };
+
+  // Rigid-body modes of a free structure, deflated from the eigensolve
+  array1d< ParallelVector > rigidBodyModes;
+  if( m_modalDeflateRigidBodyModes != 0 )
+  {
+    GEOS_ERROR_IF( numConstrained > 0,
+                   "Rigid-body modes cannot be deflated when displacement boundary conditions are applied",
+                   getWrapperDataContext( viewKeyStruct::modalDeflateRigidBodyModesString() ) );
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  string_array const & )
+    {
+      if( rigidBodyModes.empty() )
+      {
+        NodeManager const & nodes = mesh.getNodeManager();
+        arrayView1d< globalIndex const > const dofNumber =
+          nodes.getReference< globalIndex_array >( m_dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
+        rigidBodyModes = LAIHelperFunctions::computeRigidBodyModes< ParallelVector >( nodes.referencePosition(),
+                                                                                      dofNumber,
+                                                                                      m_dofManager.rankOffset(),
+                                                                                      m_dofManager.numLocalDofs() );
+      }
+    } );
+    for( ParallelVector const & mode : rigidBodyModes )
+    {
+      problem.constraints.push_back( &mode );
+    }
+  }
 
   std::unique_ptr< GeneralizedEigenSolver< ParallelVector > > eigenSolver =
     GeneralizedEigenSolver< ParallelVector >::create( eigenParams );

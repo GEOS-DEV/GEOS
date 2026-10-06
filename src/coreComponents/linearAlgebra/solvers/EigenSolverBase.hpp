@@ -86,6 +86,12 @@ struct GeneralizedEigenProblem
   /// Optional vector with 1 on the unknowns of the problem and 0 on the constrained ones, used to generate
   /// starting vectors that vanish on constrained unknowns. Null if there is none.
   VECTOR const * freeMask = nullptr;
+
+  /// Known eigenvectors (e.g. the rigid-body modes of a free structure). They do not need to be orthonormal,
+  /// but they must span an invariant subspace of the pencil. The solver deflates them: it computes the
+  /// remaining eigenpairs in the M-orthogonal complement, and returns the constraints as the first
+  /// eigenvectors, so that numEigenvalues counts them.
+  std::vector< VECTOR const * > constraints = {};
 };
 
 /**
@@ -154,12 +160,54 @@ protected:
                        std::vector< Vector > & modes,
                        EigenSolverResult & result ) const;
 
+public:
+
+  /**
+   * @brief Orthonormal basis of the constraint space of a problem.
+   */
+  struct ConstraintSpace
+  {
+    /// M-orthonormal vectors
+    std::vector< VECTOR > vectors;
+
+    /// Their images by M
+    std::vector< VECTOR > massVectors;
+
+    /// @return the number of independent constraints
+    integer size() const { return LvArray::integerConversion< integer >( vectors.size() ); }
+
+    /**
+     * @brief Remove from a vector its M-orthogonal projection on the constraint space.
+     * @param[in,out] z the vector to project
+     */
+    void project( VECTOR & z ) const
+    {
+      for( int pass = 0; pass < 2; ++pass )
+      {
+        for( size_t i = 0; i < vectors.size(); ++i )
+        {
+          z.axpy( -massVectors[i].dot( z ), vectors[i] );
+        }
+      }
+    }
+  };
+
+  /**
+   * @brief M-orthonormalize the constraints of a problem.
+   * @param[in] problem the operators of the pencil
+   * @param[in] prototype a vector used to size and distribute the new vectors
+   * @return the constraint space (dependent constraints are dropped)
+   */
+  static ConstraintSpace makeConstraintSpace( Problem const & problem, Vector const & prototype );
+
   /**
    * @brief Create a vector with the same distribution as a prototype.
    * @param[in] prototype the vector to mimic
    * @return a new (zero) vector
    */
   static Vector makeVector( Vector const & prototype );
+
+protected:
 
   /// Solver parameters
   EigenSolverParameters m_params;

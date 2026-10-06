@@ -55,6 +55,9 @@ public:
   /// Type of the problem description
   using Problem = typename Base::Problem;
 
+  /// Type of the constraint space
+  using ConstraintSpace = typename Base::ConstraintSpace;
+
   /**
    * @brief Constructor.
    * @param parameters solver parameters

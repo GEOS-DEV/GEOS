@@ -235,6 +235,18 @@ Two eigensolvers are available, with the ``modalSolverType`` attribute:
    The locally optimal block preconditioned conjugate gradient method.
    It finds the lowest modes and applies the preconditioner of the linear solver once per vector and per iteration, without accurate solves.
    The shift is only used by the preconditioner, so it must be at or below the first eigenvalue.
+   The method needs a good preconditioner: a single multigrid cycle is not enough for every problem,
+   for example for a slender beam.
+   Use ``modalSubspaceSize`` larger than ``modalNumModes`` (guard vectors) so that a group of repeated eigenvalues
+   is not cut at the last requested mode.
+
+The rigid-body modes of a free structure are known.
+With ``modalDeflateRigidBodyModes="1"``, the solver computes the three translations and the three rotations analytically
+and removes them from the eigensolve.
+They are the first modes of the result and count in ``modalNumModes``.
+Their eigenvalue is the Rayleigh quotient of the analytical vector, which is zero up to rounding.
+This option needs a structure without displacement boundary conditions.
+It removes the rounding noise of the rigid modes from the convergence test, and it is advised with ``lobpcg``.
 
 The convergence test of both solvers is on :math:`\| (\mathbf{K} - \sigma \mathbf{M})^{-1} \mathbf{r} \|_{\mathbf{M}} \leq` ``modalTolerance``, where :math:`\mathbf{r} = \mathbf{K}\boldsymbol{\phi} - \lambda \mathbf{M}\boldsymbol{\phi}`.
 The log reports the relative residual :math:`\|\mathbf{r}\|_2 / (|\lambda - \sigma| \, \|\mathbf{M}\boldsymbol{\phi}\|_2)`.

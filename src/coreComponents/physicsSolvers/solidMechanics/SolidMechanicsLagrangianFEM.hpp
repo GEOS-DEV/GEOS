@@ -284,6 +284,7 @@ public:
     static constexpr char const * modalBlockSizeString() { return "modalBlockSize"; }
     static constexpr char const * modalCompletenessCheckString() { return "modalCompletenessCheck"; }
     static constexpr char const * modalSeedString() { return "modalSeed"; }
+    static constexpr char const * modalDeflateRigidBodyModesString() { return "modalDeflateRigidBodyModes"; }
     static constexpr char const * modalEigenvaluesString() { return "modalEigenvalues"; }
     static constexpr char const * modalFrequenciesString() { return "modalFrequencies"; }
     static constexpr char const * modalResidualsString() { return "modalResiduals"; }
@@ -401,6 +402,11 @@ protected:
   integer m_modalCompletenessCheck;
   /// Seed of the starting vectors of the eigensolver
   integer m_modalSeed;
+  /// Whether the six rigid-body modes of a free structure are deflated from the eigensolve
+  integer m_modalDeflateRigidBodyModes;
+  /// True while the modal analysis assembles its operators: the Modal option is only valid for a standalone
+  /// solver that runs modalAnalysisStep(), not when the solver is driven by a coupled solver
+  bool m_isModalAssembly = false;
 
   /// Eigenvalues lambda = omega^2 of the last modal analysis
   array1d< real64 > m_modalEigenvalues;

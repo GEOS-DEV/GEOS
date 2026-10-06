@@ -68,7 +68,7 @@ struct EigenSolverParameters
   /// Seed of the random starting vectors
   integer seed = 1;
 
-  /// Verbosity (0 = silent, 1 = one line per restart)
+  /// Verbosity (0 = silent, 1 = one line per restart/iteration, 2 = also the error estimate of every eigenpair)
   integer logLevel = 0;
 };
 
