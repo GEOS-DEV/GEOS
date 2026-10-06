@@ -189,6 +189,87 @@ However, in GEOS we do not offer this option since it can cause some confusion t
 storage of state at different points in time.
 
 
+Modal Analysis (Vibration Modes)
+--------------------------------
+
+With ``timeIntegrationOption="Modal"``, the solver does not advance in time.
+At each application of the solver, it computes the free vibration modes of the structure about the current state.
+The tangent stiffness matrix :math:`\mathbf{K}` and the lumped mass matrix :math:`\mathbf{M}` define the generalized eigenvalue problem
+
+.. math::
+   \mathbf{K} \boldsymbol{\phi}_k = \lambda_k \mathbf{M} \boldsymbol{\phi}_k,
+   \qquad \lambda_k = \omega_k^2, \qquad f_k = \frac{\omega_k}{2\pi},
+
+where :math:`f_k` is the frequency of mode :math:`k`.
+The mass matrix is diagonal.
+The nodal mass is the row sum of the consistent mass matrix, which is the quantity used by the explicit dynamics option.
+The modes are normalized so that :math:`\boldsymbol{\phi}_k^T \mathbf{M} \boldsymbol{\phi}_k = 1`.
+
+Displacement boundary conditions are treated as homogeneous.
+The constrained degrees of freedom are removed symmetrically from :math:`\mathbf{K}` and :math:`\mathbf{M}`, and the mode shapes are zero there.
+If no displacement boundary condition is imposed, the structure is a free body.
+Then :math:`\mathbf{K}` is singular and the six rigid-body modes are the first six eigenpairs, with :math:`\lambda = 0`.
+
+The modes closest to a spectral shift :math:`\sigma` are computed.
+The shift is given as a signed frequency by ``modalShiftFrequency``, and :math:`\sigma = \mathrm{sign}(f)\,(2 \pi f)^2`.
+A negative frequency gives a negative shift :math:`\sigma = -\alpha`.
+The shifted matrix :math:`\mathbf{K} - \sigma \mathbf{M} = \mathbf{K} + \alpha \mathbf{M}` is then symmetric positive definite, even for a free body.
+It is the matrix of the linear systems that the ``arnoldi`` eigensolver solves.
+Its linear solver is the one given in the ``LinearSolverParameters`` block of the solver.
+Because every Krylov vector needs one solve, set ``krylovTol`` at least two orders of magnitude below ``modalTolerance``.
+The multigrid preconditioner of an elastic problem uses the rigid-body modes as near-null space.
+
+Two eigensolvers are available, with the ``modalSolverType`` attribute:
+
+``arnoldi``
+   A block Krylov-Schur method (thick-restart Arnoldi, which is a Lanczos method for this symmetric problem) applied to the operator
+   :math:`(\mathbf{K} - \sigma \mathbf{M})^{-1} \mathbf{M}`.
+   It is the shift-and-invert approach of ARPACK.
+   It finds the modes closest to the shift, for any shift, and needs accurate linear solves.
+   A single Krylov vector cannot find repeated eigenvalues by itself, as for the six rigid-body modes.
+   The default ``modalCompletenessCheck`` adds one Krylov cycle that starts from random vectors orthogonal to the converged modes,
+   and restarts the iteration if it finds a mode that was missed.
+   Alternatively, set ``modalBlockSize`` to at least the multiplicity of the eigenvalues.
+
+``lobpcg``
+   The locally optimal block preconditioned conjugate gradient method.
+   It finds the lowest modes and applies the preconditioner of the linear solver once per vector and per iteration, without accurate solves.
+   The shift is only used by the preconditioner, so it must be at or below the first eigenvalue.
+
+The convergence test of both solvers is on :math:`\| (\mathbf{K} - \sigma \mathbf{M})^{-1} \mathbf{r} \|_{\mathbf{M}} \leq` ``modalTolerance``, where :math:`\mathbf{r} = \mathbf{K}\boldsymbol{\phi} - \lambda \mathbf{M}\boldsymbol{\phi}`.
+The log reports the relative residual :math:`\|\mathbf{r}\|_2 / (|\lambda - \sigma| \, \|\mathbf{M}\boldsymbol{\phi}\|_2)`.
+For the rigid-body modes, this residual is limited by the rounding error of :math:`\mathbf{K}\boldsymbol{\phi}` and can be larger than the tolerance.
+
+The results are:
+
+- A table in the log with the frequency, the eigenvalue, the residual and the participation factors :math:`\Gamma_{k,d} = \boldsymbol{\phi}_k^T \mathbf{M} \mathbf{e}_d` of each mode in the three directions :math:`d`.
+- The arrays ``modalEigenvalues``, ``modalFrequencies``, ``modalResiduals`` and ``modalParticipationFactors`` of the solver, which are saved in the restart files.
+  A frequency has the sign of its eigenvalue, so a rigid mode with a small negative eigenvalue has a small negative frequency.
+- The nodal fields ``modeShape1``, ``modeShape2``, ..., one for each mode, which a VTK output writes.
+
+The following limits apply.
+The stiffness is the tangent stiffness at the current state, without the geometric (pre-stress) stiffness.
+Only the lumped mass is available.
+Contact, damping and body-force or traction loads are not used.
+
+.. code-block:: xml
+
+   <SolidMechanicsLagrangianFEM name="solid"
+                                discretization="FE1"
+                                targetRegions="{ Region }"
+                                timeIntegrationOption="Modal"
+                                modalNumModes="10"
+                                modalShiftFrequency="-100"
+                                modalTolerance="1e-8">
+     <LinearSolverParameters solverType="cg"
+                             preconditionerType="amg"
+                             krylovTol="1e-10"/>
+   </SolidMechanicsLagrangianFEM>
+
+   <Events maxTime="1">
+     <PeriodicEvent name="modalAnalysis" forceDt="1" target="/Solvers/solid"/>
+   </Events>
+
 Parameters
 =========================
 

@@ -5622,7 +5622,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
-		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
 		<xsd:attribute name="modalNumModes" type="integer" default="10" />
@@ -5630,12 +5630,13 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalSeed" type="integer" default="1" />
 		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
 		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
-		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
-* arnoldi-->
+		<!--modalSolverType => Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). Options are:
+* arnoldi
+* lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
-		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
@@ -5680,7 +5681,7 @@ When set to `all` output both convergence & iteration information to a csv.-->
 	</xsd:complexType>
 	<xsd:simpleType name="geos_EigenSolverParameters_SolverType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|arnoldi" />
+			<xsd:pattern value=".*[\[\]`$].*|arnoldi|lobpcg" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption">
@@ -5725,7 +5726,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
-		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
 		<xsd:attribute name="modalNumModes" type="integer" default="10" />
@@ -5733,12 +5734,13 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalSeed" type="integer" default="1" />
 		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
 		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
-		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
-* arnoldi-->
+		<!--modalSolverType => Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). Options are:
+* arnoldi
+* lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
-		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
@@ -5810,7 +5812,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
-		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
 		<xsd:attribute name="modalNumModes" type="integer" default="10" />
@@ -5818,12 +5820,13 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalSeed" type="integer" default="1" />
 		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
 		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
-		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
-* arnoldi-->
+		<!--modalSolverType => Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). Options are:
+* arnoldi
+* lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
-		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
@@ -5897,7 +5900,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
-		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
 		<xsd:attribute name="modalNumModes" type="integer" default="10" />
@@ -5905,12 +5908,13 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalSeed" type="integer" default="1" />
 		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
 		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
-		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
-* arnoldi-->
+		<!--modalSolverType => Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). Options are:
+* arnoldi
+* lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
-		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
@@ -5978,7 +5982,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
 		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
-		<!--modalMaxIterations => Maximum number of restarts of the eigensolver.-->
+		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
 		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
 		<!--modalNumModes => Number of vibration modes computed when the time integration option is `Modal`.-->
 		<xsd:attribute name="modalNumModes" type="integer" default="10" />
@@ -5986,12 +5990,13 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="modalSeed" type="integer" default="1" />
 		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
 		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
-		<!--modalSolverType => Eigensolver of the modal analysis. Options are:
-* arnoldi-->
+		<!--modalSolverType => Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). Options are:
+* arnoldi
+* lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver. The default (0) selects twice the number of modes.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
-		<!--modalTolerance => Relative convergence tolerance of the eigensolver. Set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
 		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
