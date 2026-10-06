@@ -98,18 +98,18 @@ def main():
     pl.camera.focal_point = (0.5 * length, 0.5 * side, 0.0)
     pl.camera.position = (0.5 * length, 0.5 * side, 30.0)
     pl.camera.parallel_scale = 1.4
-    pl.add_text('Side view of the mesh: 100 x 4 x 4 hexahedra, 10 m x 0.2 m x 0.2 m', font_size=9)
+    pl.add_text('Side view of the mesh: 100 x 4 x 4 hexahedra, 10 m x 0.2 m x 0.2 m', font_size=15)
     pl.subplot(1, 0)
     pl.add_mesh(grid, color='lightsteelblue', show_edges=True, line_width=1.0)
     pl.camera.parallel_projection = False
     pl.camera.focal_point = (0.9, 0.1, 0.1)
     pl.camera.position = (-0.9, -0.8, 0.7)
     pl.camera.view_angle = 40.0
-    pl.add_text('End of the beam: four hexahedra across the thickness', font_size=9)
+    pl.add_text('End of the beam: four hexahedra across the thickness', font_size=15)
     pl.screenshot(args.outputDir + '/FreeFreeBeamMesh.png')
 
     nrows = 7
-    peak_display_strain = 0.01
+    peak_display_strain = 0.02
     pl = pv.Plotter(shape=(nrows, 2), off_screen=True, window_size=(1500, 1250))
     for k in range(14):
         m = k + 7
@@ -138,8 +138,8 @@ def main():
         pl.camera.focal_point = (0.5 * length, 0.0, 0.1)
         pl.camera.position = (0.5 * length, 0.0, 30.0)
         pl.camera.parallel_scale = 1.25
-        pl.add_text(f'Mode {m}: {labels[k]}, {frequencies[6 + k]:.2f} Hz, peak displacement {scale * np.max(magnitude_raw):.2f} m',
-                    font_size=8, position='upper_left')
+        pl.add_text(f'Mode {m}: {labels[k]}, {frequencies[6 + k]:.1f} Hz, peak {scale * np.max(magnitude_raw):.2f} m',
+                    font_size=15, position='upper_left')
     gallery = pl.screenshot(return_img=True)
 
     # One colorbar for all the panels: the displacement of each mode is normalized by its maximum
@@ -148,14 +148,15 @@ def main():
     import matplotlib.pyplot as plt
     height, width = gallery.shape[:2]
     dpi = 100
-    fig = plt.figure(figsize=((width + 130) / dpi, height / dpi), dpi=dpi)
-    ax = fig.add_axes([0.0, 0.0, width / (width + 130), 1.0])
+    fig = plt.figure(figsize=((width + 200) / dpi, (height + 30) / dpi), dpi=dpi)
+    ax = fig.add_axes([0.0, 30.0 / (height + 30), width / (width + 200), height / (height + 30)])
     ax.imshow(gallery)
     ax.axis('off')
-    cax = fig.add_axes([(width + 25) / (width + 130), 0.12, 20.0 / (width + 130), 0.76])
+    cax = fig.add_axes([(width + 30) / (width + 200), 0.12, 24.0 / (width + 200), 0.76])
     fig.colorbar(matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(0.0, 1.0), cmap='viridis'), cax=cax)
-    cax.set_ylabel('Displacement magnitude / its maximum', fontsize=9)
-    fig.text(0.5, 0.004, 'The amplitude of a mode is arbitrary. Each mode is scaled so that its peak strain is 1 % (steel yields at about 0.1 %)', ha='center', fontsize=8)
+    cax.set_ylabel('Displacement magnitude / its maximum', fontsize=15)
+    cax.tick_params(labelsize=13)
+    fig.text(0.5, 0.006, 'The amplitude of a mode is arbitrary. Each mode is scaled so that its peak strain is 2 % (steel yields at about 0.1 %)', ha='center', fontsize=13)
     fig.savefig(args.outputDir + '/FreeFreeBeamModes.png', dpi=dpi)
 
 
