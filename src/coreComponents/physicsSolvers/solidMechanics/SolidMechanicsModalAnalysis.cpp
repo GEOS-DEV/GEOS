@@ -149,8 +149,11 @@ globalIndex SolidMechanicsLagrangianFEM::computeModalDiagonals( real64 const tim
 
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
-        globalIndex const row = dofNumber[ targetSet[i] ] + component - rankOffset;
-        if( row >= 0 && row < maskView.size() )
+        // Nodes outside the target regions have no degree of freedom (number -1): adding the component to this
+        // sentinel would select the degree of freedom of another node
+        globalIndex const nodeDof = dofNumber[ targetSet[i] ];
+        globalIndex const row = nodeDof + component - rankOffset;
+        if( nodeDof >= 0 && row >= 0 && row < maskView.size() )
         {
           maskView[row] = 0.0;
           massView[row] = 0.0;

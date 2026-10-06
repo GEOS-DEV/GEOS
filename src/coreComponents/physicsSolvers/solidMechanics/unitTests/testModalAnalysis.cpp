@@ -287,6 +287,22 @@ void checkAxialModes( ModalResult const & result, std::vector< real64 > const & 
   }
 }
 
+
+/// The bar of makeInput extended by a second cell region that the solver does not target
+string makeInputWithOutsideRegion( string const & constraints, integer const numModes )
+{
+  string xml = makeInput( constraints, numModes, 1 );
+  xml = replaceAll( xml, "xCoords=\"{ 0, " + std::to_string( barLength ) + " }\"",
+                    "xCoords=\"{ 0, " + std::to_string( barLength ) + ", " + std::to_string( 2 * barLength ) + " }\"" );
+  xml = replaceAll( xml, "nx=\"{ " + std::to_string( numElements ) + " }\"",
+                    "nx=\"{ " + std::to_string( numElements ) + ", " + std::to_string( numElements ) + " }\"" );
+  xml = replaceAll( xml, "cellBlockNames=\"{ cb }\"", "cellBlockNames=\"{ cb, cbOutside }\"" );
+  xml = replaceAll( xml, "<CellElementRegion name=\"Region\" cellBlocks=\"{ cb }\" materialList=\"{ rock }\"/>",
+                    "<CellElementRegion name=\"Region\" cellBlocks=\"{ cb }\" materialList=\"{ rock }\"/>\n"
+                    "    <CellElementRegion name=\"Outside\" cellBlocks=\"{ cbOutside }\" materialList=\"{ rock }\"/>" );
+  return xml;
+}
+
 } // namespace
 
 TEST( SolidMechanicsModal, clampedBarAxialModes )
@@ -404,6 +420,32 @@ TEST( SolidMechanicsModal, deflatedRigidBodyModes )
       }
       EXPECT_NEAR( sum, barLength, 1.0e-10 * barLength ) << "direction " << d;
     }
+  }
+}
+
+TEST( SolidMechanicsModal, constraintsOutsideTargetRegionsAreIgnored )
+{
+  // A displacement condition on nodes that no target region owns has no degree of freedom to remove. These nodes
+  // have the degree of freedom number -1, and a component offset must not turn it into the number of another node.
+  string const outsideConstraint =
+    R"xml(
+    <FieldSpecification name="fixOutside" objectPath="nodeManager" fieldName="totalDisplacement" component="1" scale="0.0" setNames="{ xpos }"/>
+)xml";
+  integer const numModes = 14;
+  ModalResult const reference = runModalAnalysis( makeInputWithOutsideRegion( "", numModes ) );
+  ModalResult const constrained = runModalAnalysis( makeInputWithOutsideRegion( outsideConstraint, numModes ) );
+  ASSERT_EQ( reference.eigenvalues.size(), static_cast< size_t >( numModes ) );
+  ASSERT_EQ( constrained.eigenvalues.size(), static_cast< size_t >( numModes ) );
+
+  // The target region is a free body: six rigid-body modes
+  for( size_t k = 0; k < 6; ++k )
+  {
+    EXPECT_NEAR( reference.eigenvalues[k], 0.0, 1.0e-8 ) << "rigid mode " << k + 1;
+    EXPECT_NEAR( constrained.eigenvalues[k], 0.0, 1.0e-8 ) << "rigid mode " << k + 1;
+  }
+  for( size_t k = 6; k < reference.eigenvalues.size(); ++k )
+  {
+    EXPECT_NEAR( constrained.eigenvalues[k], reference.eigenvalues[k], 1.0e-6 * reference.eigenvalues[k] ) << "mode " << k + 1;
   }
 }
 

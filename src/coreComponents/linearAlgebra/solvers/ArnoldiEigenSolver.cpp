@@ -452,7 +452,11 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
   KrylovSchurState< Vector > state( params, problem, constraints, prototype, ncv, b );
   state.initialize();
 
-  integer constexpr maxCompletenessChecks = 3;
+  // A check that finds more copies of a repeated eigenvalue does not prove completeness, because the random block
+  // can find some copies and miss others. The checks continue until one of them changes nothing. Each check that
+  // finds copies replaces at least one wanted pair by a pair closer to the shift, so at most nev + 1 checks run.
+  integer const maxCompletenessChecks = nev + 1;
+  std::vector< real64 > checkedTheta;
   integer m = 0;
   integer restarts = 0;
   integer numChecks = 0;
@@ -494,7 +498,20 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
 
     if( converged )
     {
-      if( verifying || params.completenessCheck == 0 || numChecks >= maxCompletenessChecks )
+      // A check that changes the wanted Ritz values has found new copies of repeated eigenvalues
+      bool foundNewCopies = false;
+      if( verifying )
+      {
+        real64 const floor = std::pow( DBL_EPSILON, 2.0 / 3.0 ) * std::fabs( ritz.theta[0] );
+        for( integer i = 0; i < nev && !foundNewCopies; ++i )
+        {
+          real64 const scale = std::max( std::fabs( ritz.theta[i] ), floor );
+          foundNewCopies = std::fabs( ritz.theta[i] - checkedTheta[i] ) > 10.0 * params.tolerance * scale;
+        }
+        GEOS_LOG_RANK_0_IF( params.logLevel >= 1 && foundNewCopies,
+                            "  Arnoldi check: the wanted eigenvalues changed, new copies were found" );
+      }
+      if( params.completenessCheck == 0 || ( verifying && !foundNewCopies ) || numChecks >= maxCompletenessChecks )
       {
         break;
       }
@@ -502,6 +519,7 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
       // that is orthogonal to them
       ++numChecks;
       verifying = true;
+      checkedTheta.assign( ritz.theta.begin(), ritz.theta.begin() + nev );
       state.restart( nev, ritz, true );
       m = nev;
       continue;

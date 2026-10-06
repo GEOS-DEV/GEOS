@@ -7,6 +7,7 @@ set( parallel_tests
      testMatrices.cpp
      testVectors.cpp
      testMultiVectorOperations.cpp
+     testEigenSolvers.cpp
      testExternalSolvers.cpp
      testKrylovSolvers.cpp
      testReverseCutHillMcKeeOrdering.cpp )
