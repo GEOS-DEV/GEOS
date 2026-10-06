@@ -368,6 +368,12 @@ Only the lumped mass is available.
 Contact, damping and body-force or traction loads are not used.
 The ``Modal`` option is only available to a standalone solver, not to a solver that a coupled solver drives.
 
+The modal analysis runs on the CPU, CUDA and HIP backends, and it does not use unified memory.
+The vectors, the matrices and the preconditioner stay in the memory space of the backend during the eigensolve.
+The dot products of the orthogonalization and of the Rayleigh-Ritz steps are computed in batches by device kernels, and only the small matrix of results is copied to the host.
+Linear combinations of many vectors are done by one fused kernel.
+The small dense eigenproblems of the projected matrices are solved on the host.
+
 The examples :ref:`AdvancedExampleFreeFreeBeamModes` and :ref:`AdvancedExampleEigensolverComparison` verify this option against the Euler-Bernoulli beam theory and compare the two eigensolvers.
 
 .. code-block:: xml
