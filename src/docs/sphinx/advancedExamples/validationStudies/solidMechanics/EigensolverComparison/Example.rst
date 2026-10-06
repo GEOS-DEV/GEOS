@@ -38,7 +38,7 @@ The other combinations are obtained by changing the attributes ``modalSolverType
 The script :download:`run_comparison.sh <run_comparison.sh>` makes all the runs.
 The script :download:`summarize_comparison.py <summarize_comparison.py>` writes the table and the convergence histories from the logs.
 The script :download:`EigensolverComparison.py <EigensolverComparison.py>` makes the figure.
-The results are in :download:`EigensolverComparison.csv <EigensolverComparison.csv>` and :download:`ConvergenceHistory.txt <ConvergenceHistory.txt>`.
+The results are in :download:`EigensolverComparison.csv <EigensolverComparison.csv>` and :download:`ConvergenceHistory.csv <ConvergenceHistory.csv>`.
 
 ------------------------------------------------------------------
 Solver

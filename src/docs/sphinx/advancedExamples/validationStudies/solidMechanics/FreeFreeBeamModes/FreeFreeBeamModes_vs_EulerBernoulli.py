@@ -85,9 +85,9 @@ def main():
     shear = young / (2.0 * (1.0 + poisson))
 
     # GEOS results
-    frequency = np.loadtxt(args.outputDir + "/FreeFreeBeamFrequencies.txt", usecols=(1,))
+    frequency = np.loadtxt(args.outputDir + "/FreeFreeBeamFrequencies.csv", delimiter=",", skiprows=1, usecols=(1,))
     elastic = frequency[6:]
-    shapes = np.loadtxt(args.outputDir + "/FreeFreeBeamModeShapes.txt")
+    shapes = np.loadtxt(args.outputDir + "/FreeFreeBeamModeShapes.csv", delimiter=",", skiprows=1)
     x = shapes[:, 0]
 
     # Beam theory: Euler-Bernoulli bending (each frequency is double), Saint-Venant torsion of a square section

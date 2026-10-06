@@ -6,19 +6,13 @@ import numpy as np
 
 
 def read_history(path):
-    """Read the blocks of ConvergenceHistory.txt: {name: (applications, error estimates)}."""
-    histories, name, data = {}, None, []
-    for line in open(path):
-        line = line.strip()
-        if line.startswith('## '):
-            if name is not None:
-                histories[name] = np.array(data)
-            name, data = line[3:], []
-        elif line and not line.startswith('#'):
-            data.append([float(v) for v in line.split()])
-    if name is not None:
-        histories[name] = np.array(data)
-    return histories
+    """Read ConvergenceHistory.csv: {run: array of (operator applications, error estimate)}."""
+    histories = {}
+    with open(path) as f:
+        for row in csv.DictReader(f):
+            histories.setdefault(row['Run'], []).append([float(row['Operator applications']),
+                                                          float(row['Maximum error estimate'])])
+    return {name: np.array(values) for name, values in histories.items()}
 
 
 def main():
@@ -29,7 +23,7 @@ def main():
 
     with open(args.outputDir + '/EigensolverComparison.csv') as f:
         rows = list(csv.DictReader(f))
-    histories = read_history(args.outputDir + '/ConvergenceHistory.txt')
+    histories = read_history(args.outputDir + '/ConvergenceHistory.csv')
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.2))
 

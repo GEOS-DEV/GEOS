@@ -72,7 +72,7 @@ Its location in the repository is:
   src/docs/sphinx/advancedExamples/validationStudies/solidMechanics/FreeFreeBeamModes/FreeFreeBeamModes_vs_EulerBernoulli.py
 
 The script :download:`make_beam_assets.py <make_beam_assets.py>` generates the images and the table of this page from a GEOS run.
-The text files are :download:`FreeFreeBeamFrequencies.txt <FreeFreeBeamFrequencies.txt>`, :download:`FreeFreeBeamModeShapes.txt <FreeFreeBeamModeShapes.txt>` and :download:`FreeFreeBeamModeTable.csv <FreeFreeBeamModeTable.csv>`.
+The data files are :download:`FreeFreeBeamFrequencies.csv <FreeFreeBeamFrequencies.csv>`, :download:`FreeFreeBeamModeShapes.csv <FreeFreeBeamModeShapes.csv>` and :download:`FreeFreeBeamModeTable.csv <FreeFreeBeamModeTable.csv>`.
 
 ------------------------------------------------------------------
 Mesh
@@ -143,7 +143,7 @@ A comparison between GEOS results and beam theory
 ------------------------------------------------------------------
 
 The results use a run with ``modalNumModes="20"``.
-They are in the files ``FreeFreeBeamFrequencies.txt`` and ``FreeFreeBeamModeShapes.txt``.
+They are in the files ``FreeFreeBeamFrequencies.csv`` and ``FreeFreeBeamModeShapes.csv``.
 The left plot compares the frequencies of the bending modes, the first torsion mode and the first axial mode.
 Each GEOS bending value is the mean of a pair of modes.
 The two other plots compare the mass-normalized shapes of the first four bending modes.

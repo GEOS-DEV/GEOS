@@ -1,4 +1,4 @@
-"""Summarize the logs of run_comparison.sh into EigensolverComparison.csv and ConvergenceHistory.txt.
+"""Summarize the logs of run_comparison.sh into EigensolverComparison.csv and ConvergenceHistory.csv.
 
 usage: python3 summarize_comparison.py LOGDIR [OUTPUTDIR]
 """
@@ -44,11 +44,9 @@ with open(os.path.join(outdir, 'EigensolverComparison.csv'), 'w') as out:
         if solver == 'LOBPCG':
             hist[name] = [(int(m.group(5)), float(m.group(4))) for m in history.finditer(text)]
 
-names = [n for n in hist]
-with open(os.path.join(outdir, 'ConvergenceHistory.txt'), 'w') as out:
-    out.write('# Maximum error estimate of the wanted modes of the LOBPCG runs, at each iteration\n')
-    out.write('# One block per run, introduced by a line "## name", with the columns: operator applications, error estimate\n')
-    for n in names:
-        out.write(f'\n\n## {n}\n')
-        for apps, err in hist[n]:
-            out.write(f'{apps} {err:.6e}\n')
+with open(os.path.join(outdir, 'ConvergenceHistory.csv'), 'w') as out:
+    # Maximum error estimate of the wanted modes of the LOBPCG runs, at each iteration
+    out.write('Run,Operator applications,Maximum error estimate\n')
+    for name, values in hist.items():
+        for apps, err in values:
+            out.write(f'{name},{apps},{err:.6e}\n')

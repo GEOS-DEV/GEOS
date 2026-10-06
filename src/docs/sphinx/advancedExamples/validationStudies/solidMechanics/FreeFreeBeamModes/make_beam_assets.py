@@ -9,7 +9,8 @@ This script is not run by the documentation build. Run it again if the results c
 2. python3 make_beam_assets.py --vtu <run>/vtkOutput/000001/beam/Level0/Region/rank_0.vtu \
                                --log <run>/run.log --geosDir <GEOS repository>
 
-It writes FreeFreeBeamModeTable.csv, FreeFreeBeamModeShapes.txt, FreeFreeBeamMesh.png and FreeFreeBeamModes.png.
+It writes FreeFreeBeamFrequencies.csv, FreeFreeBeamModeTable.csv, FreeFreeBeamModeShapes.csv, FreeFreeBeamMesh.png and
+FreeFreeBeamModes.png.
 """
 import argparse
 import re
@@ -21,11 +22,12 @@ from FreeFreeBeamModes_vs_EulerBernoulli import classify, euler_bernoulli_roots,
 
 
 def read_log(path):
+    """Read the table of the GEOS log: (mode, frequency, eigenvalue, relative residual)."""
     rows = []
     for line in open(path):
         m = re.match(r'^\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)', line)
         if m and ('e+' in m.group(2) or 'e-' in m.group(2)):
-            rows.append((int(m.group(1)), float(m.group(2))))
+            rows.append((int(m.group(1)), float(m.group(2)), float(m.group(3)), float(m.group(4))))
     return rows
 
 
@@ -55,7 +57,11 @@ def main():
 
     timoshenko = timoshenko_estimate(bending, roots, length, side / np.sqrt(12.0), young, shear, poisson)
     log = read_log(args.log)
-    frequencies = [f for _, f in log]
+    frequencies = [f for _, f, _, _ in log]
+    with open(args.outputDir + '/FreeFreeBeamFrequencies.csv', 'w') as out:
+        out.write('Mode,Frequency (Hz),Eigenvalue (1/s^2),Relative residual\n')
+        for mode, f, eigenvalue, residual in log:
+            out.write(f'{mode},{f:.9e},{eigenvalue:.9e},{residual:.3e}\n')
     labels, theory = classify(frequencies[6:], bending, torsion, axial)
 
     with open(args.outputDir + '/FreeFreeBeamModeTable.csv', 'w') as out:
@@ -78,13 +84,14 @@ def main():
     on_axis = np.where((np.abs(points[:, 1] - 0.5 * side) < 1e-6) & (np.abs(points[:, 2] - 0.5 * side) < 1e-6))[0]
     on_axis = on_axis[np.argsort(points[on_axis, 0])]
     modes = (7, 9, 11, 13)
-    with open(args.outputDir + '/FreeFreeBeamModeShapes.txt', 'w') as out:
-        out.write('# Mass-normalized transverse displacement of the nodes on the axis of the beam\n')
-        out.write('# column 1 = x (m)\n')
-        out.write('# columns 2 to 9 = y and z displacement of the modes 7, 9, 11 and 13 (first four bending modes)\n')
+    with open(args.outputDir + '/FreeFreeBeamModeShapes.csv', 'w') as out:
+        # Mass-normalized transverse displacement of the nodes on the axis of the beam. The two members of a
+        # pair of bending modes have an arbitrary polarization in the plane of the cross-section.
+        header = ['x (m)'] + [f'{axis} displacement of mode {m}' for m in modes for axis in ('y', 'z')]
+        out.write(','.join(header) + '\n')
         for i in on_axis:
             row = [points[i, 0]] + [grid.point_data[f'modeShape{m}'][i, c] for m in modes for c in (1, 2)]
-            out.write(' '.join(f'{v:.9e}' for v in row) + '\n')
+            out.write(','.join(f'{v:.9e}' for v in row) + '\n')
 
     # Images
     pv.OFF_SCREEN = True
