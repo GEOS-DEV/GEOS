@@ -44,6 +44,19 @@ def bool_env(name, default):
     raise ValueError(name + " must be a boolean")
 
 
+def marker_search_mode_env():
+    """Select legacy (0), indexed (1), or checked indexed (2) marker search.
+
+    Preserve the existing true/false spellings for modes 1/0. Mode 2 runs both
+    searches and verifies their neighbor sequences; use it for short correctness
+    runs, not for performance measurements. This changes solver XML only.
+    """
+    name = "WEAK_TRACE_FAST_MARKER_SEARCH"
+    if os.environ.get(name, "").strip() == "2":
+        return 2
+    return int(bool_env(name, True))
+
+
 loading = os.environ.get("WEAK_TRACE_LOADING", "pressure")
 variant = os.environ.get("WEAK_TRACE_VARIANT", "traceContactGroups")
 if loading not in ("pressure", "ftableCube"):
@@ -135,7 +148,7 @@ if variant == "traceContactGroups":
         weakInterfaceTraceBoundaryCoupling=1, weakInterfaceTraceProjectionScale=1.0,
         weakInterfaceTraceQRBackend=qr_backend,
         weakInterfaceTraceComponentRanks=positive_int("WEAK_TRACE_COMPONENT_RANKS", 3),
-        weakInterfaceTraceFastMarkerSearch=1 if bool_env("WEAK_TRACE_FAST_MARKER_SEARCH", True) else 0,
+        weakInterfaceTraceFastMarkerSearch=marker_search_mode_env(),
         weakInterfaceTracePerformanceLog=1 if bool_env("WEAK_TRACE_PERFORMANCE_LOG", False) else 0,
         weakInterfaceTraceSuppressNodalContact=1, weakInterfaceTracePairs=[[0, 1]],
         weakInterfaceTraceSurfaceFitNeighbors=12, weakInterfaceTraceSurfaceFitRadius=2.5,

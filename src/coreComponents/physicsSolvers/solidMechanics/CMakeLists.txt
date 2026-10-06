@@ -36,7 +36,9 @@ if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
         kernels/MPMBoundaryMortar.hpp
         kernels/MPMBoundaryMortarQR.hpp
         kernels/MPMBoundaryMortarComponents.hpp
-        kernels/MPMMortarSearch.hpp )
+        kernels/MPMMortarSearch.hpp
+        kernels/MPMMortarIndexedSearch.hpp
+        kernels/MPMMortarStateValidation.hpp )
 
   list( APPEND solidMechanicsSolvers_sources
         SolidMechanicsMPM.cpp

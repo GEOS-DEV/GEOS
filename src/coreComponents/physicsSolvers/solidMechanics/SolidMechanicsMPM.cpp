@@ -22,6 +22,10 @@
 #include "kernels/MPMBoundaryMortarQR.hpp"
 #include "kernels/MPMBoundaryMortarComponents.hpp"
 #include "kernels/MPMMortarSearch.hpp"
+#include "kernels/MPMMortarIndexedSearch.hpp"
+#include "kernels/MPMMortarStateValidation.hpp"
+#include <memory>
+#include <climits>
 #include <iterator>
 
 #if defined( GEOS_USE_HIP )
@@ -3844,7 +3848,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Maximum workers for independent boundary mortar component solves (1..3). Actual workers=min(value,dimensions,MPI ranks). Each component remains a complete solve." );
   registerWrapper( "weakInterfaceTraceFastMarkerSearch", &m_weakInterfaceTraceFastMarkerSearch ).
     setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 1 ).
-    setDescription( "Deduplicate search-bin keys and bypass redundant marker sorting in boundary-coupled surface fitting; zero restores the legacy gather/sort." );
+    setDescription( "Boundary mortar marker search: 0 legacy, 1 exact indexed k-nearest within legacy bins, 2 indexed with legacy neighbor-sequence verification. No radius or fit-law change." );
   registerWrapper( "weakInterfaceTracePerformanceLog", &m_weakInterfaceTracePerformanceLog ).
     setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 0 ).
     setDescription( "Log rank-max wall timings and candidate counts for boundary mortar. Enable MPMSubroutines logging as well. No numerical decisions depend on timing." );
@@ -4234,9 +4238,9 @@ void SolidMechanicsMPM::postInputInitialization()
   {
     GEOS_ERROR_IF( m_weakInterfaceTraceComponentRanks < 1 || m_weakInterfaceTraceComponentRanks > 3,
                    "weakInterfaceTraceComponentRanks must be between one and three." );
-    GEOS_ERROR_IF( (m_weakInterfaceTraceFastMarkerSearch != 0 && m_weakInterfaceTraceFastMarkerSearch != 1) ||
+    GEOS_ERROR_IF( (m_weakInterfaceTraceFastMarkerSearch < 0 || m_weakInterfaceTraceFastMarkerSearch > 2) ||
                    (m_weakInterfaceTracePerformanceLog != 0 && m_weakInterfaceTracePerformanceLog != 1),
-                   "Boundary mortar search/timing switches must be zero or one." );
+                   "Boundary mortar search must be 0, 1, or 2; timing must be zero or one." );
     try { mpm::boundaryMortar::selectQRBackend( m_weakInterfaceTraceQRBackend ); }
     catch( std::exception const & e ) { GEOS_ERROR( e.what() ); }
     GEOS_ERROR_IF( m_rigidBodyMode != 0, "Boundary-compatible mortar is not available in RigidBodyMPM." );
@@ -25065,6 +25069,10 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   auto const projectionStart = mortarNow();
   double fittingSeconds = 0.0;
   real64 markerCandidatesVisited = 0.0, maximumMarkerCandidates = 0.0;
+  real64 markerDistanceEvaluations = 0.0, markerTreeNodes = 0.0, markerQueries = 0.0, markerTieReplays = 0.0;
+  double searchIndexSeconds = 0.0;
+  globalIndex markerSearchMismatches = 0;
+  bool const validateMarkerSearch = boundaryCoupled && m_weakInterfaceTraceFastMarkerSearch == 2;
 
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
@@ -25112,14 +25120,52 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
                    "Invalid global background-grid cell count for the C0 mortar." );
   }
 
+  namespace ms = mpm::mortarState;
+  ms::Lattice mortarLattice;
+  if( boundaryCoupled )
+  {
+    // Local mesh-coordinate subtraction can produce a different last bit of h
+    // on each rank. Near knots that changes zero coefficients, bin membership,
+    // and the required-node set. Use ONE validated global lattice for the
+    // mortar only; do not resize/move GEOS nodes or alter particle mapping.
+    for( int d = 0; d < 3; ++d )
+    {
+      globalIndex const nMin = MpiWrapper::allReduce( globalCellCount[d], MpiWrapper::Reduction::Min, MPI_COMM_GEOS );
+      globalIndex const nMax = MpiWrapper::allReduce( globalCellCount[d], MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+      GEOS_ERROR_IF( nMin != nMax || nMin < ( periodic[d] ? 1 : 3 ),
+        "Inconsistent global mortar lattice cell count in direction " << d << ": " << nMin << ".." << nMax );
+    }
+    auto const localMin = gridGlobalMin;
+    auto const localMax = gridGlobalMax;
+    MpiWrapper::bcast( gridGlobalMin.data(), 3, 0, MPI_COMM_GEOS );
+    MpiWrapper::bcast( gridGlobalMax.data(), 3, 0, MPI_COMM_GEOS );
+    real64 latticeDisagreement = 0.0;
+    for( int d = 0; d < 3; ++d )
+    {
+      gridGlobalExtent[d] = gridGlobalMax[d] - gridGlobalMin[d];
+      real64 const canonicalSpacing = gridGlobalExtent[d] / globalCellCount[d];
+      latticeDisagreement = std::max( latticeDisagreement,
+        std::max( { std::abs( localMin[d] - gridGlobalMin[d] ),
+                    std::abs( localMax[d] - gridGlobalMax[d] ),
+                    std::abs( hEl[d] - canonicalSpacing ) } ) / canonicalSpacing );
+      hEl[d] = canonicalSpacing;
+    }
+    latticeDisagreement = MpiWrapper::allReduce( latticeDisagreement, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+    GEOS_ERROR_IF( !std::isfinite( latticeDisagreement ) || latticeDisagreement > 1.0e-8,
+      "Ranks disagree on the uniform mortar lattice: relative discrepancy=" << latticeDisagreement );
+    mortarLattice = ms::Lattice::make( gridGlobalMin, gridGlobalMax,
+      ms::Key{{globalCellCount[0],globalCellCount[1],globalCellCount[2]}},
+      std::array<bool,3>{{periodic[0]!=0,periodic[1]!=0,periodic[2]!=0}} );
+  }
+
   namespace bm = mpm::boundaryMortar;
   bm::Faces boundaryFaces;
   boundaryFaces.dimensions = numDims;
   for( int d = 0; d < 3; ++d )
   {
     boundaryFaces.cells[d] = globalCellCount[d];
-    boundaryFaces.low[d] = m_xGlobalMin[d];
-    boundaryFaces.high[d] = m_xGlobalMax[d];
+    boundaryFaces.low[d] = boundaryCoupled ? gridGlobalMin[d] + (periodic[d] ? 0.0 : hEl[d]) : m_xGlobalMin[d];
+    boundaryFaces.high[d] = boundaryCoupled ? gridGlobalMax[d] - (periodic[d] ? 0.0 : hEl[d]) : m_xGlobalMax[d];
     boundaryFaces.periodic[d] = periodic[d] != 0;
   }
   if( boundaryCoupled )
@@ -25138,7 +25184,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         GEOS_ERROR_IF( m_prescribedBoundaryFTable != 1 && m_stressControl[0] != 1 &&
                        m_stressControl[1] != 1 && m_stressControl[2] != 1,
                        "A Moving face in boundary-compatible mortar requires FTableBC or active stress control." );
-        real64 const position = face % 2 == 0 ? m_xGlobalMin[d] : m_xGlobalMax[d];
+        real64 const position = face % 2 == 0 ? boundaryFaces.low[d] : boundaryFaces.high[d];
         boundaryFaces.target[face][d] = m_domainL[d] * m_domainIncrementalStretch[d] * position;
         if( m_enablePrescribedBoundaryTransverseVelocities[face] )
           for( int t = 0; t < 2; ++t )
@@ -25265,6 +25311,28 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     WeakInterfaceMortarNodeKey const key = nodeKeyFromCoordinates(
       gridPosition[node][0], gridPosition[node][1], gridPosition[node][2] );
     localNodeKeys[static_cast< std::size_t >( node )] = key;
+  }
+
+  auto mortarGridPoint = [&]( localIndex const node )
+  {
+    std::array< real64, 3 > const point{{gridPosition[node][0], gridPosition[node][1], gridPosition[node][2]}};
+    return boundaryCoupled ? mortarLattice.snap( point ) : point;
+  };
+  if( boundaryCoupled )
+  {
+    real64 localMismatch = 0.0;
+    int invalidKeys = 0;
+    for( localIndex node = 0; node < nodeManager.size(); ++node )
+    {
+      std::array<real64,3> const point{{gridPosition[node][0],gridPosition[node][1],gridPosition[node][2]}};
+      localMismatch = std::max( localMismatch, mortarLattice.mismatch( point ) );
+      if( !mortarLattice.contains( toBoundaryKey( localNodeKeys[static_cast<std::size_t>(node)] ) ) ) ++invalidKeys;
+    }
+    localMismatch = MpiWrapper::allReduce( localMismatch, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+    invalidKeys = MpiWrapper::allReduce( invalidKeys, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+    GEOS_ERROR_IF( invalidKeys || !std::isfinite(localMismatch) || localMismatch > 1.0e-8,
+      "Actual GEOS nodes do not match the global mortar lattice: invalid keys=" << invalidKeys <<
+      ", max coordinate error/h=" << localMismatch << ". Check generated grid extents, spacing, and partitioning." );
   }
 
   // Collect owned particle-carried interface markers and replicate only this
@@ -25913,6 +25981,21 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       markerCellKeys.insert( cellKeyFromPoint( pairMarkers[markerIndex].point ) );
     }
 
+    // Keep the ORIGINAL bin membership/search stencil. Each bin gets a small
+    // spatial tree over actual (including reflected) marker positions. This
+    // accelerates k-nearest selection without changing the fit's semantics.
+    using MarkerIndex = mpm::mortarSearch::IndexedBins< WeakInterfaceMortarNodeKey, localIndex >;
+    std::unique_ptr< MarkerIndex > markerIndex;
+    if( fastMarkerSearch )
+    {
+      auto const indexStart = mortarNow();
+      std::array< bool, 3 > const wrapped{{ periodic[0] != 0, periodic[1] != 0, periodic[2] != 0 }};
+      markerIndex.reset( new MarkerIndex( markerBins,
+        [&]( localIndex const id ) { return canonicalPoint( pairMarkers[id].point ); },
+        numDims, wrapped, gridGlobalExtent ) );
+      if( timeMortar ) searchIndexSeconds += elapsed( indexStart, mortarNow() );
+    }
+
     localIndex const numNodesX = nEl[0] + 1;
     localIndex const numNodesY = nEl[1] + 1;
     localIndex const numNodesZ = m_planeStrain == 1 ? 1 : nEl[2] + 1;
@@ -25947,10 +26030,8 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         for( localIndex i = 0; i < numNodesX; ++i )
         {
           localIndex const node = ijkMap[i][j][gridK];
-          std::array< real64, 3 > x{{
-            gridPosition[node][0], gridPosition[node][1],
-            m_planeStrain == 1 ? physicalMidZ : gridPosition[node][2]
-          }};
+          std::array< real64, 3 > x = mortarGridPoint( node );
+          if( m_planeStrain == 1 ) x[2] = physicalMidZ;
           distances.clear();
           nearbyMarkers.clear();
           std::array< WeakInterfaceMortarNodeKey, 27 > neighborBins{};
@@ -26000,61 +26081,71 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
               }
             }
           }
-          if( fastMarkerSearch )
-            mpm::mortarSearch::gatherSortedMarkers( neighborBins, numberOfNeighborBins, markerBins, nearbyMarkers );
-          else
+          auto distanceToMarker = [&]( localIndex const id )
           {
-            std::sort( nearbyMarkers.begin(), nearbyMarkers.end() );
-            nearbyMarkers.erase( std::unique( nearbyMarkers.begin(), nearbyMarkers.end() ), nearbyMarkers.end() );
-          }
-          if( timeMortar )
-          {
-            markerCandidatesVisited += static_cast< real64 >( nearbyMarkers.size() );
-            maximumMarkerCandidates = std::max( maximumMarkerCandidates, static_cast< real64 >( nearbyMarkers.size() ) );
-          }
-          distances.reserve( nearbyMarkers.size() );
-          for( localIndex const markerIndex : nearbyMarkers )
-          {
-            WeakInterfaceTraceMarker const & marker = pairMarkers[markerIndex];
             real64 distanceSquared = 0.0;
             for( int d = 0; d < numDims; ++d )
             {
-              real64 const dx = minimumImageDelta( x[d] - marker.point[d], d );
+              real64 const dx = minimumImageDelta( x[d] - pairMarkers[id].point[d], d );
               distanceSquared += dx * dx;
             }
-            distances.emplace_back( distanceSquared, markerIndex );
-          }
-          int const nearestCount = LvArray::math::min(
-            surfaceFitNeighbors, static_cast< int >( distances.size() ) );
-          if( nearestCount > 0 )
+            return distanceSquared;
+          };
+          auto distanceLess = [&]( auto const & left, auto const & right )
           {
-            std::partial_sort( distances.begin(),
-                               distances.begin() + nearestCount,
-                               distances.end(),
-                               [&]( auto const & left, auto const & right )
-            {
-              if( left.first < right.first )
-              {
-                return true;
-              }
-              if( right.first < left.first )
-              {
-                return false;
-              }
-              WeakInterfaceTraceMarker const & leftMarker = pairMarkers[left.second];
-              WeakInterfaceTraceMarker const & rightMarker = pairMarkers[right.second];
-              return std::tie( leftMarker.particleID,
-                               leftMarker.group,
-                               leftMarker.point[0],
-                               leftMarker.point[1],
-                               leftMarker.point[2] ) <
-                     std::tie( rightMarker.particleID,
-                               rightMarker.group,
-                               rightMarker.point[0],
-                               rightMarker.point[1],
-                               rightMarker.point[2] );
-            } );
+            if( left.first < right.first ) return true;
+            if( right.first < left.first ) return false;
+            auto const & a = pairMarkers[left.second];
+            auto const & b = pairMarkers[right.second];
+            return std::tie( a.particleID, a.group, a.point[0], a.point[1], a.point[2] ) <
+                   std::tie( b.particleID, b.group, b.point[0], b.point[1], b.point[2] );
+          };
+          std::size_t candidatesVisited = 0, distancesEvaluated = 0;
+          bool replayLegacy = !fastMarkerSearch;
+          if( fastMarkerSearch )
+          {
+            MarkerIndex::Statistics stats;
+            replayLegacy = markerIndex->query( neighborBins, numberOfNeighborBins,
+              canonicalPoint( x ), static_cast< std::size_t >( surfaceFitNeighbors ),
+              distanceToMarker, distanceLess, distances, stats );
+            candidatesVisited = stats.candidates;
+            distancesEvaluated = stats.distances;
+            if( timeMortar ) markerTreeNodes += stats.treeNodes;
+            if( replayLegacy && timeMortar ) markerTieReplays += 1.0;
           }
+          if( replayLegacy || validateMarkerSearch )
+          {
+            // Validation also runs the ORIGINAL partial_sort on the same input
+            // order. Comparator-equivalent records always use this legacy path.
+            if( fastMarkerSearch )
+              mpm::mortarSearch::gatherSortedMarkers( neighborBins, numberOfNeighborBins, markerBins, nearbyMarkers );
+            else
+            {
+              std::sort( nearbyMarkers.begin(), nearbyMarkers.end() );
+              nearbyMarkers.erase( std::unique( nearbyMarkers.begin(), nearbyMarkers.end() ), nearbyMarkers.end() );
+            }
+            std::vector< std::pair< real64, localIndex > > reference;
+            reference.reserve( nearbyMarkers.size() );
+            for( localIndex const id : nearbyMarkers ) reference.emplace_back( distanceToMarker( id ), id );
+            std::size_t const count = std::min( static_cast< std::size_t >( surfaceFitNeighbors ), reference.size() );
+            std::partial_sort( reference.begin(), reference.begin() + count, reference.end(), distanceLess );
+            reference.resize( count );
+            candidatesVisited = nearbyMarkers.size();
+            distancesEvaluated += nearbyMarkers.size();
+            if( validateMarkerSearch && !replayLegacy && distances != reference )
+              ++markerSearchMismatches; // Diagnose collectively after local construction.
+            // Always use the legacy sequence in validation mode, even on failure.
+            // No inconsistent correction can be committed before the collective check.
+            distances.swap( reference );
+          }
+          if( timeMortar )
+          {
+            markerCandidatesVisited += static_cast< real64 >( candidatesVisited );
+            maximumMarkerCandidates = std::max( maximumMarkerCandidates, static_cast< real64 >( candidatesVisited ) );
+            markerDistanceEvaluations += static_cast< real64 >( distancesEvaluated );
+            markerQueries += 1.0;
+          }
+          int const nearestCount = static_cast< int >( distances.size() );
 
           NodalSurfaceFit fit;
           fit.near = nearestCount > 0 &&
@@ -26324,8 +26415,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
           for( int corner = 0; corner < 4; ++corner )
           {
             localIndex const node = cornerLocalNodes[corner];
-            cellPoints[corner][0] = gridPosition[node][0];
-            cellPoints[corner][1] = gridPosition[node][1];
+            cellPoints[corner] = mortarGridPoint( node );
             cellPoints[corner][2] = physicalMidZ;
             cornerNodeKeys[corner] = localNodeKeys[static_cast< std::size_t >( node )];
             localIndex const ii = corner == 1 || corner == 3 ? i + 1 : i;
@@ -26742,10 +26832,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
               localIndex const jj = j + cornerJ[corner];
               localIndex const kk = k + cornerK[corner];
               localIndex const node = ijkMap[ii][jj][kk];
-              for( int d = 0; d < 3; ++d )
-              {
-                cellPoints[corner][d] = gridPosition[node][d];
-              }
+              cellPoints[corner] = mortarGridPoint( node );
               cornerNodeKeys[corner] = localNodeKeys[static_cast< std::size_t >( node )];
               NodalSurfaceFit const & fit = nodalFit[nodalPhiIndex( ii, jj, kk )];
               cornerPhi[corner] = fit.phi;
@@ -26842,6 +26929,14 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         }
       }
     }
+  }
+
+  if( validateMarkerSearch )
+  {
+    globalIndex const mismatches = MpiWrapper::allReduce( markerSearchMismatches, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+    GEOS_ERROR_IF( mismatches != 0,
+      "Indexed mortar search differs from legacy neighbors at " << mismatches <<
+      " queries. All ranks have stopped before any projection commit." );
   }
 
   std::vector< WeakInterfaceMortarSegmentRecord > gatheredSegmentRecords =
@@ -27790,6 +27885,16 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
   }
 
 
+  if( boundaryCoupled )
+  {
+    int const localWork = (!candidates.empty() || !fallbackFieldsByNodeKey.empty()) ? 1 : 0;
+    int const minWork = MpiWrapper::allReduce( localWork, MpiWrapper::Reduction::Min, MPI_COMM_GEOS );
+    int const maxWork = MpiWrapper::allReduce( localWork, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+    GEOS_ERROR_IF( minWork != maxWork,
+      "Replicated mortar construction differs across ranks: some ranks have no constraints/fallback. "
+      "Stopping collectively rather than returning before a required gather." );
+  }
+
   if( candidates.empty() && fallbackFieldsByNodeKey.empty() )
   {
     GEOS_LOG_LEVEL_RANK_0(
@@ -27811,14 +27916,33 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
     participatingFields.insert( selectedPair.second );
   }
 
+  std::set< ms::Key > directRequests;
   if( boundaryCoupled )
   {
-    std::set< bm::LatticeKey > keys;
-    for( auto const & key : requiredNodeKeys ) keys.insert( toBoundaryKey( key ) );
-    bm::closeBoundaryDependencies( keys, boundaryFaces );
+    // Announce requests BEFORE owners filter their state records. In particular,
+    // a node needed on rank A must be sent by its owner B even if B's local
+    // support construction did not request it. Do not manufacture zero mass for
+    // an absent donor. This union is cheap compared with the replicated rows.
+    std::vector< ms::Key > localRequests;
+    for( auto const & key : requiredNodeKeys ) localRequests.push_back( toBoundaryKey( key ) );
+    auto const announced = allGatherWeakInterfaceRecords( localRequests );
+    directRequests = ms::requestUnion( announced );
+    std::set< bm::LatticeKey > keys = directRequests;
     for( auto const & key : keys )
+      GEOS_ERROR_IF( !mortarLattice.contains(key),
+        "Mortar coefficient/fallback requested an invalid global lattice key " << ms::keyText(key) );
+    bm::closeBoundaryDependencies( keys, boundaryFaces );
+    requiredNodeKeys.clear();
+    for( auto const & key : keys )
+    {
+      GEOS_ERROR_IF( !mortarLattice.contains(key),
+        "Mortar boundary closure generated invalid lattice key " << ms::keyText(key) );
       requiredNodeKeys.insert( WeakInterfaceMortarNodeKey{ static_cast< globalIndex >( key[0] ),
         static_cast< globalIndex >( key[1] ), static_cast< globalIndex >( key[2] ) } );
+    }
+    GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
+      "C0 mortar state requests: global-direct=" << directRequests.size() <<
+      ", closure-added=" << keys.size()-directRequests.size() << ", total=" << keys.size() );
   }
 
   if( boundaryCoupled )
@@ -27999,6 +28123,68 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
         for( auto b = std::next( a ); b != entry.second.end(); ++b )
           fallback.emplace_back( flatFieldIndex( node, a->first ), flatFieldIndex( node, b->first ) );
     }
+    std::vector<int> const fields( participatingFields.begin(), participatingFields.end() );
+    auto const missing = ms::missingRecords( keys, static_cast<std::size_t>(numVelocityFields),
+      fields, interfaceRecordPriority, directRequests );
+    if( !missing.empty() )
+    {
+      // The request union and gathered records are identical on all ranks, so
+      // every rank enters this diagnostic collective, including empty ranks.
+      struct Coverage { int rank; long long nodes; ms::Key low, high; };
+      Coverage coverage{rank,static_cast<long long>(localNodeKeys.size()),
+        ms::Key{{LLONG_MAX,LLONG_MAX,LLONG_MAX}},ms::Key{{LLONG_MIN,LLONG_MIN,LLONG_MIN}}};
+      for( auto const & key : localNodeKeys )
+      {
+        auto const k=toBoundaryKey(key);
+        for(int d=0;d<3;++d){coverage.low[d]=std::min(coverage.low[d],k[d]);coverage.high[d]=std::max(coverage.high[d],k[d]);}
+      }
+      auto const coverages=allGatherWeakInterfaceRecords(std::vector<Coverage>{coverage});
+      std::ostringstream message;
+      message << "Boundary-compatible mortar missing " << missing.size() <<
+        " globally requested node/field records AFTER request union. No state has been invented.\n";
+      for( std::size_t i=0; i<std::min<std::size_t>(missing.size(),16); ++i )
+      {
+        auto const & item=missing[i]; auto const point=mortarLattice.point(item.key);
+        message << "  key=" << ms::keyText(item.key) << ", field=" << item.field <<
+          ", origin=" << (item.addedByClosure?"boundary-closure":"coefficient-or-fallback") <<
+          ", xyz=" << std::setprecision(17) << point[0] << "," << point[1] << "," << point[2] << "\n";
+      }
+      message << "  global cells=" << ms::keyText(mortarLattice.cells) << "\n";
+      for(auto const & c:coverages)message << "  rank=" << c.rank << ", nodes=" << c.nodes <<
+        ", available-key-range=" << ms::keyText(c.low) << ".." << ms::keyText(c.high) << "\n";
+      GEOS_ERROR(message.str());
+    }
+
+    // Component workers must receive the SAME operator, not just arrays with
+    // the same dimensions. A request union alone cannot repair differing rows.
+    // Canonical lattice geometry above removes normal roundoff dependence on
+    // rank-local h. Fail collectively if anything else still diverges.
+    ms::Fingerprint fingerprint;
+    fingerprint.integer(numVelocityFields);
+    for(auto const & key:keys)fingerprint.key(key);
+    fingerprint.integer(rows.size());
+    for(auto const & row:rows)
+    {
+      fingerprint.scalar(row.measure);fingerprint.integer(row.coefficients.size());
+      for(auto const & c:row.coefficients){fingerprint.integer(c.a);fingerprint.integer(c.b);fingerprint.scalar(c.value);}
+    }
+    for(auto const & tie:fallback){fingerprint.integer(tie.first);fingerprint.integer(tie.second);}
+    for(int face=0;face<6;++face)
+    {
+      fingerprint.integer(boundaryFaces.kind[face]);
+      for(int d=0;d<3;++d){fingerprint.integer(boundaryFaces.controlled[face][d]);fingerprint.scalar(boundaryFaces.target[face][d]);}
+    }
+    struct Signature { int rank; unsigned long long hash, nodes, rows; };
+    Signature const signature{rank,fingerprint.value,static_cast<unsigned long long>(keys.size()),static_cast<unsigned long long>(rows.size())};
+    auto const signatures=allGatherWeakInterfaceRecords(std::vector<Signature>{signature});
+    bool same=true;std::ostringstream mismatch;
+    for(auto const & value:signatures)
+    {
+      same=same && value.hash==signatures.front().hash;
+      mismatch << " rank=" << value.rank << " nodes=" << value.nodes << " rows=" << value.rows << " hash=" << value.hash;
+    }
+    GEOS_ERROR_IF(!same,"Replicated boundary-mortar inputs differ before component solves:" << mismatch.str());
+
     std::vector< double > mass( flatSize, 0.0 ), cutoff( flatSize, smallMass );
     for( localIndex node = 0; node < static_cast< localIndex >( interfaceNodeKeys.size() ); ++node )
       for( localIndex const field : participatingFields )
@@ -28159,6 +28345,16 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
       for( real64 & value : times )
         value = MpiWrapper::allReduce( value, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
       real64 const totalVisits = MpiWrapper::allReduce( markerCandidatesVisited, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+      real64 const totalEvaluations = MpiWrapper::allReduce( markerDistanceEvaluations, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+      real64 const totalTreeNodes = MpiWrapper::allReduce( markerTreeNodes, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+      real64 const totalQueries = MpiWrapper::allReduce( markerQueries, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+      real64 const totalTieReplays = MpiWrapper::allReduce( markerTieReplays, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+      real64 const indexMax = MpiWrapper::allReduce( static_cast< real64 >( searchIndexSeconds ), MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
+        "C0 mortar search: queries=" << totalQueries << ", eligible-candidates=" << totalVisits <<
+        ", distance-evaluations=" << totalEvaluations << ", tree-nodes=" << totalTreeNodes <<
+        ", tie-replays=" << totalTieReplays << ", index-build-rank-max=" << indexMax <<
+        ", validation=" << validateMarkerSearch );
       GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
         "C0 mortar timing rank-max seconds: total=" << times[0] << ", geometry+rows=" << times[1] <<
         ", fitting(subset)=" << times[2] << ", node-gather=" << times[3] <<
