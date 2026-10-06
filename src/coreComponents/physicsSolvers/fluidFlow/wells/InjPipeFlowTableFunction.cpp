@@ -178,7 +178,6 @@ InjPipeFlowTableFunction::calculatedPdQ( real64 const & volRate, real64 const & 
   // Calculate ratios that are assumed fixed for table lookup
   real64 lrate = -volRate;
 
-
   integer b0, b1;
   integer bStat = getRateBracket( lrate, b0, b1 );
   GEOS_UNUSED_VAR( bStat );
@@ -210,11 +209,6 @@ void InjPipeFlowTableFunction::calculateBHP( real64 const & volRate, real64 cons
 
   real64 const m_sign=1.0;
   real64 liq = volRate;
-  //for( int i = 0; i < phaseRates.size(); ++i )
-  //{
-  //  totalVolumeRate += phaseRates[i];
-//  }
-
 
   array1d< real64 > table_coords( 2 );
 
@@ -261,43 +255,22 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
                                                                    getAxisHypercubeMults(),
                                                                    getHypercubeData()
                                                                    );
-  TableFunction::KernelWrapper kernelWrapper = m_tableFunction0->createKernelWrapper();
-  //solveStat = 0;  // Assume success
-  // liq(oil)=0 vap = 1 wat = 2
-  //real64 totalVolumeRate = 0.0;
-  //for( int i = 0; i < phaseRates.size(); ++i )
-  //{
-  //  totalVolumeRate += phaseRates[i];
-//  }
-
-  std::cout << bhp << " " << totalVolumeRate << " " << whp  << std::endl;
   real64 const m_sign=1.0;
   real64 liq = totalVolumeRate;
-  //for( int i = 0; i < phaseRates.size(); ++i )
-  //{
-  //  totalVolumeRate += phaseRates[i];
-//  }
-  std::cout << bhp << " " << totalVolumeRate << " " << whp  << std::endl;
 
-
-  std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP  bhp " << bhp << " liq " << liq <<   std::endl;
-#if 1
   array1d< real64 > table_coords( 2 );
-  real64 derivatives[2]{};
   array1d< real64 > table_bhp( 1 );
   array2d< real64 > table_derv( 1, 2 );
   table_coords[1]=liq*m_sign; // gas oil rat
 
   table_coords[0]=whp;    // well head pressure
   kernel.compute( table_coords, table_bhp, table_derv );
-  std::cout << " InjPipeFlowTableFunction::calculateWHP initial whp = " << whp << " bhp calc " << table_bhp[0] << " " << table_coords <<std::endl;
 
   integer nWHP = m_whp.size();
   for( integer i=0; i<nWHP; i++ )
   {
     table_coords[0]=m_whp[i];    // well head pressure
     kernel.compute( table_coords, table_bhp, table_derv );
-    std::cout << table_coords[0] << " " << table_bhp[0] << std::endl;
   }
   integer foundBracket= 0;
   table_coords[0]=m_whp[nWHP-1];  // well head pressure
@@ -312,18 +285,8 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
     kernel.compute( table_coords, table_bhp, table_derv );
     bhp0 = table_bhp[0];
     double dwhp_dp = ( m_whp[nWHP-1] - m_whp[nWHP-2] )/( bhpN - bhp0 );
-    //bhp0 = kernelWrapper.compute( table_coords, derivatives );
     whp0 = m_whp[nWHP-1] + ( bhp - bhpN )*dwhp_dp;
-    //whp0 = m_whp[nWHP-1] + ( bhp - bhpN )*table_derv[0][3];
-    std::cout << table_derv << " " << dwhp_dp << " " <<  m_whp[nWHP-1] + ( bhp - bhpN )*table_derv[0][0]<<std::endl;
     whp=whp0;
-
-    if( std::isnan( whp0 ) )
-    {
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP bhpN " << bhpN << " bhp0 " << bhp0 << " bhp " << bhp << std::endl;
-    }
-    std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP extrapolate at high whp = " << whp << " " << bhp<< " " <<m_whp[nWHP-1] << " " << m_whp[nWHP-2] << " " << bhpN <<" " << bhp0 <<
-      " liq = " << liq*m_sign  << std::endl;
     solveStat=2;
   }
   else
@@ -341,10 +304,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
       table_coords[0]=m_whp[1];
       kernel.compute( table_coords, table_bhp, table_derv );
       bhpN = table_bhp[0];
-      //bhpN = kernelWrapper.compute( table_coords, derivatives );
       whpN = m_whp[0] + ( bhp - bhp0 )*( m_whp[1] - whp0 )/( bhpN - bhp0 );
-      //whpN = m_whp[0] + ( bhp - bhp0 )*table_derv[0][3];
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN  << std::endl;
       whp=whpN;
       solveStat=0;
       return;
@@ -364,9 +324,10 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
       }
       bhp0 = bhpN;
       whp0 = m_whp[i];
-
     }
-
+    GEOS_THROW_IF( foundBracket ==0,
+                   wellName << ": InjPipeFlowTableFunction::calculateWHP failed to find bracketing whp values",
+                   InputError, getDataContext());
     if( foundBracket ==0 )
     {
       throw; std::runtime_error( "InjPipeFlowTableFunction::calculateWHP failed to find bracketing whp values" );
@@ -375,119 +336,9 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
     {
       solveStat=1;
       whp  = whp0 + ( bhp - bhp0  )*( whpN - whp0  )/( bhpN - bhp0 );
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN <<  std::endl;
       solveStat=1;
     }
   }
-#else
-  real64 table_coords[5]{};
-  real64 derivatives[5]{};
-  table_coords[0]=liq*m_sign; // gas oil ratio
-  table_coords[2]=wct;  // water cut
-  table_coords[3]=gor; // well head pressure
-  table_coords[4]=gasLift; // gas lift rat
-
-  integer nWHP = m_whp.size();
-  integer foundBracket= 0;
-  table_coords[1]=m_whp[nWHP-1];  // well head pressure
-  double bhpN = kernelWrapper.compute( table_coords, derivatives );
-  double bhp0, whp0;
-  if( bhpN < bhp )
-  {
-    table_coords[1]=m_whp[nWHP-2];
-    bhp0 = kernelWrapper.compute( table_coords, derivatives );
-    whp0 = m_whp[nWHP-1] + ( bhp - bhpN )*( m_whp[nWHP-1] - m_whp[nWHP-2] )/( bhpN - bhp0 );
-    whp=whp0;
-
-    if( std::isnan( whp0 ) )
-    {
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP bhpN " << bhpN << " bhp0 " << bhp0 << " bhp " << bhp << std::endl;
-    }
-    std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP extrapolate at high whp = " << whp << " " << bhp<< " " <<m_whp[nWHP-1] << " " << m_whp[nWHP-2] << " " << bhpN <<" " << bhp0 <<
-      " liq = " << liq*m_sign  << std::endl;
-
-  }
-  else
-  {
-    // check low end
-    table_coords[1]=m_whp[0];  // well head pressure
-    bhp0 = kernelWrapper.compute( table_coords, derivatives );
-    whp0  = m_whp[0];
-    double whpN;
-    if( bhp <  bhp0 )
-    {
-      table_coords[1]=m_whp[1];
-      bhpN = kernelWrapper.compute( table_coords, derivatives );
-      whpN = m_whp[0] + ( bhp - bhp0 )*( m_whp[1] - whp0 )/( bhpN - bhp0 );
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
-        " gor = " << gor << std::endl;
-      whp=whpN;
-      return;
-    }
-    // search for bracketing whp
-    for( integer i=1; i<nWHP; ++i )
-    {
-      table_coords[1]=m_whp[i]; // well head pressure
-      bhpN = kernelWrapper.compute( table_coords, derivatives );
-      if( bhp0 <= bhp && bhp <= bhpN )
-      {
-        foundBracket=1;
-        whpN = m_whp[i];
-        break;
-      }
-      bhp0 = bhpN;
-      whp0 = m_whp[i];
-
-    }
-
-    if( foundBracket ==0 )
-    {
-      throw; std::runtime_error( "InjPipeFlowTableFunction::calculateWHP failed to find bracketing whp values" );
-    }
-    else
-    {
-      whp  = whp0 + ( bhp - bhp0 )*( whpN - whp0  )/( bhpN - bhp0 );
-      whp  = whp0 + ( bhp - bhp0  )*( whpN - whp0  )/( bhpN - bhp0 );
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
-        " gor = " << gor << std::endl;
-    }
-  }
-#endif
-  return;
-
-  std::cout << "InjPipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq*m_sign << " whp " << whp0 <<  std::endl;
-
-  // array1d< real64 > table_bhp( 1 );
-
-  //kernel.compute( table_coords, table_bhp, derivs );
-  bhp0 = kernelWrapper.compute( table_coords, derivatives );
-  double whpn = whp0 + 2e5;
-  table_coords[1]= whpn;
-
-  double bhpn =  kernelWrapper.compute( table_coords, derivatives );
-  std::cout << " residual bhp = " <<  bhp0 - bhp << std::endl;
-  double dpdwhp = ( bhpn - bhp0 )/2e5;
-  integer const maxIters=20;
-  real64 const tol = 1e-6;
-  integer iter = 0;
-
-  while( iter < maxIters && std::abs( bhpn - bhp ) > tol )
-  {
-    // update whp
-    dpdwhp = ( bhpn - bhp0 ) / (whpn - whp0);
-    table_coords[1] -= dpdwhp;
-    bhp0=bhpn;
-    whp0 =whpn;
-    whpn = table_coords[1];
-    bhpn = kernelWrapper.compute( table_coords, derivatives );
-    std::cout << " InjPipeFlowTableFunction::calculateWHP iter = " << iter << " bhp " << bhpn << " whp = " << whpn <<  " derive " << dpdwhp<< " residual = " << bhpn - bhp0 << std::endl;
-
-    ++iter;
-  }
-  whp0 = table_coords[1];
-  std::cout << "InjPipeFlowTableFunction::calculateWHP output whp = " << whp0 << " liq = " << liq*m_sign << " bhp " << bhpn <<  std::endl;
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, InjPipeFlowTableFunction, string const &, Group * const )

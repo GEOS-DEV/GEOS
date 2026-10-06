@@ -2892,12 +2892,9 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
     ConstraintTypeId wellControl = getControl();
     MpiWrapper::broadcast( wellControl, owner );
     setControl( wellControl );
-    std::ofstream of;
-    of.open( "fl.csv" );
-    of << "liq ,bhp ,tablebhp"<< std::endl;
+
     // Liquid constraint is used to find intersection of IPR and VLP
     const array1d< real64 > & tableRates = m_flowTable.getRates();
-    std::cout << tableRates << std::endl;
     integer numRates = tableRates.size();
 
     bool cSolve=false;
@@ -2915,10 +2912,9 @@ bool CompositionalMultiphaseWell::solveMaxWHPConstraint( real64 const & time_n,
                                                         subRegion );
 
     }
-    if( !cSolve )
-    {
-      throw("ft solve ");
-    }
+    GEOS_THROW_IF( !cSolve,
+                   getName() << ": flow table Well estimator solved failed for table rate " << tableRates[currentRateIndex],
+                   InputError, getDataContext());
     real64 bhp1 = currentBHP;
     real64 tableBHP1;
     m_flowTable.calculateBHP( currentTotalVolRate, currentWHP, tableBHP1,

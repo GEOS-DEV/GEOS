@@ -291,12 +291,6 @@ void ProdPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRat
   real64 const gasLift=0.0;
   real64 const m_sign=-1.0;
   real64 liq = (phaseRates[0] + phaseRates[2]);
-  //for( int i = 0; i < phaseRates.size(); ++i )
-  //{
-  //  totalVolumeRate += phaseRates[i];
-//  }
-
-  std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
 
   real64 wct = 0;
   if( phaseRates[0]*m_sign > 0 )
@@ -358,7 +352,6 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
                                                                    getHypercubeData()
                                                                    );
   real64 const gasLift=0.0;
-  std::cout << bhp << " " << phaseRates << " " << whp  << std::endl;
   real64 const m_sign=-1.0;
   real64 liq = (phaseRates[0] + phaseRates[2]);
 
