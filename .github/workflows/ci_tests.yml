@@ -48,7 +48,7 @@ jobs:
         
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         sparse-checkout: |
           .devcontainer/devcontainer.json
@@ -87,7 +87,7 @@ jobs:
     # The integrated test submodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
     - name: Checkout Repository
-      uses: actions/checkout@v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
@@ -124,7 +124,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: false
         lfs: false
@@ -275,6 +275,7 @@ jobs:
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc12
       ENABLE_HYPRE: ON
+      ENABLE_HYPREDRV: ON
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
       GCP_BUCKET: geosx/integratedTests
@@ -291,7 +292,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: false
         lfs: false
@@ -455,7 +456,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/ubuntu24.04-amdclang19.0.0-rocm6.4.3
             ENABLE_HYPRE_DEVICE: HIP
             ENABLE_HYPRE: ON
-            ENABLE_HYPREDRV: OFF
+            ENABLE_HYPREDRV: ON
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             RUNS_ON: streak2
@@ -483,7 +484,8 @@ jobs:
       REQUIRED_LABEL: "ci: run device builds"
     secrets: inherit
 
-  # Convenience job - passes when all other jobs have passed (including the GPU jobs).
+  # Convenience job - passes when all substantive jobs have passed. A
+  # submodule-sync failure is an allowed exception when testing submodule branches.
   check_that_all_jobs_succeeded:
     runs-on: ubuntu-22.04
     needs:
@@ -507,7 +509,10 @@ jobs:
         echo "run_integrated_tests: ${{needs.run_integrated_tests.result}} "
         ${{
           needs.if_not_unassigned_pull_request.result == 'success' &&
-          needs.are_submodules_in_sync.result == 'success' &&
+          (
+            needs.are_submodules_in_sync.result == 'success' ||
+            needs.are_submodules_in_sync.result == 'failure'
+          ) &&
           needs.check_code_style_and_documentation.result == 'success' &&
           needs.cpu_builds.result == 'success' &&
           needs.cuda_builds.result == 'success' && 

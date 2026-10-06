@@ -32,43 +32,20 @@ bool compareWithTolerance( const std::string & valueStr, double expected, double
   return std::fabs( value - expected ) <= tolerance;
 }
 
-class IterationTest : public IterationsStatistics
+void assertIterationValuesEquals( IterationsStatistics const & stats )
 {
+  auto const getValue = [&stats]( char const * const key ) -> integer const &
+  { return stats.getReference< integer >( key ); };
 
-public:
-  void AssertIterationValuesEquals()
-  {
-    EXPECT_EQ( m_numTimeSteps, 20 );
-    EXPECT_EQ( m_numTimeStepCuts, 0 );
-    EXPECT_EQ( m_numSuccessfulConfigIterations, 0 );
-    EXPECT_EQ( m_numSuccessfulNonlinearIterations, 20 );
-    EXPECT_EQ( m_numSuccessfulLinearIterations, 20 );
-    EXPECT_EQ( m_numDiscardedConfigIterations, 0 );
-    EXPECT_EQ( m_numDiscardedNonlinearIterations, 0 );
-    EXPECT_EQ( m_numDiscardedLinearIterations, 0 );
-  }
-};
-
-class ConvergenceTest : public ConvergenceStatistics
-{
-
-public:
-
-  void AssertConvergenceValuesEquals( stdVector< std::string > const & actualValues,
-                                      stdVector< std::string > const & expectedValues )
-  {
-    EXPECT_EQ( actualValues[0], expectedValues[0] );
-    EXPECT_EQ( actualValues[1], expectedValues[1] );
-    EXPECT_EQ( actualValues[2], expectedValues[2] );
-    EXPECT_EQ( actualValues[3], expectedValues[3] );
-    EXPECT_EQ( actualValues[4], expectedValues[4] );
-    EXPECT_EQ( actualValues[5], expectedValues[5] );
-    EXPECT_EQ( actualValues[6], expectedValues[6] );
-    EXPECT_EQ( actualValues[7], expectedValues[7] );
-    EXPECT_TRUE( compareWithTolerance( actualValues[8], 0.00392298, 1e-2 ));
-    EXPECT_TRUE( compareWithTolerance( actualValues[9], 0.00192568, 1e-2 ));
-  }
-};
+  EXPECT_EQ( getValue( IterationsStatistics::viewKeyStruct::numTimeStepsString() ), 20 );
+  EXPECT_EQ( getValue( IterationsStatistics::viewKeyStruct::numTimeStepCutsString() ), 0 );
+  EXPECT_EQ( getValue( IterationsStatistics::viewKeyStruct::numSuccessfulConfigIterationsString() ), 0 );
+  EXPECT_EQ( getValue( IterationsStatistics::viewKeyStruct::numSuccessfulNonlinearIterationsString() ), 20 );
+  EXPECT_EQ( getValue( IterationsStatistics::viewKeyStruct::numSuccessfulLinearIterationsString() ), 20 );
+  EXPECT_EQ( getValue( IterationsStatistics::viewKeyStruct::numDiscardedConfigIterationsString() ), 0 );
+  EXPECT_EQ( getValue( IterationsStatistics::viewKeyStruct::numDiscardedNonlinearIterationsString() ), 0 );
+  EXPECT_EQ( getValue( IterationsStatistics::viewKeyStruct::numDiscardedLinearIterationsString() ), 0 );
+}
 
 static const string solverLogOutput =
   R"xml(
@@ -217,9 +194,7 @@ TEST( testSolverStats, testLog )
   problem.runSimulation();
 
   PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
-  IterationTest & solverStat = static_cast< IterationTest & >(solver.getIterationStats());
-
-  solverStat.AssertIterationValuesEquals();
+  assertIterationValuesEquals( solver.getIterationStats() );
 
 }
 
@@ -235,8 +210,8 @@ TEST( testSolverStats, testOutputFiles )
   problem.runSimulation();
 
   PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
-  ConvergenceTest & convergenceStat = static_cast< ConvergenceTest & >(solver.getConvergenceStats());
-  IterationTest & iterationStat = static_cast< IterationTest & >(solver.getIterationStats());
+  ConvergenceStatistics const & convergenceStat = solver.getConvergenceStats();
+  IterationsStatistics const & iterationStat = solver.getIterationStats();
 
   auto loadCsvLines = []( string const & filename, stdVector< string > & lines ) {
 
@@ -302,7 +277,7 @@ TEST( testSolverStats, testOutputFiles )
              "Discarded configuration,Discarded nonlinear,Discarded linear,"
              "Setup time,Solve time" );
 
-  iterationStat.AssertIterationValuesEquals();
+  assertIterationValuesEquals( iterationStat );
 
   stdVector< string > csvLines2;
   loadCsvLines( convergenceStat.getFilename(), csvLines2 );
