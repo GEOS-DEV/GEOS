@@ -153,6 +153,11 @@ ModalResult runModalAnalysis( string const & xml )
 {
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
+
+  // Partition the bar along its axis when running with several MPI ranks
+  dataRepository::Group & commandLine = problem.getGroup< dataRepository::Group >( problem.groupKeys.commandLine );
+  commandLine.getReference< integer >( problem.viewKeys.xPartitionsOverride ) = MpiWrapper::commSize( MPI_COMM_GEOS );
+
   problem.parseInputString( xml );
   problem.problemSetup();
   problem.applyInitialConditions();
