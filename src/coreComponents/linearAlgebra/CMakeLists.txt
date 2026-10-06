@@ -51,9 +51,11 @@ set( linearAlgebra_headers
      multiscale/msrsb/MsrsbLevelBuilderCoupled.hpp
      multiscale/msrsb/MsrsbLevelBuilder.hpp
      multiscale/msrsb/MsrsbUtils.hpp
+     solvers/ArnoldiEigenSolver.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
+     solvers/EigenSolverBase.hpp
      solvers/GmresSolver.hpp
      solvers/KrylovSolver.hpp
      solvers/KrylovUtils.hpp
@@ -71,6 +73,7 @@ set( linearAlgebra_headers
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
      utilities/ComponentMask.hpp
+     utilities/EigenSolverParameters.hpp
      utilities/InverseNormalOperator.hpp
      utilities/LAIHelperFunctions.hpp
      utilities/SparsityPatternUtilities.hpp
@@ -99,9 +102,11 @@ set( linearAlgebra_sources
      multiscale/msrsb/MsrsbLevelBuilderCoupled.cpp
      multiscale/msrsb/MsrsbLevelBuilder.cpp
      multiscale/msrsb/MsrsbUtils.cpp
+     solvers/ArnoldiEigenSolver.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
+     solvers/EigenSolverBase.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
      solvers/RichardsonSolver.cpp
