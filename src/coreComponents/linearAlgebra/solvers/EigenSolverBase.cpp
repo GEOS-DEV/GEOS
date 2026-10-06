@@ -21,6 +21,7 @@
 
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/solvers/ArnoldiEigenSolver.hpp"
+#include "linearAlgebra/solvers/LobpcgEigenSolver.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -38,6 +39,10 @@ GeneralizedEigenSolver< VECTOR >::create( EigenSolverParameters const & paramete
     case EigenSolverParameters::SolverType::arnoldi:
     {
       return std::make_unique< ArnoldiEigenSolver< VECTOR > >( parameters );
+    }
+    case EigenSolverParameters::SolverType::lobpcg:
+    {
+      return std::make_unique< LobpcgEigenSolver< VECTOR > >( parameters );
     }
   }
   GEOS_ERROR( "Unsupported eigensolver type" );

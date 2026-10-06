@@ -34,7 +34,8 @@ struct EigenSolverParameters
   /// Available eigensolver algorithms
   enum class SolverType : integer
   {
-    arnoldi  ///< Block Krylov-Schur (thick-restart Arnoldi/Lanczos) with spectral transformation (K - shift M)^{-1} M
+    arnoldi,  ///< Block Krylov-Schur (thick-restart Arnoldi/Lanczos) with spectral transformation (K - shift M)^{-1} M
+    lobpcg    ///< Locally optimal block preconditioned conjugate gradient (smallest eigenvalues, needs a preconditioner only)
   };
 
   /// Eigensolver algorithm
@@ -52,7 +53,8 @@ struct EigenSolverParameters
   /// Maximum number of restarts (Arnoldi) or iterations (LOBPCG)
   integer maxIterations = 300;
 
-  /// Maximum dimension of the Krylov basis (Arnoldi); 0 selects a default
+  /// Maximum dimension of the Krylov basis (Arnoldi), or block size of the iterates (LOBPCG, if larger than
+  /// numEigenvalues, the extra vectors accelerate convergence); 0 selects a default
   integer subspaceSize = 0;
 
   /// Number of vectors expanded at once (Arnoldi block size). Needs to be at least the multiplicity of the
@@ -71,7 +73,8 @@ struct EigenSolverParameters
 };
 
 ENUM_STRINGS( EigenSolverParameters::SolverType,
-              "arnoldi" );
+              "arnoldi",
+              "lobpcg" );
 
 } // namespace geos
 

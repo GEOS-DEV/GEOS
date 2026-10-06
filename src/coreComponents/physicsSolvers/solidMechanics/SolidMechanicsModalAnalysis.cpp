@@ -239,14 +239,31 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   LinearSolverParameters const & linParams = m_linearSolverParameters.get();
   bool const isDirectSolver = ( linParams.solverType == LinearSolverParameters::SolverType::direct );
 
+  // Arnoldi needs the shift-and-invert operator, i.e. accurate solves with the shifted matrix.
+  // LOBPCG only needs a preconditioner: a standalone one (e.g. one AMG cycle) unless the linear solver is direct.
+  bool const needsInverse = ( m_modalSolverType == EigenSolverParameters::SolverType::arnoldi ) || isDirectSolver;
+
   std::unique_ptr< KrylovSolver< ParallelVector > > krylovSolver;
+  std::unique_ptr< PreconditionerBase< LAInterface > > standalonePreconditioner;
   integer numLinearSolves = 0;
   integer numLinearIterations = 0;
   integer numLinearFailures = 0;
   real64 linearSolveTime = 0.0;
   {
     Stopwatch setupWatch;
-    if( isDirectSolver || !m_precond )
+    if( !needsInverse )
+    {
+      if( m_precond )
+      {
+        m_precond->setup( shiftedMatrix );
+      }
+      else
+      {
+        standalonePreconditioner = LAInterface::createPreconditioner( linParams, getLinearSolverNearNullKernel() );
+        standalonePreconditioner->setup( shiftedMatrix );
+      }
+    }
+    else if( isDirectSolver || !m_precond )
     {
       m_linearSolver = LAInterface::createSolver( linParams );
 
@@ -307,7 +324,13 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   eigenParams.logLevel = getLogLevel() >= 1 ? 1 : 0;
 
   DiagonalOperator< ParallelVector > massOperator( massDiag );
-  GeneralizedEigenProblem< ParallelVector > problem{ m_matrix, massOperator, &shiftedInverse, nullptr,
+  // Preconditioned methods use one application of a set-up preconditioner (e.g. one multigrid cycle)
+  LinearOperator< ParallelVector > const * preconditioner = nullptr;
+  if( !needsInverse )
+  {
+    preconditioner = standalonePreconditioner ? standalonePreconditioner.get() : m_precond.get();
+  }
+  GeneralizedEigenProblem< ParallelVector > problem{ m_matrix, massOperator, needsInverse ? &shiftedInverse : nullptr, preconditioner,
                                                      m_solution.globalSize() - numConstrained };
 
   std::unique_ptr< GeneralizedEigenSolver< ParallelVector > > eigenSolver =
@@ -395,10 +418,10 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
                           m_modalParticipationFactors( k, 1 ),
                           m_modalParticipationFactors( k, 2 ) ) );
     }
-    GEOS_LOG( GEOS_FMT( "  {} restarts, {} shift-and-invert solves ({} linear iterations, {:.3f} s in linear solves), "
-                        "{:.3f} s eigensolve, {:.3f} s total",
-                        eigenResult.numIterations, numLinearSolves, numLinearIterations, linearSolveTime,
-                        eigenResult.solveTime, totalWatch.elapsedTime() ) );
+    GEOS_LOG( GEOS_FMT( "  {} restarts/iterations, {} operator applications, {} linear solves ({} linear iterations, "
+                        "{:.3f} s in linear solves), {:.3f} s eigensolve, {:.3f} s total",
+                        eigenResult.numIterations, eigenResult.numOperatorApplications, numLinearSolves,
+                        numLinearIterations, linearSolveTime, eigenResult.solveTime, totalWatch.elapsedTime() ) );
   }
 
   return dt;

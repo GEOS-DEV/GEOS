@@ -75,7 +75,8 @@ string const clampedEnd =
     <FieldSpecification name="fixXneg" objectPath="nodeManager" fieldName="totalDisplacement" component="0" scale="0.0" setNames="{ xneg }"/>
 )xml";
 
-string makeInput( string const & constraints, integer const numModes, integer const blockSize )
+string makeInput( string const & constraints, integer const numModes, integer const blockSize,
+                  string const & solverType = "arnoldi" )
 {
   string xml =
     R"xml(
@@ -88,6 +89,7 @@ string makeInput( string const & constraints, integer const numModes, integer co
                                  modalNumModes="@MODES@"
                                  modalShiftFrequency="@SHIFT@"
                                  modalBlockSize="@BLOCK@"
+                                 modalSolverType="@EIGENSOLVER@"
                                  modalTolerance="1e-9">
       <LinearSolverParameters solverType="cg"
                               preconditionerType="jacobi"
@@ -134,6 +136,7 @@ string makeInput( string const & constraints, integer const numModes, integer co
   xml = replaceAll( xml, "@MODES@", std::to_string( numModes ) );
   xml = replaceAll( xml, "@SHIFT@", shiftFrequency );
   xml = replaceAll( xml, "@BLOCK@", std::to_string( blockSize ) );
+  xml = replaceAll( xml, "@EIGENSOLVER@", solverType );
   xml = replaceAll( xml, "@LENGTH@", std::to_string( barLength ) );
   xml = replaceAll( xml, "@NX@", std::to_string( numElements ) );
   xml = replaceAll( xml, "@CONSTRAINTS@", constraints );
@@ -283,19 +286,27 @@ void checkAxialModes( ModalResult const & result, std::vector< real64 > const & 
 
 TEST( SolidMechanicsModal, clampedBarAxialModes )
 {
-  ModalResult const result = runModalAnalysis( makeInput( lateralConstraints + clampedEnd, 16, 1 ) );
-  ASSERT_EQ( result.eigenvalues.size(), 16u );
-  checkAxialModes( result, chainEigenvalues( true ), true );
+  for( string const solverType : { "arnoldi", "lobpcg" } )
+  {
+    SCOPED_TRACE( solverType );
+    ModalResult const result = runModalAnalysis( makeInput( lateralConstraints + clampedEnd, 16, 1, solverType ) );
+    ASSERT_EQ( result.eigenvalues.size(), 16u );
+    checkAxialModes( result, chainEigenvalues( true ), true );
+  }
 }
 
 TEST( SolidMechanicsModal, freeBarAxialModes )
 {
   // Only the x translation is a rigid-body mode: K is singular and the shifted operator K + M is not
-  ModalResult const result = runModalAnalysis( makeInput( lateralConstraints, 16, 1 ) );
-  ASSERT_EQ( result.eigenvalues.size(), 16u );
-  EXPECT_NEAR( result.eigenvalues[0], 0.0, 1.0e-8 );
-  EXPECT_GT( std::fabs( result.participation[0][0] ), 1.0 );
-  checkAxialModes( result, chainEigenvalues( false ), false );
+  for( string const solverType : { "arnoldi", "lobpcg" } )
+  {
+    SCOPED_TRACE( solverType );
+    ModalResult const result = runModalAnalysis( makeInput( lateralConstraints, 16, 1, solverType ) );
+    ASSERT_EQ( result.eigenvalues.size(), 16u );
+    EXPECT_NEAR( result.eigenvalues[0], 0.0, 1.0e-8 );
+    EXPECT_GT( std::fabs( result.participation[0][0] ), 1.0 );
+    checkAxialModes( result, chainEigenvalues( false ), false );
+  }
 }
 
 TEST( SolidMechanicsModal, freeBodyRigidModes )
@@ -332,16 +343,29 @@ TEST( SolidMechanicsModal, freeBodyRigidModes )
     EXPECT_LT( single.residuals[k], 1.0e-6 );
   }
 
-  // A block size equal to the multiplicity of the rigid modes gives the same spectrum
+  // A block size equal to the multiplicity of the rigid modes, and the LOBPCG solver, give the same spectrum
   ModalResult const block = runModalAnalysis( makeInput( "", numModes, 6 ) );
+  ModalResult const lobpcg = runModalAnalysis( makeInput( "", numModes, 1, "lobpcg" ) );
   ASSERT_EQ( block.eigenvalues.size(), single.eigenvalues.size() );
+  ASSERT_EQ( lobpcg.eigenvalues.size(), single.eigenvalues.size() );
   for( size_t k = 6; k < single.eigenvalues.size(); ++k )
   {
     EXPECT_NEAR( block.eigenvalues[k], single.eigenvalues[k], 1.0e-6 * single.eigenvalues[k] ) << "mode " << k + 1;
+    EXPECT_NEAR( lobpcg.eigenvalues[k], single.eigenvalues[k], 1.0e-6 * single.eigenvalues[k] ) << "mode " << k + 1;
   }
   for( size_t k = 0; k < 6; ++k )
   {
     EXPECT_NEAR( block.eigenvalues[k], 0.0, 1.0e-8 );
+    EXPECT_NEAR( lobpcg.eigenvalues[k], 0.0, 1.0e-8 );
+  }
+  for( integer d = 0; d < 3; ++d )
+  {
+    real64 sum = 0.0;
+    for( integer k = 0; k < 6; ++k )
+    {
+      sum += lobpcg.participation[k][d] * lobpcg.participation[k][d];
+    }
+    EXPECT_NEAR( sum, barLength, 1.0e-6 * barLength ) << "LOBPCG direction " << d;
   }
 }
 

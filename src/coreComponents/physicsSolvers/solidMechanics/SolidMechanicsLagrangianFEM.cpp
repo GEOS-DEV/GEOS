@@ -161,24 +161,28 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   registerWrapper( viewKeyStruct::modalSolverTypeString(), &m_modalSolverType ).
     setApplyDefaultValue( m_modalSolverType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Eigensolver of the modal analysis. Options are:\n* " + EnumStrings< EigenSolverParameters::SolverType >::concat( "\n* " ) );
+    setDescription( "Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with "
+                    "K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the "
+                    "linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). "
+                    "Options are:\n* " + EnumStrings< EigenSolverParameters::SolverType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::modalToleranceString(), &m_modalTolerance ).
     setApplyDefaultValue( 1.0e-8 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Relative convergence tolerance of the eigensolver. Set the linear solver tolerance "
+    setDescription( "Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance "
                     "(`krylovTol`) at least two orders of magnitude tighter." );
 
   registerWrapper( viewKeyStruct::modalMaxIterationsString(), &m_modalMaxIterations ).
     setApplyDefaultValue( 300 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum number of restarts of the eigensolver." );
+    setDescription( "Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver." );
 
   registerWrapper( viewKeyStruct::modalSubspaceSizeString(), &m_modalSubspaceSize ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum dimension of the Krylov basis of the Arnoldi eigensolver. "
-                    "The default (0) selects twice the number of modes." );
+    setDescription( "Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG "
+                    "eigensolver if larger than the number of modes (guard vectors). "
+                    "The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG." );
 
   registerWrapper( viewKeyStruct::modalBlockSizeString(), &m_modalBlockSize ).
     setApplyDefaultValue( 1 ).

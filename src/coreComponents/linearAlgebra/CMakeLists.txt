@@ -58,6 +58,7 @@ set( linearAlgebra_headers
      solvers/EigenSolverBase.hpp
      solvers/GmresSolver.hpp
      solvers/KrylovSolver.hpp
+     solvers/LobpcgEigenSolver.hpp
      solvers/KrylovUtils.hpp
      solvers/PreconditionerBlockJacobi.hpp
      solvers/PreconditionerIdentity.hpp
@@ -109,6 +110,7 @@ set( linearAlgebra_sources
      solvers/EigenSolverBase.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
+     solvers/LobpcgEigenSolver.cpp
      solvers/RichardsonSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
      utilities/ReverseCutHillMcKeeOrdering.cpp )
