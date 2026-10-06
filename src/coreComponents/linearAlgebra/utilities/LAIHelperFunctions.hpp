@@ -230,7 +230,9 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
   {
     rigidBodyModes[k].create( numLocalDof, MPI_COMM_GEOS );
     arrayView1d< real64 > const values = rigidBodyModes[k].open();
-    forAll< parallelHostPolicy >( dofIndex.size(), [=]( localIndex const i )
+    // The vector lives in the memory space of the linear algebra backend: fill it with a device kernel
+    // instead of a host loop, so that it does not depend on unified memory
+    forAll< parallelDevicePolicy<> >( dofIndex.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const localDof = LvArray::integerConversion< localIndex >( dofIndex[i] - dofOffset );
       if( 0 <= localDof && localDof < numLocalDof )
@@ -249,7 +251,7 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
     arrayView1d< real64 > const values = rigidBodyModes[k].open();
     integer const ind[2] = { ( k - numComponents + 1 ) % numComponents,
                              ( k - numComponents + 2 ) % numComponents };
-    forAll< parallelHostPolicy >( dofIndex.size(), [=]( localIndex const i )
+    forAll< parallelDevicePolicy<> >( dofIndex.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const localDof = LvArray::integerConversion< localIndex >( dofIndex[i] - dofOffset );
       if( 0 <= localDof && localDof < numLocalDof )
