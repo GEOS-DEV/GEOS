@@ -109,6 +109,7 @@ def main():
     pl.screenshot(args.outputDir + '/FreeFreeBeamMesh.png')
 
     nrows = 7
+    peak_display_strain = 0.01
     pl = pv.Plotter(shape=(nrows, 2), off_screen=True, window_size=(1500, 1250))
     for k in range(14):
         m = k + 7
@@ -118,10 +119,17 @@ def main():
         _, _, vt = np.linalg.svd(transverse, full_matrices=False)
         axis = vt[0]
         rotated = np.stack([u[:, 0], transverse @ axis, transverse @ np.array([-axis[1], axis[0]])], axis=1)
-        scale = 1.0 / np.max(np.linalg.norm(rotated, axis=1))
+        # The modes have no physical amplitude (they are mass-normalized). For the image, the displacement is
+        # amplified so that the peak strain of every mode is the same (1 %), instead of the peak displacement.
+        derivative = grid.compute_derivative(scalars=f'modeShape{m}')['gradient'].reshape(-1, 3, 3)
+        strain = 0.5 * (derivative + np.transpose(derivative, (0, 2, 1)))
+        peak_strain = np.percentile(np.max(np.abs(np.linalg.eigvalsh(strain)), axis=1), 99.0)
+        scale = peak_display_strain / peak_strain
         shape = grid.copy()
         shape.points = grid.points + scale * rotated
-        shape['displacement'] = np.linalg.norm(rotated, axis=1) * scale
+        magnitude_raw = np.linalg.norm(rotated, axis=1)
+        magnitude = magnitude_raw
+        shape['displacement'] = magnitude / np.max(magnitude)
         pl.subplot(k % nrows, k // nrows)
         pl.add_mesh(shape, scalars='displacement', cmap='viridis', clim=(0.0, 1.0), show_scalar_bar=False)
         pl.add_mesh(outline, color='gray', line_width=1)
@@ -130,7 +138,8 @@ def main():
         pl.camera.focal_point = (0.5 * length, 0.0, 0.1)
         pl.camera.position = (0.5 * length, 0.0, 30.0)
         pl.camera.parallel_scale = 1.25
-        pl.add_text(f'Mode {m}: {labels[k]}, {frequencies[6 + k]:.2f} Hz', font_size=8, position='upper_left')
+        pl.add_text(f'Mode {m}: {labels[k]}, {frequencies[6 + k]:.2f} Hz, peak displacement {scale * np.max(magnitude_raw):.2f} m',
+                    font_size=8, position='upper_left')
     gallery = pl.screenshot(return_img=True)
 
     # One colorbar for all the panels: the displacement of each mode is normalized by its maximum
@@ -146,6 +155,7 @@ def main():
     cax = fig.add_axes([(width + 25) / (width + 130), 0.12, 20.0 / (width + 130), 0.76])
     fig.colorbar(matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(0.0, 1.0), cmap='viridis'), cax=cax)
     cax.set_ylabel('Displacement magnitude / its maximum', fontsize=9)
+    fig.text(0.5, 0.004, 'The amplitude of a mode is arbitrary. Each mode is scaled so that its peak strain is 1 % (steel yields at about 0.1 %)', ha='center', fontsize=8)
     fig.savefig(args.outputDir + '/FreeFreeBeamModes.png', dpi=dpi)
 
 

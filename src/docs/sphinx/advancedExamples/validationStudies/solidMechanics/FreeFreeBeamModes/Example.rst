@@ -164,7 +164,11 @@ The difference is relative to the beam theory frequency.
 
 The six rigid-body modes are zero up to rounding errors: their frequencies are below 0.001 Hz.
 The next fourteen modes are the elastic modes.
-The images below show them, scaled so that the largest displacement is 1 m.
+The images below show them.
+The amplitude of a vibration mode is arbitrary, because the modes are normalized with the mass.
+Each image is therefore scaled so that the peak strain of the mode is 1 %.
+This is ten times the yield strain of steel, so a real vibration is much smaller.
+The peak displacement that results is given in each title.
 The grey rectangle is the undeformed beam.
 The color is the displacement magnitude divided by its maximum for the mode, with one colorbar for all the images.
 The bending modes of a pair have the same shape in two perpendicular planes.
