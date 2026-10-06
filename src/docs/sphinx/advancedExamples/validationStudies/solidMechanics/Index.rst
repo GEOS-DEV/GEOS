@@ -8,3 +8,4 @@ Solid Mechanics
    :maxdepth: 1
 
    FreeFreeBeamModes/Example
+   EigensolverComparison/Example

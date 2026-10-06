@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./modalFreeBlock_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_MODAL_BLOCK_SOLVER -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsLagrangianFEM
+      name="modal"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region }"
+      timeIntegrationOption="Modal"
+      modalSolverType="arnoldi"
+      modalNumModes="16"
+      modalShiftFrequency="-500.0"
+      modalDeflateRigidBodyModes="0"
+      modalMaxIterations="600"
+      modalTolerance="1.0e-8">
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-10"
+        krylovMaxIter="2000"/>
+    </SolidMechanicsLagrangianFEM>
+  </Solvers>
+  <!-- SPHINX_MODAL_BLOCK_SOLVER_END -->
+
+</Problem>

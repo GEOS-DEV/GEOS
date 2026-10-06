@@ -9,29 +9,46 @@ Free-Free Beam: Modal Analysis versus Euler-Bernoulli Beam Theory
 Problem description
 ------------------------------------------------------------------
 
-This example computes the vibration modes of a free-free steel beam with the ``Modal`` time integration option of the :ref:`SolidMechanicsLagrangianFEM` solver, and compares them with the Euler-Bernoulli beam theory.
+This example computes the vibration modes of a free-free steel beam with the ``Modal`` time integration option of the :ref:`SolidMechanicsLagrangianFEM` solver, and compares them with the beam theory.
 The beam is 10 m long and has a square cross-section of 0.2 m by 0.2 m.
+It is slender: the length is 50 times the side.
 No displacement boundary condition is applied, so the beam is a free body.
 Its stiffness matrix :math:`\mathbf{K}` is singular, and the first six modes are the rigid-body modes at zero frequency.
 They are followed by the elastic modes of the beam: bending, torsion and axial modes.
 
-The beam theory gives the frequencies of the bending modes as
+**Beam theory**
+
+The Euler-Bernoulli theory gives the frequencies of the bending modes [Blevins2001]_ as
 
 .. math::
    f_n = \frac{(\beta_n L)^2}{2 \pi L^2} \sqrt{\frac{E I}{\rho A}},
 
 where :math:`L` is the length, :math:`E` the Young modulus, :math:`\rho` the density, :math:`A` the area of the cross-section and :math:`I` its second moment of area.
-The numbers :math:`\beta_n L = 4.7300, 7.8532, 10.9956, \dots` are the roots of :math:`\cos(x)\cosh(x) = 1`.
+The numbers :math:`\beta_n L = 4.7300, 7.8532, 10.9956, 14.1372, \dots` are the roots of :math:`\cos(x)\cosh(x) = 1`.
 The cross-section is square, so every bending frequency is double: the beam bends in two perpendicular planes with the same frequency.
 The mode shape is
 
 .. math::
    \phi_n(x) = \cosh(\beta_n x) + \cos(\beta_n x) - \sigma_n \left( \sinh(\beta_n x) + \sin(\beta_n x) \right),
-   \qquad \sigma_n = \frac{\cosh(\beta_n L) - \cos(\beta_n L)}{\sinh(\beta_n L) - \sin(\beta_n L)}.
+   \qquad \sigma_n = \frac{\cosh(\beta_n L) - \cos(\beta_n L)}{\sinh(\beta_n L) - \sin(\beta_n L)},
 
+with :math:`\beta_n = (\beta_n L) / L` and :math:`\int_0^L \phi_n^2 \, dx = L`.
 GEOS normalizes its modes with :math:`\boldsymbol{\phi}^T \mathbf{M} \boldsymbol{\phi} = 1`.
-For the beam, this means :math:`\rho A \int_0^L \phi^2 \, dx = 1`.
-The first axial frequency is :math:`f = \frac{1}{2L} \sqrt{E/\rho}`.
+For the beam, this means :math:`\rho A \int_0^L u^2 \, dx = 1`, so the mass-normalized displacement is :math:`u_n(x) = \phi_n(x) / \sqrt{\rho A L}`.
+
+The Euler-Bernoulli theory ignores the shear deformation and the rotary inertia.
+Both lower the frequencies.
+The Rayleigh-Timoshenko estimate [Han1999]_ gives
+
+.. math::
+   f_n^{T} = \frac{f_n}{\sqrt{1 + (\beta_n r)^2 \left( 1 + \dfrac{E}{\kappa G} \right)}},
+
+where :math:`r = \sqrt{I/A}` is the radius of gyration, :math:`G = E / (2(1+\nu))` the shear modulus and :math:`\kappa = 10(1+\nu)/(12+11\nu)` the shear coefficient of a rectangular section [Cowper1966]_.
+It is first-order accurate for a free-free beam.
+The correction is 0.15 % for the first mode and 2.7 % for the sixth.
+
+The first axial frequency of a free-free rod is :math:`f = \frac{1}{2L} \sqrt{E/\rho}`.
+The first torsion frequency is :math:`f = \frac{1}{2L} \sqrt{G J / (\rho I_p)}`, with the Saint-Venant constant :math:`J = 0.1406\,a^4` of a square section of side :math:`a` [TimoshenkoGoodier1970]_ and the polar moment :math:`I_p = a^4/6`.
 
 **Input files**
 
@@ -51,6 +68,8 @@ A Python script that gives the beam theory solutions and plots the comparison is
 
   src/docs/sphinx/advancedExamples/validationStudies/solidMechanics/FreeFreeBeamModes/FreeFreeBeamModes_vs_EulerBernoulli.py
 
+The script ``make_beam_assets.py`` in the same folder generates the images and the table of this page from a GEOS run.
+
 ------------------------------------------------------------------
 Mesh
 ------------------------------------------------------------------
@@ -61,6 +80,9 @@ The internal mesh generator builds the beam with 100 by 4 by 4 trilinear hexahed
     :language: xml
     :start-after: <!-- SPHINX_MODAL_BEAM_MESH -->
     :end-before: <!-- SPHINX_MODAL_BEAM_MESH_END -->
+
+.. image:: FreeFreeBeamMesh.png
+   :width: 100%
 
 ------------------------------------------------------------------
 Material
@@ -92,6 +114,7 @@ The linear solver tolerance ``krylovTol`` is two orders of magnitude smaller tha
 The default ``modalCompletenessCheck`` verifies that no copy of a repeated eigenvalue is missed.
 The second input file uses ``modalBlockSize="6"``, which is the multiplicity of the rigid-body modes, instead of this check.
 The attribute ``modalDeflateRigidBodyModes="1"`` removes the rigid-body modes from the eigensolve, which lowers the cost of a free body.
+The theory of the eigensolvers is in :ref:`SolidMechanicsLagrangianFEM`.
 
 The solver runs once.
 It prints a table with the frequency, the residual and the participation factors of each mode in the log.
@@ -115,23 +138,52 @@ The modes 9 and 10 are the two polarizations of the second one.
 A comparison between GEOS results and beam theory
 ------------------------------------------------------------------
 
-The figure uses a run with ``modalNumModes="20"``.
-The results are in the files ``FreeFreeBeamFrequencies.txt`` and ``FreeFreeBeamModeShapes.txt``.
-The left plot compares the bending frequencies.
-Each GEOS value is the mean of a pair of modes.
-The right plot compares the mass-normalized mode shapes.
+The results use a run with ``modalNumModes="20"``.
+They are in the files ``FreeFreeBeamFrequencies.txt`` and ``FreeFreeBeamModeShapes.txt``.
+The left plot compares the frequencies of the bending modes, the first torsion mode and the first axial mode.
+Each GEOS bending value is the mean of a pair of modes.
+The two other plots compare the mass-normalized shapes of the first four bending modes.
 The polarization of a bending mode in the plane of the cross-section is arbitrary.
 The script projects each computed mode on the beam theory shape.
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/solidMechanics/FreeFreeBeamModes/FreeFreeBeamModes_vs_EulerBernoulli.py
 
+The table gives the 20 modes.
+The letters (a) and (b) label the two members of a pair.
+The difference is relative to the beam theory frequency.
+
+.. csv-table:: Modes of the free-free beam
+   :file: FreeFreeBeamModeTable.csv
+   :header-rows: 1
+   :widths: 8, 18, 14, 16, 12, 16, 16
+
+The six rigid-body modes are zero up to rounding errors: their frequencies are below 0.001 Hz.
+The next fourteen modes are the elastic modes.
+The images below show them, scaled so that the largest displacement is 1 m.
+The grey rectangle is the undeformed beam.
+The color is the displacement magnitude.
+The bending modes of a pair have the same shape in two perpendicular planes.
+The image shows each of them rotated into the plane of the view.
+
+.. image:: FreeFreeBeamModes.png
+   :width: 100%
+
+**Discussion**
+
 The shapes agree with the beam theory.
-The GEOS frequencies are 5 % higher for the first bending mode.
-This is the effect of the shear locking of the standard trilinear hexahedron, which has only four elements across the thickness.
-The difference falls with the mesh: it is 13 %, 7.5 % and 5 % with 60, 80 and 100 elements along the beam.
-The ratio of the frequencies of the second and the first bending mode is 2.749 in GEOS and 2.756 in the beam theory.
-The axial mode at 252.4 Hz agrees with the closed form to :math:`10^{-4}`.
-The first six frequencies are zero up to rounding errors (below 0.001 Hz).
+The ratio of the frequencies of the second and the first bending mode is 2.749 in GEOS and 2.756 in the Euler-Bernoulli theory.
+The axial frequency agrees with the closed form to :math:`10^{-4}`.
+The torsion frequency is 3.3 % lower than the Saint-Venant estimate.
+The row-sum lumped mass places the mass of a section at its nodes, which raises the polar moment of this mesh by 12.5 %, and lowers the torsion frequency by 5.7 %.
+The stiffness of the element partly compensates.
+
+The bending frequencies of GEOS are higher than the Euler-Bernoulli values by 5.0 % for the first mode and 2.3 % for the sixth.
+The difference to the Timoshenko estimate is 5.1 % for the six bending orders.
+This constant offset is a stiffening of the discretization.
+It is the shear locking of the standard trilinear hexahedron, which has four elements across the thickness.
+It does not depend on the mode.
+The difference with the Euler-Bernoulli values decreases with the mode order only because the shear and rotary inertia effects increase with it.
+The locking falls with the mesh: with 4 elements across the thickness, the first mode is 12.7 %, 7.5 % and 5.0 % high with 60, 80 and 100 elements along the beam.
 
 ------------------------------------------------------------------
 To go further
@@ -140,14 +192,21 @@ To go further
 **Eigensolvers**
 
 The ``lobpcg`` eigensolver applies only a preconditioner and finds the lowest modes.
-It is much faster for a free body, but it needs ``modalDeflateRigidBodyModes="1"`` and a good preconditioner.
-A single multigrid cycle is not enough for this slender beam.
-See :ref:`SolidMechanicsLagrangianFEM` for the description of both eigensolvers.
+On this beam it converges in 131 iterations and 0.9 s on one core with ``modalDeflateRigidBodyModes="1"``, against 9.3 s for the default ``arnoldi`` setting.
+Without deflation, it does not converge.
+The example :ref:`AdvancedExampleEigensolverComparison` gives the measured costs.
 
 **Integrated test**
 
 The two decks run as integrated tests on one, two and four MPI ranks.
 They compare the mode shapes with the beam theory with the curve checker.
+
+**References**
+
+- [Blevins2001]_ gives the frequencies and the mode shapes of beams.
+- [Han1999]_ compares four beam theories.
+- [Cowper1966]_ gives the shear coefficient.
+- [TimoshenkoGoodier1970]_ gives the torsion constant.
 
 **Feedback on this example**
 

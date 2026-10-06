@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <!-- Free steel block, 2 m x 1 m x 1 m. No boundary condition: the block has six rigid-body modes. -->
+  <Mesh>
+    <InternalMesh
+      name="block"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 2 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 32 }"
+      ny="{ 16 }"
+      nz="{ 16 }"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ cb }"
+      materialList="{ steel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="steel"
+      defaultDensity="7850"
+      defaultYoungModulus="2.0e11"
+      defaultPoissonRatio="0.3"/>
+  </Constitutive>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <!-- The modal analysis runs once. -->
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="modalAnalysis"
+      forceDt="1.0"
+      target="/Solvers/modal"/>
+  </Events>
+
+</Problem>
