@@ -117,6 +117,21 @@ public:
                             integer const cycleNumber,
                             DomainPartition & domain );
 
+  /**
+   * @brief Build the lumped mass vector and the mask of free degrees of freedom of the modal analysis.
+   * @param[in] time time at which the displacement boundary conditions are evaluated
+   * @param[in] domain the domain
+   * @param[out] freeMask vector with 1 on free degrees of freedom and 0 on constrained ones
+   * @param[out] massDiag lumped mass, zero on constrained degrees of freedom
+   * @return the global number of constrained degrees of freedom
+   * @note This function is public because it launches device kernels (extended lambdas of CUDA cannot be
+   *       defined in protected or private member functions).
+   */
+  globalIndex computeModalDiagonals( real64 const time,
+                                     DomainPartition & domain,
+                                     ParallelVector & freeMask,
+                                     ParallelVector & massDiag );
+
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -347,19 +362,6 @@ protected:
   virtual void postInputInitialization() override;
 
   void initializeMass( MeshLevel & mesh, CellElementSubRegion & subRegion );
-
-  /**
-   * @brief Build the lumped mass vector and the mask of free degrees of freedom of the modal analysis.
-   * @param[in] time time at which the displacement boundary conditions are evaluated
-   * @param[in] domain the domain
-   * @param[out] freeMask vector with 1 on free degrees of freedom and 0 on constrained ones
-   * @param[out] massDiag lumped mass, zero on constrained degrees of freedom
-   * @return the global number of constrained degrees of freedom
-   */
-  globalIndex computeModalDiagonals( real64 const time,
-                                     DomainPartition & domain,
-                                     ParallelVector & freeMask,
-                                     ParallelVector & massDiag );
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
