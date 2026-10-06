@@ -152,6 +152,17 @@ void GEOS_dgeev( char const * JOBVL,
                  int * LWORK,
                  int * INFO );
 
+#define GEOS_dsyev FORTRAN_MANGLE( dsyev )
+void GEOS_dsyev( char const * JOBZ,
+                 char const * UPLO,
+                 int const * N,
+                 double * A,
+                 int const * LDA,
+                 double * W,
+                 double * WORK,
+                 int const * LWORK,
+                 int * INFO );
+
 #define GEOS_dgetrs FORTRAN_MANGLE( dgetrs )
 void GEOS_dgetrs( char const * TRANS,
                   int const * N,
