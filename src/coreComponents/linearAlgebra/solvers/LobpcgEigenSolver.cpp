@@ -62,16 +62,25 @@ integer rayleighRitz( std::vector< VECTOR * > const & S,
 {
   integer const m = LvArray::integerConversion< integer >( S.size() );
 
+  // Gram matrices of the search space. Each is computed by one batched device operation.
+  array2d< real64 > products;
   DenseMatrix G( m, m );
   DenseMatrix A( m, m );
+  std::vector< VECTOR const * > const basis = multiVectorOperations::constPointers( S );
+  multiVectorOperations::dots( basis, multiVectorOperations::constPointers( MS ), products );
   for( integer j = 0; j < m; ++j )
   {
-    for( integer i = 0; i <= j; ++i )
+    for( integer i = 0; i < m; ++i )
     {
-      G( i, j ) = S[i]->dot( *MS[j] );
-      G( j, i ) = G( i, j );
-      A( i, j ) = S[i]->dot( *KS[j] );
-      A( j, i ) = A( i, j );
+      G( i, j ) = 0.5 * ( products( i, j ) + products( j, i ) );
+    }
+  }
+  multiVectorOperations::dots( basis, multiVectorOperations::constPointers( KS ), products );
+  for( integer j = 0; j < m; ++j )
+  {
+    for( integer i = 0; i < m; ++i )
+    {
+      A( i, j ) = 0.5 * ( products( i, j ) + products( j, i ) );
     }
   }
 
@@ -168,7 +177,7 @@ integer rayleighRitz( std::vector< VECTOR * > const & S,
   return r;
 }
 
-/// out = sum_{j >= first} coefficients(j, column) * src[j]
+/// out = sum_{j >= first} coefficients(j, column) * src[j], in one fused device kernel
 template< typename VECTOR >
 void combine( std::vector< VECTOR * > const & src,
               DenseMatrix const & coefficients,
@@ -176,11 +185,14 @@ void combine( std::vector< VECTOR * > const & src,
               integer const first,
               VECTOR & out )
 {
-  out.zero();
+  std::vector< VECTOR const * > vectors;
+  std::vector< real64 > weights;
   for( integer j = first; j < LvArray::integerConversion< integer >( src.size() ); ++j )
   {
-    out.axpy( coefficients( j, column ), *src[j] );
+    vectors.push_back( src[j] );
+    weights.push_back( coefficients( j, column ) );
   }
+  multiVectorOperations::combine( vectors, weights, out, false );
 }
 
 } // namespace

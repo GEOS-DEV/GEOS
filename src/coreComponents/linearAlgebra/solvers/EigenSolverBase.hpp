@@ -22,6 +22,7 @@
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/utilities/EigenSolverParameters.hpp"
+#include "linearAlgebra/utilities/MultiVectorOperations.hpp"
 
 #include <memory>
 #include <vector>
@@ -182,12 +183,27 @@ public:
      */
     void project( VECTOR & z ) const
     {
+      if( vectors.empty() )
+      {
+        return;
+      }
+      std::vector< VECTOR const * > basis;
+      std::vector< VECTOR const * > massBasis;
+      for( size_t i = 0; i < vectors.size(); ++i )
+      {
+        basis.push_back( &vectors[i] );
+        massBasis.push_back( &massVectors[i] );
+      }
+      array2d< real64 > products;
+      std::vector< real64 > coefficients( vectors.size() );
       for( int pass = 0; pass < 2; ++pass )
       {
+        multiVectorOperations::dots( massBasis, std::vector< VECTOR const * >{ & z }, products );
         for( size_t i = 0; i < vectors.size(); ++i )
         {
-          z.axpy( -massVectors[i].dot( z ), vectors[i] );
+          coefficients[i] = -products( i, 0 );
         }
+        multiVectorOperations::combine( basis, coefficients, z, true );
       }
     }
   };

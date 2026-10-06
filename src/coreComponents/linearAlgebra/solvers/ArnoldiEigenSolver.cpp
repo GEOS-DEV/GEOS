@@ -290,13 +290,19 @@ private:
   /// m_X[0..count-1] = V[0..m-1] Y[:, 0..count-1]
   void ritzVectors( integer const count, RitzPairs const & r )
   {
+    std::vector< VECTOR const * > basis;
+    for( integer j = 0; j < r.m; ++j )
+    {
+      basis.push_back( &m_V[j] );
+    }
+    std::vector< real64 > column( static_cast< size_t >( r.m ) );
     for( integer i = 0; i < count; ++i )
     {
-      m_X[i].zero();
       for( integer j = 0; j < r.m; ++j )
       {
-        m_X[i].axpy( r.Y( j, i ), m_V[j] );
+        column[j] = r.Y( j, i );
       }
+      multiVectorOperations::combine( basis, column, m_X[i], false );
     }
   }
 
@@ -319,17 +325,32 @@ private:
       return 0.0;
     }
 
+    // Classical Gram-Schmidt with one reorthogonalization. The products with the whole basis are one batched
+    // device operation, instead of one reduction and one synchronization for each basis vector.
+    std::vector< VECTOR const * > basis;
+    std::vector< VECTOR const * > massBasis;
+    for( integer i = 0; i < index; ++i )
+    {
+      basis.push_back( &m_V[i] );
+      massBasis.push_back( &m_MV[i] );
+    }
+    array2d< real64 > products;
+    std::vector< real64 > update( static_cast< size_t >( index ) );
     for( int pass = 0; pass < 2; ++pass )
     {
       m_constraints.project( w );
-      for( integer i = 0; i < index; ++i )
+      if( index > 0 )
       {
-        real64 const c = m_MV[i].dot( w );
-        w.axpy( -c, m_V[i] );
-        if( coefficients != nullptr )
+        multiVectorOperations::dots( massBasis, std::vector< VECTOR const * >{ & w }, products );
+        for( integer i = 0; i < index; ++i )
         {
-          coefficients[i] += c;
+          update[i] = -products( i, 0 );
+          if( coefficients != nullptr )
+          {
+            coefficients[i] -= update[i];
+          }
         }
+        multiVectorOperations::combine( basis, update, w, true );
       }
     }
 

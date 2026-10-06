@@ -74,12 +74,14 @@ set( linearAlgebra_headers
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
      utilities/ComponentMask.hpp
+     utilities/DiagonalOperator.hpp
      utilities/EigenSolverParameters.hpp
      utilities/InverseNormalOperator.hpp
      utilities/LAIHelperFunctions.hpp
      utilities/SparsityPatternUtilities.hpp
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
+     utilities/MultiVectorOperations.hpp
      utilities/NormalOperator.hpp
      utilities/ReverseCutHillMcKeeOrdering.hpp
      utilities/TransposeOperator.hpp )
