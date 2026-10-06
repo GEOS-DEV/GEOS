@@ -162,7 +162,9 @@ void MultiFluidBase::postInputInitialization()
                         "invalid number of components",
                         InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
-                        "invalid number of components",
+                        GEOS_FMT( "Fluid model requires {} components, exceeding this build's fluid storage capacity of {}. "
+                                  "Current build setting: GEOS_MAX_FLUID_COMPONENTS={}.",
+                                  numComp, MAX_NUM_COMPONENTS, GEOS_MAX_FLUID_COMPONENTS ),
                         InputError, getDataContext() );
   GEOS_THROW_IF_LT_MSG( numPhase, 1,
                         "invalid number of phases",

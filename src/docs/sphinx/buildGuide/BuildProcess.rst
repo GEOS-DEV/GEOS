@@ -74,6 +74,7 @@ Option                          Default   Explanation
 ``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
 ``ENABLE_COV``                  ``OFF``   Enables code coverage
 ``GEOS_ENABLE_TESTS``           ``ON``    Enables unit testing targets
+``GEOS_MAX_FLUID_COMPONENTS``   ``5``     Maximum component count instantiated in compositional flow solvers (3 to 20)
 ``GEOS_LA_INTERFACE``           ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOS_BUILD_OBJ_LIBS``         ``ON``    Use CMake Object Libraries build
 ``GEOS_BUILD_SHARED_LIBS``      ``OFF``   Build ``geosx_core`` as a shared library instead of static
@@ -81,3 +82,43 @@ Option                          Default   Explanation
 ``GEOS_PARALLEL_LINK_JOBS``               Max. number of link jobs (when using Ninja), in addition to ``-j`` flag
 ``GEOS_INSTALL_SCHEMA``         ``ON``    Enables schema generation and installation
 =============================== ========= ==============================================================================
+
+Compositional component limit
+-----------------------------
+
+Set ``GEOS_MAX_FLUID_COMPONENTS`` in the host configuration or pass, for example,
+``-DGEOS_MAX_FLUID_COMPONENTS=20`` to CMake to build compositional flow solvers for up to
+twenty components. The default of five preserves the existing solver range.
+
+To build for more components:
+
+1. Add ``set( GEOS_MAX_FLUID_COMPONENTS 20 CACHE STRING "" )`` to the host-config
+   file, or pass ``-DGEOS_MAX_FLUID_COMPONENTS=20`` on the CMake command line.
+2. Reconfigure the build directory (``cmake`` or ``config-build.py``).
+3. Rebuild GEOS.
+
+No source changes are needed. In particular, ``kernelSpecs.json`` does not have to be
+edited: each ``NCOMP`` list there gives only the lowest instantiated component count,
+and CMake extends it to ``GEOS_MAX_FLUID_COMPONENTS`` when the build is configured.
+Values must be integers from three to twenty; smaller limits reduce compilation
+work and the number of kernel instantiations. One-component kernels remain
+available at every supported setting. Three is the minimum build limit because
+black-oil fluids require three components; two-component fluid models remain
+available in every supported build. The count includes every modeled fluid
+species, including water when present.
+
+This setting controls both runtime dispatch and explicit instantiations,
+including thermal, hybrid finite-volume, aquifer, CFL and well kernels. Solvers
+reject models exceeding the configured limit during setup,
+with a message identifying the required setting. Changing the option requires
+reconfiguring and rebuilding GEOS.
+
+The constitutive fluid working arrays have capacity for at least nine components
+and grow with ``GEOS_MAX_FLUID_COMPONENTS`` above nine. Smaller builds retain existing
+nine-component standalone fluid-property calculations, such as the PVT driver.
+
+The table-based reactive OBL solver uses the smaller of the configured limit and
+seven components. Its per-thread interpolation workspace grows exponentially with
+the component count and would exceed the CUDA local-memory limit at eight, so
+increasing ``GEOS_MAX_FLUID_COMPONENTS`` above seven extends the EOS compositional
+solvers without increasing the OBL limit.

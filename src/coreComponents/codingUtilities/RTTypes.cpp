@@ -100,13 +100,19 @@ string constructArrayRegex( string_view subPattern, integer dimension, bool topL
   string subPatternStr = dimension > 1 ?
                          constructArrayRegex( subPattern, dimension-1, false ) :
                          string( subPattern );
+  // Braces and separators already handle leading whitespace. Avoid adjacent
+  // whitespace repetitions that cause backtracking across matrix entries.
+  if( stringutilities::startsWith( subPatternStr, "\\s*" ) )
+    subPatternStr.erase( 0, 3 );
   // Add trailing space if is not already done
   if( !stringutilities::endsWith( subPatternStr, "\\s*" ) )
     subPatternStr+="\\s*";
-  // Allow the bottom-level to be empty
-  string const arrayRegex = dimension == 1 ?
-                            "\\{\\s*((" + subPatternStr + ",\\s*)*" + subPatternStr + ")?\\}":
-                            "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\}";
+  // Put separators first in the repeated group so a closing brace does not
+  // backtrack through every element of a padded, multidimensional array.
+  string const entriesRegex = subPatternStr + "(,\\s*" + subPatternStr + ")*";
+  // Allow the bottom-level to be empty.
+  string const arrayRegex = "\\{\\s*" +
+                            (dimension == 1 ? "(" + entriesRegex + ")?" : entriesRegex) + "\\}";
   // accept spaces around surrounding braces at the top-level
   return topLevelCall ?
          "\\s*" + arrayRegex + "\\s*" :
@@ -154,14 +160,10 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   string_view const intDesc = "Input value must be a signed int (eg. -123, 455, +789, etc.)";
   string_view const intRegex = "\\s*[+-]?[\\d]+\\s*";
 
-  // Explanation of parts:
-  // [+-]?[\\d]*  matches an optional +/- at the beginning, any numbers preceding the decimal
-  // ([\\d]\\.?|\\.[\\d]) matches the decimal region of the number (0, 1., 2.3, .4)
-  // [\\d]*  matches any number of numbers following the decimal
-  // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
-  // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
+  // Numeric alternatives have distinct first characters (digit or decimal point).
+  // Keep whitespace outside the optional exponent to avoid ambiguous repetitions.
   string_view const realDesc = "Input value must be a real number (eg. 1, .25, +2.3, -.4, 5.6e7, -8E-9, etc.)";
-  string_view const realRegex = "\\s*[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
+  string_view const realRegex = "\\s*[+-]?([\\d]+(\\.[\\d]*)?|\\.[\\d]+)([eE][-+]?[\\d]+)?\\s*";
 
   string_view const R1Desc = "Input value must be a R1Tensor, an array of 3 real numbers surrounded by braces and separated by commas (eg.  \"{ 1, .25, +2.3}\", \"{ -.4, 5.6e7, -8E-9\", etc.) .";
   string const R1Regex = "\\s*\\{\\s*(" + string( realRegex ) + "\\s*,\\s*){2}" + string( realRegex ) + "\\s*\\}\\s*";
