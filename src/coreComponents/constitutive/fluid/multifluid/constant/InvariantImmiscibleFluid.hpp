@@ -24,6 +24,8 @@ public:
 
   virtual integer getWaterPhaseIndex() const override;
 
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override final;
+
   void checkTablesParameters( real64 pressure, real64 temperature ) const override;
 
   /**

@@ -122,7 +122,13 @@ integer ReactiveBrineFluid< PHASE > ::getWaterPhaseIndex() const
   // There is only 1 phase
   return 0;
 }
-
+template< typename PHASE >
+integer ReactiveBrineFluid< PHASE > ::getPhaseIndex( const std::string & phaseName ) const
+{
+  GEOS_UNUSED_VAR( phaseName );
+  // There is only 1 phase
+  return 0;
+}
 
 template< typename PHASE >
 void ReactiveBrineFluid< PHASE > ::postInputInitialization()
