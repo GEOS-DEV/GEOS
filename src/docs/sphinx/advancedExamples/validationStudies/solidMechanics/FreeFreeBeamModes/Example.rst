@@ -62,13 +62,17 @@ This example uses three GEOS xml files:
 
 The base file has the mesh, the material and the outputs.
 The two other files differ by the eigensolver settings.
-A Python script that gives the beam theory solutions and plots the comparison is provided at:
+The Python script that gives the beam theory solutions and plots the comparison is
+:download:`FreeFreeBeamModes_vs_EulerBernoulli.py <FreeFreeBeamModes_vs_EulerBernoulli.py>`.
+It reads the beam parameters from the GEOS xml files and the GEOS results from the two text files of this folder.
+Its location in the repository is:
 
 .. code-block:: console
 
   src/docs/sphinx/advancedExamples/validationStudies/solidMechanics/FreeFreeBeamModes/FreeFreeBeamModes_vs_EulerBernoulli.py
 
-The script ``make_beam_assets.py`` in the same folder generates the images and the table of this page from a GEOS run.
+The script :download:`make_beam_assets.py <make_beam_assets.py>` generates the images and the table of this page from a GEOS run.
+The text files are :download:`FreeFreeBeamFrequencies.txt <FreeFreeBeamFrequencies.txt>`, :download:`FreeFreeBeamModeShapes.txt <FreeFreeBeamModeShapes.txt>` and :download:`FreeFreeBeamModeTable.csv <FreeFreeBeamModeTable.csv>`.
 
 ------------------------------------------------------------------
 Mesh
@@ -145,6 +149,7 @@ Each GEOS bending value is the mean of a pair of modes.
 The two other plots compare the mass-normalized shapes of the first four bending modes.
 The polarization of a bending mode in the plane of the cross-section is arbitrary.
 The script projects each computed mode on the beam theory shape.
+The script is :download:`FreeFreeBeamModes_vs_EulerBernoulli.py <FreeFreeBeamModes_vs_EulerBernoulli.py>`.
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/solidMechanics/FreeFreeBeamModes/FreeFreeBeamModes_vs_EulerBernoulli.py
 
@@ -161,7 +166,7 @@ The six rigid-body modes are zero up to rounding errors: their frequencies are b
 The next fourteen modes are the elastic modes.
 The images below show them, scaled so that the largest displacement is 1 m.
 The grey rectangle is the undeformed beam.
-The color is the displacement magnitude.
+The color is the displacement magnitude divided by its maximum for the mode, with one colorbar for all the images.
 The bending modes of a pair have the same shape in two perpendicular planes.
 The image shows each of them rotated into the plane of the view.
 

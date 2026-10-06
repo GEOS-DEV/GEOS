@@ -123,7 +123,7 @@ def main():
         shape.points = grid.points + scale * rotated
         shape['displacement'] = np.linalg.norm(rotated, axis=1) * scale
         pl.subplot(k % nrows, k // nrows)
-        pl.add_mesh(shape, scalars='displacement', cmap='viridis', show_scalar_bar=False)
+        pl.add_mesh(shape, scalars='displacement', cmap='viridis', clim=(0.0, 1.0), show_scalar_bar=False)
         pl.add_mesh(outline, color='gray', line_width=1)
         pl.view_xy()
         pl.camera.parallel_projection = True
@@ -131,7 +131,22 @@ def main():
         pl.camera.position = (0.5 * length, 0.0, 30.0)
         pl.camera.parallel_scale = 1.25
         pl.add_text(f'Mode {m}: {labels[k]}, {frequencies[6 + k]:.2f} Hz', font_size=8, position='upper_left')
-    pl.screenshot(args.outputDir + '/FreeFreeBeamModes.png')
+    gallery = pl.screenshot(return_img=True)
+
+    # One colorbar for all the panels: the displacement of each mode is normalized by its maximum
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    height, width = gallery.shape[:2]
+    dpi = 100
+    fig = plt.figure(figsize=((width + 130) / dpi, height / dpi), dpi=dpi)
+    ax = fig.add_axes([0.0, 0.0, width / (width + 130), 1.0])
+    ax.imshow(gallery)
+    ax.axis('off')
+    cax = fig.add_axes([(width + 25) / (width + 130), 0.12, 20.0 / (width + 130), 0.76])
+    fig.colorbar(matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(0.0, 1.0), cmap='viridis'), cax=cax)
+    cax.set_ylabel('Displacement magnitude / its maximum', fontsize=9)
+    fig.savefig(args.outputDir + '/FreeFreeBeamModes.png', dpi=dpi)
 
 
 if __name__ == "__main__":

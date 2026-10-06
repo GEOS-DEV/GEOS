@@ -35,9 +35,10 @@ The block uses two GEOS xml files that differ by the eigensolver:
 
 The beam uses the files of the example :ref:`AdvancedExampleFreeFreeBeamModes`.
 The other combinations are obtained by changing the attributes ``modalSolverType`` and ``modalDeflateRigidBodyModes``.
-The script ``run_comparison.sh`` in the folder of this example makes all the runs.
-The script ``summarize_comparison.py`` writes the table and the convergence histories from the logs.
-The script ``EigensolverComparison.py`` makes the figure.
+The script :download:`run_comparison.sh <run_comparison.sh>` makes all the runs.
+The script :download:`summarize_comparison.py <summarize_comparison.py>` writes the table and the convergence histories from the logs.
+The script :download:`EigensolverComparison.py <EigensolverComparison.py>` makes the figure.
+The results are in :download:`EigensolverComparison.csv <EigensolverComparison.csv>` and :download:`ConvergenceHistory.txt <ConvergenceHistory.txt>`.
 
 ------------------------------------------------------------------
 Solver
