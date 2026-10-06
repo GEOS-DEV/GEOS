@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: LGPL-2.1-only
 
 set( GEOS_MAX_FLUID_COMPONENTS 5 CACHE STRING
-     "Maximum number of components instantiated in compositional flow solvers (2-20)" )
-if( NOT GEOS_MAX_FLUID_COMPONENTS MATCHES "^([2-9]|1[0-9]|20)$" )
-  message( FATAL_ERROR "GEOS_MAX_FLUID_COMPONENTS must be an integer from 2 to 20." )
+     "Maximum number of components instantiated in compositional flow solvers (3-20)" )
+# The component visitor includes black-oil fluids, which require three
+# components. Smaller fluid models remain available with this build limit.
+if( NOT GEOS_MAX_FLUID_COMPONENTS MATCHES "^([3-9]|1[0-9]|20)$" )
+  message( FATAL_ERROR "GEOS_MAX_FLUID_COMPONENTS must be an integer from 3 to 20." )
 endif()
 
 # Keep dispatch and explicit instantiations on the same component range.

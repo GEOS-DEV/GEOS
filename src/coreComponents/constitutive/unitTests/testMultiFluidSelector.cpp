@@ -41,9 +41,32 @@ protected:
   FluidType * m_model{};
 };
 
+using MultiFluidSelectorTestBlackOilFluid = MultiFluidSelectorTest< BlackOilFluid >;
 using MultiFluidSelectorTestDeadOilFluid = MultiFluidSelectorTest< DeadOilFluid >;
 using MultiFluidSelectorTestCO2BrinePhillipsThermalFluid = MultiFluidSelectorTest< CO2BrinePhillipsThermalFluid >;
 using MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity = MultiFluidSelectorTest< CompositionalTwoPhaseConstantViscosity >;
+
+TEST_F( MultiFluidSelectorTestBlackOilFluid, testValidComponents )
+{
+  bool isExecuted = false;
+  constitutiveComponentUpdatePassThru( getFluid(), 3, [&]( auto &, auto NC )
+  {
+    EXPECT_EQ( NC(), 3 );
+    isExecuted = true;
+  } );
+  EXPECT_TRUE( isExecuted );
+}
+
+TEST_F( MultiFluidSelectorTestBlackOilFluid, testInvalidComponents )
+{
+  for( integer components : { 2, 4 } )
+  {
+    EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), components, []( auto &, auto )
+    {
+      FAIL(); // Black-oil fluids require exactly three components
+    } ), InputError );
+  }
+}
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testValidComponents )
 {
@@ -55,15 +78,6 @@ TEST_F( MultiFluidSelectorTestDeadOilFluid, testValidComponents )
     isExecuted = true;
   } );
   EXPECT_TRUE( isExecuted );
-
-  if( GEOS_MAX_FLUID_COMPONENTS < 3 )
-  {
-    EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 3, []( auto &, auto )
-    {
-      FAIL(); // Disabled component count must not be dispatched
-    } ), InputError );
-    return;
-  }
 
   isExecuted = false;
   constitutiveComponentUpdatePassThru( getFluid(), 3, [&]( auto &, auto NC )
