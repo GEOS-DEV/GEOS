@@ -8,6 +8,7 @@
 
   <!-- The shift is a negative frequency: the shifted matrix K + alpha M is positive definite although
        the beam is a free body. The linear solver tolerance is two orders below the eigensolver tolerance. -->
+  <!-- SPHINX_MODAL_BEAM_SOLVER -->
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangianFEM
@@ -26,5 +27,6 @@
         krylovMaxIter="2000"/>
     </SolidMechanicsLagrangianFEM>
   </Solvers>
+  <!-- SPHINX_MODAL_BEAM_SOLVER_END -->
 
 </Problem>

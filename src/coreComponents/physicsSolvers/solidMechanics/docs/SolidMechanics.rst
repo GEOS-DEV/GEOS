@@ -264,6 +264,8 @@ The stiffness is the tangent stiffness at the current state, without the geometr
 Only the lumped mass is available.
 Contact, damping and body-force or traction loads are not used.
 
+The example :ref:`AdvancedExampleFreeFreeBeamModes` verifies this option on a free-free beam against the Euler-Bernoulli beam theory.
+
 .. code-block:: xml
 
    <SolidMechanicsLagrangianFEM name="solid"

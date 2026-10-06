@@ -4,6 +4,7 @@
 
   <!-- Free-free steel beam, 10 m long, 0.2 m x 0.2 m cross-section. No boundary condition:
        the structure has six rigid-body modes, followed by the bending, torsion and axial modes. -->
+  <!-- SPHINX_MODAL_BEAM_MESH -->
   <Mesh>
     <InternalMesh
       name="beam"
@@ -16,6 +17,7 @@
       nz="{ 4 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
+  <!-- SPHINX_MODAL_BEAM_MESH_END -->
 
   <ElementRegions>
     <CellElementRegion
@@ -24,6 +26,7 @@
       materialList="{ steel }"/>
   </ElementRegions>
 
+  <!-- SPHINX_MODAL_BEAM_MATERIAL -->
   <Constitutive>
     <ElasticIsotropic
       name="steel"
@@ -31,6 +34,7 @@
       defaultYoungModulus="2.0e11"
       defaultPoissonRatio="0.3"/>
   </Constitutive>
+  <!-- SPHINX_MODAL_BEAM_MATERIAL_END -->
 
   <NumericalMethods>
     <FiniteElements>
@@ -75,6 +79,7 @@
 
   <!-- Modes 1 to 6 are the rigid-body modes. Modes 7 and 8 are the two polarizations of the first bending
        mode, and modes 9 and 10 those of the second one. -->
+  <!-- SPHINX_MODAL_BEAM_TASKS -->
   <Tasks>
     <PackCollection
       name="bendingMode1Collection"
@@ -88,6 +93,7 @@
       setNames="{ axis }"
       fieldName="modeShape9"/>
   </Tasks>
+  <!-- SPHINX_MODAL_BEAM_TASKS_END -->
 
   <Outputs>
     <TimeHistory
