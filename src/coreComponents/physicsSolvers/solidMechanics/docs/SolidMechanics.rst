@@ -250,6 +250,7 @@ The solver builds an :math:`\mathbf{M}`-orthonormal basis :math:`V_m` of the Kry
 and extracts the Ritz pairs :math:`(\theta_i, V_m y_i)` from the small symmetric matrix :math:`H_m`.
 Each new basis vector costs one linear solve with :math:`\mathbf{K} - \sigma \mathbf{M}`.
 The basis is restarted with the Krylov-Schur technique: the solver keeps the best Ritz vectors and the residual block.
+The default basis has the larger of twice the number of modes and 20 vectors, set by ``modalSubspaceSize``.
 For a single vector this is the Lanczos method with thick restart.
 The implementation keeps the full matrix :math:`H_m` and :math:`\mathbf{M}`-orthogonalizes every vector twice, so that it does not depend on a tridiagonal structure.
 
@@ -266,7 +267,10 @@ Because every solve must be accurate, set ``krylovTol`` at least two orders of m
 A single Krylov vector cannot find a repeated eigenvalue.
 The six rigid-body modes of a free body are such a case.
 Two remedies are available.
-The default ``modalCompletenessCheck`` adds one Krylov cycle that starts from random vectors orthogonal to the converged modes, and restarts the iteration if it finds a mode that was missed.
+The default ``modalCompletenessCheck`` keeps the converged modes and builds the Krylov space of a random vector that is :math:`\mathbf{M}`-orthogonal to them.
+That space has a direction in every eigenspace that is left, so a missed copy appears among the wanted Ritz pairs.
+The check ends only when the best Ritz pair that is not kept has converged, because a Ritz value that has not converged can hide a missed copy when the Ritz values are clustered.
+It repeats while it finds new modes.
 The alternative is ``modalBlockSize`` at least equal to the multiplicity of the eigenvalues.
 Neither is a proof that no mode is missed.
 The check is a strong heuristic, because the largest eigenvalues of the complement appear first in the Krylov space.
@@ -311,7 +315,8 @@ The implementation has these properties:
 - ``modalSubspaceSize`` larger than ``modalNumModes`` adds guard vectors.
   They keep the method from cutting a group of repeated eigenvalues at the last requested mode.
 
-The cost of an iteration is, for each active vector, one application of the preconditioner, one of :math:`\mathbf{K}` and one of :math:`\mathbf{M}`.
+In each iteration, the preconditioner and :math:`\mathbf{M}` are applied to the residual of every iterate, converged or not, because the convergence test uses the preconditioned residual of all of them.
+:math:`\mathbf{K}` is applied to the residual of every active vector, and :math:`\mathbf{K}` and :math:`\mathbf{M}` to the new iterates.
 The dense work is :math:`O(n^2)` vector operations.
 The memory is about fifteen blocks of :math:`n` vectors.
 
@@ -361,6 +366,7 @@ The results are:
 - The arrays ``modalEigenvalues``, ``modalFrequencies``, ``modalResiduals`` and ``modalParticipationFactors`` of the solver, which are saved in the restart files.
   A frequency has the sign of its eigenvalue, so a rigid mode with a small negative eigenvalue has a small negative frequency.
 - The nodal fields ``modeShape1``, ``modeShape2``, ..., one for each mode, which a VTK output writes.
+  They are not saved in the restart files: after a restart, the frequencies and factors are available, and the mode shapes are zero until the modal analysis runs again.
 
 The following limits apply.
 The stiffness is the tangent stiffness at the current state, without the geometric (pre-stress) stiffness.
