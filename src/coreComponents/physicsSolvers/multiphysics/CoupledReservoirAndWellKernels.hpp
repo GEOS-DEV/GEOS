@@ -715,7 +715,7 @@ public:
       {
         localIndex localDofIndexPres = ke * resNumDOF;
         localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
-        localPerfJacobian[TAG::WELL ][localDofIndexPres] = isTopInjectorElement ? 0.0 : -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
+        localPerfJacobian[TAG::RES ][localDofIndexPres+NC+1] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
 
         // populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
@@ -724,8 +724,12 @@ public:
           localPerfJacobian[TAG::RES ][localDofIndexComp] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
           localPerfJacobian[TAG::WELL][localDofIndexComp] = isTopInjectorElement ? 0.0 : -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
         }
-        localPerfJacobian[TAG::RES ][localDofIndexPres+NC+1] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
-        localPerfJacobian[TAG::WELL][localDofIndexPres+NC+1] = isTopInjectorElement ? 0.0 : -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+
+        if( !isTopInjectorElement )
+        {
+          localPerfJacobian[TAG::WELL ][localDofIndexPres] =  -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
+          localPerfJacobian[TAG::WELL][localDofIndexPres+NC+1] =   -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+        }
       }
 
 

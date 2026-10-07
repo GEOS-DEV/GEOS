@@ -392,10 +392,14 @@ public:
       {
         localIndex localDofIndexPres = ke * resNumDOF;
         localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
-        localPerfJacobian[TAG::WELL ][localDofIndexPres] = isTopInjectorElement ? 0.0 : -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
-
         localPerfJacobian[TAG::RES ][localDofIndexPres+1] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
-        localPerfJacobian[TAG::WELL][localDofIndexPres+1] = isTopInjectorElement ? 0.0 : -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+
+        if( !isTopInjectorElement )
+        {
+          localPerfJacobian[TAG::WELL ][localDofIndexPres] =  -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
+          localPerfJacobian[TAG::WELL][localDofIndexPres+1] =  -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+        }
+
       }
 
 
