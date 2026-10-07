@@ -609,6 +609,13 @@ inline void CoulombFrictionUpdates::constraintCheck( localIndex const k,
     {
       condConv = 2;
     }
+    // Case 2bis: an open element that has closed beyond the tolerance (interpenetration) must be
+    // flagged too, otherwise the configuration is deemed converged and it can never go back to contact
+    if( fractureState == FractureState::Open &&
+        dispJump[0] < -normalDisplacementTolerance )
+    {
+      condConv = 2;
+    }
     // Case 3: it is stick and dg is greater than 0
     if( fractureState == FractureState::Stick &&
         deltaDispNorm > slidingTolerance )
