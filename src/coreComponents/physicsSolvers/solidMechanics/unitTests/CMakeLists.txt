@@ -15,6 +15,9 @@ foreach( test_source ${solidMechanics_gtest_tests} )
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList}
                       FOLDER UnitTests )
+  # Meshes read by the tests
+  target_compile_definitions( ${test_name} PRIVATE
+                              "GEOS_MODAL_TEST_DATA_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/data\"" )
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} )
 

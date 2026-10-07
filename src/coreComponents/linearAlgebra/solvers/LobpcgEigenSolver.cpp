@@ -219,15 +219,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   integer const nev = params.numEigenvalues - numConstraints;
   if( nev <= 0 )
   {
-    EigenSolverResult trivial;
-    modes.clear();
-    for( integer i = 0; i < params.numEigenvalues && i < numConstraints; ++i )
-    {
-      modes.push_back( std::move( constraints.vectors[i] ) );
-    }
-    trivial.converged = true;
-    trivial.numConverged = LvArray::integerConversion< integer >( modes.size() );
-    this->finalizeResult( problem, modes, trivial );
+    EigenSolverResult trivial = this->returnConstraintsOnly( problem, constraints, modes );
     trivial.solveTime = watch.elapsedTime();
     return trivial;
   }
@@ -469,10 +461,12 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       }
     }
     std::vector< Vector const * > const iterates = multiVectorOperations::constPointers( S );
+    std::vector< Vector const * > const massIterates = multiVectorOperations::constPointers( MS );
+    // The images by M of the directions are known when entering (W: computed by the test of the column, P: refreshed
+    // after the last extraction). Each pass updates them with the same combination as the directions, and one
+    // application at the end removes the drift.
     for( integer pass = 0; pass < 2; ++pass )
     {
-      for( size_t j = 0; j < directions.size(); ++j )
-        problem.mass.apply( *directions[j], *massDirections[j] );
       array2d< real64 > products;
       multiVectorOperations::dots( iterates, multiVectorOperations::constPointers( massDirections ), products );
       for( size_t j = 0; j < directions.size(); ++j )
@@ -481,6 +475,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
         for( integer i = 0; i < n; ++i )
           weights[i] = -products( i, j );
         multiVectorOperations::combine( iterates, weights, *directions[j], true );
+        multiVectorOperations::combine( massIterates, weights, *massDirections[j], true );
       }
     }
     for( size_t j = 0; j < directions.size(); ++j )

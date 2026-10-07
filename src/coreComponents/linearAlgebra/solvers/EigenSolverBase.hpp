@@ -53,7 +53,8 @@ struct EigenSolverResult
   /// Eigenvalues lambda, ascending. These are Rayleigh quotients of the returned vectors.
   array1d< real64 > eigenvalues;
 
-  /// Relative residuals ||K x - lambda M x||_2 / ( |lambda - shift| ||M x||_2 ) of the returned eigenpairs
+  /// Relative residuals ||K x - lambda M x||_2 / ( s ||M x||_2 ) of the returned eigenpairs, where s is the largest of
+  /// |shift| and of the returned |lambda|
   array1d< real64 > residuals;
 };
 
@@ -224,6 +225,17 @@ public:
   static Vector makeVector( Vector const & prototype );
 
 protected:
+
+  /**
+   * @brief Result of a problem whose requested eigenpairs are all among the constraints.
+   * @param[in] problem the operators of the pencil
+   * @param[in,out] constraints the constraint space, whose vectors are moved out
+   * @param[out] modes the first constraints, as many as eigenpairs are requested
+   * @return the converged result, without the solve time
+   */
+  EigenSolverResult returnConstraintsOnly( Problem const & problem,
+                                           ConstraintSpace & constraints,
+                                           std::vector< Vector > & modes ) const;
 
   /// Solver parameters
   EigenSolverParameters m_params;

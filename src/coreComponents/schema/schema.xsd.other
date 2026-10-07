@@ -1406,7 +1406,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="modalFrequencies" type="real64_array" />
 		<!--modalParticipationFactors => Participation factors of the last modal analysis, per mode and direction, for M-normalized modes.-->
 		<xsd:attribute name="modalParticipationFactors" type="real64_array2d" />
-		<!--modalResiduals => Relative residuals ||K x - lambda M x|| / ( |lambda - sigma| ||M x|| ) of the last modal analysis.-->
+		<!--modalResiduals => Relative residuals ||K x - lambda M x|| / ( s ||M x|| ) of the last modal analysis, with s the largest of |sigma| and of the computed |lambda|.-->
 		<xsd:attribute name="modalResiduals" type="real64_array" />
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />

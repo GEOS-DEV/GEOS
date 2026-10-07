@@ -182,6 +182,15 @@ protected:
 
   virtual void postInputInitialization() override;
 
+  /**
+   * @brief Rigid-body modes for the multigrid coarse spaces, when amgNullSpaceType is rigidBodyModes.
+   * @return the modes of the current step, empty otherwise
+   */
+  virtual arrayView1d< ParallelVector const > getLinearSolverNearNullKernel() const override
+  {
+    return m_rigidBodyModes.toViewConst();
+  }
+
 private:
 
   /// Number of modes requested by the modal analysis

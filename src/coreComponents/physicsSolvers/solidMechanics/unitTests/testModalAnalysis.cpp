@@ -495,24 +495,36 @@ TEST( SolidMechanicsModal, fewModesWithDefaultBasis )
   }
 }
 
-#ifdef GEOS_SPHERE_BENCHMARK_DIR
-TEST( SolidMechanicsModal, consistentFreeTetrahedron )
+namespace
 {
-  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 )
-    GTEST_SKIP() << "A one-cell body is a serial assembly oracle.";
+
+/**
+ * @brief Modal analysis of the free unit tetrahedron (vertices 0, e_x, e_y, e_z), E = 1, nu = 0.3, rho = 1.
+ * @param massType the modalMassType
+ * @return the result with eight eigenvalues, the six rigid-body modes being deflated
+ */
+ModalResult runFreeTetrahedron( string const & massType )
+{
   // Leave room for the Arnoldi search basis in the six-dimensional elastic complement.
   string xml = makeInput( "", 8, 1, "arnoldi", 1 );
   size_t const meshStart = xml.find( "  <Mesh>" );
   size_t const meshEnd = xml.find( "  </Mesh>", meshStart ) + string( "  </Mesh>" ).size();
   xml.replace( meshStart, meshEnd - meshStart,
-               "<Mesh><VTKMesh name=\"mesh\" file=\"" GEOS_SPHERE_BENCHMARK_DIR "/tests/unit/data/free_tetra.vtu\"/></Mesh>" );
+               "<Mesh><VTKMesh name=\"mesh\" file=\"" GEOS_MODAL_TEST_DATA_DIR "/free_tetra.vtu\"/></Mesh>" );
   xml = replaceAll( xml, "cellBlocks=\"{ cb }\"", "cellBlocks=\"{ tetrahedra }\"" );
   xml = replaceAll( xml, "defaultPoissonRatio=\"0\"", "defaultPoissonRatio=\"0.3\"" );
-  xml = replaceAll( xml, "modalTolerance=\"1e-9\"", "modalTolerance=\"1e-9\" modalMassType=\"consistent\" modalVerifyFreeBody=\"1\"" );
-  ModalResult const result = runModalAnalysis( xml );
-  ASSERT_EQ( result.eigenvalues.size(), 8u );
+  xml = replaceAll( xml, "modalTolerance=\"1e-9\"", "modalTolerance=\"1e-9\" modalMassType=\"" + massType + "\" modalVerifyFreeBody=\"1\"" );
+  return runModalAnalysis( xml );
+}
 
-  // Independent dense oracle. For the unit simplex, grad N = (-1,-1,-1), e_x, e_y, e_z.
+/**
+ * @brief Dense reference for the free unit tetrahedron.
+ * @param consistent if true, the consistent mass M = ( I + J ) / 120 (x) I_3, otherwise the lumped mass I / 24
+ * @return the twelve eigenvalues of K x = lambda M x in ascending order
+ */
+std::vector< real64 > freeTetrahedronEigenvalues( bool const consistent )
+{
+  // For the unit simplex, grad N = (-1,-1,-1), e_x, e_y, e_z.
   real64 const gradients[4][3] = { {-1, -1, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
   real64 B[6][12] = {};
   for( integer a = 0; a < 4; ++a )
@@ -525,12 +537,14 @@ TEST( SolidMechanicsModal, consistentFreeTetrahedron )
   }
   real64 const mu = 1.0 / 2.6, lambdaLame = 0.3 / ( 1.3 * 0.4 );
   real64 K[12][12] = {}, W[12][12] = {};
-  // M = (I + J)/120 tensor I_3. W = M^{-1/2} analytically, using J^2=4J.
+  // W = M^{-1/2}. Consistent mass: analytically, using J^2 = 4 J. Lumped mass: M = I / 24.
   for( integer i = 0; i < 12; ++i )
     for( integer j = 0; j < 12; ++j )
     {
-      W[i][j] = i%3 == j%3 ? std::sqrt( 120.0 ) *
-                ( ( i == j ? 1.0 : 0.0 ) - ( 1.0 - 1.0/std::sqrt( 5.0 ) )/4.0 ) : 0.0;
+      if( consistent )
+        W[i][j] = i%3 == j%3 ? std::sqrt( 120.0 ) * ( ( i == j ? 1.0 : 0.0 ) - ( 1.0 - 1.0/std::sqrt( 5.0 ) )/4.0 ) : 0.0;
+      else
+        W[i][j] = i == j ? std::sqrt( 24.0 ) : 0.0;
       for( integer p = 0; p < 6; ++p )
         for( integer q = 0; q < 6; ++q )
         {
@@ -547,10 +561,34 @@ TEST( SolidMechanicsModal, consistentFreeTetrahedron )
         for( integer q = 0; q < 12; ++q )
           S( i, j ) += W[i][p] * K[p][q] * W[q][j];
   BlasLapackLA::matrixSymmetricEigen( S.toSliceConst(), reference.toSlice(), V.toSlice() );
-  for( integer k = 0; k < 8; ++k )
-    EXPECT_NEAR( result.eigenvalues[k], reference[k], 1e-8 + 1e-8 * std::fabs( reference[k] ) );
+  return std::vector< real64 >( reference.begin(), reference.end() );
 }
-#endif
+
+} // namespace
+
+TEST( SolidMechanicsModal, consistentFreeTetrahedron )
+{
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 )
+    GTEST_SKIP() << "A one-cell body is a serial assembly oracle.";
+  ModalResult const result = runFreeTetrahedron( "consistent" );
+  std::vector< real64 > const reference = freeTetrahedronEigenvalues( true );
+  ASSERT_EQ( result.eigenvalues.size(), 8u );
+  for( integer k = 0; k < 8; ++k )
+    EXPECT_NEAR( result.eigenvalues[k], reference[k], 1e-8 + 1e-8 * std::fabs( reference[k] ) ) << "mode " << k + 1;
+}
+
+TEST( SolidMechanicsModal, lumpedFreeTetrahedron )
+{
+  // The lumped mass of a Tet4 is a quarter of the element mass per node. The nodal mass of the base solver used to
+  // be six times too large on tetrahedra, which scaled every eigenvalue by 1/6.
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 )
+    GTEST_SKIP() << "A one-cell body is a serial assembly oracle.";
+  ModalResult const result = runFreeTetrahedron( "lumped" );
+  std::vector< real64 > const reference = freeTetrahedronEigenvalues( false );
+  ASSERT_EQ( result.eigenvalues.size(), 8u );
+  for( integer k = 0; k < 8; ++k )
+    EXPECT_NEAR( result.eigenvalues[k], reference[k], 1e-8 + 1e-8 * std::fabs( reference[k] ) ) << "mode " << k + 1;
+}
 
 int main( int argc, char * * argv )
 {

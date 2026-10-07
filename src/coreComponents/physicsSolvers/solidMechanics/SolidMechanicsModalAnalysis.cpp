@@ -198,7 +198,7 @@ SolidMechanicsModalAnalysis::SolidMechanicsModalAnalysis( string const & name,
   registerWrapper( viewKeyStruct::modalResidualsString(), &m_modalResiduals ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Relative residuals ||K x - lambda M x|| / ( |lambda - sigma| ||M x|| ) of the last modal analysis." );
+    setDescription( "Relative residuals ||K x - lambda M x|| / ( s ||M x|| ) of the last modal analysis, with s the largest of |sigma| and of the computed |lambda|." );
 
   registerWrapper( viewKeyStruct::modalParticipationFactorsString(), &m_modalParticipationFactors ).
     setInputFlag( InputFlags::FALSE ).
@@ -414,6 +414,11 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
   setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, true );
   setSystemSetupTimestamp( meshTimestamp );
 
+  // The multigrid preconditioner of the shifted matrix needs the rigid-body modes (K + alpha M is nearly singular
+  // for a free body). They depend on the degrees of freedom numbering, which was just rebuilt.
+  m_rigidBodyModes.clear();
+  computeRigidBodyModes( domain );
+
   implicitStepSetup( time_n, dt, domain );
 
   m_localMatrix.zero();
@@ -604,7 +609,8 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
         rigidBodyModes = LAIHelperFunctions::computeRigidBodyModes< ParallelVector >( nodes.referencePosition(),
                                                                                       dofNumber,
                                                                                       m_dofManager.rankOffset(),
-                                                                                      m_dofManager.numLocalDofs() );
+                                                                                      m_dofManager.numLocalDofs(),
+                                                                                      true );
       }
     } );
     if( m_modalVerifyFreeBody )
@@ -733,6 +739,7 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
   m_modalParticipationFactors.zero();
 
   stdVector< string > shapeFieldNames;
+  std::vector< real64 > localParticipation( 3 * static_cast< size_t >( numModes ), 0.0 );
   for( integer k = 0; k < numModes; ++k )
   {
     real64 const lambda = eigenResult.eigenvalues[k];
@@ -740,7 +747,9 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
     m_modalFrequencies[k] = ( lambda < 0.0 ? -1.0 : 1.0 ) * std::sqrt( std::fabs( lambda ) ) / ( 2.0 * M_PI );
     m_modalResiduals[k] = eigenResult.residuals[k];
 
-    // Participation factors: Gamma_d = sum_i m_i phi_i e_d
+    // Participation factors Gamma_d = phi^T M e_d, where e_d is the rigid translation in direction d. M e_d is the
+    // row sum of M, i.e. the lumped mass, for the consistent mass too (the shape functions sum to one). The local
+    // sums are reduced over the ranks once, after the loop.
     arrayView1d< real64 const > const phi = modes[k].values();
     arrayView1d< real64 const > const mass = massDiag.values();
     RAJA::ReduceSum< parallelDeviceReduce, real64 > sumX( 0.0 );
@@ -752,9 +761,9 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
       sumY += mass[3 * n + 1] * phi[3 * n + 1];
       sumZ += mass[3 * n + 2] * phi[3 * n + 2];
     } );
-    m_modalParticipationFactors( k, 0 ) = MpiWrapper::sum( sumX.get(), MPI_COMM_GEOS );
-    m_modalParticipationFactors( k, 1 ) = MpiWrapper::sum( sumY.get(), MPI_COMM_GEOS );
-    m_modalParticipationFactors( k, 2 ) = MpiWrapper::sum( sumZ.get(), MPI_COMM_GEOS );
+    localParticipation[3 * k] = sumX.get();
+    localParticipation[3 * k + 1] = sumY.get();
+    localParticipation[3 * k + 2] = sumZ.get();
 
     // Mode shape to the nodal field
     string const fieldName = modeShapeFieldName( k + 1 );
@@ -764,6 +773,12 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
                                     1.0 );
     shapeFieldNames.emplace_back( fieldName );
   }
+
+  std::vector< real64 > globalParticipation( localParticipation.size(), 0.0 );
+  MpiWrapper::allReduce( localParticipation, globalParticipation, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  for( integer k = 0; k < numModes; ++k )
+    for( integer d = 0; d < 3; ++d )
+      m_modalParticipationFactors( k, d ) = globalParticipation[3 * k + d];
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

@@ -212,14 +212,19 @@ MATRIX permuteMatrix( MATRIX const & matrix,
  * @param dofIndex array of nodal degree-of-freedom indices
  * @param dofOffset global dof offset for displacement field
  * @param numLocalDof the number of locally owned displacement dofs
+ * @param centerOnGeometry if true, the rotations are taken about the geometric center of the owned nodes (one
+ *        collective reduction) instead of the origin. This keeps the rotations well-conditioned against the
+ *        translations for a body that is far from the origin, at the price of a different (equivalent) basis.
  * @return the output array of linear algebra vectors containing RBMs
+ * @note The function is collective on MPI_COMM_GEOS.
  */
 template< typename VECTOR >
 array1d< VECTOR >
 computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                        arrayView1d< globalIndex const > const & dofIndex,
                        globalIndex const dofOffset,
-                       localIndex const numLocalDof )
+                       localIndex const numLocalDof,
+                       bool const centerOnGeometry = false )
 {
   GEOS_ASSERT_EQ( nodePosition.size( 0 ), dofIndex.size() );
   integer const numComponents = nodePosition.size( 1 );
@@ -246,30 +251,33 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
     rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
   }
 
-  // Compute the geometric center from owned nodes, including all MPI partitions.
-  // Centering reduces translation/rotation cancellation for bodies far from the origin.
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > sumX( 0.0 ), sumY( 0.0 ), sumZ( 0.0 ), count( 0.0 );
-  forAll< parallelDevicePolicy<> >( dofIndex.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+  // Center of the rotations: the origin, or the geometric center of the owned nodes of all the MPI partitions
+  real64 center[3] = { 0.0, 0.0, 0.0 };
+  if( centerOnGeometry )
   {
-    globalIndex const localDof = dofIndex[i] - dofOffset;
-    if( dofIndex[i] >= 0 && 0 <= localDof && localDof < numLocalDof )
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > sumX( 0.0 ), sumY( 0.0 ), sumZ( 0.0 ), count( 0.0 );
+    forAll< parallelDevicePolicy<> >( dofIndex.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      sumX += nodePosition( i, 0 );
-      sumY += nodePosition( i, 1 );
-      if( numComponents == 3 )
-        sumZ += nodePosition( i, 2 );
-      count += 1.0;
+      globalIndex const localDof = dofIndex[i] - dofOffset;
+      if( dofIndex[i] >= 0 && 0 <= localDof && localDof < numLocalDof )
+      {
+        sumX += nodePosition( i, 0 );
+        sumY += nodePosition( i, 1 );
+        if( numComponents == 3 )
+          sumZ += nodePosition( i, 2 );
+        count += 1.0;
+      }
+    } );
+    // One reduction for the sums and the count. A target without any owned node keeps the origin as center.
+    std::array< real64, 4 > const localSums{ sumX.get(), sumY.get(), sumZ.get(), count.get() };
+    std::array< real64, 4 > globalSums{};
+    MpiWrapper::allReduce( localSums, globalSums, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+    if( globalSums[3] > 0.0 )
+    {
+      for( integer c = 0; c < 3; ++c )
+        center[c] = globalSums[c] / globalSums[3];
     }
-  } );
-  // One reduction for the sums and the count. A target without any owned node keeps the origin as center, as
-  // before the centering.
-  std::array< real64, 4 > const localSums{ sumX.get(), sumY.get(), sumZ.get(), count.get() };
-  std::array< real64, 4 > globalSums{};
-  MpiWrapper::allReduce( localSums, globalSums, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-  real64 const globalCount = globalSums[3];
-  real64 const center[3] = { globalCount > 0.0 ? globalSums[0] / globalCount : 0.0,
-                             globalCount > 0.0 ? globalSums[1] / globalCount : 0.0,
-                             globalCount > 0.0 ? globalSums[2] / globalCount : 0.0 };
+  }
 
   // Rotation RBMs
   for( localIndex k = numComponents; k < numRidigBodyModes; ++k )

@@ -73,7 +73,6 @@ public:
     m_params( params ),
     m_problem( problem ),
     m_constraints( constraints ),
-    m_ncv( ncv ),
     m_b( blockSize ),
     m_ld( ncv + blockSize ),
     m_H( static_cast< size_t >( m_ld ) * static_cast< size_t >( ncv ), 0.0 )
@@ -371,6 +370,10 @@ private:
     for( int attempt = 0; attempt < 5; ++attempt )
     {
       m_V[index].rand( static_cast< unsigned >( m_params.seed ) + 7919u * static_cast< unsigned >( m_randomCount++ ) );
+      // M r must be M-orthogonal to the constraints: they span the null space of K - shift M when the shift is an
+      // eigenvalue of the deflated modes (e.g. the rigid-body modes for a zero shift), and the system is then
+      // only consistent for a right-hand side without component in it
+      m_constraints.project( m_V[index] );
       m_problem.mass.apply( m_V[index], m_MV[index] );
       applyOperator( m_MV[index], m_V[index] );
       if( orthonormalize( index, nullptr ) > 0.0 )
@@ -379,7 +382,9 @@ private:
       }
     }
     GEOS_ERROR( "Eigensolver could not generate a new starting vector: the problem is too small for the "
-                "requested subspace size, or M is singular on the whole space." );
+                "requested subspace size, M is singular on the whole space, or the linear solves with K - shift M "
+                "failed (for example because the shift is, to rounding, an eigenvalue: use a slightly different "
+                "shift frequency, or a more robust linear solver)." );
   }
 
   /// Relative drop of the norm below which a vector is considered to be in the span of the basis
@@ -388,7 +393,6 @@ private:
   EigenSolverParameters const & m_params;
   Problem const & m_problem;
   Constraints const & m_constraints;
-  integer const m_ncv;
   integer const m_b;
   integer const m_ld;
   std::vector< real64 > m_H;
@@ -422,15 +426,7 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
   integer const b = params.blockSize;
   if( nev <= 0 )
   {
-    EigenSolverResult trivial;
-    modes.clear();
-    for( integer i = 0; i < params.numEigenvalues && i < numConstraints; ++i )
-    {
-      modes.push_back( std::move( constraints.vectors[i] ) );
-    }
-    trivial.converged = true;
-    trivial.numConverged = LvArray::integerConversion< integer >( modes.size() );
-    this->finalizeResult( problem, modes, trivial );
+    EigenSolverResult trivial = this->returnConstraintsOnly( problem, constraints, modes );
     trivial.solveTime = watch.elapsedTime();
     return trivial;
   }
