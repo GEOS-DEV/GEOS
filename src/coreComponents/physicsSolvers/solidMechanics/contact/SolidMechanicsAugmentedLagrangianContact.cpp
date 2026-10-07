@@ -1137,6 +1137,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               traction,
                                               dispJump,
                                               deltaDispJump,
+                                              fractureState,
                                               traction_new_v );
         }
         else
