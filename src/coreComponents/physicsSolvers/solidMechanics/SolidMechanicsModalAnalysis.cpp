@@ -377,8 +377,18 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
                    GEOS_FMT( "Modal analysis: only {} of {} eigenpairs converged to the tolerance {:.1e} after {} restarts",
                              eigenResult.numConverged, m_modalNumModes, m_modalTolerance, eigenResult.numIterations ),
                    getDataContext() );
+  // The convergence test of the eigensolver trusts the linear solves. If none of them converged, the modes are
+  // meaningless, whatever the Ritz estimates say. This happens for example with cg when the shift is above the
+  // lowest eigenvalue: K - sigma M is then indefinite.
+  GEOS_ERROR_IF( numLinearSolves > 0 && numLinearFailures == numLinearSolves,
+                 GEOS_FMT( "Modal analysis: none of the {} linear solves converged, so the modes are not valid. "
+                           "With the cg solver, use a shift frequency below the lowest mode (a negative shift frequency) "
+                           "so that K - sigma M is positive definite, or use gmres or a direct solver. "
+                           "Otherwise tighten krylovTol or strengthen the preconditioner.",
+                           numLinearSolves ),
+                 getDataContext() );
   GEOS_WARNING_IF( numLinearFailures > 0,
-                   GEOS_FMT( "Modal analysis: {} of {} linear solves did not converge; "
+                   GEOS_FMT( "Modal analysis: {} of {} linear solves did not converge, so the eigenpairs may be inaccurate; "
                              "tighten the linear solver tolerance (krylovTol) or strengthen the preconditioner",
                              numLinearFailures, numLinearSolves ),
                    getDataContext() );
@@ -456,6 +466,22 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
                         "{:.3f} s in linear solves), {:.3f} s eigensolve, {:.3f} s total",
                         eigenResult.numIterations, eigenResult.numOperatorApplications, numLinearSolves,
                         numLinearIterations, linearSolveTime, eigenResult.solveTime, totalWatch.elapsedTime() ) );
+  }
+
+  // The preconditioner and the linear solver refer to the shifted matrix, which is local to this function, while
+  // the solver members m_precond and m_linearSolver outlive it. Release the matrix before it goes out of scope:
+  // some backends (e.g. Trilinos/ML) crash when the matrix is deleted before the preconditioner.
+  if( standalonePreconditioner )
+  {
+    standalonePreconditioner->clear();
+  }
+  if( m_precond )
+  {
+    m_precond->clear();
+  }
+  if( m_linearSolver )
+  {
+    m_linearSolver->clear();
   }
 
   return dt;
