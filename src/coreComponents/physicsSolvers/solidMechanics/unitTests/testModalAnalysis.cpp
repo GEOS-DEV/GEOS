@@ -237,9 +237,11 @@ ModalResult runModalAnalysis( string const & xml )
       readback.move( hostMemorySpace, false );
       for( localIndex a = 0; a < nodes.size(); ++a )
         if( ghostRanks[a] >= 0 )
+        {
           for( integer d = 0; d < 3; ++d )
             EXPECT_DOUBLE_EQ( readback( a, d ), ownerValues[( k * globalNodes + globalIds[a] ) * 3 + d] )
               << "mode " << k + 1 << ", global node " << globalIds[a] << ", component " << d;
+        }
     }
   }
   return result;

@@ -77,7 +77,7 @@ template< typename LAI >
 class MultiVectorOperationsTest : public ::testing::Test
 {
 public:
-  using Vector = typename LAI::ParallelVector;
+  using VectorType = typename LAI::ParallelVector;
 };
 
 TYPED_TEST_SUITE_P( MultiVectorOperationsTest );
@@ -85,7 +85,7 @@ TYPED_TEST_SUITE_P( MultiVectorOperationsTest );
 // More vectors than the tile size, so that several tiles are needed in both directions
 TYPED_TEST_P( MultiVectorOperationsTest, dots )
 {
-  using Vector = typename TestFixture::Vector;
+  using Vector = typename TestFixture::VectorType;
   localIndex constexpr startSize = 3000;
   stdVector< Vector > const X = createBlock< Vector >( startSize, 19, 0 );
   stdVector< Vector > const Y = createBlock< Vector >( startSize, 17, 40 );
@@ -107,7 +107,7 @@ TYPED_TEST_P( MultiVectorOperationsTest, dots )
 
 TYPED_TEST_P( MultiVectorOperationsTest, dotsOfOneVector )
 {
-  using Vector = typename TestFixture::Vector;
+  using Vector = typename TestFixture::VectorType;
   stdVector< Vector > const X = createBlock< Vector >( 100, 5, 0 );
 
   array2d< real64 > products;
@@ -125,7 +125,7 @@ TYPED_TEST_P( MultiVectorOperationsTest, dotsOfOneVector )
 // The symmetric variant computes the upper triangle of a Gram matrix and mirrors it
 TYPED_TEST_P( MultiVectorOperationsTest, symmetricDots )
 {
-  using Vector = typename TestFixture::Vector;
+  using Vector = typename TestFixture::VectorType;
   localIndex constexpr startSize = 3000;
   stdVector< Vector > const X = createBlock< Vector >( startSize, 37, 0 );
 
@@ -147,7 +147,7 @@ TYPED_TEST_P( MultiVectorOperationsTest, symmetricDots )
 
 TYPED_TEST_P( MultiVectorOperationsTest, combine )
 {
-  using Vector = typename TestFixture::Vector;
+  using Vector = typename TestFixture::VectorType;
   localIndex constexpr startSize = 2500;
   integer constexpr count = 21;
   stdVector< Vector > const V = createBlock< Vector >( startSize, count, 0 );
@@ -188,7 +188,7 @@ TYPED_TEST_P( MultiVectorOperationsTest, combine )
 
 TYPED_TEST_P( MultiVectorOperationsTest, combineNothing )
 {
-  using Vector = typename TestFixture::Vector;
+  using Vector = typename TestFixture::VectorType;
   Vector x;
   createAndFill( 50, 3, x );
   Vector kept( x );
