@@ -23,6 +23,7 @@
 #include "PorosityBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
 {
@@ -208,6 +209,14 @@ public:
                                        real64 const & meanTotalStressIncrement ) const
   {
     m_meanTotalStressIncrement_k[k][q] = meanTotalStressIncrement;
+  }
+
+  GEOS_HOST_DEVICE
+  void addToMeanTotalStressIncrement( localIndex const k,
+                                      localIndex const q,
+                                      real64 const & meanTotalStressIncrement ) const
+  {
+    RAJA::atomicAdd< parallelDeviceAtomic >( &m_meanTotalStressIncrement_k[k][q], meanTotalStressIncrement );
   }
 
 protected:

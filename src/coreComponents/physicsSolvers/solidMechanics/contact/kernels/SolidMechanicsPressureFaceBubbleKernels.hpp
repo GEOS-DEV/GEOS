@@ -248,8 +248,6 @@ public:
 
     constexpr int nBubbleUdof = numFacesPerElem*3;
 
-    constexpr int nUdof = numNodesPerElem*3;
-
     real64 dBubbleNdX[ numFacesPerElem ][ 3 ];
     // Next line is needed because I only inserted a placeholder for calcGradFaceBubbleN in some finite elements
     LvArray::tensorOps::fill< numFacesPerElem, 3 >( dBubbleNdX, 0 );
@@ -265,9 +263,6 @@ public:
     real64 strainBubbleMatrix[6][nBubbleUdof];
     solidMechanicsConformingContactKernelsHelper::assembleStrainOperator< 6, nBubbleUdof, numFacesPerElem >( strainBubbleMatrix, dBubbleNdX );
 
-    real64 strainMatrix[6][nUdof];
-    solidMechanicsConformingContactKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
-
     real64 biotPressure[6] = {0};
     LvArray::tensorOps::symAddIdentity< 3 >( biotPressure, -biotCoefficient * stack.pLocal[0] );
 
@@ -276,34 +271,22 @@ public:
     LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( Rb_gauss, strainBubbleMatrix, biotPressure );
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localRb, Rb_gauss, -detJ );
 
-    real64 localStrainBubbleMatrix[6][3];
+    // Bubble contribution to the fixed-stress porosity update: the bulk fixed-stress kernel (run before
+    // this one in the same assembly) sets the mean total stress increment from the nodal strain only;
+    // add K * tr( B_b * delta b ) for the bubble of the parent face.
+    // No constitutive update here: smallStrainUpdatePoromechanicsFixedStress would overwrite the stored
+    // stress (saveStress) and the mean-stress increment, e.g. dropping the thermal increment.
     localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
-    for( localIndex i = 0; i < 6; ++i )
+    real64 bubbleVolumetricStrainIncrement = 0.0;
+    for( localIndex i = 0; i < 3; ++i )
     {
       for( localIndex j = 0; j < 3; ++j )
       {
-        localStrainBubbleMatrix[i][j] = strainBubbleMatrix[i][parentFaceIndex*3+j];
+        bubbleVolumetricStrainIncrement += strainBubbleMatrix[i][parentFaceIndex*3+j] * stack.bIncrLocal[j];
       }
     }
-    real64 strainIncBubble[6] = {0};
-    real64 strainInc[6] = {0};
+    m_constitutiveUpdate.addVolumetricStrainIncrementToMeanTotalStress( k, q, bubbleVolumetricStrainIncrement );
 
-    LvArray::tensorOps::Ri_eq_AijBj< 6, 3 >( strainIncBubble, localStrainBubbleMatrix, stack.bIncrLocal );
-    LvArray::tensorOps::Ri_eq_AijBj< 6, nUdof >( strainInc, strainMatrix, stack.uIncrLocal );
-
-    //LvArray::tensorOps::add< 6 >( strainInc, strainIncBubble );
-
-    real64 totalStress[6] = {0};
-    typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
-
-    m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k, q,
-                                                                    m_dt,
-                                                                    m_pressure[k],
-                                                                    m_pressure_n[k],
-                                                                    0.0, 0.0, 0.0,
-                                                                    strainInc,
-                                                                    totalStress,
-                                                                    stiffness );
 
   }
 
