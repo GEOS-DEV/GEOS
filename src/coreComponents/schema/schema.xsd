@@ -5620,7 +5620,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
-		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds new modes.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
 		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
 		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
@@ -5636,7 +5636,7 @@ Information output from lower logLevels is added with the desired log level
 * arnoldi
 * lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
 		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
@@ -5726,7 +5726,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
-		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds new modes.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
 		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
 		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
@@ -5742,7 +5742,7 @@ Information output from lower logLevels is added with the desired log level
 * arnoldi
 * lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
 		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
@@ -5814,7 +5814,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
-		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds new modes.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
 		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
 		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
@@ -5830,7 +5830,7 @@ Information output from lower logLevels is added with the desired log level
 * arnoldi
 * lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
 		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
@@ -5904,7 +5904,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
-		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds new modes.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
 		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
 		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
@@ -5920,7 +5920,7 @@ Information output from lower logLevels is added with the desired log level
 * arnoldi
 * lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
 		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
@@ -5988,7 +5988,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
 		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
-		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of an additional Krylov cycle.-->
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds new modes.-->
 		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
 		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
 		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
@@ -6004,7 +6004,7 @@ Information output from lower logLevels is added with the desired log level
 * arnoldi
 * lobpcg-->
 		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
-		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG.-->
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard vector for LOBPCG.-->
 		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
 		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
 		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />

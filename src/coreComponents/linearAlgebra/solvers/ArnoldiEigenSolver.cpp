@@ -436,8 +436,10 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
   }
 
   // Basis dimension: a multiple of the block size, large enough to hold the wanted vectors and a block, and
-  // small enough for the basis to be linearly independent
-  integer ncv = params.subspaceSize > 0 ? params.subspaceSize : std::max( 2 * nev, nev + 2 * b );
+  // small enough for the basis to be linearly independent. The default is at least twice the number of wanted
+  // vectors and never below 20: a small basis restarts too often and can stagnate on a clustered spectrum.
+  integer constexpr minDefaultBasis = 20;
+  integer ncv = params.subspaceSize > 0 ? params.subspaceSize : std::max( { 2 * nev, nev + 2 * b, minDefaultBasis } );
   ncv = std::max( ncv, nev + b );
   ncv = ( ncv + b - 1 ) / b * b;
   globalIndex const maxBasis = ( problem.numUnknowns > 0 ? problem.numUnknowns : prototype.globalSize() ) - numConstraints;
@@ -452,34 +454,54 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
   KrylovSchurState< Vector > state( params, problem, constraints, prototype, ncv, b );
   state.initialize();
 
-  // A check that finds more copies of a repeated eigenvalue does not prove completeness, because the random block
-  // can find some copies and miss others. The checks continue until one of them changes nothing. Each check that
-  // finds copies replaces at least one wanted pair by a pair closer to the shift, so at most nev + 1 checks run.
+  // Completeness check. After the wanted pairs converge, the solver keeps them and expands the Krylov space of a
+  // random vector that is M-orthogonal to them. That space contains a direction in every eigenspace that is left,
+  // so a missed copy of a repeated eigenvalue appears as a Ritz pair among the wanted ones. The check is complete
+  // only when the best Ritz pair that is not kept, the sentinel, has converged too: a missed copy is then not
+  // hidden behind a Ritz value that has not yet converged to it. This matters when the Ritz values are clustered,
+  // for example with a shift far below the spectrum. A check that changes the wanted Ritz values has found new
+  // copies, and another check follows. Each check that finds copies replaces at least one wanted pair by a pair
+  // closer to the shift, so at most nev + 1 checks run.
+  integer const sentinel = ( params.completenessCheck != 0 && ncv >= nev + b + 1 ) ? 1 : 0;
   integer const maxCompletenessChecks = nev + 1;
   std::vector< real64 > checkedTheta;
   integer m = 0;
   integer restarts = 0;
   integer numChecks = 0;
-  integer numConverged = 0;
   bool verifying = false;
+  bool checkIncomplete = false;
   RitzPairs ritz;
+
+  // True if the wanted Ritz values differ from those recorded at the start of the current check
+  auto const wantedChanged = [&]( RitzPairs const & r )
+  {
+    real64 const floor = std::pow( DBL_EPSILON, 2.0 / 3.0 ) * std::fabs( r.theta[0] );
+    for( integer i = 0; i < nev; ++i )
+    {
+      real64 const scale = std::max( std::fabs( r.theta[i] ), floor );
+      if( std::fabs( r.theta[i] - checkedTheta[i] ) > 10.0 * params.tolerance * scale )
+      {
+        return true;
+      }
+    }
+    return false;
+  };
 
   for(;; )
   {
-    bool converged = false;
+    integer const wanted = verifying ? nev + sentinel : nev;
     bool haveRitz = false;
     while( m + b <= ncv )
     {
       state.extendBlock( m );
       m += b;
       haveRitz = false;
-      if( !verifying && m >= nev )
+      if( m >= wanted )
       {
         ritz = state.ritz( m );
         haveRitz = true;
-        if( state.countConverged( ritz, nev ) == nev )
+        if( state.countConverged( ritz, wanted ) == wanted )
         {
-          converged = true;
           break;
         }
       }
@@ -488,31 +510,25 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
     {
       ritz = state.ritz( m );
     }
-    numConverged = state.countConverged( ritz, nev );
-    converged = ( numConverged == nev );
+    integer const numConvergedWanted = state.countConverged( ritz, wanted );
 
     GEOS_LOG_RANK_0_IF( params.logLevel >= 1,
                         GEOS_FMT( "  Arnoldi {}: restart {:3}, basis {:3}, converged {:3}/{}, operator applications {}",
-                                  verifying ? "check" : "     ", restarts, m, numConverged, nev,
+                                  verifying ? "check" : "     ", restarts, m, numConvergedWanted, wanted,
                                   state.numOperatorApplications() ) );
 
-    if( converged )
+    if( numConvergedWanted == wanted )
     {
-      // A check that changes the wanted Ritz values has found new copies of repeated eigenvalues
-      bool foundNewCopies = false;
-      if( verifying )
+      bool const foundNewCopies = verifying && wantedChanged( ritz );
+      GEOS_LOG_RANK_0_IF( params.logLevel >= 1 && foundNewCopies,
+                          "  Arnoldi check: the wanted eigenvalues changed, new copies were found" );
+      if( params.completenessCheck == 0 || ( verifying && !foundNewCopies ) )
       {
-        real64 const floor = std::pow( DBL_EPSILON, 2.0 / 3.0 ) * std::fabs( ritz.theta[0] );
-        for( integer i = 0; i < nev && !foundNewCopies; ++i )
-        {
-          real64 const scale = std::max( std::fabs( ritz.theta[i] ), floor );
-          foundNewCopies = std::fabs( ritz.theta[i] - checkedTheta[i] ) > 10.0 * params.tolerance * scale;
-        }
-        GEOS_LOG_RANK_0_IF( params.logLevel >= 1 && foundNewCopies,
-                            "  Arnoldi check: the wanted eigenvalues changed, new copies were found" );
+        break;
       }
-      if( params.completenessCheck == 0 || ( verifying && !foundNewCopies ) || numChecks >= maxCompletenessChecks )
+      if( numChecks >= maxCompletenessChecks )
       {
+        checkIncomplete = true;
         break;
       }
       // Look for missed copies of repeated eigenvalues: keep the converged vectors and expand a random block
@@ -527,15 +543,26 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
 
     if( restarts >= params.maxIterations )
     {
+      checkIncomplete = verifying;
       break;
     }
     ++restarts;
-    verifying = false;
-    integer const keep = nev + std::min( numConverged, ( ncv - b - nev ) / 2 );
+    if( verifying && wantedChanged( ritz ) )
+    {
+      // New copies entered the wanted pairs: converge them first, then check again
+      verifying = false;
+    }
+    integer const keepWanted = verifying ? nev + sentinel : nev;
+    integer const keep = keepWanted + std::min( numConvergedWanted, ( ncv - b - keepWanted ) / 2 );
     state.restart( keep, ritz, false );
     m = keep;
   }
 
+  GEOS_WARNING_IF( checkIncomplete,
+                   "Arnoldi: the completeness check did not finish, so copies of repeated eigenvalues may be missing. "
+                   "Increase modalMaxIterations or use a larger modalBlockSize." );
+
+  integer const numConverged = state.countConverged( ritz, nev );
   state.extractModes( nev, ritz, modes );
   modes.insert( modes.begin(),
                 std::make_move_iterator( constraints.vectors.begin() ),

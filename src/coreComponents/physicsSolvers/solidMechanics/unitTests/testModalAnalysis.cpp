@@ -75,6 +75,13 @@ string const clampedEnd =
     <FieldSpecification name="fixXneg" objectPath="nodeManager" fieldName="totalDisplacement" component="0" scale="0.0" setNames="{ xneg }"/>
 )xml";
 
+string const fullyClampedEnd =
+  R"xml(
+    <FieldSpecification name="clampX" objectPath="nodeManager" fieldName="totalDisplacement" component="0" scale="0.0" setNames="{ xneg }"/>
+    <FieldSpecification name="clampY" objectPath="nodeManager" fieldName="totalDisplacement" component="1" scale="0.0" setNames="{ xneg }"/>
+    <FieldSpecification name="clampZ" objectPath="nodeManager" fieldName="totalDisplacement" component="2" scale="0.0" setNames="{ xneg }"/>
+)xml";
+
 string makeInput( string const & constraints, integer const numModes, integer const blockSize,
                   string const & solverType = "arnoldi", integer const deflateRigidBodyModes = 0 )
 {
@@ -446,6 +453,46 @@ TEST( SolidMechanicsModal, constraintsOutsideTargetRegionsAreIgnored )
   for( size_t k = 6; k < reference.eigenvalues.size(); ++k )
   {
     EXPECT_NEAR( constrained.eigenvalues[k], reference.eigenvalues[k], 1.0e-6 * reference.eigenvalues[k] ) << "mode " << k + 1;
+  }
+}
+
+TEST( SolidMechanicsModal, clampedBarDoubleBendingModes )
+{
+  // The bar has a square cross-section, so every bending mode is double. The spectrum is: bending (double),
+  // torsion (single), second bending (double). The shift is far below the spectrum: the Ritz values of the
+  // completeness check are then clustered, and a check that is too weak misses the second copy of a double mode.
+  for( integer const numModes : { 3, 5 } )
+  {
+    SCOPED_TRACE( numModes );
+    string const xml = replaceAll( makeInput( fullyClampedEnd, numModes, 1 ), shiftFrequency, "-1.0" );
+    ModalResult const result = runModalAnalysis( xml );
+    ASSERT_EQ( result.eigenvalues.size(), static_cast< size_t >( numModes ) );
+    std::vector< real64 > const & lambda = result.eigenvalues;
+    EXPECT_NEAR( lambda[1], lambda[0], 1.0e-6 * lambda[0] ) << "first bending pair";
+    EXPECT_GT( lambda[2], 1.01 * lambda[1] ) << "torsion mode";
+    if( numModes >= 5 )
+    {
+      EXPECT_GT( lambda[3], 1.01 * lambda[2] ) << "second bending pair";
+      EXPECT_NEAR( lambda[4], lambda[3], 1.0e-6 * lambda[3] ) << "second bending pair";
+    }
+  }
+}
+
+TEST( SolidMechanicsModal, fewModesWithDefaultBasis )
+{
+  // One or two modes, with the default Krylov basis size, must converge to the same values as a larger solve
+  ModalResult const reference = runModalAnalysis( makeInput( fullyClampedEnd, 6, 1 ) );
+  ASSERT_EQ( reference.eigenvalues.size(), 6u );
+  for( integer const numModes : { 1, 2 } )
+  {
+    SCOPED_TRACE( numModes );
+    ModalResult const result = runModalAnalysis( makeInput( fullyClampedEnd, numModes, 1 ) );
+    ASSERT_EQ( result.eigenvalues.size(), static_cast< size_t >( numModes ) );
+    for( integer k = 0; k < numModes; ++k )
+    {
+      EXPECT_NEAR( result.eigenvalues[k], reference.eigenvalues[k], 1.0e-7 * reference.eigenvalues[k] ) << "mode " << k + 1;
+      EXPECT_LT( result.residuals[k], 1.0e-5 ) << "mode " << k + 1;
+    }
   }
 }
 

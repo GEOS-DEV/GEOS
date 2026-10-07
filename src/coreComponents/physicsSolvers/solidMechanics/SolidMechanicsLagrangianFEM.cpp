@@ -183,7 +183,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG "
                     "eigensolver if larger than the number of modes (guard vectors). "
-                    "The default (0) selects twice the number of modes for Arnoldi and no guard vector for LOBPCG." );
+                    "The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard "
+                    "vector for LOBPCG." );
 
   registerWrapper( viewKeyStruct::modalBlockSizeString(), &m_modalBlockSize ).
     setApplyDefaultValue( 1 ).
@@ -196,7 +197,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated "
-                    "eigenvalue was missed, at the cost of an additional Krylov cycle." );
+                    "eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds "
+                    "new modes." );
 
   registerWrapper( viewKeyStruct::modalSeedString(), &m_modalSeed ).
     setApplyDefaultValue( 1 ).
