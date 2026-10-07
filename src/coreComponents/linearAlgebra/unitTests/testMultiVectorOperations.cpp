@@ -122,6 +122,29 @@ TYPED_TEST_P( MultiVectorOperationsTest, dotsOfOneVector )
   }
 }
 
+// The symmetric variant computes the upper triangle of a Gram matrix and mirrors it
+TYPED_TEST_P( MultiVectorOperationsTest, symmetricDots )
+{
+  using Vector = typename TestFixture::Vector;
+  localIndex constexpr startSize = 3000;
+  std::vector< Vector > const X = createBlock< Vector >( startSize, 37, 0 );
+
+  array2d< real64 > full;
+  array2d< real64 > symmetric;
+  multiVectorOperations::dots( pointers( X ), pointers( X ), full );
+  multiVectorOperations::dots( pointers( X ), pointers( X ), symmetric, true );
+
+  ASSERT_EQ( symmetric.size( 0 ), 37 );
+  ASSERT_EQ( symmetric.size( 1 ), 37 );
+  for( integer i = 0; i < 37; ++i )
+  {
+    for( integer j = 0; j < 37; ++j )
+    {
+      EXPECT_NEAR( symmetric( i, j ), full( i, j ), 1.0e-11 * ( 1.0 + std::fabs( full( i, j ) ) ) ) << "pair " << i << ", " << j;
+    }
+  }
+}
+
 TYPED_TEST_P( MultiVectorOperationsTest, combine )
 {
   using Vector = typename TestFixture::Vector;
@@ -179,6 +202,7 @@ TYPED_TEST_P( MultiVectorOperationsTest, combineNothing )
 REGISTER_TYPED_TEST_SUITE_P( MultiVectorOperationsTest,
                              dots,
                              dotsOfOneVector,
+                             symmetricDots,
                              combine,
                              combineNothing );
 

@@ -67,7 +67,8 @@ integer rayleighRitz( std::vector< VECTOR * > const & S,
   DenseMatrix G( m, m );
   DenseMatrix A( m, m );
   std::vector< VECTOR const * > const basis = multiVectorOperations::constPointers( S );
-  multiVectorOperations::dots( basis, multiVectorOperations::constPointers( MS ), products );
+  // Both Gram matrices are symmetric, so only their upper triangles are computed
+  multiVectorOperations::dots( basis, multiVectorOperations::constPointers( MS ), products, true );
   for( integer j = 0; j < m; ++j )
   {
     for( integer i = 0; i < m; ++i )
@@ -75,7 +76,7 @@ integer rayleighRitz( std::vector< VECTOR * > const & S,
       G( i, j ) = 0.5 * ( products( i, j ) + products( j, i ) );
     }
   }
-  multiVectorOperations::dots( basis, multiVectorOperations::constPointers( KS ), products );
+  multiVectorOperations::dots( basis, multiVectorOperations::constPointers( KS ), products, true );
   for( integer j = 0; j < m; ++j )
   {
     for( integer i = 0; i < m; ++i )

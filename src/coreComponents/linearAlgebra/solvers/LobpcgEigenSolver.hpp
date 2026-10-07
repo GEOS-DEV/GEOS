@@ -37,8 +37,9 @@ namespace geos
  * space but no longer generate residual and search directions.
  *
  * Unlike the Arnoldi solver, no linear system is solved to high accuracy: the method only needs a
- * preconditioner T that approximates (K - sigma M)^{-1} (one multigrid cycle is enough). It then costs one
- * preconditioner application, one K application and one M application per active vector and iteration.
+ * preconditioner T that approximates (K - sigma M)^{-1} (one multigrid cycle is enough). In each iteration it
+ * applies the preconditioner and M to the residual of every iterate, converged or not, because the convergence
+ * test uses the preconditioned residual of all of them, and it applies K to the residual of every active vector.
  * The shift only enters through the preconditioner, and the eigenvalues found are the smallest ones of the
  * pencil, so the shift should be at or below the smallest eigenvalue. K and M may be singular.
  *

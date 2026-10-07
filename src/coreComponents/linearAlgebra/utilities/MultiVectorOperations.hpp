@@ -41,8 +41,11 @@ namespace multiVectorOperations
 namespace internal
 {
 
-/// Number of rows handled sequentially by one thread in the block dot product kernel
-constexpr localIndex dotChunkSize = 1024;
+/// Minimum number of rows that one thread sums in the block dot product kernel before more threads are used
+constexpr localIndex dotRowsPerThread = 256;
+
+/// Maximum number of threads that share the sum of one pair of vectors. It bounds the scratch array of partial sums.
+constexpr localIndex dotMaxChunks = 1024;
 
 /// Number of vectors handled by one kernel. The views of these vectors are passed to the kernel by value, so that
 /// no pointer table needs to be uploaded to the device.
@@ -94,18 +97,25 @@ std::vector< VECTOR const * > constPointers( std::vector< VECTOR * > const & vec
  * @param[in] X first block, nx vectors
  * @param[in] Y second block, ny vectors
  * @param[out] result the nx x ny matrix with entries X[i] . Y[j], on the host
+ * @param[in] symmetric if true, the caller guarantees that nx == ny and X[i] . Y[j] == X[j] . Y[i] (for example
+ *            the Gram matrix of X in a symmetric inner product, with Y = M X). Only the pairs with i <= j are
+ *            computed, and the others are copied from them.
  *
- * The products are computed on the device, one kernel for each tile of at most 16 x 16 pairs of vectors. They
- * are reduced over the rows in a second kernel, and copied to the host in a single transfer of nx * ny values.
- * One reduction over the processes completes them. Nothing is uploaded to the device.
+ * The products are computed on the device, one kernel for each tile of at most 16 x 16 pairs of vectors. The
+ * threads that share a pair read consecutive rows, so that the loads are coalesced. A second kernel adds the
+ * partial sums, and the result is copied to the host in a single transfer of nx * ny values. One reduction over
+ * the processes completes them. Nothing is uploaded to the device. The scratch arrays have a size that does not
+ * depend on the number of rows.
  */
 template< typename VECTOR >
 void dots( std::vector< VECTOR const * > const & X,
            std::vector< VECTOR const * > const & Y,
-           array2d< real64 > & result )
+           array2d< real64 > & result,
+           bool const symmetric = false )
 {
   localIndex const nx = LvArray::integerConversion< localIndex >( X.size() );
   localIndex const ny = LvArray::integerConversion< localIndex >( Y.size() );
+  GEOS_ERROR_IF( symmetric && nx != ny, "multiVectorOperations::dots: a symmetric product needs two blocks of the same size" );
   result.resize( nx, ny );
   if( nx == 0 || ny == 0 )
   {
@@ -113,8 +123,9 @@ void dots( std::vector< VECTOR const * > const & X,
   }
 
   localIndex const n = X[0]->localSize();
-  localIndex const chunkSize = internal::dotChunkSize;
-  localIndex const numChunks = LvArray::math::max( ( n + chunkSize - 1 ) / chunkSize, localIndex( 1 ) );
+  localIndex const numChunks = LvArray::math::min( LvArray::math::max( ( n + internal::dotRowsPerThread - 1 ) / internal::dotRowsPerThread,
+                                                                       localIndex( 1 ) ),
+                                                   internal::dotMaxChunks );
   localIndex constexpr tile = internal::tileSize;
 
   // The scratch arrays are allocated directly in the memory space of the kernels: allocating them on the host
@@ -122,6 +133,14 @@ void dots( std::vector< VECTOR const * > const & X,
   array1d< real64 > local;
   local.resizeWithoutInitializationOrDestruction( parallelDeviceMemorySpace, nx * ny );
   arrayView1d< real64 > const localView = local.toView();
+  if( symmetric )
+  {
+    // The entries below the diagonal are not computed: they are zero in the reduction
+    forAll< parallelDevicePolicy<> >( nx * ny, [=] GEOS_HOST_DEVICE ( localIndex const i )
+    {
+      localView[i] = 0.0;
+    } );
+  }
   array1d< real64 > partial;
   partial.resizeWithoutInitializationOrDestruction( parallelDeviceMemorySpace, tile * tile * numChunks );
   arrayView1d< real64 > const partialView = partial.toView();
@@ -133,6 +152,10 @@ void dots( std::vector< VECTOR const * > const & X,
     internal::ViewTile const xs = internal::collectTile( X, x0, tx );
     for( localIndex y0 = 0; y0 < ny; y0 += tile )
     {
+      if( symmetric && y0 < x0 )
+      {
+        continue;
+      }
       localIndex const ty = LvArray::math::min( tile, ny - y0 );
       internal::ViewTile const ys = internal::collectTile( Y, y0, ty );
 
@@ -142,12 +165,13 @@ void dots( std::vector< VECTOR const * > const & X,
         localIndex const chunk = w - pair * numChunks;
         localIndex const i = pair / ty;
         localIndex const j = pair - i * ty;
-        localIndex const begin = chunk * chunkSize;
-        localIndex const end = LvArray::math::min( n, begin + chunkSize );
         real64 sum = 0.0;
-        for( localIndex r = begin; r < end; ++r )
+        if( !symmetric || x0 + i <= y0 + j )
         {
-          sum += xs.views[i][r] * ys.views[j][r];
+          for( localIndex r = chunk; r < n; r += numChunks )
+          {
+            sum += xs.views[i][r] * ys.views[j][r];
+          }
         }
         partialView[w] = sum;
       } );
@@ -174,7 +198,7 @@ void dots( std::vector< VECTOR const * > const & X,
   {
     for( localIndex j = 0; j < ny; ++j )
     {
-      result( i, j ) = global[i * ny + j];
+      result( i, j ) = ( symmetric && j < i ) ? global[j * ny + i] : global[i * ny + j];
     }
   }
 }
