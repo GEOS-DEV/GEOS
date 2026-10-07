@@ -118,7 +118,7 @@ public:
     if constexpr (CONTACT_SOLVER::hasContactStabilization) {
       //bubble to displacement coupling
       addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
-      addMatrixPressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by CONTACT::STABILIZATION
+      addMatrixTemperaturePressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by CONTACT::STABILIZATION
     }
 
 
@@ -139,7 +139,7 @@ public:
     addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
     if constexpr (CONTACT_SOLVER::hasContactStabilization) {
       addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
-      addMatrixPressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
+      addMatrixTemperaturePressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
     }
 
     setUpDflux_dApertureMatrix( domain );
@@ -253,13 +253,14 @@ public:
     } );
   }
 
-  void addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
+  void addMatrixTemperaturePressureBubbleCouplingNNZ( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            arrayView1d< localIndex > const & rowLengths ) const
   {
     GEOS_MARK_FUNCTION;
 
     integer const numComp = this->flowSolver()->numFluidComponents();
+    bool const isThermal = this->m_isThermal;
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & regionNames )
@@ -292,7 +293,8 @@ public:
             globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
             if( rowNumber >= 0 && rowNumber < rowLengths.size() )
             {
-              rowLengths[rowNumber] += numComp; // One pressure DOF from matrix cell
+              // One pressure DOF from matrix cell, plus its temperature DOF when thermal
+              rowLengths[rowNumber] += numComp + ( isThermal ? 1 : 0 );
             }
           }
 
@@ -308,13 +310,14 @@ public:
     } );
   }
 
-  void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
+  void addMatrixTemperaturePressureBubbleCouplingPattern( DomainPartition const & domain,
                                                DofManager const & dofManager,
                                                SparsityPatternView< globalIndex > const & pattern ) const
   {
     GEOS_MARK_FUNCTION;
 
     integer const numComp = this->flowSolver()->numFluidComponents();
+    bool const isThermal = this->m_isThermal;
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
@@ -352,6 +355,8 @@ public:
             {
               for( integer ic = 0; ic < numComp; ++ic )
                 pattern.insertNonZero( rowIndex, pressureColIndex + ic );
+              if( isThermal )
+                pattern.insertNonZero( rowIndex, pressureColIndex + numComp ); // appending temperature DOF
             }
           }
 

@@ -218,6 +218,19 @@ public:
     thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
   }
 
+  /**
+   * @brief Return the bulk modulus at a given element
+   *
+   * @param [in] k the element number
+   * @param [out] bulkModulus the bulk modulus
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void getBulkModulus( localIndex const k, real64 & bulkModulus ) const
+  {
+    bulkModulus = m_solidUpdate.getBulkModulus( k );
+  }
+
 private:
 
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >::m_solidUpdate;
