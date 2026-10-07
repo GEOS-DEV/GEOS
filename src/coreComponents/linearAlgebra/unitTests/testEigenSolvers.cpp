@@ -127,6 +127,29 @@ public:
     return GeneralizedEigenSolver< Vector >::create( params )->solve( problem, pencil.k, modes );
   }
 
+  /// Solve the pencil 1, 2, 3, ... with LOBPCG and a damped (inexact) diagonal preconditioner
+  static EigenSolverResult solveLobpcg( integer const numModes, real64 const damping )
+  {
+    real64 constexpr sigma = -1.0;
+    DiagonalPencil< Vector > const pencil( sigma, 1 );
+    Vector damped( pencil.inverse );
+    damped.scale( damping );
+    DiagonalOperator< Vector > const stiffness( pencil.k );
+    DiagonalOperator< Vector > const mass( pencil.m );
+    DiagonalOperator< Vector > const preconditioner( damped );
+
+    EigenSolverParameters params;
+    params.solverType = EigenSolverParameters::SolverType::lobpcg;
+    params.numEigenvalues = numModes;
+    params.shift = sigma;
+    params.tolerance = 1.0e-8;
+    params.maxIterations = 400;
+
+    typename GeneralizedEigenSolver< Vector >::Problem problem{ stiffness, mass, nullptr, &preconditioner };
+    std::vector< Vector > modes;
+    return GeneralizedEigenSolver< Vector >::create( params )->solve( problem, pencil.k, modes );
+  }
+
   /// Solve the pencil with the six zeros and check the returned eigenvalues against the exact ones
   static void checkArnoldi( integer const numModes, integer const blockSize )
   {
@@ -219,7 +242,32 @@ TYPED_TEST_P( EigenSolversTest, arnoldiFewModesDefaultBasis )
   }
 }
 
+// The converged columns are locked and tested only every few iterations: the eigenvalues must stay correct, and
+// the number of preconditioner applications must be smaller than testing every column at every iteration
+TYPED_TEST_P( EigenSolversTest, lobpcgLocksConvergedColumns )
+{
+  integer const numModes = 8;
+  for( real64 const damping : { 1.0, 0.3, 0.1 } )
+  {
+    SCOPED_TRACE( ::testing::Message() << "damping " << damping );
+    EigenSolverResult const result = TestFixture::solveLobpcg( numModes, damping );
+    EXPECT_TRUE( result.converged );
+    ASSERT_EQ( result.eigenvalues.size(), numModes );
+    for( integer i = 0; i < numModes; ++i )
+    {
+      EXPECT_NEAR( result.eigenvalues[i], static_cast< real64 >( i + 1 ), 1.0e-6 ) << "eigenvalue " << i;
+    }
+    // One test of every column in each iteration, and in the last one, is the cost without locking
+    EXPECT_LE( result.numOperatorApplications, numModes * ( result.numIterations + 1 ) );
+    if( result.numIterations > 12 )
+    {
+      EXPECT_LT( result.numOperatorApplications, numModes * ( result.numIterations + 1 ) );
+    }
+  }
+}
+
 REGISTER_TYPED_TEST_SUITE_P( EigenSolversTest,
+                             lobpcgLocksConvergedColumns,
                              arnoldiClusteredDoubleEigenvalues,
                              arnoldiClusteredHigherMultiplicity,
                              arnoldiFewModesDefaultBasis,

@@ -82,15 +82,16 @@ A hatched bar is a run that did not converge.
   The default completeness check keeps the converged modes and expands the Krylov space of a random vector, until the best pair that is not kept has converged.
   It adds 38 solves for the block and 9 for the beam with 10 modes, and it is a large part of the cost of the runs of the block.
   With deflation of the rigid modes, the iteration has no repeated eigenvalue to find.
-  The runs with deflation keep the check and are cheaper than the default runs by 1 % for the block and by 29 % for the beam.
+  The runs with deflation keep the check and are cheaper than the default runs by 1 % for the block and by 24 % for the beam.
   If the multiplicity of the eigenvalues is known, ``modalCompletenessCheck="0"`` removes this cost.
-- ``lobpcg`` without deflation needs 1440 preconditioner applications for the block, against 810 with deflation.
+- ``lobpcg`` without deflation needs 606 preconditioner applications for the block, against 395 with deflation.
+  The converged columns are locked and tested only every five iterations, so most iterations apply the preconditioner to the columns that are still active.
   It does not converge for the beam within 400 iterations.
   The rigid-body modes have a rounding noise in :math:`\mathbf{K}\mathbf{x}`.
   The noise keeps them active and disturbs the other modes.
 - ``lobpcg`` with deflation converges in 80 iterations for the block and 134 for the beam.
-  It is 3.0 times faster than ``arnoldi`` with deflation for the block, and 8.9 times faster for the beam.
-  For the 20 modes of the beam, it needs 2.9 s, against 13.8 s for ``arnoldi`` with the default settings.
+  It is 4.1 times faster than ``arnoldi`` with deflation for the block, and 7.6 times faster for the beam.
+  For the 20 modes of the beam, it needs 3.5 s, against 13.8 s for ``arnoldi`` with the default settings.
 - The advantage of ``lobpcg`` depends on the quality of the preconditioner.
   The block is well preconditioned, and a solve to a tight tolerance costs about 35 iterations of the conjugate gradient method.
   The beam needs about 270 iterations for each solve, so the accurate solves of ``arnoldi`` are expensive and the single cycles of ``lobpcg`` are cheap.

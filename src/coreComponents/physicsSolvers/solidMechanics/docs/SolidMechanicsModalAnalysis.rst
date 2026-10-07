@@ -140,12 +140,13 @@ The implementation has these properties:
   It estimates the quantity that the Arnoldi test uses.
   The plain residual :math:`\| r_i \|` cannot be used for the eigenvalues close to zero, because it has a floor: the rounding error of :math:`\mathbf{K} x`.
 - The converged iterates stay in the Rayleigh-Ritz space but do not make new directions (soft locking).
+  A locked iterate is tested every five iterations, and once more before the solver stops, because the Rayleigh-Ritz steps mix the columns. It is unlocked if it fails the test.
 - The images :math:`\mathbf{K} X` and :math:`\mathbf{M} X` are recomputed at each iteration, because the update by coefficients loses accuracy when the directions become nearly dependent.
 - If the search space has fewer independent directions than modes, random vectors are added.
 - ``modalSubspaceSize`` larger than ``modalNumModes`` adds guard vectors.
   They keep the method from cutting a group of repeated eigenvalues at the last requested mode.
 
-In each iteration, the preconditioner and :math:`\mathbf{M}` are applied to the residual of every iterate, converged or not, because the convergence test uses the preconditioned residual of all of them.
+In each iteration, the preconditioner and :math:`\mathbf{M}` are applied to the residual of every iterate that is not locked, and of the locked iterates in the iterations where they are tested, because the convergence test uses the preconditioned residual.
 :math:`\mathbf{K}` is applied to the residual of every active vector, and :math:`\mathbf{K}` and :math:`\mathbf{M}` to the new iterates.
 The dense work is :math:`O(n^2)` vector operations.
 The memory is about fifteen blocks of :math:`n` vectors.
@@ -178,7 +179,7 @@ In summary:
 
 - ``arnoldi`` is the robust default.
   It finds the modes closest to any shift, including a shift inside the spectrum with a direct solver, and its behavior only depends on the quality of the linear solver.
-- ``lobpcg`` with ``modalDeflateRigidBodyModes="1"`` is about three to nine times faster than ``arnoldi`` with deflation on the cases of the examples.
+- ``lobpcg`` with ``modalDeflateRigidBodyModes="1"`` is about four to eight times faster than ``arnoldi`` with deflation on the cases of the examples.
   Without deflation it can stagnate.
   It finds the lowest modes only.
   Its convergence depends on the quality of the preconditioner.

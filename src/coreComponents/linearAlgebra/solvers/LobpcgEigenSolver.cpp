@@ -347,33 +347,77 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   bool havePrevious = false;
   std::vector< real64 > errorEstimate( static_cast< size_t >( n ), 0.0 );
 
+  // A column that has converged is locked: it stays in the Rayleigh-Ritz space and does not make search
+  // directions. Testing a column costs one preconditioner application, so a locked column is only tested every
+  // lockedTestInterval iterations, which saves most of the cycles when the columns converge at different
+  // iterations. The Rayleigh-Ritz steps mix the columns, so a locked column can drift: a locked column that fails
+  // its test is unlocked. All the locked columns are also tested before the solver stops.
+  integer constexpr lockedTestInterval = 5;
+  std::vector< bool > locked( static_cast< size_t >( n ), false );
+
+  // Preconditioned residual W = T ( K x - theta M x ) of column i. Its M-norm estimates ||(K - sigma M)^{-1} r||_M,
+  // the error measure of the shift-and-invert Krylov solver, and is not limited by the rounding noise of K x
+  // that dominates the plain residual of the near-zero eigenvalues.
+  auto const testColumn = [&]( integer const i )
+  {
+    KW[i].copy( KX[i] );
+    KW[i].axpy( -theta[i], MX[i] );
+    W[i].zero();
+    preconditioner.apply( KW[i], W[i] );
+    ++numOperatorApplications;
+    constraints.project( W[i] );
+    problem.mass.apply( W[i], MW[i] );
+    real64 const xNorm = std::sqrt( std::max( X[i].dot( MX[i] ), 0.0 ) );
+    real64 const wNorm = std::sqrt( std::max( W[i].dot( MW[i] ), 0.0 ) );
+    errorEstimate[i] = xNorm > 0.0 ? wNorm / xNorm : wNorm;
+    return i < nev && errorEstimate[i] <= params.tolerance;
+  };
+
   for(;; )
   {
-    // Preconditioned residuals W = T ( K x - theta M x ). Their M-norm estimates ||(K - sigma M)^{-1} r||_M, the
-    // error measure of the shift-and-invert Krylov solver, and is not limited by the rounding noise of K x
-    // that dominates the plain residual of the near-zero eigenvalues.
     std::vector< integer > active;
+    std::vector< bool > tested( static_cast< size_t >( n ), false );
     numConverged = 0;
     for( integer i = 0; i < n; ++i )
     {
-      KW[i].copy( KX[i] );
-      KW[i].axpy( -theta[i], MX[i] );
-      W[i].zero();
-      preconditioner.apply( KW[i], W[i] );
-      ++numOperatorApplications;
-      constraints.project( W[i] );
-      problem.mass.apply( W[i], MW[i] );
-      real64 const xNorm = std::sqrt( std::max( X[i].dot( MX[i] ), 0.0 ) );
-      real64 const wNorm = std::sqrt( std::max( W[i].dot( MW[i] ), 0.0 ) );
-      errorEstimate[i] = xNorm > 0.0 ? wNorm / xNorm : wNorm;
-      bool const converged = i < nev && errorEstimate[i] <= params.tolerance;
-      if( converged )
+      if( locked[i] && iteration % lockedTestInterval != 0 )
       {
+        ++numConverged;
+        continue;
+      }
+      tested[i] = true;
+      if( testColumn( i ) )
+      {
+        locked[i] = true;
         ++numConverged;
       }
       else
       {
+        locked[i] = false;
         active.push_back( i );
+      }
+    }
+
+    // Before stopping, test the locked columns that were not tested in this iteration
+    if( numConverged == nev || iteration >= params.maxIterations )
+    {
+      bool unlocked = false;
+      for( integer i = 0; i < nev; ++i )
+      {
+        if( locked[i] && !tested[i] )
+        {
+          if( !testColumn( i ) )
+          {
+            locked[i] = false;
+            --numConverged;
+            active.push_back( i );
+            unlocked = true;
+          }
+        }
+      }
+      if( unlocked )
+      {
+        std::sort( active.begin(), active.end() );
       }
     }
 
@@ -427,17 +471,20 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
     std::vector< Vector const * > const iterates = multiVectorOperations::constPointers( S );
     for( integer pass = 0; pass < 2; ++pass )
     {
-      for( size_t j = 0; j < directions.size(); ++j ) problem.mass.apply( *directions[j], *massDirections[j] );
+      for( size_t j = 0; j < directions.size(); ++j )
+        problem.mass.apply( *directions[j], *massDirections[j] );
       array2d< real64 > products;
       multiVectorOperations::dots( iterates, multiVectorOperations::constPointers( massDirections ), products );
       for( size_t j = 0; j < directions.size(); ++j )
       {
         std::vector< real64 > weights( static_cast< size_t >( n ) );
-        for( integer i = 0; i < n; ++i ) weights[i] = -products( i, j );
+        for( integer i = 0; i < n; ++i )
+          weights[i] = -products( i, j );
         multiVectorOperations::combine( iterates, weights, *directions[j], true );
       }
     }
-    for( size_t j = 0; j < directions.size(); ++j ) problem.mass.apply( *directions[j], *massDirections[j] );
+    for( size_t j = 0; j < directions.size(); ++j )
+      problem.mass.apply( *directions[j], *massDirections[j] );
 
     for( integer const i : active )
     {
