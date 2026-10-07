@@ -660,7 +660,7 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
   std::unique_ptr< GeneralizedEigenSolver< ParallelVector > > eigenSolver =
     GeneralizedEigenSolver< ParallelVector >::create( eigenParams );
 
-  std::vector< ParallelVector > modes;
+  stdVector< ParallelVector > modes;
   EigenSolverResult const eigenResult = eigenSolver->solve( problem, m_solution, modes );
 
   if( m_modalVerifyFreeBody )
@@ -739,7 +739,7 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
   m_modalParticipationFactors.zero();
 
   stdVector< string > shapeFieldNames;
-  std::vector< real64 > localParticipation( 3 * static_cast< size_t >( numModes ), 0.0 );
+  stdVector< real64 > localParticipation( 3 * static_cast< size_t >( numModes ), 0.0 );
   for( integer k = 0; k < numModes; ++k )
   {
     real64 const lambda = eigenResult.eigenvalues[k];
@@ -774,7 +774,7 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
     shapeFieldNames.emplace_back( fieldName );
   }
 
-  std::vector< real64 > globalParticipation( localParticipation.size(), 0.0 );
+  stdVector< real64 > globalParticipation( localParticipation.size(), 0.0 );
   MpiWrapper::allReduce( localParticipation, globalParticipation, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
   for( integer k = 0; k < numModes; ++k )
     for( integer d = 0; d < 3; ++d )

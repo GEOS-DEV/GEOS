@@ -50,9 +50,9 @@ void createAndFill( localIndex const startSize, integer const index, VEC & x )
 }
 
 template< typename VEC >
-std::vector< VEC > createBlock( localIndex const startSize, integer const count, integer const first )
+stdVector< VEC > createBlock( localIndex const startSize, integer const count, integer const first )
 {
-  std::vector< VEC > block( count );
+  stdVector< VEC > block( count );
   for( integer k = 0; k < count; ++k )
   {
     createAndFill( startSize, first + k, block[k] );
@@ -61,9 +61,9 @@ std::vector< VEC > createBlock( localIndex const startSize, integer const count,
 }
 
 template< typename VEC >
-std::vector< VEC const * > pointers( std::vector< VEC > const & block )
+stdVector< VEC const * > pointers( stdVector< VEC > const & block )
 {
-  std::vector< VEC const * > result;
+  stdVector< VEC const * > result;
   for( VEC const & v : block )
   {
     result.push_back( &v );
@@ -87,8 +87,8 @@ TYPED_TEST_P( MultiVectorOperationsTest, dots )
 {
   using Vector = typename TestFixture::Vector;
   localIndex constexpr startSize = 3000;
-  std::vector< Vector > const X = createBlock< Vector >( startSize, 19, 0 );
-  std::vector< Vector > const Y = createBlock< Vector >( startSize, 17, 40 );
+  stdVector< Vector > const X = createBlock< Vector >( startSize, 19, 0 );
+  stdVector< Vector > const Y = createBlock< Vector >( startSize, 17, 40 );
 
   array2d< real64 > products;
   multiVectorOperations::dots( pointers( X ), pointers( Y ), products );
@@ -108,7 +108,7 @@ TYPED_TEST_P( MultiVectorOperationsTest, dots )
 TYPED_TEST_P( MultiVectorOperationsTest, dotsOfOneVector )
 {
   using Vector = typename TestFixture::Vector;
-  std::vector< Vector > const X = createBlock< Vector >( 100, 5, 0 );
+  stdVector< Vector > const X = createBlock< Vector >( 100, 5, 0 );
 
   array2d< real64 > products;
   multiVectorOperations::dots( pointers( X ), pointers( X ), products );
@@ -127,7 +127,7 @@ TYPED_TEST_P( MultiVectorOperationsTest, symmetricDots )
 {
   using Vector = typename TestFixture::Vector;
   localIndex constexpr startSize = 3000;
-  std::vector< Vector > const X = createBlock< Vector >( startSize, 37, 0 );
+  stdVector< Vector > const X = createBlock< Vector >( startSize, 37, 0 );
 
   array2d< real64 > full;
   array2d< real64 > symmetric;
@@ -150,9 +150,9 @@ TYPED_TEST_P( MultiVectorOperationsTest, combine )
   using Vector = typename TestFixture::Vector;
   localIndex constexpr startSize = 2500;
   integer constexpr count = 21;
-  std::vector< Vector > const V = createBlock< Vector >( startSize, count, 0 );
+  stdVector< Vector > const V = createBlock< Vector >( startSize, count, 0 );
 
-  std::vector< real64 > coefficients( count );
+  stdVector< real64 > coefficients( count );
   for( integer k = 0; k < count; ++k )
   {
     coefficients[k] = std::cos( 0.9 * k ) - 0.2;
@@ -192,10 +192,10 @@ TYPED_TEST_P( MultiVectorOperationsTest, combineNothing )
   Vector x;
   createAndFill( 50, 3, x );
   Vector kept( x );
-  multiVectorOperations::combine( std::vector< Vector const * >{}, std::vector< real64 >{}, x, true );
+  multiVectorOperations::combine( stdVector< Vector const * >{}, stdVector< real64 >{}, x, true );
   kept.axpy( -1.0, x );
   EXPECT_DOUBLE_EQ( kept.normInf(), 0.0 );
-  multiVectorOperations::combine( std::vector< Vector const * >{}, std::vector< real64 >{}, x, false );
+  multiVectorOperations::combine( stdVector< Vector const * >{}, stdVector< real64 >{}, x, false );
   EXPECT_DOUBLE_EQ( x.normInf(), 0.0 );
 }
 

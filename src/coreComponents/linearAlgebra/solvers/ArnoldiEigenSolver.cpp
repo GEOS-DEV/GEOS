@@ -40,13 +40,13 @@ struct RitzPairs
   /// Dimension of the Rayleigh-Ritz problem
   integer m = 0;
   /// Ritz values theta of the operator T = (K - sigma M)^{-1} M
-  std::vector< real64 > theta;
+  stdVector< real64 > theta;
   /// Coefficients of the Ritz vectors in the Krylov basis (column i is the vector of theta[i])
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > Y;
   /// Residual estimates ||T x_i - theta_i x_i||_M
-  std::vector< real64 > rho;
+  stdVector< real64 > rho;
   /// Coefficients of the residuals in the (not yet expanded) next block of the basis: coupling[c + b*i]
-  std::vector< real64 > coupling;
+  stdVector< real64 > coupling;
 };
 
 /**
@@ -107,7 +107,7 @@ public:
   /// Append one block of b vectors to the basis. @p m is the current number of columns of H.
   void extendBlock( integer const m )
   {
-    std::vector< real64 > coefficients( static_cast< size_t >( m_ld ) );
+    stdVector< real64 > coefficients( static_cast< size_t >( m_ld ) );
     for( integer c = 0; c < m_b; ++c )
     {
       integer const column = m + c;
@@ -150,7 +150,7 @@ public:
     }
     BlasLapackLA::matrixSymmetricEigen( S.toSliceConst(), lambda.toSlice(), Yraw.toSlice() );
 
-    std::vector< integer > order( static_cast< size_t >( m ) );
+    stdVector< integer > order( static_cast< size_t >( m ) );
     std::iota( order.begin(), order.end(), 0 );
     std::stable_sort( order.begin(), order.end(), [&]( integer const a, integer const b )
     {
@@ -262,7 +262,7 @@ public:
   }
 
   /// Move the first @p count Ritz vectors to @p modes
-  void extractModes( integer const count, RitzPairs const & r, std::vector< VECTOR > & modes )
+  void extractModes( integer const count, RitzPairs const & r, stdVector< VECTOR > & modes )
   {
     ritzVectors( count, r );
     modes.clear();
@@ -289,12 +289,12 @@ private:
   /// m_X[0..count-1] = V[0..m-1] Y[:, 0..count-1]
   void ritzVectors( integer const count, RitzPairs const & r )
   {
-    std::vector< VECTOR const * > basis;
+    stdVector< VECTOR const * > basis;
     for( integer j = 0; j < r.m; ++j )
     {
       basis.push_back( &m_V[j] );
     }
-    std::vector< real64 > column( static_cast< size_t >( r.m ) );
+    stdVector< real64 > column( static_cast< size_t >( r.m ) );
     for( integer i = 0; i < count; ++i )
     {
       for( integer j = 0; j < r.m; ++j )
@@ -326,21 +326,21 @@ private:
 
     // Classical Gram-Schmidt with one reorthogonalization. The products with the whole basis are one batched
     // device operation, instead of one reduction and one synchronization for each basis vector.
-    std::vector< VECTOR const * > basis;
-    std::vector< VECTOR const * > massBasis;
+    stdVector< VECTOR const * > basis;
+    stdVector< VECTOR const * > massBasis;
     for( integer i = 0; i < index; ++i )
     {
       basis.push_back( &m_V[i] );
       massBasis.push_back( &m_MV[i] );
     }
     array2d< real64 > products;
-    std::vector< real64 > update( static_cast< size_t >( index ) );
+    stdVector< real64 > update( static_cast< size_t >( index ) );
     for( int pass = 0; pass < 2; ++pass )
     {
       m_constraints.project( w );
       if( index > 0 )
       {
-        multiVectorOperations::dots( massBasis, std::vector< VECTOR const * >{ & w }, products );
+        multiVectorOperations::dots( massBasis, stdVector< VECTOR const * >{ & w }, products );
         for( integer i = 0; i < index; ++i )
         {
           update[i] = -products( i, 0 );
@@ -395,10 +395,10 @@ private:
   Constraints const & m_constraints;
   integer const m_b;
   integer const m_ld;
-  std::vector< real64 > m_H;
-  std::vector< VECTOR > m_V;
-  std::vector< VECTOR > m_MV;
-  std::vector< VECTOR > m_X;
+  stdVector< real64 > m_H;
+  stdVector< VECTOR > m_V;
+  stdVector< VECTOR > m_MV;
+  stdVector< VECTOR > m_X;
   integer m_numOperatorApplications = 0;
   integer m_randomCount = 0;
 };
@@ -408,7 +408,7 @@ private:
 template< typename VECTOR >
 EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
                                                        Vector const & prototype,
-                                                       std::vector< Vector > & modes ) const
+                                                       stdVector< Vector > & modes ) const
 {
   GEOS_ERROR_IF( problem.shiftedInverse == nullptr,
                  "The Arnoldi eigensolver requires the shift-and-invert operator (K - shift M)^{-1}" );
@@ -460,7 +460,7 @@ EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
   // closer to the shift, so at most nev + 1 checks run.
   integer const sentinel = ( params.completenessCheck != 0 && ncv >= nev + b + 1 ) ? 1 : 0;
   integer const maxCompletenessChecks = nev + 1;
-  std::vector< real64 > checkedTheta;
+  stdVector< real64 > checkedTheta;
   integer m = 0;
   integer restarts = 0;
   integer numChecks = 0;

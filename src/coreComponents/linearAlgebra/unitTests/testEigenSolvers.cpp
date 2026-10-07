@@ -123,7 +123,7 @@ public:
     params.tolerance = 1.0e-10;
 
     typename GeneralizedEigenSolver< Vector >::Problem problem{ stiffness, mass, &inverse };
-    std::vector< Vector > modes;
+    stdVector< Vector > modes;
     return GeneralizedEigenSolver< Vector >::create( params )->solve( problem, pencil.k, modes );
   }
 
@@ -146,7 +146,7 @@ public:
     params.maxIterations = 400;
 
     typename GeneralizedEigenSolver< Vector >::Problem problem{ stiffness, mass, nullptr, &preconditioner };
-    std::vector< Vector > modes;
+    stdVector< Vector > modes;
     return GeneralizedEigenSolver< Vector >::create( params )->solve( problem, pencil.k, modes );
   }
 

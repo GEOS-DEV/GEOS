@@ -93,7 +93,7 @@ struct GeneralizedEigenProblem
   /// but they must span an invariant subspace of the pencil. The solver deflates them: it computes the
   /// remaining eigenpairs in the M-orthogonal complement, and returns the constraints as the first
   /// eigenvectors, so that numEigenvalues counts them.
-  std::vector< VECTOR const * > constraints = {};
+  stdVector< VECTOR const * > constraints = {};
 };
 
 /**
@@ -142,7 +142,7 @@ public:
    */
   virtual EigenSolverResult solve( Problem const & problem,
                                    Vector const & prototype,
-                                   std::vector< Vector > & modes ) const = 0;
+                                   stdVector< Vector > & modes ) const = 0;
 
   /// @return the solver parameters
   EigenSolverParameters const & parameters() const { return m_params; }
@@ -159,7 +159,7 @@ protected:
    * original pencil, independently of the algorithm used to build the vectors.
    */
   void finalizeResult( Problem const & problem,
-                       std::vector< Vector > & modes,
+                       stdVector< Vector > & modes,
                        EigenSolverResult & result ) const;
 
 public:
@@ -170,10 +170,10 @@ public:
   struct ConstraintSpace
   {
     /// M-orthonormal vectors
-    std::vector< VECTOR > vectors;
+    stdVector< VECTOR > vectors;
 
     /// Their images by M
-    std::vector< VECTOR > massVectors;
+    stdVector< VECTOR > massVectors;
 
     /// @return the number of independent constraints
     integer size() const { return LvArray::integerConversion< integer >( vectors.size() ); }
@@ -188,21 +188,21 @@ public:
       {
         return;
       }
-      std::vector< VECTOR const * > basis;
-      std::vector< VECTOR const * > massBasis;
+      stdVector< VECTOR const * > basis;
+      stdVector< VECTOR const * > massBasis;
       for( size_t i = 0; i < vectors.size(); ++i )
       {
         basis.push_back( &vectors[i] );
         massBasis.push_back( &massVectors[i] );
       }
       array2d< real64 > products;
-      std::vector< real64 > coefficients( vectors.size() );
+      stdVector< real64 > coefficients( vectors.size() );
       for( int pass = 0; pass < 2; ++pass )
       {
-        multiVectorOperations::dots( massBasis, std::vector< VECTOR const * >{ & z }, products );
+        multiVectorOperations::dots( massBasis, stdVector< VECTOR const * >{ & z }, products );
         for( size_t i = 0; i < vectors.size(); ++i )
         {
-          coefficients[i] = -products( i, 0 );
+          coefficients[i] = -products( LvArray::integerConversion< localIndex >( i ), 0 );
         }
         multiVectorOperations::combine( basis, coefficients, z, true );
       }
@@ -235,7 +235,7 @@ protected:
    */
   EigenSolverResult returnConstraintsOnly( Problem const & problem,
                                            ConstraintSpace & constraints,
-                                           std::vector< Vector > & modes ) const;
+                                           stdVector< Vector > & modes ) const;
 
   /// Solver parameters
   EigenSolverParameters m_params;

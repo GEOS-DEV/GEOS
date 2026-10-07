@@ -53,12 +53,12 @@ real64 constexpr svqbTolerance = 1.0e-8;
  * directions with a negligible eigenvalue are dropped. The Ritz problem is then a standard symmetric eigenproblem.
  */
 template< typename VECTOR >
-integer rayleighRitz( std::vector< VECTOR * > const & S,
-                      std::vector< VECTOR * > const & KS,
-                      std::vector< VECTOR * > const & MS,
+integer rayleighRitz( stdVector< VECTOR * > const & S,
+                      stdVector< VECTOR * > const & KS,
+                      stdVector< VECTOR * > const & MS,
                       integer const wanted,
                       DenseMatrix & coefficients,
-                      std::vector< real64 > & theta )
+                      stdVector< real64 > & theta )
 {
   integer const m = LvArray::integerConversion< integer >( S.size() );
 
@@ -66,7 +66,7 @@ integer rayleighRitz( std::vector< VECTOR * > const & S,
   array2d< real64 > products;
   DenseMatrix G( m, m );
   DenseMatrix A( m, m );
-  std::vector< VECTOR const * > const basis = multiVectorOperations::constPointers( S );
+  stdVector< VECTOR const * > const basis = multiVectorOperations::constPointers( S );
   // Both Gram matrices are symmetric, so only their upper triangles are computed
   multiVectorOperations::dots( basis, multiVectorOperations::constPointers( MS ), products, true );
   for( integer j = 0; j < m; ++j )
@@ -86,7 +86,7 @@ integer rayleighRitz( std::vector< VECTOR * > const & S,
   }
 
   // Scale to a unit diagonal and diagonalize
-  std::vector< real64 > d( m );
+  stdVector< real64 > d( m );
   for( integer i = 0; i < m; ++i )
   {
     d[i] = G( i, i ) > 0.0 ? 1.0 / std::sqrt( G( i, i ) ) : 0.0;
@@ -103,7 +103,7 @@ integer rayleighRitz( std::vector< VECTOR * > const & S,
   DenseMatrix U( m, m );
   BlasLapackLA::matrixSymmetricEigen( Gs.toSliceConst(), sigma.toSlice(), U.toSlice() );
 
-  std::vector< integer > kept;
+  stdVector< integer > kept;
   for( integer j = 0; j < m; ++j )
   {
     if( sigma[j] > svqbTolerance * sigma[m - 1] )
@@ -180,14 +180,14 @@ integer rayleighRitz( std::vector< VECTOR * > const & S,
 
 /// out = sum_{j >= first} coefficients(j, column) * src[j], in one fused device kernel
 template< typename VECTOR >
-void combine( std::vector< VECTOR * > const & src,
+void combine( stdVector< VECTOR * > const & src,
               DenseMatrix const & coefficients,
               integer const column,
               integer const first,
               VECTOR & out )
 {
-  std::vector< VECTOR const * > vectors;
-  std::vector< real64 > weights;
+  stdVector< VECTOR const * > vectors;
+  stdVector< real64 > weights;
   for( integer j = first; j < LvArray::integerConversion< integer >( src.size() ); ++j )
   {
     vectors.push_back( src[j] );
@@ -201,7 +201,7 @@ void combine( std::vector< VECTOR * > const & src,
 template< typename VECTOR >
 EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
                                                       Vector const & prototype,
-                                                      std::vector< Vector > & modes ) const
+                                                      stdVector< Vector > & modes ) const
 {
   GEOS_ERROR_IF( problem.preconditioner == nullptr && problem.shiftedInverse == nullptr,
                  "The LOBPCG eigensolver requires a preconditioner (an approximation of (K - shift M)^{-1})" );
@@ -230,7 +230,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
 
   auto makeBlock = [&]()
   {
-    std::vector< Vector > block;
+    stdVector< Vector > block;
     block.reserve( static_cast< size_t >( n ) );
     for( integer i = 0; i < n; ++i )
     {
@@ -240,24 +240,24 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   };
 
   // Iterates, search directions and preconditioned residuals, with their images by K and M
-  std::vector< Vector > X = makeBlock();
-  std::vector< Vector > KX = makeBlock();
-  std::vector< Vector > MX = makeBlock();
-  std::vector< Vector > Xn = makeBlock();
-  std::vector< Vector > KXn = makeBlock();
-  std::vector< Vector > MXn = makeBlock();
-  std::vector< Vector > P = makeBlock();
-  std::vector< Vector > KP = makeBlock();
-  std::vector< Vector > MP = makeBlock();
-  std::vector< Vector > Pn = makeBlock();
-  std::vector< Vector > KPn = makeBlock();
-  std::vector< Vector > MPn = makeBlock();
-  std::vector< Vector > W = makeBlock();
-  std::vector< Vector > KW = makeBlock();
-  std::vector< Vector > MW = makeBlock();
+  stdVector< Vector > X = makeBlock();
+  stdVector< Vector > KX = makeBlock();
+  stdVector< Vector > MX = makeBlock();
+  stdVector< Vector > Xn = makeBlock();
+  stdVector< Vector > KXn = makeBlock();
+  stdVector< Vector > MXn = makeBlock();
+  stdVector< Vector > P = makeBlock();
+  stdVector< Vector > KP = makeBlock();
+  stdVector< Vector > MP = makeBlock();
+  stdVector< Vector > Pn = makeBlock();
+  stdVector< Vector > KPn = makeBlock();
+  stdVector< Vector > MPn = makeBlock();
+  stdVector< Vector > W = makeBlock();
+  stdVector< Vector > KW = makeBlock();
+  stdVector< Vector > MW = makeBlock();
 
   DenseMatrix coefficients;
-  std::vector< real64 > theta;
+  stdVector< real64 > theta;
   integer numOperatorApplications = 0;
   unsigned randomCount = 0;
 
@@ -273,8 +273,8 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
 
   // Rayleigh-Ritz extraction. If the search space has fewer than n independent directions, it is enlarged with
   // random vectors, which are kept in padding for the duration of the call.
-  std::vector< std::unique_ptr< Vector > > padding;
-  auto extract = [&]( std::vector< Vector * > & S, std::vector< Vector * > & KS, std::vector< Vector * > & MS )
+  stdVector< std::unique_ptr< Vector > > padding;
+  auto extract = [&]( stdVector< Vector * > & S, stdVector< Vector * > & KS, stdVector< Vector * > & MS )
   {
     padding.clear();
     for( int attempt = 0; attempt < 10; ++attempt )
@@ -310,9 +310,9 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   }
 
   {
-    std::vector< Vector * > S;
-    std::vector< Vector * > KS;
-    std::vector< Vector * > MS;
+    stdVector< Vector * > S;
+    stdVector< Vector * > KS;
+    stdVector< Vector * > MS;
     for( integer i = 0; i < n; ++i )
     {
       problem.mass.apply( X[i], MX[i] );
@@ -337,7 +337,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   integer iteration = 0;
   integer numConverged = 0;
   bool havePrevious = false;
-  std::vector< real64 > errorEstimate( static_cast< size_t >( n ), 0.0 );
+  stdVector< real64 > errorEstimate( static_cast< size_t >( n ), 0.0 );
 
   // A column that has converged is locked: it stays in the Rayleigh-Ritz space and does not make search
   // directions. Testing a column costs one preconditioner application, so a locked column is only tested every
@@ -345,7 +345,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   // iterations. The Rayleigh-Ritz steps mix the columns, so a locked column can drift: a locked column that fails
   // its test is unlocked. All the locked columns are also tested before the solver stops.
   integer constexpr lockedTestInterval = 5;
-  std::vector< bool > locked( static_cast< size_t >( n ), false );
+  stdVector< integer > locked( static_cast< size_t >( n ), false );
 
   // Preconditioned residual W = T ( K x - theta M x ) of column i. Its M-norm estimates ||(K - sigma M)^{-1} r||_M,
   // the error measure of the shift-and-invert Krylov solver, and is not limited by the rounding noise of K x
@@ -367,8 +367,8 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
 
   for(;; )
   {
-    std::vector< integer > active;
-    std::vector< bool > tested( static_cast< size_t >( n ), false );
+    stdVector< integer > active;
+    stdVector< integer > tested( static_cast< size_t >( n ), false );
     numConverged = 0;
     for( integer i = 0; i < n; ++i )
     {
@@ -436,9 +436,9 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
     ++iteration;
 
     // Search space: [X, preconditioned residuals, previous directions] of the active columns
-    std::vector< Vector * > S;
-    std::vector< Vector * > KS;
-    std::vector< Vector * > MS;
+    stdVector< Vector * > S;
+    stdVector< Vector * > KS;
+    stdVector< Vector * > MS;
     for( integer i = 0; i < n; ++i )
     {
       S.push_back( &X[i] );
@@ -449,7 +449,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
     // Separate small search directions from the O(1) iterate block before SVQB.
     // Otherwise near-parallel P and X columns amplify roundoff in the projected
     // pencil and impose a residual floor on consistent-mass elasticity problems.
-    std::vector< Vector * > directions, massDirections;
+    stdVector< Vector * > directions, massDirections;
     for( integer const i : active )
     {
       directions.push_back( &W[i] );
@@ -460,8 +460,8 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
         massDirections.push_back( &MP[i] );
       }
     }
-    std::vector< Vector const * > const iterates = multiVectorOperations::constPointers( S );
-    std::vector< Vector const * > const massIterates = multiVectorOperations::constPointers( MS );
+    stdVector< Vector const * > const iterates = multiVectorOperations::constPointers( S );
+    stdVector< Vector const * > const massIterates = multiVectorOperations::constPointers( MS );
     // The images by M of the directions are known when entering (W: computed by the test of the column, P: refreshed
     // after the last extraction). Each pass updates them with the same combination as the directions, and one
     // application at the end removes the drift.
@@ -471,9 +471,9 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       multiVectorOperations::dots( iterates, multiVectorOperations::constPointers( massDirections ), products );
       for( size_t j = 0; j < directions.size(); ++j )
       {
-        std::vector< real64 > weights( static_cast< size_t >( n ) );
+        stdVector< real64 > weights( static_cast< size_t >( n ) );
         for( integer i = 0; i < n; ++i )
-          weights[i] = -products( i, j );
+          weights[i] = -products( i, LvArray::integerConversion< localIndex >( j ) );
         multiVectorOperations::combine( iterates, weights, *directions[j], true );
         multiVectorOperations::combine( massIterates, weights, *massDirections[j], true );
       }

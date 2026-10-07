@@ -94,7 +94,7 @@ GeneralizedEigenSolver< VECTOR >::makeConstraintSpace( Problem const & problem, 
 template< typename VECTOR >
 EigenSolverResult GeneralizedEigenSolver< VECTOR >::returnConstraintsOnly( Problem const & problem,
                                                                            ConstraintSpace & constraints,
-                                                                           std::vector< VECTOR > & modes ) const
+                                                                           stdVector< VECTOR > & modes ) const
 {
   EigenSolverResult result;
   modes.clear();
@@ -110,7 +110,7 @@ EigenSolverResult GeneralizedEigenSolver< VECTOR >::returnConstraintsOnly( Probl
 
 template< typename VECTOR >
 void GeneralizedEigenSolver< VECTOR >::finalizeResult( Problem const & problem,
-                                                       std::vector< VECTOR > & modes,
+                                                       stdVector< VECTOR > & modes,
                                                        EigenSolverResult & result ) const
 {
   size_t const n = modes.size();
@@ -125,7 +125,7 @@ void GeneralizedEigenSolver< VECTOR >::finalizeResult( Problem const & problem,
   VECTOR Kx = makeVector( modes[0] );
 
   // Eigenvalue error bound ||K x - lambda M x|| / ||M x|| of each M-normalized pair
-  std::vector< real64 > errorBound( n );
+  stdVector< real64 > errorBound( n );
   for( size_t i = 0; i < n; ++i )
   {
     // M-normalize, then evaluate the Rayleigh quotient and the residual of the original pencil
@@ -158,14 +158,14 @@ void GeneralizedEigenSolver< VECTOR >::finalizeResult( Problem const & problem,
   }
 
   // Sort by ascending eigenvalue
-  std::vector< size_t > order( n );
+  stdVector< size_t > order( n );
   std::iota( order.begin(), order.end(), 0 );
   std::stable_sort( order.begin(), order.end(), [&]( size_t const a, size_t const b )
   {
     return result.eigenvalues[a] < result.eigenvalues[b];
   } );
 
-  std::vector< VECTOR > sorted;
+  stdVector< VECTOR > sorted;
   sorted.reserve( n );
   array1d< real64 > sortedValues( n );
   array1d< real64 > sortedResiduals( n );

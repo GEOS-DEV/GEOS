@@ -75,7 +75,7 @@ public:
 
   virtual EigenSolverResult solve( Problem const & problem,
                                    Vector const & prototype,
-                                   std::vector< Vector > & modes ) const override;
+                                   stdVector< Vector > & modes ) const override;
 };
 
 } // namespace geos

@@ -158,10 +158,10 @@ string makeInput( string const & constraints, integer const numModes, integer co
 
 struct ModalResult
 {
-  std::vector< real64 > eigenvalues;
-  std::vector< real64 > residuals;
-  std::vector< std::array< real64, 3 > > participation;
-  std::vector< real64 > frequencies;
+  stdVector< real64 > eigenvalues;
+  stdVector< real64 > residuals;
+  stdVector< std::array< real64, 3 > > participation;
+  stdVector< real64 > frequencies;
   bool shapesRegistered = false;
 };
 
@@ -210,7 +210,7 @@ ModalResult runModalAnalysis( string const & xml )
     for( localIndex a = 0; a < nodes.size(); ++a )
       maxId = std::max( maxId, globalIds[a] );
     globalIndex const globalNodes = MpiWrapper::max( maxId ) + 1;
-    std::vector< real64 > ownedValues( static_cast< size_t >( globalNodes * lambda.size() * 3 ), 0.0 );
+    stdVector< real64 > ownedValues( static_cast< size_t >( globalNodes * lambda.size() * 3 ), 0.0 );
     for( localIndex k = 0; k < lambda.size(); ++k )
     {
       auto const field = nodes.getReference< fields::solidMechanics::array2dLayoutTotalDisplacement >(
@@ -221,7 +221,7 @@ ModalResult runModalAnalysis( string const & xml )
           for( integer d = 0; d < 3; ++d )
             ownedValues[( k * globalNodes + globalIds[a] ) * 3 + d] = field( a, d );
     }
-    std::vector< real64 > ownerValues( ownedValues.size(), 0.0 );
+    stdVector< real64 > ownerValues( ownedValues.size(), 0.0 );
     MpiWrapper::allReduce( ownedValues, ownerValues, MpiWrapper::Reduction::Sum );
     for( localIndex k = 0; k < lambda.size(); ++k )
     {
@@ -250,13 +250,13 @@ ModalResult runModalAnalysis( string const & xml )
  * @param clamped if true, the first node is fixed
  * @return the eigenvalues of K x = lambda M x in ascending order
  */
-std::vector< real64 > chainEigenvalues( bool const clamped )
+stdVector< real64 > chainEigenvalues( bool const clamped )
 {
   integer const numNodes = numElements + 1;
   real64 const h = barLength / numElements;
 
-  std::vector< std::vector< real64 > > K( numNodes, std::vector< real64 >( numNodes, 0.0 ) );
-  std::vector< real64 > m( numNodes, h );
+  stdVector< stdVector< real64 > > K( numNodes, stdVector< real64 >( numNodes, 0.0 ) );
+  stdVector< real64 > m( numNodes, h );
   m.front() = 0.5 * h;
   m.back() = 0.5 * h;
   for( integer e = 0; e < numElements; ++e )
@@ -280,7 +280,7 @@ std::vector< real64 > chainEigenvalues( bool const clamped )
     }
   }
   BlasLapackLA::matrixSymmetricEigen( S.toSliceConst(), lambda.toSlice(), V.toSlice() );
-  return std::vector< real64 >( lambda.begin(), lambda.end() );
+  return stdVector< real64 >( lambda.begin(), lambda.end() );
 }
 
 bool nearlyEqual( real64 const a, real64 const b )
@@ -296,7 +296,7 @@ bool nearlyEqual( real64 const a, real64 const b )
  *        the end is clamped); if false (free end: elastic modes are M-orthogonal to the rigid translation), the
  *        reference eigenvalues are only required to be contained in the computed spectrum
  */
-void checkAxialModes( ModalResult const & result, std::vector< real64 > const & reference, bool const netParticipation )
+void checkAxialModes( ModalResult const & result, stdVector< real64 > const & reference, bool const netParticipation )
 {
   ASSERT_FALSE( result.eigenvalues.empty() );
   EXPECT_TRUE( result.shapesRegistered );
@@ -513,7 +513,7 @@ TEST( SolidMechanicsModal, clampedBarDoubleBendingModes )
     string const xml = replaceAll( makeInput( fullyClampedEnd, numModes, 1 ), shiftFrequency, "-1.0" );
     ModalResult const result = runModalAnalysis( xml );
     ASSERT_EQ( result.eigenvalues.size(), static_cast< size_t >( numModes ) );
-    std::vector< real64 > const & lambda = result.eigenvalues;
+    stdVector< real64 > const & lambda = result.eigenvalues;
     EXPECT_NEAR( lambda[1], lambda[0], 1.0e-6 * lambda[0] ) << "first bending pair";
     EXPECT_GT( lambda[2], 1.01 * lambda[1] ) << "torsion mode";
     if( numModes >= 5 )
@@ -569,7 +569,7 @@ ModalResult runFreeTetrahedron( string const & massType )
  * @param consistent if true, the consistent mass M = ( I + J ) / 120 (x) I_3, otherwise the lumped mass I / 24
  * @return the twelve eigenvalues of K x = lambda M x in ascending order
  */
-std::vector< real64 > freeTetrahedronEigenvalues( bool const consistent )
+stdVector< real64 > freeTetrahedronEigenvalues( bool const consistent )
 {
   // For the unit simplex, grad N = (-1,-1,-1), e_x, e_y, e_z.
   real64 const gradients[4][3] = { {-1, -1, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
@@ -608,7 +608,7 @@ std::vector< real64 > freeTetrahedronEigenvalues( bool const consistent )
         for( integer q = 0; q < 12; ++q )
           S( i, j ) += W[i][p] * K[p][q] * W[q][j];
   BlasLapackLA::matrixSymmetricEigen( S.toSliceConst(), reference.toSlice(), V.toSlice() );
-  return std::vector< real64 >( reference.begin(), reference.end() );
+  return stdVector< real64 >( reference.begin(), reference.end() );
 }
 
 } // namespace
@@ -618,7 +618,7 @@ TEST( SolidMechanicsModal, consistentFreeTetrahedron )
   if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 )
     GTEST_SKIP() << "A one-cell body is a serial assembly oracle.";
   ModalResult const result = runFreeTetrahedron( "consistent" );
-  std::vector< real64 > const reference = freeTetrahedronEigenvalues( true );
+  stdVector< real64 > const reference = freeTetrahedronEigenvalues( true );
   ASSERT_EQ( result.eigenvalues.size(), 8u );
   for( integer k = 0; k < 8; ++k )
     EXPECT_NEAR( result.eigenvalues[k], reference[k], 1e-8 + 1e-8 * std::fabs( reference[k] ) ) << "mode " << k + 1;
@@ -631,7 +631,7 @@ TEST( SolidMechanicsModal, lumpedFreeTetrahedron )
   if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 )
     GTEST_SKIP() << "A one-cell body is a serial assembly oracle.";
   ModalResult const result = runFreeTetrahedron( "lumped" );
-  std::vector< real64 > const reference = freeTetrahedronEigenvalues( false );
+  stdVector< real64 > const reference = freeTetrahedronEigenvalues( false );
   ASSERT_EQ( result.eigenvalues.size(), 8u );
   for( integer k = 0; k < 8; ++k )
     EXPECT_NEAR( result.eigenvalues[k], reference[k], 1e-8 + 1e-8 * std::fabs( reference[k] ) ) << "mode " << k + 1;

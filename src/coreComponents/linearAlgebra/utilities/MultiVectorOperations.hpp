@@ -67,7 +67,7 @@ struct ViewTile
  * @return the views
  */
 template< typename VECTOR >
-ViewTile collectTile( std::vector< VECTOR const * > const & vectors, localIndex const begin, localIndex const count )
+ViewTile collectTile( stdVector< VECTOR const * > const & vectors, localIndex const begin, localIndex const count )
 {
   ViewTile tile;
   for( localIndex k = 0; k < count; ++k )
@@ -86,9 +86,9 @@ ViewTile collectTile( std::vector< VECTOR const * > const & vectors, localIndex 
  * @return the pointers to const vectors
  */
 template< typename VECTOR >
-std::vector< VECTOR const * > constPointers( std::vector< VECTOR * > const & vectors )
+stdVector< VECTOR const * > constPointers( stdVector< VECTOR * > const & vectors )
 {
-  return std::vector< VECTOR const * >( vectors.begin(), vectors.end() );
+  return stdVector< VECTOR const * >( vectors.begin(), vectors.end() );
 }
 
 /**
@@ -108,8 +108,8 @@ std::vector< VECTOR const * > constPointers( std::vector< VECTOR * > const & vec
  * depend on the number of rows.
  */
 template< typename VECTOR >
-void dots( std::vector< VECTOR const * > const & X,
-           std::vector< VECTOR const * > const & Y,
+void dots( stdVector< VECTOR const * > const & X,
+           stdVector< VECTOR const * > const & Y,
            array2d< real64 > & result,
            bool const symmetric = false )
 {
@@ -215,8 +215,8 @@ void dots( std::vector< VECTOR const * > const & X,
  * by value, so nothing is uploaded to the device.
  */
 template< typename VECTOR >
-void combine( std::vector< VECTOR const * > const & V,
-              std::vector< real64 > const & coefficients,
+void combine( stdVector< VECTOR const * > const & V,
+              stdVector< real64 > const & coefficients,
               VECTOR & out,
               bool const accumulate )
 {
