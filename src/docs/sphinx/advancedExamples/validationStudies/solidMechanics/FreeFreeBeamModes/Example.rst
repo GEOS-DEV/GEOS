@@ -9,7 +9,7 @@ Free-Free Beam: Modal Analysis versus Euler-Bernoulli Beam Theory
 Problem description
 ------------------------------------------------------------------
 
-This example computes the vibration modes of a free-free steel beam with the ``Modal`` time integration option of the :ref:`SolidMechanicsLagrangianFEM` solver, and compares them with the beam theory.
+This example computes the vibration modes of a free-free steel beam with the :ref:`SolidMechanicsModalAnalysis` solver, and compares them with the beam theory.
 The beam is 10 m long and has a square cross-section of 0.2 m by 0.2 m.
 It is slender: the length is 50 times the side.
 No displacement boundary condition is applied, so the beam is a free body.
@@ -103,7 +103,7 @@ The material is an isotropic elastic steel, in the International System of Units
 Solver
 ------------------------------------------------------------------
 
-The solver block selects the ``Modal`` option:
+The solver block uses the ``SolidMechanicsModalAnalysis`` solver:
 
 .. literalinclude:: ../../../../../../../inputFiles/solidMechanics/modalFreeFreeBeam_arnoldi_smoke.xml
     :language: xml
@@ -118,7 +118,7 @@ The linear solver tolerance ``krylovTol`` is two orders of magnitude smaller tha
 The default ``modalCompletenessCheck`` verifies that no copy of a repeated eigenvalue is missed.
 The second input file uses ``modalBlockSize="6"``, which is the multiplicity of the rigid-body modes, instead of this check.
 The attribute ``modalDeflateRigidBodyModes="1"`` removes the rigid-body modes from the eigensolve, which lowers the cost of a free body.
-The theory of the eigensolvers is in :ref:`SolidMechanicsLagrangianFEM`.
+The theory of the eigensolvers is in :ref:`SolidMechanicsModalAnalysis`.
 
 The solver runs once.
 It prints a table with the frequency, the residual and the participation factors of each mode in the log.

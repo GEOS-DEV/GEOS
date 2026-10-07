@@ -26,7 +26,6 @@
 #include "kernels/StressStrainAverageKernels.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "linearAlgebra/utilities/EigenSolverParameters.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -55,8 +54,7 @@ public:
   {
     QuasiStatic,      //!< QuasiStatic
     ImplicitDynamic,  //!< ImplicitDynamic
-    ExplicitDynamic,  //!< ExplicitDynamic
-    Modal             //!< Modal analysis: generalized eigenproblem K x = lambda M x (no time integration)
+    ExplicitDynamic   //!< ExplicitDynamic
   };
 
   /**
@@ -97,44 +95,6 @@ public:
                        real64 const & dt,
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
-
-  /**
-   * @brief Compute the vibration modes of the structure.
-   * @param time_n time at the beginning of the step
-   * @param dt time step (unused except for the evaluation of time-dependent coefficients)
-   * @param cycleNumber cycle number
-   * @param domain the domain
-   * @return the time step (unchanged)
-   *
-   * Assembles the tangent stiffness K and the selected modal mass M (lumped by default, optionally exact
-   * consistent Tet4 mass), and solves the generalized
-   * eigenproblem K phi = lambda M phi for the modes closest to the shift @p modalShiftFrequency, with the
-   * eigensolver selected by @p modalSolverType. Displacement boundary conditions (taken as homogeneous) remove
-   * the constrained degrees of freedom. Frequencies, residuals and participation factors are stored in the
-   * solver, and the mode shapes in the nodal fields `modeShape1`, `modeShape2`, ...
-   */
-  real64 modalAnalysisStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
-
-  /**
-   * @brief Build the lumped mass vector and the mask of free degrees of freedom of the modal analysis.
-   * @param[in] time time at which the displacement boundary conditions are evaluated
-   * @param[in] domain the domain
-   * @param[out] freeMask vector with 1 on free degrees of freedom and 0 on constrained ones
-   * @param[out] massDiag lumped mass, zero on constrained degrees of freedom
-   * @return the global number of constrained degrees of freedom
-   * @note This function is public because it launches device kernels (extended lambdas of CUDA cannot be
-   *       defined in protected or private member functions).
-   */
-  globalIndex computeModalDiagonals( real64 const time,
-                                     DomainPartition & domain,
-                                     ParallelVector & freeMask,
-                                     ParallelVector & massDiag );
-
-  /** Assemble the exact consistent mass for first-order tetrahedra, using the stiffness sparsity. */
-  void assembleModalConsistentMass( DomainPartition & domain, ParallelMatrix & massMatrix );
 
   virtual void
   implicitStepSetup( real64 const & time_n,
@@ -294,23 +254,6 @@ public:
 
     static constexpr char const * contactPenaltyStiffnessString() { return "contactPenaltyStiffness"; }
 
-    static constexpr char const * modalNumModesString() { return "modalNumModes"; }
-    static constexpr char const * modalShiftFrequencyString() { return "modalShiftFrequency"; }
-    static constexpr char const * modalSolverTypeString() { return "modalSolverType"; }
-    static constexpr char const * modalToleranceString() { return "modalTolerance"; }
-    static constexpr char const * modalMaxIterationsString() { return "modalMaxIterations"; }
-    static constexpr char const * modalSubspaceSizeString() { return "modalSubspaceSize"; }
-    static constexpr char const * modalBlockSizeString() { return "modalBlockSize"; }
-    static constexpr char const * modalCompletenessCheckString() { return "modalCompletenessCheck"; }
-    static constexpr char const * modalSeedString() { return "modalSeed"; }
-    static constexpr char const * modalDeflateRigidBodyModesString() { return "modalDeflateRigidBodyModes"; }
-    static constexpr char const * modalMassTypeString() { return "modalMassType"; }
-    static constexpr char const * modalVerifyFreeBodyString() { return "modalVerifyFreeBody"; }
-    static constexpr char const * modalEigenvaluesString() { return "modalEigenvalues"; }
-    static constexpr char const * modalFrequenciesString() { return "modalFrequencies"; }
-    static constexpr char const * modalResidualsString() { return "modalResiduals"; }
-    static constexpr char const * modalParticipationFactorsString() { return "modalParticipationFactors"; }
-
   };
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
@@ -345,25 +288,6 @@ public:
 
   TimeIntegrationOption timeIntegrationOption() const { return m_timeIntegrationOption; }
 
-  /**
-   * @brief Name of the nodal field holding a mode shape.
-   * @param mode mode number, starting at 1
-   * @return the field name
-   */
-  static string modeShapeFieldName( integer const mode ) { return GEOS_FMT( "modeShape{}", mode ); }
-
-  /// @return eigenvalues lambda = omega^2 of the last modal analysis, ascending
-  arrayView1d< real64 const > modalEigenvalues() const { return m_modalEigenvalues.toViewConst(); }
-
-  /// @return signed frequencies sign(lambda) sqrt(|lambda|) / (2 pi) of the last modal analysis
-  arrayView1d< real64 const > modalFrequencies() const { return m_modalFrequencies.toViewConst(); }
-
-  /// @return relative residuals of the eigenpairs of the last modal analysis
-  arrayView1d< real64 const > modalResiduals() const { return m_modalResiduals.toViewConst(); }
-
-  /// @return participation factors (mode, direction) of the last modal analysis
-  arrayView2d< real64 const > modalParticipationFactors() const { return m_modalParticipationFactors.toViewConst(); }
-
 protected:
   virtual void postInputInitialization() override;
 
@@ -392,44 +316,6 @@ protected:
 
   real64 m_contactPenaltyStiffness;
 
-  /// Number of modes requested by the modal analysis
-  integer m_modalNumModes;
-  /// Spectral shift of the modal analysis, in Hz (signed: the shift in eigenvalue units is sign(f) (2 pi f)^2)
-  real64 m_modalShiftFrequency;
-  /// Eigensolver used by the modal analysis
-  EigenSolverParameters::SolverType m_modalSolverType;
-  /// Convergence tolerance of the eigensolver
-  real64 m_modalTolerance;
-  /// Maximum number of eigensolver restarts/iterations
-  integer m_modalMaxIterations;
-  /// Maximum dimension of the Krylov basis (0 = default)
-  integer m_modalSubspaceSize;
-  /// Block size of the Arnoldi eigensolver
-  integer m_modalBlockSize;
-  /// Whether the Arnoldi eigensolver verifies that no repeated eigenvalue copy was missed
-  integer m_modalCompletenessCheck;
-  /// Seed of the starting vectors of the eigensolver
-  integer m_modalSeed;
-  /// Whether the six rigid-body modes of a free structure are deflated from the eigensolve
-  integer m_modalDeflateRigidBodyModes;
-
-  /// Mass discretization: existing lumped behavior or exact consistent Tet4 mass.
-  string m_modalMassType = "lumped";
-  /// Strict free-body verification before and after the modal solve.
-  integer m_modalVerifyFreeBody = 0;
-  /// True while the modal analysis assembles its operators: the Modal option is only valid for a standalone
-  /// solver that runs modalAnalysisStep(), not when the solver is driven by a coupled solver
-  bool m_isModalAssembly = false;
-
-  /// Eigenvalues lambda = omega^2 of the last modal analysis
-  array1d< real64 > m_modalEigenvalues;
-  /// Signed frequencies (Hz) of the last modal analysis
-  array1d< real64 > m_modalFrequencies;
-  /// Relative residuals of the last modal analysis
-  array1d< real64 > m_modalResiduals;
-  /// Participation factors of the last modal analysis: ( mode, direction )
-  array2d< real64 > m_modalParticipationFactors;
-
 private:
 
   string m_contactRelationName;
@@ -441,8 +327,7 @@ private:
 ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
               "QuasiStatic",
               "ImplicitDynamic",
-              "ExplicitDynamic",
-              "Modal" );
+              "ExplicitDynamic" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************

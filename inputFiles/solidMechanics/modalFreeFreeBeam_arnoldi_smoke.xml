@@ -11,11 +11,10 @@
   <!-- SPHINX_MODAL_BEAM_SOLVER -->
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SolidMechanicsLagrangianFEM
+    <SolidMechanicsModalAnalysis
       name="modal"
       discretization="FE1"
       targetRegions="{ Region }"
-      timeIntegrationOption="Modal"
       modalSolverType="arnoldi"
       modalNumModes="10"
       modalShiftFrequency="-5.0"
@@ -25,7 +24,7 @@
         preconditionerType="amg"
         krylovTol="1.0e-10"
         krylovMaxIter="2000"/>
-    </SolidMechanicsLagrangianFEM>
+    </SolidMechanicsModalAnalysis>
   </Solvers>
   <!-- SPHINX_MODAL_BEAM_SOLVER_END -->
 

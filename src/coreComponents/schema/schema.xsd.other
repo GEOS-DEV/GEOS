@@ -611,6 +611,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SolidMechanicsLagrangeContact" type="SolidMechanicsLagrangeContactType" />
 			<xsd:element name="SolidMechanicsLagrangeContactBubbleStab" type="SolidMechanicsLagrangeContactBubbleStabType" />
 			<xsd:element name="SolidMechanicsLagrangianFEM" type="SolidMechanicsLagrangianFEMType" />
+			<xsd:element name="SolidMechanicsModalAnalysis" type="SolidMechanicsModalAnalysisType" />
 			<xsd:element name="SolidMechanics_MPM" type="SolidMechanics_MPMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 			<xsd:element name="WellManager" type="WellManagerType" />
@@ -1330,14 +1331,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="contactRelationName" type="groupNameRef" />
 		<!--maxForce => The maximum force contribution in the problem domain.-->
 		<xsd:attribute name="maxForce" type="real64" />
-		<!--modalEigenvalues => Eigenvalues lambda = omega^2 of the last modal analysis, in ascending order.-->
-		<xsd:attribute name="modalEigenvalues" type="real64_array" />
-		<!--modalFrequencies => Signed frequencies sign(lambda) sqrt(|lambda|) / (2 pi) of the last modal analysis.-->
-		<xsd:attribute name="modalFrequencies" type="real64_array" />
-		<!--modalParticipationFactors => Participation factors of the last modal analysis, per mode and direction, for M-normalized modes.-->
-		<xsd:attribute name="modalParticipationFactors" type="real64_array2d" />
-		<!--modalResiduals => Relative residuals ||K x - lambda M x|| / ( |lambda - sigma| ||M x|| ) of the last modal analysis.-->
-		<xsd:attribute name="modalResiduals" type="real64_array" />
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 		<!--surfaceGeneratorName => Name of the surface generator to use-->
@@ -1353,14 +1346,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="contactRelationName" type="groupNameRef" />
 		<!--maxForce => The maximum force contribution in the problem domain.-->
 		<xsd:attribute name="maxForce" type="real64" />
-		<!--modalEigenvalues => Eigenvalues lambda = omega^2 of the last modal analysis, in ascending order.-->
-		<xsd:attribute name="modalEigenvalues" type="real64_array" />
-		<!--modalFrequencies => Signed frequencies sign(lambda) sqrt(|lambda|) / (2 pi) of the last modal analysis.-->
-		<xsd:attribute name="modalFrequencies" type="real64_array" />
-		<!--modalParticipationFactors => Participation factors of the last modal analysis, per mode and direction, for M-normalized modes.-->
-		<xsd:attribute name="modalParticipationFactors" type="real64_array2d" />
-		<!--modalResiduals => Relative residuals ||K x - lambda M x|| / ( |lambda - sigma| ||M x|| ) of the last modal analysis.-->
-		<xsd:attribute name="modalResiduals" type="real64_array" />
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 		<!--surfaceGeneratorName => Name of the surface generator to use-->
@@ -1376,14 +1361,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="contactRelationName" type="groupNameRef" />
 		<!--maxForce => The maximum force contribution in the problem domain.-->
 		<xsd:attribute name="maxForce" type="real64" />
-		<!--modalEigenvalues => Eigenvalues lambda = omega^2 of the last modal analysis, in ascending order.-->
-		<xsd:attribute name="modalEigenvalues" type="real64_array" />
-		<!--modalFrequencies => Signed frequencies sign(lambda) sqrt(|lambda|) / (2 pi) of the last modal analysis.-->
-		<xsd:attribute name="modalFrequencies" type="real64_array" />
-		<!--modalParticipationFactors => Participation factors of the last modal analysis, per mode and direction, for M-normalized modes.-->
-		<xsd:attribute name="modalParticipationFactors" type="real64_array2d" />
-		<!--modalResiduals => Relative residuals ||K x - lambda M x|| / ( |lambda - sigma| ||M x|| ) of the last modal analysis.-->
-		<xsd:attribute name="modalResiduals" type="real64_array" />
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 		<!--surfaceGeneratorName => Name of the surface generator to use-->
@@ -1399,20 +1376,23 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="contactRelationName" type="groupNameRef" />
 		<!--maxForce => The maximum force contribution in the problem domain.-->
 		<xsd:attribute name="maxForce" type="real64" />
-		<!--modalEigenvalues => Eigenvalues lambda = omega^2 of the last modal analysis, in ascending order.-->
-		<xsd:attribute name="modalEigenvalues" type="real64_array" />
-		<!--modalFrequencies => Signed frequencies sign(lambda) sqrt(|lambda|) / (2 pi) of the last modal analysis.-->
-		<xsd:attribute name="modalFrequencies" type="real64_array" />
-		<!--modalParticipationFactors => Participation factors of the last modal analysis, per mode and direction, for M-normalized modes.-->
-		<xsd:attribute name="modalParticipationFactors" type="real64_array2d" />
-		<!--modalResiduals => Relative residuals ||K x - lambda M x|| / ( |lambda - sigma| ||M x|| ) of the last modal analysis.-->
-		<xsd:attribute name="modalResiduals" type="real64_array" />
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 		<!--surfaceGeneratorName => Name of the surface generator to use-->
 		<xsd:attribute name="surfaceGeneratorName" type="string" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianFEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--maxForce => The maximum force contribution in the problem domain.-->
+		<xsd:attribute name="maxForce" type="real64" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsModalAnalysisType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />

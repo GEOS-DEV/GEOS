@@ -16,7 +16,7 @@
 /**
  * @file testModalAnalysis.cpp
  *
- * Tests of the Modal time integration option of SolidMechanicsLagrangianFEM on a bar made of one column of
+ * Tests of the SolidMechanicsModalAnalysis solver on a bar made of one column of
  * trilinear hexahedra, with Poisson ratio zero and lumped mass.
  *
  * When the lateral displacements are constrained, the axial motion that is uniform over the cross-section is
@@ -30,7 +30,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsModalAnalysis.hpp"
 
 #include <gtest/gtest.h>
 
@@ -89,8 +89,7 @@ string makeInput( string const & constraints, integer const numModes, integer co
     R"xml(
 <Problem>
   <Solvers>
-    <SolidMechanicsLagrangianFEM name="solid"
-                                 timeIntegrationOption="Modal"
+    <SolidMechanicsModalAnalysis name="solid"
                                  discretization="FE1"
                                  targetRegions="{ Region }"
                                  modalNumModes="@MODES@"
@@ -104,7 +103,7 @@ string makeInput( string const & constraints, integer const numModes, integer co
                               preconditionerType="jacobi"
                               krylovTol="1e-13"
                               krylovMaxIter="5000"/>
-    </SolidMechanicsLagrangianFEM>
+    </SolidMechanicsModalAnalysis>
   </Solvers>
 
   <Mesh>
@@ -178,7 +177,7 @@ ModalResult runModalAnalysis( string const & xml )
   problem.applyInitialConditions();
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
-  SolidMechanicsLagrangianFEM & solver = problem.getGroupByPath< SolidMechanicsLagrangianFEM >( "/Solvers/solid" );
+  SolidMechanicsModalAnalysis & solver = problem.getGroupByPath< SolidMechanicsModalAnalysis >( "/Solvers/solid" );
 
   ModalResult result;
   arrayView1d< real64 const > const lambda = solver.modalEigenvalues();
@@ -194,8 +193,8 @@ ModalResult runModalAnalysis( string const & xml )
   }
 
   NodeManager const & nodes = problem.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization().getNodeManager();
-  result.shapesRegistered = nodes.hasWrapper( SolidMechanicsLagrangianFEM::modeShapeFieldName( 1 ) ) &&
-                            nodes.hasWrapper( SolidMechanicsLagrangianFEM::modeShapeFieldName( LvArray::integerConversion< integer >( lambda.size() ) ) );
+  result.shapesRegistered = nodes.hasWrapper( SolidMechanicsModalAnalysis::modeShapeFieldName( 1 ) ) &&
+                            nodes.hasWrapper( SolidMechanicsModalAnalysis::modeShapeFieldName( LvArray::integerConversion< integer >( lambda.size() ) ) );
   return result;
 }
 
@@ -499,7 +498,8 @@ TEST( SolidMechanicsModal, fewModesWithDefaultBasis )
 #ifdef GEOS_SPHERE_BENCHMARK_DIR
 TEST( SolidMechanicsModal, consistentFreeTetrahedron )
 {
-  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 ) GTEST_SKIP() << "A one-cell body is a serial assembly oracle.";
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 )
+    GTEST_SKIP() << "A one-cell body is a serial assembly oracle.";
   // Leave room for the Arnoldi search basis in the six-dimensional elastic complement.
   string xml = makeInput( "", 8, 1, "arnoldi", 1 );
   size_t const meshStart = xml.find( "  <Mesh>" );
@@ -513,7 +513,7 @@ TEST( SolidMechanicsModal, consistentFreeTetrahedron )
   ASSERT_EQ( result.eigenvalues.size(), 8u );
 
   // Independent dense oracle. For the unit simplex, grad N = (-1,-1,-1), e_x, e_y, e_z.
-  real64 const gradients[4][3] = { {-1,-1,-1}, {1,0,0}, {0,1,0}, {0,0,1} };
+  real64 const gradients[4][3] = { {-1, -1, -1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
   real64 B[6][12] = {};
   for( integer a = 0; a < 4; ++a )
   {
@@ -530,7 +530,7 @@ TEST( SolidMechanicsModal, consistentFreeTetrahedron )
     for( integer j = 0; j < 12; ++j )
     {
       W[i][j] = i%3 == j%3 ? std::sqrt( 120.0 ) *
-        ( ( i == j ? 1.0 : 0.0 ) - ( 1.0 - 1.0/std::sqrt( 5.0 ) )/4.0 ) : 0.0;
+                ( ( i == j ? 1.0 : 0.0 ) - ( 1.0 - 1.0/std::sqrt( 5.0 ) )/4.0 ) : 0.0;
       for( integer p = 0; p < 6; ++p )
         for( integer q = 0; q < 6; ++q )
         {
@@ -544,7 +544,8 @@ TEST( SolidMechanicsModal, consistentFreeTetrahedron )
   for( integer i = 0; i < 12; ++i )
     for( integer j = 0; j < 12; ++j )
       for( integer p = 0; p < 12; ++p )
-        for( integer q = 0; q < 12; ++q ) S( i,j ) += W[i][p] * K[p][q] * W[q][j];
+        for( integer q = 0; q < 12; ++q )
+          S( i, j ) += W[i][p] * K[p][q] * W[q][j];
   BlasLapackLA::matrixSymmetricEigen( S.toSliceConst(), reference.toSlice(), V.toSlice() );
   for( integer k = 0; k < 8; ++k )
     EXPECT_NEAR( result.eigenvalues[k], reference[k], 1e-8 + 1e-8 * std::fabs( reference[k] ) );

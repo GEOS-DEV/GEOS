@@ -9,12 +9,11 @@
   <!-- SPHINX_MODAL_BLOCK_SOLVER -->
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SolidMechanicsLagrangianFEM
+    <SolidMechanicsModalAnalysis
       name="modal"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region }"
-      timeIntegrationOption="Modal"
       modalSolverType="lobpcg"
       modalNumModes="16"
       modalShiftFrequency="-500.0"
@@ -26,7 +25,7 @@
         preconditionerType="amg"
         krylovTol="1.0e-10"
         krylovMaxIter="2000"/>
-    </SolidMechanicsLagrangianFEM>
+    </SolidMechanicsModalAnalysis>
   </Solvers>
   <!-- SPHINX_MODAL_BLOCK_SOLVER_END -->
 

@@ -16,14 +16,14 @@
 /**
  * @file SolidMechanicsModalAnalysis.cpp
  *
- * Modal analysis (vibration modes) of SolidMechanicsLagrangianFEM:
+ * Modal analysis (vibration modes) of a structure:
  * the generalized eigenproblem K phi = lambda M phi, solved with a spectral transformation that
  * requires solving linear systems with K - sigma M. For a negative shift sigma = -alpha, this is
  * the shifted elasticity operator K + alpha M, which is symmetric positive definite even for
  * structures with rigid-body modes.
  */
 
-#include "SolidMechanicsLagrangianFEM.hpp"
+#include "SolidMechanicsModalAnalysis.hpp"
 
 #include "common/Stopwatch.hpp"
 #include "common/TimingMacros.hpp"
@@ -88,8 +88,184 @@ private:
 
 } // namespace
 
-void SolidMechanicsLagrangianFEM::assembleModalConsistentMass( DomainPartition & domain,
-                                                             ParallelMatrix & massMatrix )
+SolidMechanicsModalAnalysis::SolidMechanicsModalAnalysis( string const & name,
+                                                          Group * const parent ):
+  SolidMechanicsLagrangianFEM( name, parent ),
+  m_modalNumModes( 10 ),
+  m_modalShiftFrequency( -1.0 ),
+  m_modalSolverType( EigenSolverParameters::SolverType::arnoldi ),
+  m_modalTolerance( 1.0e-8 ),
+  m_modalMaxIterations( 300 ),
+  m_modalSubspaceSize( 0 ),
+  m_modalBlockSize( 1 ),
+  m_modalCompletenessCheck( 1 ),
+  m_modalSeed( 1 ),
+  m_modalDeflateRigidBodyModes( 0 ),
+  m_modalMassType( MassType::lumped ),
+  m_modalVerifyFreeBody( 0 )
+{
+  registerWrapper( viewKeyStruct::modalNumModesString(), &m_modalNumModes ).
+    setApplyDefaultValue( 10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of vibration modes computed." );
+
+  registerWrapper( viewKeyStruct::modalShiftFrequencyString(), &m_modalShiftFrequency ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift "
+                    "sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. "
+                    "Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. "
+                    "Frequencies are in the units of the model (Hz if SI units are used)." );
+
+  registerWrapper( viewKeyStruct::modalSolverTypeString(), &m_modalSolverType ).
+    setApplyDefaultValue( m_modalSolverType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with "
+                    "K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the "
+                    "linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). "
+                    "Options are:\n* " + EnumStrings< EigenSolverParameters::SolverType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::modalToleranceString(), &m_modalTolerance ).
+    setApplyDefaultValue( 1.0e-8 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance "
+                    "(`krylovTol`) at least two orders of magnitude tighter." );
+
+  registerWrapper( viewKeyStruct::modalMaxIterationsString(), &m_modalMaxIterations ).
+    setApplyDefaultValue( 300 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver." );
+
+  registerWrapper( viewKeyStruct::modalSubspaceSizeString(), &m_modalSubspaceSize ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG "
+                    "eigensolver if larger than the number of modes (guard vectors). "
+                    "The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard "
+                    "vector for LOBPCG." );
+
+  registerWrapper( viewKeyStruct::modalBlockSizeString(), &m_modalBlockSize ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to "
+                    "the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) "
+                    "to find repeated eigenvalues without relying on the completeness check." );
+
+  registerWrapper( viewKeyStruct::modalCompletenessCheckString(), &m_modalCompletenessCheck ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated "
+                    "eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds "
+                    "new modes." );
+
+  registerWrapper( viewKeyStruct::modalSeedString(), &m_modalSeed ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Seed of the random starting vectors of the eigensolver." );
+
+  registerWrapper( viewKeyStruct::modalDeflateRigidBodyModesString(), &m_modalDeflateRigidBodyModes ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "If 1, the rigid-body modes of a free structure (three translations and three rotations) are "
+                    "computed analytically and deflated from the eigensolve. They are the first modes of the result, "
+                    "with a zero eigenvalue, and they count in the number of modes. "
+                    "This avoids the rounding noise of the rigid modes in the convergence test, which is "
+                    "useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied." );
+
+  registerWrapper( viewKeyStruct::modalMassTypeString(), &m_modalMassType ).
+    setApplyDefaultValue( m_modalMassType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Mass discretization of the modal analysis. `lumped` is the row-sum lumped (diagonal) mass. "
+                    "`consistent` is the exact consistent mass, available for first-order tetrahedra only. "
+                    "Options are:\n* " + EnumStrings< MassType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeyStruct::modalVerifyFreeBodyString(), &m_modalVerifyFreeBody ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "If 1, require a free body with six independent analytical rigid modes, verify their stiffness "
+                    "residuals, and check numerical nullity, eigenpair residuals and mass orthogonality." );
+
+  registerWrapper( viewKeyStruct::modalEigenvaluesString(), &m_modalEigenvalues ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Eigenvalues lambda = omega^2 of the last modal analysis, in ascending order." );
+
+  registerWrapper( viewKeyStruct::modalFrequenciesString(), &m_modalFrequencies ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Signed frequencies sign(lambda) sqrt(|lambda|) / (2 pi) of the last modal analysis." );
+
+  registerWrapper( viewKeyStruct::modalResidualsString(), &m_modalResiduals ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Relative residuals ||K x - lambda M x|| / ( |lambda - sigma| ||M x|| ) of the last modal analysis." );
+
+  registerWrapper( viewKeyStruct::modalParticipationFactorsString(), &m_modalParticipationFactors ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Participation factors of the last modal analysis, per mode and direction, for M-normalized modes." );
+}
+
+void SolidMechanicsModalAnalysis::postInputInitialization()
+{
+  SolidMechanicsLagrangianFEM::postInputInitialization();
+
+  GEOS_ERROR_IF( timeIntegrationOption() != TimeIntegrationOption::QuasiStatic,
+                 "The modal analysis does not integrate in time: remove the attribute timeIntegrationOption",
+                 getWrapperDataContext( viewKeyStruct::timeIntegrationOptionString() ) );
+  GEOS_ERROR_IF( m_modalNumModes <= 0,
+                 "The number of modes must be positive",
+                 getWrapperDataContext( viewKeyStruct::modalNumModesString() ) );
+  GEOS_ERROR_IF( m_modalBlockSize <= 0,
+                 "The block size of the eigensolver must be positive",
+                 getWrapperDataContext( viewKeyStruct::modalBlockSizeString() ) );
+  GEOS_ERROR_IF( m_modalTolerance <= 0.0,
+                 "The tolerance of the eigensolver must be positive",
+                 getWrapperDataContext( viewKeyStruct::modalToleranceString() ) );
+  GEOS_ERROR_IF( getReference< string >( viewKeyStruct::contactRelationNameString() ) != viewKeyStruct::noContactRelationNameString(),
+                 "The modal analysis does not support contact",
+                 getDataContext() );
+
+  // Size the result arrays up front so that they can be collected by history outputs
+  m_modalEigenvalues.resize( m_modalNumModes );
+  m_modalFrequencies.resize( m_modalNumModes );
+  m_modalResiduals.resize( m_modalNumModes );
+  m_modalParticipationFactors.resize( m_modalNumModes, 3 );
+}
+
+void SolidMechanicsModalAnalysis::registerDataOnMesh( Group & meshBodies )
+{
+  SolidMechanicsLagrangianFEM::registerDataOnMesh( meshBodies );
+
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & meshLevel,
+                                                    string_array const & )
+  {
+    NodeManager & nodes = meshLevel.getNodeManager();
+    for( integer mode = 1; mode <= m_modalNumModes; ++mode )
+    {
+      nodes.registerWrapper< solidMechanics::array2dLayoutTotalDisplacement >( modeShapeFieldName( mode ) ).
+        setApplyDefaultValue( 0.0 ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setDescription( GEOS_FMT( "Displacement of the mass-normalized vibration mode {}", mode ) ).
+        setRegisteringObjects( getName() ).
+        reference().resizeDimension< 1 >( 3 );
+    }
+  } );
+}
+
+real64 SolidMechanicsModalAnalysis::solverStep( real64 const & time_n,
+                                                real64 const & dt,
+                                                integer const cycleNumber,
+                                                DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+  return modalAnalysisStep( time_n, dt, cycleNumber, domain );
+}
+
+void SolidMechanicsModalAnalysis::assembleModalConsistentMass( DomainPartition & domain,
+                                                               ParallelMatrix & massMatrix )
 {
   // The centroid quadrature used for Tet4 stiffness is not sufficient for N_a N_b.
   // Integrate this quadratic product exactly: rho * V / 20 * (1 + delta_ab).
@@ -98,8 +274,8 @@ void SolidMechanicsLagrangianFEM::assembleModalConsistentMass( DomainPartition &
   string const dofKey = m_dofManager.getKey( solidMechanics::totalDisplacement::key() );
   globalIndex const rankOffset = m_dofManager.rankOffset();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                              MeshLevel & mesh,
-                                                              string_array const & regionNames )
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
   {
     auto const dofs = mesh.getNodeManager().getReference< globalIndex_array >( dofKey ).toViewConst();
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & subRegion )
@@ -119,13 +295,16 @@ void SolidMechanicsLagrangianFEM::assembleModalConsistentMass( DomainPartition &
         for( integer c = 0; c < 3; ++c )
         {
           globalIndex columns[4];
-          for( integer b = 0; b < 4; ++b ) columns[b] = dofs[nodes[k][b]] + c;
+          for( integer b = 0; b < 4; ++b )
+            columns[b] = dofs[nodes[k][b]] + c;
           for( integer a = 0; a < 4; ++a )
           {
             globalIndex const globalRow = columns[a];
-            if( globalRow < rankOffset || globalRow >= rankOffset + matrix.numRows() ) continue;
+            if( globalRow < rankOffset || globalRow >= rankOffset + matrix.numRows() )
+              continue;
             real64 values[4];
-            for( integer b = 0; b < 4; ++b ) values[b] = density[k][0] * volumes[k] / 20.0 * ( a == b ? 2.0 : 1.0 );
+            for( integer b = 0; b < 4; ++b )
+              values[b] = density[k][0] * volumes[k] / 20.0 * ( a == b ? 2.0 : 1.0 );
             matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >(
               LvArray::integerConversion< localIndex >( globalRow - rankOffset ), columns, values, 4 );
           }
@@ -137,7 +316,7 @@ void SolidMechanicsLagrangianFEM::assembleModalConsistentMass( DomainPartition &
   massMatrix.setDofManager( &m_dofManager );
 }
 
-globalIndex SolidMechanicsLagrangianFEM::computeModalDiagonals( real64 const time,
+globalIndex SolidMechanicsModalAnalysis::computeModalDiagonals( real64 const time,
                                                                 DomainPartition & domain,
                                                                 ParallelVector & freeMask,
                                                                 ParallelVector & massDiag )
@@ -219,7 +398,7 @@ globalIndex SolidMechanicsLagrangianFEM::computeModalDiagonals( real64 const tim
   return freeMask.globalSize() - LvArray::integerConversion< globalIndex >( std::llround( freeMask.norm1() ) );
 }
 
-real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
+real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
                                                        real64 const & dt,
                                                        integer const cycleNumber,
                                                        DomainPartition & domain )
@@ -241,9 +420,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   m_rhs.zero();
   {
     arrayView1d< real64 > const localRhs = m_rhs.open();
-    m_isModalAssembly = true;
     assembleSystem( time_n, dt, domain, m_dofManager, m_localMatrix.toViewConstSizes(), localRhs );
-    m_isModalAssembly = false;
     m_rhs.close();
   }
   m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
@@ -255,15 +432,14 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   ParallelVector freeMask;
   ParallelVector massDiag;
   globalIndex const numConstrained = computeModalDiagonals( time_n + dt, domain, freeMask, massDiag );
-  GEOS_ERROR_IF( m_modalMassType != "lumped" && m_modalMassType != "consistent",
-                 "modalMassType must be lumped or consistent", getDataContext() );
   GEOS_ERROR_IF( m_modalVerifyFreeBody && ( numConstrained != 0 || m_modalNumModes < 7 ),
                  "Free-body verification requires no constraints and at least seven eigenpairs", getDataContext() );
   ParallelMatrix consistentMass;
-  if( m_modalMassType == "consistent" )
+  if( m_modalMassType == MassType::consistent )
   {
     assembleModalConsistentMass( domain, consistentMass );
-    if( numConstrained > 0 ) consistentMass.leftRightScale( freeMask, freeMask );
+    if( numConstrained > 0 )
+      consistentMass.leftRightScale( freeMask, freeMask );
   }
 
   // Constrained rows and columns are removed symmetrically: K <- D K D, with D = diag( freeMask ).
@@ -296,7 +472,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
 
   ParallelMatrix shiftedMatrix( m_matrix );
   shiftedMatrix.setDofManager( &m_dofManager );
-  if( m_modalMassType == "consistent" )
+  if( m_modalMassType == MassType::consistent )
     shiftedMatrix.addEntries( consistentMass, MatrixPatternOp::Equal, -shift );
   else
     shiftedMatrix.addDiagonal( massDiag, -shift );
@@ -397,7 +573,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   eigenParams.logLevel = getLogLevel() >= 2 ? 2 : ( getLogLevel() >= 1 ? 1 : 0 );
 
   DiagonalOperator< ParallelVector > lumpedMassOperator( massDiag );
-  LinearOperator< ParallelVector > const & massOperator = m_modalMassType == "consistent"
+  LinearOperator< ParallelVector > const & massOperator = m_modalMassType == MassType::consistent
     ? static_cast< LinearOperator< ParallelVector > const & >( consistentMass )
     : static_cast< LinearOperator< ParallelVector > const & >( lumpedMassOperator );
   // Preconditioned methods use one application of a set-up preconditioner (e.g. one multigrid cycle)
@@ -438,6 +614,11 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
       image.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
       real64 const stiffnessScale = m_matrix.normInf();
       GEOS_ERROR_IF( stiffnessScale <= 0.0, "Stiffness scale must be positive", getDataContext() );
+      // Relative tolerance on ||K q|| / ( ||K||_inf ||q|| ) of an analytical rigid vector q
+      real64 constexpr rigidStiffnessTolerance = 1.0e-12;
+      // A rigid vector whose squared M-norm falls below this fraction of its norm before the orthogonalization
+      // is numerically dependent on the previous ones. Relative, so that it does not depend on the units of the mass.
+      real64 constexpr rigidRankTolerance = 1.0e-12;
       // Two-pass M-orthogonalization both checks rank and prepares a stable deflation basis.
       for( localIndex j = 0; j < rigidBodyModes.size(); ++j )
       {
@@ -445,8 +626,10 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
         m_matrix.apply( q, image );
         real64 const residual = image.norm2() / ( stiffnessScale * q.norm2() );
         GEOS_LOG_RANK_0( GEOS_FMT( "  analytical RBM {} normalized stiffness residual {:.16e}", j, residual ) );
-        GEOS_ERROR_IF( !std::isfinite( residual ) || residual > 1e-12,
+        GEOS_ERROR_IF( !std::isfinite( residual ) || residual > rigidStiffnessTolerance,
                        "Analytical rigid vector is not in the stiffness nullspace", getDataContext() );
+        massOperator.apply( q, image );
+        real64 const initialMassNorm2 = q.dot( image );
         for( integer pass = 0; pass < 2; ++pass )
           for( localIndex i = 0; i < j; ++i )
           {
@@ -455,16 +638,17 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
           }
         massOperator.apply( q, image );
         real64 const massNorm2 = q.dot( image );
-        GEOS_ERROR_IF( !std::isfinite( massNorm2 ) || massNorm2 <= 1e-20,
+        GEOS_ERROR_IF( !std::isfinite( massNorm2 ) || initialMassNorm2 <= 0.0 || massNorm2 <= rigidRankTolerance * initialMassNorm2,
                        "Rigid subspace has rank less than six", getDataContext() );
         q.scale( 1.0 / std::sqrt( massNorm2 ) );
       }
       GEOS_LOG_RANK_0( "  analytical RBM mass-orthogonalized rank 6" );
     }
-    if( m_modalDeflateRigidBodyModes != 0 ) for( ParallelVector const & mode : rigidBodyModes )
-    {
-      problem.constraints.push_back( &mode );
-    }
+    if( m_modalDeflateRigidBodyModes != 0 )
+      for( ParallelVector const & mode : rigidBodyModes )
+      {
+        problem.constraints.push_back( &mode );
+      }
   }
 
   std::unique_ptr< GeneralizedEigenSolver< ParallelVector > > eigenSolver =
@@ -477,8 +661,12 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   {
     GEOS_ERROR_IF( !eigenResult.converged, "Free-body eigensolve did not converge", getDataContext() );
     real64 spectralScale = 0.0;
-    for( real64 const value : eigenResult.eigenvalues ) spectralScale = std::max( spectralScale, std::fabs( value ) );
-    real64 const zeroBand = std::max( 1e-12, spectralScale * m_modalTolerance );
+    for( real64 const value : eigenResult.eigenvalues )
+      spectralScale = std::max( spectralScale, std::fabs( value ) );
+    GEOS_ERROR_IF( !( spectralScale > 0.0 ), "All the computed eigenvalues are zero: there is no elastic mode to compare with",
+                   getDataContext() );
+    // Eigenvalues below this band, relative to the largest one, are rigid modes
+    real64 const zeroBand = spectralScale * m_modalTolerance;
     integer nullity = 0;
     real64 maxResidual = 0.0, maxMassError = 0.0, maxStiffnessError = 0.0;
     ParallelVector kPhi, mPhi, residual;
@@ -505,7 +693,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
       {
         maxMassError = std::max( maxMassError, std::fabs( modes[i].dot( mPhi ) - ( i == j ? 1.0 : 0.0 ) ) );
         maxStiffnessError = std::max( maxStiffnessError,
-          std::fabs( modes[i].dot( kPhi ) - ( i == j ? value : 0.0 ) ) / spectralScale );
+                                      std::fabs( modes[i].dot( kPhi ) - ( i == j ? value : 0.0 ) ) / spectralScale );
       }
     }
     GEOS_LOG_RANK_0( GEOS_FMT( "  free-body verification: nullity {}, max residual {:.16e}, "
@@ -629,5 +817,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
 
   return dt;
 }
+
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SolidMechanicsModalAnalysis, string const &, dataRepository::Group * const )
 
 } // namespace geos

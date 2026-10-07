@@ -71,17 +71,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
   m_isFixedStressPoromechanicsUpdate( false ),
-  m_performStressInitialization( false ),
-  m_modalNumModes( 10 ),
-  m_modalShiftFrequency( -1.0 ),
-  m_modalSolverType( EigenSolverParameters::SolverType::arnoldi ),
-  m_modalTolerance( 1.0e-8 ),
-  m_modalMaxIterations( 300 ),
-  m_modalSubspaceSize( 0 ),
-  m_modalBlockSize( 1 ),
-  m_modalCompletenessCheck( 1 ),
-  m_modalSeed( 1 ),
-  m_modalDeflateRigidBodyModes( 0 )
+  m_performStressInitialization( false )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -146,105 +136,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setDescription( "The maximum force contribution in the problem domain." );
 
-  registerWrapper( viewKeyStruct::modalNumModesString(), &m_modalNumModes ).
-    setApplyDefaultValue( 10 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Number of vibration modes computed when the time integration option is `Modal`." );
-
-  registerWrapper( viewKeyStruct::modalShiftFrequencyString(), &m_modalShiftFrequency ).
-    setApplyDefaultValue( -1.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift "
-                    "sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. "
-                    "Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. "
-                    "Frequencies are in the units of the model (Hz if SI units are used)." );
-
-  registerWrapper( viewKeyStruct::modalSolverTypeString(), &m_modalSolverType ).
-    setApplyDefaultValue( m_modalSolverType ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with "
-                    "K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the "
-                    "linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). "
-                    "Options are:\n* " + EnumStrings< EigenSolverParameters::SolverType >::concat( "\n* " ) );
-
-  registerWrapper( viewKeyStruct::modalToleranceString(), &m_modalTolerance ).
-    setApplyDefaultValue( 1.0e-8 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance "
-                    "(`krylovTol`) at least two orders of magnitude tighter." );
-
-  registerWrapper( viewKeyStruct::modalMaxIterationsString(), &m_modalMaxIterations ).
-    setApplyDefaultValue( 300 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver." );
-
-  registerWrapper( viewKeyStruct::modalSubspaceSizeString(), &m_modalSubspaceSize ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG "
-                    "eigensolver if larger than the number of modes (guard vectors). "
-                    "The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard "
-                    "vector for LOBPCG." );
-
-  registerWrapper( viewKeyStruct::modalBlockSizeString(), &m_modalBlockSize ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to "
-                    "the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) "
-                    "to find repeated eigenvalues without relying on the completeness check." );
-
-  registerWrapper( viewKeyStruct::modalCompletenessCheckString(), &m_modalCompletenessCheck ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated "
-                    "eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds "
-                    "new modes." );
-
-  registerWrapper( viewKeyStruct::modalSeedString(), &m_modalSeed ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Seed of the random starting vectors of the eigensolver." );
-
-  registerWrapper( viewKeyStruct::modalDeflateRigidBodyModesString(), &m_modalDeflateRigidBodyModes ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "If 1, the rigid-body modes of a free structure (three translations and three rotations) are "
-                    "computed analytically and deflated from the eigensolve. They are the first modes of the result, "
-                    "with a zero eigenvalue, and they count in the number of modes. "
-                    "This avoids the rounding noise of the rigid modes in the convergence test, which is "
-                    "useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied." );
-
-  registerWrapper( viewKeyStruct::modalMassTypeString(), &m_modalMassType ).
-    setApplyDefaultValue( "lumped" ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Modal mass discretization: lumped (default) or consistent (exact first-order tetrahedra only)." );
-
-  registerWrapper( viewKeyStruct::modalVerifyFreeBodyString(), &m_modalVerifyFreeBody ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "If 1, require a free body with six independent analytical rigid modes, verify their stiffness "
-                    "residuals, and check numerical nullity, eigenpair residuals and mass orthogonality." );
-
-  registerWrapper( viewKeyStruct::modalEigenvaluesString(), &m_modalEigenvalues ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Eigenvalues lambda = omega^2 of the last modal analysis, in ascending order." );
-
-  registerWrapper( viewKeyStruct::modalFrequenciesString(), &m_modalFrequencies ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Signed frequencies sign(lambda) sqrt(|lambda|) / (2 pi) of the last modal analysis." );
-
-  registerWrapper( viewKeyStruct::modalResidualsString(), &m_modalResiduals ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Relative residuals ||K x - lambda M x|| / ( |lambda - sigma| ||M x|| ) of the last modal analysis." );
-
-  registerWrapper( viewKeyStruct::modalParticipationFactorsString(), &m_modalParticipationFactors ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Participation factors of the last modal analysis, per mode and direction, for M-normalized modes." );
-
   // Set physics-dependent parameters for linear solver
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.dofsPerNode = 3;
@@ -276,28 +167,6 @@ void SolidMechanicsLagrangianFEM::postInputInitialization()
     {
       linParams.amg.nullSpaceType = LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes;
     }
-  }
-
-  if( m_timeIntegrationOption == TimeIntegrationOption::Modal )
-  {
-    GEOS_ERROR_IF( m_modalNumModes <= 0,
-                   "The number of modes must be positive",
-                   getWrapperDataContext( viewKeyStruct::modalNumModesString() ) );
-    GEOS_ERROR_IF( m_modalBlockSize <= 0,
-                   "The block size of the eigensolver must be positive",
-                   getWrapperDataContext( viewKeyStruct::modalBlockSizeString() ) );
-    GEOS_ERROR_IF( m_modalTolerance <= 0.0,
-                   "The tolerance of the eigensolver must be positive",
-                   getWrapperDataContext( viewKeyStruct::modalToleranceString() ) );
-    GEOS_ERROR_IF( m_contactRelationName != viewKeyStruct::noContactRelationNameString(),
-                   "The Modal time integration option does not support contact",
-                   getDataContext() );
-
-    // Size the result arrays up front so that they can be collected by history outputs
-    m_modalEigenvalues.resize( m_modalNumModes );
-    m_modalFrequencies.resize( m_modalNumModes );
-    m_modalResiduals.resize( m_modalNumModes );
-    m_modalParticipationFactors.resize( m_modalNumModes, 3 );
   }
 
   m_surfaceGenerator = this->getParent().getGroupPointer< PhysicsSolverBase >( m_surfaceGeneratorName );
@@ -332,8 +201,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       reference().resizeDimension< 1 >( 3 );
 
     Group const & outputs = Group::getGroupByPath( GEOS_FMT( "/{}", ProblemManager::groupKeysStruct().outputManager.key() ) );
-    if( ( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic &&
-          m_timeIntegrationOption != TimeIntegrationOption::Modal ) || outputs.hasSubGroupOfType< ChomboIO >() )
+    if( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic || outputs.hasSubGroupOfType< ChomboIO >() )
     {
       nodes.registerField< solidMechanics::velocity >( getName() ).
         reference().resizeDimension< 1 >( 3 );
@@ -349,20 +217,6 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
     }
 
     nodes.registerField< solidMechanics::mass >( getName() );
-
-    if( m_timeIntegrationOption == TimeIntegrationOption::Modal )
-    {
-      for( integer mode = 1; mode <= m_modalNumModes; ++mode )
-      {
-        nodes.registerWrapper< solidMechanics::array2dLayoutTotalDisplacement >( modeShapeFieldName( mode ) ).
-          setApplyDefaultValue( 0.0 ).
-          setPlotLevel( PlotLevel::LEVEL_0 ).
-          setRestartFlags( RestartFlags::NO_WRITE ).
-          setDescription( GEOS_FMT( "Displacement of the mass-normalized vibration mode {}", mode ) ).
-          setRegisteringObjects( getName() ).
-          reference().resizeDimension< 1 >( 3 );
-      }
-    }
 
     nodes.registerField< solidMechanics::externalForce >( getName() ).
       reference().resizeDimension< 1 >( 3 );
@@ -650,11 +504,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
 
-  if( m_timeIntegrationOption == TimeIntegrationOption::Modal )
-  {
-    dtReturn = modalAnalysisStep( time_n, dt, cycleNumber, domain );
-  }
-  else if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
+  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
     dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
 
@@ -1072,8 +922,7 @@ SolidMechanicsLagrangianFEM::
         }
       } );
     }
-    else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic ||
-             this->m_timeIntegrationOption == TimeIntegrationOption::Modal )
+    else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
       forAll< parallelDevicePolicy<  > >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
@@ -1373,12 +1222,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
     }
     else
     {
-      GEOS_ERROR_IF( m_timeIntegrationOption == TimeIntegrationOption::Modal && !m_isModalAssembly,
-                     "The Modal time integration option is only available to a standalone solver, "
-                     "not to a solver that is driven by a coupled solver",
-                     getDataContext() );
-      if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic ||
-          m_timeIntegrationOption == TimeIntegrationOption::Modal )
+      if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
       {
         m_maxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,

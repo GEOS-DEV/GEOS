@@ -9,10 +9,10 @@ Free Block and Free-Free Beam: Arnoldi versus LOBPCG Eigensolvers
 Problem description
 ------------------------------------------------------------------
 
-The ``Modal`` time integration option of the :ref:`SolidMechanicsLagrangianFEM` solver offers two eigensolvers: ``arnoldi`` and ``lobpcg``.
+The :ref:`SolidMechanicsModalAnalysis` solver offers two eigensolvers: ``arnoldi`` and ``lobpcg``.
 This example compares them on two free bodies.
 It shows the effect of the deflation of the rigid-body modes.
-The theory of both solvers is in :ref:`SolidMechanicsLagrangianFEM`.
+The theory of both solvers is in :ref:`SolidMechanicsModalAnalysis`.
 
 The first problem is a free steel block of 2 m by 1 m by 1 m.
 It has 32 by 16 by 16 trilinear hexahedra, that is 28 611 unknowns.

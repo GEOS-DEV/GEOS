@@ -22,6 +22,7 @@ set( solidMechanicsSolvers_headers
      SolidMechanicsFields.hpp
      SolidMechanicsLagrangianFEM.hpp
      SolidMechanicsLagrangianFEM.hpp
+     SolidMechanicsModalAnalysis.hpp
      kernels/SolidMechanicsLagrangianFEMKernels.hpp
      SolidMechanicsMPM.hpp
      MPMSolverFields.hpp
