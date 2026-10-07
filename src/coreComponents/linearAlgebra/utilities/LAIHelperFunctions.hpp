@@ -27,6 +27,8 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
+#include <array>
+
 namespace geos
 {
 namespace LAIHelperFunctions
@@ -254,15 +256,20 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
     {
       sumX += nodePosition( i, 0 );
       sumY += nodePosition( i, 1 );
-      if( numComponents == 3 ) sumZ += nodePosition( i, 2 );
+      if( numComponents == 3 )
+        sumZ += nodePosition( i, 2 );
       count += 1.0;
     }
   } );
-  real64 const globalCount = MpiWrapper::sum( count.get(), MPI_COMM_GEOS );
-  GEOS_ERROR_IF( globalCount <= 0.0, "Cannot construct rigid modes for an empty body" );
-  real64 const center[3] = { MpiWrapper::sum( sumX.get(), MPI_COMM_GEOS ) / globalCount,
-                            MpiWrapper::sum( sumY.get(), MPI_COMM_GEOS ) / globalCount,
-                            MpiWrapper::sum( sumZ.get(), MPI_COMM_GEOS ) / globalCount };
+  // One reduction for the sums and the count. A target without any owned node keeps the origin as center, as
+  // before the centering.
+  std::array< real64, 4 > const localSums{ sumX.get(), sumY.get(), sumZ.get(), count.get() };
+  std::array< real64, 4 > globalSums{};
+  MpiWrapper::allReduce( localSums, globalSums, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+  real64 const globalCount = globalSums[3];
+  real64 const center[3] = { globalCount > 0.0 ? globalSums[0] / globalCount : 0.0,
+                             globalCount > 0.0 ? globalSums[1] / globalCount : 0.0,
+                             globalCount > 0.0 ? globalSums[2] / globalCount : 0.0 };
 
   // Rotation RBMs
   for( localIndex k = numComponents; k < numRidigBodyModes; ++k )
