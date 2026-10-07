@@ -1,0 +1,105 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <!-- Free-free steel beam, 10 m long, 0.2 m x 0.2 m cross-section. No boundary condition:
+       the structure has six rigid-body modes, followed by the bending, torsion and axial modes. -->
+  <!-- SPHINX_MODAL_BEAM_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="beam"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 0.2 }"
+      zCoords="{ 0, 0.2 }"
+      nx="{ 100 }"
+      ny="{ 4 }"
+      nz="{ 4 }"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+  <!-- SPHINX_MODAL_BEAM_MESH_END -->
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ cb }"
+      materialList="{ steel }"/>
+  </ElementRegions>
+
+  <!-- SPHINX_MODAL_BEAM_MATERIAL -->
+  <Constitutive>
+    <ElasticIsotropic
+      name="steel"
+      defaultDensity="7850"
+      defaultYoungModulus="2.0e11"
+      defaultPoissonRatio="0.3"/>
+  </Constitutive>
+  <!-- SPHINX_MODAL_BEAM_MATERIAL_END -->
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <!-- Nodes on the axis of the beam -->
+  <Geometry>
+    <Box
+      name="axis"
+      xMin="{ -0.01, 0.09, 0.09 }"
+      xMax="{ 10.01, 0.11, 0.11 }"/>
+  </Geometry>
+
+  <!-- The modal analysis runs once. The mode shapes along the axis are then collected and written to the
+       history file. -->
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="modalAnalysis"
+      forceDt="1.0"
+      target="/Solvers/modal"/>
+
+    <PeriodicEvent
+      name="bendingModeCollection"
+      timeFrequency="1.0"
+      target="/Tasks/bendingMode1Collection"/>
+
+    <PeriodicEvent
+      name="secondBendingModeCollection"
+      timeFrequency="1.0"
+      target="/Tasks/bendingMode2Collection"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="1.0"
+      target="/Outputs/timeHistoryOutput"/>
+  </Events>
+
+  <!-- Modes 1 to 6 are the rigid-body modes. Modes 7 and 8 are the two polarizations of the first bending
+       mode, and modes 9 and 10 those of the second one. -->
+  <!-- SPHINX_MODAL_BEAM_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="bendingMode1Collection"
+      objectPath="nodeManager"
+      setNames="{ axis }"
+      fieldName="modeShape7"/>
+
+    <PackCollection
+      name="bendingMode2Collection"
+      objectPath="nodeManager"
+      setNames="{ axis }"
+      fieldName="modeShape9"/>
+  </Tasks>
+  <!-- SPHINX_MODAL_BEAM_TASKS_END -->
+
+  <Outputs>
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{ /Tasks/bendingMode1Collection, /Tasks/bendingMode2Collection }"
+      filename="modal_history"/>
+  </Outputs>
+
+</Problem>

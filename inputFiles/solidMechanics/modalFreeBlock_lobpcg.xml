@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./modalFreeBlock_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_MODAL_BLOCK_SOLVER -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsModalAnalysis
+      name="modal"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region }"
+      modalSolverType="lobpcg"
+      modalNumModes="16"
+      modalShiftFrequency="-500.0"
+      modalDeflateRigidBodyModes="1"
+      modalMaxIterations="600"
+      modalTolerance="1.0e-8">
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-10"
+        krylovMaxIter="2000"/>
+    </SolidMechanicsModalAnalysis>
+  </Solvers>
+  <!-- SPHINX_MODAL_BLOCK_SOLVER_END -->
+
+</Problem>

@@ -188,6 +188,7 @@ This approach is typically referred to as the "Leapfrog" method.
 However, in GEOS we do not offer this option since it can cause some confusion that results from the
 storage of state at different points in time.
 
+The vibration modes of a structure are computed by the :ref:`SolidMechanicsModalAnalysis` solver.
 
 Parameters
 =========================

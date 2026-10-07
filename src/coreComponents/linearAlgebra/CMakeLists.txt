@@ -51,11 +51,14 @@ set( linearAlgebra_headers
      multiscale/msrsb/MsrsbLevelBuilderCoupled.hpp
      multiscale/msrsb/MsrsbLevelBuilder.hpp
      multiscale/msrsb/MsrsbUtils.hpp
+     solvers/ArnoldiEigenSolver.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
+     solvers/EigenSolverBase.hpp
      solvers/GmresSolver.hpp
      solvers/KrylovSolver.hpp
+     solvers/LobpcgEigenSolver.hpp
      solvers/KrylovUtils.hpp
      solvers/PreconditionerBlockJacobi.hpp
      solvers/PreconditionerIdentity.hpp
@@ -71,11 +74,14 @@ set( linearAlgebra_headers
      utilities/BlockVectorView.hpp
      utilities/BlockVectorWrapper.hpp
      utilities/ComponentMask.hpp
+     utilities/DiagonalOperator.hpp
+     utilities/EigenSolverParameters.hpp
      utilities/InverseNormalOperator.hpp
      utilities/LAIHelperFunctions.hpp
      utilities/SparsityPatternUtilities.hpp
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
+     utilities/MultiVectorOperations.hpp
      utilities/NormalOperator.hpp
      utilities/ReverseCutHillMcKeeOrdering.hpp
      utilities/TransposeOperator.hpp )
@@ -99,11 +105,14 @@ set( linearAlgebra_sources
      multiscale/msrsb/MsrsbLevelBuilderCoupled.cpp
      multiscale/msrsb/MsrsbLevelBuilder.cpp
      multiscale/msrsb/MsrsbUtils.cpp
+     solvers/ArnoldiEigenSolver.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
+     solvers/EigenSolverBase.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
+     solvers/LobpcgEigenSolver.cpp
      solvers/RichardsonSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
      utilities/ReverseCutHillMcKeeOrdering.cpp )

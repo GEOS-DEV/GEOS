@@ -1,0 +1,29 @@
+from geos.ats.test_builder import generate_geos_tests, TestDeck, CurveCheckParameters
+
+# The mass-normalized bending mode shapes along the axis of the beam are compared with the Euler-Bernoulli
+# solution of a free-free beam. The tolerance is the L2 norm of the difference divided by the number of values.
+# The shapes of the finite element solution agree with the beam theory to about 1e-6 in this norm. The shear
+# locking of the trilinear elements mostly raises the frequencies, by about 5 percent for the first mode.
+curvecheck_params = CurveCheckParameters(
+    filename='modal_history.hdf5',
+    tolerance=[5.0e-6, 5.0e-6],
+    script_instructions=[['./modalFreeFreeBeam_curve.py', 'first_bending', 'modeShape7', 'axis'],
+                         ['./modalFreeFreeBeam_curve.py', 'second_bending', 'modeShape9', 'axis']],
+    curves=[['modeShape7', 'axis'], ['modeShape9', 'axis']])
+
+decks = [
+    TestDeck(name="modalFreeFreeBeam_arnoldi",
+             description="Modal analysis of a free-free beam with the shift-and-invert Arnoldi eigensolver.",
+             partitions=((1, 1, 1), (2, 1, 1), (4, 1, 1)),
+             restart_step=0,
+             check_step=1,
+             curvecheck_params=curvecheck_params),
+    TestDeck(name="modalFreeFreeBeam_block",
+             description="Modal analysis of a free-free beam with a block size equal to the rigid-body multiplicity.",
+             partitions=((1, 1, 1), (2, 1, 1)),
+             restart_step=0,
+             check_step=1,
+             curvecheck_params=curvecheck_params)
+]
+
+generate_geos_tests(decks)

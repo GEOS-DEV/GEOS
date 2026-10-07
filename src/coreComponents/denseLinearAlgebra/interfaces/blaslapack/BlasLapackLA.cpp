@@ -1033,6 +1033,71 @@ void BlasLapackLA::matrixEigenvalues( MatRowMajor< real64 const > const & A,
   matrixEigenvalues( AT.toSliceConst(), lambda );
 }
 
+void BlasLapackLA::matrixSymmetricEigen( MatColMajor< real64 const > const & A,
+                                         Vec< real64 > const & lambda,
+                                         MatColMajor< real64 > const & V )
+{
+  GEOS_ASSERT_MSG( A.size( 0 ) == A.size( 1 ),
+                   "The matrix A must be square" );
+
+  GEOS_ASSERT_MSG( A.size( 0 ) == lambda.size(),
+                   "The matrix A and lambda have incompatible sizes" );
+
+  GEOS_ASSERT_MSG( A.size( 0 ) == V.size( 0 ) && A.size( 1 ) == V.size( 1 ),
+                   "The matrices A and V have incompatible sizes" );
+
+  // dsyev overwrites A with the eigenvectors, so work on a copy
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > ACOPY( A.size( 0 ), A.size( 1 ) );
+  BlasLapackLA::matrixCopy( A, ACOPY );
+
+  int const N   = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const LDA = N;
+  int LWORK = -1;
+  int INFO  = 0;
+  double WKOPT = 0.0;
+
+  // 1) query the optimal workspace
+  GEOS_dsyev( "V", "U", &N, ACOPY.data(), &LDA, lambda.dataIfContiguous(), &WKOPT, &LWORK, &INFO );
+
+  LWORK = static_cast< int >( WKOPT );
+  array1d< real64 > WORK( LWORK );
+
+  // 2) compute eigenvalues and eigenvectors
+  GEOS_dsyev( "V", "U", &N, ACOPY.data(), &LDA, lambda.dataIfContiguous(), WORK.data(), &LWORK, &INFO );
+
+  GEOS_ERROR_IF( INFO != 0, "The algorithm computing symmetric eigenpairs failed to converge." );
+
+  BlasLapackLA::matrixCopy( ACOPY.toSliceConst(), V );
+}
+
+void BlasLapackLA::matrixSymmetricEigen( MatRowMajor< real64 const > const & A,
+                                         Vec< real64 > const & lambda,
+                                         MatRowMajor< real64 > const & V )
+{
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > AT( A.size( 0 ), A.size( 1 ) );
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > VT( V.size( 0 ), V.size( 1 ) );
+
+  // convert A to a column major format
+  for( int i = 0; i < A.size( 0 ); ++i )
+  {
+    for( int j = 0; j < A.size( 1 ); ++j )
+    {
+      AT( i, j ) = A( i, j );
+    }
+  }
+
+  matrixSymmetricEigen( AT.toSliceConst(), lambda, VT.toSlice() );
+
+  // convert V back to row-major format
+  for( int i = 0; i < V.size( 0 ); ++i )
+  {
+    for( int j = 0; j < V.size( 1 ); ++j )
+    {
+      V( i, j ) = VT( i, j );
+    }
+  }
+}
+
 void BlasLapackLA::solveLinearSystem( MatRowMajor< real64 const > const & A,
                                       Vec< real64 const > const & rhs,
                                       Vec< real64 > const & solution )

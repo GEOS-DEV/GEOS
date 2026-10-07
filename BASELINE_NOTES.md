@@ -4,6 +4,13 @@ Notes
 This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
+
+PR #4159 (2026-10-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4159-17735-0b04c4c.tar.gz>
+=====================
+Add history baselines for the new free-free beam modal tests: Arnoldi on 1,
+2 and 4 MPI ranks, and block Arnoldi on 1 and 2 ranks. All mode-shape checks
+satisfy the Euler-Bernoulli tolerance. Existing test baselines are unchanged.
+
 PR #3996 (2026-09-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3996-17639-718fc69.tar.gz>
 =====================
 Switch the single-phase reactive transport solver to a molality-based primary
