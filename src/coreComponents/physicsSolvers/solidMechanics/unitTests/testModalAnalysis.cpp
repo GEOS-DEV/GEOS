@@ -26,11 +26,13 @@
  */
 
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsModalAnalysis.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 #include <gtest/gtest.h>
 
@@ -195,6 +197,51 @@ ModalResult runModalAnalysis( string const & xml )
   NodeManager const & nodes = problem.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization().getNodeManager();
   result.shapesRegistered = nodes.hasWrapper( SolidMechanicsModalAnalysis::modeShapeFieldName( 1 ) ) &&
                             nodes.hasWrapper( SolidMechanicsModalAnalysis::modeShapeFieldName( LvArray::integerConversion< integer >( lambda.size() ) ) );
+
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) > 1 )
+  {
+    // An independent all-reduce of owned values checks every received mode-field
+    // component. This also exercises host/device validity after the halo exchange.
+    arrayView1d< globalIndex const > const globalIds = nodes.localToGlobalMap();
+    arrayView1d< integer const > const ghostRanks = nodes.ghostRank();
+    globalIds.move( hostMemorySpace, false );
+    ghostRanks.move( hostMemorySpace, false );
+    globalIndex maxId = -1;
+    for( localIndex a = 0; a < nodes.size(); ++a )
+      maxId = std::max( maxId, globalIds[a] );
+    globalIndex const globalNodes = MpiWrapper::max( maxId ) + 1;
+    std::vector< real64 > ownedValues( static_cast< size_t >( globalNodes * lambda.size() * 3 ), 0.0 );
+    for( localIndex k = 0; k < lambda.size(); ++k )
+    {
+      auto const field = nodes.getReference< fields::solidMechanics::array2dLayoutTotalDisplacement >(
+        SolidMechanicsModalAnalysis::modeShapeFieldName( k + 1 ) ).toViewConst();
+      field.move( hostMemorySpace, false );
+      for( localIndex a = 0; a < nodes.size(); ++a )
+        if( ghostRanks[a] < 0 )
+          for( integer d = 0; d < 3; ++d )
+            ownedValues[( k * globalNodes + globalIds[a] ) * 3 + d] = field( a, d );
+    }
+    std::vector< real64 > ownerValues( ownedValues.size(), 0.0 );
+    MpiWrapper::allReduce( ownedValues, ownerValues, MpiWrapper::Reduction::Sum );
+    for( localIndex k = 0; k < lambda.size(); ++k )
+    {
+      auto const field = nodes.getReference< fields::solidMechanics::array2dLayoutTotalDisplacement >(
+        SolidMechanicsModalAnalysis::modeShapeFieldName( k + 1 ) ).toViewConst();
+      array2d< real64 > readback( nodes.size(), 3 );
+      arrayView2d< real64 > const readbackView = readback.toView();
+      geos::forAll< geos::parallelDevicePolicy<> >( nodes.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      {
+        for( integer d = 0; d < 3; ++d )
+          readbackView( a, d ) = field( a, d );
+      } );
+      readback.move( hostMemorySpace, false );
+      for( localIndex a = 0; a < nodes.size(); ++a )
+        if( ghostRanks[a] >= 0 )
+          for( integer d = 0; d < 3; ++d )
+            EXPECT_DOUBLE_EQ( readback( a, d ), ownerValues[( k * globalNodes + globalIds[a] ) * 3 + d] )
+              << "mode " << k + 1 << ", global node " << globalIds[a] << ", component " << d;
+    }
+  }
   return result;
 }
 

@@ -784,9 +784,31 @@ real64 SolidMechanicsModalAnalysis::modalAnalysisStep( real64 const & time_n,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
+    stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+    if( neighbors.empty() )
+    {
+      return;
+    }
+
+    // These fields are final output, not eigensolver work vectors. Use the host
+    // exchange once per solve: asynchronous device unpacking of many mode fields
+    // can race on CUDA. Mark the host copies writable so subsequent device reads
+    // also see the received ghost values.
+    NodeManager & nodes = mesh.getNodeManager();
+    for( string const & fieldName : shapeFieldNames )
+    {
+      nodes.getWrapperBase( fieldName ).move( hostMemorySpace, true );
+    }
+    for( NeighborCommunicator const & neighbor : neighbors )
+    {
+      NeighborData & data = nodes.getNeighborData( neighbor.neighborRank() );
+      data.ghostsToSend().move( hostMemorySpace, false );
+      data.ghostsToReceive().move( hostMemorySpace, false );
+    }
+
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, shapeFieldNames );
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, neighbors, false );
   } );
 
   // ---- Report ----

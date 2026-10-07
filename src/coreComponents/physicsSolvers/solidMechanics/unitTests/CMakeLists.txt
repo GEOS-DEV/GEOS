@@ -21,7 +21,7 @@ foreach( test_source ${solidMechanics_gtest_tests} )
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} )
 
-  if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+  if( ENABLE_MPI )
     set( nranks 2 )
     geos_add_test( NAME ${test_name}_mpi
                    COMMAND ${test_name} -x ${nranks}
