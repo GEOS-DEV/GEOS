@@ -27,12 +27,14 @@
 
 #include "common/Stopwatch.hpp"
 #include "common/TimingMacros.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "linearAlgebra/solvers/EigenSolverBase.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "linearAlgebra/utilities/DiagonalOperator.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 #include <cmath>
@@ -85,6 +87,55 @@ private:
 };
 
 } // namespace
+
+void SolidMechanicsLagrangianFEM::assembleModalConsistentMass( DomainPartition & domain,
+                                                             ParallelMatrix & massMatrix )
+{
+  // The centroid quadrature used for Tet4 stiffness is not sufficient for N_a N_b.
+  // Integrate this quadratic product exactly: rho * V / 20 * (1 + delta_ab).
+  m_localMatrix.zero();
+  auto const matrix = m_localMatrix.toViewConstSizes();
+  string const dofKey = m_dofManager.getKey( solidMechanics::totalDisplacement::key() );
+  globalIndex const rankOffset = m_dofManager.rankOffset();
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                              MeshLevel & mesh,
+                                                              string_array const & regionNames )
+  {
+    auto const dofs = mesh.getNodeManager().getReference< globalIndex_array >( dofKey ).toViewConst();
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & subRegion )
+    {
+      GEOS_ERROR_IF( subRegion.getElementType() != ElementType::Tetrahedron || subRegion.numNodesPerElement() != 4,
+                     "Consistent modal mass currently requires Tet4 elements", getDataContext() );
+      auto const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+      GEOS_ERROR_IF( fe.getMaxSupportPoints() != 4,
+                     "Consistent modal mass requires a first-order four-node displacement space", getDataContext() );
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const nodes = subRegion.nodeList();
+      auto const volumes = subRegion.getElementVolume();
+      auto const density = getConstitutiveModel< constitutive::SolidBase >( subRegion ).getDensity();
+      // Assemble owned rows from every incident element, including halo elements. This is the same
+      // row ownership convention as the production elasticity kernel; do not filter ghost elements.
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        for( integer c = 0; c < 3; ++c )
+        {
+          globalIndex columns[4];
+          for( integer b = 0; b < 4; ++b ) columns[b] = dofs[nodes[k][b]] + c;
+          for( integer a = 0; a < 4; ++a )
+          {
+            globalIndex const globalRow = columns[a];
+            if( globalRow < rankOffset || globalRow >= rankOffset + matrix.numRows() ) continue;
+            real64 values[4];
+            for( integer b = 0; b < 4; ++b ) values[b] = density[k][0] * volumes[k] / 20.0 * ( a == b ? 2.0 : 1.0 );
+            matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >(
+              LvArray::integerConversion< localIndex >( globalRow - rankOffset ), columns, values, 4 );
+          }
+        }
+      } );
+    } );
+  } );
+  massMatrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  massMatrix.setDofManager( &m_dofManager );
+}
 
 globalIndex SolidMechanicsLagrangianFEM::computeModalDiagonals( real64 const time,
                                                                 DomainPartition & domain,
@@ -200,10 +251,20 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   // GEOS assembles the Jacobian of the residual, which is minus the stiffness
   m_matrix.scale( -1.0 );
 
-  // ---- Lumped mass and constrained degrees of freedom ----
+  // ---- Modal mass and constrained degrees of freedom ----
   ParallelVector freeMask;
   ParallelVector massDiag;
   globalIndex const numConstrained = computeModalDiagonals( time_n + dt, domain, freeMask, massDiag );
+  GEOS_ERROR_IF( m_modalMassType != "lumped" && m_modalMassType != "consistent",
+                 "modalMassType must be lumped or consistent", getDataContext() );
+  GEOS_ERROR_IF( m_modalVerifyFreeBody && ( numConstrained != 0 || m_modalNumModes < 7 ),
+                 "Free-body verification requires no constraints and at least seven eigenpairs", getDataContext() );
+  ParallelMatrix consistentMass;
+  if( m_modalMassType == "consistent" )
+  {
+    assembleModalConsistentMass( domain, consistentMass );
+    if( numConstrained > 0 ) consistentMass.leftRightScale( freeMask, freeMask );
+  }
 
   // Constrained rows and columns are removed symmetrically: K <- D K D, with D = diag( freeMask ).
   // They get a decoupled diagonal entry (the original stiffness diagonal) in the shifted matrix, and a
@@ -235,7 +296,10 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
 
   ParallelMatrix shiftedMatrix( m_matrix );
   shiftedMatrix.setDofManager( &m_dofManager );
-  shiftedMatrix.addDiagonal( massDiag, -shift );
+  if( m_modalMassType == "consistent" )
+    shiftedMatrix.addEntries( consistentMass, MatrixPatternOp::Equal, -shift );
+  else
+    shiftedMatrix.addDiagonal( massDiag, -shift );
   if( numConstrained > 0 )
   {
     shiftedMatrix.addDiagonal( constrainedDiagonal, 1.0 );
@@ -321,7 +385,10 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   eigenParams.solverType = m_modalSolverType;
   eigenParams.numEigenvalues = m_modalNumModes;
   eigenParams.shift = shift;
-  eigenParams.tolerance = m_modalTolerance;
+  // Krylov convergence measures the transformed/preconditioned problem. The free-body
+  // regression checks the residual of the original pencil, which can be larger (notably
+  // with consistent mass). Solve more tightly, then enforce the requested tolerance below.
+  eigenParams.tolerance = m_modalVerifyFreeBody ? 0.001 * m_modalTolerance : m_modalTolerance;
   eigenParams.maxIterations = m_modalMaxIterations;
   eigenParams.subspaceSize = m_modalSubspaceSize;
   eigenParams.blockSize = m_modalBlockSize;
@@ -329,7 +396,10 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
   eigenParams.seed = m_modalSeed;
   eigenParams.logLevel = getLogLevel() >= 2 ? 2 : ( getLogLevel() >= 1 ? 1 : 0 );
 
-  DiagonalOperator< ParallelVector > massOperator( massDiag );
+  DiagonalOperator< ParallelVector > lumpedMassOperator( massDiag );
+  LinearOperator< ParallelVector > const & massOperator = m_modalMassType == "consistent"
+    ? static_cast< LinearOperator< ParallelVector > const & >( consistentMass )
+    : static_cast< LinearOperator< ParallelVector > const & >( lumpedMassOperator );
   // Preconditioned methods use one application of a set-up preconditioner (e.g. one multigrid cycle)
   LinearOperator< ParallelVector > const * preconditioner = nullptr;
   if( !needsInverse )
@@ -341,7 +411,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
 
   // Rigid-body modes of a free structure, deflated from the eigensolve
   array1d< ParallelVector > rigidBodyModes;
-  if( m_modalDeflateRigidBodyModes != 0 )
+  if( m_modalDeflateRigidBodyModes != 0 || m_modalVerifyFreeBody != 0 )
   {
     GEOS_ERROR_IF( numConstrained > 0,
                    "Rigid-body modes cannot be deflated when displacement boundary conditions are applied",
@@ -361,7 +431,37 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
                                                                                       m_dofManager.numLocalDofs() );
       }
     } );
-    for( ParallelVector const & mode : rigidBodyModes )
+    if( m_modalVerifyFreeBody )
+    {
+      GEOS_ERROR_IF_NE_MSG( rigidBodyModes.size(), 6, "Expected six analytical rigid modes", getDataContext() );
+      ParallelVector image;
+      image.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
+      real64 const stiffnessScale = m_matrix.normInf();
+      GEOS_ERROR_IF( stiffnessScale <= 0.0, "Stiffness scale must be positive", getDataContext() );
+      // Two-pass M-orthogonalization both checks rank and prepares a stable deflation basis.
+      for( localIndex j = 0; j < rigidBodyModes.size(); ++j )
+      {
+        auto & q = rigidBodyModes[j];
+        m_matrix.apply( q, image );
+        real64 const residual = image.norm2() / ( stiffnessScale * q.norm2() );
+        GEOS_LOG_RANK_0( GEOS_FMT( "  analytical RBM {} normalized stiffness residual {:.16e}", j, residual ) );
+        GEOS_ERROR_IF( !std::isfinite( residual ) || residual > 1e-12,
+                       "Analytical rigid vector is not in the stiffness nullspace", getDataContext() );
+        for( integer pass = 0; pass < 2; ++pass )
+          for( localIndex i = 0; i < j; ++i )
+          {
+            massOperator.apply( q, image );
+            q.axpy( -rigidBodyModes[i].dot( image ), rigidBodyModes[i] );
+          }
+        massOperator.apply( q, image );
+        real64 const massNorm2 = q.dot( image );
+        GEOS_ERROR_IF( !std::isfinite( massNorm2 ) || massNorm2 <= 1e-20,
+                       "Rigid subspace has rank less than six", getDataContext() );
+        q.scale( 1.0 / std::sqrt( massNorm2 ) );
+      }
+      GEOS_LOG_RANK_0( "  analytical RBM mass-orthogonalized rank 6" );
+    }
+    if( m_modalDeflateRigidBodyModes != 0 ) for( ParallelVector const & mode : rigidBodyModes )
     {
       problem.constraints.push_back( &mode );
     }
@@ -372,6 +472,49 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
 
   std::vector< ParallelVector > modes;
   EigenSolverResult const eigenResult = eigenSolver->solve( problem, m_solution, modes );
+
+  if( m_modalVerifyFreeBody )
+  {
+    GEOS_ERROR_IF( !eigenResult.converged, "Free-body eigensolve did not converge", getDataContext() );
+    real64 spectralScale = 0.0;
+    for( real64 const value : eigenResult.eigenvalues ) spectralScale = std::max( spectralScale, std::fabs( value ) );
+    real64 const zeroBand = std::max( 1e-12, spectralScale * m_modalTolerance );
+    integer nullity = 0;
+    real64 maxResidual = 0.0, maxMassError = 0.0, maxStiffnessError = 0.0;
+    ParallelVector kPhi, mPhi, residual;
+    kPhi.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
+    mPhi.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
+    residual.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
+    real64 const stiffnessScale = m_matrix.normInf();
+    for( localIndex j = 0; j < LvArray::integerConversion< localIndex >( modes.size() ); ++j )
+    {
+      real64 const value = eigenResult.eigenvalues[j];
+      GEOS_ERROR_IF( !std::isfinite( value ) || value < -zeroBand, "Negative or nonfinite modal eigenvalue", getDataContext() );
+      bool const rigid = std::fabs( value ) <= zeroBand;
+      nullity += rigid;
+      m_matrix.apply( modes[j], kPhi );
+      massOperator.apply( modes[j], mPhi );
+      residual.copy( kPhi );
+      residual.axpy( -value, mPhi );
+      real64 const denominator = rigid ? stiffnessScale * modes[j].norm2()
+        : kPhi.norm2() + std::fabs( value ) * mPhi.norm2();
+      real64 const eta = residual.norm2() / denominator;
+      GEOS_ERROR_IF( !std::isfinite( eta ), "Nonfinite modal residual", getDataContext() );
+      maxResidual = std::max( maxResidual, eta );
+      for( localIndex i = 0; i <= j; ++i )
+      {
+        maxMassError = std::max( maxMassError, std::fabs( modes[i].dot( mPhi ) - ( i == j ? 1.0 : 0.0 ) ) );
+        maxStiffnessError = std::max( maxStiffnessError,
+          std::fabs( modes[i].dot( kPhi ) - ( i == j ? value : 0.0 ) ) / spectralScale );
+      }
+    }
+    GEOS_LOG_RANK_0( GEOS_FMT( "  free-body verification: nullity {}, max residual {:.16e}, "
+                               "mass Gram error {:.16e}, stiffness projection error {:.16e}",
+                               nullity, maxResidual, maxMassError, maxStiffnessError ) );
+    GEOS_ERROR_IF( nullity != 6 || maxResidual > m_modalTolerance || maxMassError > 10 * m_modalTolerance ||
+                   maxStiffnessError > 10 * m_modalTolerance,
+                   "Free-body modal verification failed", getDataContext() );
+  }
 
   GEOS_WARNING_IF( !eigenResult.converged,
                    GEOS_FMT( "Modal analysis: only {} of {} eigenpairs converged to the tolerance {:.1e} after {} restarts",
@@ -456,7 +599,7 @@ real64 SolidMechanicsLagrangianFEM::modalAnalysisStep( real64 const & time_n,
     GEOS_LOG( "  mode   frequency [Hz]      eigenvalue [1/s^2]    residual     MPF-x         MPF-y         MPF-z" );
     for( integer k = 0; k < numModes; ++k )
     {
-      GEOS_LOG( GEOS_FMT( "  {:4}   {:16.8e}   {:16.8e}   {:9.2e}   {:12.5e}  {:12.5e}  {:12.5e}",
+      GEOS_LOG( GEOS_FMT( "  {:4}   {:24.16e}   {:24.16e}   {:24.16e}   {:12.5e}  {:12.5e}  {:12.5e}",
                           k + 1, m_modalFrequencies[k], m_modalEigenvalues[k], m_modalResiduals[k],
                           m_modalParticipationFactors( k, 0 ),
                           m_modalParticipationFactors( k, 1 ),

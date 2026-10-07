@@ -106,7 +106,8 @@ public:
    * @param domain the domain
    * @return the time step (unchanged)
    *
-   * Assembles the tangent stiffness K at the current state and the lumped mass M, and solves the generalized
+   * Assembles the tangent stiffness K and the selected modal mass M (lumped by default, optionally exact
+   * consistent Tet4 mass), and solves the generalized
    * eigenproblem K phi = lambda M phi for the modes closest to the shift @p modalShiftFrequency, with the
    * eigensolver selected by @p modalSolverType. Displacement boundary conditions (taken as homogeneous) remove
    * the constrained degrees of freedom. Frequencies, residuals and participation factors are stored in the
@@ -131,6 +132,9 @@ public:
                                      DomainPartition & domain,
                                      ParallelVector & freeMask,
                                      ParallelVector & massDiag );
+
+  /** Assemble the exact consistent mass for first-order tetrahedra, using the stiffness sparsity. */
+  void assembleModalConsistentMass( DomainPartition & domain, ParallelMatrix & massMatrix );
 
   virtual void
   implicitStepSetup( real64 const & time_n,
@@ -300,6 +304,8 @@ public:
     static constexpr char const * modalCompletenessCheckString() { return "modalCompletenessCheck"; }
     static constexpr char const * modalSeedString() { return "modalSeed"; }
     static constexpr char const * modalDeflateRigidBodyModesString() { return "modalDeflateRigidBodyModes"; }
+    static constexpr char const * modalMassTypeString() { return "modalMassType"; }
+    static constexpr char const * modalVerifyFreeBodyString() { return "modalVerifyFreeBody"; }
     static constexpr char const * modalEigenvaluesString() { return "modalEigenvalues"; }
     static constexpr char const * modalFrequenciesString() { return "modalFrequencies"; }
     static constexpr char const * modalResidualsString() { return "modalResiduals"; }
@@ -406,6 +412,11 @@ protected:
   integer m_modalSeed;
   /// Whether the six rigid-body modes of a free structure are deflated from the eigensolve
   integer m_modalDeflateRigidBodyModes;
+
+  /// Mass discretization: existing lumped behavior or exact consistent Tet4 mass.
+  string m_modalMassType = "lumped";
+  /// Strict free-body verification before and after the modal solve.
+  integer m_modalVerifyFreeBody = 0;
   /// True while the modal analysis assembles its operators: the Modal option is only valid for a standalone
   /// solver that runs modalAnalysisStep(), not when the solver is driven by a coupled solver
   bool m_isModalAssembly = false;

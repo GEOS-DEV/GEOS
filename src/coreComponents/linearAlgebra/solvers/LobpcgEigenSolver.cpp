@@ -409,6 +409,36 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       KS.push_back( &KX[i] );
       MS.push_back( &MX[i] );
     }
+
+    // Separate small search directions from the O(1) iterate block before SVQB.
+    // Otherwise near-parallel P and X columns amplify roundoff in the projected
+    // pencil and impose a residual floor on consistent-mass elasticity problems.
+    std::vector< Vector * > directions, massDirections;
+    for( integer const i : active )
+    {
+      directions.push_back( &W[i] );
+      massDirections.push_back( &MW[i] );
+      if( havePrevious )
+      {
+        directions.push_back( &P[i] );
+        massDirections.push_back( &MP[i] );
+      }
+    }
+    std::vector< Vector const * > const iterates = multiVectorOperations::constPointers( S );
+    for( integer pass = 0; pass < 2; ++pass )
+    {
+      for( size_t j = 0; j < directions.size(); ++j ) problem.mass.apply( *directions[j], *massDirections[j] );
+      array2d< real64 > products;
+      multiVectorOperations::dots( iterates, multiVectorOperations::constPointers( massDirections ), products );
+      for( size_t j = 0; j < directions.size(); ++j )
+      {
+        std::vector< real64 > weights( static_cast< size_t >( n ) );
+        for( integer i = 0; i < n; ++i ) weights[i] = -products( i, j );
+        multiVectorOperations::combine( iterates, weights, *directions[j], true );
+      }
+    }
+    for( size_t j = 0; j < directions.size(); ++j ) problem.mass.apply( *directions[j], *massDirections[j] );
+
     for( integer const i : active )
     {
       problem.stiffness.apply( W[i], KW[i] );
@@ -420,6 +450,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
     {
       for( integer const i : active )
       {
+        problem.stiffness.apply( P[i], KP[i] );
         S.push_back( &P[i] );
         KS.push_back( &KP[i] );
         MS.push_back( &MP[i] );
@@ -437,8 +468,12 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       problem.mass.apply( Xn[c], MXn[c] );
       problem.stiffness.apply( Xn[c], KXn[c] );
       combine( S, coefficients, c, n, Pn[c] );
-      combine( KS, coefficients, c, n, KPn[c] );
-      combine( MS, coefficients, c, n, MPn[c] );
+      constraints.project( Pn[c] );
+      // Search directions can be formed by cancellation of almost parallel vectors.
+      // Updating their images by the same recurrence then ceases to represent K P and M P,
+      // corrupting the next projected pencil. Refresh them just like the iterate images.
+      problem.stiffness.apply( Pn[c], KPn[c] );
+      problem.mass.apply( Pn[c], MPn[c] );
     }
     std::swap( X, Xn );
     std::swap( KX, KXn );

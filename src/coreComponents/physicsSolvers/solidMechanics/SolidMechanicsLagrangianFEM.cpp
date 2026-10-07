@@ -214,6 +214,17 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
                     "This avoids the rounding noise of the rigid modes in the convergence test, which is "
                     "useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied." );
 
+  registerWrapper( viewKeyStruct::modalMassTypeString(), &m_modalMassType ).
+    setApplyDefaultValue( "lumped" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Modal mass discretization: lumped (default) or consistent (exact first-order tetrahedra only)." );
+
+  registerWrapper( viewKeyStruct::modalVerifyFreeBodyString(), &m_modalVerifyFreeBody ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "If 1, require a free body with six independent analytical rigid modes, verify their stiffness "
+                    "residuals, and check numerical nullity, eigenpair residuals and mass orthogonality." );
+
   registerWrapper( viewKeyStruct::modalEigenvaluesString(), &m_modalEigenvalues ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).

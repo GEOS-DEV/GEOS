@@ -244,6 +244,26 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
     rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
   }
 
+  // Compute the geometric center from owned nodes, including all MPI partitions.
+  // Centering reduces translation/rotation cancellation for bodies far from the origin.
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > sumX( 0.0 ), sumY( 0.0 ), sumZ( 0.0 ), count( 0.0 );
+  forAll< parallelDevicePolicy<> >( dofIndex.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    globalIndex const localDof = dofIndex[i] - dofOffset;
+    if( dofIndex[i] >= 0 && 0 <= localDof && localDof < numLocalDof )
+    {
+      sumX += nodePosition( i, 0 );
+      sumY += nodePosition( i, 1 );
+      if( numComponents == 3 ) sumZ += nodePosition( i, 2 );
+      count += 1.0;
+    }
+  } );
+  real64 const globalCount = MpiWrapper::sum( count.get(), MPI_COMM_GEOS );
+  GEOS_ERROR_IF( globalCount <= 0.0, "Cannot construct rigid modes for an empty body" );
+  real64 const center[3] = { MpiWrapper::sum( sumX.get(), MPI_COMM_GEOS ) / globalCount,
+                            MpiWrapper::sum( sumY.get(), MPI_COMM_GEOS ) / globalCount,
+                            MpiWrapper::sum( sumZ.get(), MPI_COMM_GEOS ) / globalCount };
+
   // Rotation RBMs
   for( localIndex k = numComponents; k < numRidigBodyModes; ++k )
   {
@@ -256,8 +276,8 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
       localIndex const localDof = LvArray::integerConversion< localIndex >( dofIndex[i] - dofOffset );
       if( 0 <= localDof && localDof < numLocalDof )
       {
-        values[localDof + ind[0]] = -nodePosition( i, ind[1] );
-        values[localDof + ind[1]] = +nodePosition( i, ind[0] );
+        values[localDof + ind[0]] = -( nodePosition( i, ind[1] ) - center[ind[1]] );
+        values[localDof + ind[1]] = +( nodePosition( i, ind[0] ) - center[ind[0]] );
       }
     } );
     rigidBodyModes[k].close();

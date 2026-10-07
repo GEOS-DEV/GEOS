@@ -496,6 +496,61 @@ TEST( SolidMechanicsModal, fewModesWithDefaultBasis )
   }
 }
 
+#ifdef GEOS_SPHERE_BENCHMARK_DIR
+TEST( SolidMechanicsModal, consistentFreeTetrahedron )
+{
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 ) GTEST_SKIP() << "A one-cell body is a serial assembly oracle.";
+  // Leave room for the Arnoldi search basis in the six-dimensional elastic complement.
+  string xml = makeInput( "", 8, 1, "arnoldi", 1 );
+  size_t const meshStart = xml.find( "  <Mesh>" );
+  size_t const meshEnd = xml.find( "  </Mesh>", meshStart ) + string( "  </Mesh>" ).size();
+  xml.replace( meshStart, meshEnd - meshStart,
+               "<Mesh><VTKMesh name=\"mesh\" file=\"" GEOS_SPHERE_BENCHMARK_DIR "/tests/unit/data/free_tetra.vtu\"/></Mesh>" );
+  xml = replaceAll( xml, "cellBlocks=\"{ cb }\"", "cellBlocks=\"{ tetrahedra }\"" );
+  xml = replaceAll( xml, "defaultPoissonRatio=\"0\"", "defaultPoissonRatio=\"0.3\"" );
+  xml = replaceAll( xml, "modalTolerance=\"1e-9\"", "modalTolerance=\"1e-9\" modalMassType=\"consistent\" modalVerifyFreeBody=\"1\"" );
+  ModalResult const result = runModalAnalysis( xml );
+  ASSERT_EQ( result.eigenvalues.size(), 8u );
+
+  // Independent dense oracle. For the unit simplex, grad N = (-1,-1,-1), e_x, e_y, e_z.
+  real64 const gradients[4][3] = { {-1,-1,-1}, {1,0,0}, {0,1,0}, {0,0,1} };
+  real64 B[6][12] = {};
+  for( integer a = 0; a < 4; ++a )
+  {
+    real64 const x = gradients[a][0], y = gradients[a][1], z = gradients[a][2];
+    B[0][3*a] = x; B[1][3*a+1] = y; B[2][3*a+2] = z;
+    B[3][3*a] = y; B[3][3*a+1] = x;
+    B[4][3*a+1] = z; B[4][3*a+2] = y;
+    B[5][3*a] = z; B[5][3*a+2] = x;
+  }
+  real64 const mu = 1.0 / 2.6, lambdaLame = 0.3 / ( 1.3 * 0.4 );
+  real64 K[12][12] = {}, W[12][12] = {};
+  // M = (I + J)/120 tensor I_3. W = M^{-1/2} analytically, using J^2=4J.
+  for( integer i = 0; i < 12; ++i )
+    for( integer j = 0; j < 12; ++j )
+    {
+      W[i][j] = i%3 == j%3 ? std::sqrt( 120.0 ) *
+        ( ( i == j ? 1.0 : 0.0 ) - ( 1.0 - 1.0/std::sqrt( 5.0 ) )/4.0 ) : 0.0;
+      for( integer p = 0; p < 6; ++p )
+        for( integer q = 0; q < 6; ++q )
+        {
+          real64 const D = ( p == q ? ( p < 3 ? 2*mu : mu ) : 0.0 ) + ( p < 3 && q < 3 ? lambdaLame : 0.0 );
+          K[i][j] += B[p][i] * D * B[q][j] / 6.0;
+        }
+    }
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > S( 12, 12 ), V( 12, 12 );
+  array1d< real64 > reference( 12 );
+  S.zero();
+  for( integer i = 0; i < 12; ++i )
+    for( integer j = 0; j < 12; ++j )
+      for( integer p = 0; p < 12; ++p )
+        for( integer q = 0; q < 12; ++q ) S( i,j ) += W[i][p] * K[p][q] * W[q][j];
+  BlasLapackLA::matrixSymmetricEigen( S.toSliceConst(), reference.toSlice(), V.toSlice() );
+  for( integer k = 0; k < 8; ++k )
+    EXPECT_NEAR( result.eigenvalues[k], reference[k], 1e-8 + 1e-8 * std::fabs( reference[k] ) );
+}
+#endif
+
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
