@@ -340,7 +340,7 @@ Deflation is therefore advised with ``lobpcg``.
 Choice of the eigensolver
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The cost of ``arnoldi`` is the number of operator applications, about two to five times the number of modes, times the cost of an accurate linear solve.
+The cost of ``arnoldi`` is the number of operator applications, about two to six times the number of modes, times the cost of an accurate linear solve.
 The cost of ``lobpcg`` is the number of iterations, typically 80 to 200, times the number of modes, times the cost of one preconditioner application.
 It is faster when one preconditioner cycle is much cheaper than a solve to a tight tolerance, which is the usual case.
 The examples :ref:`AdvancedExampleEigensolverComparison` and :ref:`AdvancedExampleFreeFreeBeamModes` give measured costs.
@@ -348,7 +348,7 @@ In summary:
 
 - ``arnoldi`` is the robust default.
   It finds the modes closest to any shift, including a shift inside the spectrum with a direct solver, and its behavior only depends on the quality of the linear solver.
-- ``lobpcg`` with ``modalDeflateRigidBodyModes="1"`` is about two to eight times faster than ``arnoldi`` with deflation on the cases of the examples.
+- ``lobpcg`` with ``modalDeflateRigidBodyModes="1"`` is about three to nine times faster than ``arnoldi`` with deflation on the cases of the examples.
   Without deflation it can stagnate.
   It finds the lowest modes only.
   Its convergence depends on the quality of the preconditioner.

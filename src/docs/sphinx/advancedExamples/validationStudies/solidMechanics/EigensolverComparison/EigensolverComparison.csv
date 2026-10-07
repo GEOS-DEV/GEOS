@@ -1,11 +1,11 @@
 Problem,Modes,Eigensolver,Rigid modes deflated,Iterations,Operator applications,Linear iterations,Time (s),Converged,Mode 7 (Hz)
-Block,16,Arnoldi,no,3,75,2535,18.3,yes,715.9340
-Block,16,Arnoldi,yes,6,65,2187,15.7,yes,715.9340
-Block,16,LOBPCG,no,89,1440,-,11.9,yes,715.9340
-Block,16,LOBPCG,yes,83,840,-,7.4,yes,715.9340
-Beam,10,Arnoldi,no,1,36,9708,9.3,yes,10.8928
-Beam,10,Arnoldi,yes,3,21,5584,5.4,yes,10.8928
-Beam,10,LOBPCG,no,400,4010,-,5.7,no,10.8928
-Beam,10,LOBPCG,yes,131,528,-,0.7,yes,10.8928
-Beam,20,Arnoldi,no,0,62,16135,15.6,yes,10.8928
-Beam,20,LOBPCG,yes,115,1624,-,2.4,yes,10.8928
+Block,16,Arnoldi,no,6,96,3229,25.7,yes,715.9340
+Block,16,Arnoldi,yes,12,95,3184,25.0,yes,715.9340
+Block,16,LOBPCG,no,89,1440,-,13.5,yes,715.9340
+Block,16,LOBPCG,yes,80,810,-,8.2,yes,715.9340
+Beam,10,Arnoldi,no,1,34,9112,8.9,yes,10.8928
+Beam,10,Arnoldi,yes,0,24,6313,6.2,yes,10.8928
+Beam,10,LOBPCG,no,400,4010,-,6.2,no,10.8929
+Beam,10,LOBPCG,yes,134,540,-,0.7,yes,10.8928
+Beam,20,Arnoldi,no,0,54,14062,13.8,yes,10.8928
+Beam,20,LOBPCG,yes,136,1918,-,2.9,yes,10.8928
