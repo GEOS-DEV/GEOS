@@ -505,6 +505,20 @@ protected:
     // required.
     for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
     {
+      if (dtAttempt > 0) {
+        // cut timestep, go back to beginning of step and restart the Newton loop
+        stepDt *= dtCutFactor;
+        m_numTimestepsSinceLastDtCut = 0;
+        GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
+
+        // notify the solver statistics counter that this is a time step cut
+        getIterationStats().updateTimeStepCut();
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          solver->getIterationStats().updateTimeStepCut();
+        } );
+      }
+
       // TODO configuration loop
 
       // Reset the states of all solvers if any of them had to restart
@@ -580,33 +594,18 @@ protected:
         // get out of the time loop
         break;
       }
-      else
-      {
-        // cut timestep, go back to beginning of step and restart the Newton loop
-        stepDt *= dtCutFactor;
-        m_numTimestepsSinceLastDtCut = 0;
-        GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
-
-        // notify the solver statistics counter that this is a time step cut
-        getIterationStats().updateTimeStepCut();
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-        {
-          solver->getIterationStats().updateTimeStepCut();
-        } );
-      }
     }
+    // if still not converged & no timestep cut are permitted, we exit the loop
 
-    if( !isConverged )
+    if( !isConfigurationLoopConverged )
     {
-      GEOS_LOG_RANK_0( "Convergence not achieved." );
-
-      if( m_nonlinearSolverParameters.m_allowNonConverged > 0 )
+      if( allowNonConverged )
       {
-        GEOS_LOG_RANK_0( "The accepted solution may be inaccurate." );
+        GEOS_LOG_RANK_0( "Convergence not achieved. The accepted solution residuals are out of tolerance bounds." );
       }
       else
       {
-        GEOS_ERROR( "Nonconverged solutions not allowed. Terminating...", getDataContext() );
+        GEOS_ERROR( "Convergence not achieved. Terminating...", getDataContext() );
       }
     }
 

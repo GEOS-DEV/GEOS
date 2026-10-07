@@ -63,6 +63,7 @@
       discretization="fluidTPFA"
       targetRegions="{ Region, Reservoir, Fracture}" 
       temperature="368.15" >
+      <!-- 'allowNonConverged' is a workaround, DO NOT USE IN PRODUCTION WITHOUT CONSIDERATION. -->
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"
