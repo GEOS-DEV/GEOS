@@ -118,7 +118,8 @@ public:
     if constexpr (CONTACT_SOLVER::hasContactStabilization) {
       //bubble to displacement coupling
       addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
-      addMatrixTemperaturePressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by CONTACT::STABILIZATION
+      addMatrixTemperaturePressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by
+                                                                                               // CONTACT::STABILIZATION
     }
 
 
@@ -254,8 +255,8 @@ public:
   }
 
   void addMatrixTemperaturePressureBubbleCouplingNNZ( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           arrayView1d< localIndex > const & rowLengths ) const
+                                                      DofManager const & dofManager,
+                                                      arrayView1d< localIndex > const & rowLengths ) const
   {
     GEOS_MARK_FUNCTION;
 
@@ -311,8 +312,8 @@ public:
   }
 
   void addMatrixTemperaturePressureBubbleCouplingPattern( DomainPartition const & domain,
-                                               DofManager const & dofManager,
-                                               SparsityPatternView< globalIndex > const & pattern ) const
+                                                          DofManager const & dofManager,
+                                                          SparsityPatternView< globalIndex > const & pattern ) const
   {
     GEOS_MARK_FUNCTION;
 
