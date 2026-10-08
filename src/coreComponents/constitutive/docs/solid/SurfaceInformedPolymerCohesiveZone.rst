@@ -15,8 +15,10 @@ thermal scale, crystallinity multipliers, softening law, stretch-hardening law,
 pressure-asymmetry function, compressive pressure cap, and maximum-stretch
 failure criterion as the continuum model.
 
-The cohesive model operates on normal and tangential displacement jumps, but
-interprets those jumps as nominal strains in a film of thickness ``thickness``.
+The cohesive model operates on normal and tangential displacement jumps and
+interprets those jumps as strains in a film of thickness ``thickness``.  The
+optional ``normalStrainMeasure`` input selects ``Engineering`` (the default) or
+``Logarithmic`` for the normal stress and plastic update.
 This allows the cohesive-zone parameters to be derived from the corresponding
 continuum polymer parameters and a layer thickness.
 
@@ -24,13 +26,30 @@ Film kinematics
 ===============
 
 For normal jump :math:`\delta_n`, tangential jump magnitude
-:math:`\delta_t`, and film thickness :math:`h_0`, the nominal film strains are
+:math:`\delta_t`, and film thickness :math:`h_0`, define the engineering normal
+strain, physical normal stretch, and engineering shear strain as
 
 .. math::
 
-   \epsilon_n = \frac{\delta_n}{h_0},
+   e_n = \frac{\delta_n}{h_0},
+   \qquad
+   \lambda_n = 1 + e_n,
    \qquad
    \gamma = \frac{\delta_t}{h_0}.
+
+The normal strain used below in the volumetric/deviatoric stress split and
+plastic correction is
+
+.. math::
+
+   \epsilon_n =
+   \begin{cases}
+      e_n & \text{Engineering}, \\
+      \ln\lambda_n & \text{Logarithmic}.
+   \end{cases}
+
+The logarithm argument is floored at :math:`10^{-16}` for numerical robustness.
+The shear strain remains :math:`\gamma=\delta_t/h_0` in both modes.
 
 For the chain-stretch calculation, the implementation constructs a reduced film
 deformation gradient,
@@ -40,7 +59,7 @@ deformation gradient,
    F_{film} =
    \begin{bmatrix}
       1 & \gamma & 0 \\
-      0 & 1+\epsilon_n & 0 \\
+      0 & \lambda_n & 0 \\
       0 & 0 & 1
    \end{bmatrix},
 
@@ -53,6 +72,10 @@ and evaluates the same chain-stretch measure used by the continuum model,
 If ``maximumStretch`` is exceeded, the cohesive damage flag is set to one and
 zero traction is returned.  This finite-extensibility failure is pressure
 independent.
+
+The deformation gradient always uses the physical normal stretch, including
+when logarithmic strain is selected.  Stretch hardening and maximum-stretch
+failure therefore use the same kinematics in both modes.
 
 Elastic split and flow surface
 ==============================
@@ -94,6 +117,25 @@ Only the deviatoric normal/shear components are returned.  The volumetric film
 stress :math:`p` is retained so that a nearly incompressible finite-thickness
 polymer layer remains stiff in constrained normal loading.
 
+Before plasticity and failure, uniform normal loading at fixed temperature gives
+
+.. math::
+
+   \sigma_n = (K+4G/3)e_n \quad\text{(Engineering)},
+   \qquad
+   \sigma_n = (K+4G/3)\ln(1+e_n) \quad\text{(Logarithmic)}.
+
+Both modes have the same initial normal traction stiffness
+:math:`(K+4G/3)/h_0`.  The logarithmic mode permits a comparison with the
+continuum's integrated normal strain under uniform, rotation-free constrained
+loading.  It is not a full tensor logarithmic-strain update for arbitrary mixed
+normal/shear histories.  The existing coupled normal/shear return surface and
+plastic-softening normalization are retained.
+
+Use fresh runs when comparing modes: the stored plastic normal strain is
+expressed in the selected measure and is not converted when restarting with a
+different measure.
+
 Compressive pressure cap
 ========================
 
@@ -125,6 +167,8 @@ units and temperature convention as the corresponding continuum card.
      - Purpose
    * - ``thickness``
      - Physical film thickness :math:`h_0` used to convert jumps to strains.
+   * - ``normalStrainMeasure``
+     - Optional normal strain for stress and plasticity: ``Engineering`` (default) or ``Logarithmic``. Physical stretch controls hardening and failure in both modes.
    * - ``bulkModulus``, ``shearModulus``
      - Reference film moduli at ``glassTransitionTemperature``.
    * - ``defaultYieldStrength``
@@ -182,6 +226,7 @@ A typical XML block is
     <SurfaceInformedPolymerCohesiveZone
       name="polymerCZ"
       thickness="0.1"
+      normalStrainMeasure="Engineering"
       bulkModulus="260.0"
       shearModulus="5.0"
       defaultYieldStrength="7.0"

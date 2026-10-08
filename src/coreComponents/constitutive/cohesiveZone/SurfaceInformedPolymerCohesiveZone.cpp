@@ -27,6 +27,7 @@ namespace constitutive
 SurfaceInformedPolymerCohesiveZone::SurfaceInformedPolymerCohesiveZone( string const & name, Group * const parent ):
   CohesiveZoneBase( name, parent ),
   m_thickness( 1.0 ),
+  m_normalStrainMeasure( PolymerCohesiveNormalStrainMeasure::Engineering ),
   m_bulkModulus( 1.0 ),
   m_shearModulus( 1.0 ),
   m_defaultYieldStrength( 1.0 ),
@@ -62,7 +63,14 @@ SurfaceInformedPolymerCohesiveZone::SurfaceInformedPolymerCohesiveZone( string c
 {
   registerWrapper( viewKeyStruct::thicknessString(), &m_thickness ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Cohesive film thickness used to convert jumps to nominal film strains" );
+    setDescription( "Reference cohesive film thickness used to convert jumps to film strains" );
+
+  registerWrapper( viewKeyStruct::normalStrainMeasureString(), &m_normalStrainMeasure ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( PolymerCohesiveNormalStrainMeasure::Engineering ).
+    setDescription( "Normal strain for cohesive film stress and plasticity: Engineering uses delta_n/h0; "
+                    "Logarithmic uses log(1+delta_n/h0). Hardening and failure use the physical film stretch. "
+                    "Options are:\n* " + EnumStrings< PolymerCohesiveNormalStrainMeasure >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
     setInputFlag( InputFlags::REQUIRED ).

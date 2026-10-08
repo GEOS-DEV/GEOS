@@ -18,9 +18,10 @@
  *
  * @details
  * This cohesive-zone law interprets the displacement jump as the deformation of a finite-thickness
- * polymer layer.  The normal and tangential jumps are converted to nominal film strain measures,
+ * polymer layer.  The normal and tangential jumps are converted to film strain measures,
  *
- *   eps_n = delta_n / h0,  gamma = delta_t / h0,
+ *   eps_n = delta_n / h0 (Engineering, default), or
+ *   eps_n = log(1 + delta_n / h0) (Logarithmic),  gamma = delta_t / h0,
  *
  * and elastic trial tractions are computed from the same temperature/crystallinity-scaled moduli used
  * by the continuum polymer.  The normal film response is decomposed into a retained volumetric mean
@@ -47,6 +48,7 @@
 
 #include "constitutive/cohesiveZone/CohesiveZoneBase.hpp"
 #include "constitutive/solid/SurfaceInformedPolymerHelpers.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 #include <cfloat>
@@ -56,10 +58,22 @@ namespace geos
 namespace constitutive
 {
 
+/** @brief Normal strain used in the reduced cohesive-film stress update. */
+enum class PolymerCohesiveNormalStrainMeasure : integer
+{
+  Engineering,
+  Logarithmic
+};
+
+ENUM_STRINGS( PolymerCohesiveNormalStrainMeasure,
+              "Engineering",
+              "Logarithmic" );
+
 class SurfaceInformedPolymerCohesiveZoneUpdates : public CohesiveZoneBaseUpdates
 {
 public:
   SurfaceInformedPolymerCohesiveZoneUpdates( real64 const & thickness,
+                                             PolymerCohesiveNormalStrainMeasure const normalStrainMeasure,
                                              real64 const & bulkModulus,
                                              real64 const & shearModulus,
                                              real64 const & defaultYieldStrength,
@@ -101,6 +115,7 @@ public:
                              oldNormalStress,
                              oldShearStress ),
     m_thickness( thickness ),
+    m_normalStrainMeasure( normalStrainMeasure ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
     m_defaultYieldStrength( defaultYieldStrength ),
@@ -156,13 +171,19 @@ public:
     }
 
     real64 const thickness = LvArray::math::max( m_thickness, 1.0e-16 );
-    real64 const normalStrain = normalDisplacement / thickness;
+    real64 const engineeringNormalStrain = normalDisplacement / thickness;
+    real64 const normalStretch = 1.0 + engineeringNormalStrain;
+    real64 const normalStrain = m_normalStrainMeasure == PolymerCohesiveNormalStrainMeasure::Logarithmic
+                               ? LvArray::math::log( LvArray::math::max( normalStretch, 1.0e-16 ) )
+                               : engineeringNormalStrain;
     real64 const tangentialStrain = tangentialDisplacement / thickness;
 
+    // Hardening and failure depend on the physical film deformation, independent of the
+    // normal strain measure selected for the stress/plastic update.
     real64 filmDeformationGradient[3][3] = { { 0.0 } };
     filmDeformationGradient[0][0] = 1.0;
     filmDeformationGradient[0][1] = tangentialStrain;
-    filmDeformationGradient[1][1] = 1.0 + normalStrain;
+    filmDeformationGradient[1][1] = normalStretch;
     filmDeformationGradient[2][2] = 1.0;
 
     real64 const lambdaChain = surfaceInformedPolymerHelpers::chainStretch( filmDeformationGradient );
@@ -219,8 +240,9 @@ public:
 
     // The cohesive film is a reduced normal-shear representation of a finite-thickness continuum
     // layer.  For the normal part, use the uniaxial-strain split of the corresponding continuum
-    // response: p_t=K eps_n is retained as a volumetric stress, while only the deviatoric normal
-    // stress s_n=(4/3)G(eps_n-eps_n^p) participates in the radial return.  This keeps a nearly
+    // response: p_t=K eps_n uses the selected normal strain measure and is retained as a volumetric
+    // stress, while only the deviatoric normal stress s_n=(4/3)G(eps_n-eps_n^p) participates in the
+    // radial return.  This keeps a nearly
     // incompressible film stiff in constrained tension/compression while still allowing plastic
     // flow of the deviatoric part.
     real64 const pTrial = K * normalStrain;
@@ -292,7 +314,9 @@ public:
     shearStress = -tau;
 
           GEOS_LOG_RANK( 
-        "k: " << k << ", " << 
+        "k: " << k << ", " <<
+        "strain measure: " << (m_normalStrainMeasure == PolymerCohesiveNormalStrainMeasure::Logarithmic
+                               ? "Log" : "Eng") << ", " 
         "thickness: " << thickness << ", " << 
         "temp: " << m_temperature[k] << ", " << 
         "dnorm: " << normalDisplacement << ", " << 
@@ -319,6 +343,7 @@ public:
 
 private:
   real64 m_thickness;
+  PolymerCohesiveNormalStrainMeasure m_normalStrainMeasure;
   real64 m_bulkModulus;
   real64 m_shearModulus;
   real64 m_defaultYieldStrength;
@@ -372,6 +397,7 @@ public:
   struct viewKeyStruct : public CohesiveZoneBase::viewKeyStruct
   {
     static constexpr char const * thicknessString() { return "thickness"; }
+    static constexpr char const * normalStrainMeasureString() { return "normalStrainMeasure"; }
     static constexpr char const * bulkModulusString() { return "bulkModulus"; }
     static constexpr char const * shearModulusString() { return "shearModulus"; }
     static constexpr char const * defaultYieldStrengthString() { return "defaultYieldStrength"; }
@@ -424,6 +450,7 @@ public:
   {
     GEOS_UNUSED_VAR( includeState );
     return SurfaceInformedPolymerCohesiveZoneUpdates( m_thickness,
+                                                      m_normalStrainMeasure,
                                                       m_bulkModulus,
                                                       m_shearModulus,
                                                       m_defaultYieldStrength,
@@ -467,6 +494,7 @@ public:
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_thickness,
+                          m_normalStrainMeasure,
                           m_bulkModulus,
                           m_shearModulus,
                           m_defaultYieldStrength,
@@ -509,6 +537,7 @@ protected:
   virtual void postInputInitialization() override;
 
   real64 m_thickness;
+  PolymerCohesiveNormalStrainMeasure m_normalStrainMeasure;
   real64 m_bulkModulus;
   real64 m_shearModulus;
   real64 m_defaultYieldStrength;

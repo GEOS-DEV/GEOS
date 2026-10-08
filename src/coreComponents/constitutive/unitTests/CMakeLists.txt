@@ -36,6 +36,7 @@ set( gtest_geosx_tests
      testSoreideWhitsonFlash.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
+     testSurfaceInformedPolymerCohesiveZone.cpp
      testRachfordRice.cpp
      testTwoPhaseImmiscibleFluid.cpp )
 
