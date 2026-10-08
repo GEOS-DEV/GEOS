@@ -1,0 +1,2069 @@
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+index e5f6b0c..83ac390 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+@@ -792,11 +792,15 @@ parameters = {
+                'weakInterfaceTraceMaterialLRMaxMisfitFraction': ( None, True ),  # MPM: max wrong-side fraction for material-LR weak-interface insertion.
+                'weakInterfaceTraceMaterialLRMinMeanMargin': ( None, True ),  # MPM: min normalized mean margin for material-LR weak-interface insertion.
+                'weakInterfaceTraceMaterialLRMinParticlesPerSide': ( None, True ),  # MPM: min neighboring particles per material side for material-LR weak-interface insertion.
+-               'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
+-               'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
++               'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: maximum PCG iterations for coupled cut-cell weak-interface projection.
++               'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: scale for the coupled weak-interface mass projection.
+                'weakInterfaceTraceGapStabilization': ( None, True ),  # MPM: optional trace gap-stabilization coefficient.
+                'weakInterfaceTraceMaxGapCorrectionVelocity': ( None, True ),  # MPM: cap for trace accumulated-gap correction velocity.
+                'weakInterfaceTraceMinWeight': ( None, True ),  # MPM: minimum active trace interpolation weight.
++               'weakInterfaceTraceCutTolerance': ( None, True ),  # MPM: cut/conforming classification tolerance relative to in-plane cell diagonal.
++               'weakInterfaceTraceMinSegmentFraction': ( None, True ),  # MPM: sliver segment threshold relative to minimum in-plane cell width.
++               'weakInterfaceTraceLinearSolverTolerance': ( None, True ),  # MPM: relative PCG tolerance for coupled weak-interface projection.
++               'weakInterfaceTraceLinearSolverRegularization': ( None, True ),  # MPM: diagonal regularization fraction for coupled projection matrix.
+                'weakInterfaceTraceSuppressNodalContact': ( None, True ),  # MPM: suppress nodal contact for trace-projected group pairs.
+                'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.
+                'endTime': ( 1.0, False ),  # PFW: simulation end time for generated event.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionAntiPlane/pfw_input_weakTraceCircularInclusionAntiPlane.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionAntiPlane/pfw_input_weakTraceCircularInclusionAntiPlane.py
+index 38a1762..6167a44 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionAntiPlane/pfw_input_weakTraceCircularInclusionAntiPlane.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionAntiPlane/pfw_input_weakTraceCircularInclusionAntiPlane.py
+@@ -158,11 +158,15 @@ if VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "100"))
+     pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+-    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.01"))
+-    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "1.0e-5"))
++    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
++    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
+     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceCutTolerance"] = float(os.environ.get("WEAK_TRACE_CUT_TOLERANCE", "1.0e-8"))
++    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "0.02"))
++    pfw["weakInterfaceTraceLinearSolverTolerance"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_TOLERANCE", "1.0e-10"))
++    pfw["weakInterfaceTraceLinearSolverRegularization"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_REGULARIZATION", "1.0e-12"))
+     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
+     pfw["weakInterfaceTracePairs"] = [[0, 1]]
+ elif VARIANT == "falseElasticCZ":
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionRadial/pfw_input_weakTraceCircularInclusionRadial.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionRadial/pfw_input_weakTraceCircularInclusionRadial.py
+index efb181a..c45cbcd 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionRadial/pfw_input_weakTraceCircularInclusionRadial.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionRadial/pfw_input_weakTraceCircularInclusionRadial.py
+@@ -154,11 +154,15 @@ if VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "100"))
+     pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+-    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.01"))
+-    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "1.0e-5"))
++    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
++    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
+     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceCutTolerance"] = float(os.environ.get("WEAK_TRACE_CUT_TOLERANCE", "1.0e-8"))
++    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "0.02"))
++    pfw["weakInterfaceTraceLinearSolverTolerance"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_TOLERANCE", "1.0e-10"))
++    pfw["weakInterfaceTraceLinearSolverRegularization"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_REGULARIZATION", "1.0e-12"))
+     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
+     pfw["weakInterfaceTracePairs"] = [[0, 1]]
+ elif VARIANT == "falseElasticCZ":
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCouetteShear/pfw_input_weakTraceCouetteShear.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCouetteShear/pfw_input_weakTraceCouetteShear.py
+index 5748b5a..a5b6c4b 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCouetteShear/pfw_input_weakTraceCouetteShear.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCouetteShear/pfw_input_weakTraceCouetteShear.py
+@@ -145,11 +145,15 @@ if VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "100"))
+     pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+-    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.01"))
+-    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "1.0e-5"))
++    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
++    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
+     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceCutTolerance"] = float(os.environ.get("WEAK_TRACE_CUT_TOLERANCE", "1.0e-8"))
++    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "0.02"))
++    pfw["weakInterfaceTraceLinearSolverTolerance"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_TOLERANCE", "1.0e-10"))
++    pfw["weakInterfaceTraceLinearSolverRegularization"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_REGULARIZATION", "1.0e-12"))
+     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
+     pfw["weakInterfaceTracePairs"] = [[0, 1]]
+ elif VARIANT == "falseElasticCZ":
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceDynamicWave/pfw_input_weakTraceDynamicWave.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceDynamicWave/pfw_input_weakTraceDynamicWave.py
+index 44da74d..3de669b 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceDynamicWave/pfw_input_weakTraceDynamicWave.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceDynamicWave/pfw_input_weakTraceDynamicWave.py
+@@ -180,11 +180,15 @@ if VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "100"))
+     pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+-    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.01"))
+-    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "1.0e-5"))
++    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
++    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
+     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceCutTolerance"] = float(os.environ.get("WEAK_TRACE_CUT_TOLERANCE", "1.0e-8"))
++    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "0.02"))
++    pfw["weakInterfaceTraceLinearSolverTolerance"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_TOLERANCE", "1.0e-10"))
++    pfw["weakInterfaceTraceLinearSolverRegularization"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_REGULARIZATION", "1.0e-12"))
+     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
+     pfw["weakInterfaceTracePairs"] = [[0, 1]]
+ elif VARIANT == "falseElasticCZ":
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceEllipticalInclusion/pfw_input_weakTraceEllipticalInclusion.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceEllipticalInclusion/pfw_input_weakTraceEllipticalInclusion.py
+index d714a2b..86d973f 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceEllipticalInclusion/pfw_input_weakTraceEllipticalInclusion.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceEllipticalInclusion/pfw_input_weakTraceEllipticalInclusion.py
+@@ -137,11 +137,15 @@ if VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "100"))
+     pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+-    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.01"))
+-    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "1.0e-5"))
++    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
++    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
+     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceCutTolerance"] = float(os.environ.get("WEAK_TRACE_CUT_TOLERANCE", "1.0e-8"))
++    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "0.02"))
++    pfw["weakInterfaceTraceLinearSolverTolerance"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_TOLERANCE", "1.0e-10"))
++    pfw["weakInterfaceTraceLinearSolverRegularization"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_REGULARIZATION", "1.0e-12"))
+     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
+     pfw["weakInterfaceTracePairs"] = [[0, 1]]
+ elif VARIANT == "falseElasticCZ":
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/README.md b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/README.md
+index 66e2e77..6756816 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/README.md
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/README.md
+@@ -17,9 +17,15 @@ with `explicitSurfaceNormalInfluence=25.0` by default.  Override with
+ `WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE=<value>` when comparing normal-mapping
+ sensitivity.
+ 
+-The weak-trace variant defaults to a small gap-feedback test,
+-`weakInterfaceTraceGapStabilization=0.01`, with the accumulated-gap correction
+-velocity capped by `weakInterfaceTraceMaxGapCorrectionVelocity=1.0e-5`.
+-Override `WEAK_TRACE_GAP_STABILIZATION=0.0` for the stable velocity-only
+-projection baseline or `0.1` to reproduce the overcorrected failed case.
+-Override `WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY=<value>` to test the cap.
++The current experimental weak-interface implementation uses one canonical
++constraint per cut cell (plus nodal constraints for conforming or sliver cuts)
++and solves the coupled mass-metric projection with PCG.  The default
++`weakInterfaceTraceProjectionIterations=100` is therefore the maximum PCG
++iteration count, not a number of repeated Jacobi projection passes.
++
++This prototype intentionally disables displacement/gap feedback:
++`weakInterfaceTraceGapStabilization=0` and
++`weakInterfaceTraceMaxGapCorrectionVelocity=0` are required.  Use
++`WEAK_TRACE_PROJECTION_SCALE=1.0` for the full coupled projection and inspect
++the solver log for PCG convergence, post-projection velocity jump, and kinetic
++energy change.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/pfw_input_weakTraceRotatedBar.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/pfw_input_weakTraceRotatedBar.py
+index 2699f45..9d8ab26 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/pfw_input_weakTraceRotatedBar.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/pfw_input_weakTraceRotatedBar.py
+@@ -152,11 +152,15 @@ if VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+     pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
+-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "100"))
+     pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+-    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.01"))
+-    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "1.0e-5"))
++    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
++    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
+     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceCutTolerance"] = float(os.environ.get("WEAK_TRACE_CUT_TOLERANCE", "1.0e-8"))
++    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "0.02"))
++    pfw["weakInterfaceTraceLinearSolverTolerance"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_TOLERANCE", "1.0e-10"))
++    pfw["weakInterfaceTraceLinearSolverRegularization"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_REGULARIZATION", "1.0e-12"))
+     pfw["weakInterfaceTraceSuppressNodalContact"] = 1
+     pfw["weakInterfaceTracePairs"] = [[0, 1]]
+ elif VARIANT == "falseElasticCZ":
+@@ -177,11 +181,15 @@ elif VARIANT in ("materialWeak", "materialWeakSurface"):
+         pfw["weakInterfaceTraceMaterialLRMaxMisfitFraction"] = float(os.environ.get("WEAK_TRACE_MATERIAL_LR_MAX_MISFIT_FRACTION", "0.05"))
+         pfw["weakInterfaceTraceMaterialLRMinMeanMargin"] = float(os.environ.get("WEAK_TRACE_MATERIAL_LR_MIN_MEAN_MARGIN", "0.0"))
+         pfw["weakInterfaceTraceMaterialLRMinParticlesPerSide"] = int(os.environ.get("WEAK_TRACE_MATERIAL_LR_MIN_PARTICLES_PER_SIDE", "2"))
+-    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "100"))
+     pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
+     pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
+     pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
+     pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceCutTolerance"] = float(os.environ.get("WEAK_TRACE_CUT_TOLERANCE", "1.0e-8"))
++    pfw["weakInterfaceTraceMinSegmentFraction"] = float(os.environ.get("WEAK_TRACE_MIN_SEGMENT_FRACTION", "0.02"))
++    pfw["weakInterfaceTraceLinearSolverTolerance"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_TOLERANCE", "1.0e-10"))
++    pfw["weakInterfaceTraceLinearSolverRegularization"] = float(os.environ.get("WEAK_TRACE_LINEAR_SOLVER_REGULARIZATION", "1.0e-12"))
+     pfw["weakInterfaceTraceSuppressNodalContact"] = 0
+ else:
+     pfw["enableContact"] = 0
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/runTest b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/runTest
+index 6de261e..aeb9e5d 100755
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/runTest
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/runTest
+@@ -39,8 +39,8 @@ while [ "$#" -gt 0 ]; do
+   esac
+ done
+ 
+-ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups materialWeak materialWeakSurface)
+-PLACEHOLDER_VARIANTS=(dfgSurfaceFlags stressResidualPartition)
++ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups)
++PLACEHOLDER_VARIANTS=(materialWeak materialWeakSurface dfgSurfaceFlags stressResidualPartition)
+ 
+ selected_variants=()
+ if [ -n "$VARIANT_FILTER" ]; then
+@@ -136,7 +136,7 @@ for p in jsons:
+         "jobs": jobs,
+         "placeholder": False,
+     })
+-for variant in ["dfgSurfaceFlags", "stressResidualPartition"]:
++for variant in ["materialWeak", "materialWeakSurface", "dfgSurfaceFlags", "stressResidualPartition"]:
+     if not any(s["name"] == variant for s in subcases):
+         subcases.append({
+             "name": variant,
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
+index 4b1b1d0..5131260 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
++++ b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
+@@ -48,6 +48,10 @@
+ #include "physicsSolvers/solidMechanics/LogLevelsInfo.hpp"
+ 
+ #include <chrono>
++#include <array>
++#include <cmath>
++#include <map>
++#include <set>
+ #include <vector>
+ #include <string>
+ #include <sstream>
+@@ -128,6 +132,153 @@ bool hasExplicitPartitionSurfaceNormal( VECTOR const & normal )
+          explicitSurfaceNormalNormSquaredTolerance;
+ }
+ 
++struct WeakInterfaceProjectionDof
++{
++  localIndex node = -1;
++  localIndex field = -1;
++  real64 coefficient = 0.0;
++};
++
++struct WeakInterfaceProjectionConstraint
++{
++  std::array< WeakInterfaceProjectionDof, 16 > dofs{};
++  int numDofs = 0;
++  localIndex fieldA = -1;
++  localIndex fieldB = -1;
++  std::array< real64, 3 > point{};
++  std::array< real64, 3 > normal{};
++  std::array< real64, 3 > surfaceJump{};
++  real64 measure = 0.0;
++  int kind = 0; // 1: cut-cell midpoint, 2: conforming/sliver nodal tie.
++};
++
++struct WeakInterfaceProjectionSolveResult
++{
++  int iterations = 0;
++  real64 relativeResidual = 0.0;
++  bool converged = true;
++};
++
++using WeakInterfaceSparseRow = std::vector< std::pair< localIndex, real64 > >;
++using WeakInterfaceSparseMatrix = std::vector< WeakInterfaceSparseRow >;
++
++void multiplyWeakInterfaceSparseMatrix( WeakInterfaceSparseMatrix const & matrix,
++                                        std::vector< real64 > const & x,
++                                        std::vector< real64 > & y )
++{
++  y.assign( matrix.size(), 0.0 );
++  for( localIndex row = 0; row < static_cast< localIndex >( matrix.size() ); ++row )
++  {
++    real64 value = 0.0;
++    for( auto const & entry : matrix[row] )
++    {
++      value += entry.second * x[entry.first];
++    }
++    y[row] = value;
++  }
++}
++
++WeakInterfaceProjectionSolveResult solveWeakInterfaceProjectionPCG(
++  WeakInterfaceSparseMatrix const & matrix,
++  std::vector< real64 > const & diagonal,
++  std::vector< real64 > const & rhs,
++  int const maxIterations,
++  real64 const relativeTolerance,
++  std::vector< real64 > & solution )
++{
++  WeakInterfaceProjectionSolveResult result;
++  localIndex const size = static_cast< localIndex >( rhs.size() );
++  solution.assign( size, 0.0 );
++  if( size == 0 )
++  {
++    return result;
++  }
++
++  real64 rhsNormSquared = 0.0;
++  for( real64 const value : rhs )
++  {
++    rhsNormSquared += value * value;
++  }
++  if( rhsNormSquared <= std::numeric_limits< real64 >::min() )
++  {
++    return result;
++  }
++
++  std::vector< real64 > residual = rhs;
++  std::vector< real64 > preconditioned( size, 0.0 );
++  std::vector< real64 > direction( size, 0.0 );
++  std::vector< real64 > matrixDirection( size, 0.0 );
++
++  real64 residualDotPreconditioned = 0.0;
++  for( localIndex row = 0; row < size; ++row )
++  {
++    real64 const inverseDiagonal = diagonal[row] > 0.0 ? 1.0 / diagonal[row] : 0.0;
++    preconditioned[row] = inverseDiagonal * residual[row];
++    direction[row] = preconditioned[row];
++    residualDotPreconditioned += residual[row] * preconditioned[row];
++  }
++
++  real64 const absoluteToleranceSquared =
++    relativeTolerance * relativeTolerance * rhsNormSquared;
++  real64 residualNormSquared = rhsNormSquared;
++  result.converged = residualNormSquared <= absoluteToleranceSquared;
++
++  for( int iteration = 0; iteration < maxIterations && !result.converged; ++iteration )
++  {
++    multiplyWeakInterfaceSparseMatrix( matrix, direction, matrixDirection );
++
++    real64 directionDotMatrixDirection = 0.0;
++    for( localIndex row = 0; row < size; ++row )
++    {
++      directionDotMatrixDirection += direction[row] * matrixDirection[row];
++    }
++    if( directionDotMatrixDirection <= std::numeric_limits< real64 >::epsilon() *
++                                             LvArray::math::max( 1.0, residualDotPreconditioned ) )
++    {
++      result.converged = false;
++      break;
++    }
++
++    real64 const step = residualDotPreconditioned / directionDotMatrixDirection;
++    residualNormSquared = 0.0;
++    for( localIndex row = 0; row < size; ++row )
++    {
++      solution[row] += step * direction[row];
++      residual[row] -= step * matrixDirection[row];
++      residualNormSquared += residual[row] * residual[row];
++    }
++
++    result.iterations = iteration + 1;
++    result.converged = residualNormSquared <= absoluteToleranceSquared;
++    if( result.converged )
++    {
++      break;
++    }
++
++    real64 newResidualDotPreconditioned = 0.0;
++    for( localIndex row = 0; row < size; ++row )
++    {
++      real64 const inverseDiagonal = diagonal[row] > 0.0 ? 1.0 / diagonal[row] : 0.0;
++      preconditioned[row] = inverseDiagonal * residual[row];
++      newResidualDotPreconditioned += residual[row] * preconditioned[row];
++    }
++    if( residualDotPreconditioned <= std::numeric_limits< real64 >::min() )
++    {
++      result.converged = false;
++      break;
++    }
++    real64 const beta = newResidualDotPreconditioned / residualDotPreconditioned;
++    for( localIndex row = 0; row < size; ++row )
++    {
++      direction[row] = preconditioned[row] + beta * direction[row];
++    }
++    residualDotPreconditioned = newResidualDotPreconditioned;
++  }
++
++  result.relativeResidual = std::sqrt( residualNormSquared / rhsNormSquared );
++  return result;
++}
++
+ mpm::OversizedParticleTreatmentOption effectiveOversizedParticleTreatment(
+   int const resetDefGradForOversizedParticles,
+   mpm::OversizedParticleTreatmentOption const oversizedParticleTreatment )
+@@ -1933,8 +2084,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
+   m_weakInterfaceTraceMaterialLRMinParticlesPerSide( 2 ),
+   m_weakInterfaceTraceMaxGapCorrectionVelocity( 0.0 ),
+   m_weakInterfaceTraceMinWeight( 1.0e-12 ),
++  m_weakInterfaceTraceCutTolerance( 1.0e-8 ),
++  m_weakInterfaceTraceMinSegmentFraction( 2.0e-2 ),
++  m_weakInterfaceTraceLinearSolverTolerance( 1.0e-10 ),
++  m_weakInterfaceTraceLinearSolverRegularization( 1.0e-12 ),
+   m_weakInterfaceTracePairs(),
+-  m_weakInterfaceTraceProjectionIterations( 1 ),
++  m_weakInterfaceTraceProjectionIterations( 100 ),
+   m_weakInterfaceTraceProjectionScale( 1.0 ),
+   m_weakInterfaceTraceSuppressNodalContact( 1 ),
+   m_writeParticleData( 0 ),
+@@ -3177,6 +3332,30 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
+     setRestartFlags( RestartFlags::NO_WRITE ).
+     setDescription( "Minimum active trace support weight required on each side of a weak-interface trace projection." );
+ 
++  registerWrapper( "weakInterfaceTraceCutTolerance", &m_weakInterfaceTraceCutTolerance ).
++    setInputFlag( InputFlags::OPTIONAL ).
++    setApplyDefaultValue( m_weakInterfaceTraceCutTolerance ).
++    setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Dimensionless signed-distance tolerance, relative to the in-plane cell diagonal, used to classify cut, conforming, and touch-only weak-interface cells." );
++
++  registerWrapper( "weakInterfaceTraceMinSegmentFraction", &m_weakInterfaceTraceMinSegmentFraction ).
++    setInputFlag( InputFlags::OPTIONAL ).
++    setApplyDefaultValue( m_weakInterfaceTraceMinSegmentFraction ).
++    setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Minimum reconstructed interface-segment length divided by the minimum in-plane cell width. Shorter sliver cuts collapse to a nodal tie." );
++
++  registerWrapper( "weakInterfaceTraceLinearSolverTolerance", &m_weakInterfaceTraceLinearSolverTolerance ).
++    setInputFlag( InputFlags::OPTIONAL ).
++    setApplyDefaultValue( m_weakInterfaceTraceLinearSolverTolerance ).
++    setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Relative residual tolerance for the coupled cut-cell weak-interface projection PCG solve." );
++
++  registerWrapper( "weakInterfaceTraceLinearSolverRegularization", &m_weakInterfaceTraceLinearSolverRegularization ).
++    setInputFlag( InputFlags::OPTIONAL ).
++    setApplyDefaultValue( m_weakInterfaceTraceLinearSolverRegularization ).
++    setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Diagonal regularization fraction for the coupled cut-cell weak-interface projection matrix." );
++
+   registerWrapper( "weakInterfaceTracePairs", &m_weakInterfaceTracePairs ).
+     setInputFlag( InputFlags::OPTIONAL ).
+     setRestartFlags( RestartFlags::NO_WRITE ).
+@@ -3186,13 +3365,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
+     setInputFlag( InputFlags::OPTIONAL ).
+     setApplyDefaultValue( m_weakInterfaceTraceProjectionIterations ).
+     setRestartFlags( RestartFlags::NO_WRITE ).
+-    setDescription( "Number of local Jacobi iterations for the weak-interface trace projection. Values greater than one reduce slip without using a full one-shot projection." );
++    setDescription( "Maximum number of PCG iterations for the coupled cut-cell weak-interface mass projection." );
+ 
+   registerWrapper( "weakInterfaceTraceProjectionScale", &m_weakInterfaceTraceProjectionScale ).
+     setInputFlag( InputFlags::OPTIONAL ).
+     setApplyDefaultValue( m_weakInterfaceTraceProjectionScale ).
+     setRestartFlags( RestartFlags::NO_WRITE ).
+-    setDescription( "Under-relaxation scale alpha for each weak-interface trace projection impulse." );
++    setDescription( "Scale applied to the coupled cut-cell weak-interface projection. Use one for the full mass-orthogonal projection." );
+ 
+   registerWrapper( "weakInterfaceTraceSuppressNodalContact", &m_weakInterfaceTraceSuppressNodalContact ).
+     setInputFlag( InputFlags::OPTIONAL ).
+@@ -3435,12 +3614,33 @@ void SolidMechanicsMPM::postInputInitialization()
+   {
+     GEOS_ERROR_IF( m_weakInterfaceTraceProjectionIterations < 1,
+                    "weakInterfaceTraceProjectionIterations must be at least one." );
+-    GEOS_ERROR_IF( m_weakInterfaceTraceProjectionScale < 0.0,
+-                   "weakInterfaceTraceProjectionScale must be non-negative." );
++    GEOS_ERROR_IF( m_weakInterfaceTraceProjectionScale < 0.0 ||
++                   m_weakInterfaceTraceProjectionScale > 1.0,
++                   "weakInterfaceTraceProjectionScale must be in [0, 1] for the coupled mass projection." );
+     GEOS_ERROR_IF( m_weakInterfaceTraceMinWeight <= 0.0,
+                    "weakInterfaceTraceMinWeight must be positive." );
++    GEOS_ERROR_IF( m_weakInterfaceTraceCutTolerance <= 0.0,
++                   "weakInterfaceTraceCutTolerance must be positive." );
++    GEOS_ERROR_IF( m_weakInterfaceTraceMinSegmentFraction < 0.0 ||
++                   m_weakInterfaceTraceMinSegmentFraction > 1.0,
++                   "weakInterfaceTraceMinSegmentFraction must be in [0, 1]." );
++    GEOS_ERROR_IF( m_weakInterfaceTraceLinearSolverTolerance <= 0.0,
++                   "weakInterfaceTraceLinearSolverTolerance must be positive." );
++    GEOS_ERROR_IF( m_weakInterfaceTraceLinearSolverRegularization < 0.0,
++                   "weakInterfaceTraceLinearSolverRegularization must be non-negative." );
+     GEOS_ERROR_IF( m_weakInterfaceTraceGapStabilization < 0.0,
+                    "weakInterfaceTraceGapStabilization must be non-negative." );
++    GEOS_ERROR_IF( m_weakInterfaceTraceGapStabilization > 0.0 ||
++                   m_weakInterfaceTraceMaxGapCorrectionVelocity > 0.0,
++                   "The cut-cell weak-interface projection prototype does not use displacement-gap stabilization. "
++                   "Set weakInterfaceTraceGapStabilization=0 and weakInterfaceTraceMaxGapCorrectionVelocity=0." );
++    GEOS_ERROR_IF( m_planeStrain != 1,
++                   "The cut-cell weak-interface projection prototype currently supports plane strain only." );
++    GEOS_ERROR_IF( m_damageFieldPartitioning != 0,
++                   "The cut-cell weak-interface projection prototype currently requires damageFieldPartitioning=0." );
++    GEOS_ERROR_IF( m_weakDiscontinuityInsertion != mpm::WeakDiscontinuityInsertionOption::Off ||
++                   m_weakInterfaceTraceGeometry != mpm::WeakInterfaceTraceGeometryOption::Surface,
++                   "The cut-cell weak-interface projection prototype currently supports prescribed surface geometry only." );
+     GEOS_ERROR_IF( m_weakInterfaceTraceMaterialLRMaxMisfitFraction < 0.0 ||
+                    m_weakInterfaceTraceMaterialLRMaxMisfitFraction > 1.0,
+                    "weakInterfaceTraceMaterialLRMaxMisfitFraction must be in [0, 1]." );
+@@ -22830,16 +23030,15 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
+ 
+ 
+ /**
+- * @brief Applies the prescribed-surface weak-interface trace projection.
++ * @brief Applies the prescribed-surface cut-cell weak-interface projection.
+  *
+- * This projection is a post-contact correction between already-existing nodal
+- * fields. It does not create velocity fields and does not use CZ state. The
+- * current implementation is deliberately local:
+- * - the field pair comes from the contact-group/DFG-style field layout,
+- * - prescribed weak-surface pairs use mapped gridSurfacePosition/gridSurfaceFieldMass,
+- * - material-weak pairs use either mapped surface geometry or material-label LR,
+- * - the projection support is the trilinear grid-cell basis around that trace point,
+- * - repeated iterations reduce the residual slip/opening in a Jacobi-like way.
++ * This CPU prototype reconstructs a single interface segment in every genuinely
++ * cut background cell. Grid-conforming and short sliver cuts are replaced by
++ * canonical nodal equality constraints. All remaining point constraints are
++ * assembled into the coupled mass-metric system G M^{-1} G^T, solved with PCG,
++ * and scattered as the balanced impulse M^{-1} G^T lambda. This avoids the
++ * unstable sum of independent overlapping node-anchored projections and removes
++ * the heuristic anchor-weight scaling from the physics.
+  */
+ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+                                                              DomainPartition & domain,
+@@ -22849,44 +23048,62 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+ {
+   GEOS_MARK_FUNCTION;
+ 
+-  for( int iter = 0; iter < m_weakInterfaceTraceProjectionIterations; ++iter )
+-  {
+-    // Forces and activation diagnostics are per projection iteration. Clearing
+-    // them here means the final output describes the last correction that was
+-    // actually applied, not an accumulation of stale per-iteration flags.
+-    zeroWeakInterfaceTraceProjectionFields( nodeManager );
+-
+-    computeWeakInterfaceTraceProjectionForces( dt,
+-                                               particleManager,
+-                                               nodeManager );
+-
+-    syncGridFields( { viewKeyStruct::gridWeakInterfaceTraceForceString() },
+-                    domain,
+-                    nodeManager,
+-                    mesh,
+-                    MPI_SUM );
++  GEOS_UNUSED_VAR( domain );
++  GEOS_UNUSED_VAR( particleManager );
++  GEOS_UNUSED_VAR( mesh );
+ 
+-    applyWeakInterfaceTraceProjectionForces( dt,
+-                                             nodeManager );
++  GEOS_ERROR_IF( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1,
++                 "The cut-cell weak-interface projection prototype currently supports one MPI rank only." );
++#ifdef GEOS_USE_DEVICE
++  GEOS_ERROR( "The cut-cell weak-interface projection prototype currently supports CPU execution only." );
++#endif
++  GEOS_ERROR_IF( m_planeStrain != 1,
++                 "The cut-cell weak-interface projection prototype currently supports plane-strain problems only." );
++  GEOS_ERROR_IF( m_weakDiscontinuityInsertion != mpm::WeakDiscontinuityInsertionOption::Off,
++                 "The cut-cell weak-interface projection prototype currently supports prescribed surface geometry only." );
++  GEOS_ERROR_IF( m_weakInterfaceTraceGeometry != mpm::WeakInterfaceTraceGeometryOption::Surface,
++                 "The cut-cell weak-interface projection prototype requires weakInterfaceTraceGeometry=surface." );
++  GEOS_ERROR_IF( m_damageFieldPartitioning != 0,
++                 "The cut-cell weak-interface projection prototype currently requires damageFieldPartitioning=0." );
++  GEOS_ERROR_IF( dt <= 0.0,
++                 "The cut-cell weak-interface projection requires a positive time step." );
++
++  zeroWeakInterfaceTraceProjectionFields( nodeManager );
+ 
+-    computeWeakInterfaceTraceProjectionPostVelocityJump( nodeManager );
+-  }
++  int const numDims = m_numDims;
++  int const numContactGroups = m_numContactGroups;
++  int const numVelocityFields = m_numVelocityFields;
++  int const numWeakInterfaceTracePairs = m_weakInterfaceTracePairs.size( 0 );
++  int const maxLinearIterations = m_weakInterfaceTraceProjectionIterations;
++  real64 const smallMass = m_smallMass;
++  real64 const minTraceWeight = m_weakInterfaceTraceMinWeight;
++  real64 const projectionScale = m_weakInterfaceTraceProjectionScale;
++  real64 const linearTolerance = m_weakInterfaceTraceLinearSolverTolerance;
++  real64 const linearRegularization = m_weakInterfaceTraceLinearSolverRegularization;
++  real64 const cutToleranceFraction = m_weakInterfaceTraceCutTolerance;
++  real64 const minSegmentFraction = m_weakInterfaceTraceMinSegmentFraction;
+ 
+-  updateInterfaceMechanismDiagnostics( nodeManager );
+-}
++  integer nEl[3] = {};
++  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
++  real64 hEl[3] = {};
++  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+ 
+-/**
+- * @brief Clears transient weak-trace projection fields before each projection iteration.
+- *
+- * These arrays describe the current projection iteration only. Persistent
+- * quantities, such as the mapped surface position and grid velocity fields, are
+- * not reset here.
+- */
+-void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager )
+-{
+-  GEOS_MARK_FUNCTION;
++  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
++  arrayView2d< int const > const weakInterfaceTracePairs = m_weakInterfaceTracePairs;
++  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
++  arrayView2d< real64 const > const gridActive =
++    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
++  arrayView2d< real64 const > const gridMass =
++    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
++  arrayView2d< real64 const > const gridSurfaceFieldMass =
++    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
++  arrayView3d< real64 const > const gridSurfaceNormal =
++    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
++  arrayView3d< real64 const > const gridSurfacePosition =
++    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
++  arrayView3d< real64 const > const gridVelocity =
++    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+ 
+-  localIndex const numVelocityFields = m_numVelocityFields;
+   arrayView2d< int > const gridWeakInterfaceTraceActive =
+     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
+   arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight =
+@@ -22906,730 +23123,762 @@ void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & no
+   arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJumpPost =
+     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
+ 
+-  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
++  auto pairIsSelected = [&]( localIndex const A, localIndex const B )
+   {
+-    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
++    if( numWeakInterfaceTracePairs == 0 )
+     {
+-      gridWeakInterfaceTraceActive[g][fieldIndex] = 0;
+-      gridWeakInterfaceTraceSkipReason[g][fieldIndex] = 0;
+-      gridWeakInterfaceTraceAnchorWeight[g][fieldIndex] = 0.0;
+-      gridWeakInterfaceTraceSupportWeight[g][fieldIndex] = 0.0;
+-      for( int i = 0; i < 3; ++i )
++      return true;
++    }
++    int const groupA = numContactGroups > 0 ? A % numContactGroups : A;
++    int const groupB = numContactGroups > 0 ? B % numContactGroups : B;
++    for( int pairIndex = 0; pairIndex < numWeakInterfaceTracePairs; ++pairIndex )
++    {
++      int const p0 = weakInterfaceTracePairs[pairIndex][0];
++      int const p1 = weakInterfaceTracePairs[pairIndex][1];
++      if( ( groupA == p0 && groupB == p1 ) ||
++          ( groupA == p1 && groupB == p0 ) )
+       {
+-        gridWeakInterfaceTraceForce[g][fieldIndex][i] = 0.0;
+-        gridWeakInterfaceTracePoint[g][fieldIndex][i] = 0.0;
+-        gridWeakInterfaceTraceSurfaceJump[g][fieldIndex][i] = 0.0;
+-        gridWeakInterfaceTraceVelocityJump[g][fieldIndex][i] = 0.0;
+-        gridWeakInterfaceTraceVelocityJumpPost[g][fieldIndex][i] = 0.0;
++        return true;
+       }
+     }
+-  } );
+-}
+-
+-/**
+- * @brief Forms the weak-trace correction force for each eligible nodal field pair.
+- *
+- * For every owned grid node and candidate field pair, this routine:
+- * 1. selects prescribed weak-surface pairs from weakInterfaceTracePairs or
+- *    material-weak A/B pairs from the material classifier,
+- * 2. requires both fields to be active and to carry trace geometry,
+- * 3. constructs a trace point from surface positions or a material-label LR fit,
+- * 4. interpolates both field velocities to that trace point,
+- * 5. applies a balanced impulse that reduces vA - vB plus optional gap correction.
+- *
+- * The result is stored as gridWeakInterfaceTraceForce and later applied by
+- * applyWeakInterfaceTraceProjectionForces(). The force is synchronized with
+- * MPI_SUM before application because support nodes can live on neighboring ranks.
+- */
+-void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const dt,
+-                                                                   ParticleManager & particleManager,
+-                                                                   NodeManager & nodeManager )
+-{
+-  GEOS_MARK_FUNCTION;
++    return false;
++  };
+ 
+-#ifdef GEOS_USE_DEVICE
+-  m_weakInterfaceTracePairs.move( parallelDeviceMemorySpace, true );
+-#endif
++  std::vector< WeakInterfaceProjectionConstraint > constraints;
++  constraints.reserve( static_cast< std::size_t >( nEl[0] * nEl[1] / 4 + 1 ) );
++  std::set< std::tuple< localIndex, localIndex, localIndex > > nodalConstraintKeys;
++  localIndex cellsWithBothFields = 0;
++  localIndex cellsWithTraceGeometry = 0;
++  localIndex conformingCells = 0;
++  localIndex interiorCutCells = 0;
++  localIndex sliverCells = 0;
++  localIndex touchOrUncutCells = 0;
++  localIndex rejectedConstraints = 0;
++
++  real64 const cellDiagonal = std::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] );
++  real64 const geometryTolerance = cutToleranceFraction * cellDiagonal;
++  real64 const minSegmentLength = minSegmentFraction * LvArray::math::min( hEl[0], hEl[1] );
++
++  real64 const physicalMidZ = 0.5 * ( m_xGlobalMin[2] + m_xGlobalMax[2] );
++  int const planeCellK = LvArray::math::max(
++    0,
++    LvArray::math::min(
++      static_cast< int >( nEl[2] - 1 ),
++      static_cast< int >( LvArray::math::floor( ( physicalMidZ - m_xLocalMin[2] ) / hEl[2] ) ) ) );
++
++  auto addPointConstraint = [&]( std::array< localIndex, 8 > const & cellNodes,
++                                 localIndex const A,
++                                 localIndex const B,
++                                 std::array< real64, 3 > const & point,
++                                 std::array< real64, 3 > const & normal,
++                                 std::array< real64, 3 > const & surfaceJump,
++                                 real64 const measure,
++                                 int const kind )
++  {
++    real64 const x0 = gridPosition[cellNodes[0]][0];
++    real64 const y0 = gridPosition[cellNodes[0]][1];
++    real64 const z0 = gridPosition[cellNodes[0]][2];
++    real64 const xRel = LvArray::math::max( 0.0, LvArray::math::min( 1.0, ( point[0] - x0 ) / hEl[0] ) );
++    real64 const yRel = LvArray::math::max( 0.0, LvArray::math::min( 1.0, ( point[1] - y0 ) / hEl[1] ) );
++    real64 const zRel = LvArray::math::max( 0.0, LvArray::math::min( 1.0, ( point[2] - z0 ) / hEl[2] ) );
+ 
+-  int const numDims = m_numDims;
+-  int const planeStrain = m_planeStrain;
+-  int const numContactGroups = m_numContactGroups;
+-  int const numVelocityFields = m_numVelocityFields;
+-  int const numWeakInterfaceTracePairs = m_weakInterfaceTracePairs.size( 0 );
+-  int const materialWeakTraceProjection =
+-    m_weakDiscontinuityInsertion == mpm::WeakDiscontinuityInsertionOption::Material ? 1 : 0;
+-  mpm::WeakInterfaceTraceGeometryOption const weakInterfaceTraceGeometry = m_weakInterfaceTraceGeometry;
+-  int const maxLRIterations = m_maxLRIterations;
+-  real64 const LRtolerance = m_LRtolerance;
+-  real64 const smallMass = m_smallMass;
+-  real64 const minTraceWeight = m_weakInterfaceTraceMinWeight;
+-  real64 const projectionScale = m_weakInterfaceTraceProjectionScale;
+-  real64 const gapStabilization = m_weakInterfaceTraceGapStabilization;
+-  real64 const maxGapCorrectionVelocity = m_weakInterfaceTraceMaxGapCorrectionVelocity;
++    real64 const wx[2] = { 1.0 - xRel, xRel };
++    real64 const wy[2] = { 1.0 - yRel, yRel };
++    real64 const wz[2] = { 1.0 - zRel, zRel };
++    real64 basis[8] = {
++      wx[0] * wy[0] * wz[0],
++      wx[1] * wy[0] * wz[0],
++      wx[1] * wy[1] * wz[0],
++      wx[0] * wy[1] * wz[0],
++      wx[0] * wy[0] * wz[1],
++      wx[1] * wy[0] * wz[1],
++      wx[1] * wy[1] * wz[1],
++      wx[0] * wy[1] * wz[1]
++    };
+ 
+-  real64 hEl[3] = {};
+-  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+-  real64 xLocalMin[3] = {};
+-  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+-  integer nEl[3] = {};
+-  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
++    real64 supportA = 0.0;
++    real64 supportB = 0.0;
++    for( int q = 0; q < 8; ++q )
++    {
++      localIndex const node = cellNodes[q];
++      if( gridActive[node][A] > 0.5 && gridMass[node][A] > smallMass )
++      {
++        supportA += basis[q];
++      }
++      if( gridActive[node][B] > 0.5 && gridMass[node][B] > smallMass )
++      {
++        supportB += basis[q];
++      }
++    }
++    if( supportA <= minTraceWeight || supportB <= minTraceWeight )
++    {
++      ++rejectedConstraints;
++      return false;
++    }
+ 
+-  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
+-  arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
+-  arrayView2d< int const > const weakInterfaceTracePairs = m_weakInterfaceTracePairs;
+-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+-  arrayView2d< real64 const > const gridActive = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
+-  arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+-  arrayView2d< real64 const > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
+-  arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
+-  arrayView3d< real64 const > const gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() );
+-  arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+-  arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
+-  arrayView3d< real64 const > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+-  arrayView2d< int const > const gridMaterialWeakActive = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakActiveString() );
+-  arrayView2d< int const > const gridMaterialWeakPrimaryMaterial = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakPrimaryMaterialString() );
+-  arrayView2d< int const > const gridMaterialWeakSecondaryMaterial = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridMaterialWeakSecondaryMaterialString() );
+-  arrayView2d< int > const gridWeakInterfaceTraceActive = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
+-  arrayView2d< int > const gridWeakInterfaceTraceSkipReason = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() );
+-  arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() );
+-  arrayView3d< real64 > const gridWeakInterfaceTraceForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() );
+-  arrayView3d< real64 > const gridWeakInterfaceTracePoint = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() );
+-  arrayView2d< real64 > const gridWeakInterfaceTraceSupportWeight = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() );
+-  arrayView3d< real64 > const gridWeakInterfaceTraceSurfaceJump = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() );
+-  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJump = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() );
+-
+-  ParticleManager::ParticleViewAccessor< arrayView1d< localIndex const > > particleGroupAccessor =
+-    particleManager.constructArrayViewAccessor< localIndex, 1 >( "particleGroup" );
+-  ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleMaterialTypeAccessor =
+-    particleManager.constructArrayViewAccessor< int, 1 >( fields::mpm::particleMaterialType::key() );
+-  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor =
+-    particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
+-  ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroupView =
+-    particleGroupAccessor.toNestedViewConst();
+-  ParticleManager::ParticleViewConst< arrayView1d< int const > > particleMaterialTypeView =
+-    particleMaterialTypeAccessor.toNestedViewConst();
+-  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePositionView =
+-    particlePositionAccessor.toNestedViewConst();
+-  arrayView1d< localIndex const > const numNeighborsAll = m_nodalNeighborList.m_numParticles.toViewConst();
+-  ArrayOfArraysView< localIndex const > const neighborRegions = m_nodalNeighborList.m_toParticleRegion.toViewConst();
+-  ArrayOfArraysView< localIndex const > const neighborSubRegions = m_nodalNeighborList.m_toParticleSubRegion.toViewConst();
+-  ArrayOfArraysView< localIndex const > const neighborIndices = m_nodalNeighborList.m_toParticleIndex.toViewConst();
++    WeakInterfaceProjectionConstraint constraint;
++    constraint.fieldA = A;
++    constraint.fieldB = B;
++    constraint.point = point;
++    constraint.normal = normal;
++    constraint.surfaceJump = surfaceJump;
++    constraint.measure = measure;
++    constraint.kind = kind;
+ 
+-  int constexpr traceSkipNone = 0;
+-  int constexpr traceSkipGhostNode = 1;
+-  int constexpr traceSkipPairNotSelected = 2;
+-  int constexpr traceSkipInactiveFields = 3;
+-  int constexpr traceSkipInsufficientSurfaceMass = 4;
+-  int constexpr traceSkipTracePointOutsideGrid = 5;
+-  int constexpr traceSkipAnchorWeightTooSmall = 6;
+-  int constexpr traceSkipSupportWeightATooSmall = 7;
+-  int constexpr traceSkipSupportWeightBTooSmall = 8;
+-  int constexpr traceSkipInvalidEffectiveMass = 9;
+-  int constexpr traceSkipActive = 10;
+-  GEOS_UNUSED_VAR( traceSkipNone );
+-
+-  // Skip reasons are diagnostic, not control inputs. They identify the first
+-  // failed eligibility test for the candidate pair at the anchor node.
+-  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
+-  {
+-    if( gridGhostRank[g] >= 0 )
++    for( int q = 0; q < 8; ++q )
+     {
+-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
++      localIndex const node = cellNodes[q];
++      if( gridActive[node][A] > 0.5 && gridMass[node][A] > smallMass )
+       {
+-        gridWeakInterfaceTraceSkipReason[g][fieldIndex] = traceSkipGhostNode;
++        constraint.dofs[constraint.numDofs++] = { node, A, basis[q] / supportA };
++      }
++      if( gridActive[node][B] > 0.5 && gridMass[node][B] > smallMass )
++      {
++        constraint.dofs[constraint.numDofs++] = { node, B, -basis[q] / supportB };
+       }
+-      return;
+     }
+ 
+-    for( localIndex A = 0; A < numVelocityFields - 1; ++A )
++    real64 diagonal = 0.0;
++    for( int d = 0; d < constraint.numDofs; ++d )
+     {
+-      for( localIndex B = A + 1; B < numVelocityFields; ++B )
+-      {
+-        bool const materialWeakPair =
+-          materialWeakTraceProjection == 1 &&
+-          numContactGroups > 0 &&
+-          A % numContactGroups == B % numContactGroups &&
+-          A / numContactGroups < 2 &&
+-          B / numContactGroups < 2 &&
+-          A / numContactGroups != B / numContactGroups &&
+-          gridMaterialWeakActive[g][A] != 0 &&
+-          gridMaterialWeakActive[g][B] != 0;
++      WeakInterfaceProjectionDof const & dof = constraint.dofs[d];
++      diagonal += dof.coefficient * dof.coefficient / gridMass[dof.node][dof.field];
++    }
++    if( diagonal <= 0.0 )
++    {
++      ++rejectedConstraints;
++      return false;
++    }
+ 
+-        // With an empty weakInterfaceTracePairs list, every prescribed-surface
+-        // field pair is a candidate. Material-weak A/B fields are always eligible
+-        // when the classifier marked the node; there is no separate surface flag
+-        // or contact-group pair to consult.
+-        bool weakTracePair = materialWeakPair;
+-        if( !weakTracePair && numWeakInterfaceTracePairs == 0 )
+-        {
+-          weakTracePair = true;
+-        }
+-        else if( !weakTracePair )
+-        {
+-          int const groupA = numContactGroups > 0 ? A % numContactGroups : A;
+-          int const groupB = numContactGroups > 0 ? B % numContactGroups : B;
+-          for( int pairIndex = 0; pairIndex < numWeakInterfaceTracePairs; ++pairIndex )
+-          {
+-            int const p0 = weakInterfaceTracePairs[pairIndex][0];
+-            int const p1 = weakInterfaceTracePairs[pairIndex][1];
+-            if( ( groupA == p0 && groupB == p1 ) ||
+-                ( groupA == p1 && groupB == p0 ) )
+-            {
+-              weakTracePair = true;
+-            }
+-          }
+-        }
+-        if( !weakTracePair )
+-        {
+-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipPairNotSelected;
+-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipPairNotSelected;
+-          continue;
+-        }
++    constraints.emplace_back( std::move( constraint ) );
++    return true;
++  };
+ 
+-        if( gridActive[g][A] <= 0.5 || gridActive[g][B] <= 0.5 )
+-        {
+-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInactiveFields;
+-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInactiveFields;
+-          continue;
+-        }
++  auto addNodalConstraint = [&]( std::array< localIndex, 8 > const & cellNodes,
++                                 int const cornerIndex,
++                                 localIndex const A,
++                                 localIndex const B,
++                                 std::array< real64, 3 > const & point,
++                                 std::array< real64, 3 > const & normal,
++                                 std::array< real64, 3 > const & surfaceJump,
++                                 real64 const measure )
++  {
++    localIndex const keyNode = cellNodes[cornerIndex];
++    auto const key = std::make_tuple( keyNode, A, B );
++    if( !nodalConstraintKeys.insert( key ).second )
++    {
++      return;
++    }
++    addPointConstraint( cellNodes, A, B, point, normal, surfaceJump, measure, 2 );
++  };
+ 
+-        real64 sGamma[3] = {};
+-        real64 jump[3] = {};
+-        real64 gapJump[3] = {};
+-        real64 xGamma[3] = {};
+-        bool const materialWeakUseMaterialLR =
+-          materialWeakPair &&
+-          weakInterfaceTraceGeometry == mpm::WeakInterfaceTraceGeometryOption::MaterialLogisticRegression;
++  for( int i = 0; i < nEl[0]; ++i )
++  {
++    for( int j = 0; j < nEl[1]; ++j )
++    {
++      int const k = planeCellK;
++      std::array< localIndex, 8 > cellNodes = {
++        ijkMap[i][j][k],
++        ijkMap[i + 1][j][k],
++        ijkMap[i + 1][j + 1][k],
++        ijkMap[i][j + 1][k],
++        ijkMap[i][j][k + 1],
++        ijkMap[i + 1][j][k + 1],
++        ijkMap[i + 1][j + 1][k + 1],
++        ijkMap[i][j + 1][k + 1]
++      };
+ 
+-        if( materialWeakUseMaterialLR )
+-        {
+-          real64 const volA = gridMaterialVolume[g][A];
+-          real64 const volB = gridMaterialVolume[g][B];
+-          if( volA <= 0.0 || volB <= 0.0 )
+-          {
+-            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+-            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+-            continue;
+-          }
++      std::array< std::array< real64, 2 >, 4 > const xyCorners = {{
++        {{ gridPosition[cellNodes[0]][0], gridPosition[cellNodes[0]][1] }},
++        {{ gridPosition[cellNodes[1]][0], gridPosition[cellNodes[1]][1] }},
++        {{ gridPosition[cellNodes[2]][0], gridPosition[cellNodes[2]][1] }},
++        {{ gridPosition[cellNodes[3]][0], gridPosition[cellNodes[3]][1] }}
++      }};
+ 
+-          int const primaryMaterial = gridMaterialWeakPrimaryMaterial[g][A];
+-          int const secondaryMaterial = gridMaterialWeakSecondaryMaterial[g][A];
+-          int const sideA = A / numContactGroups;
+-          int const sideB = B / numContactGroups;
+-          int const materialA = sideA == 0 ? primaryMaterial : secondaryMaterial;
+-          int const materialB = sideB == 0 ? primaryMaterial : secondaryMaterial;
+-          if( materialA < 0 || materialB < 0 || materialA == materialB )
++      for( localIndex A = 0; A < numVelocityFields - 1; ++A )
++      {
++        for( localIndex B = A + 1; B < numVelocityFields; ++B )
++        {
++          if( !pairIsSelected( A, B ) )
+           {
+-            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+-            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+             continue;
+           }
+ 
+-          real64 normal0[3] = {};
+-          for( int i = 0; i < 3; ++i )
++          real64 cellMassA = 0.0;
++          real64 cellMassB = 0.0;
++          for( localIndex const node : cellNodes )
+           {
+-            normal0[i] = gridCenterOfVolume[g][B][i] - gridCenterOfVolume[g][A][i];
+-          }
+-          if( planeStrain == 1 )
+-          {
+-            normal0[2] = 0.0;
++            cellMassA += gridMass[node][A];
++            cellMassB += gridMass[node][B];
+           }
+-          real64 const normal0Norm = LvArray::tensorOps::l2Norm< 3 >( normal0 );
+-          if( normal0Norm <= 1.0e-20 )
++          if( cellMassA <= smallMass || cellMassB <= smallMass )
+           {
+-            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+-            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+-            continue;
+-          }
+-          LvArray::tensorOps::scale< 3 >( normal0, 1.0 / normal0Norm );
+-
+-          real64 normal[3] = {};
+-          int const lrFitOk =
+-            materialLogisticRegression( planeStrain,
+-                                        maxLRIterations,
+-                                        LRtolerance,
+-                                        hEl,
+-                                        A % numContactGroups,
+-                                        materialA,
+-                                        materialB,
+-                                        numNeighborsAll[g],
+-                                        neighborRegions[g],
+-                                        neighborSubRegions[g],
+-                                        neighborIndices[g],
+-                                        particleGroupView,
+-                                        particleMaterialTypeView,
+-                                        particlePositionView,
+-                                        gridPosition[g],
+-                                        normal0,
+-                                        normal,
+-                                        sGamma );
+-          if( lrFitOk == 0 )
+-          {
+-            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+-            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+             continue;
+           }
++          ++cellsWithBothFields;
+ 
+-          real64 normalNorm = LvArray::tensorOps::l2Norm< 3 >( normal );
+-          if( planeStrain == 1 )
++          std::array< real64, 3 > planePoint{};
++          std::array< real64, 3 > planeNormal{};
++          std::array< real64, 3 > surfaceJump{};
++          std::array< real64, 3 > referenceNormal{};
++          bool haveReferenceNormal = false;
++          real64 geometryWeight = 0.0;
++
++          for( localIndex const node : cellNodes )
+           {
+-            normal[2] = 0.0;
+-            normalNorm = LvArray::tensorOps::l2Norm< 3 >( normal );
++            real64 const surfaceMassA = gridSurfaceFieldMass[node][A];
++            real64 const surfaceMassB = gridSurfaceFieldMass[node][B];
++            if( surfaceMassA <= smallMass || surfaceMassB <= smallMass )
++            {
++              continue;
++            }
++
++            std::array< real64, 3 > pointA{};
++            std::array< real64, 3 > pointB{};
++            std::array< real64, 3 > pairNormal{};
++            for( int d = 0; d < 3; ++d )
++            {
++              pointA[d] = gridPosition[node][d] + gridSurfacePosition[node][A][d];
++              pointB[d] = gridPosition[node][d] + gridSurfacePosition[node][B][d];
++              pairNormal[d] = gridSurfaceNormal[node][A][d] - gridSurfaceNormal[node][B][d];
++            }
++            pairNormal[2] = 0.0;
++            real64 const pairNormalNorm = std::sqrt( pairNormal[0] * pairNormal[0] + pairNormal[1] * pairNormal[1] );
++            if( pairNormalNorm <= 1.0e-20 )
++            {
++              continue;
++            }
++            pairNormal[0] /= pairNormalNorm;
++            pairNormal[1] /= pairNormalNorm;
++
++            if( haveReferenceNormal )
++            {
++              real64 const alignment = pairNormal[0] * referenceNormal[0] + pairNormal[1] * referenceNormal[1];
++              if( alignment < 0.0 )
++              {
++                pairNormal[0] = -pairNormal[0];
++                pairNormal[1] = -pairNormal[1];
++              }
++            }
++            else
++            {
++              referenceNormal = pairNormal;
++              haveReferenceNormal = true;
++            }
++
++            real64 const weight = std::sqrt( surfaceMassA * surfaceMassB );
++            for( int d = 0; d < 3; ++d )
++            {
++              planePoint[d] += 0.5 * weight * ( pointA[d] + pointB[d] );
++              planeNormal[d] += weight * pairNormal[d];
++              surfaceJump[d] += weight * ( pointA[d] - pointB[d] );
++            }
++            geometryWeight += weight;
+           }
+-          if( normalNorm <= 1.0e-20 )
++
++          if( geometryWeight <= smallMass )
+           {
+-            LvArray::tensorOps::copy< 3 >( normal, normal0 );
++            continue;
+           }
+-          else
++          ++cellsWithTraceGeometry;
++          for( int d = 0; d < 3; ++d )
+           {
+-            LvArray::tensorOps::scale< 3 >( normal, 1.0 / normalNorm );
++            planePoint[d] /= geometryWeight;
++            planeNormal[d] /= geometryWeight;
++            surfaceJump[d] /= geometryWeight;
+           }
++          planePoint[2] = 0.5 * ( gridPosition[cellNodes[0]][2] + gridPosition[cellNodes[4]][2] );
++          planeNormal[2] = 0.0;
++          surfaceJump[2] = 0.0;
+ 
+-          // No prescribed surface is required in material-LR mode. The fit gives
+-          // the local trace point and normal from material labels. The centroid
+-          // difference is only a geometric diagnostic, and gap stabilization is
+-          // intentionally disabled for this path because it is not an accumulated
+-          // opening.
+-          for( int i = 0; i < 3; ++i )
++          real64 const planeNormalNorm = std::sqrt( planeNormal[0] * planeNormal[0] + planeNormal[1] * planeNormal[1] );
++          if( planeNormalNorm <= 1.0e-20 )
+           {
+-            real64 const xA = gridCenterOfVolume[g][A][i];
+-            real64 const xB = gridCenterOfVolume[g][B][i];
+-            xGamma[i] = gridPosition[g][i] + sGamma[i];
+-            jump[i] = xA - xB;
+-            gridSurfaceNormal[g][A][i] = normal[i];
+-            gridSurfaceNormal[g][B][i] = -normal[i];
+-            gridWeakInterfaceTracePoint[g][A][i] = sGamma[i];
+-            gridWeakInterfaceTracePoint[g][B][i] = sGamma[i];
+-            gridWeakInterfaceTraceSurfaceJump[g][A][i] = jump[i];
+-            gridWeakInterfaceTraceSurfaceJump[g][B][i] = -jump[i];
+-          }
+-        }
+-        else
+-        {
+-          real64 const spmA = gridSurfaceFieldMass[g][A];
+-          real64 const spmB = gridSurfaceFieldMass[g][B];
+-          real64 const spmAB = spmA + spmB;
+-          // gridSurfacePosition is meaningful only for fields with mapped weak or
+-          // surface particles carrying nonzero surface normals. If either side is
+-          // missing this data, the trace location is not defined at this anchor.
+-          if( spmA <= smallMass || spmB <= smallMass || spmAB <= smallMass )
+-          {
+-            gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
+-            gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
+             continue;
+           }
++          planeNormal[0] /= planeNormalNorm;
++          planeNormal[1] /= planeNormalNorm;
+ 
+-          // sGamma is stored relative to the anchor grid node because the same
+-          // value is reused later to recompute post-projection jump diagnostics.
+-          // jump is the signed difference between the two mapped trace locations.
+-          for( int i = 0; i < 3; ++i )
++          std::array< real64, 4 > signedDistance{};
++          bool hasPositive = false;
++          bool hasNegative = false;
++          for( int corner = 0; corner < 4; ++corner )
+           {
+-            sGamma[i] = ( spmA * gridSurfacePosition[g][A][i] +
+-                          spmB * gridSurfacePosition[g][B][i] ) / spmAB;
+-            jump[i] = gridSurfacePosition[g][A][i] - gridSurfacePosition[g][B][i];
+-            gapJump[i] = jump[i];
+-            xGamma[i] = gridPosition[g][i] + sGamma[i];
+-            gridWeakInterfaceTracePoint[g][A][i] = sGamma[i];
+-            gridWeakInterfaceTracePoint[g][B][i] = sGamma[i];
+-            gridWeakInterfaceTraceSurfaceJump[g][A][i] = jump[i];
+-            gridWeakInterfaceTraceSurfaceJump[g][B][i] = -jump[i];
++            signedDistance[corner] =
++              planeNormal[0] * ( xyCorners[corner][0] - planePoint[0] ) +
++              planeNormal[1] * ( xyCorners[corner][1] - planePoint[1] );
++            hasPositive = hasPositive || signedDistance[corner] > geometryTolerance;
++            hasNegative = hasNegative || signedDistance[corner] < -geometryTolerance;
+           }
+-        }
+ 
+-        int baseIJK[3] = {};
+-        bool inGrid = true;
+-        for( int d = 0; d < 3; ++d )
+-        {
+-          baseIJK[d] = LvArray::math::floor( ( xGamma[d] - xLocalMin[d] ) / hEl[d] );
+-          if( baseIJK[d] < 0 || baseIJK[d] >= nEl[d] )
+-          {
+-            inGrid = false;
+-          }
+-        }
+-        if( planeStrain == 1 )
+-        {
+-          // Plane strain has one interior cell layer in z. Clamp z into that
+-          // layer before evaluating the same 3D trilinear support used elsewhere.
+-          baseIJK[2] = LvArray::math::max( 0, LvArray::math::min( baseIJK[2], static_cast< int >( nEl[2] - 1 ) ) );
+-          inGrid = inGrid && nEl[2] > 0;
+-        }
+-        if( !inGrid )
+-        {
+-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipTracePointOutsideGrid;
+-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipTracePointOutsideGrid;
+-          continue;
+-        }
++          std::array< std::array< int, 2 >, 4 > const edges = {{{{0, 1}}, {{1, 2}}, {{2, 3}}, {{3, 0}}}};
++          std::vector< std::array< real64, 2 > > intersections;
++          intersections.reserve( 4 );
++          std::vector< std::array< int, 2 > > conformingEdges;
+ 
+-        localIndex traceNodes[8] = {};
+-        real64 traceWeights[8] = {};
+-        localIndex corner = ijkMap[baseIJK[0]][baseIJK[1]][baseIJK[2]];
+-        real64 const xRel = ( xGamma[0] - gridPosition[corner][0] ) / hEl[0];
+-        real64 const yRel = ( xGamma[1] - gridPosition[corner][1] ) / hEl[1];
+-        real64 const zRel = ( xGamma[2] - gridPosition[corner][2] ) / hEl[2];
+-        int node = 0;
+-        for( int ii = 0; ii < 2; ++ii )
+-        {
+-          real64 const wx = ii * xRel + ( 1 - ii ) * ( 1.0 - xRel );
+-          for( int jj = 0; jj < 2; ++jj )
++          auto appendIntersection = [&]( std::array< real64, 2 > const & candidate )
+           {
+-            real64 const wy = jj * yRel + ( 1 - jj ) * ( 1.0 - yRel );
+-            for( int kk = 0; kk < 2; ++kk )
++            for( auto const & existing : intersections )
+             {
+-              real64 const wz = kk * zRel + ( 1 - kk ) * ( 1.0 - zRel );
+-              traceNodes[node] = ijkMap[baseIJK[0] + ii][baseIJK[1] + jj][baseIJK[2] + kk];
+-              traceWeights[node] = wx * wy * wz;
+-              ++node;
++              real64 const dx = candidate[0] - existing[0];
++              real64 const dy = candidate[1] - existing[1];
++              if( dx * dx + dy * dy <= geometryTolerance * geometryTolerance )
++              {
++                return;
++              }
+             }
+-          }
+-        }
++            intersections.push_back( candidate );
++          };
+ 
+-        real64 anchorWeight = 0.0;
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          if( traceNodes[q] == g )
++          for( auto const & edge : edges )
+           {
+-            anchorWeight += traceWeights[q];
++            int const c0 = edge[0];
++            int const c1 = edge[1];
++            real64 const phi0 = signedDistance[c0];
++            real64 const phi1 = signedDistance[c1];
++            bool const zero0 = std::abs( phi0 ) <= geometryTolerance;
++            bool const zero1 = std::abs( phi1 ) <= geometryTolerance;
++            if( zero0 && zero1 )
++            {
++              conformingEdges.push_back( edge );
++              continue;
++            }
++            if( zero0 )
++            {
++              appendIntersection( xyCorners[c0] );
++            }
++            if( zero1 )
++            {
++              appendIntersection( xyCorners[c1] );
++            }
++            if( phi0 * phi1 < 0.0 )
++            {
++              real64 const fraction = phi0 / ( phi0 - phi1 );
++              appendIntersection( {{
++                xyCorners[c0][0] + fraction * ( xyCorners[c1][0] - xyCorners[c0][0] ),
++                xyCorners[c0][1] + fraction * ( xyCorners[c1][1] - xyCorners[c0][1] )
++              }} );
++            }
+           }
+-        }
+-        // The anchor node must participate in the trace support. This suppresses
+-        // anchors whose mapped trace point lies effectively in a neighboring cell.
+-        if( anchorWeight <= minTraceWeight )
+-        {
+-          gridWeakInterfaceTraceAnchorWeight[g][A] = anchorWeight;
+-          gridWeakInterfaceTraceAnchorWeight[g][B] = anchorWeight;
+-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipAnchorWeightTooSmall;
+-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipAnchorWeightTooSmall;
+-          continue;
+-        }
+ 
+-        real64 const nodalBlend = anchorWeight * anchorWeight * anchorWeight * anchorWeight;
+-        real64 projectionWeights[8] = {};
+-        bool anchorInserted = false;
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          projectionWeights[q] = ( 1.0 - nodalBlend ) * traceWeights[q];
+-          if( !anchorInserted && traceNodes[q] == g )
+-          {
+-            projectionWeights[q] += nodalBlend;
+-            anchorInserted = true;
+-          }
+-        }
+-        // If the reconstructed interface point falls close to an existing grid
+-        // node, that node already represents the weak interface degree of
+-        // freedom. Blend continuously from the trace basis to a nodal A/B
+-        // projection, using the anchor shape-function weight as the smooth
+-        // proximity measure.
+-        //
+-        // The force scale still needs a quadrature-like weight because each
+-        // active anchor contributes a local trace constraint. Using unit weight
+-        // at every active anchor overconstrains cell-interior traces. Using the
+-        // raw anchor weight is stable, but makes near-node traces much stronger
+-        // than cell-interior traces. Cap the strength at the bilinear reference
+-        // value for a plane-strain interface to preserve the stabilizing
+-        // partition-of-unity role without the near-node strength spike.
+-        real64 const referenceAnchorWeight = planeStrain == 1 ? 0.25 : 0.125;
+-        real64 const projectionStrength = LvArray::math::min( anchorWeight, referenceAnchorWeight );
+-
+-        real64 weightA = 0.0;
+-        real64 weightB = 0.0;
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          localIndex const I = traceNodes[q];
+-          real64 const N = projectionWeights[q];
+-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
++          if( !conformingEdges.empty() )
+           {
+-            weightA += N;
++            ++conformingCells;
++            for( auto const & edge : conformingEdges )
++            {
++              for( int endpoint = 0; endpoint < 2; ++endpoint )
++              {
++                int const corner = edge[endpoint];
++                std::array< real64, 3 > point = {{
++                  xyCorners[corner][0],
++                  xyCorners[corner][1],
++                  planePoint[2]
++                }};
++                addNodalConstraint( cellNodes,
++                                    corner,
++                                    A,
++                                    B,
++                                    point,
++                                    planeNormal,
++                                    surfaceJump,
++                                    hEl[0] );
++              }
++            }
++            continue;
+           }
+-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
++
++          if( !hasPositive || !hasNegative || intersections.size() < 2 )
+           {
+-            weightB += N;
++            ++touchOrUncutCells;
++            continue;
+           }
+-        }
+-        // Require enough active basis support on both fields. Without this,
+-        // interpolation would collapse onto one side and the impulse would act
+-        // like an extrapolated boundary condition.
+-        if( weightA <= minTraceWeight || weightB <= minTraceWeight )
+-        {
+-          gridWeakInterfaceTraceSupportWeight[g][A] = weightA;
+-          gridWeakInterfaceTraceSupportWeight[g][B] = weightB;
+-          int const skipReason = weightA <= minTraceWeight ? traceSkipSupportWeightATooSmall : traceSkipSupportWeightBTooSmall;
+-          gridWeakInterfaceTraceSkipReason[g][A] = skipReason;
+-          gridWeakInterfaceTraceSkipReason[g][B] = skipReason;
+-          continue;
+-        }
+-        gridWeakInterfaceTraceAnchorWeight[g][A] = anchorWeight;
+-        gridWeakInterfaceTraceAnchorWeight[g][B] = anchorWeight;
+-        gridWeakInterfaceTraceSupportWeight[g][A] = weightA;
+-        gridWeakInterfaceTraceSupportWeight[g][B] = weightB;
+-
+-        real64 vA[3] = {};
+-        real64 vB[3] = {};
+-        real64 inverseEffectiveMass = 0.0;
+-        // Interpolate each side's velocity to xGamma using normalized weights
+-        // over the active support for that field. The same normalized weights
+-        // define the effective mass of the projected trace degree of freedom.
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          localIndex const I = traceNodes[q];
+-          real64 const N = projectionWeights[q];
+-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
++          ++interiorCutCells;
++
++          // If the reconstructed interface passes exactly through a grid node,
++          // retain the ordinary shared-node kinematics there by adding one
++          // canonical nodal constraint. The cut-cell constraint below then acts
++          // only on the interior part of the segment. Duplicate nodal constraints
++          // from neighboring cells are removed by nodalConstraintKeys.
++          for( int corner = 0; corner < 4; ++corner )
+           {
+-            real64 const NA = N / weightA;
+-            inverseEffectiveMass += NA * NA / gridMass[I][A];
+-            for( int i = 0; i < numDims; ++i )
++            if( std::abs( signedDistance[corner] ) <= geometryTolerance )
+             {
+-              vA[i] += NA * gridVelocity[I][A][i];
++              std::array< real64, 3 > point = {{
++                xyCorners[corner][0],
++                xyCorners[corner][1],
++                planePoint[2]
++              }};
++              addNodalConstraint( cellNodes,
++                                  corner,
++                                  A,
++                                  B,
++                                  point,
++                                  planeNormal,
++                                  surfaceJump,
++                                  0.0 );
+             }
+           }
+-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
++
++          int first = 0;
++          int second = 1;
++          real64 maxDistanceSquared = -1.0;
++          for( int p = 0; p < static_cast< int >( intersections.size() ); ++p )
+           {
+-            real64 const NB = N / weightB;
+-            inverseEffectiveMass += NB * NB / gridMass[I][B];
+-            for( int i = 0; i < numDims; ++i )
++            for( int q = p + 1; q < static_cast< int >( intersections.size() ); ++q )
+             {
+-              vB[i] += NB * gridVelocity[I][B][i];
++              real64 const dx = intersections[p][0] - intersections[q][0];
++              real64 const dy = intersections[p][1] - intersections[q][1];
++              real64 const distanceSquared = dx * dx + dy * dy;
++              if( distanceSquared > maxDistanceSquared )
++              {
++                maxDistanceSquared = distanceSquared;
++                first = p;
++                second = q;
++              }
+             }
+           }
+-        }
+-        if( inverseEffectiveMass <= 0.0 )
+-        {
+-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInvalidEffectiveMass;
+-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInvalidEffectiveMass;
+-          continue;
+-        }
+ 
+-        real64 residual[3] = {};
+-        real64 impulse[3] = {};
+-        real64 gapCorrection[3] = {};
+-        for( int i = 0; i < numDims; ++i )
+-        {
+-          gapCorrection[i] = ( 1.0 - nodalBlend ) * gapStabilization * gapJump[i] / dt;
+-        }
+-        real64 const gapCorrectionNorm = LvArray::tensorOps::l2Norm< 3 >( gapCorrection );
+-        if( maxGapCorrectionVelocity > 0.0 && gapCorrectionNorm > maxGapCorrectionVelocity )
+-        {
+-          LvArray::tensorOps::scale< 3 >( gapCorrection, maxGapCorrectionVelocity / gapCorrectionNorm );
+-        }
+-        // Residual is the trace velocity jump to remove. A positive
+-        // gapStabilization adds beta * displacementJump / dt, which damps an
+-        // accumulated opening/overlap in the same impulse solve. projectionScale
+-        // under-relaxes the correction when needed.
+-        for( int i = 0; i < numDims; ++i )
+-        {
+-          residual[i] = vA[i] - vB[i] + gapCorrection[i];
+-          impulse[i] = -projectionScale * projectionStrength * residual[i] / inverseEffectiveMass;
+-          gridWeakInterfaceTraceVelocityJump[g][A][i] = residual[i];
+-          gridWeakInterfaceTraceVelocityJump[g][B][i] = -residual[i];
+-        }
+-        gridWeakInterfaceTraceActive[g][A] = 1;
+-        gridWeakInterfaceTraceActive[g][B] = 1;
+-        gridWeakInterfaceTraceSkipReason[g][A] = traceSkipActive;
+-        gridWeakInterfaceTraceSkipReason[g][B] = traceSkipActive;
++          real64 const segmentLength = std::sqrt( maxDistanceSquared );
++          std::array< real64, 3 > midpoint = {{
++            0.5 * ( intersections[first][0] + intersections[second][0] ),
++            0.5 * ( intersections[first][1] + intersections[second][1] ),
++            planePoint[2]
++          }};
+ 
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          localIndex const I = traceNodes[q];
+-          real64 const N = projectionWeights[q];
+-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
++          if( segmentLength < minSegmentLength )
+           {
+-            real64 const NA = N / weightA;
+-            for( int i = 0; i < numDims; ++i )
++            ++sliverCells;
++            int nearestCorner = 0;
++            real64 nearestDistanceSquared = std::numeric_limits< real64 >::max();
++            for( int corner = 0; corner < 4; ++corner )
+             {
+-              // Store as a force so the standard grid acceleration, momentum,
+-              // dVelocity, and velocity updates can consume it consistently.
+-              RAJA::atomicAdd( parallelDeviceAtomic{},
+-                               &gridWeakInterfaceTraceForce[I][A][i],
+-                               NA * impulse[i] / dt );
++              real64 const dx = midpoint[0] - xyCorners[corner][0];
++              real64 const dy = midpoint[1] - xyCorners[corner][1];
++              real64 const distanceSquared = dx * dx + dy * dy;
++              if( distanceSquared < nearestDistanceSquared )
++              {
++                nearestDistanceSquared = distanceSquared;
++                nearestCorner = corner;
++              }
+             }
++            std::array< real64, 3 > point = {{
++              xyCorners[nearestCorner][0],
++              xyCorners[nearestCorner][1],
++              planePoint[2]
++            }};
++            addNodalConstraint( cellNodes,
++                                nearestCorner,
++                                A,
++                                B,
++                                point,
++                                planeNormal,
++                                surfaceJump,
++                                segmentLength );
+           }
+-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
++          else
+           {
+-            real64 const NB = N / weightB;
+-            for( int i = 0; i < numDims; ++i )
+-            {
+-              RAJA::atomicAdd( parallelDeviceAtomic{},
+-                               &gridWeakInterfaceTraceForce[I][B][i],
+-                               -NB * impulse[i] / dt );
+-            }
++            addPointConstraint( cellNodes,
++                                A,
++                                B,
++                                midpoint,
++                                planeNormal,
++                                surfaceJump,
++                                segmentLength,
++                                1 );
+           }
+         }
+       }
+     }
+-  } );
+-}
++  }
+ 
+-/**
+- * @brief Recomputes weak-trace velocity jump diagnostics after applying projection forces.
+- *
+- * computeWeakInterfaceTraceProjectionForces() stores the pre-correction
+- * residual used to form the impulse. This helper repeats the same interpolation
+- * after the force application so plots can show the remaining jump.
+- */
+-void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager )
+-{
+-  GEOS_MARK_FUNCTION;
++  if( constraints.empty() )
++  {
++    GEOS_LOG_LEVEL_RANK_0(
++      logInfo::MPMSubroutines,
++      "Weak-interface cut-cell projection: cells(bothFields/geometry/cut/conforming/sliver/touch)=" <<
++      cellsWithBothFields << "/" << cellsWithTraceGeometry << "/" << interiorCutCells << "/" <<
++      conformingCells << "/" << sliverCells << "/" << touchOrUncutCells <<
++      ", constraints=0, rejected=" << rejectedConstraints );
++    return;
++  }
+ 
+-  int const numDims = m_numDims;
+-  int const planeStrain = m_planeStrain;
+-  int const numVelocityFields = m_numVelocityFields;
+-  real64 const smallMass = m_smallMass;
+-  real64 const minTraceWeight = m_weakInterfaceTraceMinWeight;
++  localIndex const numConstraints = static_cast< localIndex >( constraints.size() );
++  std::map< localIndex, std::vector< std::pair< localIndex, real64 > > > dofIncidence;
++  for( localIndex constraintIndex = 0; constraintIndex < numConstraints; ++constraintIndex )
++  {
++    WeakInterfaceProjectionConstraint const & constraint = constraints[constraintIndex];
++    for( int d = 0; d < constraint.numDofs; ++d )
++    {
++      WeakInterfaceProjectionDof const & dof = constraint.dofs[d];
++      localIndex const flatDof = dof.node * numVelocityFields + dof.field;
++      dofIncidence[flatDof].emplace_back( constraintIndex, dof.coefficient );
++    }
++  }
+ 
+-  real64 hEl[3] = {};
+-  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+-  real64 xLocalMin[3] = {};
+-  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+-  integer nEl[3] = {};
+-  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
++  std::vector< std::map< localIndex, real64 > > rowMaps( numConstraints );
++  for( auto const & dofEntry : dofIncidence )
++  {
++    localIndex const flatDof = dofEntry.first;
++    localIndex const node = flatDof / numVelocityFields;
++    localIndex const field = flatDof % numVelocityFields;
++    real64 const inverseMass = 1.0 / gridMass[node][field];
++    auto const & incidentConstraints = dofEntry.second;
++    for( auto const & left : incidentConstraints )
++    {
++      for( auto const & right : incidentConstraints )
++      {
++        rowMaps[left.first][right.first] += left.second * right.second * inverseMass;
++      }
++    }
++  }
+ 
+-  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
+-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+-  arrayView2d< real64 const > const gridActive = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
+-  arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+-  arrayView3d< real64 const > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+-  arrayView2d< int const > const gridWeakInterfaceTraceActive = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
+-  arrayView3d< real64 const > const gridWeakInterfaceTracePoint = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() );
+-  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJumpPost = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
++  real64 maxDiagonal = 0.0;
++  for( localIndex row = 0; row < numConstraints; ++row )
++  {
++    auto const diagonalEntry = rowMaps[row].find( row );
++    if( diagonalEntry != rowMaps[row].end() )
++    {
++      maxDiagonal = LvArray::math::max( maxDiagonal, diagonalEntry->second );
++    }
++  }
++  real64 const regularization =
++    linearRegularization * LvArray::math::max( maxDiagonal, std::numeric_limits< real64 >::min() );
+ 
+-  // Re-evaluate the same trace interpolation after applying forces. This gives
+-  // diagnostics of the residual jump actually left by the current projection
+-  // iteration, instead of the pre-correction residual used to form the impulse.
+-  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
++  WeakInterfaceSparseMatrix projectionMatrix( numConstraints );
++  std::vector< real64 > diagonal( numConstraints, 0.0 );
++  for( localIndex row = 0; row < numConstraints; ++row )
+   {
+-    for( localIndex A = 0; A < numVelocityFields - 1; ++A )
++    rowMaps[row][row] += regularization;
++    projectionMatrix[row].reserve( rowMaps[row].size() );
++    for( auto const & entry : rowMaps[row] )
+     {
+-      for( localIndex B = A + 1; B < numVelocityFields; ++B )
++      projectionMatrix[row].emplace_back( entry.first, entry.second );
++    }
++    diagonal[row] = rowMaps[row][row];
++  }
++
++  std::array< std::vector< real64 >, 3 > preResidual;
++  std::array< std::vector< real64 >, 3 > multipliers;
++  std::array< WeakInterfaceProjectionSolveResult, 3 > solveResults{};
++  for( int component = 0; component < numDims; ++component )
++  {
++    preResidual[component].assign( numConstraints, 0.0 );
++    std::vector< real64 > rhs( numConstraints, 0.0 );
++    for( localIndex constraintIndex = 0; constraintIndex < numConstraints; ++constraintIndex )
++    {
++      WeakInterfaceProjectionConstraint const & constraint = constraints[constraintIndex];
++      real64 residual = 0.0;
++      for( int d = 0; d < constraint.numDofs; ++d )
+       {
+-        if( gridWeakInterfaceTraceActive[g][A] == 0 || gridWeakInterfaceTraceActive[g][B] == 0 )
+-        {
+-          continue;
+-        }
++        WeakInterfaceProjectionDof const & dof = constraint.dofs[d];
++        residual += dof.coefficient * gridVelocity[dof.node][dof.field][component];
++      }
++      preResidual[component][constraintIndex] = residual;
++      rhs[constraintIndex] = -residual;
++    }
+ 
+-        real64 xGamma[3] = {};
+-        for( int i = 0; i < 3; ++i )
+-        {
+-          xGamma[i] = gridPosition[g][i] + gridWeakInterfaceTracePoint[g][A][i];
+-        }
++    solveResults[component] = solveWeakInterfaceProjectionPCG( projectionMatrix,
++                                                               diagonal,
++                                                               rhs,
++                                                               maxLinearIterations,
++                                                               linearTolerance,
++                                                               multipliers[component] );
++  }
+ 
+-        int baseIJK[3] = {};
+-        bool inGrid = true;
+-        for( int d = 0; d < 3; ++d )
+-        {
+-          baseIJK[d] = LvArray::math::floor( ( xGamma[d] - xLocalMin[d] ) / hEl[d] );
+-          if( baseIJK[d] < 0 || baseIJK[d] >= nEl[d] )
+-          {
+-            inGrid = false;
+-          }
+-        }
+-        if( planeStrain == 1 )
+-        {
+-          baseIJK[2] = LvArray::math::max( 0, LvArray::math::min( baseIJK[2], static_cast< int >( nEl[2] - 1 ) ) );
+-          inGrid = inGrid && nEl[2] > 0;
+-        }
+-        if( !inGrid )
++  auto updateJumpDiagnostic = [&]( arrayView3d< real64 > const & diagnostic,
++                                   WeakInterfaceProjectionConstraint const & constraint,
++                                   std::array< real64, 3 > const & jump )
++  {
++    real64 const jumpMagnitudeSquared = jump[0] * jump[0] + jump[1] * jump[1] + jump[2] * jump[2];
++    for( int d = 0; d < constraint.numDofs; ++d )
++    {
++      WeakInterfaceProjectionDof const & dof = constraint.dofs[d];
++      real64 const currentMagnitudeSquared =
++        diagnostic[dof.node][dof.field][0] * diagnostic[dof.node][dof.field][0] +
++        diagnostic[dof.node][dof.field][1] * diagnostic[dof.node][dof.field][1] +
++        diagnostic[dof.node][dof.field][2] * diagnostic[dof.node][dof.field][2];
++      if( jumpMagnitudeSquared > currentMagnitudeSquared )
++      {
++        real64 const side = dof.coefficient >= 0.0 ? 1.0 : -1.0;
++        for( int component = 0; component < 3; ++component )
+         {
+-          continue;
++          diagnostic[dof.node][dof.field][component] = side * jump[component];
+         }
++      }
++    }
++  };
+ 
+-        localIndex traceNodes[8] = {};
+-        real64 traceWeights[8] = {};
+-        localIndex const corner = ijkMap[baseIJK[0]][baseIJK[1]][baseIJK[2]];
+-        real64 const xRel = ( xGamma[0] - gridPosition[corner][0] ) / hEl[0];
+-        real64 const yRel = ( xGamma[1] - gridPosition[corner][1] ) / hEl[1];
+-        real64 const zRel = ( xGamma[2] - gridPosition[corner][2] ) / hEl[2];
+-        int node = 0;
+-        for( int ii = 0; ii < 2; ++ii )
++  real64 kineticEnergyBefore = 0.0;
++  for( localIndex node = 0; node < nodeManager.size(); ++node )
++  {
++    for( localIndex field = 0; field < numVelocityFields; ++field )
++    {
++      if( gridActive[node][field] > 0.5 && gridMass[node][field] > smallMass )
++      {
++        real64 velocitySquared = 0.0;
++        for( int component = 0; component < numDims; ++component )
+         {
+-          real64 const wx = ii * xRel + ( 1 - ii ) * ( 1.0 - xRel );
+-          for( int jj = 0; jj < 2; ++jj )
+-          {
+-            real64 const wy = jj * yRel + ( 1 - jj ) * ( 1.0 - yRel );
+-            for( int kk = 0; kk < 2; ++kk )
+-            {
+-              real64 const wz = kk * zRel + ( 1 - kk ) * ( 1.0 - zRel );
+-              traceNodes[node] = ijkMap[baseIJK[0] + ii][baseIJK[1] + jj][baseIJK[2] + kk];
+-              traceWeights[node] = wx * wy * wz;
+-              ++node;
+-            }
+-          }
++          velocitySquared += gridVelocity[node][field][component] * gridVelocity[node][field][component];
+         }
++        kineticEnergyBefore += 0.5 * gridMass[node][field] * velocitySquared;
++      }
++    }
++  }
+ 
+-        real64 anchorWeight = 0.0;
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          if( traceNodes[q] == g )
+-          {
+-            anchorWeight += traceWeights[q];
+-          }
+-        }
+-        if( anchorWeight <= minTraceWeight )
+-        {
+-          continue;
+-        }
++  for( localIndex constraintIndex = 0; constraintIndex < numConstraints; ++constraintIndex )
++  {
++    WeakInterfaceProjectionConstraint const & constraint = constraints[constraintIndex];
++    std::array< real64, 3 > preJump{};
++    for( int component = 0; component < numDims; ++component )
++    {
++      preJump[component] = preResidual[component][constraintIndex];
++    }
+ 
+-        real64 const nodalBlend = anchorWeight * anchorWeight * anchorWeight * anchorWeight;
+-        real64 projectionWeights[8] = {};
+-        bool anchorInserted = false;
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          projectionWeights[q] = ( 1.0 - nodalBlend ) * traceWeights[q];
+-          if( !anchorInserted && traceNodes[q] == g )
+-          {
+-            projectionWeights[q] += nodalBlend;
+-            anchorInserted = true;
+-          }
+-        }
++    for( int d = 0; d < constraint.numDofs; ++d )
++    {
++      WeakInterfaceProjectionDof const & dof = constraint.dofs[d];
++      gridWeakInterfaceTraceActive[dof.node][dof.field] = 1;
++      gridWeakInterfaceTraceSkipReason[dof.node][dof.field] = 10;
++      gridWeakInterfaceTraceAnchorWeight[dof.node][dof.field] =
++        LvArray::math::max( gridWeakInterfaceTraceAnchorWeight[dof.node][dof.field],
++                            constraint.measure / LvArray::math::max( cellDiagonal, 1.0e-30 ) );
++      gridWeakInterfaceTraceSupportWeight[dof.node][dof.field] = 1.0;
++      for( int component = 0; component < 3; ++component )
++      {
++        gridWeakInterfaceTracePoint[dof.node][dof.field][component] =
++          constraint.point[component] - gridPosition[dof.node][component];
++        real64 const side = dof.coefficient >= 0.0 ? 1.0 : -1.0;
++        gridWeakInterfaceTraceSurfaceJump[dof.node][dof.field][component] =
++          side * constraint.surfaceJump[component];
++      }
++    }
++    updateJumpDiagnostic( gridWeakInterfaceTraceVelocityJump, constraint, preJump );
+ 
+-        real64 weightA = 0.0;
+-        real64 weightB = 0.0;
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          localIndex const I = traceNodes[q];
+-          real64 const N = projectionWeights[q];
+-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
+-          {
+-            weightA += N;
+-          }
+-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
+-          {
+-            weightB += N;
+-          }
+-        }
+-        if( weightA <= minTraceWeight || weightB <= minTraceWeight )
+-        {
+-          continue;
+-        }
++    for( int component = 0; component < numDims; ++component )
++    {
++      real64 const multiplier = projectionScale * multipliers[component][constraintIndex];
++      for( int d = 0; d < constraint.numDofs; ++d )
++      {
++        WeakInterfaceProjectionDof const & dof = constraint.dofs[d];
++        gridWeakInterfaceTraceForce[dof.node][dof.field][component] +=
++          dof.coefficient * multiplier / dt;
++      }
++    }
++  }
+ 
+-        real64 vA[3] = {};
+-        real64 vB[3] = {};
+-        for( int q = 0; q < 8; ++q )
+-        {
+-          localIndex const I = traceNodes[q];
+-          real64 const N = projectionWeights[q];
+-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
+-          {
+-            real64 const NA = N / weightA;
+-            for( int i = 0; i < numDims; ++i )
+-            {
+-              vA[i] += NA * gridVelocity[I][A][i];
+-            }
+-          }
+-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
+-          {
+-            real64 const NB = N / weightB;
+-            for( int i = 0; i < numDims; ++i )
+-            {
+-              vB[i] += NB * gridVelocity[I][B][i];
+-            }
+-          }
+-        }
++  applyWeakInterfaceTraceProjectionForces( dt, nodeManager );
+ 
+-        for( int i = 0; i < numDims; ++i )
++  real64 kineticEnergyAfter = 0.0;
++  real64 maxPostJump = 0.0;
++  for( localIndex constraintIndex = 0; constraintIndex < numConstraints; ++constraintIndex )
++  {
++    WeakInterfaceProjectionConstraint const & constraint = constraints[constraintIndex];
++    std::array< real64, 3 > postJump{};
++    for( int component = 0; component < numDims; ++component )
++    {
++      for( int d = 0; d < constraint.numDofs; ++d )
++      {
++        WeakInterfaceProjectionDof const & dof = constraint.dofs[d];
++        postJump[component] += dof.coefficient * gridVelocity[dof.node][dof.field][component];
++      }
++      maxPostJump = LvArray::math::max( maxPostJump, std::abs( postJump[component] ) );
++    }
++    updateJumpDiagnostic( gridWeakInterfaceTraceVelocityJumpPost, constraint, postJump );
++  }
++
++  for( localIndex node = 0; node < nodeManager.size(); ++node )
++  {
++    for( localIndex field = 0; field < numVelocityFields; ++field )
++    {
++      if( gridActive[node][field] > 0.5 && gridMass[node][field] > smallMass )
++      {
++        real64 velocitySquared = 0.0;
++        for( int component = 0; component < numDims; ++component )
+         {
+-          real64 const residual = vA[i] - vB[i];
+-          gridWeakInterfaceTraceVelocityJumpPost[g][A][i] = residual;
+-          gridWeakInterfaceTraceVelocityJumpPost[g][B][i] = -residual;
++          velocitySquared += gridVelocity[node][field][component] * gridVelocity[node][field][component];
+         }
++        kineticEnergyAfter += 0.5 * gridMass[node][field] * velocitySquared;
++      }
++    }
++  }
++
++  localIndex cutPointConstraints = 0;
++  localIndex nodalConstraints = 0;
++  for( WeakInterfaceProjectionConstraint const & constraint : constraints )
++  {
++    cutPointConstraints += constraint.kind == 1 ? 1 : 0;
++    nodalConstraints += constraint.kind == 2 ? 1 : 0;
++  }
++
++  int maxIterationsUsed = 0;
++  real64 maxRelativeResidual = 0.0;
++  bool allConverged = true;
++  for( int component = 0; component < numDims; ++component )
++  {
++    maxIterationsUsed = LvArray::math::max( maxIterationsUsed, solveResults[component].iterations );
++    maxRelativeResidual = LvArray::math::max( maxRelativeResidual, solveResults[component].relativeResidual );
++    allConverged = allConverged && solveResults[component].converged;
++  }
++
++  GEOS_LOG_LEVEL_RANK_0(
++    logInfo::MPMSubroutines,
++    "Weak-interface cut-cell projection: cells(bothFields/geometry/cut/conforming/sliver/touch)=" <<
++    cellsWithBothFields << "/" << cellsWithTraceGeometry << "/" << interiorCutCells << "/" <<
++    conformingCells << "/" << sliverCells << "/" << touchOrUncutCells <<
++    ", constraints(cut/nodal/rejected)=" << cutPointConstraints << "/" << nodalConstraints << "/" << rejectedConstraints <<
++    ", PCG iterations=" << maxIterationsUsed <<
++    ", relative residual=" << maxRelativeResidual <<
++    ", max post jump=" << maxPostJump <<
++    ", delta kinetic energy=" << kineticEnergyAfter - kineticEnergyBefore <<
++    ", converged=" << ( allConverged ? 1 : 0 ) );
++}
++
++/**
++ * @brief Clears transient weak-trace projection fields before each projection solve.
++ *
++ * These arrays describe the current cut-cell projection solve only. Persistent
++ * quantities, such as the mapped surface position and grid velocity fields, are
++ * not reset here.
++ */
++void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager )
++{
++  GEOS_MARK_FUNCTION;
++
++  localIndex const numVelocityFields = m_numVelocityFields;
++  arrayView2d< int > const gridWeakInterfaceTraceActive =
++    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
++  arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight =
++    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() );
++  arrayView3d< real64 > const gridWeakInterfaceTraceForce =
++    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() );
++  arrayView3d< real64 > const gridWeakInterfaceTracePoint =
++    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() );
++  arrayView2d< real64 > const gridWeakInterfaceTraceSupportWeight =
++    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() );
++  arrayView2d< int > const gridWeakInterfaceTraceSkipReason =
++    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() );
++  arrayView3d< real64 > const gridWeakInterfaceTraceSurfaceJump =
++    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() );
++  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJump =
++    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() );
++  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJumpPost =
++    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
++
++  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
++  {
++    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
++    {
++      gridWeakInterfaceTraceActive[g][fieldIndex] = 0;
++      gridWeakInterfaceTraceSkipReason[g][fieldIndex] = 0;
++      gridWeakInterfaceTraceAnchorWeight[g][fieldIndex] = 0.0;
++      gridWeakInterfaceTraceSupportWeight[g][fieldIndex] = 0.0;
++      for( int i = 0; i < 3; ++i )
++      {
++        gridWeakInterfaceTraceForce[g][fieldIndex][i] = 0.0;
++        gridWeakInterfaceTracePoint[g][fieldIndex][i] = 0.0;
++        gridWeakInterfaceTraceSurfaceJump[g][fieldIndex][i] = 0.0;
++        gridWeakInterfaceTraceVelocityJump[g][fieldIndex][i] = 0.0;
++        gridWeakInterfaceTraceVelocityJumpPost[g][fieldIndex][i] = 0.0;
+       }
+     }
+   } );
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
+index 870ea7f..43c8997 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
++++ b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
+@@ -542,13 +542,14 @@ public:
+                              NodeManager & nodeManager );
+ 
+   /**
+-   * @brief Enforces the prescribed weak-interface trace projection on nodal velocity fields.
++   * @brief Enforces a coupled cut-cell weak-interface projection on nodal velocity fields.
+    *
+-   * This projection is run after ordinary grid dynamics/contact. It uses the
+-   * already-mapped weak/surface position fields to find a local trace point and
+-   * applies a balanced impulse that reduces the velocity jump between selected
+-   * field pairs. It does not create new fields; field creation must already have
+-   * happened through contact-group, DFG, or material weak partitioning.
++   * The current prototype is CPU-only, single-rank, plane strain, and uses
++   * prescribed surface geometry. It reconstructs one canonical interface segment
++   * per cut cell, collapses conforming/sliver cuts to nodal constraints, assembles
++   * the coupled mass-metric constraint matrix, and solves the multiplier system
++   * with preconditioned conjugate gradients. Field creation must already have
++   * occurred through the prescribed contact-group split.
+    */
+   void enforceWeakInterfaceTraceProjection( real64 const dt,
+                                             DomainPartition & domain,
+@@ -561,29 +562,12 @@ public:
+    */
+   void zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager );
+ 
+-  /**
+-   * @brief Computes weak-trace projection forces for eligible nodal field pairs.
+-   *
+-   * Prescribed weak-surface pairs are controlled by weakInterfaceTracePairs.
+-   * Material-weak pairs are controlled by the material classifier. Both paths
+-   * require active fields, a trace point in the grid, and enough basis support on
+-   * both fields.
+-   */
+-  void computeWeakInterfaceTraceProjectionForces( real64 const dt,
+-                                                  ParticleManager & particleManager,
+-                                                  NodeManager & nodeManager );
+-
+   /**
+    * @brief Applies the accumulated weak-trace projection force to grid state.
+    */
+   void applyWeakInterfaceTraceProjectionForces( real64 const dt,
+                                                 NodeManager & nodeManager );
+ 
+-  /**
+-   * @brief Recomputes the trace velocity jump after applying the projection impulse.
+-   */
+-  void computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager );
+-
+   /**
+    * @brief Populates diagnostic mechanism/force/jump fields for active interfaces.
+    */
+@@ -1687,6 +1671,10 @@ protected:
+   int m_weakInterfaceTraceMaterialLRMinParticlesPerSide;
+   real64 m_weakInterfaceTraceMaxGapCorrectionVelocity;
+   real64 m_weakInterfaceTraceMinWeight;
++  real64 m_weakInterfaceTraceCutTolerance;
++  real64 m_weakInterfaceTraceMinSegmentFraction;
++  real64 m_weakInterfaceTraceLinearSolverTolerance;
++  real64 m_weakInterfaceTraceLinearSolverRegularization;
+   array2d< int > m_weakInterfaceTracePairs;
+   int m_weakInterfaceTraceProjectionIterations;
+   real64 m_weakInterfaceTraceProjectionScale;

@@ -1,0 +1,7 @@
+3d_separated_cartesian_r1 252 particles; serial-identical
+3d_separated_cartesian_r3 252 particles; serial-identical
+3d_separated_cartesian_r7 252 particles; serial-identical
+3d_separated_simplex_r1 1296 particles; serial-identical
+3d_separated_simplex_r3 1296 particles; serial-identical
+3d_separated_simplex_r7 1296 particles; serial-identical
+All 6 full-writer cases passed (emulated collectives).

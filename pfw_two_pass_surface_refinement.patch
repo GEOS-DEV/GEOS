@@ -1,0 +1,1777 @@
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/README b/scripts/preProcessing/materialPointMethodParticleFileWriter/README
+index 1a958fd..b4bcc5c 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/README
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/README
+@@ -239,3 +239,18 @@ Example: a disk of points on an x-normal surface to monitor velocity:
+ The generated solver attributes are `tracerHistory`, `tracerCoordinates`,
+ `tracerVariables`, `tracerWriteInterval` or `tracerCycleInterval`, and
+ `tracerOutputPrefix`.  Use a time interval or a cycle interval, not both.
++
++***Two-pass surface refinement***
++
++Set surfaceRefinementLevel > 1 to refine the band identified from ordinary
++coarse-center surface flags, occupied/empty adjacency, and region changes:
++
++  pfw["surfaceRefinementMethod"] = "cartesian"  # default
++  pfw["surfaceRefinementLevel"] = 4
++
++Empty-center coarse domains adjacent to particles are included. For local
++plane-cut triangle/tetrahedron centroid/volume initialization with single-point
++B-spline particles, use surfaceRefinementMethod="simplex". The existing geometry
++objects are unchanged. Both options use rank-owned coarse domains and read-only
++coarse-slice halos. See SURFACE_REFINEMENT.md for the algorithm, file-format
++compatibility, MPI factory requirements, fallback behavior, and tests.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/SURFACE_REFINEMENT.md b/scripts/preProcessing/materialPointMethodParticleFileWriter/SURFACE_REFINEMENT.md
+new file mode 100644
+index 0000000..e1c7aa6
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/SURFACE_REFINEMENT.md
+@@ -0,0 +1,222 @@
++# Two-pass surface refinement in PFW
++
++## Configuration
++
++```python
++# Existing geometry objects need no changes.
++pfw["surfaceRefinementLevel"] = 4
++pfw["surfaceRefinementMethod"] = "cartesian"  # Default method.
++```
++
++Or, for boundary-conforming centroid/volume initialization of single-point
++B-spline particles:
++
++```python
++pfw["surfaceRefinementLevel"] = 4
++pfw["surfaceRefinementMethod"] = "simplex"
++# Set particleType=1 on the corresponding geometry objects.
++```
++
++`"simplex-conforming"` is also accepted as an alias for `"simplex"`.
++These are writer options, not GEOS solver XML attributes. With the default
++`method="cartesian", level=1`, the original no-surface-refinement generation
++path is retained. Explicit `method="simplex", level=1` enables plane cutting
++without additional Cartesian subdivision of the candidate parents.
++
++The level is a subdivision **factor per active direction**, not a recursion
++count. Plane strain subdivides x/y and retains the original z thickness.
++An object's existing `particleRefinement` factor is also applied. At a
++candidate domain, the maximum material refinement factor in its immediate
++neighborhood supplies one common partition for both material sides.
++Consequently, level 4 does not mean the same particle count as in the older
++surface-flagged-center-only implementation: more parents can be selected, and
++cut polygons/polyhedra can produce several simplex particles per subdomain.
++
++Two optional safeguards are available:
++
++```python
++pfw["surfaceRefinementFallback"] = "cartesian"  # Default; alternatives: "error".
++pfw["surfaceRefinementPlaneTolerance"] = 0.05  # Default; fraction of child diagonal.
++```
++
++The tolerance controls allowed disagreement between a local tangent plane and
++sampled corner labels. It is not a geometric-error guarantee or a conservation
++correction. Strict `fallback="error"` is useful when checking whether a
++benchmark actually uses the intended simplex cuts throughout its surface band.
++
++## What the two passes do
++
++The lattice here is the **coarse particle reference-domain lattice**, not the
++MPM background grid. Pass 1 queries ordinary coarse centers, recording
++occupancy, object/material/contact-group labels, and surface flags. An absent
++entry in a slice represents an empty sampled location. Existing particle
++properties are staged as ordinary output text for owned occupied parents.
++
++Pass 2 selects a parent when any of its immediate neighbors is surface flagged
++or has a different region label. This includes the flagged parent itself, both
++sides of an occupied/empty boundary, and both sides of an A/B interface.
++The neighborhood includes diagonal neighbors: 8 in 2D or 26 in 3D.
++No corner sampling is performed throughout the bulk merely to detect this band.
++
++The passes are pipelined through three x-slices rather than keeping or rereading
++a complete provisional particle file. Unchanged bulk parents reuse their staged
++record without a second membership/property query. Candidate records are
++replaced, never appended alongside their children. Empty-center parents in the
++band can now contribute particles. Output IDs are assigned in parent order.
++
++### Cartesian method
++
++Subdivide the selected parent and classify each child center using the existing
++object priority. Emit ordinary equal-sized children where material is present.
++Unlike the previous method, a parent need not have an interior center to be
++visited. This remains midpoint/stair-step volume quadrature, not geometric
++clipping. Children in the interior away from the band retain the ordinary
++initialization behavior, including material-wise particle refinement.
++
++### Simplex method
++
++Each selected parent is subdivided at the requested level. On each subdomain:
++
++1. Query its center and corners, only within this selected band. Geometry
++   queries at corners are shifted one floating-point step toward the subdomain
++   interior to respect objects with half-open bounds; clipping uses the exact
++   corner coordinates.
++2. Obtain a usable surface normal and position offset from a local flagged
++   sample, or a neighboring coarse surface marker. Reuse staged surface data
++   where available. Re-query at the child scale rather than merely subdividing
++   a single parent tangent plane.
++3. Use one shared plane for both sides of the cut. Intersect edges analytically,
++   clip the square/cube, and triangulate/tetrahedralize the convex pieces.
++4. Assign the sides using object/material/contact-group labels. Retain material
++   pieces and omit void. Check the simplex partition's volume closure before
++   removing the void side; never rescale volumes to conceal a failed cut.
++5. Place a particle at each simplex centroid and assign its physical volume.
++   Recompute surface-position offsets relative to that particle's centroid.
++
++The cutter operates in a unit square/cube for numerical scaling. Its generated
++simplex volumes and first moments reproduce the **adopted plane-cut region**,
++not the exact curved object. Positive-volume pieces are retained; numerical
++coincidences at vertices/edges are handled without an arbitrary physical
++sliver-volume threshold.
++
++## Current GEOS file-format compatibility
++
++This update changes PFW only. It does not add a C++ `particleReferenceGeometry`
++field, triangle/tet connectivity, CPDI2 support, or a new particle interpolation.
++The cut simplices are temporary initialization geometry.
++
++For `particleType=1` (SinglePointBSpline), the existing reader obtains volume
++from the determinant of the R-vectors. The writer therefore emits an
++**equal-volume axis-aligned box** at each simplex centroid. Its aspect ratio
++matches the local sampling box; in plane strain its z thickness is unchanged.
++Thus the existing reader receives the intended physical volume without new
++columns or a density correction. Visualization through the existing R-vectors
++shows these equivalent boxes, not the temporary simplices.
++
++Emitting an actual simplex-cut particle with another particle type produces a
++clear error. Use Cartesian refinement for CPDI/CPTI. Merely giving a CPDI
++particle an equal-volume box is not the same as supplying a conforming CPDI
++integration domain and is deliberately not advertised as such.
++
++## Parallel PFW and rank-based object slicing
++
++Ownership remains a half-open interval of coarse x rows:
++
++```
++start = ceil(number_of_rows * rank / number_of_ranks)
++stop  = ceil(number_of_rows * (rank + 1) / number_of_ranks)
++```
++
++The implementation uses integer arithmetic for those ceilings. Only owned
++parents emit particles. All children inherit their parent's writer ownership;
++they are not reassigned according to an equivalent box's extent.
++
++Each rank queries one additional coarse x row on either side as a read-only
++halo. The halo supplies occupancy/flags across the rank boundary but creates
++no particle records or output. Recomputing this thin halo avoids communicating
++Python geometry objects, full particle state, or a global occupancy array.
++Small volume/diagnostic reductions and material/type metadata collectives remain.
++Ranks with zero owned rows participate in the collective stages normally.
++
++For `make_objects(rankxmin, rankxmax)`, PFW now passes bounds derived from the
++actual integer-owned rows, expanded by one coarse row when refinement is active.
++This fixes a mismatch between fractional rank ranges and integer row ownership.
++The factory must return all **complete objects whose bounding boxes intersect
++these bounds**, in the same relative priority order on every rank. It must not
++clip or redefine those objects to the requested rank interval. The geometry,
++material IDs, and property functions must be deterministic functions of global
++position; process-order-dependent random draws are not rank-count invariant.
++
++Refined child queries filter objects using the parent's complete x extent,
++not just the parent's center. This is necessary for empty-center cap recovery.
++The writer also unions material/type metadata across ranks before rank 0 writes
++XML, and reduces particle volume across all rank-owned outputs rather than
++printing rank 0's local volume.
++
++Periodic neighbors wrap their lattice indices. Neighboring surface planes are
++translated into the local periodic image before use. With periodic x and a
++slice-limited factory, the writer passes the **full x interval** to that factory:
++a single `(xmin,xmax)` interface cannot express a disjoint opposite-edge halo
++safely while preserving object priority. This is a documented object-memory
++tradeoff, not a global particle/occupancy gather.
++
++The original code's serial-only Flux writer path is unchanged. The MPI/sliced
++path discussed here is the existing non-Flux PFW path.
++
++## Limitations and fallback
++
++- Features with no coarse occupied sample, label change, or nearby surface flag
++  can remain undetected. This is a coarse-resolution requirement, not a certified
++  search for arbitrary subparticle features.
++- One local plane may not describe a corner, thin layer, or multi-region
++  junction. Missing/invalid surface data, more than two sampled regions, large
++  side-label inconsistencies, invalid partitions, or a simplex centroid in the
++  wrong actual region trigger **whole-subdomain** fallback. Individual
++  simplices are never filtered out of an otherwise accepted material partition.
++- Default fallback is ordinary Cartesian midpoint sampling at that subdomain's
++  requested resolution. It can retain the corresponding staircase error.
++  Strict mode stops instead. Fallback reasons and counts are reported.
++- The same plane partitions A and B inside one subdomain, so those two local
++  volume partitions are complementary. Independently chosen planes in adjacent
++  subdomains are **not guaranteed to form a globally C0 surface** or to coincide
++  with GEOS's reconstructed mortar. This change does not fix the solver's
++  topology, global-boundary, or post-projection fallback issues.
++- Conservation is relative to the adopted local geometry, not the previous
++  staircase file. Recovered material and clipped-away overfill can change total
++  initialized mass at fixed physical density. No cell-filling correction is used.
++- Additional simplex particles cost preprocessing and subsequent solver time.
++  No claim about improved stress accuracy is made without GEOS verification.
++
++## Diagnostics and tests
++
++The writer prints and saves `mpmParticleFile_<case>_refinement.json`, including
++candidate domains, recovered empty parents, simplex particles, fallback counts,
++geometry-query counts, total particle volume, and per-rank peak slice-cache
++sizes. Query counters count the writer's call sites, not additional searches
++performed internally by an object's methods. Peaks are maxima across ranks;
++counts are sums. More ranks can increase halo query counts without changing
++particles.
++
++Run geometry/ownership unit tests without MPI:
++
++```bash
++python -m unittest discover -s tests -p 'test_surface_refinement.py' -v
++```
++
++Run complete writer regression with actual MPI on an appropriate machine:
++
++```bash
++python tests/run_writer_regression.py --output /tmp/pfw-regression \
++    --communicator mpi --launcher mpiexec
++# On an allocated Slurm node, substitute --launcher srun.
++```
++
++The regression compares merged particle files byte-for-byte across 1, 3, and
++7 ranks, including empty-rank cases, a material interface, separated free-surface
++objects, and a slice-filtered object factory. It validates positive R-vector
++volumes, global volume reporting, IDs, and material/type XML coverage.
++
++When an MPI runtime is unavailable, `--communicator emulated` explicitly opts
++into a **test-only file-backed collective API**. This exercises the entire
++writer in independent processes but is not evidence of actual MPI transport or
++cluster performance. The test worker is never imported by production PFW.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+index f81c632..a190eb4 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+@@ -31,6 +31,9 @@ import platform
+ import argparse
+ import re
+ import builtins
++import json
++from collections import Counter
++from pfw_surface_refinement import GeometryQueries, TwoPassRefiner, object_slice_bounds
+ 
+ parser = argparse.ArgumentParser(description='Particle File Writer for GEOS-MPM')
+ parser.add_argument('input_file', help="PFW input file", type=str)
+@@ -885,7 +888,10 @@ parameters = {
+                'particleDataWriteInterval': ( None, True ),  # MPM: particle-data write interval.
+                'particleFileFields': ( [], False ),  # PFW: particle columns to write.
+                'particleRefinement': ( None, False ),  # PFW: material-wise particle refinement settings.
+-               'surfaceRefinementLevel': ( 1, False ),  # PFW: extra per-direction refinement for surface-flagged particle domains.
++               'surfaceRefinementLevel': ( 1, False ),  # PFW: per-direction subdivision in the two-pass surface band.
++               'surfaceRefinementMethod': ( 'cartesian', False ),  # PFW: cartesian or simplex (single-point B-splines).
++               'surfaceRefinementFallback': ( 'cartesian', False ),  # PFW: cartesian or error for unresolved local simplex cuts.
++               'surfaceRefinementPlaneTolerance': ( 0.05, False ),  # PFW: allowed corner/plane disagreement divided by child diagonal.
+                'periodic': ( [ False, False, False ], False ),  # PFW: periodicity in x/y/z.
+                'planeStrain': ( 0, True ),  # MPM: run in plane-strain mode.
+                'plotGridFields': ( None, True ),  # MPM: write grid fields to plot output.
+@@ -1111,6 +1117,17 @@ ppcx = ppcx if ppcx != None else ppc
+ ppcy = ppcy if ppcy != None else ppc
+ ppcz = ppcz if ppcz != None else ppc
+ 
++# Validate these before make_objects: a sliced factory must receive the same
++# integer-row bounds used for particle ownership, plus a read-only coarse halo.
++surfaceRefinementLevel = 1 if surfaceRefinementLevel is None else surfaceRefinementLevel
++if float(surfaceRefinementLevel) != int(surfaceRefinementLevel) or int(surfaceRefinementLevel) < 1:
++  raise ValueError("pfw['surfaceRefinementLevel'] must be a positive integer")
++surfaceRefinementLevel = int(surfaceRefinementLevel)
++surfaceRefinementMethod = str(surfaceRefinementMethod).lower().replace('-conforming', '')
++if surfaceRefinementMethod not in ('cartesian', 'simplex'):
++  raise ValueError("surfaceRefinementMethod must be 'cartesian' or 'simplex'")
++surfaceRefinementEnabled = surfaceRefinementLevel > 1 or surfaceRefinementMethod == 'simplex'
++
+ # list of geometry creation objects
+ # if objects == None:
+ #   objects = job.make_objects()
+@@ -1137,8 +1154,10 @@ elif ( hasattr(job, 'make_objects') ):
+   else:
+     # This will be used to make objects only be created if their bounding box contains the current
+     # ranks slice.
+-    rankxmin = xmin + (rank/num_ranks)*(xmax-xmin)
+-    rankxmax = xmin + ( (rank+1)/num_ranks)*(xmax-xmin)
++    coarseRows = int(ppcx * (NI if periodic[0] else NI - 2))
++    rankxmin, rankxmax = object_slice_bounds(
++      xmin, xmax, coarseRows, rank, num_ranks,
++      halo=surfaceRefinementEnabled, periodic=bool(periodic[0]))
+     objects = job.make_objects(rankxmin,rankxmax)
+ else:
+   # Throw error if no objects defined.  you can still specify objects=[] to run with no objects.
+@@ -1200,6 +1219,11 @@ for obj in objects:
+   subregions = obj.getSubregions()
+   subregions_all.extend(subregions)
+ 
++# A rank-local object factory may not contain every material/type.  XML written
++# by rank 0 must nevertheless describe particles produced by all ranks.
++if not flux:
++  subregions_all = [entry for entries in comm.allgather(subregions_all) for entry in entries]
++subregions_all = sorted(set(tuple(entry) for entry in subregions_all))
+ print("subregions_all:", subregions_all)
+ 
+ particleTypesPerMat = [set() for m in materials]
+@@ -1215,9 +1239,6 @@ if rank == 0:
+   print("Num subregions:", numSubRegions)
+ 
+ particleRefinement = particleRefinement if particleRefinement != None else [ 1 for i in range(numMats) ]  # Create list of size materials all ones
+-surfaceRefinementLevel = int(surfaceRefinementLevel if surfaceRefinementLevel != None else 1)
+-if surfaceRefinementLevel < 1:
+-  raise ValueError("pfw['surfaceRefinementLevel'] must be at least 1")
+ 
+ 
+ # ============================================================================================
+@@ -1338,7 +1359,7 @@ if generateParticleFile:
+       raise ValueError("particleRefinement values must be at least 1")
+     return refinement
+ 
+-  def _evaluate_particle_data(object, pt, voxelFlag):
++  def _evaluate_particle_data(object, pt, voxelFlag, surfaceOverride=None):
+     # Surface refinement may revisit this query at child particle centers. Keep
+     # every surface-dependent field relative to the point that will be written.
+     data = { "object": object, "surfaceFlag": voxelFlag }
+@@ -1385,15 +1406,20 @@ if generateParticleFile:
+         data["temperature"] = object.temperature(object, pt ) if callable( object.temperature ) else object.temperature
+ 
+     data["surfacePosition"] = np.array([0.0, 0.0, 0.0])
+-    if "SurfacePosition" in particleFileFields and data["surfaceFlag"] != 0:
++    if "SurfacePosition" in particleFileFields and data["surfaceFlag"] != 0 and surfaceOverride is None:
+       data["surfacePosition"] = object.getSurfacePosition( pt )
+ 
+     data["surfaceNormal"] = np.array([0.0, 0.0, 0.0])
+-    if "SurfaceNormal" in particleFileFields and data["surfaceFlag"] != 0:
++    if "SurfaceNormal" in particleFileFields and data["surfaceFlag"] != 0 and surfaceOverride is None:
+       data["surfaceNormal"] = np.array(object.getSurfaceNormal( pt ))
+       if (np.linalg.norm(data["surfaceNormal"]) < 0.0001 ):
+         print("Near zero surface normal specfied for surface flagged particle.")
+ 
++    if surfaceOverride is not None and data["surfaceFlag"] != 0:
++      # The child uses the adopted local cutting plane.  Its offset must be
++      # recomputed from its own centroid, not copied from the coarse marker.
++      data["surfaceNormal"], data["surfacePosition"] = surfaceOverride
++
+     data["surfaceTraction"] = np.array([0.0,0.0,0.0])
+     if "SurfaceTraction" in particleFileFields and data["surfaceFlag"] != 0:
+       if hasattr(object, 'getSurfaceTraction'):
+@@ -1613,58 +1639,160 @@ if generateParticleFile:
+ 
+     return pString +'\n'
+ 
+-  max_num_particles = ni*nj*nk
+-  
+-  n_p = 0
+-  for i in range(1+math.ceil(ni*rank/num_ranks), math.ceil(ni*(rank+1)/num_ranks)+1):
+-    print('creating files, row',i,'/',ni,', estimated time remaining = ',(ni-i)/i*(time.time()-timer),'s')
+-    x = xmin + (i - 0.5)*dx
+-
+-    if(sortObjects):
+-      sliceObjects = [ob for ob in objects if (ob.xMin() <= x and ob.xMax() >= x)]
+-    else:
+-      sliceObjects = objects
+-
+-    for j in range(1,nj+1):
+-      y = ymin + (j - 0.5)*dy
+-      for k in range(1,nk+1):
+-        z = zmin + (k - 0.5)*dz
+-        pt = np.array([x,y,z])
+-        parentData = _query_particle_data(pt, sliceObjects)
+-        if parentData is None:
++  refinementReport = None
++  if surfaceRefinementEnabled:
++    # Logical pass 1: ordinary coarse-center occupancy and surface flags.
++    # Logical pass 2: replace only the selected band, including empty centers.
++    # The helper pipelines these passes through three x slices.  Each rank
++    # requeries its read-only halo and emits only its owned coarse domains.
++    queries = GeometryQueries(objects, surfaceDepth, planeStrain == 1, sortObjects)
++
++    def _capture_coarse_record(sample):
++      # This is the ordinary first-pass particle record.  Keeping only its text
++      # avoids reevaluating bulk geometry/state in pass 2.  Selected parents'
++      # records are discarded and replaced, not added to their children.
++      obj = objects[sample.object_index]
++      data = _evaluate_particle_data(obj, sample.point, sample.surface_flag)
++      if sample.surface_flag and {'SurfaceNormal', 'SurfacePosition'} <= particleFileFields:
++        normal = np.array(data['surfaceNormal'], dtype=float).copy()
++        offset = np.array(data['surfacePosition'], dtype=float).copy()
++        if planeStrain == 1:
++          normal[2] = 0.0
++          offset[2] = 0.0
++        length = np.linalg.norm(normal)
++        sample.surface_checked = True
++        if np.isfinite(length) and length > 1.0e-14 and np.all(np.isfinite(offset)):
++          sample.surface = (normal / length, sample.point + offset)
++        queries.stats['surface_queries'] += 1
++      return _particle_file_line(0, sample.point, data, dx, dy, dz).split(delim, 1)[1]
++
++    n_p = 0
++    try:
++      refiner = TwoPassRefiner(
++        queries, [xmin, ymin, zmin], [ni, nj, nk], [dx, dy, dz], periodic,
++        rank=rank, size=num_ranks, plane_strain=(planeStrain == 1),
++        method=surfaceRefinementMethod, level=surfaceRefinementLevel,
++        material_refinement=_particle_refinement_for_mat,
++        fallback=surfaceRefinementFallback, plane_tolerance=surfaceRefinementPlaneTolerance,
++        capture_coarse_record=_capture_coarse_record)
++      for piece in refiner.particles():
++        if piece.coarse_record is not None:
++          n_p += 1
++          particleVolume += piece.volume
++          particleFile.write(str(n_p) + delim + piece.coarse_record)
+           continue
++        obj = objects[piece.sample.object_index]
++        # Restore any geometry-object membership cache before evaluating state.
++        # The coarse pass has already staged parent state.  Replacement state
++        # is evaluated at emitted children, never at trial simplex centroids or
++        # halo points.  For rank-count invariance, getters must be deterministic
++        # functions of position, not process-order-dependent random draws.
++        obj.isInterior(piece.point, surfaceDepth)
++        queries.stats["isInterior_calls"] += 1
++        override = None
++        flag = piece.sample.surface_flag
++        if piece.vertices is not None:
++          flag = piece.surface_flag
++          distance = float(np.dot(piece.normal, piece.point - piece.surface_point))
++          override = (piece.normal, -distance * piece.normal)
++        data = _evaluate_particle_data(obj, piece.point, flag, surfaceOverride=override)
++        if piece.vertices is not None and data["particleType"] != 1:
++          raise ValueError("Simplex refinement requires particleType=1 (SinglePointBSpline) "
++                           "at cut domains; use cartesian refinement for CPDI/CPTI particles")
++        if "MaterialType" in particleFileFields and data["mat"] != piece.sample.material:
++          raise ValueError("Geometry getMat changed between classification and particle output")
++        if "ContactGroup" in particleFileFields and data["group"] != piece.sample.group:
++          raise ValueError("Geometry getGroup changed between classification and particle output")
++        _validate_particle_value("Position", obj, piece.point, piece.point)
++        _validate_particle_value("ParticleType", obj, data["particleType"], piece.point)
++        n_p += 1
++        particleVolume += piece.volume
++        # Existing GEOS file format: RVector half-widths encode volume.  For a
++        # simplex, these are equal-volume boxes (z thickness fixed in 2D), NOT
++        # new CPDI integration domains or a triangle/tet reference-geometry API.
++        particleFile.write(_particle_file_line(n_p, piece.point, data, *piece.widths))
++      refinementReport = refiner.report()
++    except Exception as exc:
++      particleFile.close()
++      _abort_particle_generation("Two-pass surface refinement failed on rank " + str(rank) + ": " + str(exc))
++  else:
++    # Preserve the original no-surface-refinement path and its output ordering.
++    max_num_particles = ni*nj*nk
+ 
+-        baseRefinement = _particle_refinement_for_mat(parentData["mat"])
+-        isSurfaceParent = parentData["surfaceFlag"] != 0
+-        localRefinement = baseRefinement * (surfaceRefinementLevel if isSurfaceParent else 1)
+-        dxr = dx/localRefinement
+-        dyr = dy/localRefinement
+-        dzr = dz if planeStrain == 1 else dz/localRefinement
+-        queryObjects = objects if isSurfaceParent and surfaceRefinementLevel > 1 else sliceObjects
+-
+-        for ri in range(localRefinement):
+-          for rj in range(localRefinement):
+-            for rk in range( ( 1 if planeStrain == 1 else localRefinement ) ):
+-              xr = x - 0.5*dx + (ri + 0.5)*dxr
+-              yr = y - 0.5*dy + (rj + 0.5)*dyr
+-              zr = z - 0.5*dz + (rk + 0.5)*dzr
+-              particlePosition = [xr, yr, zr]
+-              childData = parentData
+-              if isSurfaceParent and surfaceRefinementLevel > 1:
+-                childData = _query_particle_data(np.array(particlePosition), queryObjects)
+-                if childData is None:
+-                  continue
++    n_p = 0
++    for i in range(1+math.ceil(ni*rank/num_ranks), math.ceil(ni*(rank+1)/num_ranks)+1):
++      print('creating files, row',i,'/',ni,', estimated time remaining = ',(ni-i)/i*(time.time()-timer),'s')
++      x = xmin + (i - 0.5)*dx
+ 
+-              if childData["mat"] < 0:
+-                continue
+-              _validate_particle_value("Position", childData["object"], particlePosition, particlePosition)
+-              _validate_particle_value("ParticleType", childData["object"], childData["particleType"], particlePosition)
+-              n_p = n_p + 1
+-              particleVolume += dxr*dyr*dzr
+-              particleFile.write(_particle_file_line(n_p, particlePosition, childData, dxr, dyr, dzr))
++      if(sortObjects):
++        sliceObjects = [ob for ob in objects if (ob.xMin() <= x and ob.xMax() >= x)]
++      else:
++        sliceObjects = objects
++
++      for j in range(1,nj+1):
++        y = ymin + (j - 0.5)*dy
++        for k in range(1,nk+1):
++          z = zmin + (k - 0.5)*dz
++          pt = np.array([x,y,z])
++          parentData = _query_particle_data(pt, sliceObjects)
++          if parentData is None:
++            continue
++
++          baseRefinement = _particle_refinement_for_mat(parentData["mat"])
++          isSurfaceParent = parentData["surfaceFlag"] != 0
++          localRefinement = baseRefinement * (surfaceRefinementLevel if isSurfaceParent else 1)
++          dxr = dx/localRefinement
++          dyr = dy/localRefinement
++          dzr = dz if planeStrain == 1 else dz/localRefinement
++          queryObjects = objects if isSurfaceParent and surfaceRefinementLevel > 1 else sliceObjects
++
++          for ri in range(localRefinement):
++            for rj in range(localRefinement):
++              for rk in range( ( 1 if planeStrain == 1 else localRefinement ) ):
++                xr = x - 0.5*dx + (ri + 0.5)*dxr
++                yr = y - 0.5*dy + (rj + 0.5)*dyr
++                zr = z - 0.5*dz + (rk + 0.5)*dzr
++                particlePosition = [xr, yr, zr]
++                childData = parentData
++                if isSurfaceParent and surfaceRefinementLevel > 1:
++                  childData = _query_particle_data(np.array(particlePosition), queryObjects)
++                  if childData is None:
++                    continue
++
++                if childData["mat"] < 0:
++                  continue
++                _validate_particle_value("Position", childData["object"], particlePosition, particlePosition)
++                _validate_particle_value("ParticleType", childData["object"], childData["particleType"], particlePosition)
++                n_p = n_p + 1
++                particleVolume += dxr*dyr*dzr
++                particleFile.write(_particle_file_line(n_p, particlePosition, childData, dxr, dyr, dzr))
+ 
+   particleFile.close()
+ 
++  # Counts/volumes must include all rank-owned rows, not only rank 0's slice.
++  # Only small diagnostics are communicated; no particles or geometry objects.
++  if not flux:
++    particleVolume = comm.allreduce(particleVolume, op=MPI.SUM)
++    rankReports = comm.gather(refinementReport, root=0)
++  else:
++    rankReports = [refinementReport]
++  if rank == 0 and surfaceRefinementEnabled:
++    combined = Counter()
++    for report in rankReports:
++      for key, value in report.items():
++        if key.startswith('peak_'):
++          combined[key] = max(combined[key], value)
++        else:
++          combined[key] += value
++    summary = dict(combined)
++    summary.update(method=surfaceRefinementMethod, level=surfaceRefinementLevel,
++                   pfw_ranks=num_ranks, particle_volume=particleVolume,
++                   peak_values_are_per_rank=True)
++    with open(particleFileName + '_refinement.json', 'w') as reportFile:
++      json.dump(summary, reportFile, indent=2, sort_keys=True)
++      reportFile.write('\n')
++    print('Two-pass surface refinement:', summary)
++
+   # Wait for all mpi processes to finish generating particles
+   if flux:
+     print('PFW does not support MPI on flux currently')
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_simplex_clipping.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_simplex_clipping.py
+new file mode 100644
+index 0000000..4b2b757
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_simplex_clipping.py
+@@ -0,0 +1,160 @@
++"""Small, dependency-light plane cutter used by PFW surface refinement.
++
++The temporary geometry lives in a unit square/cube.  This avoids tolerances
++that depend on the units, aspect ratio, or global position of the specimen.
++Each half of the same cut is triangulated/tetrahedralized independently, but
++uses the same plane and the same fan origin on shared polygonal faces.
++
++This is *not* a general mesh generator.  It cuts one convex box with one plane.
++Only NumPy is needed, and no connectivity is retained by the MPM solver.
++"""
++from __future__ import annotations
++
++import math
++import numpy as np
++
++_EPS = 64.0 * np.finfo(float).eps
++
++
++def _unique(points):
++    """Remove repeated vertices, without a geometry-scale-dependent threshold."""
++    result = []
++    for point in points:
++        if not any(np.linalg.norm(point - old, ord=np.inf) <= _EPS for old in result):
++            result.append(np.asarray(point, dtype=float))
++    return result
++
++
++def _canonical_polygon(points):
++    """Use the lexicographically first vertex as a deterministic fan origin."""
++    points = _unique(points)
++    if not points:
++        return points
++    first = min(range(len(points)), key=lambda i: tuple(points[i]))
++    return points[first:] + points[:first]
++
++
++def _clip_polygon(points, normal, offset):
++    """Sutherland-Hodgman clipping to normal.dot(x) <= offset."""
++    if not points:
++        return []
++    result = []
++    previous = points[-1]
++    previous_distance = float(np.dot(normal, previous) - offset)
++    if abs(previous_distance) <= _EPS:
++        previous_distance = 0.0
++    for current in points:
++        distance = float(np.dot(normal, current) - offset)
++        if abs(distance) <= _EPS:
++            distance = 0.0
++        if (distance <= 0.0) != (previous_distance <= 0.0):
++            fraction = previous_distance / (previous_distance - distance)
++            result.append(previous + fraction * (current - previous))
++        if distance <= 0.0:
++            result.append(current)
++        previous, previous_distance = current, distance
++    return _canonical_polygon(result)
++
++
++def _cube_faces():
++    """Cyclic vertex order on the six faces of the unit cube."""
++    return [np.asarray(face, dtype=float) for face in (
++        ((0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0)),
++        ((0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)),
++        ((0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1)),
++        ((0, 1, 0), (0, 1, 1), (1, 1, 1), (1, 1, 0)),
++        ((0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0)),
++        ((1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 0, 1)),
++    )]
++
++
++def _clip_cube(normal, offset):
++    faces = [_clip_polygon(list(face), normal, offset) for face in _cube_faces()]
++    faces = [face for face in faces if len(face) >= 3]
++    cap = _unique([point for face in faces for point in face
++                   if abs(np.dot(normal, point) - offset) <= 4.0 * _EPS])
++    if len(cap) >= 3:
++        center = np.mean(cap, axis=0)
++        axis = np.eye(3)[int(np.argmin(np.abs(normal)))]
++        u = np.cross(normal, axis)
++        u /= np.linalg.norm(u)
++        v = np.cross(normal, u)
++        cap.sort(key=lambda point: math.atan2(np.dot(point - center, v),
++                                             np.dot(point - center, u)))
++        cap = _canonical_polygon(cap)
++        # A cut exactly on a cube face has already supplied that face.
++        if not any(len(face) == len(cap) and all(
++                any(np.linalg.norm(p - q, ord=np.inf) <= _EPS for q in face)
++                for p in cap) for face in faces):
++            faces.append(cap)
++    return faces
++
++
++def _unit_simplices(normal, offset, dimension):
++    if dimension == 2:
++        square = [np.array(p, dtype=float) for p in ((0, 0), (1, 0), (1, 1), (0, 1))]
++        polygon = _clip_polygon(square, normal, offset)
++        for j in range(1, len(polygon) - 1):
++            vertices = np.array((polygon[0], polygon[j], polygon[j + 1]))
++            edges = vertices[1:] - vertices[0]
++            area = abs(float(np.linalg.det(edges))) / 2.0
++            if area > 0.0:
++                yield vertices, area
++    else:
++        faces = _clip_cube(normal, offset)
++        points = _unique([point for face in faces for point in face])
++        if len(points) < 4:
++            return
++        anchor = min(points, key=lambda point: tuple(point))
++        # Coning the boundary triangles to a boundary vertex partitions a convex
++        # polyhedron.  Faces through the anchor contribute zero-volume tets.
++        for face in faces:
++            if any(np.linalg.norm(anchor - vertex, ord=np.inf) <= _EPS for vertex in face):
++                continue  # Geometrically zero; do not emit roundoff-sized tets.
++            for j in range(1, len(face) - 1):
++                vertices = np.array((anchor, face[0], face[j], face[j + 1]))
++                volume = abs(float(np.linalg.det(vertices[1:] - anchor))) / 6.0
++                if volume > 0.0:
++                    yield vertices, volume
++
++
++def split_box(lower, widths, plane_point, normal, plane_strain=False):
++    """Return (negative_simplices, positive_simplices) for one shared plane.
++
++    Each item is (physical_vertices, physical_volume).  Plane-strain items are
++    triangles at the midplane and their volume is area times widths[2].  This
++    routine does not discard void or assign materials; the caller does that.
++    It verifies closure and never rescales weights to hide a failed partition.
++    """
++    lower = np.asarray(lower, dtype=float)
++    widths = np.asarray(widths, dtype=float)
++    normal = np.asarray(normal, dtype=float)
++    point = np.asarray(plane_point, dtype=float)
++    dimension = 2 if plane_strain else 3
++    if not np.all(np.isfinite(widths)) or np.any(widths <= 0.0):
++        raise ValueError("Box widths must be positive and finite")
++    scaled_normal = normal[:dimension] * widths[:dimension]
++    scale = np.linalg.norm(scaled_normal)
++    if not np.isfinite(scale) or scale <= 0.0:
++        raise ValueError("A cutting plane requires a finite, nonzero normal")
++    unit_normal = scaled_normal / scale
++    offset = float(np.dot(normal[:dimension], (point - lower)[:dimension]) / scale)
++    jacobian = float(np.prod(widths))
++    sides = []
++    unit_volumes = []
++    for sign in (1.0, -1.0):
++        simplices = []
++        for unit_vertices, measure in _unit_simplices(sign * unit_normal, sign * offset, dimension):
++            vertices = np.tile(lower, (dimension + 1, 1))
++            vertices[:, :dimension] += unit_vertices * widths[:dimension]
++            if plane_strain:
++                vertices[:, 2] += 0.5 * widths[2]
++            volume = measure * jacobian
++            if not np.isfinite(volume) or volume <= 0.0:
++                raise ValueError("A cut simplex has a nonpositive or nonfinite volume")
++            simplices.append((vertices, volume))
++            unit_volumes.append(measure)
++        sides.append(simplices)
++    if abs(math.fsum(unit_volumes) - 1.0) > 1.0e-11:
++        raise ValueError("Plane-cut simplex partition does not close to the parent volume")
++    return tuple(sides)
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_surface_refinement.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_surface_refinement.py
+new file mode 100644
+index 0000000..2dd16fb
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_surface_refinement.py
+@@ -0,0 +1,450 @@
++"""Two-pass, narrow-band surface refinement for particleFileWriter.
++
++Pass 1 queries ordinary coarse particle centers.  Occupancy, object/material/
++contact-group labels, and surface flags select the domains needing more work.
++Pass 2 replaces only those domains, including empty-center domains next to
++material.  The passes are pipelined through three x-slices, so memory does not
++scale with the rank's entire particle count and interior geometry is not
++queried again merely to find the surface band.
++
++Ranks own coarse domains, not refined particle centers.  A read-only one-row
++halo is *requeried* on each rank; it is never emitted.  Thus no particle lists,
++Python geometry objects, or global occupancy arrays need MPI communication.
++The caller must supply objects covering the owned domains plus this halo.
++Objects and property functions must be deterministic functions of position.
++
++Geometry objects are unchanged.  The simplex path uses their existing
++isInterior / getSurfaceNormal / getSurfacePosition methods.  It is a local
++single-plane approximation, not a globally conforming mesh of the object.
++"""
++from __future__ import annotations
++
++from collections import Counter
++from dataclasses import dataclass
++from itertools import product
++import math
++from typing import Optional
++
++import numpy as np
++
++from pfw_simplex_clipping import split_box
++
++
++def owned_x_range(number_of_rows, rank, size):
++    """Zero-based, half-open ownership; matches the writer's legacy ceil rule."""
++    if number_of_rows < 1 or size < 1 or not 0 <= rank < size:
++        raise ValueError("Invalid lattice size or MPI rank")
++    return ((number_of_rows * rank + size - 1) // size,
++            (number_of_rows * (rank + 1) + size - 1) // size)
++
++
++def object_slice_bounds(xmin, xmax, number_of_rows, rank, size, halo=False, periodic=False):
++    """Bounds passed to make_objects(xmin, xmax), including any read-only halo.
++
++    A periodic x-halo is disjoint at the seam.  The existing two-scalar factory
++    cannot express disjoint intervals, so use the full x extent in that case.
++    This costs object memory, but preserves order/priority without new APIs.
++    """
++    if halo and periodic:
++        return float(xmin), float(xmax)
++    start, stop = owned_x_range(number_of_rows, rank, size)
++    padding = 1 if halo else 0
++    dx = (xmax - xmin) / number_of_rows
++    return (xmin + max(0, start - padding) * dx,
++            xmin + min(number_of_rows, stop + padding) * dx)
++
++
++@dataclass
++class Sample:
++    """Geometry result with optional staged ordinary-pass particle text."""
++    point: np.ndarray
++    object_index: int
++    material: int
++    group: int
++    surface_flag: int
++    surface_checked: bool = False
++    surface: Optional[tuple] = None  # (outward unit normal, absolute surface point)
++    coarse_record: Optional[str] = None  # Optional ordinary-pass output, without ID.
++
++    @property
++    def region(self):
++        return self.object_index, self.material, self.group
++
++
++def region(sample):
++    return None if sample is None else sample.region
++
++
++def _integer(value, name):
++    number = float(value)
++    if not math.isfinite(number) or number != int(number):
++        raise ValueError(name + " must be a finite integer")
++    return int(number)
++
++
++def _property(obj, method, attribute, point, default):
++    if hasattr(obj, method):
++        return getattr(obj, method)(point)
++    value = getattr(obj, attribute, default)
++    return value(obj, point) if callable(value) else value
++
++
++class GeometryQueries:
++    """Adapter around existing geometry methods, preserving first-object priority."""
++
++    def __init__(self, objects, surface_depth, plane_strain=False, sort_objects=False):
++        self.objects = objects
++        self.surface_depth = float(surface_depth)
++        self.plane_strain = bool(plane_strain)
++        self.sort_objects = bool(sort_objects)
++        self.stats = Counter()
++
++    def objects_in_interval(self, lower, upper):
++        if not self.sort_objects:
++            return tuple(range(len(self.objects)))
++        # Refined queries use the full parent interval, NOT its center x.  An
++        # object wholly inside an empty-center parent's edge must remain visible.
++        return tuple(i for i, obj in enumerate(self.objects)
++                     if obj.xMin() <= upper and obj.xMax() >= lower)
++
++    def query(self, point, indices, coarse=False):
++        point = np.asarray(point, dtype=float)
++        self.stats["coarse_center_queries" if coarse else "refinement_point_queries"] += 1
++        for index in indices:
++            obj = self.objects[index]
++            self.stats["isInterior_calls"] += 1
++            flag = _integer(obj.isInterior(point, self.surface_depth), "Surface flag")
++            if flag < 0:
++                continue
++            # Query these immediately: some compound objects cache their last
++            # membership result for getMat/getGroup.  Do not sample full particle
++            # state here (in particular, do not consume random strength draws).
++            material = _integer(_property(obj, "getMat", "mat", point, 0), "Material")
++            group = _integer(_property(obj, "getGroup", "group", point, 0), "Contact group")
++            if material < 0:
++                return None  # Preserve the legacy first-object exclusion rule.
++            return Sample(point.copy(), index, material, group, flag)
++        return None
++
++    def get_surface(self, sample):
++        """Lazily cache only the surface information actually used in pass 2."""
++        if sample.surface_checked:
++            return sample.surface
++        sample.surface_checked = True
++        if sample.surface_flag == 0:
++            return None
++        obj = self.objects[sample.object_index]
++        if not hasattr(obj, "getSurfaceNormal") or not hasattr(obj, "getSurfacePosition"):
++            return None
++        # Restore any object's point-local cache before its surface getters.
++        self.stats["isInterior_calls"] += 1
++        if obj.isInterior(sample.point, self.surface_depth) < 0:
++            return None
++        self.stats["surface_queries"] += 1
++        normal = np.asarray(obj.getSurfaceNormal(sample.point), dtype=float).copy()
++        offset = np.asarray(obj.getSurfacePosition(sample.point), dtype=float).copy()
++        if normal.shape != (3,) or offset.shape != (3,):
++            return None
++        if not np.all(np.isfinite(normal)) or not np.all(np.isfinite(offset)):
++            return None
++        if self.plane_strain:
++            normal[2] = 0.0
++            offset[2] = 0.0
++        length = float(np.linalg.norm(normal))
++        if length <= 1.0e-14:
++            return None
++        sample.surface = (normal / length, sample.point + offset)
++        return sample.surface
++
++
++@dataclass
++class ParticlePiece:
++    """One final material point, ready for the writer's existing field evaluator."""
++    point: np.ndarray
++    widths: np.ndarray
++    volume: float
++    sample: Sample
++    parent_index: tuple
++    # A cut simplex carries its adopted plane for consistent particle-relative
++    # surface offsets.  Ordinary Cartesian/fallback pieces have no plane.
++    normal: Optional[np.ndarray] = None
++    surface_point: Optional[np.ndarray] = None
++    surface_flag: Optional[int] = None
++    vertices: Optional[np.ndarray] = None
++    coarse_record: Optional[str] = None
++
++
++class TwoPassRefiner:
++    """Generate replacement particles in a deterministic global parent order."""
++
++    def __init__(self, queries, lower, counts, widths, periodic,
++                 rank=0, size=1, plane_strain=False, method="cartesian", level=1,
++                 material_refinement=None, fallback="cartesian", plane_tolerance=0.05,
++                 capture_coarse_record=None):
++        self.queries = queries
++        self.lower = np.asarray(lower, dtype=float)
++        self.counts = tuple(int(n) for n in counts)
++        self.widths = np.asarray(widths, dtype=float)
++        self.periodic = tuple(bool(p) for p in periodic)
++        self.plane_strain = bool(plane_strain)
++        self.dimension = 2 if self.plane_strain else 3
++        self.method = method.lower().replace("-conforming", "")
++        self.level = _integer(level, "Surface refinement level")
++        self.fallback = fallback.lower()
++        self.plane_tolerance = float(plane_tolerance)
++        self.material_refinement = material_refinement or (lambda material: 1)
++        self.capture_coarse_record = capture_coarse_record
++        if self.method not in ("cartesian", "simplex"):
++            raise ValueError("surfaceRefinementMethod must be 'cartesian' or 'simplex'")
++        if self.level < 1 or any(n < 1 for n in self.counts):
++            raise ValueError("Refinement level and coarse counts must be positive")
++        if self.fallback not in ("cartesian", "error"):
++            raise ValueError("surfaceRefinementFallback must be 'cartesian' or 'error'")
++        if not 0.0 <= self.plane_tolerance < 0.5:
++            raise ValueError("surfaceRefinementPlaneTolerance must be in [0, 0.5)")
++        if np.any(self.widths <= 0.0) or not np.all(np.isfinite(self.widths)):
++            raise ValueError("Coarse particle widths must be positive and finite")
++        if self.plane_strain and self.counts[2] != 1:
++            raise ValueError("Plane-strain initialization requires one z particle layer")
++        self.start, self.stop = owned_x_range(self.counts[0], rank, size)
++        self.slices = {}  # x index -> sparse {(j,k): Sample}; missing entries are void
++        self.stats = Counter()
++        self.neighbor_offsets = tuple(product((-1, 0, 1), (-1, 0, 1),
++                                              (0,) if self.plane_strain else (-1, 0, 1)))
++
++    def _canonical_index(self, index):
++        result = []
++        for d, value in enumerate(index):
++            if 0 <= value < self.counts[d]:
++                result.append(value)
++            elif self.periodic[d] and not (self.plane_strain and d == 2):
++                result.append(value % self.counts[d])
++            else:
++                return None
++        return tuple(result)
++
++    def _prepare_slices(self, i):
++        needed = set()
++        for di in (-1, 0, 1):
++            key = self._canonical_index((i + di, 0, 0))
++            if key is not None:
++                needed.add(key[0])
++        for old in list(self.slices):
++            if old not in needed:
++                del self.slices[old]
++        for row in sorted(needed):
++            if row in self.slices:
++                continue
++            x = self.lower[0] + (row + 0.5) * self.widths[0]
++            objects = self.queries.objects_in_interval(x, x)
++            samples = {}
++            for j in range(self.counts[1]):
++                for k in range(self.counts[2]):
++                    point = self.lower + (np.array((row, j, k)) + 0.5) * self.widths
++                    sample = self.queries.query(point, objects, coarse=True)
++                    if sample is not None:
++                        # The real writer can stage its ordinary first-pass text
++                        # here.  Reuse it for untouched parents: no second
++                        # membership/property query in the bulk.  Halo samples
++                        # never evaluate particle state or create output records.
++                        if self.capture_coarse_record is not None and self.start <= row < self.stop:
++                            sample.coarse_record = self.capture_coarse_record(sample)
++                        samples[j, k] = sample
++            self.slices[row] = samples
++        self.stats["peak_cached_slices"] = max(self.stats["peak_cached_slices"], len(self.slices))
++        self.stats["peak_cached_occupied_centers"] = max(
++            self.stats["peak_cached_occupied_centers"], sum(len(s) for s in self.slices.values()))
++
++    def _neighborhood(self, index):
++        """Return samples plus periodic image shifts, including the center."""
++        neighbors = []
++        for delta in self.neighbor_offsets:
++            raw = tuple(index[d] + delta[d] for d in range(3))
++            key = self._canonical_index(raw)
++            if key is None:
++                continue  # Outside generation bounds is not an empty target cell.
++            sample = self.slices[key[0]].get(key[1:])
++            shift = (np.array(raw) - np.array(key)) * self.widths
++            neighbors.append((sample, shift))
++        return neighbors
++
++    def _is_candidate(self, parent, neighbors):
++        for sample, _ in neighbors:
++            if sample is not None and sample.surface_flag != 0:
++                return True
++            if region(sample) != region(parent):
++                return True  # Includes BOTH sides of occupied/void and A/B pairs.
++        return False
++
++    def _factor(self, parent, neighbors, candidate):
++        samples = [s for s, _ in neighbors if s is not None] if candidate else [parent]
++        base = max((_integer(self.material_refinement(s.material), "Particle refinement")
++                    for s in samples if s is not None), default=1)
++        if base < 1:
++            raise ValueError("particleRefinement values must be at least 1")
++        # One common subdivision for a candidate domain: independently using
++        # A's and B's factors could duplicate or omit part of the same domain.
++        return base * self.level if candidate else base
++
++    def _cartesian_piece(self, lower, widths, objects, index, sample=None):
++        point = lower + 0.5 * widths
++        if sample is None:
++            sample = self.queries.query(point, objects)
++        if sample is None:
++            return []
++        return [ParticlePiece(point, widths.copy(), float(np.prod(widths)), sample, index)]
++
++    def _fallback(self, reason, lower, widths, objects, index, center):
++        self.stats["fallback_" + reason] += 1
++        if self.fallback == "error":
++            raise ValueError("Simplex surface refinement: " + reason +
++                             " at parent " + str(index) + ", subdomain center " +
++                             str((lower + 0.5 * widths).tolist()))
++        return self._cartesian_piece(lower, widths, objects, index, center)
++
++    def _simplex_pieces(self, lower, widths, objects, index, neighbors):
++        """Cut one refined subdomain; fall back as a unit, never drop one side."""
++        center_point = lower + 0.5 * widths
++        center = self.queries.query(center_point, objects)
++        points = [center_point]
++        samples = [center]
++        for corner in product((0.0, 1.0), repeat=self.dimension):
++            point = lower.copy()
++            point[:self.dimension] += np.array(corner) * widths[:self.dimension]
++            if self.plane_strain:
++                point[2] += 0.5 * widths[2]
++            points.append(point)
++            # Geometry objects commonly use half-open bounds.  Query one ULP
++            # toward this subdomain's interior so a corner exactly on xmax is
++            # not mistaken for an extra void region.  The cutter still uses the
++            # exact corner coordinate stored above.
++            samples.append(self.queries.query(np.nextafter(point, center_point), objects))
++        labels = {region(s) for s in samples}
++        if len(labels) > 2:
++            return self._fallback("multiple_regions", lower, widths, objects, index, center)
++
++        # Surface data is fetched only here, never for every object/domain.
++        # Prefer a local query, then a nearby coarse surface marker.  Periodic
++        # markers keep their canonical query point but translate the plane.
++        seeds = [(s, np.zeros(3)) for s in samples if s is not None and s.surface_flag]
++        seeds += [(s, shift) for s, shift in neighbors if s is not None and s.surface_flag]
++        seeds.sort(key=lambda item: float(np.dot(item[0].point + item[1] - center_point,
++                                                item[0].point + item[1] - center_point)))
++        plane = None
++        distances = None
++        scale = float(np.linalg.norm(widths[:self.dimension]))
++        epsilon = 128.0 * np.finfo(float).eps * scale
++        for source, shift in seeds:
++            surface = self.queries.get_surface(source)
++            if surface is None:
++                continue
++            normal, surface_point = surface
++            surface_point = surface_point + shift
++            trial = np.array([np.dot(normal, p - surface_point) for p in points])
++            if trial.min() < -epsilon and trial.max() > epsilon:
++                plane = source, normal, surface_point
++                distances = trial
++                break
++            if len(labels) == 1:
++                # A usable nearest-surface plane does not cut this uniform
++                # subdomain.  Do not query every other flagged marker just to
++                # reconfirm that fact.  The single-local-surface assumption is
++                # the same one used by the actual cutter.
++                self.stats["uncut_subdomains"] += 1
++                return self._cartesian_piece(lower, widths, objects, index, center)
++        if plane is None:
++            if len(labels) == 1:
++                self.stats["uncut_subdomains"] += 1
++                return self._cartesian_piece(lower, widths, objects, index, center)
++            return self._fallback("no_usable_plane", lower, widths, objects, index, center)
++
++        source, normal, surface_point = plane
++        negative = samples[int(np.argmin(distances))]
++        positive = samples[int(np.argmax(distances))]
++        if region(negative) == region(positive):
++            if len(labels) == 1:
++                return self._cartesian_piece(lower, widths, objects, index, center)
++            return self._fallback("unresolved_sides", lower, widths, objects, index, center)
++        if region(negative) != source.region:
++            return self._fallback("inconsistent_normal", lower, widths, objects, index, center)
++        for sample, distance in zip(samples, distances):
++            expected = negative if distance < 0.0 else positive
++            # Small disagreement is expected for a tangent to a curved surface.
++            # Large disagreement means one plane cannot represent this subdomain.
++            if abs(distance) > max(epsilon, self.plane_tolerance * scale):
++                if region(sample) != region(expected):
++                    return self._fallback("inconsistent_plane", lower, widths, objects, index, center)
++        try:
++            sides = split_box(lower, widths, surface_point, normal, self.plane_strain)
++        except ValueError:
++            return self._fallback("invalid_partition", lower, widths, objects, index, center)
++
++        pieces = []
++        for sign, side, owner in zip((1.0, -1.0), sides, (negative, positive)):
++            if owner is None:
++                continue  # Void remains void; do not renormalize material volume.
++            matching = [s for s in samples if region(s) == owner.region and s.surface_flag]
++            flag = source.surface_flag if owner.region == source.region else (
++                matching[0].surface_flag if matching else 0)
++            for vertices, volume in side:
++                point = vertices.mean(axis=0)
++                actual = self.queries.query(point, objects)
++                # Property getters can be undefined outside an object's actual
++                # region.  Reject the WHOLE cut if one centroid has the wrong
++                # region; never filter individual simplices and leave holes.
++                if region(actual) != owner.region:
++                    return self._fallback("centroid_region", lower, widths, objects, index, center)
++                equivalent_widths = widths.copy()
++                factor = (volume / float(np.prod(widths))) ** (1.0 / self.dimension)
++                equivalent_widths[:self.dimension] *= factor
++                pieces.append(ParticlePiece(point, equivalent_widths, volume, actual, index,
++                                            sign * normal, surface_point.copy(), flag, vertices))
++        self.stats["cut_subdomains"] += 1
++        self.stats["simplex_particles"] += len(pieces)
++        return pieces
++
++    def particles(self, progress=None):
++        """Yield final particles; owned parent rows alone may produce output."""
++        for i in range(self.start, self.stop):
++            self._prepare_slices(i)
++            if progress is not None:
++                progress(i)
++            for j in range(self.counts[1]):
++                for k in range(self.counts[2]):
++                    index = (i, j, k)
++                    parent = self.slices[i].get((j, k))
++                    neighbors = self._neighborhood(index)
++                    candidate = self._is_candidate(parent, neighbors)
++                    self.stats["owned_coarse_domains"] += 1
++                    if candidate:
++                        self.stats["candidate_domains"] += 1
++                    if parent is None and not candidate:
++                        continue
++                    lower = self.lower + np.array(index) * self.widths
++                    factor = self._factor(parent, neighbors, candidate)
++                    child_widths = self.widths.copy()
++                    child_widths[:self.dimension] /= factor
++                    objects = self.queries.objects_in_interval(lower[0], lower[0] + self.widths[0])
++                    emitted = False
++                    for child in product(range(factor), range(factor),
++                                         range(1 if self.plane_strain else factor)):
++                        child_lower = lower + np.array(child) * child_widths
++                        if candidate and self.method == "simplex":
++                            pieces = self._simplex_pieces(child_lower, child_widths, objects, index, neighbors)
++                        elif not candidate and factor == 1:
++                            # Exactly the original particle; no duplicate geometry query.
++                            pieces = self._cartesian_piece(child_lower, child_widths, objects, index, parent)
++                            pieces[0].coarse_record = parent.coarse_record
++                        else:
++                            pieces = self._cartesian_piece(child_lower, child_widths, objects, index)
++                        for piece in pieces:
++                            emitted = True
++                            self.stats["emitted_particles"] += 1
++                            yield piece
++                    if emitted and parent is None:
++                        self.stats["recovered_empty_parents"] += 1
++                    if candidate and parent is not None:
++                        self.stats["replaced_occupied_parents"] += 1
++
++    def report(self):
++        return dict(self.stats + self.queries.stats)
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/_collective_test_worker.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/_collective_test_worker.py
+new file mode 100644
+index 0000000..24eda1b
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/_collective_test_worker.py
+@@ -0,0 +1,72 @@
++"""TEST ONLY: file-backed collective API used when no MPI runtime is installed.
++
++It exercises the complete writer in independent Python processes, including
++barriers, halo object factories, metadata gather, and final file merge.  It is
++NOT an MPI implementation/transport test and is never imported by production.
++"""
++import os
++import pickle
++from pathlib import Path
++import runpy
++import sys
++import time
++import types
++
++writer, input_file, rank, size, shared = sys.argv[1:]
++rank, size = int(rank), int(size)
++shared = Path(shared)
++shared.mkdir(parents=True, exist_ok=True)
++
++
++class TestCommunicator:
++    sequence = 0
++
++    def Get_rank(self):
++        return rank
++
++    def Get_size(self):
++        return size
++
++    def _exchange(self, value):
++        stage = self.sequence
++        self.sequence += 1
++        path = shared / ('%03d_%03d.pkl' % (stage, rank))
++        temporary = path.with_suffix('.tmp')
++        temporary.write_bytes(pickle.dumps(value))
++        os.replace(temporary, path)
++        expected = [shared / ('%03d_%03d.pkl' % (stage, r)) for r in range(size)]
++        deadline = time.monotonic() + 90
++        while not all(p.exists() for p in expected):
++            if (shared / 'abort').exists() or time.monotonic() > deadline:
++                raise RuntimeError('Test communicator timeout/abort at stage %d' % stage)
++            time.sleep(0.01)
++        return [pickle.loads(p.read_bytes()) for p in expected]
++
++    def Barrier(self):
++        self._exchange(None)
++
++    def allgather(self, value):
++        return self._exchange(value)
++
++    def gather(self, value, root=0):
++        values = self._exchange(value)
++        return values if rank == root else None
++
++    def allreduce(self, value, op=None):
++        values = self._exchange(value)
++        return max(values) if op == 'MAX' else sum(values)
++
++    def bcast(self, value, root=0):
++        return self._exchange(value)[root]
++
++    def Abort(self, code=1):
++        (shared / 'abort').write_text(str(code))
++        raise SystemExit(code)
++
++
++module = types.ModuleType('mpi4py')
++module.MPI = types.SimpleNamespace(COMM_WORLD=TestCommunicator(), SUM='SUM', MAX='MAX')
++sys.modules['mpi4py'] = module
++sys.path[:0] = [str(Path(writer).parent), os.getcwd()]
++sys.argv = [writer, input_file]
++runpy.run_path(writer, run_name='__main__')
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/pfw_input_refinement_smoke.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/pfw_input_refinement_smoke.py
+new file mode 100644
+index 0000000..8ee0727
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/pfw_input_refinement_smoke.py
+@@ -0,0 +1,71 @@
++"""Small PFW-only fixture; never submits or runs GEOS.
++
++PFW_TEST_DIM=2|3, PFW_TEST_MODE=cartesian|simplex,
++PFW_TEST_GEOMETRY=plane|separated, PFW_TEST_LEVEL=1|2|...
++The make_objects factory deliberately filters by the rank interval.
++"""
++import os
++import numpy as np
++import pfw_geometryObjects as geom
++
++DIM = int(os.environ.get('PFW_TEST_DIM', '3'))
++MODE = os.environ.get('PFW_TEST_MODE', 'simplex')
++SCENE = os.environ.get('PFW_TEST_GEOMETRY', 'plane')
++LEVEL = int(os.environ.get('PFW_TEST_LEVEL', '2'))
++
++pfw = dict(
++    mSubmitJobs=False, mBatch=True, mBank='test', mWallTime='00:01:00',
++    planeStrain=int(DIM == 2), periodic=[False, False, False],
++    xmin=0.0, xmax=1.0, ymin=0.0, ymax=1.0, zmin=0.0, zmax=1.0,
++    nI=7, nJ=6, nK=3 if DIM == 2 else 5, ppc=1,
++    xpar=1, ypar=1, zpar=1, outputType='silo',
++    endTime=0.01, plotInterval=0.01, restartInterval=1.0,
++    surfaceRefinementMethod=MODE, surfaceRefinementLevel=LEVEL,
++    sortObjects=True,
++    materials=['mat0', 'mat1'],
++    particleFileFields=['Velocity', 'MaterialType', 'ContactGroup',
++                        'SurfaceFlag', 'RVector', 'SurfaceNormal', 'SurfacePosition'],
++    materialPropertyString='\n'.join(
++        '<ElasticIsotropic name="mat%d" defaultDensity="1" '
++        'defaultYoungModulus="%d" defaultPoissonRatio="0.25"/>' % (i, i + 1)
++        for i in (0, 1)),
++)
++
++
++class PlanarSide(geom.Geometry):
++    def __init__(self, sign, material):
++        super().__init__('side%d' % material, mat=material, group=material, particleType=1)
++        self.sign = sign
++        self.normal = np.array([1.0, 0.31, 0.19 if DIM == 3 else 0.0])
++        self.normal /= np.linalg.norm(self.normal)
++
++    def isInterior(self, point, depth):
++        if np.any(np.asarray(point) < 0) or np.any(np.asarray(point) >= 1):
++            return -1
++        distance = self.sign * (np.dot(self.normal, point) - 0.49)
++        return -1 if distance > 0 else (5 if abs(distance) < depth else 0)
++
++    def getSurfaceNormal(self, point):
++        return self.sign * self.normal
++
++    def getSurfacePosition(self, point):
++        return -(np.dot(self.normal, point) - 0.49) * self.normal
++
++    def xMin(self):
++        return 0.0
++
++    def xMax(self):
++        return 1.0
++
++
++def make_objects(rankxmin, rankxmax):
++    if SCENE == 'plane':
++        return [PlanarSide(1, 0), PlanarSide(-1, 1)]
++    descriptions = [([0.0, 0.08, 0.08], [0.32, 0.93, 0.93], 0),
++                    ([0.58, 0.08, 0.08], [1.0, 0.93, 0.93], 1)]
++    result = []
++    for lower, upper, material in descriptions:
++        if lower[0] <= rankxmax and upper[0] >= rankxmin:
++            result.append(geom.box('box%d' % material, lower[:DIM], upper[:DIM],
++                                   mat=material, group=material, particleType=1, dim=DIM))
++    return result
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_writer_regression.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_writer_regression.py
+new file mode 100644
+index 0000000..32423ff
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_writer_regression.py
+@@ -0,0 +1,114 @@
++"""Exercise the complete writer without running GEOS.
++
++Real MPI:
++  python tests/run_writer_regression.py --output /tmp/pfw-check --communicator mpi
++  # Choose --launcher srun on an allocated Slurm node.
++Without MPI (explicitly emulated collectives, NOT a real MPI test):
++  python tests/run_writer_regression.py --output /tmp/pfw-check --communicator emulated
++
++The merged particle file must be byte-identical for 1, 3, and 7 writer ranks;
++7 ranks also tests ranks with zero owned rows on this five-row coarse lattice.
++"""
++import argparse
++import getpass
++import json
++import os
++from pathlib import Path
++import shutil
++import subprocess
++import sys
++
++import numpy as np
++
++
++def inspect_particle_file(path):
++    with path.open() as stream:
++        names = stream.readline().split()
++    data = np.loadtxt(path, skiprows=1, ndmin=2)
++    assert np.all(np.isfinite(data)), 'Nonfinite particle data'
++    rcolumns = [names.index('RVector' + name) for name in ('XX', 'XY', 'XZ', 'YX', 'YY', 'YZ', 'ZX', 'ZY', 'ZZ')]
++    volume = 8 * np.abs(np.linalg.det(data[:, rcolumns].reshape(-1, 3, 3)))
++    assert np.all(volume > 0), 'Nonpositive particle volume'
++    assert np.array_equal(data[:, 0], np.arange(1, len(data) + 1)), 'Duplicate/missing IDs'
++    return len(data), float(volume.sum())
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--output', type=Path, required=True)
++    parser.add_argument('--communicator', choices=['mpi', 'emulated'], default='mpi')
++    parser.add_argument('--launcher', default='mpiexec')
++    parser.add_argument('--dimensions', type=int, nargs='+', default=[2, 3], choices=[2, 3])
++    parser.add_argument('--scenes', nargs='+', default=['plane', 'separated'], choices=['plane', 'separated'])
++    parser.add_argument('--modes', nargs='+', default=['cartesian', 'simplex'], choices=['cartesian', 'simplex'])
++    args = parser.parse_args()
++    tests = Path(__file__).resolve().parent
++    writer = tests.parent / 'particleFileWriter.py'
++    root = args.output.resolve()
++    root.mkdir(parents=True, exist_ok=True)
++    if args.communicator == 'mpi' and shutil.which(args.launcher) is None:
++        parser.error('MPI launcher not found; emulated mode must be requested explicitly')
++    results = []
++    for dimension in args.dimensions:
++        for scene in args.scenes:
++            for mode in args.modes:
++                reference = None
++                for ranks in (1, 3, 7):
++                    name = '%dd_%s_%s_r%d' % (dimension, scene, mode, ranks)
++                    directory = root / name
++                    # Do not reuse old collective files or stale output.
++                    if directory.exists():
++                        shutil.rmtree(directory)
++                    directory.mkdir()
++                    shutil.copyfile(tests / 'pfw_input_refinement_smoke.py', directory / 'pfw_input_case.py')
++                    (directory / ('userDefs_' + getpass.getuser() + '.py')).write_text(
++                        'geosPath="/bin/true"\npfwPath=%r\ndefaultBank="test"\n' % str(tests.parent))
++                    env = os.environ.copy()
++                    env.update(PFW_TEST_DIM=str(dimension), PFW_TEST_GEOMETRY=scene,
++                               PFW_TEST_MODE=mode, PFW_TEST_LEVEL='2',
++                               OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
++                    handles, processes = [], []
++                    try:
++                        if args.communicator == 'mpi':
++                            handles.append((directory / 'mpi.log').open('w'))
++                            processes.append(subprocess.Popen(
++                                [args.launcher, '-n', str(ranks), sys.executable, str(writer), 'pfw_input_case.py'],
++                                cwd=directory, env=env, stdout=handles[-1], stderr=subprocess.STDOUT))
++                        else:
++                            for rank in range(ranks):
++                                handles.append((directory / ('rank%d.log' % rank)).open('w'))
++                                processes.append(subprocess.Popen(
++                                    [sys.executable, str(tests / '_collective_test_worker.py'), str(writer),
++                                     'pfw_input_case.py', str(rank), str(ranks), str(directory / 'collectives')],
++                                    cwd=directory, env=env, stdout=handles[-1], stderr=subprocess.STDOUT))
++                        for process in processes:
++                            if process.wait(timeout=120) != 0:
++                                raise RuntimeError('Writer failed; inspect logs in ' + str(directory))
++                    finally:
++                        for process in processes:
++                            if process.poll() is None:
++                                process.kill()
++                        for handle in handles:
++                            handle.close()
++                    particle_file = directory / 'mpmParticleFile_case'
++                    count, volume = inspect_particle_file(particle_file)
++                    content = particle_file.read_bytes()
++                    if reference is None:
++                        reference = content
++                    assert content == reference, 'Rank-dependent particle file: ' + name
++                    xml = (directory / 'mpm_case.xml').read_text()
++                    assert 'materialList="{ mat0 }"' in xml and 'materialList="{ mat1 }"' in xml
++                    assert 'surfaceRefinementMethod=' not in xml, 'Writer-only option leaked into solver XML'
++                    if scene == 'plane':
++                        assert abs(volume - 1.0) < 2e-12
++                    report = json.loads((directory / 'mpmParticleFile_case_refinement.json').read_text())
++                    assert abs(report['particle_volume'] - volume) < 2e-12
++                    results.append(dict(case=name, communicator=args.communicator, particles=count,
++                                        volume=volume, byte_identical_to_serial=True))
++                    print(name, count, 'particles; serial-identical', flush=True)
++    (root / 'writer_regression_results.json').write_text(json.dumps(results, indent=2) + '\n')
++    print('All %d full-writer cases passed (%s collectives).' % (len(results), args.communicator))
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/test_surface_refinement.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/test_surface_refinement.py
+new file mode 100644
+index 0000000..7d15a5b
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/test_surface_refinement.py
+@@ -0,0 +1,305 @@
++"""Run with: python -m unittest discover -s tests -p 'test_surface_refinement.py' -v
++
++These tests need NumPy only.  Rank tests instantiate independent writer slabs;
++they test the actual ownership/halo/geometry algorithm, not an MPI transport.
++"""
++import math
++import sys
++import unittest
++from pathlib import Path
++
++import numpy as np
++
++sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
++from pfw_simplex_clipping import split_box
++from pfw_surface_refinement import (GeometryQueries, TwoPassRefiner,
++                                    owned_x_range, object_slice_bounds)
++
++
++class HalfSpace:
++    def __init__(self, normal, offset, sign=1, material=0, flagged=True):
++        self.normal = np.asarray(normal, dtype=float)
++        self.normal /= np.linalg.norm(self.normal)
++        self.offset = float(offset)
++        self.sign = sign
++        self.mat = material
++        self.group = material
++        self.flagged = flagged
++
++    def isInterior(self, point, depth):
++        distance = self.sign * (np.dot(self.normal, point) - self.offset)
++        if distance > 0.0:
++            return -1
++        return 5 if self.flagged and abs(distance) <= depth else 0
++
++    def getSurfaceNormal(self, point):
++        return self.sign * self.normal
++
++    def getSurfacePosition(self, point):
++        return -(np.dot(self.normal, point) - self.offset) * self.normal
++
++    def xMin(self):
++        return -np.inf
++
++    def xMax(self):
++        return np.inf
++
++
++class Ball:
++    def __init__(self, center, radius, dimension=3, material=0, periodic_x=False):
++        self.center = np.array(center, dtype=float)
++        self.radius = radius
++        self.dimension = dimension
++        self.mat = material
++        self.group = material
++        self.periodic_x = periodic_x
++
++    def delta(self, point):
++        delta = np.asarray(point) - self.center
++        if self.periodic_x:
++            delta[0] = (delta[0] + 0.5) % 1.0 - 0.5
++        if self.dimension == 2:
++            delta[2] = 0.0
++        return delta
++
++    def isInterior(self, point, depth):
++        distance = np.linalg.norm(self.delta(point)) - self.radius
++        return -1 if distance > 0 else (2 if distance >= -depth else 0)
++
++    def getSurfaceNormal(self, point):
++        delta = self.delta(point)
++        length = np.linalg.norm(delta)
++        return delta / length if length > 0 else np.zeros(3)
++
++    def getSurfacePosition(self, point):
++        delta = self.delta(point)
++        return (self.radius - np.linalg.norm(delta)) * self.getSurfaceNormal(point)
++
++    def xMin(self):
++        return -np.inf if self.periodic_x else self.center[0] - self.radius
++
++    def xMax(self):
++        return np.inf if self.periodic_x else self.center[0] + self.radius
++
++
++class Everywhere:
++    def __init__(self, material=1):
++        self.mat = material
++        self.group = material
++
++    def isInterior(self, point, depth):
++        return 0
++
++    def xMin(self):
++        return -np.inf
++
++    def xMax(self):
++        return np.inf
++
++
++def generate(objects, counts=(6, 5, 1), method="simplex", level=2,
++             rank=0, size=1, periodic=(False, False, False), **kwargs):
++    widths = 1.0 / np.asarray(counts)
++    plane_strain = counts[2] == 1
++    depth = np.linalg.norm(widths[:2 if plane_strain else 3])
++    queries = GeometryQueries(objects, depth, plane_strain, sort_objects=True)
++    refiner = TwoPassRefiner(queries, [0, 0, 0], counts, widths, periodic,
++                            rank=rank, size=size, plane_strain=plane_strain,
++                            method=method, level=level, **kwargs)
++    pieces = list(refiner.particles())
++    return pieces, refiner.report()
++
++
++def signature(pieces):
++    """Include all geometric output and flags, but not rank-local object indices."""
++    return [(p.parent_index, tuple(p.point), tuple(p.widths), p.volume,
++             p.sample.material, p.sample.group, p.sample.surface_flag,
++             p.surface_flag, None if p.normal is None else tuple(p.normal),
++             None if p.surface_point is None else tuple(p.surface_point)) for p in pieces]
++
++
++class ClippingTests(unittest.TestCase):
++    def test_random_plane_volume_and_first_moment(self):
++        rng = np.random.default_rng(20260916)
++        for dimension in (2, 3):
++            for _ in range(100):
++                normal = rng.normal(size=3)
++                if dimension == 2:
++                    normal[2] = 0.0
++                sides = split_box(np.zeros(3), np.ones(3), rng.random(3), normal,
++                                  plane_strain=dimension == 2)
++                volume = math.fsum(v for side in sides for _, v in side)
++                moment = sum((v * t.mean(axis=0) for side in sides for t, v in side), np.zeros(3))
++                self.assertAlmostEqual(volume, 1.0, places=12)
++                np.testing.assert_allclose(moment, [0.5, 0.5, 0.5], atol=2e-13, rtol=0)
++                self.assertTrue(all(v > 0 for side in sides for _, v in side))
++
++    def test_planes_through_corners_edges_and_faces(self):
++        for dimension in (2, 3):
++            for normal, point in [([1, 0, 0], [0, 0, 0]), ([1, 0, 0], [1, 0, 0]),
++                                  ([1, -1, 0], [0, 0, 0]), ([1, 1, 0], [1, 0, 0]),
++                                  ([1, 0, 0], [1e-8, 0, 0])]:
++                sides = split_box(np.zeros(3), np.ones(3), point, normal, dimension == 2)
++                self.assertAlmostEqual(math.fsum(v for side in sides for _, v in side), 1.0, places=12)
++            self.assertAlmostEqual(sum(v for _, v in sides[0]), 1e-8, places=14)
++
++    def test_translation_anisotropy_and_plane_strain_thickness(self):
++        lower = np.array([1e4, -5e3, 7.0])
++        widths = np.array([0.125, 0.005, 0.003])
++        for strain in (True, False):
++            sides = split_box(lower, widths, lower + 0.5 * widths, [1, 0, 0], strain)
++            volume = sum(v for side in sides for _, v in side)
++            self.assertAlmostEqual(volume / np.prod(widths), 1.0, places=12)
++            self.assertAlmostEqual(sum(v for _, v in sides[0]) / volume, 0.5, places=12)
++            if strain:
++                self.assertTrue(all(np.all(t[:, 2] == lower[2] + 0.5 * widths[2])
++                                    for side in sides for t, _ in side))
++
++
++class TwoPassTests(unittest.TestCase):
++    def test_recovery_of_empty_center_parents_both_modes(self):
++        for method in ("cartesian", "simplex"):
++            pieces, report = generate([HalfSpace([1, 0, 0], 0.30)], counts=(4, 4, 1), method=method, level=4)
++            self.assertGreater(report["recovered_empty_parents"], 0)
++            self.assertTrue(any(p.parent_index[0] == 1 for p in pieces))
++            if method == "simplex":
++                self.assertAlmostEqual(sum(p.volume for p in pieces), 0.30, places=12)
++                self.assertEqual(sum(v for k, v in report.items() if k.startswith("fallback_")), 0)
++
++    def test_slice_filter_keeps_objects_intersecting_empty_parent_extent(self):
++        # The x=.375 parent center lies outside the object's bounding interval,
++        # but its [.25,.50] reference domain contains part of the circle.
++        for method in ("cartesian", "simplex"):
++            pieces, report = generate([Ball([0.60, 0.50, 0.5], 0.19, 2)],
++                                      counts=(4, 4, 1), method=method, level=4)
++            self.assertGreater(report["recovered_empty_parents"], 0)
++            self.assertTrue(any(p.parent_index[0] == 1 for p in pieces))
++
++    def test_staged_bulk_records_are_owned_only_and_reused(self):
++        calls = []
++        def capture(sample):
++            calls.append(tuple(sample.point))
++            return "staged-at-" + str(tuple(sample.point))
++        pieces, report = generate([Everywhere()], counts=(7, 3, 1), method="cartesian",
++                                  rank=1, size=3, capture_coarse_record=capture)
++        start, stop = owned_x_range(7, 1, 3)
++        self.assertEqual(len(calls), (stop - start) * 3)
++        self.assertEqual(len(calls), len(pieces))
++        self.assertTrue(all(p.coarse_record.startswith("staged-at-") for p in pieces))
++        self.assertEqual(report.get("refinement_point_queries", 0), 0)
++
++    def test_unflagged_interfaces_still_refine(self):
++        objects = [HalfSpace([1, 0, 0], 0.47, flagged=False), Everywhere()]
++        pieces, report = generate(objects, method="cartesian")
++        self.assertGreater(report["candidate_domains"], 0)
++        self.assertEqual({p.sample.material for p in pieces}, {0, 1})
++        self.assertAlmostEqual(sum(p.volume for p in pieces), 1.0, places=12)
++
++    def test_no_geometry_resampling_away_from_boundary(self):
++        pieces, report = generate([Everywhere()], method="cartesian", counts=(12, 8, 3))
++        self.assertEqual(report.get("candidate_domains", 0), 0)
++        self.assertEqual(report.get("refinement_point_queries", 0), 0)
++        self.assertEqual(report["coarse_center_queries"], 12 * 8 * 3)
++        self.assertEqual(len(pieces), 12 * 8 * 3)
++        self.assertLessEqual(report["peak_cached_slices"], 3)
++
++    def test_planar_two_material_partition_2d_and_3d(self):
++        for counts, normal in [((5, 4, 1), [1, 0.31, 0]), ((4, 3, 3), [1, 0.31, 0.19])]:
++            objects = [HalfSpace(normal, 0.49, 1, 0), HalfSpace(normal, 0.49, -1, 1)]
++            pieces, report = generate(objects, counts=counts)
++            self.assertAlmostEqual(math.fsum(p.volume for p in pieces), 1.0, places=12)
++            self.assertEqual(sum(v for k, v in report.items() if k.startswith("fallback_")), 0)
++            for p in pieces:
++                self.assertGreater(p.volume, 0)
++                self.assertAlmostEqual(np.prod(p.widths) / p.volume, 1.0, places=12)
++                if counts[2] == 1:
++                    self.assertEqual(p.widths[2], 1.0)
++                if p.normal is not None:
++                    offset = -np.dot(p.normal, p.point - p.surface_point) * p.normal
++                    self.assertAlmostEqual(np.dot(p.normal, p.point + offset - p.surface_point), 0.0, places=13)
++
++    def test_material_refinement_uses_one_complementary_partition(self):
++        objects = [HalfSpace([1, 0.2, 0], 0.5), HalfSpace([1, 0.2, 0], 0.5, -1, 1)]
++        pieces, _ = generate(objects, counts=(4, 3, 1), material_refinement=lambda mat: mat + 1)
++        self.assertAlmostEqual(sum(p.volume for p in pieces), 1.0, places=12)
++
++    def test_curved_free_surface_and_inclusion_are_positive(self):
++        for dimension in (2, 3):
++            counts = (6, 6, 1 if dimension == 2 else 5)
++            for background in (False, True):
++                objects = [Ball([0.47, 0.53, 0.51], 0.29, dimension)]
++                if background:
++                    objects.append(Everywhere())
++                pieces, report = generate(objects, counts=counts)
++                self.assertGreater(report.get("cut_subdomains", 0), 0)
++                self.assertTrue(all(p.volume > 0 for p in pieces))
++                if background:
++                    self.assertAlmostEqual(sum(p.volume for p in pieces), 1.0, places=11)
++                else:
++                    exact = math.pi * 0.29**2 if dimension == 2 else 4/3 * math.pi * 0.29**3
++                    self.assertLess(abs(sum(p.volume for p in pieces) / exact - 1), 0.08)
++
++    def test_strict_fallback_reports_missing_surface_information(self):
++        with self.assertRaisesRegex(ValueError, "no_usable_plane"):
++            generate([HalfSpace([1, 0, 0], 0.47, flagged=False)], fallback="error")
++
++    def test_undetected_island_is_not_claimed_to_be_recovered(self):
++        # No occupied coarse center or flagged neighbor near this small island.
++        pieces, report = generate([Ball([0.5, 0.5, 0.5], 0.01, 2)], counts=(2, 2, 1))
++        self.assertEqual(pieces, [])
++        self.assertEqual(report.get("candidate_domains", 0), 0)
++
++    def test_invalid_options_fail(self):
++        for values in ({"method": "other"}, {"level": 0}, {"level": 1.5},
++                       {"fallback": "ignore"}, {"plane_tolerance": 0.8}):
++            with self.assertRaises(ValueError):
++                generate([Everywhere()], **values)
++
++
++class RankSlicingTests(unittest.TestCase):
++    def test_integer_ownership_has_no_gaps_or_duplicates(self):
++        for rows in (1, 5, 11):
++            for ranks in (1, 2, 3, 7, 17):
++                union = [i for r in range(ranks) for i in range(*owned_x_range(rows, r, ranks))]
++                self.assertEqual(union, list(range(rows)))
++
++    def test_factory_bounds_include_actual_owned_rows_and_halo(self):
++        for ranks in (2, 3, 8):
++            for rank in range(ranks):
++                start, stop = owned_x_range(5, rank, ranks)
++                lo, hi = object_slice_bounds(0, 1, 5, rank, ranks, halo=True)
++                self.assertLessEqual(lo, max(0, start - 1) / 5 + 1e-15)
++                self.assertGreaterEqual(hi, min(5, stop + 1) / 5 - 1e-15)
++        self.assertEqual(object_slice_bounds(0, 1, 9, 0, 3, halo=True, periodic=True), (0, 1))
++
++    def test_serial_equals_independent_rank_slabs_and_empty_ranks(self):
++        for counts in ((5, 4, 1), (5, 3, 3)):
++            dim = 2 if counts[2] == 1 else 3
++            for method in ("cartesian", "simplex"):
++                objects = [Ball([0.57, 0.51, 0.49], 0.30, dim), Everywhere()]
++                serial, _ = generate(objects, counts=counts, method=method)
++                for ranks in (2, 3, 7):
++                    combined = []
++                    for rank in range(ranks):
++                        lo, hi = object_slice_bounds(0, 1, counts[0], rank, ranks, halo=True)
++                        local_objects = [o for o in objects if o.xMin() <= hi and o.xMax() >= lo]
++                        pieces, _ = generate(local_objects, counts=counts, method=method, rank=rank, size=ranks)
++                        combined.extend(pieces)
++                    self.assertEqual(signature(serial), signature(combined))
++
++    def test_periodic_seam_and_translated_surface_markers(self):
++        for method in ("cartesian", "simplex"):
++            objects = [Ball([0.96, 0.51, 0.5], 0.22, 2, periodic_x=True)]
++            serial, _ = generate(objects, method=method, counts=(7, 6, 1), periodic=(True, False, False))
++            combined = []
++            for rank in range(3):
++                pieces, _ = generate(objects, method=method, counts=(7, 6, 1), rank=rank, size=3,
++                                     periodic=(True, False, False))
++                combined.extend(pieces)
++            self.assertEqual(signature(serial), signature(combined))
++            self.assertTrue(any(p.point[0] < 0.1 for p in serial))
++            self.assertTrue(any(p.point[0] > 0.9 for p in serial))
++
++
++if __name__ == "__main__":
++    unittest.main()

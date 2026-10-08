@@ -1,0 +1,4 @@
+3d_plane_simplex_r1 1382 particles; serial-identical
+3d_plane_simplex_r3 1382 particles; serial-identical
+3d_plane_simplex_r7 1382 particles; serial-identical
+All 3 full-writer cases passed (emulated collectives).

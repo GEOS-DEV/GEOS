@@ -1,0 +1,23 @@
+test_planes_through_corners_edges_and_faces (test_surface_refinement.ClippingTests.test_planes_through_corners_edges_and_faces) ... ok
+test_random_plane_volume_and_first_moment (test_surface_refinement.ClippingTests.test_random_plane_volume_and_first_moment) ... ok
+test_translation_anisotropy_and_plane_strain_thickness (test_surface_refinement.ClippingTests.test_translation_anisotropy_and_plane_strain_thickness) ... ok
+test_factory_bounds_include_actual_owned_rows_and_halo (test_surface_refinement.RankSlicingTests.test_factory_bounds_include_actual_owned_rows_and_halo) ... ok
+test_integer_ownership_has_no_gaps_or_duplicates (test_surface_refinement.RankSlicingTests.test_integer_ownership_has_no_gaps_or_duplicates) ... ok
+test_periodic_seam_and_translated_surface_markers (test_surface_refinement.RankSlicingTests.test_periodic_seam_and_translated_surface_markers) ... ok
+test_serial_equals_independent_rank_slabs_and_empty_ranks (test_surface_refinement.RankSlicingTests.test_serial_equals_independent_rank_slabs_and_empty_ranks) ... ok
+test_curved_free_surface_and_inclusion_are_positive (test_surface_refinement.TwoPassTests.test_curved_free_surface_and_inclusion_are_positive) ... ok
+test_invalid_options_fail (test_surface_refinement.TwoPassTests.test_invalid_options_fail) ... ok
+test_material_refinement_uses_one_complementary_partition (test_surface_refinement.TwoPassTests.test_material_refinement_uses_one_complementary_partition) ... ok
+test_no_geometry_resampling_away_from_boundary (test_surface_refinement.TwoPassTests.test_no_geometry_resampling_away_from_boundary) ... ok
+test_planar_two_material_partition_2d_and_3d (test_surface_refinement.TwoPassTests.test_planar_two_material_partition_2d_and_3d) ... ok
+test_recovery_of_empty_center_parents_both_modes (test_surface_refinement.TwoPassTests.test_recovery_of_empty_center_parents_both_modes) ... ok
+test_slice_filter_keeps_objects_intersecting_empty_parent_extent (test_surface_refinement.TwoPassTests.test_slice_filter_keeps_objects_intersecting_empty_parent_extent) ... ok
+test_staged_bulk_records_are_owned_only_and_reused (test_surface_refinement.TwoPassTests.test_staged_bulk_records_are_owned_only_and_reused) ... ok
+test_strict_fallback_reports_missing_surface_information (test_surface_refinement.TwoPassTests.test_strict_fallback_reports_missing_surface_information) ... ok
+test_undetected_island_is_not_claimed_to_be_recovered (test_surface_refinement.TwoPassTests.test_undetected_island_is_not_claimed_to_be_recovered) ... ok
+test_unflagged_interfaces_still_refine (test_surface_refinement.TwoPassTests.test_unflagged_interfaces_still_refine) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 1.924s
+
+OK

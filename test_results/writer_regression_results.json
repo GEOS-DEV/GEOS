@@ -1,0 +1,170 @@
+[
+  {
+    "case": "2d_plane_cartesian_r1",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 80,
+    "volume": 1.0,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_plane_cartesian_r3",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 80,
+    "volume": 1.0,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_plane_cartesian_r7",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 80,
+    "volume": 1.0,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_plane_simplex_r1",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 113,
+    "volume": 1.0,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_plane_simplex_r3",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 113,
+    "volume": 1.0,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_plane_simplex_r7",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 113,
+    "volume": 1.0,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_separated_cartesian_r1",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 42,
+    "volume": 0.525,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_separated_cartesian_r3",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 42,
+    "volume": 0.525,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_separated_cartesian_r7",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 42,
+    "volume": 0.525,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_separated_simplex_r1",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 94,
+    "volume": 0.6250000000000002,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_separated_simplex_r3",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 94,
+    "volume": 0.6250000000000002,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "2d_separated_simplex_r7",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 94,
+    "volume": 0.6250000000000002,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_plane_cartesian_r1",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 480,
+    "volume": 1.0000000000000002,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_plane_cartesian_r3",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 480,
+    "volume": 1.0000000000000002,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_plane_cartesian_r7",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 480,
+    "volume": 1.0000000000000002,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_plane_simplex_r1",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 1382,
+    "volume": 1.0000000000000004,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_plane_simplex_r3",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 1382,
+    "volume": 1.0000000000000004,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_plane_simplex_r7",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 1382,
+    "volume": 1.0000000000000004,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_separated_cartesian_r1",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 252,
+    "volume": 0.5250000000000001,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_separated_cartesian_r3",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 252,
+    "volume": 0.5250000000000001,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_separated_cartesian_r7",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 252,
+    "volume": 0.5250000000000001,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_separated_simplex_r1",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 1296,
+    "volume": 0.512916666666667,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_separated_simplex_r3",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 1296,
+    "volume": 0.512916666666667,
+    "byte_identical_to_serial": true
+  },
+  {
+    "case": "3d_separated_simplex_r7",
+    "communicator": "emulated-file-backed-not-real-MPI",
+    "particles": 1296,
+    "volume": 0.512916666666667,
+    "byte_identical_to_serial": true
+  }
+]

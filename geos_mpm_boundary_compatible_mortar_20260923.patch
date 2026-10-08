@@ -1,0 +1,2482 @@
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+index 734d37c23cc8ab078ce3224758bcc069c9626395..fc0c64a9acaf92d0a1bbc7c17d9b786ff131f8c1 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+@@ -828,6 +828,10 @@ parameters = {
+                'weakInterfaceTraceCutTolerance': ( None, True ),  # MPM: nodal level-set zero tolerance relative to the in-plane cell diagonal.
+                'weakInterfaceTraceMinSegmentFraction': ( None, True ),  # MPM: discarded P1 segment threshold relative to minimum in-plane cell width.
+                'weakInterfaceTraceLinearSolverTolerance': ( None, True ),  # MPM: relative RMS mortar-residual tolerance for early sweep termination.
++               'weakInterfaceTraceBoundaryCoupling': ( None, True ),  # CPU symmetry/Moving-BC-compatible minimum-norm QR projection (opt-in).
++               'weakInterfaceTraceAbsoluteTolerance': ( None, True ),  # Accepted final average jump/BC error in velocity units.
++               'weakInterfaceTraceQRRankTolerance': ( None, True ),  # Relative rank threshold, not a physical compliance.
++               'weakInterfaceTraceQRMaxEntries': ( None, True ),  # Dense QR memory guard; entries of double, not bytes.
+                'weakInterfaceTraceLinearSolverRegularization': ( None, True ),  # MPM: local mass-denominator regularization fraction for mortar projection.
+                'weakInterfaceTraceSuppressNodalContact': ( None, True ),  # MPM: suppress nodal contact for trace-projected group pairs.
+                'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/README.md b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a6510ae1e7b587e2e2ee0123c7145ff2a0636aff
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/README.md
+@@ -0,0 +1,147 @@
++# Spherical inclusion: one octant and three symmetry planes
++
++This is the positive octant (one eighth of the full 3D body), not a 2D quadrant.
++The planes x=0, y=0, and z=0 use the existing GEOS Symmetry option. The inclusion
++and outer sphere are centered at the origin, so this is a genuine mirror-symmetric
++geometry. The C0 triangular interface need not align with these planes.
++
++## Pressure problem (default)
++
++- Inclusion radius a=0.22; specimen radius b=0.72.
++- Matrix/inclusion Young moduli 1 and 4; common nu=0.25; density 1.
++- Virtual-fluid `ConfiningPressure` ramps to p=0.004 over 8 time units and holds;
++  stop time 12. This reuses the loading mechanism of the supplied circular radial
++  test. The outer curved surface is pressure-loaded, not a Moving box face.
++- The three positive computational faces are Outflow and are separated from the
++  specimen by three empty physical cells by default. They are not pressure walls.
++- Total grid cells per direction: 14, including the pre-existing one-cell padding
++  at both ends. L=b/(1-gap/(N-2)), so L-b=gap*h exactly. The negative physical
++  limits are zero, while the negative padded grid nodes lie at -h.
++- Two particles per coarse cell direction; two-pass simplex refinement level 2;
++  native tetrahedron output for cut particles, boxes elsewhere. Cartesian mode
++  is selectable and uses the same two-pass candidate selection.
++- PIC is the reference-test default. XPIC2 can be selected after establishing the
++  baseline; this patch does not add a separate projection within XPIC's filters.
++
++Generate separate run directories so one variant cannot overwrite the other:
++
++```bash
++# Use your normal PFW userDefs_<username>.py/configuration in each run directory.
++# PFW and GEOS paths below are examples to be replaced by your repository paths.
++PFW=/path/to/geos/scripts/preProcessing/materialPointMethodParticleFileWriter
++cp "$PFW/verification/weakTraceSphericalInclusionOctant/pfw_input_weakTraceSphericalInclusionOctant.py" pfw_input_case.py
++
++WEAK_TRACE_VARIANT=traceContactGroups python "$PFW/particleFileWriter.py" pfw_input_case.py
++# Then use your rebuilt CPU executable/generated launch script:
++/path/to/geos_executable -i mpm_case.xml -x 1 -y 1 -z 1
++```
++
++Repeat in a different directory with `WEAK_TRACE_VARIANT=singleField`.
++Both variants retain the same geometry, flags, positions, reference volumes,
++and refinement; only contact-group labels and solver selection differ.
++The generated input's `weakInterfaceTraceBoundaryCoupling=1` enables the patch.
++
++To use Cartesian refinement, set `WEAK_TRACE_SURFACE_REFINEMENT_METHOD=cartesian`.
++For XPIC2 use `WEAK_TRACE_UPDATE_METHOD=XPIC WEAK_TRACE_UPDATE_ORDER=2`.
++For a smaller initial diagnostic, use `WEAK_TRACE_CPP=10 WEAK_TRACE_PPC=1`.
++Do not start a large convergence study before validating the small CPU run:
++this implementation is a bounded dense QR reference solve, not a scalable solve.
++
++For solver MPI decomposition, set WEAK_TRACE_XPAR, WEAK_TRACE_YPAR, and
++WEAK_TRACE_ZPAR when generating inputs. CPP must be divisible by each count.
++Use the same -x/-y/-z values on the GEOS command line. PFW's MPI process count
++is separate: its original rank-sliced generation remains unchanged.
++For example CPP=14 permits 2x2x2 GEOS partitions without changing grid spacing
++relative to the serial CPP=14 case. Each local grid must still meet the existing
++B-spline support requirements, including required ghost nodes.
++
++## Three-dimensional static reference
++
++```bash
++python "$PFW/verification/weakTraceSphericalInclusionOctant/spherical_reference.py" \
++  --output spherical_static_reference.csv
++```
++
++The script derives the concentric-sphere solution, not the old plane-strain
++circular-inclusion formula. With K=E/[3(1-2nu)] and G=E/[2(1+nu)]:
++
++```
++u_in(r) = Ai*r
++u_matrix(r) = Am*r + B/r^2
++sigma_rr,in = sigma_tt,in = 3*Ki*Ai
++sigma_rr,matrix = 3*Km*Am - 4*Gm*B/r^3
++sigma_tt,matrix = 3*Km*Am + 2*Gm*B/r^3
++```
++
++Coefficients satisfy displacement and radial-traction continuity at r=a and
++sigma_rr(b)=-p. The CSV has separate inclusion and matrix rows at r=a: hoop
++stress is allowed to jump. This is a SMALL-STRAIN STATIC reference. A finite-rate
++ramp or an incompletely equilibrated solution need not equal it. Check kinetic
++energy, a slower-ramp repeat, and hold-time convergence before reporting errors.
++No simulated stress results accompany this patch.
++
++For a particle at radial direction n, evaluate `sigma_rr=n^T sigma n` and the
++mean tangential stress `(trace(sigma)-sigma_rr)/2`. Use both material-side traces
++and shared plotting limits. The supplied tracers cover directions close to the
++symmetry planes/axes and the interior diagonal; a tracer follows its selected
++particle, so inspect its recorded material ID and actual position.
++
++## Separate FTable intersection smoke test
++
++```bash
++WEAK_TRACE_LOADING=ftableCube WEAK_TRACE_VARIANT=traceContactGroups \
++  python "$PFW/particleFileWriter.py" pfw_input_case.py
++```
++
++This changes the physical problem to a cube of side 0.72 cut by a spherical
++interface of radius 1.2*L. The interface now intersects all three positive Moving
++faces as well as all three negative symmetry planes. A diagonal cosine FTable
++compresses to 0.998 and reverses to 1, then holds. No transverse velocities are
++prescribed and no Contact faces or virtual-fluid pressure are enabled.
++
++This problem intentionally has NO concentric-sphere stress reference. It tests
++BC endpoint targets, buffer dependencies, intersections and reversal. Do not
++compare its stresses to `spherical_reference.py`.
++
++## Diagnostics and acceptance
++
++Enable the solver's MPMSubroutines log category (or the appropriate GEOS logLevel)
++to retain lines beginning `C0 boundary-compatible QR`. They contain component,
++time, cycle, rank, row counts, residuals and fallback counts. For example:
++
++```bash
++python "$PFW/verification/weakTraceSphericalInclusionOctant/check_log.py" run.log \
++  --minimum-time 12 --maximum-jump 1e-10 --maximum-bc-residual 1e-11
++```
++
++The solver already fails if its absolute-plus-relative acceptance tests fail.
++This script is a post-run completeness check, not proof of stress accuracy.
++Use `--maximum-fallback-dofs 0` for a strict no-fallback diagnostic, not as an
++assumption that every coarse geometry will produce zero fallback.
++
++Inspect `gridWeakInterfaceTraceVelocityJumpPost`, `gridWeakInterfaceTraceSkipReason`,
++`gridWeakInterfaceTraceForce`, and `gridWeakInterfaceTraceBoundaryForce` near all
++three intersection curves. The new BoundaryForce is only the ADDITIONAL reaction
++associated with the mortar correction (and internal fallback ties); the old
++reactionHistory output still describes the preceding legacy BC operation. It is
++not, by itself, the complete coupled reaction history. Sum owned nodes only.
++The source deliberately keeps the original boundary acceleration/dVelocity
++conventions and applies no second BC overwrite after solving.
++
++Acceptance still required on the full GEOS build: serial run, serial vs 2x2x2,
++restart through loading, stress/velocity profiles near and away from symmetry
++planes, time/grid/refinement sensitivity, and a full mirrored-domain comparison.
++The standalone helper and PFW tests do not substitute for these checks.
++
++## Automated initialization tests
++
++```bash
++python test_initialization.py --output /tmp/octant-pfw --communicator mpi
++# Only when intentionally testing without an MPI implementation:
++python test_initialization.py --output /tmp/octant-pfw --communicator emulated
++```
++
++The complete writer is exercised at 1, 3 and 7 process counts. Tests check
++identical files across process counts, paired single-field/mortar clouds,
++positive native/legacy volumes, region flags and three-plane containment.
++Emulated collectives are test-only file exchanges, not an MPI transport test.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/check_log.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/check_log.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..f5d9754bef2ee7beeb941c25e67181eb31467428
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/check_log.py
+@@ -0,0 +1,50 @@
++"""Check recorded grid-projection acceptance; this is not a stress-error test."""
++import argparse
++import json
++import math
++import re
++from pathlib import Path
++
++
++def main():
++    parser=argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("log",type=Path)
++    parser.add_argument("--maximum-jump",type=float,default=1e-10)
++    parser.add_argument("--maximum-bc-residual",type=float,default=1e-11)
++    parser.add_argument("--maximum-fallback-dofs",type=int)
++    parser.add_argument("--minimum-time",type=float)
++    args=parser.parse_args()
++    text=args.log.read_text(errors="replace")
++    rows=[]
++    for line in text.splitlines():
++        if "C0 boundary-compatible QR component=" not in line:
++            continue
++        def number(key):
++            match=re.search(re.escape(key)+r"=([^,\s]+)",line)
++            if match is None: raise ValueError("Missing log field: "+key)
++            value=float(match.group(1))
++            if not math.isfinite(value): raise ValueError("Nonfinite log field: "+key)
++            return value
++        rows.append(dict(component=int(number("component")),time=number("time"),
++                         maximum_jump=number("max average jump"),boundary_residual=number("boundary residual"),
++                         relative_residual=number("relative residual"),fallback_dofs=int(number("fallback dofs"))))
++    if not rows:
++        raise SystemExit("No compatible-QR records. Enable the MPMSubroutines log category/solver log level and confirm the mode is enabled.")
++    if "C0 boundary-compatible projection failed" in text or "post-mortar boundary/synchronization update changed" in text:
++        raise SystemExit("The log contains a failed coupled projection/update.")
++    maximum_jump=max(r["maximum_jump"] for r in rows)
++    maximum_bc=max(r["boundary_residual"] for r in rows)
++    fallback=max(r["fallback_dofs"] for r in rows)
++    last=max(r["time"] for r in rows)
++    if maximum_jump>args.maximum_jump or maximum_bc>args.maximum_bc_residual:
++        raise SystemExit("Grid constraint residual exceeds the requested diagnostic threshold.")
++    if args.maximum_fallback_dofs is not None and fallback>args.maximum_fallback_dofs:
++        raise SystemExit("Fallback footprint exceeds the requested threshold.")
++    if args.minimum_time is not None and last<args.minimum_time-1e-8*max(1.,abs(args.minimum_time)):
++        raise SystemExit("Recorded projections do not reach the requested final time.")
++    print(json.dumps(dict(records=len(rows),last_projection_time=last,max_average_jump=maximum_jump,
++        max_boundary_residual=maximum_bc,max_fallback_dofs=fallback,
++        note="Grid projection only. Check particle motion, force balance and stress error separately."),indent=2))
++
++
++if __name__=="__main__": main()
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/pfw_input_weakTraceSphericalInclusionOctant.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/pfw_input_weakTraceSphericalInclusionOctant.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d378a0207d5f81cb0e1297e7c1af2ca6ceb6feeb
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/pfw_input_weakTraceSphericalInclusionOctant.py
+@@ -0,0 +1,232 @@
++"""Spherical inclusion in the positive octant, with three symmetry planes.
++
++Default: spherical specimen under the same virtual-fluid pressure event used by
++weakTraceCircularInclusionRadial. The static reference is genuinely 3D; do NOT
++reuse the plane-strain circular-inclusion solution.
++
++WEAK_TRACE_LOADING=ftableCube is a separate kinematic smoke test: a sphere cuts
++three Moving/FTable faces of a cube. It is NOT the radial-pressure problem.
++Geometry flags and particle positions are identical between singleField and
++traceContactGroups; only the contact-group labels and solver options change.
++"""
++from __future__ import annotations
++
++import math
++import os
++import numpy as np
++import pfw_geometryObjects as geom
++import pfw_tracerPoints as tracers
++
++
++def positive_int(name, default):
++    value = int(os.environ.get(name, str(default)))
++    if value < 1:
++        raise ValueError(name + " must be positive")
++    return value
++
++
++def positive_float(name, default):
++    value = float(os.environ.get(name, str(default)))
++    if not math.isfinite(value) or value <= 0:
++        raise ValueError(name + " must be finite and positive")
++    return value
++
++
++loading = os.environ.get("WEAK_TRACE_LOADING", "pressure")
++variant = os.environ.get("WEAK_TRACE_VARIANT", "traceContactGroups")
++if loading not in ("pressure", "ftableCube"):
++    raise ValueError("WEAK_TRACE_LOADING must be pressure or ftableCube")
++if variant not in ("singleField", "traceContactGroups"):
++    raise ValueError("WEAK_TRACE_VARIANT must be singleField or traceContactGroups")
++
++cpp = positive_int("WEAK_TRACE_CPP", 14)  # total grid cells, including one buffer per end
++ppc = positive_int("WEAK_TRACE_PPC", 2)
++if cpp < 8:
++    raise ValueError("Use at least eight total cells per direction for this test")
++partitions = [positive_int("WEAK_TRACE_" + d + "PAR", 1) for d in "XYZ"]
++if any(cpp % n for n in partitions):
++    raise ValueError("WEAK_TRACE_CPP must be divisible by each solver partition count")
++outer_radius = positive_float("WEAK_TRACE_OUTER_RADIUS", 0.72)
++gap_cells = positive_int("WEAK_TRACE_GAP_CELLS", 3)
++if gap_cells >= cpp - 2:
++    raise ValueError("Positive-side empty gap must be smaller than the physical grid")
++# L - b = gap_cells*h, h=L/(cpp-2). Negative faces remain exactly at zero.
++length = outer_radius / (1.0 - gap_cells / float(cpp - 2)) if loading == "pressure" else 0.72
++radius = positive_float("WEAK_TRACE_INCLUSION_RADIUS", 0.22 if loading == "pressure" else 1.2 * length)
++if loading == "pressure" and radius >= outer_radius:
++    raise ValueError("Inclusion radius must be below the specimen radius")
++if loading == "ftableCube" and not length < radius < math.sqrt(3.0) * length:
++    raise ValueError("FTable smoke requires L < interface radius < sqrt(3)*L so it cuts the moving faces")
++h = length / (cpp - 2)
++ramp_time = positive_float("WEAK_TRACE_RAMP_TIME", 8.0)
++stop_time = positive_float("WEAK_TRACE_STOP_TIME", 12.0)
++if stop_time < ramp_time:
++    raise ValueError("Stop time must include the complete loading ramp")
++pressure = positive_float("WEAK_TRACE_EXTERNAL_PRESSURE", 0.004)
++young_matrix = positive_float("WEAK_TRACE_MATRIX_E", 1.0)
++young_inclusion = positive_float("WEAK_TRACE_INCLUSION_E", 4.0)
++poisson = float(os.environ.get("WEAK_TRACE_POISSON", "0.25"))
++if not -1.0 < poisson < 0.5:
++    raise ValueError("Poisson ratio must be between -1 and 0.5")
++density = positive_float("WEAK_TRACE_DENSITY", 1.0)
++case = os.environ.get("VV_CASE_NAME", "weakTraceSphericalInclusionOctant_" + loading + "_" + variant)
++
++pfw = dict(
++    caseName=case, runDebug=True, mBatch=True, mSubmitJobs=False,
++    mWallTime=os.environ.get("WEAK_TRACE_WALLTIME", "00:10:00"),
++    planeStrain=0, periodic=[False, False, False],
++    xpar=partitions[0], ypar=partitions[1], zpar=partitions[2],
++    nI=cpp, nJ=cpp, nK=cpp, ppc=ppc,
++    xmin=0.0, ymin=0.0, zmin=0.0, xmax=length, ymax=length, zmax=length,
++    surfaceRefinementLevel=positive_int("WEAK_TRACE_SURFACE_REFINEMENT_LEVEL", 2),
++    surfaceRefinementMethod=os.environ.get("WEAK_TRACE_SURFACE_REFINEMENT_METHOD", "simplex"),
++    surfaceRefinementFallback="cartesian",
++    particleReferenceGeometry="fromRefinement", particleDomainOutput="native",
++    endTime=stop_time, plotInterval=stop_time / 40.0,
++    restartInterval=10.0 * stop_time, timeIntegrationOption="ExplicitDynamic",
++    cflFactor=positive_float("WEAK_TRACE_CFL", 0.15), initialDt=1.0e-16,
++    writeStatistics="all", reactionHistory=1, reactionWriteInterval=stop_time / 200,
++    boxAverageHistory=1, boxAverageWriteInterval=stop_time / 200,
++    updateMethod=os.environ.get("WEAK_TRACE_UPDATE_METHOD", "PIC"),
++    cpdiDomainScaling=0, outputType="silo", plotGridFields=1,
++    frictionCoefficient=0.0, contactNormalType="Aligned", useSurfacePositionForContact=1,
++    damageFieldPartitioning=0, weakDiscontinuityInsertion="off",
++    weakInterfaceTraceGeometry="surface", enableWeakInterfacePrimalEnrichment=0,
++    prescribedFTable=0, prescribedBoundaryFTable=0,
++    # Ordering: x-, x+, y-, y+, z-, z+. Zero is outflow, NOT a wall.
++    boundaryConditionTypes=[1, 0, 1, 0, 1, 0],
++    particleFileFields=["Velocity", "MaterialType", "ContactGroup", "SurfaceFlag",
++                        "RVector", "SurfaceNormal", "SurfacePosition"],
++    plottableFields=["particleStress", "particleVelocity", "particleDisplacement"],
++)
++if pfw["updateMethod"].upper() == "XPIC":
++    pfw["updateOrder"] = positive_int("WEAK_TRACE_UPDATE_ORDER", 2)
++
++pfw["gridFieldNames"] = [
++    "gridMass", "gridActive", "gridVelocity", "gridInternalForce", "gridExternalForce",
++    "gridContactForce", "gridWeakInterfaceTraceActive", "gridWeakInterfaceTraceSkipReason",
++    "gridWeakInterfaceTraceSupportWeight", "gridWeakInterfaceTraceVelocityJumpPost",
++    "gridWeakInterfaceTraceForce", "gridWeakInterfaceTraceBoundaryForce",
++]
++if variant == "traceContactGroups":
++    pfw.update(
++        enableContact=1, enableWeakInterfaceTraceProjection=1,
++        weakInterfaceTraceBoundaryCoupling=1, weakInterfaceTraceProjectionScale=1.0,
++        weakInterfaceTraceSuppressNodalContact=1, weakInterfaceTracePairs=[[0, 1]],
++        weakInterfaceTraceSurfaceFitNeighbors=12, weakInterfaceTraceSurfaceFitRadius=2.5,
++        weakInterfaceTraceMinNormalCoherence=0.0, weakInterfaceTraceMaxFitResidual=1.0e6,
++        weakInterfaceTraceMortarQuadratureOrder=2, weakInterfaceTraceMassCutoffRatio=1.0e-12,
++        weakInterfaceTraceMinWeight=1.0e-12, weakInterfaceTraceCutTolerance=1.0e-8,
++        weakInterfaceTraceMinSegmentFraction=1.0e-4,
++        weakInterfaceTraceMinFacetAreaFraction=0.0, weakInterfaceTraceMinTriangleQuality=0.0,
++        weakInterfaceTraceFallbackToSingleField=1, weakInterfaceTraceGapStabilization=0.0,
++        weakInterfaceTraceMaxGapCorrectionVelocity=0.0,
++        weakInterfaceTraceLinearSolverTolerance=1.0e-10,
++        weakInterfaceTraceAbsoluteTolerance=positive_float("WEAK_TRACE_ABSOLUTE_TOLERANCE", 1.0e-12),
++        weakInterfaceTraceQRRankTolerance=positive_float("WEAK_TRACE_QR_RANK_TOLERANCE", 1.0e-12),
++        weakInterfaceTraceQRMaxEntries=positive_int("WEAK_TRACE_QR_MAX_ENTRIES", 16000000),
++    )
++else:
++    pfw.update(enableContact=0, enableWeakInterfaceTraceProjection=0)
++
++
++def elastic_xml(name, young):
++    return ('<ElasticIsotropic name="%s" defaultDensity="%.17g" '
++            'defaultYoungModulus="%.17g" defaultPoissonRatio="%.17g"/>'
++            % (name, density, young, poisson))
++
++
++pfw["materials"] = ["octantMatrix", "octantInclusion"]
++pfw["materialPropertyString"] = elastic_xml("octantMatrix", young_matrix) + "\n" + elastic_xml("octantInclusion", young_inclusion)
++if loading == "pressure":
++    # Same virtual-fluid machinery as the supplied circular radial test. Its
++    # central exclusion cube is safely inside the specimen. There is no FTable
++    # or pressure on the computational-box faces, which are separated by void.
++    inner = 0.40 * outer_radius
++    pfw["useEvents"] = 1
++    pfw["mpmEventsString"] = f'''
++<ConfiningPressure name="octantSphericalOuterPressure"
++  startTime="0.0" endTime="{ramp_time}"
++  confiningPressureBoxMin="{{{-inner},{-inner},{-inner}}}"
++  confiningPressureBoxMax="{{{inner},{inner},{inner}}}"
++  startPressure="0.0" endPressure="{pressure}" interpType="1"/>
++'''
++else:
++    # Different geometry/loading: cube cut by a spherical material interface.
++    # This tests arbitrary intersections with Moving faces as well as symmetry.
++    # It has no concentric-sphere analytic stress reference.
++    pfw["prescribedBoundaryFTable"] = 1
++    pfw["boundaryConditionTypes"] = [1, 2, 1, 2, 1, 2]
++    pfw["fTableInterpType"] = "Cosine"
++    pfw["fTable"] = [[0, 1, 1, 1], [0.5*ramp_time, .998, .998, .998],
++                     [ramp_time, 1, 1, 1], [stop_time, 1, 1, 1]]
++    if stop_time == ramp_time:
++        pfw["fTable"].pop()  # Avoid duplicate table times.
++
++
++class RadialRegion(geom.Geometry):
++    """Analytic region; reuses the existing membership/normal/offset interface.
++
++    The PFW generation box clips to the octant. The three symmetry cuts are NOT
++    flagged as material free surfaces. This also makes halo queries symmetric.
++    """
++    def __init__(self, inclusion):
++        self.inclusion = inclusion
++        material = 1 if inclusion else 0
++        super().__init__("octant_inclusion" if inclusion else "octant_matrix",
++                         vel=[0., 0., 0.], mat=material,
++                         group=material if variant == "traceContactGroups" else 0,
++                         particleType=1)
++
++    def _surface(self, pt):
++        r = float(np.linalg.norm(pt))
++        outer = (not self.inclusion and loading == "pressure" and
++                 abs(r - outer_radius) < abs(r - radius))
++        return r, outer_radius if outer else radius, outer
++
++    def isInterior(self, pt, skinDepth):
++        r, nearest, outer = self._surface(pt)
++        if self.inclusion:
++            if r >= radius:
++                return -1
++        elif r < radius or (loading == "pressure" and r >= outer_radius):
++            return -1
++        if abs(r - nearest) <= skinDepth:
++            return int(geom.SurfaceFlag.Surface if outer else geom.SurfaceFlag.WeakDiscontinuity)
++        return 0
++
++    def getSurfaceNormal(self, pt):
++        r, _, outer = self._surface(pt)
++        direction = np.asarray(pt, dtype=float) / r if r > 0 else np.array([1., 0., 0.])
++        return direction if self.inclusion or outer else -direction
++
++    def getSurfacePosition(self, pt):
++        r, surface_radius, _ = self._surface(pt)
++        direction = np.asarray(pt, dtype=float) / r if r > 0 else np.array([1., 0., 0.])
++        return (surface_radius - r) * direction
++
++
++pfw["objects"] = [RadialRegion(False), RadialRegion(True)]
++# The stock PFW can run rank-sliced without a factory; it owns lattice rows and
++# queries read-only halos against these complete analytic objects.
++tracer_points = []
++if loading == "pressure":
++    directions = np.array([[1., .05, .05], [.05, 1., .05], [.05, .05, 1.],
++                           [1., 1., .05], [1., .05, 1.], [.05, 1., 1.], [1., 1., 1.]])
++    directions /= np.linalg.norm(directions, axis=1)[:, None]
++    for direction in directions:
++        for r in (0.5*radius, .90*radius, 1.10*radius, .65*outer_radius, .90*outer_radius):
++            tracer_points.append(tuple(r * direction))
++    tracers.set_tracers(pfw, tracer_points,
++        ["velocityX", "velocityY", "velocityZ", "stressXX", "stressYY", "stressZZ",
++         "stressXY", "stressXZ", "stressYZ", "materialType"],
++        write_interval=stop_time/200, output_prefix="sphericalOctantTracer")
++
++pfw_expected = dict(case_id="weakTraceSphericalInclusionOctant", loading=loading,
++    variant=variant, inclusion_radius=radius, outer_radius=outer_radius,
++    domain_length=length, grid_spacing=h, positive_gap_cells=gap_cells if loading == "pressure" else 0,
++    matrix_E=young_matrix, inclusion_E=young_inclusion, poisson=poisson, density=density,
++    external_pressure=pressure if loading == "pressure" else None,
++    pressure_ramp_time=ramp_time, stop_time=stop_time,
++    reference="3D small-strain static pressure solution after equilibration" if loading == "pressure" else "none: FTable kinematic smoke",
++    exact_octant_volume=math.pi*outer_radius**3/6 if loading == "pressure" else length**3)
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/spherical_reference.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/spherical_reference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..cedeccc2826b851b378829588720df5e686c9849
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/spherical_reference.py
+@@ -0,0 +1,81 @@
++"""Small-strain STATIC solution for a bonded concentric elastic sphere.
++
++Compression is negative stress; external_pressure is a positive magnitude.
++This is a 3D reference, not a transient ramp solution or a plane-strain formula.
++Python standard library only. All defaults match the pressure PFW input.
++"""
++from __future__ import annotations
++import argparse
++import csv
++import math
++from dataclasses import dataclass
++from pathlib import Path
++
++
++@dataclass(frozen=True)
++class Sphere:
++    a: float = .22
++    b: float = .72
++    matrix_E: float = 1.
++    inclusion_E: float = 4.
++    nu: float = .25
++    pressure: float = .004
++
++    def coefficients(self):
++        if not all(math.isfinite(v) for v in (self.a,self.b,self.matrix_E,self.inclusion_E,self.nu,self.pressure)):
++            raise ValueError("Reference parameters must be finite")
++        if not 0 < self.a < self.b or min(self.matrix_E, self.inclusion_E) <= 0:
++            raise ValueError("Require 0<a<b and positive elastic moduli")
++        if not -1 < self.nu < .5 or not math.isfinite(self.pressure):
++            raise ValueError("Invalid Poisson ratio or pressure")
++        km = self.matrix_E / (3*(1-2*self.nu))
++        ki = self.inclusion_E / (3*(1-2*self.nu))
++        gm = self.matrix_E / (2*(1+self.nu))
++        # u_i=Ai*r, u_m=Am*r+B/r^2. Continuity at a gives Ai=Am+B/a^3.
++        # Radial traction at a and sigma_rr(b)=-p determine Am and B.
++        ratio = -3*(ki-km)*self.a**3 / (3*ki+4*gm)  # B/Am
++        am = -self.pressure / (3*km - 4*gm*ratio/self.b**3)
++        bm = ratio*am
++        return am+bm/self.a**3, am, bm
++
++    def evaluate(self, r, side=None):
++        if r < 0 or r > self.b*(1+1e-12):
++            raise ValueError("Radius outside the physical sphere")
++        ai, am, bm = self.coefficients()
++        ki = self.inclusion_E/(3*(1-2*self.nu))
++        km = self.matrix_E/(3*(1-2*self.nu))
++        gm = self.matrix_E/(2*(1+self.nu))
++        inclusion = r < self.a if side is None else side == "inclusion"
++        if inclusion:
++            return dict(region="inclusion", displacement_r=ai*r,
++                        stress_rr=3*ki*ai, stress_tt=3*ki*ai)
++        if r <= 0:
++            raise ValueError("Matrix evaluation requires positive radius")
++        return dict(region="matrix", displacement_r=am*r+bm/r**2,
++                    stress_rr=3*km*am-4*gm*bm/r**3,
++                    stress_tt=3*km*am+2*gm*bm/r**3)
++
++
++def main():
++    parser=argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, default=Path("spherical_static_reference.csv"))
++    parser.add_argument("--a", type=float, default=.22)
++    parser.add_argument("--b", type=float, default=.72)
++    parser.add_argument("--matrix-E", type=float, default=1.)
++    parser.add_argument("--inclusion-E", type=float, default=4.)
++    parser.add_argument("--nu", type=float, default=.25)
++    parser.add_argument("--pressure", type=float, default=.004)
++    args=parser.parse_args()
++    sphere=Sphere(args.a,args.b,args.matrix_E,args.inclusion_E,args.nu,args.pressure)
++    radii=[(sphere.a*i/100,"inclusion") for i in range(101)]
++    radii += [(sphere.a+(sphere.b-sphere.a)*i/200,"matrix") for i in range(201)]
++    with args.output.open("w", newline="") as stream:
++        writer=csv.DictWriter(stream, fieldnames=["radius","region","displacement_r","stress_rr","stress_tt"])
++        writer.writeheader()
++        for r,side in radii:
++            writer.writerow(dict(radius=r,**sphere.evaluate(r,side)))
++    print("Wrote static reference (NOT simulated data):",args.output)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/test_initialization.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/test_initialization.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..9899529622311266b494e742ac66c5b84c458134
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceSphericalInclusionOctant/test_initialization.py
+@@ -0,0 +1,131 @@
++"""Full PFW initialization checks, not a GEOS or real-MPI mechanics test.
++
++Use --communicator mpi on a machine with an MPI launcher. Emulated mode uses
++independent worker processes and explicitly test-only file-backed collectives.
++"""
++from __future__ import annotations
++import argparse
++import getpass
++import importlib.util
++import json
++import os
++from pathlib import Path
++import shutil
++import subprocess
++import sys
++import numpy as np
++from spherical_reference import Sphere
++
++
++def check_static_reference():
++    for ratio in (.25,1.,4.,100.):
++        model=Sphere(inclusion_E=ratio)
++        inner=model.evaluate(model.a,"inclusion")
++        outer=model.evaluate(model.a,"matrix")
++        assert abs(inner["displacement_r"]-outer["displacement_r"]) < 1e-14
++        assert abs(inner["stress_rr"]-outer["stress_rr"]) < 1e-14
++        assert abs(model.evaluate(model.b)["stress_rr"]+model.pressure) < 1e-14
++        if ratio==1:
++            assert abs(model.coefficients()[2]) < 1e-14
++            assert abs(inner["stress_rr"]+model.pressure) < 1e-14
++
++
++def main():
++    parser=argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output",type=Path,required=True)
++    parser.add_argument("--communicator",choices=["mpi","emulated"],default="mpi")
++    parser.add_argument("--launcher",default="mpiexec")
++    parser.add_argument("--ranks",nargs="+",type=int,default=[1,3,7])
++    parser.add_argument("--modes",nargs="+",default=["cartesian","simplex"])
++    parser.add_argument("--loadings",nargs="+",default=["pressure","ftableCube"])
++    args=parser.parse_args()
++    here=Path(__file__).resolve().parent
++    pfw=here.parent.parent
++    worker=pfw/"tests/_collective_test_worker.py"
++    if args.communicator=="mpi" and shutil.which(args.launcher) is None:
++        parser.error("MPI launcher unavailable; select emulated explicitly for the test-only API")
++    check_static_reference()
++    output=args.output.resolve(); output.mkdir(parents=True,exist_ok=True)
++    results=[]
++    for loading in args.loadings:
++        for mode in args.modes:
++            method_arrays=[]
++            for variant in ("singleField","traceContactGroups"):
++                reference=None
++                for ranks in args.ranks:
++                    label=f"{loading}_{mode}_{variant}_r{ranks}"
++                    directory=output/label
++                    if directory.exists(): shutil.rmtree(directory)
++                    directory.mkdir()
++                    shutil.copy2(here/"pfw_input_weakTraceSphericalInclusionOctant.py",directory/"pfw_input_case.py")
++                    (directory/("userDefs_"+getpass.getuser()+".py")).write_text(
++                        'geosPath="/bin/true"\npfwPath=%r\ndefaultBank="test"\n' % str(pfw))
++                    env=os.environ.copy()
++                    env.update(WEAK_TRACE_LOADING=loading,WEAK_TRACE_VARIANT=variant,
++                               WEAK_TRACE_CPP="10",WEAK_TRACE_PPC="1",WEAK_TRACE_GAP_CELLS="2",
++                               WEAK_TRACE_SURFACE_REFINEMENT_LEVEL="2",WEAK_TRACE_SURFACE_REFINEMENT_METHOD=mode,
++                               VV_CASE_NAME="case",OPENBLAS_NUM_THREADS="1",OMP_NUM_THREADS="1")
++                    # PFW process count is independent of the requested GEOS partitioning.
++                    env.update(WEAK_TRACE_XPAR="1",WEAK_TRACE_YPAR="1",WEAK_TRACE_ZPAR="1")
++                    logs=[]; processes=[]
++                    try:
++                        commands=([[args.launcher,"-n",str(ranks),sys.executable,str(pfw/"particleFileWriter.py"),"pfw_input_case.py"]]
++                                  if args.communicator=="mpi" else
++                                  [[sys.executable,str(worker),str(pfw/"particleFileWriter.py"),"pfw_input_case.py",
++                                    str(rank),str(ranks),str(directory/"collectives")] for rank in range(ranks)])
++                        for i,command in enumerate(commands):
++                            logs.append((directory/f"rank{i}.log").open("w"))
++                            processes.append(subprocess.Popen(command,cwd=directory,env=env,stdout=logs[-1],stderr=subprocess.STDOUT))
++                        for process in processes:
++                            if process.wait(timeout=180)!=0:
++                                raise RuntimeError("PFW failed: "+str(directory))
++                    finally:
++                        for process in processes:
++                            if process.poll() is None: process.kill()
++                        for stream in logs: stream.close()
++                    particle_file=directory/"mpmParticleFile_case"
++                    contents=particle_file.read_bytes()
++                    if reference is None: reference=contents
++                    assert contents==reference,"Rank-dependent initialization: "+label
++                    names=particle_file.open().readline().split()
++                    data=np.loadtxt(particle_file,skiprows=1,ndmin=2)
++                    assert np.isfinite(data).all()
++                    assert np.array_equal(data[:,0],np.arange(1,len(data)+1))
++                    ij=("XX","XY","XZ","YX","YY","YZ","ZX","ZY","ZZ")
++                    rv=data[:,[names.index("RVector"+s) for s in ij]].reshape(-1,3,3)
++                    volume=8*np.abs(np.linalg.det(rv))
++                    assert (volume>0).all()
++                    shape=data[:,names.index("ParticleReferenceGeometry")].astype(int)
++                    assert set(shape)<=set((0,2)),"Expected boxes and tetrahedra in 3D"
++                    gv=data[:,[names.index("GeometryRVector"+s) for s in ij]].reshape(-1,3,3)
++                    geometry_volume=np.linalg.det(gv)*np.choose(shape,[8.,.5,1/6])
++                    assert np.allclose(geometry_volume,volume,rtol=1e-9,atol=0)
++                    xyz=data[:,[names.index(s) for s in ("PositionX","PositionY","PositionZ")]]
++                    assert (xyz>=-1e-12).all()
++                    tetra=shape==2
++                    v0=xyz[tetra]-gv[tetra].sum(axis=1)/4
++                    if tetra.any():
++                        verts=np.stack((v0,v0+gv[tetra,0],v0+gv[tetra,1],v0+gv[tetra,2]),axis=1)
++                        assert (verts>=-2e-12).all(),"A simplex crossed a symmetry plane"
++                    assert set(data[:,names.index("MaterialType")].astype(int))=={0,1}
++                    flags=data[:,names.index("SurfaceFlag")].astype(int)
++                    assert (flags==5).any(),"No weak-interface samples"
++                    xml=(directory/"mpm_case.xml").read_text()
++                    assert 'planeStrain="0"' in xml
++                    assert 'weakInterfaceTraceBoundaryCoupling="1"' in xml if variant=="traceContactGroups" else 'weakInterfaceTraceBoundaryCoupling="1"' not in xml
++                    if ranks==args.ranks[0]:
++                        # Both methods must use precisely the same integration points,
++                        # masses, flags, normal/offset data, and native shapes.
++                        method_arrays.append((names,np.delete(data,names.index("ContactGroup"),axis=1)))
++                    results.append(dict(case=label,particles=len(data),volume=float(volume.sum()),
++                        native_tetrahedra=int(tetra.sum()),reference_rank_count=args.ranks[0],byte_identical_to_reference=True,communicator=args.communicator))
++                    print(label, len(data),"particles; reference-rank-identical",flush=True)
++            assert method_arrays[0][0]==method_arrays[1][0]
++            assert np.array_equal(method_arrays[0][1],method_arrays[1][1]),"Method comparison changed particles"
++    (output/"initialization_results.json").write_text(json.dumps(dict(
++        static_reference_checks="passed, four modulus ratios",cases=results,
++        scope="Full PFW only; no GEOS physics or real MPI unless communicator=mpi"),indent=2)+"\n")
++    print("PASS",len(results),"writer configurations and matched single-field/mortar particles")
++
++
++if __name__=="__main__": main()
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/CMakeLists.txt b/src/coreComponents/physicsSolvers/solidMechanics/CMakeLists.txt
+index b95a1f1bfd61a76409174f81143a8bf1a9609257..952a524b8d268ef1f887f674e22dab99a998513d 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/CMakeLists.txt
++++ b/src/coreComponents/physicsSolvers/solidMechanics/CMakeLists.txt
+@@ -32,7 +32,8 @@ if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
+   list( APPEND solidMechanicsSolvers_headers
+         SolidMechanicsMPM.hpp
+         MPMSolverFields.hpp
+-        kernels/ExplicitMPM.hpp )
++        kernels/ExplicitMPM.hpp
++        kernels/MPMBoundaryMortar.hpp )
+ 
+   list( APPEND solidMechanicsSolvers_sources
+         SolidMechanicsMPM.cpp
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/MPMBoundaryMortar.md b/src/coreComponents/physicsSolvers/solidMechanics/MPMBoundaryMortar.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..ebeb5fd7c5bdfb532b46444f3a8cef0aa1a72932
+--- /dev/null
++++ b/src/coreComponents/physicsSolvers/solidMechanics/MPMBoundaryMortar.md
+@@ -0,0 +1,240 @@
++# Boundary-compatible C0 mortar: opt-in CPU reference implementation
++
++## Baseline and status
++
++This is an incremental patch against the exact contents of
++`2609231646_geos_mpm_bundle.zip`, whose metadata identifies commit
++`46b1dc01edcdda855091cc97bce795555b427a2b` with the supplied worktree overlay.
++The two-pass PFW and native reference-geometry additions are ALREADY in that
++baseline. Do not reapply their earlier patches.
++
++The production algebra helper and particle writer have been tested separately.
++The GEOS adapter has been inspected but has NOT been compiled in a complete GEOS
++build. No GEOS mechanics run, actual MPI transport run, GPU run, or restart test
++has been performed for this patch. Treat the included octant input as a test to
++run, not a verified mechanics result.
++
++## Enable the new path
++
++The spherical test input supplies these options. For another PFW input using
++prescribed groups and explicit weak surfaces:
++
++```python
++pfw["enableWeakInterfaceTraceProjection"] = 1
++pfw["weakInterfaceTraceBoundaryCoupling"] = 1
++pfw["weakInterfaceTraceProjectionScale"] = 1.0
++pfw["weakInterfaceTraceSuppressNodalContact"] = 1
++pfw["weakInterfaceTraceLinearSolverTolerance"] = 1.0e-10
++pfw["weakInterfaceTraceAbsoluteTolerance"] = 1.0e-12
++pfw["weakInterfaceTraceQRRankTolerance"] = 1.0e-12
++pfw["weakInterfaceTraceQRMaxEntries"] = 16000000
++```
++
++The existing trace configuration still applies: single-point cubic B-spline,
++explicit surface geometry, prescribed contact-group fields, `damageFieldPartitioning=0`,
++selected `weakInterfaceTracePairs`, and the existing interpolation restrictions.
++
++`weakInterfaceTraceBoundaryCoupling=0` is the default and leaves the original
++GS/fallback and BC ordering enabled. With coupling enabled, the GS iteration cap
++and denominator regularization are NOT used: the projection is not a relaxed
++sweep or a ridge-regularized tie. A rank threshold is not an interface compliance.
++
++The new options are passed through by PFW without any new geometry queries or
++changes to rank-sliced particle generation. Old inputs omit them. Rebuild GEOS
++before using generated XML containing the new attributes. Regenerate an XSD
++from that executable if your workflow validates input against a saved schema.
++
++## Supported and deliberately unsupported combinations
++
++Supported scope is the existing grid-aligned six-face geometry, with arbitrary
++orientation of the intersecting material interface. Symmetry and bilateral
++Moving/FTable faces are handled. A Moving face needs the existing FTableBC or
++stress-control kinematics. Optional prescribed transverse components retain the
++existing component precedence at edges/corners. Free tangential components are
++not made dependent on reflected interior values.
++
++The code explicitly rejects unilateral Contact faces and an already-applied
++legacy material-contact/CZ impulse on participating nodes/fields. It does not
++silently claim to preserve a contact law applied before the mortar correction.
++A coupled active-set/friction treatment is future work. Nodal contact for the
++selected bonded pair is already suppressed by the existing trace-pair option.
++
++Other boundaries of this patch:
++
++- CPU reference solve only; not a distributed or GPU linear-solver replacement.
++- Prescribed explicit-surface groups only; no automatic residual/LR or DFG path.
++- No new CPDI/CPTI interpolation; existing R-vectors, native particle geometry,
++  mass, volume, density, material state, and cohesive update formulas are unchanged.
++- No general immersed or arbitrarily rotated EXTERNAL boundary surface. The
++  mortar surface itself may intersect the six grid-aligned faces at any angle.
++- `prescribedBoundaryFTable` is supported; superimposed `prescribedFTable`
++  particle deformation is rejected in this mode.
++- Existing higher-order FMPM trace restriction remains. PIC is the octant test
++  default. XPIC2 is selectable, but its filtered particle motion and evolving
++  interface geometry still need complete-step verification.
++- Restricting integration to the physical grid box does not solve the separate
++  problem of identifying an arbitrary free-surface termination inside that box.
++
++## Geometry: physical faces, legitimate edges, symmetry images
++
++The new branch uses the physical boundary planes at `m_xGlobalMin/Max`, one cell
++inside each nonperiodic padded grid face. The background-cell tetrahedra already
++align with those planes, so skipping exterior cells is an exact restriction;
++there is no new polygon mesher or integration refinement. The same interior
++mortar vertices/functions and quadrature rules are retained.
++
++A reconstructed open edge on a physical face is accepted as a legitimate
++termination. An incident exterior facet cannot invalidate an interior row,
++because exterior facets are not assembled in this branch. Physical buffer nodes
++are nevertheless retained in the B-spline trace.
++
++Near a symmetry face, marker points and normals are reflected for the nodal
++surface fit. Combinations handle intersections of two or three symmetry planes.
++These are fit samples only: no mirrored particle mass, volume, or exterior
++integration facets are created. Moving faces do not imply reflected geometry.
++Symmetry still requires physically mirrored material geometry and properties;
++it is not a way to assert symmetry of a non-symmetric specimen.
++
++## Algebra: preserve boundary dependencies in the mortar correction
++
++For a normal Moving or symmetry condition, the existing GEOS relation is
++
++```
++v_boundary = U
++v_buffer   = -v_interior + 2 U
++```
++
++Consequently, an allowed increment obeys
++
++```
++delta_v_boundary = 0
++delta_v_buffer   = -delta_v_interior
++```
++
++The helper represents raw velocities as `v = v_D + Z q`, using a signed-affine
++dependency map. It includes both the donor and buffer mapped masses in
++`M_reduced = Z^T M Z`. Dependencies are formed separately for each material
++field and Cartesian component. No nodal common velocity is imposed merely
++because two materials touch the same symmetry plane.
++
++The implementation preserves the original GEOS essential-BC update, including
++its acceleration/dVelocity semantics, then finds the minimum-mass correction
++compatible with those BCs and the accepted mortar rows. This is a deliberately
++bounded adapter change: it is not a claim that the original BC operation itself
++was replaced by a full minimum-mass projection from the unconstrained trial.
++
++Mass/support checks occur after reducing dependencies. A zero-mass buffer can
++contribute through its mass-carrying donor instead of automatically losing its
++basis coefficient. Common support filtering remains part of the method. A row
++that requests necessary nodal fallback is removed, its ties are included in the
++dependency map, and the remaining rows are reduced again before the solve.
++There is no post-solve nodal fallback overwrite.
++
++For a reduced row operator D, solve the row-scaled rectangular system
++
++```
++B y = b,  minimizing ||y||,  B = S D M_reduced^(-1/2).
++```
++
++The helper uses column-pivoted Householder QR of `B^T`, rather than explicitly
++forming the poorly conditioned Gram matrix. It computes a minimum-norm
++correction for the retained numerical rank, then checks ALL accepted original
++rows, including dependent ones. Incompatible or insufficiently resolved
++constraints cause an error, not a silent least-squares compromise.
++
++Acceptance requires absolute-plus-relative RMS AND maximum average-jump tests,
++plus a boundary-dependency residual check. The absolute tolerance has velocity
++units. A small initial residual may satisfy the absolute test without satisfying
++an arbitrarily tiny relative ratio; inspect both. No fallback to GS occurs if QR
++fails, exceeds its memory cap, or does not pass acceptance.
++
++The factor is dense and bounded by `weakInterfaceTraceQRMaxEntries`; 16 million
++entries corresponds to 128 million bytes for the factor alone, not total memory.
++Factorization time also grows rapidly. Start with the small included problem;
++a sparse/distributed solver is needed for a large interface network.
++
++## Timestep staging and FTable
++
++In the opt-in branch:
++
++1. Retain the existing explicit grid dynamics/contact stage.
++2. Evaluate table/controller kinematics and apply the existing essential BCs once.
++3. Reconstruct/restrict the mortar; close boundary dependencies; gather state.
++4. Solve compatible corrections; update velocity, momentum, and active-field
++   acceleration/dVelocity consistently.
++5. Skip the later duplicate table/BC application, but retain profile output.
++6. After owner-to-ghost synchronization, verify that the solved grid velocities
++   were not changed before G2P.
++
++This audit is a grid-stage check, not a proof about later XPIC/FMPM filtering or
++particle surface-marker transport. The original diagonal FTable endpoint rate
++and exact finite grid-stretch ratio are retained. Table/controller history is
++not advanced inside QR or separately for each Cartesian component.
++
++## MPI ownership and limits
++
++The existing gathered canonical-key interface representation is retained.
++Required nodes are closed under both donor-to-buffer and buffer-to-donor
++relations before the nodal-state gather, including edge/corner combinations.
++Owner-preferred deduplication counts a mass once, rather than summing partition
++copies. Physical buffer nodes are distinct from duplicate MPI ghosts.
++
++Rank 0 performs the dense solve and broadcasts success/failure before any result
++buffers. Every rank receives the same solution and reconstructs local entries;
++ranks with no local interface still participate in collectives. A post-sync
++check is collective even on an empty rank. Missing donor records and the MPI
++count limit fail explicitly. Actual MPI transport and GEOS field migration are
++not established by the standalone/emulated tests supplied with this patch.
++
++## Diagnostics and reaction accounting
++
++The logs identify geometry/fallback counts, component/time/cycle, accepted rows,
++rank/free columns, QR pivot scale, final relative/absolute jumps, boundary
++residual, and fallback degrees of freedom. Use the MPMSubroutines log category
++or the corresponding solver log level. Do not infer convergence from a run
++merely reaching its final time.
++
++The existing `gridWeakInterfaceTraceForce` represents the TOTAL compatible
++velocity-correction force in this mode. The new
++`gridWeakInterfaceTraceBoundaryForce` is the ADDITIONAL BC/internal-fallback
++reaction needed to balance the raw mortar impulse. Fixed components can have a
++reaction even when their velocity correction is zero. With rank redundancy,
++individual dual contributions need not be unique.
++
++The old `reactionHistory` still describes the preceding legacy BC update; it is
++not automatically augmented with this extra reaction. Inspect/sum the new force
++on owned nodes as appropriate. Do not label the old history as the complete
++coupled wall reaction. No momentum loss should be diagnosed without including
++external boundary impulses, and moving-wall work must be separated from internal
++projection energy removal.
++
++Fallback diagnostics distinguish a deliberate tie from an accepted mortar row;
++a zero jump at a fallback node is not evidence that its original row survived.
++The complete-step audit checks solution preservation after synchronization, not
++only the QR library residual.
++
++## Files and tests
++
++- `kernels/MPMBoundaryMortar.hpp`: dependency-free production algebra and grid-face helpers.
++- `SolidMechanicsMPM.cpp/.hpp`: options, geometry restriction, MPI adapter, staging and diagnostics.
++- `tests/testMPMBoundaryMortar.cpp`: standalone production-header unit tests.
++- `tests/testBoundaryMortarReference.py`: independent SVD and ordering comparisons.
++- PFW `verification/weakTraceSphericalInclusionOctant`: paired pressure inputs,
++  separate FTable smoke, static 3D sphere reference and log/initialization checks.
++
++From the GEOS root (C++14 compiler, NumPy and SciPy for the independent reference):
++
++```bash
++python src/coreComponents/physicsSolvers/solidMechanics/tests/testBoundaryMortarReference.py \
++  --output /tmp/boundary-mortar-algebra
++```
++
++For the spherical input and run procedure, see its dedicated README. Its positive
++octant pressure problem has three true symmetry planes and three positive-side
++void gaps. The FTable cube variant is a different physical problem; it is not
++compared to the spherical pressure reference.
++
++Required integration acceptance remains: a complete GEOS CPU build, serial
++pressure run, serial/2x2x2 comparison, restart, full/mirrored-domain comparison,
++final particle kinematics, and stress/traction convergence near all three
++symmetry intersections. None is replaced by the standalone matrix tests.
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
+index 32bc2770b91f85dbfd5629654b060a86b24615ee..1a7665d0bc09c48ca7edb911536048fc9fba006c 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
++++ b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
+@@ -18,6 +18,8 @@
+  */
+ 
+ #include "SolidMechanicsMPM.hpp"
++#include "kernels/MPMBoundaryMortar.hpp"
++#include <iterator>
+ 
+ #if defined( GEOS_USE_HIP )
+ #include <hip/hip_runtime.h>
+@@ -2428,6 +2430,10 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
+   m_weakInterfaceTraceMinTriangleQuality( 1.0e-4 ),
+   m_weakInterfaceTraceLinearSolverTolerance( 1.0e-10 ),
+   m_weakInterfaceTraceLinearSolverRegularization( 1.0e-12 ),
++  m_weakInterfaceTraceBoundaryCoupling( 0 ),
++  m_weakInterfaceTraceAbsoluteTolerance( 1.0e-12 ),
++  m_weakInterfaceTraceQRRankTolerance( 1.0e-12 ),
++  m_weakInterfaceTraceQRMaxEntries( 16000000 ),
+   m_weakInterfaceTracePairs(),
+   m_weakInterfaceTraceProjectionIterations( 30 ),
+   m_weakInterfaceTraceProjectionScale( 0.6 ),
+@@ -3791,6 +3797,20 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
+     setRestartFlags( RestartFlags::NO_WRITE ).
+     setDescription( "Relative RMS mortar-velocity residual used for optional early termination after a forward/reverse sweep pair." );
+ 
++  // Opt-in reference implementation. Legacy runs retain the original sweep path.
++  registerWrapper( "weakInterfaceTraceBoundaryCoupling", &m_weakInterfaceTraceBoundaryCoupling ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 0 ).
++    setDescription( "Use the CPU boundary-admissible QR mortar projection; symmetry and bilateral Moving/FTable faces only." );
++  registerWrapper( "weakInterfaceTraceAbsoluteTolerance", &m_weakInterfaceTraceAbsoluteTolerance ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 1.0e-12 ).
++    setDescription( "Absolute final average-jump/BC tolerance in velocity units for boundary-compatible mortar." );
++  registerWrapper( "weakInterfaceTraceQRRankTolerance", &m_weakInterfaceTraceQRRankTolerance ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 1.0e-12 ).
++    setDescription( "Relative pivot threshold for the minimum-norm QR reference projection; not an interface compliance." );
++  registerWrapper( "weakInterfaceTraceQRMaxEntries", &m_weakInterfaceTraceQRMaxEntries ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 16000000 ).
++    setDescription( "Maximum double entries in the dense rectangular QR factor; fail rather than silently use unconverged sweeps." );
++
+   registerWrapper( "weakInterfaceTraceLinearSolverRegularization", &m_weakInterfaceTraceLinearSolverRegularization ).
+     setInputFlag( InputFlags::OPTIONAL ).
+     setApplyDefaultValue( m_weakInterfaceTraceLinearSolverRegularization ).
+@@ -4170,6 +4190,22 @@ void SolidMechanicsMPM::postInputInitialization()
+                    "weakInterfaceTraceFallbackToSingleField must be zero or one." );
+   }
+ 
++  GEOS_ERROR_IF( m_weakInterfaceTraceBoundaryCoupling != 0 && m_weakInterfaceTraceBoundaryCoupling != 1,
++                 "weakInterfaceTraceBoundaryCoupling must be zero or one." );
++  if( m_weakInterfaceTraceBoundaryCoupling == 1 )
++  {
++    GEOS_ERROR_IF( m_rigidBodyMode != 0, "Boundary-compatible mortar is not available in RigidBodyMPM." );
++    GEOS_ERROR_IF( m_enableWeakInterfaceTraceProjection != 1 || m_weakInterfaceTraceSuppressNodalContact != 1,
++                   "Boundary-compatible mortar requires trace projection and suppression of redundant nodal contact." );
++    GEOS_ERROR_IF( m_weakInterfaceTraceProjectionScale != 1.0,
++                   "Boundary-compatible QR is a full projection; set weakInterfaceTraceProjectionScale=1." );
++    GEOS_ERROR_IF( m_prescribedFTable != 0,
++                   "Boundary-compatible mortar supports prescribedBoundaryFTable, not superimposed prescribedFTable deformation." );
++    GEOS_ERROR_IF( m_weakInterfaceTraceAbsoluteTolerance <= 0.0 || m_weakInterfaceTraceQRRankTolerance <= 0.0 ||
++                   m_weakInterfaceTraceQRRankTolerance >= 1.0 || m_weakInterfaceTraceQRMaxEntries < 1,
++                   "Invalid boundary-compatible mortar tolerance or QR memory limit." );
++  }
++
+   // Initialize boundary condition types if they're not specified by the user
+   if( m_boundaryConditionTypes.size() == 0 )
+   {
+@@ -4991,7 +5027,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
+       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() ).
+         setPlotLevel( gridFieldPlotLevel ).
+         setRegisteringObjects( this->getName() ).
+-        setDescription( "Balanced C0 vertex-mortar projection force on each node and velocity field." );
++        setDescription( "Mortar force; in boundary-compatible mode this is the total compatible correction, with reactions also recorded separately." );
++      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() ).
++        setPlotLevel( gridFieldPlotLevel ).
++        setRegisteringObjects( this->getName() ).
++        setDescription( "Additional boundary and internal fallback reaction from the boundary-compatible mortar correction; force units." );
+ 
+       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() ).
+         setPlotLevel( gridFieldPlotLevel ).
+@@ -5768,6 +5808,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
+   nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() ).resize( numNodes, m_numVelocityFields );
+   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() ).resize( numNodes, m_numVelocityFields );
+   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() ).resize( numNodes, m_numVelocityFields, 3 );
++  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() ).resize( numNodes, m_numVelocityFields, 3 );
++  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() ).zero();
+   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() ).resize( numNodes, m_numVelocityFields, 3 );
+   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() ).resize( numNodes, m_numVelocityFields );
+   nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() ).resize( numNodes, m_numVelocityFields );
+@@ -6038,6 +6080,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
+   updateGridDynamicsAndContactForExplicitStep( dt,
+                                                particleManager,
+                                                nodeManager );
++  m_weakInterfaceBoundaryKinematicsPrepared = false;
++  if( m_rigidBodyMode == 0 && m_enableWeakInterfaceTraceProjection == 1 && m_weakInterfaceTraceBoundaryCoupling == 1 )
++  {
++    // Table/controller evaluation is performed exactly once at the endpoint.
++    // Keep the existing boundary acceleration and transfer-increment contract,
++    // then solve only increments in its homogeneous admissible space.
++    updatePrescribedKinematicsForExplicitStep( dt, time_n, particleManager, partition );
++    applyEssentialBCs( dt, time_n, nodeManager );
++    applyFMPMUncontactedVelocityBoundaryConditions( nodeManager );
++    m_weakInterfaceBoundaryKinematicsPrepared = true;
++  }
+   if( m_rigidBodyMode == 0 && m_enableWeakInterfaceTraceProjection == 1 )
+   {
+     /*
+@@ -6078,6 +6131,22 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
+   synchronizePostBoundaryKinematicFieldsForG2P( domain,
+                                                 nodeManager,
+                                                 mesh );
++  if( m_weakInterfaceTraceBoundaryCoupling == 1 )
++  {
++    auto const & v = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
++    real64 error = 0.0;
++    for( localIndex node = 0; node < nodeManager.size() && m_weakInterfaceBoundaryTouched.size() > 0; ++node )
++      for( localIndex field = 0; field < m_numVelocityFields; ++field )
++        if( m_weakInterfaceBoundaryTouched[node][field] != 0 )
++          for( int d = 0; d < m_numDims; ++d )
++          {
++            real64 const difference = std::abs( v[node][field][d] - m_weakInterfaceBoundaryExpected[node][field][d] );
++            error = std::isfinite( difference ) ? std::max( error, difference ) : std::numeric_limits< real64 >::max();
++          }
++    error = MpiWrapper::allReduce( error, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
++    GEOS_ERROR_IF( error > 8.0 * m_weakInterfaceTraceAbsoluteTolerance,
++                   "A post-mortar boundary/synchronization update changed the coupled solution; max difference=" << error );
++  }
+   if( m_rigidBodyMode == 1 )
+   {
+     /*
+@@ -7215,12 +7284,15 @@ void SolidMechanicsMPM::applyPrescribedDeformationAndBoundaryConditionsForExplic
+                                                                                        NodeManager & nodeManager,
+                                                                                        SpatialPartition & partition )
+ {
+-  updatePrescribedKinematicsForExplicitStep( dt,
+-                                             time_n,
+-                                             particleManager,
+-                                             partition );
+-  applyEssentialBCs( dt, time_n, nodeManager );
+-  applyFMPMUncontactedVelocityBoundaryConditions( nodeManager );
++  if( !m_weakInterfaceBoundaryKinematicsPrepared )
++  {
++    updatePrescribedKinematicsForExplicitStep( dt, time_n, particleManager, partition );
++    applyEssentialBCs( dt, time_n, nodeManager );
++    applyFMPMUncontactedVelocityBoundaryConditions( nodeManager );
++  }
++  // In coupled mode the BC operation preceded the mortar, and the mortar
++  // correction preserved its dependencies. Do not overwrite it a second time.
++  m_weakInterfaceBoundaryKinematicsPrepared = false;
+   real64 const profileOutputTime = time_n + dt;
+   if( shouldWriteProfiles( profileOutputTime, cycleNumber ) )
+   {
+@@ -11337,6 +11409,7 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
+                                       viewKeyStruct::gridSurfaceTensionForceString(), // 3
+                                       viewKeyStruct::gridContactForceString(), // 3
+                                       viewKeyStruct::gridWeakInterfaceTraceForceString(), // 3
++                                      viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString(), // 3
+                                       viewKeyStruct::gridWeakInterfaceTracePointString(), // 3
+                                       viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString(), // 3
+                                       viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString(), // 3
+@@ -11420,6 +11493,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
+       viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString(),
+       viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString(),
+       viewKeyStruct::gridWeakInterfaceTraceForceString(),
++      viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString(),
+       viewKeyStruct::gridWeakInterfaceTracePointString(),
+       viewKeyStruct::gridWeakInterfaceTraceSupportWeightString(),
+       viewKeyStruct::gridWeakInterfaceTraceSkipReasonString(),
+@@ -24854,8 +24928,10 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
+  * and a six-tetrahedron Kuhn subdivision with triangular facets in 3D. One
+  * multiplier hat is associated with each reconstructed interface vertex and
+  * integrated over all incident segments/facets using the actual cubic B-spline
+- * trace basis, or the underlying Q1 grid trace for CPDI. Alternating
+- * forward/reverse local mass-metric corrections enforce the bonded velocity
++ * trace basis, or the underlying Q1 grid trace for CPDI. The opt-in B-spline
++ * boundary-compatible branch restricts integration to the physical grid box,
++ * reduces BC/buffer dependencies, and solves the accepted constraints with QR.
++ * Otherwise, alternating forward/reverse local corrections enforce the bonded velocity
+  * trace without assembling a global matrix. If the reconstructed geometry is
+  * locally unreliable, or if multiple weak interfaces enter one grid-node
+  * support, a conservative mass-weighted nodal single-field fallback is used.
+@@ -24906,6 +24982,8 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+   }
+ 
+   zeroWeakInterfaceTraceProjectionFields( nodeManager );
++  m_weakInterfaceBoundaryTouched.resize( 0, 0 );
++  bool const boundaryCoupled = m_weakInterfaceTraceBoundaryCoupling == 1;
+ 
+   int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+   int const numDims = m_numDims;
+@@ -24952,6 +25030,47 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+                    "Invalid global background-grid cell count for the C0 mortar." );
+   }
+ 
++  namespace bm = mpm::boundaryMortar;
++  bm::Faces boundaryFaces;
++  boundaryFaces.dimensions = numDims;
++  for( int d = 0; d < 3; ++d )
++  {
++    boundaryFaces.cells[d] = globalCellCount[d];
++    boundaryFaces.low[d] = m_xGlobalMin[d];
++    boundaryFaces.high[d] = m_xGlobalMax[d];
++    boundaryFaces.periodic[d] = periodic[d] != 0;
++  }
++  if( boundaryCoupled )
++  {
++    for( int face = 0; face < 2 * numDims; ++face )
++    {
++      int const d = face / 2;
++      int const kind = m_boundaryConditionTypes[face];
++      GEOS_ERROR_IF( kind == static_cast< int >( mpm::BoundaryConditionOption::Contact ),
++                     "Boundary-compatible mortar: unilateral Contact faces require a coupled active-set solve (not in this patch)." );
++      boundaryFaces.kind[face] = periodic[d] ? 0 : kind;
++      if( periodic[d] || kind == 0 ) continue;
++      boundaryFaces.controlled[face][d] = true;
++      if( kind == static_cast< int >( mpm::BoundaryConditionOption::Moving ) )
++      {
++        GEOS_ERROR_IF( m_prescribedBoundaryFTable != 1 && m_stressControl[0] != 1 &&
++                       m_stressControl[1] != 1 && m_stressControl[2] != 1,
++                       "A Moving face in boundary-compatible mortar requires FTableBC or active stress control." );
++        real64 const position = face % 2 == 0 ? m_xGlobalMin[d] : m_xGlobalMax[d];
++        boundaryFaces.target[face][d] = m_domainL[d] * m_domainIncrementalStretch[d] * position;
++        if( m_enablePrescribedBoundaryTransverseVelocities[face] )
++          for( int t = 0; t < 2; ++t )
++          {
++            int const component = ( d + t + 1 ) % 3;
++            boundaryFaces.controlled[face][component] = true;
++            boundaryFaces.target[face][component] = m_prescribedBoundaryTransverseVelocities[face][t];
++          }
++      }
++    }
++  }
++  auto toBoundaryKey = []( WeakInterfaceMortarNodeKey const & key )
++  { return bm::LatticeKey{{ key.i, key.j, key.k }}; };
++
+   auto positiveModulo = []( globalIndex value, globalIndex const modulus )
+   {
+     value %= modulus;
+@@ -25204,6 +25323,8 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+                  "SurfaceFlag::WeakDiscontinuity particles with valid normals." );
+ 
+   bool const useBSplineTrace = haveBSplineParticles != 0;
++  GEOS_ERROR_IF( boundaryCoupled && !useBSplineTrace,
++                 "Boundary-compatible mortar currently requires single-point cubic B-spline particles." );
+ 
+   std::vector< std::pair< int, int > > selectedPairs;
+   std::set< std::pair< int, int > > pairKeys;
+@@ -25541,6 +25662,9 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+ 
+   auto physicalBoundaryMask = [&]( std::array< real64, 3 > const & point )
+   {
++    if( boundaryCoupled )
++      return boundaryFaces.boundaryMask( point, std::max( geometryTolerance,
++        256.0 * DBL_EPSILON * std::max( { gridGlobalExtent[0], gridGlobalExtent[1], gridGlobalExtent[2], 1.0 } ) ) );
+     int mask = 0;
+     real64 const tolerance = 256.0 * DBL_EPSILON *
+       LvArray::math::max( LvArray::math::max( gridGlobalExtent[0], gridGlobalExtent[1] ),
+@@ -25615,6 +25739,22 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+       }
+       continue;
+     }
++    if( boundaryCoupled )
++    {
++      std::vector< WeakInterfaceTraceMarker > extended;
++      for( auto const & marker : pairMarkers )
++      {
++        bm::SurfaceSample const sample{ marker.point, marker.normal };
++        for( auto const & image : bm::symmetryImages( sample, boundaryFaces,
++              surfaceFitRadius * cellDiagonal, geometryTolerance ) )
++        {
++          WeakInterfaceTraceMarker copy = marker;
++          copy.point = image.point; copy.normal = image.normal;
++          extended.push_back( copy );
++        }
++      }
++      pairMarkers.swap( extended );
++    }
+     ++pairReconstructions;
+     totalPairMarkers += static_cast< localIndex >( pairMarkers.size() );
+ 
+@@ -26106,9 +26246,10 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+           {
+             continue;
+           }
++          std::array< real64, 3 > const cellCenter{{ centerX, centerY, physicalMidZ }};
++          if( boundaryCoupled && !boundaryFaces.inside( cellCenter ) ) continue;
+           ++localOwnedPairCells;
+           WeakInterfaceMortarNodeKey const cellKey = localCellKey( cellPoints, 4 );
+-          std::array< real64, 3 > const cellCenter{{ centerX, centerY, physicalMidZ }};
+           bool const containsMarker = markerCellKeys.find( cellKey ) != markerCellKeys.end();
+           bool const potentialCut = minPhi <= geometryTolerance &&
+                                     maxPhi >= -geometryTolerance;
+@@ -26506,6 +26647,7 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+             {
+               continue;
+             }
++            if( boundaryCoupled && !boundaryFaces.inside( cellCenter ) ) continue;
+             ++localOwnedPairCells;
+             WeakInterfaceMortarNodeKey const cellKey = localCellKey( cellPoints, 8 );
+             bool const containsMarker = markerCellKeys.find( cellKey ) != markerCellKeys.end();
+@@ -27471,6 +27613,35 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+     participatingFields.insert( selectedPair.second );
+   }
+ 
++  if( boundaryCoupled )
++  {
++    std::set< bm::LatticeKey > keys;
++    for( auto const & key : requiredNodeKeys ) keys.insert( toBoundaryKey( key ) );
++    bm::closeBoundaryDependencies( keys, boundaryFaces );
++    for( auto const & key : keys )
++      requiredNodeKeys.insert( WeakInterfaceMortarNodeKey{ static_cast< globalIndex >( key[0] ),
++        static_cast< globalIndex >( key[1] ), static_cast< globalIndex >( key[2] ) } );
++  }
++
++  if( boundaryCoupled )
++  {
++    // This first implementation couples bilateral BCs and bonded mortar only.
++    // Do not silently destroy an already-applied unilateral/frictional or CZ law.
++    auto const & contactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
++    auto const & cohesiveForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveForceString() );
++    real64 otherImpulse = 0.0;
++    for( localIndex node = 0; node < nodeManager.size(); ++node )
++      if( requiredNodeKeys.count( localNodeKeys[static_cast< std::size_t >( node )] ) )
++        for( localIndex const field : participatingFields )
++          for( int d = 0; d < numDims; ++d )
++            otherImpulse = std::max( otherImpulse,
++              dt * ( std::abs( contactForce[node][field][d] ) + std::abs( cohesiveForce[node][field][d] ) ) );
++    otherImpulse = MpiWrapper::allReduce( otherImpulse, MpiWrapper::Reduction::Max, MPI_COMM_GEOS );
++    GEOS_ERROR_IF( otherImpulse > 0.0,
++                   "Boundary-compatible mortar encountered an overlapping legacy contact/CZ impulse; "
++                   "a coupled active-set/constitutive interface solve is required for that case." );
++  }
++
+   std::vector< WeakInterfaceMortarNodeFieldRecord > localNodeFieldRecords;
+   for( localIndex node = 0; node < nodeManager.size(); ++node )
+   {
+@@ -27595,6 +27766,194 @@ void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
+     }
+   }
+ 
++  if( boundaryCoupled )
++  {
++    // The legacy essential-BC update has already supplied the inhomogeneous
++    // endpoint state. Solve only compatible corrections, with every reflected
++    // donor AND buffer mass included. The dense reference solve runs on rank 0;
++    // all ranks receive the same canonical-key result, including empty ranks.
++    std::vector< bm::LatticeKey > keys;
++    keys.reserve( interfaceNodeKeys.size() );
++    for( auto const & key : interfaceNodeKeys ) keys.push_back( toBoundaryKey( key ) );
++    std::vector< bm::Row > rows;
++    rows.reserve( candidates.size() );
++    for( auto const & candidate : candidates )
++    {
++      bm::Row row;
++      row.measure = candidate.measure;
++      for( auto const & coefficient : candidate.coefficients )
++      {
++        auto const found = interfaceNodeLookup.find( coefficient.node );
++        GEOS_ERROR_IF( found == interfaceNodeLookup.end(), "Missing gathered mortar coefficient node." );
++        row.coefficients.push_back( bm::PairCoefficient{
++          flatFieldIndex( found->second, candidate.fieldA ),
++          flatFieldIndex( found->second, candidate.fieldB ), coefficient.coefficient } );
++      }
++      rows.emplace_back( std::move( row ) );
++    }
++    std::vector< std::pair< std::size_t, std::size_t > > fallback;
++    for( auto const & entry : fallbackFieldsByNodeKey )
++    {
++      localIndex const node = interfaceNodeLookup.at( entry.first );
++      for( auto a = entry.second.begin(); a != entry.second.end(); ++a )
++        for( auto b = std::next( a ); b != entry.second.end(); ++b )
++          fallback.emplace_back( flatFieldIndex( node, a->first ), flatFieldIndex( node, b->first ) );
++    }
++    std::vector< double > mass( flatSize, 0.0 ), cutoff( flatSize, smallMass );
++    for( localIndex node = 0; node < static_cast< localIndex >( interfaceNodeKeys.size() ); ++node )
++      for( localIndex const field : participatingFields )
++      {
++        std::size_t const flat = flatFieldIndex( node, field );
++        GEOS_ERROR_IF( interfaceRecordPriority[flat] < 0,
++                       "Boundary-compatible mortar is missing a required owner/donor record." );
++        if( interfaceActive[flat] > 0.5 && interfaceMass[flat] > smallMass ) mass[flat] = interfaceMass[flat];
++        cutoff[flat] = LvArray::math::max( smallMass, massCutoffRatio * maximumFieldMass[field] );
++      }
++    GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
++      "C0 boundary-compatible geometry: vertices/facets=" << totalVertices << "/" << totalFacets <<
++      ", candidate rows=" << candidates.size() <<
++      ", requested fallback nodes=" << fallbackFieldsByNodeKey.size() <<
++      ", unexpected boundary entities=" << unexpectedBoundaryEntities <<
++      ", max duplicate node-state difference=" << maximumDuplicateStateDifference );
++    bm::Options options;
++    options.relativeTolerance = relativeTolerance;
++    options.absoluteTolerance = m_weakInterfaceTraceAbsoluteTolerance;
++    options.rankTolerance = m_weakInterfaceTraceQRRankTolerance;
++    options.maximumMatrixEntries = static_cast< std::size_t >( m_weakInterfaceTraceQRMaxEntries );
++    options.minimumRetainedFraction = minRetainedSupportFraction;
++    options.supportFallback = fallbackToSingleField;
++
++    // Scratch expectations are not restart data; they only audit this step's
++    // owner-to-ghost synchronization and detect a later kinematic overwrite.
++    m_weakInterfaceBoundaryExpected.resize( nodeManager.size(), numVelocityFields, 3 );
++    m_weakInterfaceBoundaryTouched.resize( nodeManager.size(), numVelocityFields );
++    m_weakInterfaceBoundaryTouched.zero();
++    arrayView3d< real64 > const velocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
++    arrayView3d< real64 > const momentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
++    arrayView3d< real64 > const acceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
++    arrayView3d< real64 > const dVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDVelocityString() );
++    arrayView3d< real64 > const boundaryForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() );
++    GEOS_ERROR_IF( flatSize > static_cast< std::size_t >( std::numeric_limits< int >::max() ) ||
++                   rows.size() > static_cast< std::size_t >( std::numeric_limits< int >::max() ),
++                   "Boundary mortar broadcast exceeds the MPI count limit." );
++
++    for( int component = 0; component < numDims; ++component )
++    {
++      bm::Result result;
++      int success = 1;
++      std::string error;
++      if( rank == 0 )
++      {
++        try
++        {
++          std::vector< double > trial( flatSize, 0.0 );
++          for( std::size_t flat = 0; flat < flatSize; ++flat ) trial[flat] = interfaceVelocity[flat][component];
++          auto const relations = bm::makeBoundaryRelations( keys, numVelocityFields, component, boundaryFaces );
++          result = bm::project( mass, trial, cutoff, relations, fallback, rows, options );
++          GEOS_LOG_LEVEL_RANK_0( logInfo::MPMSubroutines,
++            "C0 boundary-compatible QR component=" << component <<
++            ", time=" << m_currentMomentumLogTime + dt <<
++            ", cycle=" << m_currentMomentumLogCycle <<
++            ", candidates/accepted=" << rows.size() << "/" << rows.size() - result.rejectedRows <<
++            ", rank/free-columns=" << result.rank << "/" << result.unknowns <<
++            ", smallest-relative-pivot=" << result.smallestRelativePivot <<
++            ", relative residual=" << result.relativeResidual <<
++            ", max average jump=" << result.maximumJump <<
++            ", boundary residual=" << result.boundaryResidual <<
++            ", fallback dofs=" << std::count( result.fallbackDof.begin(), result.fallbackDof.end(), 1 ) <<
++            ", boundary+fallback reaction impulse=" <<
++              std::accumulate( result.reactionImpulse.begin(), result.reactionImpulse.end(), 0.0 ) );
++        }
++        catch( std::exception const & exception ) { success = 0; error = exception.what(); }
++      }
++      // Broadcast failure before any result buffers: no rank waits on a solve
++      // that another rank abandoned. The message is identical on every rank.
++      MpiWrapper::bcast( &success, 1, 0, MPI_COMM_GEOS );
++      int messageSize = static_cast< int >( error.size() );
++      MpiWrapper::bcast( &messageSize, 1, 0, MPI_COMM_GEOS );
++      error.resize( messageSize );
++      if( messageSize > 0 ) MpiWrapper::bcast( &error[0], messageSize, 0, MPI_COMM_GEOS );
++      GEOS_ERROR_IF( success == 0, "C0 boundary-compatible projection failed: " << error );
++      if( rank != 0 )
++      {
++        result.velocity.resize( flatSize ); result.reactionImpulse.resize( flatSize );
++        result.preJump.resize( rows.size() ); result.postJump.resize( rows.size() );
++        result.retainedFraction.resize( rows.size() ); result.accepted.resize( rows.size() );
++        result.fallbackDof.resize( flatSize );
++      }
++      auto broadcastDoubles = [&]( std::vector< double > & values )
++      {
++        if( !values.empty() ) MpiWrapper::bcast( values.data(), static_cast< int >( values.size() ), 0, MPI_COMM_GEOS );
++      };
++      broadcastDoubles( result.velocity ); broadcastDoubles( result.reactionImpulse );
++      broadcastDoubles( result.preJump ); broadcastDoubles( result.postJump );
++      broadcastDoubles( result.retainedFraction );
++      if( !result.accepted.empty() ) MpiWrapper::bcast( result.accepted.data(), static_cast< int >( rows.size() ), 0, MPI_COMM_GEOS );
++      if( !result.fallbackDof.empty() ) MpiWrapper::bcast( result.fallbackDof.data(), static_cast< int >( flatSize ), 0, MPI_COMM_GEOS );
++
++      std::vector< double > worstPre( flatSize, 0.0 ), worstPost( flatSize, 0.0 );
++      std::vector< int > active( flatSize, 0 );
++      std::vector< double > support( flatSize, 0.0 ), anchorWeight( flatSize, 0.0 );
++      std::vector< std::array< real64, 3 > > anchor( flatSize );
++      for( std::size_t a = 0; a < rows.size(); ++a ) if( result.accepted[a] )
++        for( bm::PairCoefficient const & c : rows[a].coefficients )
++          for( int side = 0; side < 2; ++side )
++          {
++            std::size_t const flat = side == 0 ? c.a : c.b;
++            active[flat] = 1;
++            anchorWeight[flat] = std::max( anchorWeight[flat], rows[a].measure / std::max( cellDiagonal, 1.0e-30 ) );
++            real64 const jumpSign = side == 0 ? 1.0 : -1.0;
++            if( std::abs( result.preJump[a] ) > std::abs( worstPre[flat] ) ) worstPre[flat] = jumpSign * result.preJump[a];
++            if( std::abs( result.postJump[a] ) > std::abs( worstPost[flat] ) ) worstPost[flat] = jumpSign * result.postJump[a];
++            if( c.value / rows[a].measure >= support[flat] )
++            { support[flat] = c.value / rows[a].measure; anchor[flat] = candidates[a].point; }
++          }
++      for( localIndex node = 0; node < nodeManager.size(); ++node )
++      {
++        auto const found = interfaceNodeLookup.find( localNodeKeys[static_cast< std::size_t >( node )] );
++        if( found == interfaceNodeLookup.end() ) continue;
++        for( localIndex const field : participatingFields )
++        {
++          std::size_t const flat = flatFieldIndex( found->second, field );
++          real64 const delta = result.velocity[flat] - velocity[node][field][component];
++          // Commit once. Inactive dependent buffers get their velocity but no
++          // invented mass or activation. Existing active-field increment
++          // conventions are preserved from the preceding essential-BC update.
++          if( gridActive[node][field] > 0.5 && gridMass[node][field] > smallMass )
++          {
++            acceleration[node][field][component] += delta / dt;
++            dVelocity[node][field][component] += delta;
++          }
++          velocity[node][field][component] = result.velocity[flat];
++          momentum[node][field][component] = gridMass[node][field] * result.velocity[flat];
++          gridWeakInterfaceTraceForce[node][field][component] = gridMass[node][field] * delta / dt;
++          boundaryForce[node][field][component] = result.reactionImpulse[flat] / dt;
++          m_weakInterfaceBoundaryExpected[node][field][component] = result.velocity[flat];
++          m_weakInterfaceBoundaryTouched[node][field] = 1;
++          gridWeakInterfaceTraceActive[node][field] |= active[flat] || result.fallbackDof[flat];
++          if( active[flat] ) gridWeakInterfaceTraceSkipReason[node][field] =
++            std::max( gridWeakInterfaceTraceSkipReason[node][field], 10 );
++          if( result.fallbackDof[flat] )
++          {
++            int reason = 26;
++            auto const f = fallbackFieldsByNodeKey.find( localNodeKeys[static_cast< std::size_t >( node )] );
++            if( f != fallbackFieldsByNodeKey.end() && f->second.count( field ) )
++              reason = f->second.at( field );
++            gridWeakInterfaceTraceSkipReason[node][field] = std::max( gridWeakInterfaceTraceSkipReason[node][field], reason );
++          }
++          gridWeakInterfaceTraceVelocityJump[node][field][component] = worstPre[flat];
++          gridWeakInterfaceTraceVelocityJumpPost[node][field][component] = worstPost[flat];
++          gridWeakInterfaceTraceAnchorWeight[node][field] = std::max( gridWeakInterfaceTraceAnchorWeight[node][field], anchorWeight[flat] );
++          gridWeakInterfaceTraceSupportWeight[node][field] = std::max( gridWeakInterfaceTraceSupportWeight[node][field], support[flat] );
++          if( active[flat] )
++            for( int d = 0; d < 3; ++d )
++              gridWeakInterfaceTracePoint[node][field][d] = minimumImageDelta( anchor[flat][d] - gridPosition[node][d], d );
++        }
++      }
++    }
++    return; // No legacy GS, denominator regularization, or post-solve fallback.
++  }
++
+   std::vector< WeakInterfaceMortarConstraint > constraints;
+   localIndex rejectedSupportConstraints = 0;
+   localIndex rejectedMassConstraints = 0;
+@@ -28302,6 +28661,7 @@ void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & no
+   GEOS_MARK_FUNCTION;
+ 
+   localIndex const numVelocityFields = m_numVelocityFields;
++  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceBoundaryForceString() ).zero();
+   arrayView2d< int > const gridWeakInterfaceTraceActive =
+     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
+   arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight =
+@@ -31615,6 +31975,8 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
+   arrayView3d< real64 > const gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
+   arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
+   arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
++  arrayView3d< real64 > const gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
++  bool const compatibleMortar = m_weakInterfaceTraceBoundaryCoupling == 1;
+ 
+   // Get node sets
+   Group & nodeSets = nodeManager.sets();
+@@ -32184,6 +32546,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
+             gridDVelocity[g][fieldIndex][component] += dVelocity;
+           }
+           gridVelocity[g][fieldIndex][component] = newVelocity;
++          if( compatibleMortar ) gridMomentum[g][fieldIndex][component] = gridMass[g][fieldIndex] * newVelocity;
+           gridAcceleration[g][fieldIndex][component] = newAcceleration;
+         }
+       }
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
+index 6b7237579f782ad99f6c12d811e989be9b6adced..ee2f28de189e9a0f09bf5690d0f21f871d3f4a21 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
++++ b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
+@@ -152,6 +152,7 @@ public:
+     static constexpr char const * gridWeakInterfaceTraceContactSuppressedString() { return "gridWeakInterfaceTraceContactSuppressed"; }
+     static constexpr char const * gridWeakInterfaceTraceAnchorWeightString() { return "gridWeakInterfaceTraceAnchorWeight"; }
+     static constexpr char const * gridWeakInterfaceTraceForceString() { return "gridWeakInterfaceTraceForce"; }
++    static constexpr char const * gridWeakInterfaceTraceBoundaryForceString() { return "gridWeakInterfaceTraceBoundaryForce"; }
+     static constexpr char const * gridWeakInterfaceTracePointString() { return "gridWeakInterfaceTracePoint"; }
+     static constexpr char const * gridWeakInterfaceTraceSupportWeightString() { return "gridWeakInterfaceTraceSupportWeight"; }
+     static constexpr char const * gridWeakInterfaceTraceSkipReasonString() { return "gridWeakInterfaceTraceSkipReason"; }
+@@ -1723,6 +1724,13 @@ protected:
+   real64 m_weakInterfaceTraceMinTriangleQuality;
+   real64 m_weakInterfaceTraceLinearSolverTolerance;
+   real64 m_weakInterfaceTraceLinearSolverRegularization;
++  integer m_weakInterfaceTraceBoundaryCoupling;
++  real64 m_weakInterfaceTraceAbsoluteTolerance;
++  real64 m_weakInterfaceTraceQRRankTolerance;
++  integer m_weakInterfaceTraceQRMaxEntries;
++  bool m_weakInterfaceBoundaryKinematicsPrepared = false;
++  array3d< real64 > m_weakInterfaceBoundaryExpected;
++  array2d< int > m_weakInterfaceBoundaryTouched;
+   array2d< int > m_weakInterfaceTracePairs;
+   int m_weakInterfaceTraceProjectionIterations;
+   real64 m_weakInterfaceTraceProjectionScale;
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/kernels/MPMBoundaryMortar.hpp b/src/coreComponents/physicsSolvers/solidMechanics/kernels/MPMBoundaryMortar.hpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..c0bca558dd829b25ecb3c481e2326bdfd8845698
+--- /dev/null
++++ b/src/coreComponents/physicsSolvers/solidMechanics/kernels/MPMBoundaryMortar.hpp
+@@ -0,0 +1,655 @@
++/*
++ * SPDX-License-Identifier: LGPL-2.1-only
++ *
++ * Small CPU reference solver for a boundary-compatible MPM mortar projection.
++ * No GEOS, MPI, or linear-algebra-library types are used here so the algebra can
++ * be tested independently. This is intentionally a bounded, dense reference
++ * solve, NOT a distributed/scalable replacement for GEOS' linear solver stack.
++ */
++#ifndef GEOS_MPM_BOUNDARY_MORTAR_HPP
++#define GEOS_MPM_BOUNDARY_MORTAR_HPP
++
++#include <algorithm>
++#include <array>
++#include <cmath>
++#include <cstddef>
++#include <limits>
++#include <map>
++#include <numeric>
++#include <set>
++#include <stdexcept>
++#include <string>
++#include <utility>
++#include <vector>
++
++namespace geos
++{
++namespace mpm
++{
++namespace boundaryMortar
++{
++
++using Index = std::size_t;
++constexpr Index invalidIndex = std::numeric_limits< Index >::max();
++
++struct Options
++{
++  double relativeTolerance = 1.0e-10;
++  double absoluteTolerance = 1.0e-12; // velocity units, for the final average jump
++  double rankTolerance = 1.0e-12;     // relative QR pivot threshold, NOT compliance
++  double minimumRetainedFraction = 1.0e-12;
++  Index maximumMatrixEntries = 16000000; // 128 MB for the factor itself
++  bool supportFallback = true;
++};
++
++// A constraint is the integral of a velocity jump. Each coefficient multiplies
++// (v[a] - v[b]); both sides retain exactly the same quadrature coefficient.
++struct PairCoefficient
++{
++  Index a = 0;
++  Index b = 0;
++  double value = 0.0;
++};
++struct Row
++{
++  std::vector< PairCoefficient > coefficients;
++  double measure = 0.0;
++};
++
++// Either v[a] = sign*v[b] + offset, or v[a] = offset (b == invalidIndex).
++// Normal symmetry/moving-buffer reflection has sign=-1; nodal fallback sign=+1.
++struct Relation
++{
++  Index a = 0;
++  Index b = invalidIndex;
++  double sign = 1.0;
++  double offset = 0.0;
++};
++
++inline void require( bool const condition, char const * message )
++{
++  if( !condition ) throw std::runtime_error( message );
++}
++
++/** Signed affine disjoint sets: v_i = sign_i*q_root + offset_i.
++ *
++ * This is the sparse Z map for the six grid-aligned GEOS faces. One raw degree
++ * of freedom has at most one free root, so Z^T M Z is a sum of masses, not a
++ * dense matrix. Fixed values and closed reflection cycles are handled exactly.
++ * A contradictory prescription is an error, never an averaged compromise.
++ */
++class AffineMap
++{
++public:
++  explicit AffineMap( Index const n, double const tolerance )
++    : m_parent( n ), m_size( n, 1 ), m_sign( n, 1.0 ), m_offset( n, 0.0 ),
++      m_fixed( n, false ), m_value( n, 0.0 ), m_tolerance( tolerance )
++  {
++    std::iota( m_parent.begin(), m_parent.end(), Index( 0 ) );
++  }
++
++  Index root( Index const i )
++  {
++    require( i < m_parent.size(), "Boundary dependency index is out of range." );
++    if( m_parent[i] != i )
++    {
++      Index const p = m_parent[i];
++      m_parent[i] = root( p );
++      m_offset[i] += m_sign[i] * m_offset[p];
++      m_sign[i] *= m_sign[p];
++    }
++    return m_parent[i];
++  }
++
++  void fix( Index const i, double const value )
++  {
++    require( std::isfinite( value ), "Nonfinite prescribed boundary velocity." );
++    Index const r = root( i );
++    setRootValue( r, m_sign[i] * ( value - m_offset[i] ) );
++  }
++
++  void relate( Index const a, Index const b, double const sign, double const offset )
++  {
++    require( ( sign == 1.0 || sign == -1.0 ) && std::isfinite( offset ),
++             "Boundary relation must have a finite offset and a unit sign." );
++    Index const ra = root( a );
++    Index const rb = root( b );
++    double const s = m_sign[a] * sign * m_sign[b];
++    double const d = m_sign[a] * ( sign * m_offset[b] + offset - m_offset[a] );
++    // q_ra = s*q_rb + d.
++    if( ra == rb )
++    {
++      if( s == 1.0 )
++        require( close( d, 0.0 ), "Incompatible boundary/fallback dependency cycle." );
++      else
++        setRootValue( ra, 0.5 * d );
++      return;
++    }
++    if( m_size[ra] <= m_size[rb] )
++      attach( ra, rb, s, d );
++    else
++      attach( rb, ra, s, -s * d );
++  }
++
++  void apply( Relation const & relation )
++  {
++    if( relation.b == invalidIndex ) fix( relation.a, relation.offset );
++    else relate( relation.a, relation.b, relation.sign, relation.offset );
++  }
++
++  double sign( Index const i ) { root( i ); return m_sign[i]; }
++  double offset( Index const i ) { root( i ); return m_offset[i]; }
++  bool fixed( Index const i ) { return m_fixed[root( i )]; }
++  double fixedValue( Index const i ) { return m_value[root( i )]; }
++
++private:
++  bool close( double const a, double const b ) const
++  {
++    return std::abs( a - b ) <= m_tolerance * std::max( { 1.0, std::abs( a ), std::abs( b ) } );
++  }
++  void setRootValue( Index const r, double const value )
++  {
++    if( m_fixed[r] )
++      require( close( m_value[r], value ), "Incompatible prescribed boundary velocities." );
++    m_fixed[r] = true;
++    m_value[r] = value;
++  }
++  void attach( Index const child, Index const parent, double const sign, double const offset )
++  {
++    if( m_fixed[child] ) setRootValue( parent, sign * ( m_value[child] - offset ) );
++    m_parent[child] = parent;
++    m_sign[child] = sign;
++    m_offset[child] = offset;
++    m_size[parent] += m_size[child];
++  }
++  std::vector< Index > m_parent, m_size;
++  std::vector< double > m_sign, m_offset;
++  std::vector< bool > m_fixed;
++  std::vector< double > m_value;
++  double m_tolerance;
++};
++
++struct ReducedState
++{
++  std::vector< Index > root, column;
++  std::vector< double > sign, offset, mass, center, value;
++  std::vector< bool > fixed;
++  Index freeCount = 0;
++};
++
++inline ReducedState reduce( AffineMap & map, std::vector< double > const & mass,
++                            std::vector< double > const & trial )
++{
++  Index const n = mass.size();
++  ReducedState s;
++  s.root.resize( n ); s.column.assign( n, invalidIndex );
++  s.sign.resize( n ); s.offset.resize( n ); s.mass.assign( n, 0.0 );
++  s.center.assign( n, 0.0 ); s.value.resize( n ); s.fixed.resize( n );
++  for( Index i = 0; i < n; ++i )
++  {
++    require( mass[i] >= 0.0 && std::isfinite( mass[i] ) && std::isfinite( trial[i] ),
++             "Invalid mass or trial velocity in the boundary mortar solve." );
++    Index const r = map.root( i );
++    s.root[i] = r; s.sign[i] = map.sign( i ); s.offset[i] = map.offset( i );
++    s.fixed[i] = map.fixed( i );
++    s.mass[r] += mass[i];
++    s.center[r] += mass[i] * s.sign[i] * ( trial[i] - s.offset[i] );
++  }
++  for( Index r = 0; r < n; ++r )
++  {
++    if( s.root[r] != r ) continue;
++    if( s.fixed[r] ) s.center[r] = map.fixedValue( r );
++    else if( s.mass[r] > 0.0 )
++    {
++      s.center[r] /= s.mass[r];
++      s.column[r] = s.freeCount++;
++    }
++    // Unsupported free roots never enter a trace row. Keep the representative
++    // trial value rather than clearing an unrelated zero-mass velocity.
++    else s.center[r] = trial[r];
++  }
++  for( Index i = 0; i < n; ++i )
++    s.value[i] = s.sign[i] * s.center[s.root[i]] + s.offset[i];
++  return s;
++}
++
++struct QRResult
++{
++  std::vector< double > correction, dual;
++  Index rank = 0;
++  double smallestRelativePivot = 0.0;
++};
++
++/** Solve min ||y|| subject to B*y=b with column-pivoted Householder QR of B^T.
++ * B^T P = Q [R11 R12; 0 0]. For a compatible right-hand side the unique minimum
++ * norm correction is y=Q1 R11^{-T} (P^T b)_1. The caller verifies ALL original
++ * constraints, including dependent rows. A rank threshold never adds compliance.
++ *
++ * bt is column-major: bt[column_of_Bt*n + row_of_Bt]. It is overwritten by QR.
++ */
++inline QRResult minimumNorm( std::vector< double > & bt, Index const n, Index const m,
++                             std::vector< double > const & b, double const rankTolerance )
++{
++  require( b.size() == m && bt.size() == n * m, "Invalid rectangular QR dimensions." );
++  QRResult out;
++  out.correction.assign( n, 0.0 ); out.dual.assign( m, 0.0 );
++  std::vector< Index > permutation( m );
++  std::iota( permutation.begin(), permutation.end(), Index( 0 ) );
++  Index const limit = std::min( n, m );
++  std::vector< double > tau( limit, 0.0 );
++  double firstPivot = 0.0;
++  for( Index k = 0; k < limit; ++k )
++  {
++    Index pivot = k;
++    double bestNorm = -1.0;
++    // Recompute norms rather than downdating: slower, but robust for this
++    // verification-sized, strongly correlated mortar matrix.
++    for( Index j = k; j < m; ++j )
++    {
++      // project() normalizes every column of B^T to unit norm before
++      // factorization. Orthogonal transforms preserve that bound, so this
++      // dot product cannot overflow; no expensive per-entry hypot is needed.
++      double normSquared = 0.0;
++      for( Index i = k; i < n; ++i ) normSquared += bt[j*n+i] * bt[j*n+i];
++      double const norm = std::sqrt( normSquared );
++      if( norm > bestNorm ) { bestNorm = norm; pivot = j; }
++    }
++    if( k == 0 ) firstPivot = bestNorm;
++    if( !( bestNorm > rankTolerance * firstPivot ) || bestNorm == 0.0 ) break;
++    if( pivot != k )
++    {
++      for( Index i = 0; i < n; ++i ) std::swap( bt[k*n+i], bt[pivot*n+i] );
++      std::swap( permutation[k], permutation[pivot] );
++    }
++    double const x0 = bt[k*n+k];
++    double const alpha = -std::copysign( bestNorm, x0 );
++    double const denominator = x0 - alpha;
++    tau[k] = ( alpha - x0 ) / alpha;
++    for( Index i = k + 1; i < n; ++i ) bt[k*n+i] /= denominator;
++    bt[k*n+k] = alpha;
++    for( Index j = k + 1; j < m; ++j )
++    {
++      double dot = bt[j*n+k];
++      for( Index i = k + 1; i < n; ++i ) dot += bt[k*n+i] * bt[j*n+i];
++      dot *= tau[k];
++      bt[j*n+k] -= dot;
++      for( Index i = k + 1; i < n; ++i ) bt[j*n+i] -= bt[k*n+i] * dot;
++    }
++    ++out.rank;
++    out.smallestRelativePivot = bestNorm / firstPivot;
++  }
++  Index const r = out.rank;
++  std::vector< double > z( r, 0.0 );
++  for( Index i = 0; i < r; ++i )
++  {
++    double rhs = b[permutation[i]];
++    for( Index j = 0; j < i; ++j ) rhs -= bt[i*n+j] * z[j];
++    z[i] = rhs / bt[i*n+i];
++    out.correction[i] = z[i];
++  }
++  // Q = H0 H1 ...: apply Householder reflectors in reverse order to Q1*z.
++  for( Index kk = r; kk > 0; --kk )
++  {
++    Index const k = kk - 1;
++    double dot = out.correction[k];
++    for( Index i = k + 1; i < n; ++i ) dot += bt[k*n+i] * out.correction[i];
++    dot *= tau[k];
++    out.correction[k] -= dot;
++    for( Index i = k + 1; i < n; ++i ) out.correction[i] -= bt[k*n+i] * dot;
++  }
++  // One valid dual solution; multipliers need not be unique when rows repeat.
++  std::vector< double > eta( r, 0.0 );
++  for( Index ii = r; ii > 0; --ii )
++  {
++    Index const i = ii - 1;
++    double rhs = z[i];
++    for( Index j = i + 1; j < r; ++j ) rhs -= bt[j*n+i] * eta[j];
++    eta[i] = rhs / bt[i*n+i];
++    out.dual[permutation[i]] = eta[i];
++  }
++  return out;
++}
++
++struct Result
++{
++  std::vector< double > velocity, mortarImpulse, reactionImpulse;
++  std::vector< double > preJump, postJump, retainedFraction;
++  std::vector< int > accepted, fallbackDof;
++  Index rank = 0, unknowns = 0, assembledRows = 0, rejectedRows = 0;
++  double maximumJump = 0.0, relativeResidual = 0.0, boundaryResidual = 0.0;
++  double smallestRelativePivot = 0.0;
++};
++
++/** Boundary reduction, common-support selection, and simultaneous mortar solve.
++ *
++ * mass contains owned physical nodal-field masses (duplicates have already been
++ * removed). Zero-mass buffer entries may depend on mass-carrying donor entries.
++ * Support is checked AFTER boundary reduction. New support fallback ties are
++ * incorporated into that reduction; there is no post-solve velocity overwrite.
++ */
++inline Result project( std::vector< double > const & mass,
++                       std::vector< double > const & trial,
++                       std::vector< double > const & cutoff,
++                       std::vector< Relation > const & boundary,
++                       std::vector< std::pair< Index, Index > > const & fallback,
++                       std::vector< Row > const & rows,
++                       Options const & options )
++{
++  Index const n = mass.size();
++  require( trial.size() == n && cutoff.size() == n, "Boundary mortar input size mismatch." );
++  require( std::isfinite( options.relativeTolerance ) && std::isfinite( options.absoluteTolerance ) &&
++           std::isfinite( options.rankTolerance ) &&
++           options.relativeTolerance > 0.0 && options.absoluteTolerance > 0.0 &&
++           options.rankTolerance > 0.0 && options.rankTolerance < 1.0 &&
++           options.minimumRetainedFraction >= 0.0 && options.minimumRetainedFraction <= 1.0,
++           "Invalid boundary mortar solver tolerances." );
++  for( double const value : cutoff )
++    require( value >= 0.0 && std::isfinite( value ), "Invalid boundary mortar mass cutoff." );
++  AffineMap map( n, options.absoluteTolerance );
++  for( Relation const & r : boundary ) map.apply( r );
++  Result result;
++  result.fallbackDof.assign( n, 0 );
++  auto tie = [&]( Index const a, Index const b )
++  {
++    require( a < n && b < n, "Fallback index out of range." );
++    map.relate( a, b, 1.0, 0.0 );
++    result.fallbackDof[a] = result.fallbackDof[b] = 1;
++  };
++  for( auto const & pair : fallback )
++  {
++    require( pair.first < n && pair.second < n, "Fallback index out of range." );
++    if( mass[pair.first] > cutoff[pair.first] && mass[pair.second] > cutoff[pair.second] )
++      tie( pair.first, pair.second );
++  }
++
++  result.accepted.assign( rows.size(), 1 );
++  result.retainedFraction.assign( rows.size(), 0.0 );
++  std::vector< std::vector< PairCoefficient > > retained( rows.size() );
++  ReducedState state;
++  // At most one new row removal is required for progress. This also handles the
++  // rare case where a fallback merges previously separate boundary donor sets.
++  for( Index pass = 0; pass <= rows.size(); ++pass )
++  {
++    state = reduce( map, mass, trial );
++    bool removed = false;
++    for( Index a = 0; a < rows.size(); ++a )
++    {
++      if( !result.accepted[a] ) continue;
++      Row const & row = rows[a];
++      require( row.measure > 0.0 && std::isfinite( row.measure ), "Invalid mortar row measure." );
++      double total = 0.0, kept = 0.0;
++      retained[a].clear();
++      for( PairCoefficient const & c : row.coefficients )
++      {
++        require( c.a < n && c.b < n && std::isfinite( c.value ),
++                 "Invalid mortar coefficient." );
++        // Preserve coefficients exactly. The GEOS partition-of-unity closure
++        // can produce a roundoff-sized negative last B-spline coefficient.
++        total += c.value;
++        if( state.mass[state.root[c.a]] > cutoff[c.a] && state.mass[state.root[c.b]] > cutoff[c.b] )
++        { retained[a].push_back( c ); kept += c.value; }
++      }
++      result.retainedFraction[a] = total > 0.0 ? kept / total : 0.0;
++      if( kept <= 0.0 || result.retainedFraction[a] < options.minimumRetainedFraction )
++      {
++        result.accepted[a] = 0; ++result.rejectedRows; removed = true;
++        if( options.supportFallback )
++          for( PairCoefficient const & c : row.coefficients )
++            if( mass[c.a] > cutoff[c.a] && mass[c.b] > cutoff[c.b] ) tie( c.a, c.b );
++      }
++    }
++    if( !removed ) break;
++    require( pass < rows.size(), "Support/fallback reduction failed to terminate." );
++  }
++
++  result.preJump.assign( rows.size(), 0.0 );
++  result.postJump.assign( rows.size(), 0.0 );
++  std::vector< std::map< Index, double > > reducedRows;
++  std::vector< Index > sourceRow;
++  std::vector< double > scale, rhs;
++  double initialNorm = 0.0;
++  for( Index a = 0; a < rows.size(); ++a )
++  {
++    if( !result.accepted[a] ) continue;
++    std::map< Index, double > coefficients;
++    double g = 0.0;
++    for( PairCoefficient const & c : retained[a] )
++    {
++      g += c.value * ( state.value[c.a] - state.value[c.b] );
++      for( int side = 0; side < 2; ++side )
++      {
++        Index const i = side == 0 ? c.a : c.b;
++        Index const r = state.root[i];
++        if( state.column[r] != invalidIndex )
++          coefficients[state.column[r]] += ( side == 0 ? 1.0 : -1.0 ) * c.value *
++                                           state.sign[i] / std::sqrt( state.mass[r] );
++      }
++    }
++    result.preJump[a] = g / rows[a].measure;
++    initialNorm = std::hypot( initialNorm, result.preJump[a] );
++    double norm = 0.0;
++    for( auto const & c : coefficients ) norm = std::hypot( norm, c.second );
++    if( norm == 0.0 )
++    {
++      require( std::abs( result.preJump[a] ) <= options.absoluteTolerance,
++               "Mortar row conflicts with fully prescribed boundary/fallback velocities." );
++      continue; // redundant but satisfied; checked again below
++    }
++    sourceRow.push_back( a ); scale.push_back( 1.0 / norm ); rhs.push_back( -g / norm );
++    reducedRows.emplace_back( std::move( coefficients ) );
++  }
++  // Remove free roots untouched by any accepted mortar row before allocating QR.
++  // Their mass-minimizing boundary projection is still retained in state.value.
++  std::set< Index > usedColumns;
++  for( auto const & row : reducedRows )
++    for( auto const & c : row ) if( c.second != 0.0 ) usedColumns.insert( c.first );
++  std::map< Index, Index > compact;
++  for( Index c : usedColumns ) compact.emplace( c, compact.size() );
++  Index const nc = compact.size(), nr = reducedRows.size();
++  require( nr == 0 || nc <= options.maximumMatrixEntries / nr,
++           "Boundary mortar QR exceeds weakInterfaceTraceQRMaxEntries; reduce the reference problem or use a scalable solver." );
++  std::vector< double > bt( nc * nr, 0.0 );
++  for( Index a = 0; a < nr; ++a )
++    for( auto const & c : reducedRows[a] )
++      if( c.second != 0.0 ) bt[a*nc+compact.at( c.first )] = scale[a] * c.second;
++  QRResult qr = minimumNorm( bt, nc, nr, rhs, options.rankTolerance );
++  result.rank = qr.rank; result.unknowns = nc; result.assembledRows = nr;
++  result.smallestRelativePivot = qr.smallestRelativePivot;
++  for( Index r = 0; r < n; ++r )
++  {
++    if( state.root[r] != r || state.column[r] == invalidIndex ) continue;
++    auto const found = compact.find( state.column[r] );
++    if( found != compact.end() ) state.center[r] += qr.correction[found->second] / std::sqrt( state.mass[r] );
++  }
++  result.velocity.resize( n ); result.mortarImpulse.assign( n, 0.0 );
++  result.reactionImpulse.resize( n );
++  for( Index i = 0; i < n; ++i )
++    result.velocity[i] = state.sign[i] * state.center[state.root[i]] + state.offset[i];
++  for( Index a = 0; a < nr; ++a )
++  {
++    double const impulse = qr.dual[a] * scale[a];
++    for( PairCoefficient const & c : retained[sourceRow[a]] )
++    { result.mortarImpulse[c.a] += c.value * impulse; result.mortarImpulse[c.b] -= c.value * impulse; }
++  }
++  double finalNorm = 0.0;
++  for( Index a = 0; a < rows.size(); ++a )
++  {
++    if( !result.accepted[a] ) continue;
++    double g = 0.0;
++    for( PairCoefficient const & c : retained[a] )
++      g += c.value * ( result.velocity[c.a] - result.velocity[c.b] );
++    result.postJump[a] = g / rows[a].measure;
++    finalNorm = std::hypot( finalNorm, result.postJump[a] );
++    result.maximumJump = std::max( result.maximumJump, std::abs( result.postJump[a] ) );
++  }
++  result.relativeResidual = initialNorm > 0.0 ? finalNorm / initialNorm : finalNorm;
++  double const rms = finalNorm / std::sqrt( double( std::max( Index( 1 ), rows.size() - result.rejectedRows ) ) );
++  double const initialRms = initialNorm / std::sqrt( double( std::max( Index( 1 ), rows.size() - result.rejectedRows ) ) );
++  require( rms <= options.absoluteTolerance + options.relativeTolerance * initialRms &&
++           result.maximumJump <= options.absoluteTolerance + options.relativeTolerance *
++             ( result.preJump.empty() ? 0.0 : std::abs( *std::max_element( result.preJump.begin(), result.preJump.end(),
++                 []( double const a, double const b ){ return std::abs( a ) < std::abs( b ); } ) ) ),
++           "Boundary mortar QR did not satisfy the original accepted constraints; inspect rank, support, and tolerances." );
++  for( Relation const & r : boundary )
++  {
++    double const residual = result.velocity[r.a] - r.offset -
++      ( r.b == invalidIndex ? 0.0 : r.sign * result.velocity[r.b] );
++    result.boundaryResidual = std::max( result.boundaryResidual, std::abs( residual ) );
++  }
++  require( result.boundaryResidual <= 8.0 * options.absoluteTolerance,
++           "Boundary dependency reconstruction lost the prescribed kinematics." );
++  for( Index i = 0; i < n; ++i )
++  {
++    require( std::isfinite( result.velocity[i] ), "Nonfinite boundary mortar solution." );
++    // This includes both external BC reactions and internal fallback reactions.
++    // The latter cancel when summed over the fields tied at a node.
++    result.reactionImpulse[i] = mass[i] * ( result.velocity[i] - trial[i] ) - result.mortarImpulse[i];
++  }
++  return result;
++}
++
++/** Global-index description of the existing, grid-aligned GEOS BC surfaces.
++ * The physical faces are one cell inside the nonperiodic padded grid.
++ * Interface orientation does not enter these boundary relations.
++ */
++using LatticeKey = std::array< long long, 3 >;
++struct Faces
++{
++  std::array< long long, 3 > cells{{ 0, 0, 0 }};
++  std::array< double, 3 > low{{ 0, 0, 0 }}, high{{ 0, 0, 0 }};
++  std::array< bool, 3 > periodic{{ false, false, false }};
++  std::array< int, 6 > kind{{ 0, 0, 0, 0, 0, 0 }}; // 0 outflow, 1 symmetry, 2 Moving
++  std::array< std::array< bool, 3 >, 6 > controlled{};
++  std::array< std::array< double, 3 >, 6 > target{};
++  int dimensions = 3;
++
++  bool inside( std::array< double, 3 > const & x ) const
++  {
++    for( int d = 0; d < dimensions; ++d )
++      if( !periodic[d] && ( x[d] < low[d] || x[d] > high[d] ) ) return false;
++    return true;
++  }
++  int boundaryMask( std::array< double, 3 > const & x, double const tolerance ) const
++  {
++    int mask = 0;
++    for( int d = 0; d < dimensions; ++d ) if( !periodic[d] )
++    {
++      if( std::abs( x[d] - low[d] ) <= tolerance ) mask |= 1 << ( 2*d );
++      if( std::abs( x[d] - high[d] ) <= tolerance ) mask |= 1 << ( 2*d+1 );
++    }
++    return mask;
++  }
++};
++
++// A donor alone is not sufficient: include every buffer entry tied to it so all
++// physical mapped mass in Z^T M Z is present, even when that entry has c_aI=0.
++// This closure is global-index based and therefore independent of MPI slicing.
++inline void closeBoundaryDependencies( std::set< LatticeKey > & keys, Faces const & faces )
++{
++  bool changed = true;
++  while( changed )
++  {
++    changed = false;
++    std::vector< LatticeKey > additions;
++    for( LatticeKey const & key : keys )
++      for( int face = 0; face < 2 * faces.dimensions; ++face )
++      {
++        int const d = face / 2;
++        if( faces.periodic[d] || faces.kind[face] == 0 ) continue;
++        long long const ghost = face % 2 == 0 ? 0 : faces.cells[d];
++        long long const donor = face % 2 == 0 ? 2 : faces.cells[d] - 2;
++        if( key[d] == ghost || key[d] == donor )
++        {
++          LatticeKey reflected = key;
++          reflected[d] = key[d] == ghost ? donor : ghost;
++          additions.push_back( reflected );
++        }
++      }
++    for( LatticeKey const & key : additions ) changed = keys.insert( key ).second || changed;
++  }
++}
++
++inline std::vector< Relation > makeBoundaryRelations( std::vector< LatticeKey > const & keys,
++                                                       Index const fields, int const component,
++                                                       Faces const & faces )
++{
++  std::map< LatticeKey, Index > lookup;
++  for( Index i = 0; i < keys.size(); ++i ) lookup.emplace( keys[i], i );
++  std::vector< Relation > relations;
++  for( Index i = 0; i < keys.size(); ++i )
++  {
++    std::array< int, 6 > priority{};
++    int highest = 0;
++    for( int face = 0; face < 2 * faces.dimensions; ++face )
++    {
++      int const d = face / 2;
++      if( faces.periodic[d] || !faces.controlled[face][component] ) continue;
++      long long const boundary = face % 2 == 0 ? 1 : faces.cells[d] - 1;
++      long long const buffer = face % 2 == 0 ? 0 : faces.cells[d];
++      // Same precedence as GEOS' staged normal/transverse boundary targets.
++      if( keys[i][d] == boundary ) priority[face] = component == d ? 4 : 2;
++      if( keys[i][d] == buffer ) priority[face] = component == d ? 3 : 1;
++      highest = std::max( highest, priority[face] );
++    }
++    for( int face = 0; face < 2 * faces.dimensions; ++face )
++    {
++      if( priority[face] == 0 || priority[face] != highest ) continue;
++      int const d = face / 2;
++      bool const fixed = priority[face] == 4 || priority[face] == 2;
++      Index donorIndex = invalidIndex;
++      if( !fixed )
++      {
++        LatticeKey donor = keys[i];
++        donor[d] = face % 2 == 0 ? 2 : faces.cells[d] - 2;
++        auto const found = lookup.find( donor );
++        require( found != lookup.end(), "Missing MPI donor in boundary dependency closure." );
++        donorIndex = found->second;
++      }
++      for( Index field = 0; field < fields; ++field )
++        relations.push_back( Relation{ i*fields+field,
++          fixed ? invalidIndex : donorIndex*fields+field,
++          fixed ? 1.0 : -1.0, ( fixed ? 1.0 : 2.0 ) * faces.target[face][component] } );
++    }
++  }
++  return relations;
++}
++
++struct SurfaceSample
++{
++  std::array< double, 3 > point{}, normal{};
++};
++
++// Only symmetry is reflected geometrically. A Moving face does not imply a
++// mirror-symmetric material geometry. Images are fit samples, never particles,
++// volume/mass contributions, or integration facets outside the physical domain.
++inline std::vector< SurfaceSample > symmetryImages( SurfaceSample const & sample,
++                                                    Faces const & faces,
++                                                    double const radius, double const tolerance )
++{
++  std::vector< SurfaceSample > images{ sample };
++  for( int d = 0; d < faces.dimensions; ++d )
++  {
++    Index const count = images.size();
++    for( int side = 0; side < 2; ++side )
++    {
++      int const face = 2*d + side;
++      if( faces.kind[face] != 1 || faces.periodic[d] ) continue;
++      double const plane = side == 0 ? faces.low[d] : faces.high[d];
++      for( Index j = 0; j < count; ++j )
++      {
++        double const distance = images[j].point[d] - plane;
++        if( std::abs( distance ) <= tolerance || std::abs( distance ) > radius ) continue;
++        SurfaceSample mirrored = images[j];
++        mirrored.point[d] = 2.0 * plane - mirrored.point[d];
++        mirrored.normal[d] = -mirrored.normal[d];
++        images.push_back( mirrored );
++      }
++    }
++  }
++  return images;
++}
++
++} // namespace boundaryMortar
++} // namespace mpm
++} // namespace geos
++#endif
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/tests/testBoundaryMortarReference.py b/src/coreComponents/physicsSolvers/solidMechanics/tests/testBoundaryMortarReference.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..7b70ce32fa93a6aea02cdc60f7189e0861bbd3b4
+--- /dev/null
++++ b/src/coreComponents/physicsSolvers/solidMechanics/tests/testBoundaryMortarReference.py
+@@ -0,0 +1,98 @@
++#!/usr/bin/env python3
++"""Compile/test the production CPU helper and compare it with an independent SVD.
++
++This is an algebra test, not a GEOS, MPI transport, or particle mechanics run.
++Requires a C++14 compiler, NumPy, and SciPy. No external packages are downloaded.
++"""
++import argparse
++import json
++from pathlib import Path
++import subprocess
++import numpy as np
++import scipy.linalg
++
++
++def solve(executable, mass, trial, boundary, ties, rows):
++    n = len(mass)
++    text = [f"{n} {len(rows)} {len(boundary)} {len(ties)}",
++            " ".join(map(repr, mass.tolist())), " ".join(map(repr, trial.tolist()))]
++    text += [f"{a} {b} {s:.17g} {d:.17g}" for a, b, s, d in boundary]
++    text += [f"{a} {b}" for a, b in ties]
++    for coefficients in rows:
++        text.append(f"1 {len(coefficients)}")
++        text += [f"{a} {b} {c:.17g}" for a, b, c in coefficients]
++    proc = subprocess.run([str(executable), "--solve"], input="\n".join(text)+"\n",
++                          text=True, capture_output=True, check=True)
++    lines = proc.stdout.splitlines()
++    return np.fromstring(lines[0], sep=" "), np.fromstring(lines[2], sep=" ")
++
++
++def reference(mass, trial, boundary, ties, rows):
++    n = len(mass)
++    matrix, rhs = [], []
++    for a, b, sign, offset in boundary:
++        r = np.zeros(n); r[a] = 1
++        if b >= 0: r[b] -= sign
++        matrix.append(r); rhs.append(offset)
++    for a, b in ties:
++        r = np.zeros(n); r[a] = 1; r[b] -= 1
++        matrix.append(r); rhs.append(0)
++    for coefficients in rows:
++        r = np.zeros(n)
++        for a,b,c in coefficients: r[a] += c; r[b] -= c
++        matrix.append(r); rhs.append(0)
++    a = np.array(matrix)
++    target = np.array(rhs)
++    b = a / np.sqrt(mass)[None,:]
++    scale = np.linalg.norm(b, axis=1)
++    b = b / scale[:,None]
++    g = (target-a@trial)/scale
++    u,s,vt = scipy.linalg.svd(b, full_matrices=False)
++    keep = s > s[0]*1e-12
++    correction = vt[keep].T @ ((u[:,keep].T @ g)/s[keep])
++    velocity = trial + correction / np.sqrt(mass)
++    return velocity, np.max(np.abs(a@velocity-target))
++
++
++def main():
++    parser=argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--output', type=Path, required=True)
++    parser.add_argument('--compiler', default='g++')
++    args=parser.parse_args(); args.output.mkdir(parents=True, exist_ok=True)
++    here=Path(__file__).resolve().parent
++    executable=(args.output/'test_boundary_mortar').resolve()
++    subprocess.run([args.compiler,'-std=c++14','-O2','-Wall','-Wextra','-Wpedantic','-Werror',
++                    str(here/'testMPMBoundaryMortar.cpp'),'-o',str(executable)],check=True)
++    basic=subprocess.check_output([str(executable)],text=True).strip()
++    rng=np.random.default_rng(260923)
++    max_difference=max_residual=0.0
++    for k in range(120):
++        nodes=6+k%10; n=nodes*2
++        mass=10**rng.uniform(-2,2,n)
++        trial=rng.normal(0,.1,n)
++        wall=float(rng.normal(0,.2))
++        # Field-wise mirror dependencies and a common prescribed boundary value.
++        boundary=[(0,2,-1,2*wall),(1,3,-1,2*wall),
++                  (4,-1,1,wall),(5,-1,1,wall)]
++        ties=[(6,7)] if k%3==0 else []
++        rows=[]
++        for j in range(2+k%4):
++            c=rng.uniform(.01,1,nodes);c/=c.sum()
++            rows.append([(2*i,2*i+1,float(c[i])) for i in range(nodes)])
++        if k%2==0: rows.append([(a,b,3.7*c) for a,b,c in rows[0]])
++        actual, diagnostics=solve(executable,mass,trial,boundary,ties,rows)
++        expected,residual=reference(mass,trial,boundary,ties,rows)
++        delta=float(np.max(np.abs(actual-expected)))
++        np.testing.assert_allclose(actual,expected,atol=3e-10,rtol=3e-10)
++        max_difference=max(max_difference,delta);max_residual=max(max_residual,float(diagnostics[0]))
++        # Changing the relation order cannot choose a different corner solution.
++        reordered,_=solve(executable,mass,trial,list(reversed(boundary)),ties,rows)
++        np.testing.assert_allclose(actual,reordered,atol=3e-10,rtol=3e-10)
++    report=dict(basic=basic,randomized_cases=120,additional_reordered_cases=120,
++                maximum_difference_from_svd=max_difference,
++                maximum_final_average_mortar_jump=max_residual,
++                scope='Production C++ helper only; not a full GEOS/MPI/physics test')
++    (args.output/'reference_results.json').write_text(json.dumps(report,indent=2)+'\n')
++    print(json.dumps(report,indent=2))
++
++if __name__=='__main__': main()
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/tests/testMPMBoundaryMortar.cpp b/src/coreComponents/physicsSolvers/solidMechanics/tests/testMPMBoundaryMortar.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..613de6987e586bab726d679ba9938551852f5667
+--- /dev/null
++++ b/src/coreComponents/physicsSolvers/solidMechanics/tests/testMPMBoundaryMortar.cpp
+@@ -0,0 +1,182 @@
++// Standalone tests of the production header; build with C++14 or newer.
++#include "../kernels/MPMBoundaryMortar.hpp"
++#include <iostream>
++#include <random>
++#include <sstream>
++
++namespace bm = geos::mpm::boundaryMortar;
++int checks = 0;
++void check( bool c, char const * label ) { if( !c ) throw std::runtime_error( label ); ++checks; }
++void near( double a, double b, double tol=2e-11 ) { check( std::abs(a-b)<tol, "numeric comparison" ); }
++template< class F > void fails( F f ) { bool failed=false; try{f();}catch(std::runtime_error const&){failed=true;}check(failed,"expected a checked failure"); }
++bm::Row row( std::initializer_list<bm::PairCoefficient> c, double area=1 ) { return bm::Row{c,area}; }
++
++int main( int argc, char ** argv )
++{
++  // Tiny text protocol for an independent NumPy/SciPy SVD comparison runner.
++  if( argc > 1 && std::string(argv[1]) == "--solve" )
++  {
++    std::size_t n,m,k,f; std::cin>>n>>m>>k>>f;
++    std::vector<double> mass(n),v(n),cut(n,1e-30);
++    for(auto& x:mass)std::cin>>x;
++    for(auto& x:v)std::cin>>x;
++    std::vector<bm::Relation> bc(k);
++    for(auto& r:bc){long long b;std::cin>>r.a>>b>>r.sign>>r.offset;r.b=b<0?bm::invalidIndex:std::size_t(b);}
++    std::vector<std::pair<std::size_t,std::size_t>> ties(f);
++    for(auto& p:ties)std::cin>>p.first>>p.second;
++    std::vector<bm::Row> rows(m);
++    for(auto& r:rows){std::size_t count;std::cin>>r.measure>>count;r.coefficients.resize(count);for(auto& c:r.coefficients)std::cin>>c.a>>c.b>>c.value;}
++    bm::Options opt; opt.relativeTolerance=1e-9;opt.rankTolerance=1e-13;
++    try{
++      auto r=bm::project(mass,v,cut,bc,ties,rows,opt);
++      std::cout.precision(17);
++      for(double x:r.velocity)std::cout<<x<<" ";
++      std::cout<<"\n";
++      for(double x:r.reactionImpulse)std::cout<<x<<" ";
++      std::cout<<"\n";
++      std::cout<<r.maximumJump<<" "<<r.boundaryResidual<<" "<<r.rank<<"\n";
++    }catch(std::exception const& e){std::cerr<<e.what()<<"\n";return 2;}
++    return 0;
++  }
++  bm::Options o;
++  {
++    auto r=bm::project({2,3},{2,-1},{0,0},{},{},{row({{0,1,1}})},o);
++    near(r.velocity[0],.2);near(r.velocity[1],.2);
++    near(2*r.velocity[0]+3*r.velocity[1],1);
++    near(r.reactionImpulse[0],0);near(r.reactionImpulse[1],0);
++  }
++  {
++    // Redundant mortar rows, arbitrary row scaling: same mass-minimum answer.
++    auto r=bm::project({2,3},{2,-1},{0,0},{},{},
++      {row({{0,1,1}}),row({{0,1,7}},7),row({{0,1,.001}},.001)},o);
++    near(r.velocity[0],.2);check(r.rank==1,"rank of redundant constraints");
++  }
++  {
++    // Positive-mass donor with a massless dependent buffer remains represented.
++    auto r=bm::project({3,0,4,0},{1,-1,-2,2},{0,0,0,0},
++      {{1,0,-1,0},{3,2,-1,0}},{},{row({{1,3,.5}})},o);
++    near(r.velocity[0],-5.0/7);near(r.velocity[1],5.0/7);
++    near(r.velocity[2],-5.0/7);check(r.accepted[0]==1,"fold support before cutoff");
++  }
++  {
++    // Moving buffer: q, U, 2U-q. Both donor and buffer carry physical mass.
++    auto r=bm::project({3,2,7},{1,.4,-.2},{0,0,0},
++      {{1,bm::invalidIndex,1,.4},{2,0,-1,.8}},{},{},o);
++    near(r.velocity[0],1);near(r.velocity[2],-.2);near(r.velocity[1],.4);
++  }
++  {
++    // Common-velocity fallback participates in the solve, not an overwrite.
++    auto r=bm::project({1,2,3,4},{1,-2,3,-4},{0,0,0,0},{},{{0,1}},
++      {row({{0,1,.4},{2,3,.6}})},o);
++    near(r.velocity[0],r.velocity[1]);near(r.velocity[2],r.velocity[3]);
++    check(r.fallbackDof[0]==1,"fallback retained");
++  }
++  {
++    // A completely fixed, already satisfied row has no multiplier unknown.
++    auto r=bm::project({1,1},{7,9},{0,0},
++      {{0,bm::invalidIndex,1,.25},{1,bm::invalidIndex,1,.25}},{},{row({{0,1,1}})},o);
++    near(r.velocity[0],.25);check(r.rank==0,"redundant fully prescribed row");
++    fails([&]{bm::project({1,1},{0,0},{0,0},
++      {{0,bm::invalidIndex,1,0},{1,bm::invalidIndex,1,1}},{},{row({{0,1,1}})},o);});
++  }
++  {
++    bm::AffineMap map(3,1e-12);
++    map.relate(0,1,-1,2);map.relate(1,2,-1,4);map.fix(2,3);
++    auto r=bm::reduce(map,{1,1,1},{0,0,0});near(r.value[0],1);near(r.value[1],1);near(r.value[2],3);
++    fails([&]{map.fix(0,5);});
++    bm::AffineMap cycle(2,1e-12);cycle.relate(0,1,-1,2);cycle.relate(1,0,1,0);
++    auto c=bm::reduce(cycle,{1,1},{0,0});near(c.value[0],1);near(c.value[1],1);
++  }
++  {
++    bm::Options tiny=o;tiny.maximumMatrixEntries=1;
++    fails([&]{bm::project({1,1},{0,1},{0,0},{},{},{row({{0,1,1}})},tiny);});
++    fails([&]{bm::project({-1,1},{0,1},{0,0},{},{},{row({{0,1,1}})},o);});
++  }
++  {
++    bm::Faces faces;faces.cells={{10,10,10}};faces.low={{0,0,0}};faces.high={{1,1,1}};
++    for(int d=0;d<3;++d){faces.kind[2*d]=1;faces.controlled[2*d][d]=true;}
++    std::set<bm::LatticeKey> keys{{{2,2,2}}};bm::closeBoundaryDependencies(keys,faces);
++    check(keys.size()==8,"three-plane ghost/donor closure");
++    std::vector<bm::LatticeKey> list(keys.begin(),keys.end());
++    for(int d=0;d<3;++d)
++    {
++      auto rel=bm::makeBoundaryRelations(list,2,d,faces);
++      check(rel.size()==8,"component-wise independent fields");
++      std::vector<double> m(16,1),v(16,2),cut(16,0);
++      auto r=bm::project(m,v,cut,rel,{}, {},o);
++      near(r.boundaryResidual,0);
++      for(auto const& c:rel)near(r.velocity[c.a],-r.velocity[c.b]);
++    }
++    auto img=bm::symmetryImages({{{.2,.3,.4}},{{.2,.3,.4}}},faces,1,1e-12);
++    check(img.size()==8,"octant symmetry image closure");
++    std::array<double,3> sum{{0,0,0}};
++    for(auto const& x:img)for(int d=0;d<3;++d)sum[d]+=x.normal[d];
++    for(double x:sum)near(x,0);
++    check(faces.boundaryMask({{0,.1,.2}},1e-12)==1,"physical x=0 mask");
++    check(!faces.inside({{-.01,.1,.2}}),"exclude padded integration cells");
++    check(faces.inside({{0,.1,.2}}),"retain terminal facets");
++    faces.periodic[0]=true;
++    check(faces.boundaryMask({{0,.1,.2}},1e-12)==0,"periodic face not physical boundary");
++  }
++  {
++    // Admissible affine weak jump: vA-vB=x+.3y-.2 on the plane phi=0.
++    // Coefficients integrate four samples with weighted phi exactly zero.
++    std::vector<double> mass(8,1),cut(8,0),trial{-.2,0,.8,0,-.2,0,.8,0};
++    auto r=bm::project(mass,trial,cut,{}, {},
++      {row({{0,1,.4},{2,3,.1},{4,5,.4},{6,7,.1}})},o);
++    for(std::size_t i=0;i<trial.size();++i)near(r.velocity[i],trial[i]);
++  }
++  {
++    // Actual cubic B-spline boundary trace: two fields, three symmetry planes,
++    // three opposite Moving planes, and overlapping mortar constraints. The
++    // normal trace must remain prescribed after the coupled correction, even
++    // though the adjacent material-side nodal velocities are independent.
++    bm::Faces f; f.cells={{6,6,6}}; f.low={{0,0,0}}; f.high={{1,1,1}};
++    for(int d=0; d<3; ++d)
++    {
++      f.kind[2*d]=1; f.kind[2*d+1]=2;
++      f.controlled[2*d][d]=f.controlled[2*d+1][d]=true;
++      f.target[2*d+1][d]=.01*(d+1);
++    }
++    std::vector<bm::LatticeKey> keys;
++    std::map<bm::LatticeKey,std::size_t> index;
++    for(int i=0;i<=6;++i)for(int j=0;j<=6;++j)for(int k=0;k<=6;++k)
++    { bm::LatticeKey x{{i,j,k}}; index[x]=keys.size(); keys.push_back(x); }
++    std::vector<double> mass(2*keys.size()), trial(mass.size()), cut(mass.size(),0);
++    for(std::size_t i=0;i<mass.size();++i){mass[i]=1+.1*(i%7);trial[i]=.03*std::sin(double(i));}
++    std::vector<bm::Row> rows(5);
++    for(std::size_t a=0;a<rows.size();++a)
++    {
++      rows[a].measure=1;
++      for(std::size_t i=a;i<keys.size();i+=7)
++        rows[a].coefficients.push_back({2*i,2*i+1,1./49});
++    }
++    for(int d=0;d<3;++d)
++    {
++      auto bc=bm::makeBoundaryRelations(keys,2,d,f);
++      auto result=bm::project(mass,trial,cut,bc,{},rows,o);
++      near(result.maximumJump,0);
++      for(int side=0;side<2;++side)for(int j=0;j<=6;++j)for(int k=0;k<=6;++k)
++      {
++        bm::LatticeKey boundary{{0,0,0}};
++        boundary[d]=side?5:1; boundary[(d+1)%3]=j; boundary[(d+2)%3]=k;
++        auto ghost=boundary, donor=boundary;
++        ghost[d]=side?6:0; donor[d]=side?4:2;
++        for(int field=0;field<2;++field)
++        {
++          double const trace=(result.velocity[2*index.at(ghost)+field]
++            +4*result.velocity[2*index.at(boundary)+field]
++            +result.velocity[2*index.at(donor)+field])/6;
++          near(trace,f.target[2*d+side][d]);
++        }
++      }
++    }
++    // No coefficient clipping: GEOS' partition-of-unity closure can yield a
++    // tiny negative coefficient in an otherwise nonnegative trace row.
++    auto q=bm::project({1,1,1,1},{1,2,3,4},{0,0,0,0},{},{},
++      {row({{0,1,1.0},{2,3,-2e-17}})},o);
++    near(q.maximumJump,0);
++    fails([&]{bm::project({1,1},{0,1},{0,0},{},{{0,99}},{},o);});
++  }
++  std::cout<<"PASS: "<<checks<<" standalone production-header checks\n";
++}

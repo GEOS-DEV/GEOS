@@ -1,0 +1,1723 @@
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+index 31c833e7409d00d41a2c92d13c721b3f7cc8a798..49329d049fef3e3ba91743fd0b8610f69f42374b 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+@@ -783,7 +783,7 @@ parameters = {
+                'disableSurfaceTractionsOnMelt': ( None, True ),  # MPM: drop explicit surface tractions after melt.
+                'enableContact': ( None, True ),  # MPM: enable contact between velocity fields.
+                'enableWeakInterfacePrimalEnrichment': ( None, True ),  # MPM: experimental serial primal weak-interface ridge enrichment.
+-               'weakInterfacePrimalGeometryType': ( None, True ),  # MPM: 1=plane, 2=circle for exact prototype geometry.
++               'weakInterfacePrimalGeometryType': ( None, True ),  # MPM: 3=particle-surface reconstructed continuous polyline prototype.
+                'weakInterfacePrimalPointX': ( None, True ),
+                'weakInterfacePrimalPointY': ( None, True ),
+                'weakInterfacePrimalNormalX': ( None, True ),
+@@ -791,6 +791,12 @@ parameters = {
+                'weakInterfacePrimalRadius': ( None, True ),
+                'weakInterfacePrimalMinMassRatio': ( None, True ),
+                'weakInterfacePrimalMassCFL': ( None, True ),
++               'weakInterfacePrimalGeometryHalo': ( None, True ),
++               'weakInterfacePrimalMinMarkersPerCell': ( None, True ),
++               'weakInterfacePrimalMinNormalCoherence': ( None, True ),
++               'weakInterfacePrimalMaxFitResidual': ( None, True ),
++               'weakInterfacePrimalMinSegmentFraction': ( None, True ),
++               'weakInterfacePrimalGeometryLogInterval': ( None, True ),
+                'enablePrescribedBoundaryTransverseVelocities': ( None, True ),  # MPM: enable transverse boundary velocities.
+                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
+                'eventReporting': (None, True), # MPM: enable event information reporting.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceBsplineSurface/README.md b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceBsplineSurface/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b9f0bb4b2a55b50cd0606d75a541fa4e415e8a0
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceBsplineSurface/README.md
+@@ -0,0 +1,25 @@
++# Primal weak-interface B-spline surface-reconstruction checks
++
++This convenience runner dispatches the three serial CPU verification variants
++used by the particle-surface reconstructed primal weak-interface prototype:
++
++- `weakTraceRotatedBar/primalEnrichment`
++- `weakTraceDynamicWave/primalEnrichment`
++- `weakTraceCircularInclusionRadial/primalEnrichment`
++
++All command-line options are forwarded to the existing case runners. For
++example:
++
++```bash
++./runTest -y --walltime 00:20:00 --post-walltime 00:10:00
++```
++
++The solver reconstructs a current, continuous two-dimensional polyline from
++`SurfaceFlag::WeakDiscontinuity` particle surface points and normals at the
++beginning of every explicit step. Adjacent interface cells share canonical
++edge-crossing points. The mass-orthogonal primal ridge uses the unsigned
++distance and one-sided gradient to that reconstructed polyline.
++
++This is an experimental serial, CPU-only, plane-strain, PIC,
++`SinglePointBSpline` implementation. Contact, DFG, CZ, and the dual
++weak-interface projection must remain disabled in these variants.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceBsplineSurface/runTest b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceBsplineSurface/runTest
+new file mode 100755
+index 0000000000000000000000000000000000000000..3ec62ff3b4f671f354b185329b8c632e01060a3d
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceBsplineSurface/runTest
+@@ -0,0 +1,22 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
++VERIFICATION_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
++
++# Forward all arguments to the existing case runners.  Each primal variant is
++# guarded to one MPI rank by the solver and uses SinglePointBSpline particles.
++COMMON_ARGS=("$@")
++
++run_case() {
++  local folder=$1
++  local variant=$2
++  echo "[primalWeakInterfaceBsplineSurface] ${folder}/${variant}"
++  "$VERIFICATION_ROOT/$folder/runTest" \
++    --variant "$variant" \
++    "${COMMON_ARGS[@]}"
++}
++
++run_case weakTraceRotatedBar primalEnrichment
++run_case weakTraceDynamicWave primalEnrichment
++run_case weakTraceCircularInclusionRadial primalEnrichment
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionRadial/pfw_input_weakTraceCircularInclusionRadial.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionRadial/pfw_input_weakTraceCircularInclusionRadial.py
+index f91299a89b15008d4d3d6e73d717189e9965d780..8ea6f6396d59c674aa945106c469bbeeef3154d1 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionRadial/pfw_input_weakTraceCircularInclusionRadial.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceCircularInclusionRadial/pfw_input_weakTraceCircularInclusionRadial.py
+@@ -136,6 +136,11 @@ pfw["gridFieldNames"] = [
+     "gridWeakPrimalVelocity",
+     "gridWeakPrimalAcceleration",
+     "gridWeakPrimalActive",
++    "gridWeakPrimalGeometryActive",
++    "gridWeakPrimalGeometryDistance",
++    "gridWeakPrimalGeometryNormal",
++    "gridWeakPrimalGeometryFitResidual",
++    "gridWeakPrimalGeometrySegmentCount",
+ ]
+ pfw["plottableFields"] = ["particleStress", "particleVelocity", "particleDisplacement"]
+ pfw["particleFileFields"] = [
+@@ -165,12 +170,15 @@ if VARIANT == "primalEnrichment":
+     pfw["enableContact"] = 0
+     pfw["enableWeakInterfaceTraceProjection"] = 0
+     pfw["enableWeakInterfacePrimalEnrichment"] = 1
+-    pfw["weakInterfacePrimalGeometryType"] = 2
+-    pfw["weakInterfacePrimalPointX"] = float(os.environ.get("PRIMAL_WEAK_CENTER_X", "0.0"))
+-    pfw["weakInterfacePrimalPointY"] = float(os.environ.get("PRIMAL_WEAK_CENTER_Y", "0.0"))
+-    pfw["weakInterfacePrimalRadius"] = float(os.environ.get("PRIMAL_WEAK_RADIUS", str(inclusion_radius)))
++    pfw["weakInterfacePrimalGeometryType"] = 3
+     pfw["weakInterfacePrimalMinMassRatio"] = float(os.environ.get("PRIMAL_WEAK_MIN_MASS_RATIO", "1.0e-8"))
+     pfw["weakInterfacePrimalMassCFL"] = float(os.environ.get("PRIMAL_WEAK_MASS_CFL", "0.35"))
++    pfw["weakInterfacePrimalGeometryHalo"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_HALO", "1"))
++    pfw["weakInterfacePrimalMinMarkersPerCell"] = int(os.environ.get("PRIMAL_WEAK_MIN_MARKERS_PER_CELL", "1"))
++    pfw["weakInterfacePrimalMinNormalCoherence"] = float(os.environ.get("PRIMAL_WEAK_MIN_NORMAL_COHERENCE", "0.25"))
++    pfw["weakInterfacePrimalMaxFitResidual"] = float(os.environ.get("PRIMAL_WEAK_MAX_FIT_RESIDUAL", "0.35"))
++    pfw["weakInterfacePrimalMinSegmentFraction"] = float(os.environ.get("PRIMAL_WEAK_MIN_SEGMENT_FRACTION", "1.0e-4"))
++    pfw["weakInterfacePrimalGeometryLogInterval"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_LOG_INTERVAL", "1000"))
+ elif VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+@@ -300,7 +308,7 @@ def annulus(name: str, mat: int, group: int):
+ 
+ 
+ def mark_interface(name: str, obj):
+-    if VARIANT == "traceContactGroups":
++    if VARIANT in ("traceContactGroups", "primalEnrichment"):
+         return geom.surfaceFlagWrapper(name + "_weak", obj, int(geom.SurfaceFlag.WeakDiscontinuity))
+     if VARIANT == "falseElasticCZ":
+         return geom.czTagWrapper(name + "_cz_tag", geom.surfaceFlagWrapper(name + "_cz", obj, int(geom.SurfaceFlag.Cohesive)), 0)
+@@ -382,4 +390,9 @@ pfw_expected = {
+     "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
+     "primal_geometry_type": pfw.get("weakInterfacePrimalGeometryType", 0),
+     "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),
++    "primal_geometry_halo": pfw.get("weakInterfacePrimalGeometryHalo", None),
++    "primal_min_markers_per_cell": pfw.get("weakInterfacePrimalMinMarkersPerCell", None),
++    "primal_min_normal_coherence": pfw.get("weakInterfacePrimalMinNormalCoherence", None),
++    "primal_max_fit_residual": pfw.get("weakInterfacePrimalMaxFitResidual", None),
++    "primal_min_segment_fraction": pfw.get("weakInterfacePrimalMinSegmentFraction", None),
+ }
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceDynamicWave/pfw_input_weakTraceDynamicWave.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceDynamicWave/pfw_input_weakTraceDynamicWave.py
+index 62b5a1fed3519271d4ef6a7294bdd23792142f8f..141566c6b390193211a8aabc891a38efb141727a 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceDynamicWave/pfw_input_weakTraceDynamicWave.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceDynamicWave/pfw_input_weakTraceDynamicWave.py
+@@ -148,6 +148,11 @@ pfw["gridFieldNames"] = [
+     "gridWeakPrimalVelocity",
+     "gridWeakPrimalAcceleration",
+     "gridWeakPrimalActive",
++    "gridWeakPrimalGeometryActive",
++    "gridWeakPrimalGeometryDistance",
++    "gridWeakPrimalGeometryNormal",
++    "gridWeakPrimalGeometryFitResidual",
++    "gridWeakPrimalGeometrySegmentCount",
+ ]
+ pfw["plottableFields"] = ["particleStress", "particleVelocity", "particleDisplacement"]
+ pfw["particleFileFields"] = [
+@@ -204,13 +209,15 @@ if VARIANT == "primalEnrichment":
+     pfw["enableContact"] = 0
+     pfw["enableWeakInterfaceTraceProjection"] = 0
+     pfw["enableWeakInterfacePrimalEnrichment"] = 1
+-    pfw["weakInterfacePrimalGeometryType"] = 1
+-    pfw["weakInterfacePrimalPointX"] = float(os.environ.get("PRIMAL_WEAK_POINT_X", str(interface_x)))
+-    pfw["weakInterfacePrimalPointY"] = float(os.environ.get("PRIMAL_WEAK_POINT_Y", "0.0"))
+-    pfw["weakInterfacePrimalNormalX"] = float(os.environ.get("PRIMAL_WEAK_NORMAL_X", "1.0"))
+-    pfw["weakInterfacePrimalNormalY"] = float(os.environ.get("PRIMAL_WEAK_NORMAL_Y", "0.0"))
++    pfw["weakInterfacePrimalGeometryType"] = 3
+     pfw["weakInterfacePrimalMinMassRatio"] = float(os.environ.get("PRIMAL_WEAK_MIN_MASS_RATIO", "1.0e-8"))
+     pfw["weakInterfacePrimalMassCFL"] = float(os.environ.get("PRIMAL_WEAK_MASS_CFL", "0.35"))
++    pfw["weakInterfacePrimalGeometryHalo"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_HALO", "1"))
++    pfw["weakInterfacePrimalMinMarkersPerCell"] = int(os.environ.get("PRIMAL_WEAK_MIN_MARKERS_PER_CELL", "1"))
++    pfw["weakInterfacePrimalMinNormalCoherence"] = float(os.environ.get("PRIMAL_WEAK_MIN_NORMAL_COHERENCE", "0.25"))
++    pfw["weakInterfacePrimalMaxFitResidual"] = float(os.environ.get("PRIMAL_WEAK_MAX_FIT_RESIDUAL", "0.35"))
++    pfw["weakInterfacePrimalMinSegmentFraction"] = float(os.environ.get("PRIMAL_WEAK_MIN_SEGMENT_FRACTION", "1.0e-4"))
++    pfw["weakInterfacePrimalGeometryLogInterval"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_LOG_INTERVAL", "1000"))
+ elif VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+@@ -271,7 +278,7 @@ def interface_group(side: int) -> int:
+ 
+ 
+ def mark_interface(name: str, obj):
+-    if VARIANT == "traceContactGroups":
++    if VARIANT in ("traceContactGroups", "primalEnrichment"):
+         return geom.surfaceFlagWrapper(name + "_weak", obj, int(geom.SurfaceFlag.WeakDiscontinuity))
+     if VARIANT == "falseElasticCZ":
+         return geom.czTagWrapper(name + "_cz_tag", geom.surfaceFlagWrapper(name + "_cz", obj, int(geom.SurfaceFlag.Cohesive)), 0)
+@@ -347,4 +354,9 @@ pfw_expected = {
+     "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
+     "primal_geometry_type": pfw.get("weakInterfacePrimalGeometryType", 0),
+     "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),
++    "primal_geometry_halo": pfw.get("weakInterfacePrimalGeometryHalo", None),
++    "primal_min_markers_per_cell": pfw.get("weakInterfacePrimalMinMarkersPerCell", None),
++    "primal_min_normal_coherence": pfw.get("weakInterfacePrimalMinNormalCoherence", None),
++    "primal_max_fit_residual": pfw.get("weakInterfacePrimalMaxFitResidual", None),
++    "primal_min_segment_fraction": pfw.get("weakInterfacePrimalMinSegmentFraction", None),
+ }
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/pfw_input_weakTraceRotatedBar.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/pfw_input_weakTraceRotatedBar.py
+index 410234226166d6eaa08104f2bded631a6a3c75e3..8ca5e77132bcbf4f0fdea14df1b8300fb2b1f283 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/pfw_input_weakTraceRotatedBar.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/pfw_input_weakTraceRotatedBar.py
+@@ -136,6 +136,11 @@ pfw["gridFieldNames"] = [
+     "gridWeakPrimalVelocity",
+     "gridWeakPrimalAcceleration",
+     "gridWeakPrimalActive",
++    "gridWeakPrimalGeometryActive",
++    "gridWeakPrimalGeometryDistance",
++    "gridWeakPrimalGeometryNormal",
++    "gridWeakPrimalGeometryFitResidual",
++    "gridWeakPrimalGeometrySegmentCount",
+ ]
+ 
+ pfw["particleFileFields"] = [
+@@ -165,9 +170,15 @@ if VARIANT in ("primalEnrichment", "primalEnrichmentDynamic"):
+     pfw["enableContact"] = 0
+     pfw["enableWeakInterfaceTraceProjection"] = 0
+     pfw["enableWeakInterfacePrimalEnrichment"] = 1
+-    pfw["weakInterfacePrimalGeometryType"] = 1
++    pfw["weakInterfacePrimalGeometryType"] = 3
+     pfw["weakInterfacePrimalMinMassRatio"] = float(os.environ.get("PRIMAL_WEAK_MIN_MASS_RATIO", "1.0e-8"))
+     pfw["weakInterfacePrimalMassCFL"] = float(os.environ.get("PRIMAL_WEAK_MASS_CFL", "0.35"))
++    pfw["weakInterfacePrimalGeometryHalo"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_HALO", "1"))
++    pfw["weakInterfacePrimalMinMarkersPerCell"] = int(os.environ.get("PRIMAL_WEAK_MIN_MARKERS_PER_CELL", "1"))
++    pfw["weakInterfacePrimalMinNormalCoherence"] = float(os.environ.get("PRIMAL_WEAK_MIN_NORMAL_COHERENCE", "0.25"))
++    pfw["weakInterfacePrimalMaxFitResidual"] = float(os.environ.get("PRIMAL_WEAK_MAX_FIT_RESIDUAL", "0.35"))
++    pfw["weakInterfacePrimalMinSegmentFraction"] = float(os.environ.get("PRIMAL_WEAK_MIN_SEGMENT_FRACTION", "1.0e-4"))
++    pfw["weakInterfacePrimalGeometryLogInterval"] = int(os.environ.get("PRIMAL_WEAK_GEOMETRY_LOG_INTERVAL", "1000"))
+ elif VARIANT == "traceContactGroups":
+     pfw["enableContact"] = 1
+     pfw["enableWeakInterfaceTraceProjection"] = 1
+@@ -247,12 +258,6 @@ s1 = 0.82
+ # preserving the non-grid-aligned interface.
+ s_interface = float(os.environ.get("WEAK_TRACE_INTERFACE_OFFSET", "0.006875"))
+ 
+-if VARIANT in ("primalEnrichment", "primalEnrichmentDynamic"):
+-    pfw["weakInterfacePrimalPointX"] = float(s_interface * a[0])
+-    pfw["weakInterfacePrimalPointY"] = float(s_interface * a[1])
+-    pfw["weakInterfacePrimalNormalX"] = float(a[0])
+-    pfw["weakInterfacePrimalNormalY"] = float(a[1])
+-
+ def xy(s, t):
+     return (s * a + t * b).tolist()
+ 
+@@ -293,8 +298,13 @@ def make_objects(surface_flag=None, trace_groups=False, cz_tag=None):
+         upper = geom.czTagWrapper("weakTraceUpperInterfaceCZTag", upper, cz_tag)
+     return [lower, upper]
+ 
+-if VARIANT in ("singleField", "primalEnrichment", "primalEnrichmentDynamic"):
++if VARIANT == "singleField":
+     pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
++elif VARIANT in ("primalEnrichment", "primalEnrichmentDynamic"):
++    # The primal mode uses one common physical velocity field.  The weak-interface
++    # particles only provide the current surface point and normal used by the
++    # beginning-of-step polyline reconstruction.
++    pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.WeakDiscontinuity, trace_groups=False)
+ elif VARIANT == "falseElasticCZ":
+     # Match the elastic-tie CZ reference path: one contact group, with the two
+     # cohesive fields split by opposing explicit surface normals.
+@@ -354,6 +364,11 @@ pfw_expected = {
+     "trace_projection_scale": pfw.get("weakInterfaceTraceProjectionScale", 0.0),
+     "primal_enrichment": pfw.get("enableWeakInterfacePrimalEnrichment", 0),
+     "primal_min_mass_ratio": pfw.get("weakInterfacePrimalMinMassRatio", None),
++    "primal_geometry_halo": pfw.get("weakInterfacePrimalGeometryHalo", None),
++    "primal_min_markers_per_cell": pfw.get("weakInterfacePrimalMinMarkersPerCell", None),
++    "primal_min_normal_coherence": pfw.get("weakInterfacePrimalMinNormalCoherence", None),
++    "primal_max_fit_residual": pfw.get("weakInterfacePrimalMaxFitResidual", None),
++    "primal_min_segment_fraction": pfw.get("weakInterfacePrimalMinSegmentFraction", None),
+     "trace_gap_stabilization": pfw.get("weakInterfaceTraceGapStabilization", 0.0),
+     "trace_max_gap_correction_velocity": pfw.get("weakInterfaceTraceMaxGapCorrectionVelocity", 0.0),
+     "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
+index 970ebdfcee65f122fb7f820b4198a5df4c7f0176..70d17d6e3cc95ce81828d445895552ba57d06519 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
++++ b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
+@@ -279,6 +279,156 @@ WeakInterfaceProjectionSolveResult solveWeakInterfaceProjectionPCG(
+   return result;
+ }
+ 
++// -------------------------------------------------------------------------------------------------
++// Serial CPU geometry support for the experimental primal weak-interface enrichment.  These
++// structures are intentionally local to this translation unit.  The persistent particle state
++// remains particleSurfacePosition/particleSurfaceNormal; the reconstructed polyline is rebuilt and
++// discarded every explicit step.
++// -------------------------------------------------------------------------------------------------
++struct PrimalWeakInterfaceMarker
++{
++  std::array< real64, 3 > point{};
++  std::array< real64, 3 > normal{};
++  real64 weight = 0.0;
++};
++
++struct PrimalWeakCrossingKey
++{
++  // Local node ids are sufficient for the current single-rank prototype.  An
++  // MPI implementation should key shared edges with global endpoint ids and
++  // finalize the canonical crossing on a deterministic edge owner.
++  int kind = 0; // 0: grid vertex, 1: grid edge.
++  localIndex node0 = -1;
++  localIndex node1 = -1;
++
++  bool operator<( PrimalWeakCrossingKey const & other ) const
++  {
++    return std::tie( kind, node0, node1 ) <
++           std::tie( other.kind, other.node0, other.node1 );
++  }
++
++  bool operator==( PrimalWeakCrossingKey const & other ) const
++  {
++    return kind == other.kind && node0 == other.node0 && node1 == other.node1;
++  }
++};
++
++PrimalWeakCrossingKey primalWeakVertexKey( localIndex const node )
++{
++  return PrimalWeakCrossingKey{ 0, node, -1 };
++}
++
++PrimalWeakCrossingKey primalWeakEdgeKey( localIndex node0,
++                                         localIndex node1 )
++{
++  if( node1 < node0 )
++  {
++    std::swap( node0, node1 );
++  }
++  return PrimalWeakCrossingKey{ 1, node0, node1 };
++}
++
++struct PrimalWeakCrossingAccumulator
++{
++  std::array< real64, 3 > weightedPoint{};
++  real64 weight = 0.0;
++  std::vector< std::array< real64, 3 > > proposals;
++};
++
++struct PrimalWeakCellProposal
++{
++  bool valid = false;
++  localIndex i = -1;
++  localIndex j = -1;
++  std::array< PrimalWeakCrossingKey, 2 > crossings{};
++  std::array< std::array< real64, 3 >, 2 > proposedPoints{};
++  std::array< real64, 3 > point{};
++  std::array< real64, 3 > normal{};
++  real64 fitResidual = 0.0;
++  real64 normalCoherence = 0.0;
++  real64 weight = 0.0;
++};
++
++struct PrimalWeakInterfaceSegment
++{
++  std::array< real64, 3 > endpoint0{};
++  std::array< real64, 3 > endpoint1{};
++  std::array< real64, 3 > normal{};
++  localIndex cellI = -1;
++  localIndex cellJ = -1;
++  real64 length = 0.0;
++  real64 fitResidual = 0.0;
++  real64 normalCoherence = 0.0;
++};
++
++real64 primalWeakClosestPointOnSegment2D( std::array< real64, 3 > const & point,
++                                          PrimalWeakInterfaceSegment const & segment,
++                                          std::array< real64, 3 > & closestPoint )
++{
++  real64 const dx = segment.endpoint1[0] - segment.endpoint0[0];
++  real64 const dy = segment.endpoint1[1] - segment.endpoint0[1];
++  real64 const lengthSquared = dx * dx + dy * dy;
++  real64 parameter = 0.0;
++  if( lengthSquared > std::numeric_limits< real64 >::min() )
++  {
++    parameter = ( ( point[0] - segment.endpoint0[0] ) * dx +
++                  ( point[1] - segment.endpoint0[1] ) * dy ) / lengthSquared;
++    parameter = LvArray::math::max( 0.0, LvArray::math::min( 1.0, parameter ) );
++  }
++
++  closestPoint[0] = segment.endpoint0[0] + parameter * dx;
++  closestPoint[1] = segment.endpoint0[1] + parameter * dy;
++  closestPoint[2] = point[2];
++
++  real64 const rx = point[0] - closestPoint[0];
++  real64 const ry = point[1] - closestPoint[1];
++  return rx * rx + ry * ry;
++}
++
++bool primalWeakSegmentIntersectsBox2D( PrimalWeakInterfaceSegment const & segment,
++                                        real64 const xmin,
++                                        real64 const xmax,
++                                        real64 const ymin,
++                                        real64 const ymax )
++{
++  real64 const dx = segment.endpoint1[0] - segment.endpoint0[0];
++  real64 const dy = segment.endpoint1[1] - segment.endpoint0[1];
++  real64 t0 = 0.0;
++  real64 t1 = 1.0;
++
++  auto clip = [&]( real64 const p, real64 const q )
++  {
++    if( LvArray::math::abs( p ) <= std::numeric_limits< real64 >::epsilon() )
++    {
++      return q >= 0.0;
++    }
++    real64 const r = q / p;
++    if( p < 0.0 )
++    {
++      if( r > t1 )
++      {
++        return false;
++      }
++      t0 = LvArray::math::max( t0, r );
++    }
++    else
++    {
++      if( r < t0 )
++      {
++        return false;
++      }
++      t1 = LvArray::math::min( t1, r );
++    }
++    return true;
++  };
++
++  return clip( -dx, segment.endpoint0[0] - xmin ) &&
++         clip(  dx, xmax - segment.endpoint0[0] ) &&
++         clip( -dy, segment.endpoint0[1] - ymin ) &&
++         clip(  dy, ymax - segment.endpoint0[1] ) &&
++         t0 <= t1;
++}
++
+ mpm::OversizedParticleTreatmentOption effectiveOversizedParticleTreatment(
+   int const resetDefGradForOversizedParticles,
+   mpm::OversizedParticleTreatmentOption const oversizedParticleTreatment )
+@@ -2086,6 +2236,15 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
+   m_weakInterfacePrimalRadius( 0.0 ),
+   m_weakInterfacePrimalMinMassRatio( 1.0e-8 ),
+   m_weakInterfacePrimalMassCFL( 0.35 ),
++  m_weakInterfacePrimalGeometryHalo( 1 ),
++  m_weakInterfacePrimalMinMarkersPerCell( 1 ),
++  m_weakInterfacePrimalMinNormalCoherence( 0.25 ),
++  m_weakInterfacePrimalMaxFitResidual( 0.35 ),
++  m_weakInterfacePrimalMinSegmentFraction( 1.0e-4 ),
++  m_weakInterfacePrimalGeometryLogInterval( 1000 ),
++  m_weakPrimalParticleDistance(),
++  m_weakPrimalParticleDistanceGradient(),
++  m_weakPrimalParticleGeometryValid(),
+   m_weakInterfaceTraceGeometry( mpm::WeakInterfaceTraceGeometryOption::Surface ),
+   m_weakInterfaceTraceGapStabilization( 0.0 ),
+   m_weakInterfaceTraceMaterialLRMaxMisfitFraction( 0.05 ),
+@@ -3308,7 +3467,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
+     setInputFlag( InputFlags::OPTIONAL ).
+     setApplyDefaultValue( m_weakInterfacePrimalGeometryType ).
+     setRestartFlags( RestartFlags::NO_WRITE ).
+-    setDescription( "Exact geometry for the experimental primal weak-interface mode: 1=plane, 2=circle." );
++    setDescription( "Geometry provider for the experimental primal weak-interface mode. "
++                    "This prototype requires 3=continuous edge-consistent polyline reconstructed from "
++                    "WeakDiscontinuity particle surface points and normals." );
+ 
+   registerWrapper( "weakInterfacePrimalPointX", &m_weakInterfacePrimalPointX ).
+     setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalPointX ).setRestartFlags( RestartFlags::NO_WRITE );
+@@ -3326,6 +3487,24 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
+   registerWrapper( "weakInterfacePrimalMassCFL", &m_weakInterfacePrimalMassCFL ).
+     setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalMassCFL ).setRestartFlags( RestartFlags::NO_WRITE ).
+     setDescription( "Reserved CFL scale for the experimental enriched mode; currently diagnostic only." );
++  registerWrapper( "weakInterfacePrimalGeometryHalo", &m_weakInterfacePrimalGeometryHalo ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalGeometryHalo ).setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Number of neighboring cells in each in-plane direction whose WeakDiscontinuity markers are included in each local line fit." );
++  registerWrapper( "weakInterfacePrimalMinMarkersPerCell", &m_weakInterfacePrimalMinMarkersPerCell ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalMinMarkersPerCell ).setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Minimum number of particle-carried interface markers required for a provisional cell line fit." );
++  registerWrapper( "weakInterfacePrimalMinNormalCoherence", &m_weakInterfacePrimalMinNormalCoherence ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalMinNormalCoherence ).setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Minimum magnitude of the consistently oriented, weighted mean particle normal for accepting a cell interface fit." );
++  registerWrapper( "weakInterfacePrimalMaxFitResidual", &m_weakInterfacePrimalMaxFitResidual ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalMaxFitResidual ).setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Maximum RMS point-to-line fit residual normalized by the in-plane grid length." );
++  registerWrapper( "weakInterfacePrimalMinSegmentFraction", &m_weakInterfacePrimalMinSegmentFraction ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalMinSegmentFraction ).setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Minimum reconstructed segment length relative to the smaller in-plane cell size." );
++  registerWrapper( "weakInterfacePrimalGeometryLogInterval", &m_weakInterfacePrimalGeometryLogInterval ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( m_weakInterfacePrimalGeometryLogInterval ).setRestartFlags( RestartFlags::NO_WRITE ).
++    setDescription( "Cycle interval for concise serial primal-interface geometry diagnostics; zero disables periodic logging after cycle zero." );
+ 
+   registerWrapper( "weakInterfaceTraceGeometry", &m_weakInterfaceTraceGeometry ).
+     setInputFlag( InputFlags::OPTIONAL ).
+@@ -3660,16 +3839,25 @@ void SolidMechanicsMPM::postInputInitialization()
+                    m_enableWeakInterfaceTraceProjection == 1 ||
+                    m_weakDiscontinuityInsertion != mpm::WeakDiscontinuityInsertionOption::Off,
+                    "The experimental primal weak-interface enrichment currently requires contact, DFG, trace projection, and automatic weak insertion to be disabled." );
+-    GEOS_ERROR_IF( m_weakInterfacePrimalGeometryType != 1 && m_weakInterfacePrimalGeometryType != 2,
+-                   "weakInterfacePrimalGeometryType must be 1 (plane) or 2 (circle)." );
++    GEOS_ERROR_IF( m_weakInterfacePrimalGeometryType != 3,
++                   "The current primal weak-interface prototype requires "
++                   "weakInterfacePrimalGeometryType=3 (particle-surface polyline reconstruction)." );
+     GEOS_ERROR_IF( m_weakInterfacePrimalMinMassRatio <= 0.0,
+                    "weakInterfacePrimalMinMassRatio must be positive." );
+-    GEOS_ERROR_IF( m_weakInterfacePrimalGeometryType == 1 &&
+-                   m_weakInterfacePrimalNormalX * m_weakInterfacePrimalNormalX +
+-                   m_weakInterfacePrimalNormalY * m_weakInterfacePrimalNormalY <= 0.0,
+-                   "The primal weak-interface plane normal must be nonzero." );
+-    GEOS_ERROR_IF( m_weakInterfacePrimalGeometryType == 2 && m_weakInterfacePrimalRadius <= 0.0,
+-                   "The primal weak-interface circle radius must be positive." );
++    GEOS_ERROR_IF( m_weakInterfacePrimalGeometryHalo < 0,
++                   "weakInterfacePrimalGeometryHalo must be nonnegative." );
++    GEOS_ERROR_IF( m_weakInterfacePrimalMinMarkersPerCell < 1,
++                   "weakInterfacePrimalMinMarkersPerCell must be at least one." );
++    GEOS_ERROR_IF( m_weakInterfacePrimalMinNormalCoherence <= 0.0 ||
++                   m_weakInterfacePrimalMinNormalCoherence > 1.0,
++                   "weakInterfacePrimalMinNormalCoherence must be in (0,1]." );
++    GEOS_ERROR_IF( m_weakInterfacePrimalMaxFitResidual <= 0.0,
++                   "weakInterfacePrimalMaxFitResidual must be positive." );
++    GEOS_ERROR_IF( m_weakInterfacePrimalMinSegmentFraction < 0.0 ||
++                   m_weakInterfacePrimalMinSegmentFraction > 1.0,
++                   "weakInterfacePrimalMinSegmentFraction must be in [0,1]." );
++    GEOS_ERROR_IF( m_weakInterfacePrimalGeometryLogInterval < 0,
++                   "weakInterfacePrimalGeometryLogInterval must be nonnegative." );
+   }
+ 
+   if( m_enableWeakInterfaceTraceProjection == 1 )
+@@ -4492,6 +4680,21 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
+       nodeManager.registerWrapper< array1d< int > >( viewKeyStruct::gridWeakPrimalActiveString() ).
+         setPlotLevel( gridFieldPlotLevel ).setRegisteringObjects( this->getName() ).
+         setDescription( "Active nodal primal weak-interface enrichment flag." );
++      nodeManager.registerWrapper< array1d< int > >( viewKeyStruct::gridWeakPrimalGeometryActiveString() ).
++        setPlotLevel( gridFieldPlotLevel ).setRegisteringObjects( this->getName() ).
++        setDescription( "Node whose cubic B-spline support intersects the reconstructed weak-interface polyline." );
++      nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryDistanceString() ).
++        setPlotLevel( gridFieldPlotLevel ).setRegisteringObjects( this->getName() ).
++        setDescription( "Unsigned distance from the grid node to the reconstructed weak-interface polyline, normalized by the in-plane grid length." );
++      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryNormalString() ).
++        setPlotLevel( gridFieldPlotLevel ).setRegisteringObjects( this->getName() ).
++        setDescription( "One-sided gradient direction of the unsigned distance to the reconstructed polyline at each grid node." );
++      nodeManager.registerWrapper< array1d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryFitResidualString() ).
++        setPlotLevel( gridFieldPlotLevel ).setRegisteringObjects( this->getName() ).
++        setDescription( "Normalized particle point-to-line fit residual of the nearest reconstructed segment." );
++      nodeManager.registerWrapper< array1d< int > >( viewKeyStruct::gridWeakPrimalGeometrySegmentCountString() ).
++        setPlotLevel( gridFieldPlotLevel ).setRegisteringObjects( this->getName() ).
++        setDescription( "Number of reconstructed interface segments intersecting the support box of the grid node." );
+ 
+       nodeManager.registerWrapper< array2d< globalIndex > >( viewKeyStruct::gridRigidBodyFieldKeyString() ).
+         setPlotLevel( PlotLevel::NOPLOT ).
+@@ -5292,6 +5495,11 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
+   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakPrimalVelocityString() ).resize( numNodes, 3 );
+   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakPrimalAccelerationString() ).resize( numNodes, 3 );
+   nodeManager.getReference< array1d< int > >( viewKeyStruct::gridWeakPrimalActiveString() ).resize( numNodes );
++  nodeManager.getReference< array1d< int > >( viewKeyStruct::gridWeakPrimalGeometryActiveString() ).resize( numNodes );
++  nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryDistanceString() ).resize( numNodes );
++  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryNormalString() ).resize( numNodes, 3 );
++  nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryFitResidualString() ).resize( numNodes );
++  nodeManager.getReference< array1d< int > >( viewKeyStruct::gridWeakPrimalGeometrySegmentCountString() ).resize( numNodes );
+   nodeManager.getReference< array2d< globalIndex > >( viewKeyStruct::gridRigidBodyFieldKeyString() ).resize( numNodes, m_numVelocityFields );
+   nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() ).resize( numNodes, m_numVelocityFields );
+   nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() ).resize( numNodes, m_numVelocityFields );
+@@ -7226,6 +7434,12 @@ void SolidMechanicsMPM::performParticleToGridForExplicitStep( real64 const time_
+   switch( m_gpuScheme )
+   {
+     case mpm::GPUSchemeOption::Atomics:
++      if( m_enableWeakInterfacePrimalEnrichment == 1 )
++      {
++        reconstructPrimalWeakInterfaceGeometry( cycleNumber,
++                                                particleManager,
++                                                nodeManager );
++      }
+       particleToGrid( time_n,
+                       cycleNumber,
+                       particleManager,
+@@ -21610,37 +21824,842 @@ void SolidMechanicsMPM::updateGridBackgroundStress( NodeManager & nodeManager )
+ }
+ 
+ /**
+- * @brief Returns the dimensionless exact signed distance used by the serial
+- * primal weak-interface prototype.
++ * @brief Reconstructs a continuous piecewise-linear weak interface from
++ * particle-carried surface points and normals.
++ *
++ * Each WeakDiscontinuity particle supplies its current absolute surface point
++ * x_p + s_p and its current surface normal. A provisional line is fitted in
++ * every candidate background cell using markers from a configurable cell halo.
++ * Intersections proposed on a shared grid edge are then averaged once and used
++ * by both adjacent cells, producing a C0 polyline without a persistent
++ * interface mesh or an advected grid level set. The unsigned distance and its
++ * one-sided gradient are cached at the beginning-of-step particle positions and
++ * remain frozen through P2G and G2P for that explicit step.
+  */
+-real64 SolidMechanicsMPM::primalWeakInterfaceSignedDistance( real64 const x,
+-                                                             real64 const y ) const
++void SolidMechanicsMPM::reconstructPrimalWeakInterfaceGeometry(
++  integer const cycleNumber,
++  ParticleManager & particleManager,
++  NodeManager & nodeManager )
+ {
+-  real64 const h = LvArray::math::sqrt( m_hEl[0] * m_hEl[1] );
+-  GEOS_ERROR_IF( h <= 0.0, "Invalid grid spacing for primal weak-interface enrichment." );
++  GEOS_MARK_FUNCTION;
++
++  GEOS_ERROR_IF( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1,
++                 "Primal weak-interface surface reconstruction is currently serial only." );
++#ifdef GEOS_USE_DEVICE
++  GEOS_ERROR( "Primal weak-interface surface reconstruction currently supports CPU execution only." );
++#endif
++
++  integer nEl[3] = {};
++  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
++  real64 hEl[3] = {};
++  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
++  real64 const hInterface = LvArray::math::sqrt( hEl[0] * hEl[1] );
++  real64 const cellDiagonal = LvArray::math::sqrt( hEl[0] * hEl[0] + hEl[1] * hEl[1] );
++  real64 const geometryTolerance =
++    1.0e-10 * LvArray::math::max( cellDiagonal,
++                                  std::numeric_limits< real64 >::min() );
++  real64 const minSegmentLength =
++    m_weakInterfacePrimalMinSegmentFraction * LvArray::math::min( hEl[0], hEl[1] );
++
++  GEOS_ERROR_IF( hInterface <= 0.0 || nEl[0] <= 0 || nEl[1] <= 0,
++                 "Invalid background grid for primal weak-interface geometry reconstruction." );
++
++  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
++  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
++    nodeManager.referencePosition();
++  arrayView1d< int > const geometryActive =
++    nodeManager.getReference< array1d< int > >( viewKeyStruct::gridWeakPrimalGeometryActiveString() );
++  arrayView1d< real64 > const geometryDistance =
++    nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryDistanceString() );
++  arrayView2d< real64 > const geometryNormal =
++    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryNormalString() );
++  arrayView1d< real64 > const geometryFitResidual =
++    nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridWeakPrimalGeometryFitResidualString() );
++  arrayView1d< int > const geometrySegmentCount =
++    nodeManager.getReference< array1d< int > >( viewKeyStruct::gridWeakPrimalGeometrySegmentCountString() );
++
++  for( localIndex g = 0; g < nodeManager.size(); ++g )
++  {
++    geometryActive[g] = 0;
++    geometryDistance[g] = 0.0;
++    geometryFitResidual[g] = 0.0;
++    geometrySegmentCount[g] = 0;
++    LvArray::tensorOps::fill< 3 >( geometryNormal[g], 0.0 );
++  }
++
++  m_weakPrimalParticleDistance.resize( m_numberOfSubRegions );
++  m_weakPrimalParticleDistanceGradient.resize( m_numberOfSubRegions );
++  m_weakPrimalParticleGeometryValid.resize( m_numberOfSubRegions );
++
++  std::vector< PrimalWeakInterfaceMarker > markers;
++  localIndex subRegionIndex = 0;
++  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
++  {
++    SortedArrayView< localIndex const > const activeParticleIndices =
++      subRegion.activeParticleIndices();
++    localIndex const numActiveParticles = activeParticleIndices.size();
++    m_weakPrimalParticleDistance[subRegionIndex].resize( numActiveParticles );
++    m_weakPrimalParticleDistanceGradient[subRegionIndex].resize( numActiveParticles, 3 );
++    m_weakPrimalParticleGeometryValid[subRegionIndex].resize( numActiveParticles );
++
++    for( localIndex pp = 0; pp < numActiveParticles; ++pp )
++    {
++      m_weakPrimalParticleDistance[subRegionIndex][pp] = 0.0;
++      m_weakPrimalParticleGeometryValid[subRegionIndex][pp] = 0;
++      LvArray::tensorOps::fill< 3 >(
++        m_weakPrimalParticleDistanceGradient[subRegionIndex][pp], 0.0 );
++    }
++
++    arrayView1d< integer const > const particleSurfaceFlag =
++      subRegion.getParticleSurfaceFlag();
++    arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
++    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
++    arrayView2d< real64 const > const particleSurfacePosition =
++      subRegion.getParticleSurfacePosition();
++    arrayView2d< real64 const > const particleSurfaceNormal =
++      subRegion.getParticleSurfaceNormal();
++
++    for( localIndex pp = 0; pp < numActiveParticles; ++pp )
++    {
++      localIndex const p = activeParticleIndices[pp];
++      if( particleSurfaceFlag[p] !=
++          mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity ) )
++      {
++        continue;
++      }
++
++      real64 const normalNorm =
++        LvArray::tensorOps::l2Norm< 3 >( particleSurfaceNormal[p] );
++      if( normalNorm <= explicitSurfaceNormalTolerance )
++      {
++        continue;
++      }
++
++      PrimalWeakInterfaceMarker marker;
++      for( int d = 0; d < 3; ++d )
++      {
++        marker.point[d] = particlePosition[p][d] + particleSurfacePosition[p][d];
++        marker.normal[d] = particleSurfaceNormal[p][d] / normalNorm;
++      }
++      marker.normal[2] = 0.0;
++      real64 const inPlaneNormalNorm =
++        LvArray::math::sqrt( marker.normal[0] * marker.normal[0] +
++                            marker.normal[1] * marker.normal[1] );
++      if( inPlaneNormalNorm <= explicitSurfaceNormalTolerance )
++      {
++        continue;
++      }
++      marker.normal[0] /= inPlaneNormalNorm;
++      marker.normal[1] /= inPlaneNormalNorm;
++      marker.weight = LvArray::math::max( particleVolume[p], m_smallMass );
++      markers.emplace_back( marker );
++    }
++
++    ++subRegionIndex;
++  } );
++
++  GEOS_ERROR_IF( markers.empty(),
++                 "Primal weak-interface particle-surface reconstruction found no active "
++                 "SurfaceFlag::WeakDiscontinuity particles with valid normals." );
++
++  localIndex const numCellsX = nEl[0];
++  localIndex const numCellsY = nEl[1];
++  localIndex const numCells = numCellsX * numCellsY;
++  // A marker makes only its containing cell a geometric interface-cell
++  // candidate.  Neighboring-cell markers are used to condition that cell's
++  // line fit, but they must not create additional parallel segments in cells
++  // that contain no interface point of their own.
++  std::vector< std::vector< localIndex > > cellFitMarkers(
++    static_cast< std::size_t >( numCells ) );
++  std::vector< localIndex > cellOwnedMarkerCount(
++    static_cast< std::size_t >( numCells ), 0 );
++
++  auto cellLinearIndex = [=]( localIndex const i, localIndex const j )
++  {
++    return i + numCellsX * j;
++  };
+ 
+-  if( m_weakInterfacePrimalGeometryType == 1 )
++  int const halo = m_weakInterfacePrimalGeometryHalo;
++  for( localIndex markerIndex = 0;
++       markerIndex < static_cast< localIndex >( markers.size() );
++       ++markerIndex )
+   {
+-    real64 const norm = LvArray::math::sqrt(
+-      m_weakInterfacePrimalNormalX * m_weakInterfacePrimalNormalX +
+-      m_weakInterfacePrimalNormalY * m_weakInterfacePrimalNormalY );
+-    return ( ( x - m_weakInterfacePrimalPointX ) * m_weakInterfacePrimalNormalX +
+-             ( y - m_weakInterfacePrimalPointY ) * m_weakInterfacePrimalNormalY ) /
+-           ( h * norm );
++    PrimalWeakInterfaceMarker const & marker = markers[markerIndex];
++    localIndex ownerI = static_cast< localIndex >(
++      LvArray::math::floor( ( marker.point[0] - m_xLocalMin[0] ) / hEl[0] ) );
++    localIndex ownerJ = static_cast< localIndex >(
++      LvArray::math::floor( ( marker.point[1] - m_xLocalMin[1] ) / hEl[1] ) );
++    ownerI = LvArray::math::max( localIndex( 0 ),
++                                LvArray::math::min( numCellsX - 1, ownerI ) );
++    ownerJ = LvArray::math::max( localIndex( 0 ),
++                                LvArray::math::min( numCellsY - 1, ownerJ ) );
++
++    cellOwnedMarkerCount[cellLinearIndex( ownerI, ownerJ )] += 1;
++    for( int dj = -halo; dj <= halo; ++dj )
++    {
++      localIndex const j = ownerJ + dj;
++      if( j < 0 || j >= numCellsY )
++      {
++        continue;
++      }
++      for( int di = -halo; di <= halo; ++di )
++      {
++        localIndex const i = ownerI + di;
++        if( i < 0 || i >= numCellsX )
++        {
++          continue;
++        }
++        cellFitMarkers[cellLinearIndex( i, j )].push_back( markerIndex );
++      }
++    }
+   }
+ 
+-  real64 const dx = x - m_weakInterfacePrimalPointX;
+-  real64 const dy = y - m_weakInterfacePrimalPointY;
+-  return ( LvArray::math::sqrt( dx * dx + dy * dy ) - m_weakInterfacePrimalRadius ) / h;
++  real64 const physicalMidZ = 0.5 * ( m_xGlobalMin[2] + m_xGlobalMax[2] );
++  int const planeCellK = LvArray::math::max(
++    0,
++    LvArray::math::min(
++      static_cast< int >( nEl[2] - 1 ),
++      static_cast< int >(
++        LvArray::math::floor( ( physicalMidZ - m_xLocalMin[2] ) / hEl[2] ) ) ) );
++  int const planeNodeK = LvArray::math::max(
++    0,
++    LvArray::math::min( static_cast< int >( nEl[2] ), planeCellK ) );
++
++  std::vector< PrimalWeakCellProposal > cellProposals(
++    static_cast< std::size_t >( numCells ) );
++  localIndex candidateCells = 0;
++  localIndex acceptedCellFits = 0;
++  localIndex rejectedMarkerCount = 0;
++  localIndex rejectedNormalCoherence = 0;
++  localIndex rejectedFitResidual = 0;
++  localIndex rejectedIntersection = 0;
++  localIndex ambiguousIntersectionCells = 0;
++
++  int const edgeCorners[4][2] = { { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 } };
++
++  for( localIndex j = 0; j < numCellsY; ++j )
++  {
++    for( localIndex i = 0; i < numCellsX; ++i )
++    {
++      localIndex const cellIndex = cellLinearIndex( i, j );
++      if( cellOwnedMarkerCount[cellIndex] == 0 )
++      {
++        continue;
++      }
++      std::vector< localIndex > const & localMarkers = cellFitMarkers[cellIndex];
++      ++candidateCells;
++      if( static_cast< int >( localMarkers.size() ) <
++          m_weakInterfacePrimalMinMarkersPerCell )
++      {
++        ++rejectedMarkerCount;
++        continue;
++      }
++
++      std::array< real64, 3 > referenceNormal{};
++      bool haveReferenceNormal = false;
++      for( localIndex const markerIndex : localMarkers )
++      {
++        PrimalWeakInterfaceMarker const & marker = markers[markerIndex];
++        if( marker.normal[0] * marker.normal[0] +
++            marker.normal[1] * marker.normal[1] >
++            explicitSurfaceNormalNormSquaredTolerance )
++        {
++          referenceNormal = marker.normal;
++          haveReferenceNormal = true;
++          break;
++        }
++      }
++      if( !haveReferenceNormal )
++      {
++        ++rejectedNormalCoherence;
++        continue;
++      }
++
++      std::array< real64, 3 > pointSum{};
++      std::array< real64, 3 > normalSum{};
++      real64 weightSum = 0.0;
++      for( localIndex const markerIndex : localMarkers )
++      {
++        PrimalWeakInterfaceMarker const & marker = markers[markerIndex];
++        real64 orientation = marker.normal[0] * referenceNormal[0] +
++                             marker.normal[1] * referenceNormal[1];
++        orientation = orientation >= 0.0 ? 1.0 : -1.0;
++        for( int d = 0; d < 2; ++d )
++        {
++          pointSum[d] += marker.weight * marker.point[d];
++          normalSum[d] += marker.weight * orientation * marker.normal[d];
++        }
++        weightSum += marker.weight;
++      }
++      if( weightSum <= 0.0 )
++      {
++        ++rejectedMarkerCount;
++        continue;
++      }
++
++      std::array< real64, 3 > fitPoint{};
++      fitPoint[0] = pointSum[0] / weightSum;
++      fitPoint[1] = pointSum[1] / weightSum;
++      fitPoint[2] = physicalMidZ;
++      real64 const normalResultant =
++        LvArray::math::sqrt( normalSum[0] * normalSum[0] +
++                            normalSum[1] * normalSum[1] );
++      real64 const normalCoherence = normalResultant / weightSum;
++      if( normalCoherence < m_weakInterfacePrimalMinNormalCoherence ||
++          normalResultant <= explicitSurfaceNormalTolerance )
++      {
++        ++rejectedNormalCoherence;
++        continue;
++      }
++
++      std::array< real64, 3 > fitNormal{};
++      fitNormal[0] = normalSum[0] / normalResultant;
++      fitNormal[1] = normalSum[1] / normalResultant;
++
++      real64 planeOffset = 0.0;
++      for( localIndex const markerIndex : localMarkers )
++      {
++        PrimalWeakInterfaceMarker const & marker = markers[markerIndex];
++        planeOffset += marker.weight *
++                       ( fitNormal[0] * marker.point[0] +
++                         fitNormal[1] * marker.point[1] );
++      }
++      planeOffset /= weightSum;
++      real64 const pointProjection =
++        fitNormal[0] * fitPoint[0] + fitNormal[1] * fitPoint[1];
++      fitPoint[0] += ( planeOffset - pointProjection ) * fitNormal[0];
++      fitPoint[1] += ( planeOffset - pointProjection ) * fitNormal[1];
++
++      real64 residualSquared = 0.0;
++      for( localIndex const markerIndex : localMarkers )
++      {
++        PrimalWeakInterfaceMarker const & marker = markers[markerIndex];
++        real64 const residual =
++          fitNormal[0] * ( marker.point[0] - fitPoint[0] ) +
++          fitNormal[1] * ( marker.point[1] - fitPoint[1] );
++        residualSquared += marker.weight * residual * residual;
++      }
++      real64 const fitResidual =
++        LvArray::math::sqrt( residualSquared / weightSum ) / hInterface;
++      if( fitResidual > m_weakInterfacePrimalMaxFitResidual )
++      {
++        ++rejectedFitResidual;
++        continue;
++      }
++
++      std::array< localIndex, 4 > cornerNodes = {{
++        ijkMap[i][j][planeNodeK],
++        ijkMap[i + 1][j][planeNodeK],
++        ijkMap[i + 1][j + 1][planeNodeK],
++        ijkMap[i][j + 1][planeNodeK]
++      }};
++      std::array< std::array< real64, 3 >, 4 > corners{};
++      for( int corner = 0; corner < 4; ++corner )
++      {
++        corners[corner][0] = gridPosition[cornerNodes[corner]][0];
++        corners[corner][1] = gridPosition[cornerNodes[corner]][1];
++        corners[corner][2] = physicalMidZ;
++      }
++
++      real64 cornerPhi[4] = {};
++      for( int corner = 0; corner < 4; ++corner )
++      {
++        cornerPhi[corner] =
++          fitNormal[0] * ( corners[corner][0] - fitPoint[0] ) +
++          fitNormal[1] * ( corners[corner][1] - fitPoint[1] );
++      }
++
++      std::vector< std::pair< PrimalWeakCrossingKey,
++                              std::array< real64, 3 > > > intersections;
++      bool conformingEdge = false;
++      for( int edge = 0; edge < 4; ++edge )
++      {
++        int const c0 = edgeCorners[edge][0];
++        int const c1 = edgeCorners[edge][1];
++        real64 const phi0 = cornerPhi[c0];
++        real64 const phi1 = cornerPhi[c1];
++        if( LvArray::math::abs( phi0 ) <= geometryTolerance &&
++            LvArray::math::abs( phi1 ) <= geometryTolerance )
++        {
++          intersections.clear();
++          intersections.emplace_back( primalWeakVertexKey( cornerNodes[c0] ),
++                                      corners[c0] );
++          intersections.emplace_back( primalWeakVertexKey( cornerNodes[c1] ),
++                                      corners[c1] );
++          conformingEdge = true;
++          break;
++        }
++      }
++
++      if( !conformingEdge )
++      {
++        real64 const vertexParameterTolerance = 1.0e-8;
++        for( int edge = 0; edge < 4; ++edge )
++        {
++          int const c0 = edgeCorners[edge][0];
++          int const c1 = edgeCorners[edge][1];
++          real64 const phi0 = cornerPhi[c0];
++          real64 const phi1 = cornerPhi[c1];
++          bool const crosses =
++            ( phi0 < -geometryTolerance && phi1 > geometryTolerance ) ||
++            ( phi0 > geometryTolerance && phi1 < -geometryTolerance ) ||
++            LvArray::math::abs( phi0 ) <= geometryTolerance ||
++            LvArray::math::abs( phi1 ) <= geometryTolerance;
++          if( !crosses )
++          {
++            continue;
++          }
++
++          real64 const denominator = phi0 - phi1;
++          if( LvArray::math::abs( denominator ) <=
++              std::numeric_limits< real64 >::epsilon() )
++          {
++            continue;
++          }
++          real64 parameter = phi0 / denominator;
++          if( parameter < -vertexParameterTolerance ||
++              parameter > 1.0 + vertexParameterTolerance )
++          {
++            continue;
++          }
++          parameter = LvArray::math::max( 0.0,
++                                          LvArray::math::min( 1.0, parameter ) );
++
++          PrimalWeakCrossingKey key;
++          if( parameter <= vertexParameterTolerance )
++          {
++            key = primalWeakVertexKey( cornerNodes[c0] );
++          }
++          else if( parameter >= 1.0 - vertexParameterTolerance )
++          {
++            key = primalWeakVertexKey( cornerNodes[c1] );
++          }
++          else
++          {
++            key = primalWeakEdgeKey( cornerNodes[c0], cornerNodes[c1] );
++          }
++
++          std::array< real64, 3 > point{};
++          for( int d = 0; d < 3; ++d )
++          {
++            point[d] = corners[c0][d] +
++                       parameter * ( corners[c1][d] - corners[c0][d] );
++          }
++
++          bool duplicate = false;
++          for( auto const & intersection : intersections )
++          {
++            if( intersection.first == key )
++            {
++              duplicate = true;
++              break;
++            }
++          }
++          if( !duplicate )
++          {
++            intersections.emplace_back( key, point );
++          }
++        }
++      }
++
++      if( intersections.size() < 2 )
++      {
++        ++rejectedIntersection;
++        continue;
++      }
++      if( intersections.size() > 2 )
++      {
++        ++ambiguousIntersectionCells;
++      }
++
++      int first = 0;
++      int second = 1;
++      real64 maxDistanceSquared = -1.0;
++      for( int a = 0; a < static_cast< int >( intersections.size() ); ++a )
++      {
++        for( int b = a + 1; b < static_cast< int >( intersections.size() ); ++b )
++        {
++          real64 const dx = intersections[a].second[0] - intersections[b].second[0];
++          real64 const dy = intersections[a].second[1] - intersections[b].second[1];
++          real64 const distanceSquared = dx * dx + dy * dy;
++          if( distanceSquared > maxDistanceSquared )
++          {
++            maxDistanceSquared = distanceSquared;
++            first = a;
++            second = b;
++          }
++        }
++      }
++      if( maxDistanceSquared <= minSegmentLength * minSegmentLength )
++      {
++        ++rejectedIntersection;
++        continue;
++      }
++
++      PrimalWeakCellProposal & proposal = cellProposals[cellIndex];
++      proposal.valid = true;
++      proposal.i = i;
++      proposal.j = j;
++      proposal.crossings[0] = intersections[first].first;
++      proposal.crossings[1] = intersections[second].first;
++      proposal.proposedPoints[0] = intersections[first].second;
++      proposal.proposedPoints[1] = intersections[second].second;
++      proposal.point = fitPoint;
++      proposal.normal = fitNormal;
++      proposal.fitResidual = fitResidual;
++      proposal.normalCoherence = normalCoherence;
++      proposal.weight = weightSum * normalCoherence /
++                        ( 1.0 + fitResidual * fitResidual );
++      ++acceptedCellFits;
++    }
++  }
++
++  std::map< PrimalWeakCrossingKey, PrimalWeakCrossingAccumulator > crossingAccumulators;
++  std::map< PrimalWeakCrossingKey, std::array< real64, 3 > > canonicalCrossings;
++  for( PrimalWeakCellProposal const & proposal : cellProposals )
++  {
++    if( !proposal.valid )
++    {
++      continue;
++    }
++    for( int endpoint = 0; endpoint < 2; ++endpoint )
++    {
++      PrimalWeakCrossingKey const & key = proposal.crossings[endpoint];
++      if( key.kind == 0 )
++      {
++        canonicalCrossings[key] = {{
++          gridPosition[key.node0][0],
++          gridPosition[key.node0][1],
++          physicalMidZ
++        }};
++        continue;
++      }
++
++      PrimalWeakCrossingAccumulator & accumulator = crossingAccumulators[key];
++      real64 const weight = LvArray::math::max( proposal.weight,
++                                                std::numeric_limits< real64 >::min() );
++      for( int d = 0; d < 3; ++d )
++      {
++        accumulator.weightedPoint[d] +=
++          weight * proposal.proposedPoints[endpoint][d];
++      }
++      accumulator.weight += weight;
++      accumulator.proposals.emplace_back( proposal.proposedPoints[endpoint] );
++    }
++  }
++
++  real64 maxEdgeProposalDisagreement = 0.0;
++  for( auto const & entry : crossingAccumulators )
++  {
++    PrimalWeakCrossingKey const & key = entry.first;
++    PrimalWeakCrossingAccumulator const & accumulator = entry.second;
++    if( accumulator.weight <= 0.0 )
++    {
++      continue;
++    }
++
++    std::array< real64, 3 > point{};
++    for( int d = 0; d < 3; ++d )
++    {
++      point[d] = accumulator.weightedPoint[d] / accumulator.weight;
++    }
++
++    std::array< real64, 3 > edgeStart = {{
++      gridPosition[key.node0][0],
++      gridPosition[key.node0][1],
++      physicalMidZ
++    }};
++    std::array< real64, 3 > edgeEnd = {{
++      gridPosition[key.node1][0],
++      gridPosition[key.node1][1],
++      physicalMidZ
++    }};
++    real64 const ex = edgeEnd[0] - edgeStart[0];
++    real64 const ey = edgeEnd[1] - edgeStart[1];
++    real64 const edgeLengthSquared = ex * ex + ey * ey;
++    real64 parameter = 0.0;
++    if( edgeLengthSquared > std::numeric_limits< real64 >::min() )
++    {
++      parameter = ( ( point[0] - edgeStart[0] ) * ex +
++                    ( point[1] - edgeStart[1] ) * ey ) / edgeLengthSquared;
++      parameter = LvArray::math::max( 0.0,
++                                      LvArray::math::min( 1.0, parameter ) );
++    }
++    point[0] = edgeStart[0] + parameter * ex;
++    point[1] = edgeStart[1] + parameter * ey;
++    point[2] = physicalMidZ;
++    canonicalCrossings[key] = point;
++
++    for( std::array< real64, 3 > const & proposalPoint : accumulator.proposals )
++    {
++      real64 const dx = proposalPoint[0] - point[0];
++      real64 const dy = proposalPoint[1] - point[1];
++      maxEdgeProposalDisagreement = LvArray::math::max(
++        maxEdgeProposalDisagreement,
++        LvArray::math::sqrt( dx * dx + dy * dy ) / hInterface );
++    }
++  }
++
++  std::vector< PrimalWeakInterfaceSegment > segments;
++  std::set< std::pair< PrimalWeakCrossingKey,
++                       PrimalWeakCrossingKey > > segmentKeys;
++  for( PrimalWeakCellProposal const & proposal : cellProposals )
++  {
++    if( !proposal.valid )
++    {
++      continue;
++    }
++    auto point0Iterator = canonicalCrossings.find( proposal.crossings[0] );
++    auto point1Iterator = canonicalCrossings.find( proposal.crossings[1] );
++    if( point0Iterator == canonicalCrossings.end() ||
++        point1Iterator == canonicalCrossings.end() )
++    {
++      continue;
++    }
++
++    PrimalWeakCrossingKey key0 = proposal.crossings[0];
++    PrimalWeakCrossingKey key1 = proposal.crossings[1];
++    if( key1 < key0 )
++    {
++      std::swap( key0, key1 );
++    }
++    if( !segmentKeys.emplace( key0, key1 ).second )
++    {
++      continue;
++    }
++
++    PrimalWeakInterfaceSegment segment;
++    segment.endpoint0 = point0Iterator->second;
++    segment.endpoint1 = point1Iterator->second;
++    real64 const tx = segment.endpoint1[0] - segment.endpoint0[0];
++    real64 const ty = segment.endpoint1[1] - segment.endpoint0[1];
++    segment.length = LvArray::math::sqrt( tx * tx + ty * ty );
++    if( segment.length <= minSegmentLength )
++    {
++      continue;
++    }
++    segment.normal[0] = -ty / segment.length;
++    segment.normal[1] =  tx / segment.length;
++    if( segment.normal[0] * proposal.normal[0] +
++        segment.normal[1] * proposal.normal[1] < 0.0 )
++    {
++      segment.normal[0] *= -1.0;
++      segment.normal[1] *= -1.0;
++    }
++    segment.cellI = proposal.i;
++    segment.cellJ = proposal.j;
++    segment.fitResidual = proposal.fitResidual;
++    segment.normalCoherence = proposal.normalCoherence;
++    segments.emplace_back( segment );
++  }
++
++  GEOS_ERROR_IF( segments.empty(),
++                 "Primal weak-interface particle-surface reconstruction did not produce any valid line segments." );
++
++  std::map< PrimalWeakCrossingKey, int > crossingUseCount;
++  for( PrimalWeakCellProposal const & proposal : cellProposals )
++  {
++    if( proposal.valid )
++    {
++      crossingUseCount[proposal.crossings[0]] += 1;
++      crossingUseCount[proposal.crossings[1]] += 1;
++    }
++  }
++  localIndex danglingCrossings = 0;
++  for( auto const & entry : crossingUseCount )
++  {
++    if( entry.second == 1 )
++    {
++      ++danglingCrossings;
++    }
++  }
++
++  real64 const supportHalfWidthX = 2.0 * hEl[0];
++  real64 const supportHalfWidthY = 2.0 * hEl[1];
++  for( localIndex g = 0; g < nodeManager.size(); ++g )
++  {
++    std::array< real64, 3 > nodePoint = {{
++      gridPosition[g][0], gridPosition[g][1], gridPosition[g][2]
++    }};
++    real64 nearestDistanceSquared = std::numeric_limits< real64 >::max();
++    PrimalWeakInterfaceSegment const * nearestSegment = nullptr;
++    std::array< real64, 3 > nearestPoint{};
++
++    for( PrimalWeakInterfaceSegment const & segment : segments )
++    {
++      if( primalWeakSegmentIntersectsBox2D(
++            segment,
++            nodePoint[0] - supportHalfWidthX,
++            nodePoint[0] + supportHalfWidthX,
++            nodePoint[1] - supportHalfWidthY,
++            nodePoint[1] + supportHalfWidthY ) )
++      {
++        geometryActive[g] = 1;
++        geometrySegmentCount[g] += 1;
++      }
++
++      std::array< real64, 3 > closestPoint{};
++      real64 const distanceSquared =
++        primalWeakClosestPointOnSegment2D( nodePoint, segment, closestPoint );
++      if( distanceSquared < nearestDistanceSquared )
++      {
++        nearestDistanceSquared = distanceSquared;
++        nearestSegment = &segment;
++        nearestPoint = closestPoint;
++      }
++    }
++
++    if( nearestSegment != nullptr )
++    {
++      real64 const distance = LvArray::math::sqrt( nearestDistanceSquared );
++      geometryDistance[g] = distance / hInterface;
++      geometryFitResidual[g] = nearestSegment->fitResidual;
++      if( distance > geometryTolerance )
++      {
++        geometryNormal[g][0] = ( nodePoint[0] - nearestPoint[0] ) / distance;
++        geometryNormal[g][1] = ( nodePoint[1] - nearestPoint[1] ) / distance;
++      }
++      else
++      {
++        geometryNormal[g][0] = nearestSegment->normal[0];
++        geometryNormal[g][1] = nearestSegment->normal[1];
++      }
++    }
++  }
++
++  localIndex geometryParticles = 0;
++  subRegionIndex = 0;
++  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
++  {
++    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
++    arrayView2d< real64 const > const particleSurfacePosition =
++      subRegion.getParticleSurfacePosition();
++    SortedArrayView< localIndex const > const activeParticleIndices =
++      subRegion.activeParticleIndices();
++    arrayView1d< localIndex const > const numEffectiveMappedNodes =
++      m_numEffectiveMappedNodes[subRegionIndex];
++    arrayView2d< localIndex const > const effectiveMappedNodes =
++      m_effectiveMappedNodes[subRegionIndex];
++
++    for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
++    {
++      bool touchesEnrichedNode = false;
++      localIndex const count = numEffectiveMappedNodes[pp];
++      for( localIndex n = 0; n < count; ++n )
++      {
++        if( geometryActive[effectiveMappedNodes[pp][n]] != 0 )
++        {
++          touchesEnrichedNode = true;
++          break;
++        }
++      }
++      if( !touchesEnrichedNode )
++      {
++        continue;
++      }
++
++      localIndex const p = activeParticleIndices[pp];
++      std::array< real64, 3 > particlePoint = {{
++        particlePosition[p][0], particlePosition[p][1], particlePosition[p][2]
++      }};
++      real64 nearestDistanceSquared = std::numeric_limits< real64 >::max();
++      PrimalWeakInterfaceSegment const * nearestSegment = nullptr;
++      std::array< real64, 3 > nearestPoint{};
++      for( PrimalWeakInterfaceSegment const & segment : segments )
++      {
++        std::array< real64, 3 > closestPoint{};
++        real64 const distanceSquared =
++          primalWeakClosestPointOnSegment2D( particlePoint, segment, closestPoint );
++        if( distanceSquared < nearestDistanceSquared )
++        {
++          nearestDistanceSquared = distanceSquared;
++          nearestSegment = &segment;
++          nearestPoint = closestPoint;
++        }
++      }
++      if( nearestSegment == nullptr )
++      {
++        continue;
++      }
++
++      real64 const distance = LvArray::math::sqrt( nearestDistanceSquared );
++      m_weakPrimalParticleDistance[subRegionIndex][pp] = distance / hInterface;
++      arraySlice1d< real64 > const distanceGradient =
++        m_weakPrimalParticleDistanceGradient[subRegionIndex][pp];
++      if( distance > geometryTolerance )
++      {
++        distanceGradient[0] = ( particlePoint[0] - nearestPoint[0] ) /
++                              ( distance * hInterface );
++        distanceGradient[1] = ( particlePoint[1] - nearestPoint[1] ) /
++                              ( distance * hInterface );
++      }
++      else
++      {
++        real64 const surfacePositionNorm =
++          LvArray::math::sqrt(
++            particleSurfacePosition[p][0] * particleSurfacePosition[p][0] +
++            particleSurfacePosition[p][1] * particleSurfacePosition[p][1] );
++        if( surfacePositionNorm > explicitSurfaceNormalTolerance )
++        {
++          distanceGradient[0] = -particleSurfacePosition[p][0] /
++                                ( surfacePositionNorm * hInterface );
++          distanceGradient[1] = -particleSurfacePosition[p][1] /
++                                ( surfacePositionNorm * hInterface );
++        }
++        else
++        {
++          real64 const midpointX =
++            0.5 * ( nearestSegment->endpoint0[0] + nearestSegment->endpoint1[0] );
++          real64 const midpointY =
++            0.5 * ( nearestSegment->endpoint0[1] + nearestSegment->endpoint1[1] );
++          real64 const signedProjection =
++            ( particlePoint[0] - midpointX ) * nearestSegment->normal[0] +
++            ( particlePoint[1] - midpointY ) * nearestSegment->normal[1];
++          real64 const side = signedProjection >= 0.0 ? 1.0 : -1.0;
++          distanceGradient[0] = side * nearestSegment->normal[0] / hInterface;
++          distanceGradient[1] = side * nearestSegment->normal[1] / hInterface;
++        }
++      }
++      m_weakPrimalParticleGeometryValid[subRegionIndex][pp] = 1;
++      ++geometryParticles;
++    }
++
++    ++subRegionIndex;
++  } );
++
++  bool const logGeometry =
++    cycleNumber == 0 ||
++    ( m_weakInterfacePrimalGeometryLogInterval > 0 &&
++      cycleNumber % m_weakInterfacePrimalGeometryLogInterval == 0 );
++  if( logGeometry )
++  {
++    GEOS_LOG_LEVEL_RANK_0(
++      logInfo::MPMSubroutines,
++      "Primal weak-interface geometry: markers=" << markers.size() <<
++      ", candidateCells=" << candidateCells <<
++      ", acceptedFits=" << acceptedCellFits <<
++      ", segments=" << segments.size() <<
++      ", canonicalCrossings=" << canonicalCrossings.size() <<
++      ", danglingCrossings=" << danglingCrossings <<
++      ", geometryParticles=" << geometryParticles <<
++      ", rejected(marker/coherence/residual/intersection)=" <<
++        rejectedMarkerCount << "/" << rejectedNormalCoherence << "/" <<
++        rejectedFitResidual << "/" << rejectedIntersection <<
++      ", ambiguousCells=" << ambiguousIntersectionCells <<
++      ", maxEdgeProposalDisagreement/h=" << maxEdgeProposalDisagreement );
++  }
+ }
+ 
++
+ /**
+  * @brief Maps raw mass, momentum, and internal-force moments for a primal
+  * weak-interface ridge enrichment.
+  *
+- * This first implementation is intentionally serial and host-only. The raw
+- * moments are additive and are the quantities that must eventually be summed
+- * across MPI partitions before nodal mass orthogonalization.
++ * The ridge coordinate is the unsigned distance to the edge-consistent
++ * particle-reconstructed polyline, normalized by the in-plane grid length.
++ * The distance and gradient were frozen by reconstructPrimalWeakInterfaceGeometry
++ * before the ordinary P2G pass, so P2G and G2P use exactly the same current-step
++ * enrichment geometry.
+  */
+ void SolidMechanicsMPM::mapPrimalWeakInterfaceToGrid( ParticleManager & particleManager,
+                                                       NodeManager & nodeManager )
+@@ -21650,10 +22669,10 @@ void SolidMechanicsMPM::mapPrimalWeakInterfaceToGrid( ParticleManager & particle
+   GEOS_ERROR_IF( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1,
+                  "Primal weak-interface enrichment is currently serial only." );
+ 
+-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
+-    nodeManager.referencePosition();
+   arrayView2d< real64 const > const gridBackgroundStress =
+     nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
++  arrayView1d< int const > const geometryActive =
++    nodeManager.getReference< array1d< int > >( viewKeyStruct::gridWeakPrimalGeometryActiveString() );
+ 
+   arrayView1d< real64 > const crossMass =
+     nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridWeakPrimalCrossMassString() );
+@@ -21702,7 +22721,6 @@ void SolidMechanicsMPM::mapPrimalWeakInterfaceToGrid( ParticleManager & particle
+     arrayView1d< real64 const > const particleMass =
+       subRegion.getField< fields::mpm::particleMass >();
+     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+-    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+     arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+     arrayView2d< real64 const > const particleStress =
+       subRegion.getField< fields::mpm::particleStress >();
+@@ -21719,44 +22737,28 @@ void SolidMechanicsMPM::mapPrimalWeakInterfaceToGrid( ParticleManager & particle
+       m_effectiveShapeFunctionValues[subRegionIndex];
+     arrayView3d< real64 const > const effectiveShapeFunctionGradientValues =
+       m_effectiveShapeFunctionGradientValues[subRegionIndex];
++    arrayView1d< real64 const > const particleDistance =
++      m_weakPrimalParticleDistance[subRegionIndex];
++    arrayView2d< real64 const > const particleDistanceGradient =
++      m_weakPrimalParticleDistanceGradient[subRegionIndex];
++    arrayView1d< int const > const particleGeometryValid =
++      m_weakPrimalParticleGeometryValid[subRegionIndex];
+ 
+     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+     {
+-      localIndex const p = activeParticleIndices[pp];
+-      localIndex const count = numEffectiveMappedNodes[pp];
+-
+-      real64 phiH = 0.0;
+-      real64 qH = 0.0;
+-      real64 gradPhi[3] = {};
+-      real64 gradQ[3] = {};
+-
+-      for( localIndex n = 0; n < count; ++n )
+-      {
+-        localIndex const g = effectiveMappedNodes[pp][n];
+-        real64 const N = effectiveShapeFunctionValues[pp][n];
+-        real64 const phiNode = primalWeakInterfaceSignedDistance(
+-          gridPosition[g][0], gridPosition[g][1] );
+-        real64 const absPhiNode = LvArray::math::abs( phiNode );
+-        phiH += N * phiNode;
+-        qH += N * absPhiNode;
+-        for( int j = 0; j < 2; ++j )
+-        {
+-          real64 const gradN = effectiveShapeFunctionGradientValues[pp][n][j];
+-          gradPhi[j] += gradN * phiNode;
+-          gradQ[j] += gradN * absPhiNode;
+-        }
+-      }
+-
+-      real64 const phiParticle = primalWeakInterfaceSignedDistance(
+-        particlePosition[p][0], particlePosition[p][1] );
+-      real64 const side = phiParticle >= 0.0 ? 1.0 : -1.0;
+-      real64 const psi = qH - side * phiH;
+-      real64 gradPsi[3] = {};
+-      for( int j = 0; j < 2; ++j )
++      if( particleGeometryValid[pp] == 0 )
+       {
+-        gradPsi[j] = gradQ[j] - side * gradPhi[j];
++        continue;
+       }
+ 
++      localIndex const p = activeParticleIndices[pp];
++      localIndex const count = numEffectiveMappedNodes[pp];
++      real64 const rho = particleDistance[pp];
++      real64 gradRho[3] = {
++        particleDistanceGradient[pp][0],
++        particleDistanceGradient[pp][1],
++        0.0
++      };
+       real64 const mp = particleMass[p];
+       real64 const Vp = particleVolume[p];
+       real64 const supplementalPressure = particleSupplementalPressure[p];
+@@ -21764,11 +22766,15 @@ void SolidMechanicsMPM::mapPrimalWeakInterfaceToGrid( ParticleManager & particle
+       for( localIndex n = 0; n < count; ++n )
+       {
+         localIndex const g = effectiveMappedNodes[pp][n];
+-        real64 const N = effectiveShapeFunctionValues[pp][n];
+-        real64 const weightedRidge = N * psi;
++        if( geometryActive[g] == 0 )
++        {
++          continue;
++        }
+ 
++        real64 const N = effectiveShapeFunctionValues[pp][n];
++        real64 const weightedRidge = N * rho;
+         crossMass[g] += mp * weightedRidge;
+-        rawMass[g] += mp * N * psi * psi;
++        rawMass[g] += mp * N * rho * rho;
+         for( int i = 0; i < 2; ++i )
+         {
+           rawMomentum[g][i] += mp * weightedRidge * particleVelocity[p][i];
+@@ -21777,15 +22783,20 @@ void SolidMechanicsMPM::mapPrimalWeakInterfaceToGrid( ParticleManager & particle
+         real64 gradR[3] = {};
+         for( int j = 0; j < 2; ++j )
+         {
+-          gradR[j] = effectiveShapeFunctionGradientValues[pp][n][j] * psi + N * gradPsi[j];
++          gradR[j] = effectiveShapeFunctionGradientValues[pp][n][j] * rho +
++                     N * gradRho[j];
+         }
+ 
+-        real64 const sigmaXX = particleStress[p][0] - gridBackgroundStress[g][0] - supplementalPressure;
+-        real64 const sigmaYY = particleStress[p][1] - gridBackgroundStress[g][1] - supplementalPressure;
++        real64 const sigmaXX =
++          particleStress[p][0] - gridBackgroundStress[g][0] - supplementalPressure;
++        real64 const sigmaYY =
++          particleStress[p][1] - gridBackgroundStress[g][1] - supplementalPressure;
+         real64 const sigmaXY = particleStress[p][5] - gridBackgroundStress[g][5];
+ 
+-        rawInternalForce[g][0] += -Vp * ( gradR[0] * sigmaXX + gradR[1] * sigmaXY );
+-        rawInternalForce[g][1] += -Vp * ( gradR[0] * sigmaXY + gradR[1] * sigmaYY );
++        rawInternalForce[g][0] +=
++          -Vp * ( gradR[0] * sigmaXX + gradR[1] * sigmaXY );
++        rawInternalForce[g][1] +=
++          -Vp * ( gradR[0] * sigmaXY + gradR[1] * sigmaYY );
+       }
+     }
+ 
+@@ -21793,6 +22804,7 @@ void SolidMechanicsMPM::mapPrimalWeakInterfaceToGrid( ParticleManager & particle
+   } );
+ }
+ 
++
+ /**
+  * @brief Orthogonalizes and advances the enriched nodal coefficient.
+  */
+@@ -21880,8 +22892,6 @@ void SolidMechanicsMPM::applyPrimalWeakInterfaceToParticles( real64 const dt,
+ {
+   GEOS_MARK_FUNCTION;
+ 
+-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
+-    nodeManager.referencePosition();
+   arrayView1d< real64 const > const mean =
+     nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridWeakPrimalMeanString() );
+   arrayView2d< real64 const > const enrichedVelocity =
+@@ -21909,42 +22919,28 @@ void SolidMechanicsMPM::applyPrimalWeakInterfaceToParticles( real64 const dt,
+       m_effectiveShapeFunctionValues[subRegionIndex];
+     arrayView3d< real64 const > const effectiveShapeFunctionGradientValues =
+       m_effectiveShapeFunctionGradientValues[subRegionIndex];
++    arrayView1d< real64 const > const particleDistance =
++      m_weakPrimalParticleDistance[subRegionIndex];
++    arrayView2d< real64 const > const particleDistanceGradient =
++      m_weakPrimalParticleDistanceGradient[subRegionIndex];
++    arrayView1d< int const > const particleGeometryValid =
++      m_weakPrimalParticleGeometryValid[subRegionIndex];
+ 
+     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+     {
+-      localIndex const p = activeParticleIndices[pp];
+-      localIndex const count = numEffectiveMappedNodes[pp];
+-
+-      real64 phiH = 0.0;
+-      real64 qH = 0.0;
+-      real64 gradPhi[3] = {};
+-      real64 gradQ[3] = {};
+-      for( localIndex n = 0; n < count; ++n )
++      if( particleGeometryValid[pp] == 0 )
+       {
+-        localIndex const g = effectiveMappedNodes[pp][n];
+-        real64 const N = effectiveShapeFunctionValues[pp][n];
+-        real64 const phiNode = primalWeakInterfaceSignedDistance(
+-          gridPosition[g][0], gridPosition[g][1] );
+-        real64 const absPhiNode = LvArray::math::abs( phiNode );
+-        phiH += N * phiNode;
+-        qH += N * absPhiNode;
+-        for( int j = 0; j < 2; ++j )
+-        {
+-          real64 const gradN = effectiveShapeFunctionGradientValues[pp][n][j];
+-          gradPhi[j] += gradN * phiNode;
+-          gradQ[j] += gradN * absPhiNode;
+-        }
++        continue;
+       }
+ 
+-      real64 const phiParticle = primalWeakInterfaceSignedDistance(
+-        particlePosition[p][0], particlePosition[p][1] );
+-      real64 const side = phiParticle >= 0.0 ? 1.0 : -1.0;
+-      real64 const psi = qH - side * phiH;
+-      real64 gradPsi[3] = {};
+-      for( int j = 0; j < 2; ++j )
+-      {
+-        gradPsi[j] = gradQ[j] - side * gradPhi[j];
+-      }
++      localIndex const p = activeParticleIndices[pp];
++      localIndex const count = numEffectiveMappedNodes[pp];
++      real64 const rho = particleDistance[pp];
++      real64 const gradRho[3] = {
++        particleDistanceGradient[pp][0],
++        particleDistanceGradient[pp][1],
++        0.0
++      };
+ 
+       real64 velocityCorrection[3] = {};
+       real64 accelerationCorrection[3] = {};
+@@ -21959,12 +22955,13 @@ void SolidMechanicsMPM::applyPrimalWeakInterfaceToParticles( real64 const dt,
+         }
+ 
+         real64 const N = effectiveShapeFunctionValues[pp][n];
+-        real64 const centered = psi - mean[g];
++        real64 const centered = rho - mean[g];
+         real64 const enrichedWeight = N * centered;
+         real64 gradR[3] = {};
+         for( int j = 0; j < 2; ++j )
+         {
+-          gradR[j] = effectiveShapeFunctionGradientValues[pp][n][j] * centered + N * gradPsi[j];
++          gradR[j] = effectiveShapeFunctionGradientValues[pp][n][j] * centered +
++                     N * gradRho[j];
+         }
+ 
+         for( int i = 0; i < 2; ++i )
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
+index 179b09a75a3fd63333eacae619cc63e31556dd2d..bf2e734f852865f9c8ec28421e2da25e7c17871d 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
++++ b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
+@@ -37,6 +37,7 @@
+ #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+ #include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
+ 
++
+ namespace geos
+ {
+ 
+@@ -238,6 +239,11 @@ public:
+     static constexpr char const * gridWeakPrimalVelocityString() { return "gridWeakPrimalVelocity"; }
+     static constexpr char const * gridWeakPrimalAccelerationString() { return "gridWeakPrimalAcceleration"; }
+     static constexpr char const * gridWeakPrimalActiveString() { return "gridWeakPrimalActive"; }
++    static constexpr char const * gridWeakPrimalGeometryActiveString() { return "gridWeakPrimalGeometryActive"; }
++    static constexpr char const * gridWeakPrimalGeometryDistanceString() { return "gridWeakPrimalGeometryDistance"; }
++    static constexpr char const * gridWeakPrimalGeometryNormalString() { return "gridWeakPrimalGeometryNormal"; }
++    static constexpr char const * gridWeakPrimalGeometryFitResidualString() { return "gridWeakPrimalGeometryFitResidual"; }
++    static constexpr char const * gridWeakPrimalGeometrySegmentCountString() { return "gridWeakPrimalGeometrySegmentCount"; }
+ 
+     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
+ 
+@@ -1678,14 +1684,23 @@ protected:
+   int m_useReferenceVectorsForParticleUpdate;
+   int m_useSurfacePositionForContact;
+   mpm::WeakDiscontinuityInsertionOption m_weakDiscontinuityInsertion;
+-  int m_weakInterfacePrimalGeometryType; // 1: plane, 2: circle
+-  real64 m_weakInterfacePrimalPointX;
+-  real64 m_weakInterfacePrimalPointY;
+-  real64 m_weakInterfacePrimalNormalX;
+-  real64 m_weakInterfacePrimalNormalY;
+-  real64 m_weakInterfacePrimalRadius;
++  int m_weakInterfacePrimalGeometryType; // 3: particle-surface reconstruction
++  real64 m_weakInterfacePrimalPointX; // retained as a deprecated diagnostic input
++  real64 m_weakInterfacePrimalPointY; // retained as a deprecated diagnostic input
++  real64 m_weakInterfacePrimalNormalX; // retained as a deprecated diagnostic input
++  real64 m_weakInterfacePrimalNormalY; // retained as a deprecated diagnostic input
++  real64 m_weakInterfacePrimalRadius; // retained as a deprecated diagnostic input
+   real64 m_weakInterfacePrimalMinMassRatio;
+   real64 m_weakInterfacePrimalMassCFL;
++  int m_weakInterfacePrimalGeometryHalo;
++  int m_weakInterfacePrimalMinMarkersPerCell;
++  real64 m_weakInterfacePrimalMinNormalCoherence;
++  real64 m_weakInterfacePrimalMaxFitResidual;
++  real64 m_weakInterfacePrimalMinSegmentFraction;
++  int m_weakInterfacePrimalGeometryLogInterval;
++  stdVector< array1d< real64 > > m_weakPrimalParticleDistance;
++  stdVector< array2d< real64 > > m_weakPrimalParticleDistanceGradient;
++  stdVector< array1d< int > > m_weakPrimalParticleGeometryValid;
+   mpm::WeakInterfaceTraceGeometryOption m_weakInterfaceTraceGeometry;
+   real64 m_weakInterfaceTraceGapStabilization;
+   real64 m_weakInterfaceTraceMaterialLRMaxMisfitFraction;
+@@ -1740,6 +1755,13 @@ private:
+ 
+   void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
+ 
++  /// Reconstruct a continuous piecewise-linear interface from current particle
++  /// surface points/normals and cache a frozen unsigned-distance ridge at the
++  /// active particles for the current explicit step.
++  void reconstructPrimalWeakInterfaceGeometry( integer const cycleNumber,
++                                               ParticleManager & particleManager,
++                                               NodeManager & nodeManager );
++
+   /// Map raw moments and internal force for the serial primal weak-interface mode.
+   void mapPrimalWeakInterfaceToGrid( ParticleManager & particleManager,
+                                      NodeManager & nodeManager );
+@@ -1752,10 +1774,6 @@ private:
+   void applyPrimalWeakInterfaceToParticles( real64 const dt,
+                                             ParticleManager & particleManager,
+                                             NodeManager & nodeManager );
+-
+-  /// Dimensionless signed distance used by the exact plane/circle prototype.
+-  real64 primalWeakInterfaceSignedDistance( real64 const x,
+-                                            real64 const y ) const;
+ };
+ 
+ } /* namespace geos */

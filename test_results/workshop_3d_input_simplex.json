@@ -1,0 +1,20 @@
+{
+  "candidate_domains": 64,
+  "coarse_center_queries": 64,
+  "cut_subdomains": 90,
+  "emitted_particles": 1502,
+  "isInterior_calls": 10446,
+  "level": 2,
+  "method": "simplex",
+  "owned_coarse_domains": 64,
+  "particle_volume": 0.41999999999999527,
+  "peak_cached_occupied_centers": 48,
+  "peak_cached_slices": 3,
+  "peak_values_are_per_rank": true,
+  "pfw_ranks": 1,
+  "refinement_point_queries": 5688,
+  "replaced_occupied_parents": 64,
+  "simplex_particles": 1080,
+  "surface_queries": 499,
+  "uncut_subdomains": 422
+}

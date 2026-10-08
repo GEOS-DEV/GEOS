@@ -1,0 +1,1424 @@
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/NATIVE_REFERENCE_GEOMETRY.md b/scripts/preProcessing/materialPointMethodParticleFileWriter/NATIVE_REFERENCE_GEOMETRY.md
+new file mode 100644
+index 0000000..b27bea7
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/NATIVE_REFERENCE_GEOMETRY.md
+@@ -0,0 +1,223 @@
++# Native particle reference geometry for MPM output
++
++## Scope and baseline
++
++This incremental patch assumes `pfw_two_pass_surface_refinement.patch` is already
++applied to the files in `2609161200_geos_mpm_bundle.zip` (review commit
++`271e3edc9553080f388395d86df7b0c02f68a4ee`, including its supplied worktree overlay).
++Do not reapply the earlier PFW patch.
++
++The goal is native triangular-wedge/tetrahedral particle-domain output while
++keeping current SinglePointBSpline mechanics unchanged. This is NOT CPTI,
++CPDI2, a connected finite-element mesh, or a modification to mortar construction.
++It exposes the cut-simplex initialization geometry instead of its equal-volume box.
++
++## Enable
++
++In the PFW input:
++
++```python
++pfw["surfaceRefinementMethod"] = "simplex"
++pfw["surfaceRefinementLevel"] = 4
++pfw["particleReferenceGeometry"] = "fromRefinement"
++pfw["particleDomainOutput"] = "native"       # default; optional
++```
++
++Geometry objects producing cut particles must use `particleType=1`
++(`SinglePointBSpline`). A cut triangle is extruded through the existing plane-strain
++reference thickness. A 3D cut simplex is a tetrahedron. Uncut and fallback pieces
++remain boxes. Cartesian refinement also works with metadata enabled, but produces
++box geometry. Selecting `fromRefinement` does not convert every bulk particle to a
++simplex or add any object/surface queries.
++
++The default `particleReferenceGeometry="equivalentBox"` writes the old particle
++file with no added columns. Rerun PFW to obtain native geometry: the discarded
++simplex shapes cannot be recovered uniquely from an old equivalent-box file.
++
++To inspect the original numerical domains while retaining the new metadata:
++
++```python
++pfw["particleDomainOutput"] = "equivalentBox"
++```
++
++The corresponding XML option belongs on each `ParticleRegion`, NOT on the solver:
++
++```xml
++<ParticleRegion ... particleDomainOutput="equivalentBox"/>
++```
++
++PFW writes this attribute when native metadata is enabled. Old XML/files are valid;
++new files with geometry columns require the updated reader. The output mesh name
++and one-value-per-particle field association are unchanged.
++
++## Install
++
++From the full GEOS repository root, with the combined patch available:
++
++```bash
++git apply --check /path/to/mpm_native_reference_geometry.patch
++git apply /path/to/mpm_native_reference_geometry.patch
++```
++
++The package also contains `apply_patch.sh`, which checks the complete patch before
++applying anything, and split core/output patches for review. Prefer the combined
++patch: applying only the core patch does not activate native output in the writers.
++Do not force failed hunks or replace unrelated writer code.
++
++### Output-writer provenance / important coverage limitation
++
++The supplied lean archive DOES NOT contain `SiloFile.cpp` or
++`VTKPolyDataWriterInterface.cpp`. The output integration hunks were constructed
++against the publicly inspectable `GEOS-DEV/GEOS` `mpm` versions of these functions:
++
++- `SiloFile::writeParticleMeshObject`
++- `getVtkPoints(ParticleRegion const&)`
++- `getVtkCells(ParticleRegion const&)`
++
++The hunks insert guarded native paths; they do not replace whole writer files or
++change the legacy paths. Exact private-backend applicability and a full GEOS build
++must be checked in the user's full tree. If the backend hunk check fails, the core
++implementation should be retained for rebasing onto the actual writer functions,
++not installed alone and described as a completed visualization change.
++
++Public source references inspected on 2026-09-16:
++- https://raw.githubusercontent.com/GEOS-DEV/GEOS/mpm/src/coreComponents/fileIO/silo/SiloFile.cpp
++- https://raw.githubusercontent.com/GEOS-DEV/GEOS/mpm/src/coreComponents/fileIO/vtk/VTKPolyDataWriterInterface.cpp
++- https://raw.githubusercontent.com/visit-dav/visit/develop/src/databases/Silo/avtSiloFileFormat.C
++- https://raw.githubusercontent.com/Kitware/VTK/v9.6.2/Common/DataModel/vtkWedge.h
++
++## Data representation
++
++The new particle-file columns are appended after all existing columns:
++
++```
++ParticleReferenceGeometry
++GeometryRVectorXX GeometryRVectorXY GeometryRVectorXZ
++GeometryRVectorYX GeometryRVectorYY GeometryRVectorYZ
++GeometryRVectorZX GeometryRVectorZY GeometryRVectorZZ
++```
++
++All ten columns must be present together. The importer validates finite data,
++geometry tags, positive initial orientation, allowed interpolation type, and
++agreement with the INITIAL mechanical volume (relative tolerance 1e-9). It never
++rescales geometry, volume, mass, or density to repair disagreement.
++
++| Tag | Geometry | Three ROW vectors | Signed reference volume |
++|---|---|---|---|
++| 0 | Parallelepiped | Existing half edges | 8 det(G) |
++| 1 | TriangleWedge | Two full triangle edges and full z extrusion | det(G)/2 |
++| 2 | Tetrahedron | Three full edges from one vertex | det(G)/6 |
++
++The particle position is the centroid. For a tetrahedron, vertex zero is the
++center minus one quarter of the vector sum. For a wedge, the first bottom vertex
++is the center minus one third of the first two vectors and half the third vector.
++Plane-strain wedges require in-plane triangle edges and z extrusion; tetrahedra
++require a 3D solver configuration. Unsupported combinations fail explicitly.
++
++The existing `particleRVectors` and `particleReferenceRVectors` retain their
++original equivalent-box meaning. They remain authoritative for legacy volume
++initialization, B-spline support, contact, CZ TypeB, scaling and other mechanics.
++In particular, `numberOfVerticesPerParticle()` is NOT changed: its existing value
++also sizes interpolation mappings and is not a visualization-corner count.
++
++New state is registered as:
++- `particleReferenceGeometry`: one integer per particle, also available as a plot field.
++- `particleReferenceGeometryVectors`: nine doubles per particle, restart data but not plotted by default.
++
++The optional dense arrays are allocated for all particles in geometry-enabled
++subregions, including ordinary boxes. Cost is 72 bytes plus an integer per particle
++per allocated memory copy, plus allocator overhead. Old files allocate neither array.
++For tag 0, output deliberately uses the live legacy box R-vectors; its supplemental
++input vectors are not a second box-deformation/scaling policy.
++
++## Motion and reference changes
++
++For simplex particles the current geometry vectors are `G_current = G_ref F^T`
++in row-vector storage, centered on the current particle position. There is no new
++current-geometry tensor, per-step corner integration, or mechanical equation.
++
++A numerical reference change from F_old to F_new updates ONLY the new generators:
++
++```
++G_ref_new = G_ref_old F_old^T F_new^(-T)
++```
++
++This preserves current native vertices through the supplied solver's general
++F reset, initial temperature/pressure reference change, polymer healing, and
++crystal-healing volumetric reference change. Singular/nonfinite rebase operations
++fail rather than silently destroying the shape. Physical deformation updates and
++`TransformParticles` rotations are not canceled by rebasing.
++
++The native shape can remain distorted while an equivalent numerical box is reset
++or regularized. That distinction is intentional. It is not forcibly made to have
++the mechanical volume after a reference change. The INITIAL volume equality check
++is not a constraint on every later output snapshot.
++
++Runtime subdivision is guarded: when a simplex-tagged particle would actually be
++split, execution reports that native simplex subdivision is not implemented. It
++does not clone the original simplex geometry into every child. Offline PFW
++refinement remains supported, as does the existing runtime subdivision of boxes.
++
++## Output and ordering
++
++Each particle is exactly one output zone: hex, prism/wedge, or tetrahedron. Particle
++and field ordering remains subregion order followed by particle order. Silo uses
++consecutive runs of equal zone shape, allowing repeated runs, rather than sorting
++particles by shape. Ghost flags remain determined by the particle owner rank.
++Vertices stay disconnected between particles; no global ownership or node welding
++is introduced. Both native points and existing F/R-vector fields are synchronized
++to host for output.
++
++Geometry vertex order is independent of backend order. VTK linear wedges through
++9.6.2 require the first triangle normal to point AWAY from the other triangle;
++positive reference generators point toward it, so wedge connectivity reverses
++both triangles. Silo has a further prism/tetrahedron permutation. The helper makes
++these conversions explicit, and actual VTK 9.6.2 file/volume tests exercise them.
++A future VTK release changing its wedge orientation convention would need the
++small backend permutation updated; it must not change reference geometry or mass.
++
++This displays the local cut domains, not a guaranteed global conforming mesh.
++Neighboring local cuts may already differ, and independent particle motion can
++produce gaps/overlaps. Visualization does not hide them or repair the C0 mortar.
++
++## MPI and PFW rank slicing
++
++No new partition or halo algorithm is added to the two-pass writer. Geometry
++columns travel on the SAME record as their particle; there is no sidecar keyed by
++rank-local IDs. Merged IDs and existing global type/material metadata are unchanged.
++Every rank uses the same column schema, including ranks with no owned coarse rows.
++
++The GEOS importer enables optional arrays from the file HEADER on every block,
++including empty local blocks. Subregion copying explicitly transfers the arrays;
++they are parent-sized registered wrappers, using existing packing, erasure and
++restart machinery. Output vertices have no cross-rank connectivity and need no
++additional grid halos. Full GEOS migration/restart and device execution remain
++integration checks, not claimed results of the standalone tests.
++
++## Tests
++
++From the repository root:
++
++```bash
++PFW=scripts/preProcessing/materialPointMethodParticleFileWriter
++python -m unittest discover -s "$PFW/tests" -p 'test_*.py' -v
++python "$PFW/tests/run_reference_geometry_cpp_tests.py"
++python "$PFW/tests/run_writer_regression.py" --output /tmp/pfw-native-check   --reference-geometry fromRefinement --communicator mpi
++```
++
++Use `--launcher srun` on an appropriate allocation. Without MPI, explicitly choose
++`--communicator emulated`. Emulated tests launch independent processes with a
++file-backed collective API; they are NOT MPI transport/performance tests.
++
++The C++ math driver compiles the production header with a minimal DataTypes stub;
++it is NOT a complete GEOS compilation. The package's validation directory records
++backend-branch mock compilation and actual VTK preview/round-trip checks. Preview
++VTU files were created from PFW output, not by a GEOS mechanics run.
++
++Before relying on this in production, build the complete CPU solver, inspect a
++native output at t=0 and after deformation, compare mechanical fields with metadata
++off/on, trigger an F reset, and test MPI migration plus restart across a changed
++rank count. Test a CZ case to establish that the untouched mechanical R-vector
++path gives unchanged forces. Native geometry itself does not make CZ/contact
++simplex-aware. GPU compilation, Silo runtime I/O, and full GEOS tests were not
++available in the patch-preparation environment.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+index a190eb4..734d37c 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py
+@@ -889,6 +889,8 @@ parameters = {
+                'particleFileFields': ( [], False ),  # PFW: particle columns to write.
+                'particleRefinement': ( None, False ),  # PFW: material-wise particle refinement settings.
+                'surfaceRefinementLevel': ( 1, False ),  # PFW: per-direction subdivision in the two-pass surface band.
++               'particleReferenceGeometry': ( 'equivalentBox', False ),  # Optional fromRefinement metadata; no mechanics change.
++               'particleDomainOutput': ( 'native', False ),  # ParticleRegion output: native or equivalentBox.
+                'surfaceRefinementMethod': ( 'cartesian', False ),  # PFW: cartesian or simplex (single-point B-splines).
+                'surfaceRefinementFallback': ( 'cartesian', False ),  # PFW: cartesian or error for unresolved local simplex cuts.
+                'surfaceRefinementPlaneTolerance': ( 0.05, False ),  # PFW: allowed corner/plane disagreement divided by child diagonal.
+@@ -1100,6 +1102,14 @@ mpmSolverParameterString = ''.join(parameterStrings)
+ cohesiveZoneRegionString = ""
+ 
+ # Remove fields form particleFileOrder the user does not wish to write to particle field (particleFieldOrder preseveres the correct header order for values written to the particle file)
++particleReferenceGeometry = str(particleReferenceGeometry)
++if particleReferenceGeometry not in ('equivalentBox', 'fromRefinement'):
++  raise ValueError("particleReferenceGeometry must be 'equivalentBox' or 'fromRefinement'")
++nativeReferenceGeometry = particleReferenceGeometry == 'fromRefinement'
++if particleDomainOutput not in ('native', 'equivalentBox'):
++  raise ValueError("particleDomainOutput must be 'native' or 'equivalentBox'")
++if nativeReferenceGeometry:
++  from pfw_reference_geometry import COLUMN_NAMES, encode_reference_geometry, geometry_columns
+ particleFileFields.extend([ 'RVector' ]) # MaterialType, velocity, contact group, and surface flags should all default to 0 if unspecified in GEOS initialization
+ particleFileFields = set(particleFileFields)
+ particleFieldOrder = [ f for f in particleFieldOrder if f in particleFileFields ]
+@@ -1529,7 +1539,7 @@ if generateParticleFile:
+         return _evaluate_particle_data(object, pt, voxelFlag)
+     return None
+ 
+-  def _particle_file_line(particleNumber, particlePosition, data, dxr, dyr, dzr):
++  def _particle_file_line(particleNumber, particlePosition, data, dxr, dyr, dzr, geometryVertices=None):
+     object = data["object"]
+     pString = str(particleNumber) + delim \
+               + str(particlePosition[0]) + delim \
+@@ -1637,6 +1647,10 @@ if generateParticleFile:
+     if "ShrinkageFlag" in particleFileFields:
+       pString = pString + delim + str(data["shrinkageFlag"])
+ 
++    if nativeReferenceGeometry:
++      geometry = encode_reference_geometry(particlePosition, (dxr, dyr, dzr),
++                                           geometryVertices, plane_strain=planeStrain == 1)
++      pString += delim + geometry_columns(geometry, delim)
+     return pString +'\n'
+ 
+   refinementReport = None
+@@ -1707,10 +1721,10 @@ if generateParticleFile:
+         _validate_particle_value("ParticleType", obj, data["particleType"], piece.point)
+         n_p += 1
+         particleVolume += piece.volume
+-        # Existing GEOS file format: RVector half-widths encode volume.  For a
+-        # simplex, these are equal-volume boxes (z thickness fixed in 2D), NOT
+-        # new CPDI integration domains or a triangle/tet reference-geometry API.
+-        particleFile.write(_particle_file_line(n_p, piece.point, data, *piece.widths))
++        # Keep legacy equivalent-box R-vectors unchanged. Optional native
++        # reference geometry is appended from the already constructed simplex.
++        particleFile.write(_particle_file_line(n_p, piece.point, data, *piece.widths,
++                                               geometryVertices=piece.vertices))
+       refinementReport = refiner.report()
+     except Exception as exc:
+       particleFile.close()
+@@ -1825,6 +1839,8 @@ if generateParticleFile:
+ 
+         columnNames = columnNames + delim + fieldString
+ 
++      if nativeReferenceGeometry:
++        columnNames += delim + delim.join(COLUMN_NAMES)
+       columnNames = columnNames + "\n"
+       outfile.write(columnNames)
+ 
+@@ -1957,12 +1973,14 @@ if rank == 0:
+     if i < numMats-1:
+       particleBlockString+=", "
+       targetRegionsString+=", "
++    geometryOutputAttribute = (f'\n        particleDomainOutput="{particleDomainOutput}"'
++                               if nativeReferenceGeometry else "")
+     particleRegionString+=f"""
+     <ParticleRegion
+         name="ParticleRegion{i+1}"
+         meshBody="particles"
+         particleBlocks="{{ {regionBlocksStr} }}"
+-        materialList="{{ {matsOrig[i]} }}"/>"""
++        materialList="{{ {matsOrig[i]} }}"{geometryOutputAttribute}/>"""
+ 
+ 
+   # Format explicit solver child XML blocks after defaults have been resolved.
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_reference_geometry.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_reference_geometry.py
+new file mode 100644
+index 0000000..d2f394a
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_reference_geometry.py
+@@ -0,0 +1,63 @@
++"""Optional native particle geometry, independent of the legacy solver R-vectors.
++
++The two-pass refiner already owns the cut vertices. Encoding them adds no object
++queries and does not change particle positions, physical volumes, or rank ownership.
++Three row vectors encode a tetrahedron (full edges), a triangular wedge (two full
++in-plane edges and a full thickness vector), or a box (half edges).
++"""
++from __future__ import annotations
++
++import numpy as np
++
++PARALLELEPIPED, TRIANGLE_WEDGE, TETRAHEDRON = 0, 1, 2
++COLUMN_NAMES = ("ParticleReferenceGeometry",) + tuple(
++    "GeometryRVector" + ij for ij in ("XX", "XY", "XZ", "YX", "YY", "YZ", "ZX", "ZY", "ZZ"))
++
++
++def encode_reference_geometry(point, widths, vertices=None, plane_strain=False):
++    """Return (shape, generators) without changing any mechanical input fields.
++
++    widths are the EXISTING equal-volume box full widths. Their product is an
++    independent check, not a target used to rescale or repair the actual simplex.
++    """
++    point = np.asarray(point, dtype=float)
++    widths = np.asarray(widths, dtype=float)
++    if point.shape != (3,) or widths.shape != (3,):
++        raise ValueError("Native reference geometry requires 3D point and widths")
++    if not np.all(np.isfinite(point)) or not np.all(np.isfinite(widths)) or np.any(widths <= 0):
++        raise ValueError("Nonfinite point or nonpositive particle widths")
++    if vertices is None:
++        return PARALLELEPIPED, np.diag(widths * 0.5)
++
++    v = np.asarray(vertices, dtype=float)
++    expected = 3 if plane_strain else 4
++    if v.shape != (expected, 3) or not np.all(np.isfinite(v)):
++        raise ValueError("Expected three triangle or four tetrahedron vertices")
++    tol = 256 * np.finfo(float).eps * max(float(np.max(np.abs(v))), float(np.max(widths)), 1.0)
++    if np.max(np.abs(v.mean(axis=0) - point)) > tol:
++        raise ValueError("Native simplex centroid disagrees with particle center")
++    if plane_strain:
++        if np.max(np.abs(v[:, 2] - point[2])) > tol:
++            raise ValueError("Triangle reference geometry must be in the plane-strain midplane")
++        shape = TRIANGLE_WEDGE
++        g = np.array([v[1]-v[0], v[2]-v[0], [0.0, 0.0, widths[2]]])
++        factor = 0.5
++    else:
++        shape = TETRAHEDRON
++        g = v[1:] - v[0]
++        factor = 1.0 / 6.0
++    det = float(np.linalg.det(g))
++    if det < 0:
++        g[[0, 1]] = g[[1, 0]]  # reorder only; no geometric change
++        det = -det
++    volume = factor * det
++    expected_volume = float(np.prod(widths))
++    if not np.isfinite(volume) or volume <= 0 or not np.isclose(volume, expected_volume, rtol=1e-9, atol=0):
++        raise ValueError("Native simplex volume disagrees with equivalent-box particle volume")
++    return shape, g
++
++
++def geometry_columns(geometry, delimiter="\t"):
++    """Round-trip-safe precision for the optional columns; legacy columns unchanged."""
++    shape, generators = geometry
++    return delimiter.join([str(int(shape))] + [format(float(x), ".17g") for x in np.asarray(generators).flat])
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/native_geometry_cpp/test_geometry.cpp b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/native_geometry_cpp/test_geometry.cpp
+new file mode 100644
+index 0000000..2954c11
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/native_geometry_cpp/test_geometry.cpp
+@@ -0,0 +1,57 @@
++// Standalone numerical tests of the production header. The test driver supplies
++// only DataTypes typedefs; this is NOT a GEOS library or device build.
++#include "mesh/ParticleReferenceGeometry.hpp"
++#include <algorithm>
++#include <cassert>
++#include <iostream>
++#include <limits>
++#include <random>
++using namespace geos;
++
++int main()
++{
++  std::mt19937 rng(972);
++  std::uniform_real_distribution<double> d(-0.25,0.25);
++  double maxError=0;
++  for(int trial=0;trial<3000;++trial)
++  {
++    double oldF[3][3],newF[3][3],reference[3][3],copy[3][3],before[3][3],after[3][3];
++    for(int i=0;i<3;++i) for(int j=0;j<3;++j)
++    {
++      oldF[i][j]=(i==j?1.:0.)+d(rng);
++      newF[i][j]=(i==j?1.:0.)+d(rng);
++      reference[i][j]=(i==j?1.:0.)+d(rng);
++      copy[i][j]=reference[i][j];
++    }
++    particleGeometry::deform(reference,oldF,before);
++    assert(particleGeometry::rebase(oldF,newF,reference));
++    particleGeometry::deform(reference,newF,after);
++    for(int i=0;i<3;++i) for(int j=0;j<3;++j)
++      maxError=std::max(maxError,std::abs(before[i][j]-after[i][j]));
++    for(int shape=0;shape<3;++shape)
++    {
++      double c[3]={1,2,3},v[8][3],mean[3]={};
++      particleGeometry::vertices(shape,c,before,v);
++      int n=particleGeometry::vertexCount(shape);
++      for(int k=0;k<n;++k) for(int j=0;j<3;++j) mean[j]+=v[k][j]/n;
++      for(int j=0;j<3;++j) assert(std::abs(mean[j]-c[j])<3e-14);
++      double expected=particleGeometry::determinant(oldF)*particleGeometry::signedMeasure(shape,copy);
++      assert(std::abs(particleGeometry::signedMeasure(shape,before)-expected)<1e-12);
++    }
++  }
++  assert(maxError<1e-13);
++  double I[3][3]={{1,0,0},{0,1,0},{0,0,1}},G[3][3]={{1,0,0},{0,1,0},{0,0,1}};
++  double singular[3][3]={};
++  assert(!particleGeometry::rebase(I,singular,G));
++  assert(G[0][0]==1 && G[1][1]==1 && G[2][2]==1);
++  double bad[3][3]={{1,0,0},{0,1,0},{0,0,std::numeric_limits<double>::infinity()}};
++  assert(!particleGeometry::rebase(I,bad,G));
++  double scale[3][3]={{1e-90,0,0},{0,1e-90,0},{0,0,1e-90}};
++  assert(particleGeometry::rebase(I,scale,G));
++  double current[3][3];particleGeometry::deform(G,scale,current);
++  assert(std::abs(current[0][0]-1)<1e-14);
++  int fromSiloWedge[6]={2,1,5,3,0,4},fromSiloTet[4]={1,0,2,3};
++  for(int i=0;i<6;++i) assert(particleGeometry::siloVertex(1,fromSiloWedge[i])==particleGeometry::vtkVertex(1,i));
++  for(int i=0;i<4;++i) assert(particleGeometry::siloVertex(2,fromSiloTet[i])==i);
++  std::cout<<"3000 affine/reset trials passed; maximum generator error="<<maxError<<"\n";
++}
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/pfw_input_refinement_smoke.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/pfw_input_refinement_smoke.py
+index 8ee0727..3114401 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/pfw_input_refinement_smoke.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/pfw_input_refinement_smoke.py
+@@ -21,6 +21,7 @@ pfw = dict(
+     xpar=1, ypar=1, zpar=1, outputType='silo',
+     endTime=0.01, plotInterval=0.01, restartInterval=1.0,
+     surfaceRefinementMethod=MODE, surfaceRefinementLevel=LEVEL,
++    particleReferenceGeometry=os.environ.get('PFW_TEST_REFERENCE_GEOMETRY', 'equivalentBox'),
+     sortObjects=True,
+     materials=['mat0', 'mat1'],
+     particleFileFields=['Velocity', 'MaterialType', 'ContactGroup',
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_reference_geometry_cpp_tests.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_reference_geometry_cpp_tests.py
+new file mode 100644
+index 0000000..1fb804e
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_reference_geometry_cpp_tests.py
+@@ -0,0 +1,33 @@
++"""Compile the production geometry helper in a standalone CPU test.
++
++Uses a temporary minimal DataTypes header containing only typedefs/macros. This
++checks the actual geometry math, not GEOS registration, MPI, CUDA/HIP or linking.
++Run from anywhere inside a full repository or the supplied files overlay.
++"""
++import argparse
++from pathlib import Path
++import subprocess
++import tempfile
++
++
++def main():
++    parser=argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--cxx',default='c++')
++    args=parser.parse_args()
++    tests=Path(__file__).resolve().parent
++    root=next(p for p in tests.parents if (p/'src/coreComponents/mesh/ParticleReferenceGeometry.hpp').is_file())
++    with tempfile.TemporaryDirectory(prefix='geos-native-geometry-') as directory:
++        tmp=Path(directory)
++        (tmp/'common').mkdir()
++        (tmp/'common/DataTypes.hpp').write_text(
++            '#pragma once\n#define GEOS_HOST_DEVICE\n'
++            'namespace geos { using real64=double; using integer=int; using localIndex=int; }\n')
++        executable=tmp/'test_geometry'
++        subprocess.run([args.cxx,'-std=c++17','-Wall','-Wextra','-Werror','-pedantic',
++                        '-I',str(tmp),'-I',str(root/'src/coreComponents'),
++                        str(tests/'native_geometry_cpp/test_geometry.cpp'),'-o',str(executable)],check=True)
++        subprocess.run([str(executable)],check=True)
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_writer_regression.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_writer_regression.py
+index 32423ff..1876a36 100644
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_writer_regression.py
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/run_writer_regression.py
+@@ -29,6 +29,15 @@ def inspect_particle_file(path):
+     rcolumns = [names.index('RVector' + name) for name in ('XX', 'XY', 'XZ', 'YX', 'YY', 'YZ', 'ZX', 'ZY', 'ZZ')]
+     volume = 8 * np.abs(np.linalg.det(data[:, rcolumns].reshape(-1, 3, 3)))
+     assert np.all(volume > 0), 'Nonpositive particle volume'
++    if 'ParticleReferenceGeometry' in names:
++        shape = data[:, names.index('ParticleReferenceGeometry')].astype(int)
++        assert set(shape).issubset({0, 1, 2}), 'Invalid geometry tag'
++        gcolumns = [names.index('GeometryRVector' + ij) for ij in ('XX','XY','XZ','YX','YY','YZ','ZX','ZY','ZZ')]
++        det = np.linalg.det(data[:, gcolumns].reshape(-1, 3, 3))
++        factor = np.choose(shape, [8.0, 0.5, 1.0/6.0])
++        assert np.all(det > 0), 'Native reference geometry must be positively oriented'
++        assert np.allclose(factor * det, volume, rtol=1e-9, atol=0), 'Geometry/mechanical volume disagreement'
++
+     assert np.array_equal(data[:, 0], np.arange(1, len(data) + 1)), 'Duplicate/missing IDs'
+     return len(data), float(volume.sum())
+ 
+@@ -41,6 +50,7 @@ def main():
+     parser.add_argument('--dimensions', type=int, nargs='+', default=[2, 3], choices=[2, 3])
+     parser.add_argument('--scenes', nargs='+', default=['plane', 'separated'], choices=['plane', 'separated'])
+     parser.add_argument('--modes', nargs='+', default=['cartesian', 'simplex'], choices=['cartesian', 'simplex'])
++    parser.add_argument('--reference-geometry', choices=['equivalentBox', 'fromRefinement'], default='equivalentBox')
+     args = parser.parse_args()
+     tests = Path(__file__).resolve().parent
+     writer = tests.parent / 'particleFileWriter.py'
+@@ -66,6 +76,7 @@ def main():
+                     env = os.environ.copy()
+                     env.update(PFW_TEST_DIM=str(dimension), PFW_TEST_GEOMETRY=scene,
+                                PFW_TEST_MODE=mode, PFW_TEST_LEVEL='2',
++                               PFW_TEST_REFERENCE_GEOMETRY=args.reference_geometry,
+                                OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1')
+                     handles, processes = [], []
+                     try:
+@@ -103,7 +114,7 @@ def main():
+                         assert abs(volume - 1.0) < 2e-12
+                     report = json.loads((directory / 'mpmParticleFile_case_refinement.json').read_text())
+                     assert abs(report['particle_volume'] - volume) < 2e-12
+-                    results.append(dict(case=name, communicator=args.communicator, particles=count,
++                    results.append(dict(case=name, communicator=args.communicator, reference_geometry=args.reference_geometry, particles=count,
+                                         volume=volume, byte_identical_to_serial=True))
+                     print(name, count, 'particles; serial-identical', flush=True)
+     (root / 'writer_regression_results.json').write_text(json.dumps(results, indent=2) + '\n')
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/test_reference_geometry.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/test_reference_geometry.py
+new file mode 100644
+index 0000000..a2b2092
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/tests/test_reference_geometry.py
+@@ -0,0 +1,67 @@
++"""PFW native geometry encoding tests; no GEOS/VisIt runtime is required."""
++import sys
++from pathlib import Path
++import unittest
++import numpy as np
++sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
++from pfw_reference_geometry import encode_reference_geometry, geometry_columns, COLUMN_NAMES
++
++class ReferenceGeometryTests(unittest.TestCase):
++    def test_box_half_edges(self):
++        tag, g = encode_reference_geometry([0,0,0], [2,4,6])
++        self.assertEqual(tag, 0)
++        np.testing.assert_array_equal(g, np.diag([1,2,3]))
++
++    def test_tetrahedron_round_trip_and_orientation(self):
++        v = np.array([[0.,0,0],[2,0,0],[0,3,0],[0,0,4]])
++        for order in ([0,1,2,3], [0,2,1,3], [2,3,0,1]):
++            q = v[order]
++            tag, g = encode_reference_geometry(v.mean(0), [1,1,4], q)
++            self.assertEqual(tag, 2)
++            self.assertAlmostEqual(np.linalg.det(g)/6, 4)
++            a = v.mean(0) - g.sum(0)/4
++            reconstructed = np.vstack([a, a+g])
++            self.assertTrue(all(np.min(np.linalg.norm(reconstructed-x, axis=1)) < 1e-14 for x in v))
++
++    def test_wedge_centroid_and_thickness(self):
++        v = np.array([[0.,0,5],[2,0,5],[0,3,5]])
++        tag, g = encode_reference_geometry(v.mean(0), [1,3,0.7], v, plane_strain=True)
++        self.assertEqual(tag, 1)
++        self.assertAlmostEqual(np.linalg.det(g)/2, 2.1)
++        a = v.mean(0) - (g[0]+g[1])/3 - g[2]/2
++        bottom = np.array([a,a+g[0],a+g[1]])
++        wedge = np.vstack([bottom,bottom+g[2]])
++        np.testing.assert_allclose(wedge.mean(0), v.mean(0))
++        self.assertAlmostEqual(wedge[:,2].max()-wedge[:,2].min(),0.7)
++
++    def test_geometry_columns_round_trip(self):
++        tag,g = encode_reference_geometry([1,2,3],[0.11,0.22,0.33])
++        row=geometry_columns((tag,g)).split('\t')
++        self.assertEqual(len(row), len(COLUMN_NAMES))
++        np.testing.assert_array_equal(np.array(row[1:],float).reshape(3,3),g)
++
++    def test_volume_mismatch_is_not_repaired(self):
++        v = np.array([[0.,0,0],[1,0,0],[0,1,0],[0,0,1]])
++        with self.assertRaisesRegex(ValueError,'volume'):
++            encode_reference_geometry(v.mean(0),[1,1,1],v)
++
++    def test_invalid_centroid_and_nonfinite(self):
++        v = np.array([[0.,0,0],[1,0,0],[0,1,0],[0,0,1]])
++        with self.assertRaisesRegex(ValueError,'centroid'):
++            encode_reference_geometry([0,0,0],[1,1,1/6],v)
++        with self.assertRaises(ValueError):
++            encode_reference_geometry([float('nan'),0,0],[1,1,1])
++
++    def test_reject_out_of_plane_triangle(self):
++        v = np.array([[0.,0,0],[1,0,.1],[0,1,0]])
++        with self.assertRaisesRegex(ValueError,'midplane'):
++            encode_reference_geometry(v.mean(0),[1,.5,1],v,plane_strain=True)
++
++    def test_tiny_but_resolved_tetrahedron(self):
++        v = 1e-7*np.array([[0.,0,0],[1,0,0],[0,1,0],[0,0,1]])
++        tag,g = encode_reference_geometry(v.mean(0),[1e-7,1e-7,1e-7/6],v)
++        self.assertEqual(tag,2)
++        self.assertGreater(np.linalg.det(g),0)
++
++if __name__ == '__main__':
++    unittest.main()
+diff --git a/src/coreComponents/mesh/CMakeLists.txt b/src/coreComponents/mesh/CMakeLists.txt
+index 7ecb844..ee73226 100644
+--- a/src/coreComponents/mesh/CMakeLists.txt
++++ b/src/coreComponents/mesh/CMakeLists.txt
+@@ -59,6 +59,7 @@ set( mesh_headers
+      ParticleSubRegion.hpp
+      ParticleSubRegionBase.hpp
+      ParticleType.hpp
++     ParticleReferenceGeometry.hpp
+      CohesiveZoneManager.hpp
+      CohesiveZoneRegionBase.hpp
+      CohesiveZoneRegion.hpp
+diff --git a/src/coreComponents/mesh/ParticleReferenceGeometry.hpp b/src/coreComponents/mesh/ParticleReferenceGeometry.hpp
+new file mode 100644
+index 0000000..7770d05
+--- /dev/null
++++ b/src/coreComponents/mesh/ParticleReferenceGeometry.hpp
+@@ -0,0 +1,152 @@
++/*
++ * SPDX-License-Identifier: LGPL-2.1-only
++ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS.
++ */
++#ifndef GEOS_MESH_PARTICLEREFERENCEGEOMETRY_HPP_
++#define GEOS_MESH_PARTICLEREFERENCEGEOMETRY_HPP_
++
++#include "common/DataTypes.hpp"
++#include <cmath>
++
++namespace geos
++{
++namespace particleGeometry
++{
++
++/** Geometry is independent of ParticleType (the interpolation algorithm).
++ * Boxes use half edges; wedges/tetrahedra use full edges. The existing solver
++ * R-vectors ALWAYS retain their old equivalent-box meaning. These generators
++ * are separate reference data, not additional mechanical degrees of freedom.
++ */
++enum class Shape : integer { Parallelepiped = 0, TriangleWedge = 1, Tetrahedron = 2 };
++constexpr char const * shapeKey() { return "particleReferenceGeometry"; }
++constexpr char const * vectorsKey() { return "particleReferenceGeometryVectors"; }
++
++GEOS_HOST_DEVICE inline int vertexCount( integer const shape )
++{ return shape == 0 ? 8 : ( shape == 1 ? 6 : ( shape == 2 ? 4 : 0 ) ); }
++
++// All matrix arguments store vectors in ROWS, like particleRVectors.
++template< class MATRIX >
++GEOS_HOST_DEVICE inline real64 determinant( MATRIX const & g )
++{
++  return g[0][0]*(g[1][1]*g[2][2]-g[1][2]*g[2][1])
++       - g[0][1]*(g[1][0]*g[2][2]-g[1][2]*g[2][0])
++       + g[0][2]*(g[1][0]*g[2][1]-g[1][1]*g[2][0]);
++}
++
++template< class MATRIX >
++GEOS_HOST_DEVICE inline real64 signedMeasure( integer const shape, MATRIX const & g )
++{
++  return determinant( g ) * ( shape == 0 ? 8.0 : ( shape == 1 ? 0.5 : 1.0/6.0 ) );
++}
++
++template< class MATRIX, class FTYPE >
++GEOS_HOST_DEVICE inline void deform( MATRIX const & reference, FTYPE const & F, real64 (&current)[3][3] )
++{
++  for( int a=0; a<3; ++a )
++    for( int i=0; i<3; ++i )
++    {
++      current[a][i] = 0.0;
++      for( int j=0; j<3; ++j ) current[a][i] += F[i][j]*reference[a][j];
++    }
++}
++
++/** Return vertices in the geometry convention, independent of the backend:
++ * standard hex signs; bottom triangle (origin, +edge1, +edge2), then its top;
++ * tetrahedron (origin, +edge1, +edge2, +edge3). Connectivity permutations below
++ * supply outward-facing VTK/Silo cells. Neighboring particles do not share nodes.
++ */
++template< class POINT, class MATRIX >
++GEOS_HOST_DEVICE inline void vertices( integer const shape, POINT const & center,
++                                       MATRIX const & g, real64 (&v)[8][3] )
++{
++  if( shape == 0 )
++  {
++    int const signs[8][3] = { {-1,-1,-1}, {1,-1,-1}, {1,1,-1}, {-1,1,-1},
++                             {-1,-1,1}, {1,-1,1}, {1,1,1}, {-1,1,1} };
++    for( int k=0; k<8; ++k )
++      for( int i=0; i<3; ++i )
++        v[k][i] = center[i]+signs[k][0]*g[0][i]+signs[k][1]*g[1][i]+signs[k][2]*g[2][i];
++  }
++  else if( shape == 1 )
++  {
++    for( int i=0; i<3; ++i )
++    {
++      v[0][i] = center[i]-(g[0][i]+g[1][i])/3.0-g[2][i]/2.0;
++      v[1][i] = v[0][i]+g[0][i]; v[2][i] = v[0][i]+g[1][i];
++      for( int k=0; k<3; ++k ) v[k+3][i] = v[k][i]+g[2][i];
++    }
++  }
++  else if( shape == 2 )
++  {
++    for( int i=0; i<3; ++i )
++    {
++      v[0][i] = center[i]-(g[0][i]+g[1][i]+g[2][i])/4.0;
++      for( int k=0; k<3; ++k ) v[k+1][i] = v[0][i]+g[k][i];
++    }
++  }
++}
++
++/** Change the reference WITHOUT moving the current vertices.
++ * Rnew = Rold * Fold^T * Fnew^{-T}. Only call for numerical/reference resets,
++ * never for genuine deformation or a physical TransformParticles rotation.
++ * Failure leaves reference unchanged. A singular reference reset must not
++ * silently destroy native geometry. Scaling the inverse avoids overflow for
++ * otherwise well-conditioned matrices with very small/large entries.
++ */
++template< class OLD_F, class NEW_F, class MATRIX >
++GEOS_HOST_DEVICE inline bool rebase( OLD_F const & oldF, NEW_F const & newF, MATRIX && reference )
++{
++  real64 scale = 0.0;
++  for( int i=0; i<3; ++i ) for( int j=0; j<3; ++j )
++  {
++    real64 const a = ::fabs( newF[i][j] );
++    if( !std::isfinite( a ) ) return false;
++    if( a > scale ) scale = a;
++  }
++  if( scale == 0.0 ) return false;
++  real64 f[3][3];
++  for( int i=0; i<3; ++i ) for( int j=0; j<3; ++j ) f[i][j] = newF[i][j]/scale;
++  real64 const det = determinant( f );
++  if( !std::isfinite( det ) || ::fabs( det ) < 1.0e-15 ) return false;
++  real64 inv[3][3];
++  for( int i=0; i<3; ++i ) for( int j=0; j<3; ++j )
++    inv[i][j] = ( f[(j+1)%3][(i+1)%3]*f[(j+2)%3][(i+2)%3]
++                 -f[(j+1)%3][(i+2)%3]*f[(j+2)%3][(i+1)%3] ) / det / scale;
++  real64 current[3][3], next[3][3];
++  deform( reference, oldF, current );
++  for( int a=0; a<3; ++a ) for( int i=0; i<3; ++i )
++  {
++    next[a][i] = 0.0;
++    for( int j=0; j<3; ++j ) next[a][i] += inv[i][j]*current[a][j];
++    if( !std::isfinite( next[a][i] ) ) return false;
++  }
++  for( int a=0; a<3; ++a ) for( int i=0; i<3; ++i ) reference[a][i] = next[a][i];
++  return true;
++}
++
++/** Output connectivity only. VTK linear wedges (through 9.6.2) require
++ * (0,1,2) to point OUTWARD, away from the other triangle. Our positively
++ * oriented generators point toward the other triangle, so reverse both faces.
++ * Keep this backend convention out of the reusable reference geometry itself.
++ */
++GEOS_HOST_DEVICE inline int vtkVertex( integer const shape, int const i )
++{
++  int const wedge[6] = {0,2,1,3,5,4};
++  return shape == 1 ? wedge[i] : i;
++}
++
++/** Canonical vertex at each Silo index. Compose the VTK wedge orientation
++ * above with VisIt's TranslateSiloWedgeToVTKWedge permutation. Tetrahedra
++ * also need an odd permutation because Silo and VTK orientations differ.
++ */
++GEOS_HOST_DEVICE inline int siloVertex( integer const shape, int const i )
++{
++  int const prism[6] = {5,2,0,3,4,1};
++  int const tet[4] = {1,0,2,3};
++  return shape == 1 ? prism[i] : ( shape == 2 ? tet[i] : i );
++}
++
++} // namespace particleGeometry
++} // namespace geos
++#endif
+diff --git a/src/coreComponents/mesh/ParticleRegion.cpp b/src/coreComponents/mesh/ParticleRegion.cpp
+index a2838b7..70fba51 100644
+--- a/src/coreComponents/mesh/ParticleRegion.cpp
++++ b/src/coreComponents/mesh/ParticleRegion.cpp
+@@ -21,6 +21,7 @@
+ #include "common/TimingMacros.hpp"
+ #include "LvArray/src/SparsityPattern.hpp"
+ #include "common/MpiWrapper.hpp"
++#include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
+ 
+ namespace geos
+ {
+@@ -31,6 +32,9 @@ ParticleRegion::ParticleRegion( string const & name, Group * const parent ):
+ {
+   registerWrapper( viewKeyStruct::sourceParticleBlockNamesString(), &m_particleBlockNames ).
+     setInputFlag( InputFlags::OPTIONAL );
++  registerWrapper( "particleDomainOutput", &m_particleDomainOutput ).
++    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( "native" ).
++    setDescription( "native: use optional simplex reference geometry; equivalentBox: legacy particle domains" );
+ }
+ 
+ ParticleRegion::~ParticleRegion()
+@@ -38,6 +42,8 @@ ParticleRegion::~ParticleRegion()
+ 
+ void ParticleRegion::generateMesh( Group & particleBlocks )
+ {
++  GEOS_ERROR_IF( m_particleDomainOutput != "native" && m_particleDomainOutput != "equivalentBox",
++                 "particleDomainOutput must be native or equivalentBox" );
+   Group & particleSubRegions = this->getGroup( viewKeyStruct::particleSubRegions() );
+ 
+   for( string const & particleBlockName : this->m_particleBlockNames )
+@@ -110,6 +116,70 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
+   return coords;
+ }
+ 
++bool ParticleRegion::usesNativeParticleGeometry() const
++{
++  if( m_particleDomainOutput == "equivalentBox" ) return false;
++  bool enabled = false;
++  forParticleSubRegions( [&]( auto const & subRegion )
++  { enabled = enabled || subRegion.hasParticleReferenceGeometry(); } );
++  return enabled;
++}
++
++ParticleRegion::ParticleDomainMesh ParticleRegion::getParticleDomainMesh() const
++{
++  ParticleDomainMesh mesh;
++  mesh.offsets.push_back( 0 );
++  forParticleSubRegions( [&]( auto const & subRegion )
++  {
++    // Output is host-side. This is synchronization, not a mechanical mutation.
++    // WrapperBase::move updates the allocation's memory residency and timestamp.
++    auto & hostSubRegion = const_cast< ParticleSubRegion & >( subRegion );
++    auto move = [&]( char const * key )
++    { hostSubRegion.getWrapperBase( key ).move( LvArray::MemorySpace::host, false ); };
++    move( ParticleSubRegion::viewKeyStruct::particleCenterString() );
++    move( ParticleSubRegion::viewKeyStruct::particleRankString() );
++    move( ParticleSubRegion::viewKeyStruct::particleVolumeString() );
++    move( ParticleSubRegion::viewKeyStruct::particleRVectorsString() );
++    bool const enabled = subRegion.hasParticleReferenceGeometry();
++    bool const hasF = subRegion.hasWrapper( fields::mpm::particleDeformationGradient::key() );
++    if( enabled ) { move( particleGeometry::shapeKey() ); move( particleGeometry::vectorsKey() ); }
++    if( hasF ) move( fields::mpm::particleDeformationGradient::key() );
++    auto const center = subRegion.getParticleCenter();
++    auto const rank = subRegion.getParticleRank();
++    auto const volume = subRegion.getParticleVolume();
++    auto const r = subRegion.getParticleRVectors();
++    for( localIndex p=0; p<subRegion.size(); ++p )
++    {
++      integer const shape = enabled ? subRegion.template getReference< array1d< integer > >(
++        particleGeometry::shapeKey() )[p] : 0;
++      GEOS_ERROR_IF( particleGeometry::vertexCount( shape ) == 0, "Invalid particle reference geometry in output" );
++      real64 g[3][3] = {};
++      if( shape == 0 )
++      {
++        // Box particles continue to expose the actual legacy numerical domain.
++        if( subRegion.hasRVectors() )
++          for( int a=0; a<3; ++a ) for( int j=0; j<3; ++j ) g[a][j] = r[p][a][j];
++        else for( int a=0; a<3; ++a ) g[a][a] = 0.5*std::cbrt( volume[p] );
++      }
++      else
++      {
++        auto const & reference = subRegion.template getReference< array3d< real64 > >( particleGeometry::vectorsKey() );
++        if( hasF )
++          particleGeometry::deform( reference[p], subRegion.template getField< fields::mpm::particleDeformationGradient >()[p], g );
++        else for( int a=0; a<3; ++a ) for( int j=0; j<3; ++j ) g[a][j] = reference[p][a][j];
++      }
++      real64 v[8][3] = {};
++      particleGeometry::vertices( shape, center[p], g, v );
++      for( int k=0; k<particleGeometry::vertexCount( shape ); ++k )
++        mesh.points.push_back( {{ v[k][0], v[k][1], v[k][2] }} );
++      mesh.shape.push_back( shape );
++      mesh.ownerRank.push_back( rank[p] );
++      mesh.offsets.push_back( static_cast< localIndex >( mesh.points.size() ) );
++    }
++  } );
++  return mesh;
++}
++
+ REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleRegion, string const &, Group * const )
+ 
+ } /* namespace geos */
+diff --git a/src/coreComponents/mesh/ParticleRegion.hpp b/src/coreComponents/mesh/ParticleRegion.hpp
+index 1593a80..b10db75 100644
+--- a/src/coreComponents/mesh/ParticleRegion.hpp
++++ b/src/coreComponents/mesh/ParticleRegion.hpp
+@@ -22,6 +22,8 @@
+ #define GEOS_MESH_PARTICLEREGION_HPP_
+ 
+ #include "ParticleRegionBase.hpp"
++#include <array>
++#include <vector>
+ 
+ namespace geos
+ {
+@@ -111,6 +113,19 @@ public:
+    */
+   array2d< real64 > getParticleCorners() const;
+ 
++  struct ParticleDomainMesh
++  {
++    std::vector< std::array< real64, 3 > > points;
++    std::vector< localIndex > offsets; // nParticles+1; disconnected vertices
++    std::vector< integer > shape;
++    std::vector< int > ownerRank;
++  };
++
++  /// A separate API: numberOfVerticesPerParticle is an interpolation capacity.
++  bool usesNativeParticleGeometry() const;
++  ParticleDomainMesh getParticleDomainMesh() const;
++
++
+   /**
+    * @brief A struct to serve as a container for variable strings and keys.
+    * @struct viewKeyStruct
+@@ -127,6 +142,9 @@ private:
+   // Cell block names
+   string_array m_particleBlockNames;
+ 
++  /// native uses optional simplex geometry; equivalentBox forces legacy output.
++  string m_particleDomainOutput;
++
+ };
+ 
+ } /* namespace geos */
+diff --git a/src/coreComponents/mesh/ParticleSubRegion.cpp b/src/coreComponents/mesh/ParticleSubRegion.cpp
+index 695f109..7558c31 100644
+--- a/src/coreComponents/mesh/ParticleSubRegion.cpp
++++ b/src/coreComponents/mesh/ParticleSubRegion.cpp
+@@ -69,6 +69,15 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock
+   m_particleSurfaceTraction = particleBlock.getParticleSurfaceTraction();
+   m_particleCZTag = particleBlock.getParticleCZTag();
+ 
++  if( particleBlock.hasWrapper( particleGeometry::shapeKey() ) )
++  {
++    enableParticleReferenceGeometry();
++    getReference< array1d< integer > >( particleGeometry::shapeKey() ) =
++      particleBlock.getReference< array1d< integer > >( particleGeometry::shapeKey() );
++    getReference< array3d< real64 > >( particleGeometry::vectorsKey() ) =
++      particleBlock.getReference< array3d< real64 > >( particleGeometry::vectorsKey() );
++  }
++
+   // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
+   // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
+   // Be careful when refactoring.
+diff --git a/src/coreComponents/mesh/ParticleSubRegionBase.cpp b/src/coreComponents/mesh/ParticleSubRegionBase.cpp
+index 4e63bdc..74993b5 100644
+--- a/src/coreComponents/mesh/ParticleSubRegionBase.cpp
++++ b/src/coreComponents/mesh/ParticleSubRegionBase.cpp
+@@ -127,6 +127,31 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
+ ParticleSubRegionBase::~ParticleSubRegionBase()
+ {}
+ 
++void ParticleSubRegionBase::enableParticleReferenceGeometry()
++{
++  if( hasParticleReferenceGeometry() ) return;
++  registerWrapper< array1d< integer > >( particleGeometry::shapeKey() ).
++    setSizedFromParent( 1 ).setPlotLevel( PlotLevel::LEVEL_1 ).
++    setRestartFlags( RestartFlags::WRITE_AND_READ ).reference().resize( size() );
++  registerWrapper< array3d< real64 > >( particleGeometry::vectorsKey() ).
++    setSizedFromParent( 1 ).setPlotLevel( PlotLevel::NOPLOT ).
++    setRestartFlags( RestartFlags::WRITE_AND_READ ).reference().resize( size(), 3, 3 );
++}
++
++ParticleSubRegionBase::ReferenceGeometryView ParticleSubRegionBase::referenceGeometryViewOnHost()
++{
++  ReferenceGeometryView result;
++  if( hasParticleReferenceGeometry() )
++  {
++    getWrapperBase( particleGeometry::shapeKey() ).move( LvArray::MemorySpace::host, false );
++    getWrapperBase( particleGeometry::vectorsKey() ).move( LvArray::MemorySpace::host, true );
++    result.shape = getReference< array1d< integer > >( particleGeometry::shapeKey() ).toViewConst();
++    result.vectors = getReference< array3d< real64 > >( particleGeometry::vectorsKey() ).toView();
++  }
++  return result;
++}
++
++
+ unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
+                                                   arrayView1d< localIndex > const & localIndices,
+                                                   bool doPack ) const
+diff --git a/src/coreComponents/mesh/ParticleSubRegionBase.hpp b/src/coreComponents/mesh/ParticleSubRegionBase.hpp
+index 1d316c9..01eedcf 100644
+--- a/src/coreComponents/mesh/ParticleSubRegionBase.hpp
++++ b/src/coreComponents/mesh/ParticleSubRegionBase.hpp
+@@ -21,6 +21,7 @@
+ #define GEOS_MESH_PARTICLESUBREGIONBASE_HPP_
+ 
+ #include "mesh/ParticleType.hpp"
++#include "mesh/ParticleReferenceGeometry.hpp"
+ #include "mesh/ObjectManagerBase.hpp"
+ #include "mesh/mpiCommunications/CommunicationTools.hpp"
+ #include "mesh/mpiCommunications/MPI_iCommData.hpp"
+@@ -64,6 +65,37 @@ public:
+    */
+   ~ParticleSubRegionBase();
+ 
++  /** Register on ALL ranks when the input schema contains native geometry,
++   * including ranks with no local particles. Registered, parent-sized arrays
++   * participate in the normal particle packing, erasure, and restart paths.
++   */
++  void enableParticleReferenceGeometry();
++  bool hasParticleReferenceGeometry() const
++  { return hasWrapper( particleGeometry::shapeKey() ); }
++
++  struct ReferenceGeometryView
++  {
++    arrayView1d< integer const > shape;
++    arrayView3d< real64 > vectors;
++    GEOS_HOST_DEVICE bool isSimplex( localIndex const p ) const
++    { return shape.size() != 0 && shape[p] != 0; }
++
++    template< class OLD_F, class NEW_F >
++    GEOS_HOST_DEVICE void rebase( localIndex const p, OLD_F const & oldF, NEW_F const & newF ) const
++    {
++      if( isSimplex( p ) )
++      {
++        bool const valid = particleGeometry::rebase( oldF, newF, vectors[p] );
++        GEOS_ERROR_IF( !valid, "Cannot preserve native particle geometry through a singular/nonfinite F reset" );
++      }
++    }
++  };
++
++  /// For the existing serial reset paths. Explicitly synchronizes ONLY this
++  /// optional state; the caller retains responsibility for its existing F data.
++  ReferenceGeometryView referenceGeometryViewOnHost();
++
++
+   ///@}
+ 
+   /**
+diff --git a/src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp b/src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp
+index c87b00c..9bcb3c2 100644
+--- a/src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp
++++ b/src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp
+@@ -17,6 +17,7 @@
+  */
+ 
+ #include "ParticleMeshGenerator.hpp"
++#include "mesh/ParticleReferenceGeometry.hpp"
+ 
+ #include "mainInterface/GeosxState.hpp"
+ #include "common/initializeEnvironment.hpp"
+@@ -30,6 +31,7 @@
+ #include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
+ 
+ #include <cmath>
++#include <algorithm>
+ 
+ namespace geos
+ {
+@@ -178,6 +180,17 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
+   requireColumn( ParticleColumnHeaders::RVectorXX ); // For single point we currently use this to input particle volume 
+   // I don't like that we should optionally check if particleVolume field is defined and use that regardless of rvectors if instead, and warn if the user tries specifying both
+ 
++  // Header presence is rank-independent, including on empty ranks. A partial
++  // geometry record is an error, never a request to infer missing generators.
++  bool hasReferenceGeometry = false;
++  for( int h = static_cast< int >( ParticleColumnHeaders::ParticleReferenceGeometry );
++       h <= static_cast< int >( ParticleColumnHeaders::GeometryRVectorZZ ); ++h )
++    hasReferenceGeometry = hasReferenceGeometry || columnHeaderMap.count( h ) != 0;
++  if( hasReferenceGeometry )
++    for( int h = static_cast< int >( ParticleColumnHeaders::ParticleReferenceGeometry );
++         h <= static_cast< int >( ParticleColumnHeaders::GeometryRVectorZZ ); ++h )
++      requireColumn( static_cast< ParticleColumnHeaders >( h ) );
++
+   // Read in particle data
+   int lineNumber = 1; // Since column header takes one line
+   while( particleFile.peek() != EOF )
+@@ -262,6 +275,16 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
+         case ParticleColumnHeaders::SurfaceTractionX:
+         case ParticleColumnHeaders::SurfaceTractionY:
+         case ParticleColumnHeaders::SurfaceTractionZ:
++        case ParticleColumnHeaders::ParticleReferenceGeometry:
++        case ParticleColumnHeaders::GeometryRVectorXX:
++        case ParticleColumnHeaders::GeometryRVectorXY:
++        case ParticleColumnHeaders::GeometryRVectorXZ:
++        case ParticleColumnHeaders::GeometryRVectorYX:
++        case ParticleColumnHeaders::GeometryRVectorYY:
++        case ParticleColumnHeaders::GeometryRVectorYZ:
++        case ParticleColumnHeaders::GeometryRVectorZX:
++        case ParticleColumnHeaders::GeometryRVectorZY:
++        case ParticleColumnHeaders::GeometryRVectorZZ:
+         case ParticleColumnHeaders::TemperatureRate:
+           defaultValue = 0.0;
+           break;
+@@ -321,6 +344,14 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
+     array2d< real64 > particleSurfaceTraction( npInBlock, 3 );
+     array1d< int > particleCZTag( npInBlock );
+ 
++    array1d< integer > referenceGeometry;
++    array3d< real64 > referenceGeometryVectors;
++    if( hasReferenceGeometry )
++    {
++      referenceGeometry.resize( npInBlock );
++      referenceGeometryVectors.resize( npInBlock, 3, 3 );
++    }
++
+     // Populate particle fields with data
+     for( localIndex i = 0; i < npInBlock; i++ )
+     {
+@@ -456,6 +487,41 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
+         }
+       }
+ 
++      // Native geometry is supplementary metadata. The preceding legacy
++      // R-vector calculation remains authoritative for mechanical volume.
++      if( hasReferenceGeometry )
++      {
++        real64 const tag = particleData[b][i][static_cast< int >( ParticleColumnHeaders::ParticleReferenceGeometry )];
++        GEOS_ERROR_IF( !std::isfinite( tag ) || tag < 0.0 || tag > 2.0 || std::floor( tag ) != tag,
++                       "Invalid ParticleReferenceGeometry for particle " << particleID[i] );
++        integer const shape = static_cast< integer >( tag );
++        referenceGeometry[i] = shape;
++        GEOS_ERROR_IF( shape != 0 && particleBlock.getParticleType() != ParticleType::SinglePointBSpline,
++                       "Native wedge/tetrahedron geometry currently requires SinglePointBSpline" );
++        for( int a=0; a<3; ++a ) for( int j=0; j<3; ++j )
++        {
++          real64 const value = particleData[b][i][static_cast< int >( ParticleColumnHeaders::GeometryRVectorXX )+3*a+j];
++          GEOS_ERROR_IF( !std::isfinite( value ), "Nonfinite particle reference geometry" );
++          referenceGeometryVectors[i][a][j] = value;
++        }
++        if( shape == 1 )
++        {
++          real64 extent = 0.0;
++          for( int a=0; a<3; ++a ) for( int j=0; j<3; ++j )
++            extent = std::max( extent, std::abs( referenceGeometryVectors[i][a][j] ) );
++          real64 const tolerance = 1.0e-12*extent;
++          GEOS_ERROR_IF( std::abs( referenceGeometryVectors[i][0][2] ) > tolerance ||
++                         std::abs( referenceGeometryVectors[i][1][2] ) > tolerance ||
++                         std::abs( referenceGeometryVectors[i][2][0] ) > tolerance ||
++                         std::abs( referenceGeometryVectors[i][2][1] ) > tolerance,
++                         "TriangleWedge geometry must be an in-plane triangle extruded in z" );
++        }
++        real64 const volume = particleGeometry::signedMeasure( shape, referenceGeometryVectors[i] );
++        GEOS_ERROR_IF( !std::isfinite( volume ) || volume <= 0.0 || particleVolume[i] <= 0.0 ||
++                       std::abs( volume-particleVolume[i] ) > 1.0e-9*particleVolume[i],
++                       "Native geometry must have positive orientation and agree with legacy R-vector volume for particle " << particleID[i] );
++      }
++
+       // Material Direction
+       // For convenient indexing we store the transpose of the particle material directions so the X axis is easy accessed from [0]
+       particleMaterialDirection[i][0][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionXX )];
+@@ -481,6 +547,16 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
+       particleSurfaceTraction[i][2] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfaceTractionZ )];
+     }
+ 
++    if( hasReferenceGeometry )
++    {
++      // Not an external property: explicitly copied by ParticleSubRegion. This
++      // avoids changing ParticleBlockABC or any existing mechanical accessor.
++      particleBlock.registerWrapper< array1d< integer > >( particleGeometry::shapeKey() ).
++        reference() = referenceGeometry;
++      particleBlock.registerWrapper< array3d< real64 > >( particleGeometry::vectorsKey() ).
++        reference() = referenceGeometryVectors;
++    }
++
+     particleBlock.setParticleID( particleID );
+     particleBlock.setParticleCenter( particleCenter );
+     particleBlock.setParticleVelocity( particleVelocity );
+diff --git a/src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp b/src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp
+index 092b476..1498330 100644
+--- a/src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp
++++ b/src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp
+@@ -91,6 +91,16 @@ public:
+     SurfaceTractionX,
+     SurfaceTractionY,
+     SurfaceTractionZ,
++    ParticleReferenceGeometry,
++    GeometryRVectorXX,
++    GeometryRVectorXY,
++    GeometryRVectorXZ,
++    GeometryRVectorYX,
++    GeometryRVectorYY,
++    GeometryRVectorYZ,
++    GeometryRVectorZX,
++    GeometryRVectorZY,
++    GeometryRVectorZZ,
+     Count
+   };
+ 
+@@ -195,7 +205,17 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
+               "SurfacePositionZ",
+               "SurfaceTractionX",
+               "SurfaceTractionY",
+-              "SurfaceTractionZ" );
++              "SurfaceTractionZ",
++              "ParticleReferenceGeometry",
++              "GeometryRVectorXX",
++              "GeometryRVectorXY",
++              "GeometryRVectorXZ",
++              "GeometryRVectorYX",
++              "GeometryRVectorYY",
++              "GeometryRVectorYZ",
++              "GeometryRVectorZX",
++              "GeometryRVectorZY",
++              "GeometryRVectorZZ" );
+ 
+ } /* namespace geos */
+ 
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
+index 6535b5e..32bc277 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
++++ b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp
+@@ -11008,6 +11008,16 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
+   RAJA::ReduceMin< parallelDeviceReduce, real64 > minMassLocal( LvArray::NumericLimits< real64 >::max );
+   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+   {
++    if( subRegion.hasParticleReferenceGeometry() )
++    {
++      auto const geometry = subRegion.referenceGeometryViewOnHost();
++      for( localIndex p=0; p<subRegion.size(); ++p )
++      {
++        GEOS_ERROR_IF( ( geometry.shape[p] == 1 && m_planeStrain != 1 ) ||
++                       ( geometry.shape[p] == 2 && m_planeStrain == 1 ),
++                       "TriangleWedge reference geometry requires plane strain; Tetrahedron requires 3D" );
++      }
++    }
+     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
+     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
+@@ -11895,6 +11905,7 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
+         particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
+       }
+ 
++      auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
+       for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+       {
+         localIndex const p = activeParticleIndices[pp];
+@@ -11923,6 +11934,9 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
+           particleReferenceTemperature[p] = state.temperature;
+         }
+ 
++        // Thermodynamic initialization changes the reference, not the input shape.
++        real64 const newGeometryF[3][3] = { {scale[0],0,0}, {0,scale[1],0}, {0,0,scale[2]} };
++        referenceGeometry.rebase( p, particleDeformationGradient[p], newGeometryF );
+         for( int i = 0; i < 3; ++i )
+         {
+           for( int j = 0; j < 3; ++j )
+@@ -12537,6 +12551,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
+ 
+             if( ( constitutiveModel.getCatalogName() == "StrainHardeningPolymer" || constitutiveModel.getCatalogName() == "SurfaceInformedPolymer" ) )
+             {
++              auto const referenceGeometry = targetSubRegion.referenceGeometryViewOnHost();
+               // Particle fields
+               arrayView1d< real64 > const particleDamage = targetSubRegion.getParticleDamage();
+               arrayView1d< real64 > const particleReferenceVolume = targetSubRegion.getField< fields::mpm::particleReferenceVolume >();
+@@ -12558,6 +12573,8 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
+                 {
+                   particleDamage[p] = 0.0; // Reset damage
+ 
++                  real64 const identity[3][3] = { {1,0,0}, {0,1,0}, {0,0,1} };
++                  referenceGeometry.rebase( p, particleDeformationGradient[p], identity );
+                   // Tensor equation: particleDeformationGradient[p] = 0.0 component-wise.
+                   LvArray::tensorOps::fill< 3, 3 >( particleDeformationGradient[p], 0.0 );
+                   particleDeformationGradient[p][0][0] = 1.0;
+@@ -12659,6 +12676,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
+               arrayView2d< real64 > const particleStress = targetSubRegion.getField< fields::mpm::particleStress >();
+               arrayView3d< real64 > const particleDeformationGradient = targetSubRegion.getField< fields::mpm::particleDeformationGradient >();
+               arrayView3d< real64 > const particleRVectors = targetSubRegion.getParticleRVectors();
++              auto const referenceGeometry = targetSubRegion.referenceGeometryViewOnHost();
+ 
+               // CC: TODO Need to add this for Mike
+               // arrayView1d< real64 const > const particleReferencePorosity = targetSubRegion.getField<
+@@ -12719,6 +12737,10 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
+                       J,
+                       1.0 / static_cast< real64 >( activeDimensions ) );
+ 
++                    real64 newGeometryF[3][3];
++                    for( int i=0; i<3; ++i ) for( int j=0; j<3; ++j )
++                      newGeometryF[i][j] = particleDeformationGradient[p][i][j] / ( i < activeDimensions ? scaling : 1.0 );
++                    referenceGeometry.rebase( p, particleDeformationGradient[p], newGeometryF );
+                     // Remove only the active-dimensional volumetric stretch;
+                     // leave F33=1 for plane strain.
+                     for( int i = 0; i < activeDimensions; ++i )
+@@ -13550,6 +13572,7 @@ bool SolidMechanicsMPM::subdivideParticles(
+       particleSubdivideFlag[p] = 0;
+     } );
+ 
++    auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
+     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+     {
+       localIndex const p = activeParticleIndices[pp];
+@@ -13713,6 +13736,8 @@ bool SolidMechanicsMPM::subdivideParticles(
+         }
+       }
+ 
++      GEOS_ERROR_IF( subdivisionMask != 0 && referenceGeometry.isSimplex( p ),
++                     "Runtime subdivision of native simplex geometry is not implemented; use PFW refinement" );
+       particleSubdivideFlag[p] = subdivisionMask;
+       int const numberOfDirections =
+         countSubdivisionDirections( subdivisionMask, numDims );
+@@ -37713,6 +37738,9 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
+       return;
+     }
+ 
++    // Preserve native vertices while the numerical reference is reset.
++    auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
++
+     arrayView1d< int > particleDomainScaledFlag;
+     if( cpdiDomainScaling == 1 )
+     {
+@@ -38075,6 +38103,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
+         }
+       }
+ 
++      referenceGeometry.rebase( p, oldDeformationGradient, newDeformationGradient );
+       LvArray::tensorOps::copy< 3, 3 >(
+         particleDeformationGradient[p],
+         newDeformationGradient );
+diff --git a/src/coreComponents/fileIO/silo/SiloFile.cpp b/src/coreComponents/fileIO/silo/SiloFile.cpp
+--- a/src/coreComponents/fileIO/silo/SiloFile.cpp
++++ b/src/coreComponents/fileIO/silo/SiloFile.cpp
+@@ -2352,8 +2352,52 @@
+ void SiloFile::writeParticleMeshObject( ParticleRegion const & particleRegion,
+                                         string const & meshName,
+                                         int const cycleNumber,
+                                         real64 const problemTime )
+ {
++  if( particleRegion.usesNativeParticleGeometry() )
++  {
++    // Preserve particle order: fields are flattened in subregion/particle order.
++    // Shape runs may repeat; do not sort zones into geometry-type groups.
++    auto const mesh = particleRegion.getParticleDomainMesh();
++    localIndex const npoints = LvArray::integerConversion< localIndex >( mesh.points.size() );
++    localIndex const nzones = LvArray::integerConversion< localIndex >( mesh.shape.size() );
++    GEOS_ERROR_IF( nzones != particleRegion.getNumberOfParticles(), "Native particle mesh/field count mismatch" );
++    array1d< real64 > x( npoints ), y( npoints ), z( npoints );
++    array1d< char > nodeGhost( npoints ), zoneGhost( nzones );
++    std::vector< int > counts, sizes, types;
++    std::vector< std::vector< localIndex > > connectivity;
++    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
++    for( localIndex p=0; p<nzones; ++p )
++    {
++      integer const shape = mesh.shape[p];
++      int const count = particleGeometry::vertexCount( shape );
++      if( p == 0 || shape != mesh.shape[p-1] )
++      {
++        counts.push_back( 0 ); sizes.push_back( count );
++        types.push_back( shape == 0 ? DB_ZONETYPE_HEX : ( shape == 1 ? DB_ZONETYPE_PRISM : DB_ZONETYPE_TET ) );
++        connectivity.emplace_back();
++      }
++      ++counts.back();
++      char const ghost = mesh.ownerRank[p] == rank ? 0 : 1;
++      zoneGhost[p] = ghost;
++      for( int a=0; a<count; ++a )
++      {
++        localIndex const q = mesh.offsets[p]+a;
++        x[q] = mesh.points[q][0]; y[q] = mesh.points[q][1]; z[q] = mesh.points[q][2];
++        nodeGhost[q] = ghost;
++        connectivity.back().push_back( mesh.offsets[p]+particleGeometry::siloVertex( shape, a ) );
++      }
++    }
++    std::vector< localIndex const * > pointers;
++    for( auto const & run : connectivity ) pointers.push_back( run.data() );
++    real64 * coords[3] = { x.data(), y.data(), z.data() };
++    // The existing writer handles multimeshes and empty-rank output.
++    writeMeshObject( meshName, npoints, coords, nullptr, nodeGhost.data(), zoneGhost.data(),
++                     LvArray::integerConversion< int >( counts.size() ), counts.data(), pointers.data(),
++                     nullptr, types.data(), sizes.data(), cycleNumber, problemTime );
++    return;
++  }
++
+   localIndex const numParticles = particleRegion.getNumberOfParticles();
+ 
+   array2d< real64 > const particleCorners = particleRegion.getParticleCorners();
+diff --git a/src/coreComponents/fileIO/vtk/VTKPolyDataWriterInterface.cpp b/src/coreComponents/fileIO/vtk/VTKPolyDataWriterInterface.cpp
+--- a/src/coreComponents/fileIO/vtk/VTKPolyDataWriterInterface.cpp
++++ b/src/coreComponents/fileIO/vtk/VTKPolyDataWriterInterface.cpp
+@@ -256,6 +256,17 @@
+ static vtkSmartPointer< vtkPoints >
+ getVtkPoints( ParticleRegion const & particleRegion ) // TODO: Loop over the subregions owned by this region and operate on them directly
+ {
++  if( particleRegion.usesNativeParticleGeometry() )
++  {
++    auto const mesh = particleRegion.getParticleDomainMesh();
++    auto points = vtkSmartPointer< vtkPoints >::New();
++    points->SetDataTypeToDouble();
++    points->SetNumberOfPoints( static_cast< vtkIdType >( mesh.points.size() ) );
++    for( std::size_t i=0; i<mesh.points.size(); ++i )
++      points->SetPoint( static_cast< vtkIdType >( i ), mesh.points[i][0], mesh.points[i][1], mesh.points[i][2] );
++    return points;
++  }
++
+   // Particles are plotted as polyhedron with the geometry determined by the particle
+   // type.  CPDI particles are parallelepiped (8 corners and 6 faces).
+   // TODO: add support for CPTI (tet) and single point (cube or sphere) geometries
+@@ -563,6 +574,28 @@
+ static ParticleData
+ getVtkCells( ParticleRegion const & region )
+ {
++  if( region.usesNativeParticleGeometry() )
++  {
++    // One zone per particle, in exactly the field-output order. There is no
++    // vertex welding or hidden tetrahedral subdivision of wedge particles.
++    auto const mesh = region.getParticleDomainMesh();
++    GEOS_ERROR_IF( mesh.shape.size() != static_cast< std::size_t >( region.getNumberOfParticles() ),
++                   "Native particle mesh/field count mismatch" );
++    auto cells = vtkSmartPointer< vtkCellArray >::New();
++    stdVector< int > types;
++    types.reserve( mesh.shape.size() );
++    for( std::size_t p=0; p<mesh.shape.size(); ++p )
++    {
++      integer const shape = mesh.shape[p];
++      int const count = particleGeometry::vertexCount( shape );
++      vtkIdType vertices[8];
++      for( int a=0; a<count; ++a ) vertices[a] = static_cast< vtkIdType >( mesh.offsets[p]+particleGeometry::vtkVertex( shape, a ) );
++      cells->InsertNextCell( count, vertices );
++      types.push_back( shape == 0 ? VTK_HEXAHEDRON : ( shape == 1 ? VTK_WEDGE : VTK_TETRA ) );
++    }
++    return std::make_pair( types, cells );
++  }
++
+   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+   cellsArray->SetNumberOfCells( region.getNumberOfParticles() );
+   stdVector< int > cellType;

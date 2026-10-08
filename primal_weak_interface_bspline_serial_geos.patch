@@ -1,0 +1,3088 @@
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/README.md b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/README.md
+new file mode 100644
+index 0000000..763353e
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/README.md
+@@ -0,0 +1,25 @@
++# primalWeakInterfaceDynamicBar
++
++Rotated two-material MPM verification for local mixed-cell stress error.  The
++same diagonal plane-strain tensile coupon is dispatched through several
++variants: a single-field baseline, a false-elastic cohesive-zone reference, and
++prescribed weak-interface trace projection between contact groups.  DFG-surface
++and adaptive stress-residual variants are reserved as placeholders.
++
++Only the internal material interface is surface flagged in the CZ and trace
++variants.  Exterior and boundary-adjacent faces are intentionally unflagged.
++Use `./runTest --geometry-only --variant traceContactGroups` to inspect the
++PFW-generated surface flags, normals, and surface-position vectors before
++running GEOS.
++
++For the CZ and weak-trace variants, the case maps prescribed interface normals
++with `explicitSurfaceNormalInfluence=25.0` by default.  Override with
++`WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE=<value>` when comparing normal-mapping
++sensitivity.
++
++The weak-trace variant defaults to a small gap-feedback test,
++`weakInterfaceTraceGapStabilization=0.01`, with the accumulated-gap correction
++velocity capped by `weakInterfaceTraceMaxGapCorrectionVelocity=1.0e-5`.
++Override `WEAK_TRACE_GAP_STABILIZATION=0.0` for the stable velocity-only
++projection baseline or `0.1` to reproduce the overcorrected failed case.
++Override `WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY=<value>` to test the cap.
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/__pycache__/pfw_input_primalWeakInterfaceDynamicBar.cpython-313.pyc b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/__pycache__/pfw_input_primalWeakInterfaceDynamicBar.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..06b7dc59aa181ab79493c528800042d6aede9f22
+GIT binary patch
+literal 16108
+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
+
+literal 0
+HcmV?d00001
+
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/diagnoseGeometry_primalWeakInterfaceDynamicBar.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/diagnoseGeometry_primalWeakInterfaceDynamicBar.py
+new file mode 100755
+index 0000000..7314fff
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/diagnoseGeometry_primalWeakInterfaceDynamicBar.py
+@@ -0,0 +1,173 @@
++#!/usr/bin/env python3
++from __future__ import annotations
++
++import argparse
++import csv
++import importlib.util
++import math
++import os
++from pathlib import Path
++import sys
++
++import numpy as np
++
++SCRIPT_DIR = Path(__file__).resolve().parent
++PFW_ROOT = SCRIPT_DIR.parent.parent
++sys.path.insert(0, str(PFW_ROOT))
++
++
++# Geometry diagnostics are often run from a lightweight Python environment.
++# Provide a minimal mpi4py stub so importing pfw_geometryObjects works even
++# outside the MPI-enabled PFW runtime used for actual particle generation.
++try:
++    import mpi4py  # noqa: F401
++except Exception:
++    import types
++    class _Comm:
++        def Get_rank(self): return 0
++        def Get_size(self): return 1
++        def Barrier(self): return None
++    mpi4py_stub = types.ModuleType("mpi4py")
++    mpi4py_stub.MPI = types.SimpleNamespace(COMM_WORLD=_Comm())
++    sys.modules.setdefault("mpi4py", mpi4py_stub)
++
++
++def load_input(variant: str):
++    os.environ["WEAK_TRACE_VARIANT"] = variant
++    os.environ.setdefault("WEAK_TRACE_CASE_NAME", f"primalWeakInterfaceDynamicBar_{variant}_geometry")
++    spec = importlib.util.spec_from_file_location("_weak_trace_input", SCRIPT_DIR / "pfw_input_primalWeakInterfaceDynamicBar.py")
++    mod = importlib.util.module_from_spec(spec)
++    assert spec.loader is not None
++    spec.loader.exec_module(mod)
++    return mod.pfw
++
++
++def object_expected_normal(name: str):
++    a = np.array([1.0 / math.sqrt(2.0), 1.0 / math.sqrt(2.0), 0.0])
++    low = name.lower()
++    if "lower" in low or "compliant" in low:
++        return a
++    if "upper" in low or "stiff" in low:
++        return -a
++    return None
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser(description="Diagnose primalWeakInterfaceDynamicBar PFW surface geometry")
++    parser.add_argument("--variant", default=os.environ.get("WEAK_TRACE_VARIANT", "traceContactGroups"))
++    parser.add_argument("--output-dir", default=str(SCRIPT_DIR / "output" / "geometryDiagnostics"))
++    parser.add_argument("--sample-stride", type=int, default=int(os.environ.get("WEAK_TRACE_GEOMETRY_SAMPLE_STRIDE", "1")))
++    args = parser.parse_args()
++
++    pfw = load_input(args.variant)
++    out_dir = Path(args.output_dir) / args.variant
++    out_dir.mkdir(parents=True, exist_ok=True)
++
++    surface_depth = max((pfw["xmax"] - pfw["xmin"]) / (pfw["nI"] * pfw["ppc"]), (pfw["ymax"] - pfw["ymin"]) / (pfw["nJ"] * pfw["ppc"]))
++    ni = int(pfw["nI"] * pfw["ppc"])
++    nj = int(pfw["nJ"] * pfw["ppc"])
++    dx = (pfw["xmax"] - pfw["xmin"]) / float(ni)
++    dy = (pfw["ymax"] - pfw["ymin"]) / float(nj)
++    z = 0.0
++
++    rows = []
++    bad = []
++    counts = {}
++    tangent = np.array([-1.0 / math.sqrt(2.0), 1.0 / math.sqrt(2.0), 0.0])
++
++    for ii in range(1, ni + 1, max(1, args.sample_stride)):
++        x = pfw["xmin"] + (ii - 0.5) * dx
++        for jj in range(1, nj + 1, max(1, args.sample_stride)):
++            y = pfw["ymin"] + (jj - 0.5) * dy
++            pt = np.array([x, y, z])
++            for obj in pfw["objects"]:
++                flag = int(obj.isInterior(pt, surface_depth))
++                if flag < 0:
++                    continue
++                mat = int(obj.getMat(pt) if hasattr(obj, "getMat") else obj.mat)
++                group = int(obj.getGroup(pt) if hasattr(obj, "getGroup") else getattr(obj, "group", 0))
++                n = np.zeros(3)
++                s = np.zeros(3)
++                if flag != 0:
++                    n = np.array(obj.getSurfaceNormal(pt), dtype=float)
++                    s = np.array(obj.getSurfacePosition(pt), dtype=float)
++                nn = float(np.linalg.norm(n))
++                ss = float(np.linalg.norm(s))
++                expn = object_expected_normal(getattr(obj, "name", ""))
++                dot = ""
++                if flag != 0 and expn is not None:
++                    dot_val = float(np.dot(n, expn))
++                    dot = dot_val
++                    tangential_error = float(np.dot(s, tangent))
++                    is_bad = nn < 0.9 or abs(dot_val - 1.0) > 1.0e-8 or abs(tangential_error) > max(1.0e-10, 1.0e-8 * max(1.0, ss))
++                    if is_bad:
++                        bad.append((x, y, getattr(obj, "name", ""), flag, nn, dot_val, tangential_error, n.tolist(), s.tolist()))
++                else:
++                    tangential_error = ""
++                key = (getattr(obj, "name", ""), mat, group, flag)
++                counts[key] = counts.get(key, 0) + 1
++                rows.append({
++                    "x": x, "y": y, "z": z, "object": getattr(obj, "name", ""), "material": mat, "group": group, "surfaceFlag": flag,
++                    "surfaceNormalX": n[0], "surfaceNormalY": n[1], "surfaceNormalZ": n[2], "surfaceNormalNorm": nn,
++                    "surfacePositionX": s[0], "surfacePositionY": s[1], "surfacePositionZ": s[2], "surfacePositionNorm": ss,
++                    "normalDotExpected": dot, "surfacePositionTangentialError": tangential_error,
++                })
++                break
++
++    csv_path = out_dir / f"primalWeakInterfaceDynamicBar_{args.variant}_geometry_particles.csv"
++    with csv_path.open("w", newline="") as handle:
++        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()) if rows else ["x"])
++        writer.writeheader()
++        writer.writerows(rows)
++
++    surface_rows = [r for r in rows if int(r["surfaceFlag"]) != 0]
++    log = []
++    log.append(f"variant: {args.variant}")
++    log.append(f"particleLikeSampleCount: {len(rows)}")
++    log.append(f"surfaceFlaggedParticleCount: {len(surface_rows)}")
++    log.append(f"badSurfaceGeometryCount: {len(bad)}")
++    log.append("countsByObjectMaterialGroupFlag:")
++    for key, val in sorted(counts.items(), key=lambda kv: (kv[0][0], kv[0][1], kv[0][2], kv[0][3])):
++        log.append(f"  {key}: {val}")
++    if surface_rows:
++        norms = [float(r["surfaceNormalNorm"]) for r in surface_rows]
++        dots = [float(r["normalDotExpected"]) for r in surface_rows if r["normalDotExpected"] != ""]
++        tang = [abs(float(r["surfacePositionTangentialError"])) for r in surface_rows if r["surfacePositionTangentialError"] != ""]
++        log.append(f"normalNorm: min={min(norms):.8e} mean={sum(norms)/len(norms):.8e} max={max(norms):.8e}")
++        if dots:
++            log.append(f"normalDotExpected: min={min(dots):.8e} mean={sum(dots)/len(dots):.8e} max={max(dots):.8e}")
++        if tang:
++            log.append(f"surfacePositionTangentialErrorAbs: max={max(tang):.8e}")
++    if bad:
++        log.append("firstBadRows:")
++        for b in bad[:20]:
++            log.append("  " + repr(b))
++
++    (out_dir / f"primalWeakInterfaceDynamicBar_{args.variant}_geometry_summary.txt").write_text("\n".join(log) + "\n")
++    print("\n".join(log))
++
++    try:
++        import matplotlib
++        matplotlib.use("Agg")
++        import matplotlib.pyplot as plt
++        xs = [r["x"] for r in rows]
++        ys = [r["y"] for r in rows]
++        flags = [r["surfaceFlag"] for r in rows]
++        fig, ax = plt.subplots(figsize=(6.0, 5.0))
++        sc = ax.scatter(xs, ys, c=flags, s=8, marker="s")
++        fig.colorbar(sc, ax=ax, label="surfaceFlag")
++        ax.set_aspect("equal")
++        ax.set_title(f"{args.variant}: PFW surface flags")
++        ax.set_xlabel("x")
++        ax.set_ylabel("y")
++        fig.tight_layout()
++        fig.savefig(out_dir / f"primalWeakInterfaceDynamicBar_{args.variant}_geometry_flags.png", dpi=180)
++        plt.close(fig)
++    except Exception as exc:
++        (out_dir / f"primalWeakInterfaceDynamicBar_{args.variant}_geometry_plot_error.txt").write_text(str(exc) + "\n")
++
++    return 1 if bad else 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/pfw_input_primalWeakInterfaceDynamicBar.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/pfw_input_primalWeakInterfaceDynamicBar.py
+new file mode 100644
+index 0000000..1c9c2fc
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/pfw_input_primalWeakInterfaceDynamicBar.py
+@@ -0,0 +1,334 @@
++# -*- coding: utf-8 -*-
++"""Rotated two-material bar for weak-interface trace projection.
++
++A diagonal two-phase coupon is loaded in plane-strain tension by moving the
++x- and y-F-table faces.  The coupon uses two VonMisesJ materials: a compliant,
++strong phase and a stiff, weak phase.  The intended series solution remains
++elastic at the prescribed strain, but a single-field mixed-cell kinematic error
++can over-stress and plastify the stiff/weak phase near the inclined interface.
++
++The geometry uses standard pfw_geometry polygon objects.  The lower and upper
++bar segments are parallelograms in global coordinates that extend into the
++lower-left and upper-right domain corners so the moving boundaries load finite
++boundary segments rather than corner points.  Only the internal A/B interface
++edge is flagged in the CZ and trace variants.
++"""
++
++from __future__ import annotations
++
++import math
++import os
++
++import numpy as np
++
++import pfw_geometryObjects as geom
++import pfw_tracerPoints as tracers
++
++#[pfw_dependency] pfw:pfw_materials.py
++import pfw_materials as material_db
++
++pfw = {}
++
++VARIANT = os.environ.get("WEAK_TRACE_VARIANT", "singleField")
++VARIANT_LABEL = os.environ.get("WEAK_TRACE_VARIANT_LABEL", VARIANT)
++CASE_NAME = os.environ.get("WEAK_TRACE_CASE_NAME", f"primalWeakInterfaceDynamicBar_{VARIANT}")
++
++pfw["caseName"] = CASE_NAME
++pfw["runDebug"] = True
++pfw["mBatch"] = True
++pfw["mWallTime"] = os.environ.get("WEAK_TRACE_WALLTIME", "00:10:00")
++pfw["mSubmitJobs"] = False
++
++# Mesh and domain -----------------------------------------------------------------------
++refine = int(os.environ.get("WEAK_TRACE_REFINE", "1"))
++cpp = int(os.environ.get("WEAK_TRACE_CPP", "40"))
++ppc = int(os.environ.get("WEAK_TRACE_PPC", "2"))
++particle_type = int(os.environ.get("WEAK_TRACE_PARTICLE_TYPE", "2"))
++update_order_text = os.environ.get("WEAK_TRACE_UPDATE_ORDER", "")
++
++pfw["planeStrain"] = 1
++pfw["xpar"] = refine
++pfw["ypar"] = refine
++pfw["zpar"] = 1
++pfw["nI"] = pfw["xpar"] * cpp
++pfw["nJ"] = pfw["ypar"] * cpp
++pfw["nK"] = 3
++pfw["ppc"] = ppc
++
++pfw["xmin"] = -0.55
++pfw["xmax"] = 0.55
++pfw["ymin"] = -0.55
++pfw["ymax"] = 0.55
++thickness = (pfw["xmax"] - pfw["xmin"]) / float(max(1, pfw["nI"] - 2))
++pfw["zmin"] = -0.5 * thickness
++pfw["zmax"] = 0.5 * thickness
++
++# Time integration and diagnostics ------------------------------------------------------
++stop_time = float(os.environ.get("WEAK_TRACE_STOP_TIME", "20.0"))
++final_strain = float(os.environ.get("WEAK_TRACE_FINAL_STRAIN", "0.006"))
++pfw["endTime"] = stop_time
++pfw["plotInterval"] = stop_time / 80.0
++pfw["restartInterval"] = 10.0 * stop_time
++pfw["timeIntegrationOption"] = "ExplicitDynamic"
++pfw["cflFactor"] = float(os.environ.get("WEAK_TRACE_CFL", "0.18"))
++pfw["initialDt"] = 1.0e-16
++pfw["writeStatistics"] = "all"
++pfw["reactionHistory"] = 1
++pfw["reactionWriteInterval"] = stop_time / 1000.0
++pfw["boxAverageHistory"] = 1
++pfw["boxAverageWriteInterval"] = stop_time / 1000.0
++pfw["frictionCoefficient"] = 0.0
++pfw["contactNormalType"] = "Aligned"
++pfw["useSurfacePositionForContact"] = 1
++pfw["damageFieldPartitioning"] = 0
++pfw["weakDiscontinuityInsertion"] = "off"
++pfw["weakInterfaceTraceGeometry"] = "surface"
++pfw["cpdiDomainScaling"] = 0
++pfw["updateMethod"] = os.environ.get("WEAK_TRACE_UPDATE_METHOD", "PIC")
++if update_order_text.strip():
++    pfw["updateOrder"] = int(update_order_text)
++pfw["outputType"] = "silo"
++pfw["plotGridFields"] = 1
++pfw["gridFieldNames"] = [
++    "gridMass",
++    "gridVelocity",
++    "gridActive",
++    "gridSurfaceFieldMass",
++    "gridSurfaceNormal",
++    "gridExplicitSurfaceNormal",
++    "gridPrincipalExplicitSurfaceNormal",
++    "gridSurfacePosition",
++    "gridContactForce",
++    "gridCohesiveNode",
++    "gridCohesiveFieldFlag",
++    "gridCohesiveArea",
++    "gridCohesiveForce",
++    "gridDisplacement",
++    "gridWeakInterfaceTraceActive",
++    "gridWeakInterfaceTraceContactSuppressed",
++    "gridWeakInterfaceTraceSkipReason",
++    "gridWeakInterfaceTraceAnchorWeight",
++    "gridWeakInterfaceTraceSupportWeight",
++    "gridWeakInterfaceTraceSurfaceJump",
++    "gridWeakInterfaceTraceVelocityJump",
++    "gridWeakInterfaceTraceVelocityJumpPost",
++    "gridWeakInterfaceTraceForce",
++    "gridInterfaceMechanism",
++    "gridMaterialWeakActive",
++    "gridMaterialWeakOverflow",
++    "gridMaterialWeakPrimaryMaterial",
++    "gridMaterialWeakSecondaryMaterial",
++    "gridInterfaceNormalForce",
++    "gridInterfaceTangentialForce",
++    "gridInterfaceNormalVelocityJump",
++    "gridInterfaceTangentialVelocityJump",
++    "gridInterfaceNormalDisplacementJump",
++    "gridInterfaceTangentialDisplacementJump",
++]
++
++pfw["particleFileFields"] = [
++    "Velocity",
++    "MaterialType",
++    "ContactGroup",
++    "SurfaceFlag",
++    "RVector",
++    "SurfaceNormal",
++    "SurfacePosition",
++    "PlasticStrainMagnitude",
++]
++if VARIANT == "falseElasticCZ":
++    pfw["particleFileFields"].insert(pfw["particleFileFields"].index("RVector"), "CZTag")
++
++# Moving F-table faces.  Stretching x and y moves the lower-left and upper-right
++# tabs apart along the coupon axis a=(1,1)/sqrt(2).  z is plane strain.
++pfw["prescribedBcTable"] = 0
++pfw["boundaryConditionTypes"] = [2, 2, 2, 2, 1, 1]
++pfw["fTableInterpType"] = "Cosine"
++pfw["prescribedBoundaryFTable"] = 1
++pfw["fTable"] = [[0.0, 1.0, 1.0, 1.0], [stop_time, 1.0 + final_strain, 1.0 + final_strain, 1.0]]
++
++# Trace controls ------------------------------------------------------------------------
++if VARIANT == "traceContactGroups":
++    pfw["enableContact"] = 1
++    pfw["enableWeakInterfaceTraceProjection"] = 1
++    pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
++    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.01"))
++    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "1.0e-5"))
++    pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceSuppressNodalContact"] = 1
++    pfw["weakInterfaceTracePairs"] = [[0, 1]]
++elif VARIANT == "falseElasticCZ":
++    pfw["enableContact"] = 1
++    pfw["enableWeakInterfaceTraceProjection"] = 0
++    pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
++    pfw["damageFieldPartitioning"] = 1
++    pfw["useEvents"] = 1
++elif VARIANT in ("materialWeak", "materialWeakSurface"):
++    pfw["enableContact"] = 0
++    pfw["enableWeakInterfaceTraceProjection"] = 1
++    pfw["weakDiscontinuityInsertion"] = "material"
++    default_trace_geometry = "surface" if VARIANT == "materialWeakSurface" else "materialLogisticRegression"
++    pfw["weakInterfaceTraceGeometry"] = os.environ.get("WEAK_TRACE_GEOMETRY", default_trace_geometry)
++    if pfw["weakInterfaceTraceGeometry"] == "surface":
++        pfw["explicitSurfaceNormalInfluence"] = float(os.environ.get("WEAK_TRACE_EXPLICIT_NORMAL_INFLUENCE", "25.0"))
++    if pfw["weakInterfaceTraceGeometry"] == "materialLogisticRegression":
++        pfw["weakInterfaceTraceMaterialLRMaxMisfitFraction"] = float(os.environ.get("WEAK_TRACE_MATERIAL_LR_MAX_MISFIT_FRACTION", "0.05"))
++        pfw["weakInterfaceTraceMaterialLRMinMeanMargin"] = float(os.environ.get("WEAK_TRACE_MATERIAL_LR_MIN_MEAN_MARGIN", "0.0"))
++        pfw["weakInterfaceTraceMaterialLRMinParticlesPerSide"] = int(os.environ.get("WEAK_TRACE_MATERIAL_LR_MIN_PARTICLES_PER_SIDE", "2"))
++    pfw["weakInterfaceTraceProjectionIterations"] = int(os.environ.get("WEAK_TRACE_PROJECTION_ITERATIONS", "8"))
++    pfw["weakInterfaceTraceProjectionScale"] = float(os.environ.get("WEAK_TRACE_PROJECTION_SCALE", "1.0"))
++    pfw["weakInterfaceTraceGapStabilization"] = float(os.environ.get("WEAK_TRACE_GAP_STABILIZATION", "0.0"))
++    pfw["weakInterfaceTraceMaxGapCorrectionVelocity"] = float(os.environ.get("WEAK_TRACE_MAX_GAP_CORRECTION_VELOCITY", "0.0"))
++    pfw["weakInterfaceTraceMinWeight"] = float(os.environ.get("WEAK_TRACE_MIN_WEIGHT", "1.0e-12"))
++    pfw["weakInterfaceTraceSuppressNodalContact"] = 0
++else:
++    pfw["enableContact"] = 0
++    pfw["enableWeakInterfaceTraceProjection"] = 0
++
++# Materials -----------------------------------------------------------------------------
++matA = material_db.weakTraceCompliantVonMises.copy()
++matB = material_db.weakTraceStiffWeakVonMises.copy()
++cz = material_db.weakTraceFalseElasticCohesiveZone.copy()
++pfw["materials"] = [matA["name"], matB["name"]]
++pfw["materialPropertyString"] = matA["materialString"] + "\n" + matB["materialString"]
++if VARIANT == "falseElasticCZ":
++    pfw["materialPropertyString"] += "\n" + cz["materialString"]
++    pfw["cohesiveZoneRegions"] = """
++<CohesiveZoneRegion
++    name="weakTraceFalseElasticCZ"
++    constitutiveModel="weakTraceFalseElasticCohesiveZone"
++    tag="0"/>"""
++    pfw["mpmEventsString"] = """
++<ReferenceCohesiveZones
++    name="weakTraceFalseElasticCZ"
++    startTime="0.0"
++    regionNames="{ weakTraceFalseElasticCZ }"
++    czVolumeNormalization="1"/>"""
++
++# Geometry ------------------------------------------------------------------------------
++a = np.array([1.0 / math.sqrt(2.0), 1.0 / math.sqrt(2.0)])
++b = np.array([-1.0 / math.sqrt(2.0), 1.0 / math.sqrt(2.0)])
++bar_half_width = float(os.environ.get("WEAK_TRACE_BAR_HALF_WIDTH", "0.11"))
++s0 = -0.82
++s1 = 0.82
++# A small nonzero split offset avoids placing the material interface exactly on
++# a diagonal row of particle centers for the default structured seeding.  That
++# gives both sides a well-populated layer of WeakDiscontinuity particles while
++# preserving the non-grid-aligned interface.
++s_interface = float(os.environ.get("WEAK_TRACE_INTERFACE_OFFSET", "0.006875"))
++
++def xy(s, t):
++    return (s * a + t * b).tolist()
++
++# Vertices are ordered counter-clockwise.  The lower segment interface edge is
++# edge 1; the upper segment interface edge is edge 3.  Non-interface faces are
++# deliberately unflagged.
++lower_vertices = [xy(s0, -bar_half_width), xy(s_interface, -bar_half_width), xy(s_interface, bar_half_width), xy(s0, bar_half_width)]
++upper_vertices = [xy(s_interface, -bar_half_width), xy(s1, -bar_half_width), xy(s1, bar_half_width), xy(s_interface, bar_half_width)]
++
++def make_objects(surface_flag=None, trace_groups=False, cz_tag=None):
++    lower_flags = [False, surface_flag is not None, False, False]
++    upper_flags = [False, False, False, surface_flag is not None]
++    lower_group = 0
++    upper_group = 1 if trace_groups else 0
++    lower = geom.polygon(
++        "weakTraceCompliantLower",
++        lower_vertices,
++        vel=[0.0, 0.0, 0.0],
++        mat=0,
++        group=lower_group,
++        particleType=particle_type,
++        flaggedSurfaces=lower_flags,
++    )
++    upper = geom.polygon(
++        "weakTraceStiffUpper",
++        upper_vertices,
++        vel=[0.0, 0.0, 0.0],
++        mat=1,
++        group=upper_group,
++        particleType=particle_type,
++        flaggedSurfaces=upper_flags,
++    )
++    if surface_flag is not None:
++        lower = geom.surfaceFlagWrapper("weakTraceLowerInterfaceFlag", lower, int(surface_flag))
++        upper = geom.surfaceFlagWrapper("weakTraceUpperInterfaceFlag", upper, int(surface_flag))
++    if cz_tag is not None:
++        lower = geom.czTagWrapper("weakTraceLowerInterfaceCZTag", lower, cz_tag)
++        upper = geom.czTagWrapper("weakTraceUpperInterfaceCZTag", upper, cz_tag)
++    return [lower, upper]
++
++if VARIANT == "singleField":
++    pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
++elif VARIANT == "falseElasticCZ":
++    # Match the elastic-tie CZ reference path: one contact group, with the two
++    # cohesive fields split by opposing explicit surface normals.
++    pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.Cohesive, trace_groups=False, cz_tag=0)
++elif VARIANT == "traceContactGroups":
++    pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.WeakDiscontinuity, trace_groups=True)
++elif VARIANT == "materialWeak":
++    pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
++elif VARIANT == "materialWeakSurface":
++    pfw["objects"] = make_objects(surface_flag=geom.SurfaceFlag.WeakDiscontinuity, trace_groups=False)
++else:
++    # Placeholders currently run as single-field unless explicitly dispatched for
++    # development.  Their rows are still reported by the folder postprocessor.
++    pfw["objects"] = make_objects(surface_flag=None, trace_groups=False)
++
++# Local tracer layers -------------------------------------------------------------------
++tracer_points = []
++tracer_labels = []
++layer_specs = [
++    ("compliant_near", s_interface - 0.035),
++    ("stiff_near", s_interface + 0.035),
++    ("compliant_far", s_interface - 0.28),
++    ("stiff_far", s_interface + 0.28),
++]
++for label, s in layer_specs:
++    for j, t in enumerate([-0.06, 0.0, 0.06]):
++        p = s * a + t * b
++        tracer_points.append((float(p[0]), float(p[1]), 0.0))
++        tracer_labels.append(f"{label}_{j}")
++
++tracers.set_tracers(
++    pfw,
++    tracer_points,
++    variables=[
++        "particleID",
++        "materialType",
++        "density",
++        "plasticStrainMagnitude",
++        "stressXX",
++        "stressYY",
++        "stressZZ",
++        "stressYZ",
++        "stressXZ",
++        "stressXY",
++    ],
++    write_interval=stop_time / 500.0,
++    output_prefix="primalWeakInterfaceDynamicBarTracer",
++)
++
++pfw_expected = {
++    "variant": VARIANT,
++    "variant_label": VARIANT_LABEL,
++    "final_strain": final_strain,
++    "stop_time": stop_time,
++    "bar_axis": [float(a[0]), float(a[1]), 0.0],
++    "interface_normal": [float(a[0]), float(a[1]), 0.0],
++    "trace_projection_scale": pfw.get("weakInterfaceTraceProjectionScale", 0.0),
++    "trace_gap_stabilization": pfw.get("weakInterfaceTraceGapStabilization", 0.0),
++    "trace_max_gap_correction_velocity": pfw.get("weakInterfaceTraceMaxGapCorrectionVelocity", 0.0),
++    "trace_projection_iterations": pfw.get("weakInterfaceTraceProjectionIterations", 0),
++    "particle_type": particle_type,
++    "update_method": pfw.get("updateMethod", ""),
++    "update_order": pfw.get("updateOrder", None),
++    "weak_discontinuity_insertion": pfw.get("weakDiscontinuityInsertion", "off"),
++    "weak_interface_trace_geometry": pfw.get("weakInterfaceTraceGeometry", "surface"),
++    "material_lr_max_misfit_fraction": pfw.get("weakInterfaceTraceMaterialLRMaxMisfitFraction", None),
++    "material_lr_min_mean_margin": pfw.get("weakInterfaceTraceMaterialLRMinMeanMargin", None),
++    "material_lr_min_particles_per_side": pfw.get("weakInterfaceTraceMaterialLRMinParticlesPerSide", None),
++    "explicit_surface_normal_influence": pfw.get("explicitSurfaceNormalInfluence", 0.0),
++    "tracer_labels": tracer_labels,
++}
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/postProcess_primalWeakInterfaceDynamicBar.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/postProcess_primalWeakInterfaceDynamicBar.py
+new file mode 100755
+index 0000000..483e2c2
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/postProcess_primalWeakInterfaceDynamicBar.py
+@@ -0,0 +1,1069 @@
++#!/usr/bin/env python3
++from __future__ import annotations
++
++import argparse
++import csv
++import json
++import math
++import os
++import re
++import shutil
++import subprocess
++import sys
++from collections import defaultdict
++from pathlib import Path
++import xml.etree.ElementTree as ET
++
++SOURCE_DIR = Path(__file__).resolve().parent
++PFW_ROOT = SOURCE_DIR.parent.parent
++sys.path.insert(0, str(PFW_ROOT))
++
++from mpm_vv_simple_post import compact_float, latex_escape, read_csv_numeric, write_json, write_rows, plot_metric
++
++DEFAULT_CASE_ID = "primalWeakInterfaceDynamicBar"
++VARIANT_LABELS = {
++    "singleField": "single-field baseline",
++    "falseElasticCZ": "false-elastic CZ reference",
++    "traceContactGroups": "trace projection, contact groups",
++    "materialWeak": "material weak discontinuity, material LR geometry",
++    "materialWeakSurface": "material weak discontinuity, surface geometry",
++    "dfgSurfaceFlags": "DFG surface flags placeholder",
++    "stressResidualPartition": "stress-residual partition placeholder",
++}
++LAYER_ORDER = ["compliant_near", "stiff_near", "compliant_far", "stiff_far"]
++TRACERS_PER_LAYER = 3
++N = (1.0 / math.sqrt(2.0), 1.0 / math.sqrt(2.0), 0.0)
++T = (-1.0 / math.sqrt(2.0), 1.0 / math.sqrt(2.0), 0.0)
++COHESIVE_FLAG = 3
++DAMAGED_COHESIVE_FLAG = 4
++WEAK_DISCONTINUITY_FLAG = 5
++INTERFACE_SURFACE_FLAGS = {COHESIVE_FLAG, DAMAGED_COHESIVE_FLAG, WEAK_DISCONTINUITY_FLAG}
++SURFACE_FLAG_LABELS = {
++    COHESIVE_FLAG: "cohesive",
++    DAMAGED_COHESIVE_FLAG: "damaged_cohesive",
++    WEAK_DISCONTINUITY_FLAG: "weak_discontinuity",
++}
++SERIES_S0 = -0.82
++SERIES_S1 = 0.82
++SERIES_INTERFACE = 0.006875
++DEFAULT_FINAL_STRAIN = 0.006
++DEFAULT_COMPLIANT = {"bulk": 2.0 / 3.0, "shear": 0.4, "yield": 1.0}
++DEFAULT_STIFF = {"bulk": 20.0 / 3.0, "shear": 4.0, "yield": 0.025}
++NODE_RESTART_ROOT = "Problem/domain/MeshBodies/backgroundGrid/meshLevels/Level0/nodeManager"
++INTERFACE_MECHANISM_LABELS = {
++    0: "none",
++    1: "cohesive_zone",
++    2: "ordinary_contact",
++    3: "weak_trace_anchor",
++    4: "weak_trace_support",
++    5: "contact_suppressed_trace_inactive",
++    6: "material_weak_discontinuity",
++}
++NODAL_INTERFACE_FIELDS = [
++    "gridInterfaceNormalForce",
++    "gridInterfaceTangentialForce",
++    "gridInterfaceNormalVelocityJump",
++    "gridInterfaceTangentialVelocityJump",
++    "gridInterfaceNormalDisplacementJump",
++    "gridInterfaceTangentialDisplacementJump",
++]
++
++
++def parse_args() -> argparse.Namespace:
++    p = argparse.ArgumentParser(description="Post-process primalWeakInterfaceDynamicBar verification")
++    p.add_argument("--source-dir", default=str(SOURCE_DIR))
++    p.add_argument("--output-dir", default=str(SOURCE_DIR / "output" / DEFAULT_CASE_ID))
++    p.add_argument("--case-id", default=DEFAULT_CASE_ID)
++    p.add_argument("--output-prefix", default="primalWeakInterfaceDynamicBar")
++    p.add_argument("--run-dir", default="")
++    p.add_argument("--python", dest="python_cmd", default=sys.executable)
++    p.add_argument("--visit-cmd", default=os.environ.get("VISIT_COMMAND", ""))
++    p.add_argument("--visit-timeout", type=float, default=float(os.environ.get("MPM_VV_VISIT_TIMEOUT", "90")))
++    p.add_argument("--no-visit", action="store_true")
++    p.add_argument("--force", action="store_true")
++    return p.parse_args()
++
++
++def find_manifest(source_dir: Path, output_dir: Path, case_id: str) -> dict:
++    for path in [output_dir / "primalWeakInterfaceDynamicBar_jobs.json", output_dir / f"{case_id}_jobs.json"]:
++        if path.is_file():
++            return json.loads(path.read_text())
++    subcases = []
++    for name, label in VARIANT_LABELS.items():
++        jobs_path = source_dir / "output" / f"{case_id}__{name}" / f"primalWeakInterfaceDynamicBar_{name}_jobs.json"
++        jobs = {}
++        if jobs_path.is_file():
++            try:
++                jobs = json.loads(jobs_path.read_text())
++            except Exception:
++                jobs = {}
++        subcases.append({"name": name, "label": label, "case_id": f"{case_id}__{name}", "case_name": f"primalWeakInterfaceDynamicBar_{name}", "jobs": jobs, "placeholder": name not in {"singleField", "falseElasticCZ", "traceContactGroups", "materialWeak", "materialWeakSurface"}})
++    return {"case_id": case_id, "subcases": subcases}
++
++
++def run_dir_from_subcase(source_dir: Path, subcase: dict) -> Path | None:
++    run_dir = str(subcase.get("jobs", {}).get("run_dir", "")).strip()
++    if run_dir and Path(run_dir).is_dir():
++        return Path(run_dir)
++    for p in [source_dir / "output" / subcase.get("case_id", ""), source_dir / "output" / subcase.get("case_id", "") / subcase.get("case_name", "")]:
++        if p.is_dir():
++            return p
++    return None
++
++
++def tracer_files(run_dir: Path) -> list[Path]:
++    return sorted(set(run_dir.glob("primalWeakInterfaceDynamicBarTracer_*.csv")) | set(run_dir.glob("tracerPoint_*.csv")))
++
++
++def parse_tracer(path: Path) -> list[dict]:
++    rows = []
++    with path.open(newline="") as handle:
++        reader = csv.DictReader(handle)
++        for row in reader:
++            out = {}
++            for k, v in row.items():
++                if v in (None, ""):
++                    continue
++                try:
++                    out[k] = float(v)
++                except Exception:
++                    out[k] = v
++            rows.append(out)
++    return rows
++
++
++def stress_from_row(row: dict) -> tuple[float, float, float, float, float, float] | None:
++    keys = ["stressXX", "stressYY", "stressZZ", "stressYZ", "stressXZ", "stressXY"]
++    if not all(k in row for k in keys):
++        return None
++    return tuple(float(row[k]) for k in keys)
++
++
++def von_mises(sig) -> float:
++    sxx, syy, szz, syz, sxz, sxy = sig
++    return math.sqrt(max(0.0, 0.5 * ((sxx - syy)**2 + (syy - szz)**2 + (szz - sxx)**2) + 3.0 * (sxy*sxy + sxz*sxz + syz*syz)))
++
++
++def normal_stress(sig) -> float:
++    sxx, syy, szz, syz, sxz, sxy = sig
++    nx, ny, nz = N
++    return nx*nx*sxx + ny*ny*syy + nz*nz*szz + 2.0*(nx*ny*sxy + nx*nz*sxz + ny*nz*syz)
++
++
++def tracer_layer(index: int) -> str:
++    return LAYER_ORDER[min(len(LAYER_ORDER) - 1, index // TRACERS_PER_LAYER)]
++
++
++def compact_int(value: object) -> str:
++    try:
++        return str(int(value))
++    except Exception:
++        return "--"
++
++
++def dot3(a, b) -> float:
++    return float(a[0]) * float(b[0]) + float(a[1]) * float(b[1]) + float(a[2]) * float(b[2])
++
++
++def parse_floats(text: str) -> list[float]:
++    return [float(x) for x in re.findall(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?", text or "")]
++
++
++def elastic_from_bulk_shear(bulk: float, shear: float) -> tuple[float, float]:
++    young = 9.0 * bulk * shear / (3.0 * bulk + shear)
++    poisson = (3.0 * bulk - 2.0 * shear) / (2.0 * (3.0 * bulk + shear))
++    return young, poisson
++
++
++def plane_strain_axial_modulus(bulk: float, shear: float) -> float:
++    young, poisson = elastic_from_bulk_shear(bulk, shear)
++    return young * (1.0 - poisson) / ((1.0 + poisson) * (1.0 - 2.0 * poisson))
++
++
++def run_xml_path(run_dir: Path | None) -> Path | None:
++    if run_dir is None:
++        return None
++    for candidate in [run_dir / "mpm_primalWeakInterfaceDynamicBar.xml", *sorted(run_dir.glob("mpm_*.xml"))]:
++        if candidate.is_file():
++            return candidate
++    return None
++
++
++def analytical_solution(run_dir: Path | None = None) -> dict:
++    final_strain = DEFAULT_FINAL_STRAIN
++    strain_table_times = [0.0, 20.0]
++    strain_table_aa = [0.0, DEFAULT_FINAL_STRAIN]
++    strain_interp = "Cosine"
++    compliant = dict(DEFAULT_COMPLIANT)
++    stiff = dict(DEFAULT_STIFF)
++    xml_path = run_xml_path(run_dir)
++    if xml_path is not None:
++        try:
++            root = ET.parse(xml_path).getroot()
++            solver = root.find(".//SolidMechanics_MPM")
++            if solver is not None:
++                vals = parse_floats(solver.attrib.get("fTable", ""))
++                if len(vals) >= 8:
++                    row_width = 4
++                    rows = [vals[i:i + row_width] for i in range(0, len(vals), row_width) if len(vals[i:i + row_width]) == row_width]
++                    strain_table_times = [r[0] for r in rows]
++                    strain_table_aa = [0.5 * ((r[1] - 1.0) + (r[2] - 1.0)) for r in rows]
++                    final_row = vals[-row_width:]
++                    final_strain = 0.5 * ((final_row[1] - 1.0) + (final_row[2] - 1.0))
++                strain_interp = solver.attrib.get("fTableInterpType", strain_interp)
++            for mat in root.findall(".//VonMisesJ"):
++                target = None
++                if mat.attrib.get("name") == "weakTraceCompliantVonMises":
++                    target = compliant
++                elif mat.attrib.get("name") == "weakTraceStiffWeakVonMises":
++                    target = stiff
++                if target is not None:
++                    target["bulk"] = float(mat.attrib.get("defaultBulkModulus", target["bulk"]))
++                    target["shear"] = float(mat.attrib.get("defaultShearModulus", target["shear"]))
++                    target["yield"] = float(mat.attrib.get("defaultYieldStrength", target["yield"]))
++        except Exception:
++            pass
++
++    for mat in [compliant, stiff]:
++        young, poisson = elastic_from_bulk_shear(mat["bulk"], mat["shear"])
++        mat["young"] = young
++        mat["poisson"] = poisson
++        mat["planeStrainAxialModulus"] = plane_strain_axial_modulus(mat["bulk"], mat["shear"])
++
++    compliant_length = SERIES_INTERFACE - SERIES_S0
++    stiff_length = SERIES_S1 - SERIES_INTERFACE
++    total_length = SERIES_S1 - SERIES_S0
++    compliant_fraction = compliant_length / total_length
++    stiff_fraction = stiff_length / total_length
++    sigma = final_strain / (
++        compliant_fraction / compliant["planeStrainAxialModulus"] +
++        stiff_fraction / stiff["planeStrainAxialModulus"]
++    )
++    compliant_strain = sigma / compliant["planeStrainAxialModulus"]
++    stiff_strain = sigma / stiff["planeStrainAxialModulus"]
++    return {
++        "assumption": "bonded 1D series bar using plane-strain axial modulus E(1-nu)/((1+nu)(1-2nu))",
++        "finalStrainAA": final_strain,
++        "strainTableTimes": strain_table_times,
++        "strainTableAA": strain_table_aa,
++        "strainInterpolation": strain_interp,
++        "s0": SERIES_S0,
++        "s1": SERIES_S1,
++        "interfaceS": SERIES_INTERFACE,
++        "compliantLengthFraction": compliant_fraction,
++        "stiffLengthFraction": stiff_fraction,
++        "compliantYoungModulus": compliant["young"],
++        "stiffYoungModulus": stiff["young"],
++        "compliantPoissonRatio": compliant["poisson"],
++        "stiffPoissonRatio": stiff["poisson"],
++        "compliantPlaneStrainAxialModulus": compliant["planeStrainAxialModulus"],
++        "stiffPlaneStrainAxialModulus": stiff["planeStrainAxialModulus"],
++        "compliantYieldStrength": compliant["yield"],
++        "stiffYieldStrength": stiff["yield"],
++        "expectedSigmaAA": sigma,
++        "expectedSigmaNN": sigma,
++        "expectedCompliantStrainAA": compliant_strain,
++        "expectedStiffStrainAA": stiff_strain,
++        "expectedCompliantYieldRatio": abs(sigma) / compliant["yield"] if compliant["yield"] else math.nan,
++        "expectedStiffYieldRatio": abs(sigma) / stiff["yield"] if stiff["yield"] else math.nan,
++    }
++
++
++def analytical_strain_at_time(time: float, analytic: dict) -> float:
++    times = [float(v) for v in analytic.get("strainTableTimes", [0.0, 20.0])]
++    strains = [float(v) for v in analytic.get("strainTableAA", [0.0, analytic.get("finalStrainAA", DEFAULT_FINAL_STRAIN)])]
++    if not times or not strains or len(times) != len(strains):
++        return float(analytic.get("finalStrainAA", DEFAULT_FINAL_STRAIN))
++    if time <= times[0]:
++        return strains[0]
++    if time >= times[-1]:
++        return strains[-1]
++    for i in range(len(times) - 1):
++        t0, t1 = times[i], times[i + 1]
++        if t0 <= time <= t1:
++            xi = (time - t0) / (t1 - t0) if t1 != t0 else 1.0
++            if str(analytic.get("strainInterpolation", "")).lower() == "cosine":
++                xi = 0.5 * (1.0 - math.cos(math.pi * xi))
++            return strains[i] + xi * (strains[i + 1] - strains[i])
++    return strains[-1]
++
++
++def analytical_sigma_at_time(time: float, analytic: dict) -> float:
++    final_strain = float(analytic.get("finalStrainAA", DEFAULT_FINAL_STRAIN))
++    if final_strain == 0.0:
++        return math.nan
++    return float(analytic["expectedSigmaNN"]) * analytical_strain_at_time(time, analytic) / final_strain
++
++
++def analytical_time_for_visit_state(state: str, analytic: dict) -> float | None:
++    times = [float(v) for v in analytic.get("strainTableTimes", [0.0, 20.0])]
++    if not times:
++        return None
++    try:
++        if state == "initial":
++            return times[0]
++        if state == "final":
++            return times[-1]
++        if state == "middle":
++            return 0.5 * (times[0] + times[-1])
++        if state.startswith("fraction:"):
++            fraction = min(1.0, max(0.0, float(state.split(":", 1)[1])))
++            return times[0] + fraction * (times[-1] - times[0])
++    except Exception:
++        return None
++    return None
++
++
++def visit_color_range(quantity: str, state: str, analytic: dict) -> tuple[float | None, float | None]:
++    if quantity != "sigmaNN":
++        return None, None
++    time = analytical_time_for_visit_state(state, analytic)
++    if time is None:
++        return None, None
++    expected = analytical_sigma_at_time(time, analytic)
++    if not math.isfinite(expected) or expected == 0.0:
++        return None, None
++    return min(0.0, expected), max(0.0, expected)
++
++
++def layer_material(layer: str) -> str:
++    return "stiff" if layer.startswith("stiff") else "compliant"
++
++
++def layer_yield_strength(layer: str, analytic: dict) -> float:
++    return float(analytic["stiffYieldStrength"] if layer_material(layer) == "stiff" else analytic["compliantYieldStrength"])
++
++
++def add_analytical_layer_fields(row: dict, analytic: dict) -> None:
++    expected = analytical_sigma_at_time(float(row.get("time", 0.0)), analytic)
++    row["expectedSigmaNN"] = expected
++    row["sigmaNNError"] = float(row["meanSigmaNN"]) - expected
++    row["sigmaNNRelativeError"] = row["sigmaNNError"] / expected if expected != 0.0 else math.nan
++    row["sigmaNNMeasuredOverExpected"] = float(row["meanSigmaNN"]) / expected if expected != 0.0 else math.nan
++    yield_strength = layer_yield_strength(str(row.get("layer", "")), analytic)
++    row["yieldStrength"] = yield_strength
++    row["vonMisesYieldRatio"] = float(row["meanVonMisesStress"]) / yield_strength if yield_strength else math.nan
++
++
++def read_restart_array(handle, base: str, name: str):
++    group = handle[f"{base}/{name}"]
++    dims = tuple(int(v) for v in group["__dimensions__"][...])
++    return group["__values__"][...].reshape(dims)
++
++
++def latest_restart_dir(run_dir: Path) -> Path | None:
++    restart_dirs = [p for p in sorted(run_dir.glob("mpm_primalWeakInterfaceDynamicBar_restart_*")) if p.is_dir()]
++    return restart_dirs[-1] if restart_dirs else None
++
++
++def capitalized_metric_name(key: str) -> str:
++    return key[0].upper() + key[1:] if key else key
++
++
++def read_restart_node_array(restart_dir: Path, name: str):
++    try:
++        import numpy as np
++        import h5py
++    except Exception as exc:
++        raise RuntimeError(f"h5py/numpy unavailable: {exc}") from exc
++
++    arrays = []
++    for rank_path in sorted(restart_dir.glob("rank_*.hdf5")):
++        with h5py.File(rank_path, "r") as handle:
++            path = f"{NODE_RESTART_ROOT}/{name}"
++            if path not in handle:
++                continue
++            arrays.append(read_restart_array(handle, NODE_RESTART_ROOT, name))
++    if not arrays:
++        return None
++    values = np.concatenate(arrays, axis=0)
++    while len(values.shape) > 1 and values.shape[-1] == 1:
++        values = values[..., 0]
++    return values
++
++
++def percentile_abs(values, percentile: float) -> float:
++    vals = sorted(abs(float(v)) for v in values if math.isfinite(float(v)))
++    if not vals:
++        return math.nan
++    if len(vals) == 1:
++        return vals[0]
++    pos = (len(vals) - 1) * percentile / 100.0
++    lo = int(math.floor(pos))
++    hi = int(math.ceil(pos))
++    if lo == hi:
++        return vals[lo]
++    return vals[lo] + (vals[hi] - vals[lo]) * (pos - lo)
++
++
++def process_nodal_interface_diagnostics(subcase: dict, run_dir: Path | None) -> tuple[list[dict], dict]:
++    summary = {
++        "nodalInterfaceStatus": "not evaluated",
++    }
++    if run_dir is None:
++        summary["nodalInterfaceStatus"] = "missing run directory"
++        return [], summary
++    restart_dir = latest_restart_dir(run_dir)
++    if restart_dir is None:
++        summary["nodalInterfaceStatus"] = "missing restart directory"
++        return [], summary
++
++    try:
++        mechanism = read_restart_node_array(restart_dir, "gridInterfaceMechanism")
++    except Exception as exc:
++        summary["nodalInterfaceStatus"] = str(exc)
++        return [], summary
++    if mechanism is None:
++        summary["nodalInterfaceStatus"] = "missing gridInterfaceMechanism in final restart"
++        return [], summary
++
++    fields = {}
++    for name in NODAL_INTERFACE_FIELDS:
++        try:
++            fields[name] = read_restart_node_array(restart_dir, name)
++        except Exception:
++            fields[name] = None
++
++    rows = []
++    num_fields = int(mechanism.shape[1]) if len(mechanism.shape) > 1 else 1
++    aggregate_counts = {code: 0 for code in INTERFACE_MECHANISM_LABELS}
++    aggregate_interface_entries = 0
++    aggregate_values = {name: [] for name in NODAL_INTERFACE_FIELDS}
++
++    for field_index in range(num_fields):
++        mech = mechanism[:, field_index] if num_fields > 1 else mechanism[:]
++        active_mask = [int(v) != 0 for v in mech]
++        row = {
++            "variant": subcase.get("name"),
++            "label": subcase.get("label"),
++            "fieldIndex": field_index,
++            "fieldLabel": f"velocityField{field_index + 1}",
++            "restartDir": str(restart_dir),
++            "interfaceEntries": int(sum(active_mask)),
++        }
++        for code, label in INTERFACE_MECHANISM_LABELS.items():
++            count = int(sum(1 for v in mech if int(v) == code))
++            row[f"mechanism_{code}_{label}_count"] = count
++            aggregate_counts[code] += count
++        aggregate_interface_entries += row["interfaceEntries"]
++
++        for name, values in fields.items():
++            if values is None:
++                row[f"{name}_status"] = "missing"
++                continue
++            vals = values[:, field_index] if len(values.shape) > 1 else values[:]
++            active_vals = [float(v) for v, active in zip(vals, active_mask) if active]
++            aggregate_values[name].extend(active_vals)
++            row[f"{name}_meanAbs"] = sum(abs(v) for v in active_vals) / len(active_vals) if active_vals else math.nan
++            row[f"{name}_p95Abs"] = percentile_abs(active_vals, 95.0)
++            row[f"{name}_maxAbs"] = max((abs(v) for v in active_vals), default=math.nan)
++        rows.append(row)
++
++    summary.update({
++        "nodalInterfaceStatus": "processed",
++        "nodalInterfaceRestart": str(restart_dir),
++        "nodalInterfaceFieldCount": num_fields,
++        "nodalInterfaceEntries": aggregate_interface_entries,
++    })
++    for code, label in INTERFACE_MECHANISM_LABELS.items():
++        summary[f"nodalMechanism_{code}_{label}_count"] = aggregate_counts[code]
++    for name, vals in aggregate_values.items():
++        summary[f"nodal_{name}_p95Abs"] = percentile_abs(vals, 95.0)
++        summary[f"nodal_{name}_maxAbs"] = max((abs(v) for v in vals), default=math.nan)
++    return rows, summary
++
++
++def restart_surface_points(restart_dir: Path, surface_flags: set[int] | None = None) -> list[dict]:
++    try:
++        import h5py
++    except Exception as exc:
++        raise RuntimeError(f"h5py unavailable: {exc}") from exc
++
++    accepted_flags = set(INTERFACE_SURFACE_FLAGS if surface_flags is None else surface_flags)
++    points = []
++    root = "Problem/domain/MeshBodies/particles/meshLevels/Level0/ParticleRegions/particleRegionsGroup"
++    for rank_path in sorted(restart_dir.glob("rank_*.hdf5")):
++        with h5py.File(rank_path, "r") as handle:
++            if root not in handle:
++                continue
++            for region_name in handle[root]:
++                region_path = f"{root}/{region_name}"
++                region_group = handle[region_path]
++                if not isinstance(region_group, h5py.Group) or "particleSubRegions" not in region_group:
++                    continue
++                subregions = handle[f"{region_path}/particleSubRegions"]
++                for sub_name in subregions:
++                    base = f"{region_path}/particleSubRegions/{sub_name}"
++                    sub_group = handle[base]
++                    if not isinstance(sub_group, h5py.Group) or "particleSurfaceFlag" not in sub_group:
++                        continue
++                    center = read_restart_array(handle, base, "particleCenter")
++                    surface_position = read_restart_array(handle, base, "particleSurfacePosition")
++                    surface_flag = read_restart_array(handle, base, "particleSurfaceFlag")
++                    particle_group = read_restart_array(handle, base, "particleGroup")
++                    material_type = read_restart_array(handle, base, "particleMaterialType")
++                    for p, flag in enumerate(surface_flag):
++                        flag_int = int(flag)
++                        if flag_int not in accepted_flags:
++                            continue
++                        point = center[p] + surface_position[p]
++                        material = int(material_type[p])
++                        group = int(particle_group[p])
++                        side = material if material in (0, 1) else group
++                        points.append({
++                            "key": f"{rank_path.name}:{region_name}:{sub_name}:{p}",
++                            "rank": rank_path.name,
++                            "region": region_name,
++                            "subregion": sub_name,
++                            "particleIndex": int(p),
++                            "group": group,
++                            "materialType": material,
++                            "side": side,
++                            "surfaceFlag": flag_int,
++                            "surfaceFlagLabel": SURFACE_FLAG_LABELS.get(flag_int, str(flag_int)),
++                            "point": [float(point[0]), float(point[1]), float(point[2])],
++                        })
++    return points
++
++
++def match_interface_pairs(initial_points: list[dict]) -> list[tuple[dict, dict, float]]:
++    pairs = []
++    for flag in sorted({int(p["surfaceFlag"]) for p in initial_points}):
++        lower = [p for p in initial_points if int(p["surfaceFlag"]) == flag and int(p.get("side", -1)) == 0]
++        upper = [p for p in initial_points if int(p["surfaceFlag"]) == flag and int(p.get("side", -1)) == 1]
++        unused = set(range(len(upper)))
++        for lo in sorted(lower, key=lambda p: (dot3(p["point"], T), float(p["point"][2]))):
++            best = None
++            lo_t = dot3(lo["point"], T)
++            lo_z = float(lo["point"][2])
++            for idx in list(unused):
++                hi = upper[idx]
++                dt = dot3(hi["point"], T) - lo_t
++                dz = float(hi["point"][2]) - lo_z
++                dist2 = dt * dt + dz * dz
++                if best is None or dist2 < best[0]:
++                    best = (dist2, idx)
++            if best is not None:
++                unused.remove(best[1])
++                pairs.append((lo, upper[best[1]], math.sqrt(best[0])))
++    return pairs
++
++
++def solver_attributes(run_dir: Path | None) -> dict:
++    xml_path = run_xml_path(run_dir)
++    if xml_path is None:
++        return {}
++    try:
++        root = ET.parse(xml_path).getroot()
++        solver = root.find(".//SolidMechanics_MPM")
++        if solver is None:
++            return {}
++        keys = [
++            "weakDiscontinuityInsertion",
++            "weakInterfaceTraceGeometry",
++            "weakInterfaceTraceMaterialLRMaxMisfitFraction",
++            "weakInterfaceTraceMaterialLRMinMeanMargin",
++            "weakInterfaceTraceMaterialLRMinParticlesPerSide",
++            "explicitSurfaceNormalInfluence",
++            "weakInterfaceTraceProjectionScale",
++            "weakInterfaceTraceProjectionIterations",
++            "weakInterfaceTraceGapStabilization",
++            "weakInterfaceTraceMaxGapCorrectionVelocity",
++            "weakInterfaceTraceSuppressNodalContact",
++        ]
++        return {f"solver_{key}": solver.attrib.get(key, "") for key in keys if key in solver.attrib}
++    except Exception:
++        return {}
++
++
++def process_interface_kinematics(subcase: dict, run_dir: Path | None) -> tuple[list[dict], dict]:
++    summary = {
++        "interfaceKinematicsStatus": "not evaluated",
++        "interfaceMatchedPairs": 0,
++    }
++    if run_dir is None:
++        summary["interfaceKinematicsStatus"] = "missing run directory"
++        return [], summary
++    restart_dirs = [p for p in sorted(run_dir.glob("mpm_primalWeakInterfaceDynamicBar_restart_*")) if p.is_dir()]
++    if len(restart_dirs) < 2:
++        summary["interfaceKinematicsStatus"] = "missing initial/final restart directories"
++        return [], summary
++
++    try:
++        initial_points = restart_surface_points(restart_dirs[0])
++        final_points = restart_surface_points(restart_dirs[-1])
++    except Exception as exc:
++        summary["interfaceKinematicsStatus"] = str(exc)
++        return [], summary
++
++    final_by_key = {p["key"]: p for p in final_points}
++    pairs = match_interface_pairs(initial_points)
++    rows = []
++    for pair_index, (lower, upper, match_distance) in enumerate(pairs):
++        lower_final = final_by_key.get(lower["key"])
++        upper_final = final_by_key.get(upper["key"])
++        if lower_final is None or upper_final is None:
++            continue
++        initial_jump = [float(upper["point"][i]) - float(lower["point"][i]) for i in range(3)]
++        final_jump = [float(upper_final["point"][i]) - float(lower_final["point"][i]) for i in range(3)]
++        initial_mid = [0.5 * (float(upper["point"][i]) + float(lower["point"][i])) for i in range(3)]
++        final_mid = [0.5 * (float(upper_final["point"][i]) + float(lower_final["point"][i])) for i in range(3)]
++        initial_normal_gap = dot3(initial_jump, N)
++        final_normal_gap = dot3(final_jump, N)
++        initial_tangential_slip = dot3(initial_jump, T)
++        final_tangential_slip = dot3(final_jump, T)
++        rows.append({
++            "variant": subcase.get("name"),
++            "label": subcase.get("label"),
++            "pairIndex": pair_index,
++            "lowerParticle": lower["key"],
++            "upperParticle": upper["key"],
++            "surfaceFlag": int(lower.get("surfaceFlag", -1)),
++            "surfaceFlagLabel": lower.get("surfaceFlagLabel", ""),
++            "initialMatchDistance": match_distance,
++            "initialInterfaceT": dot3(initial_mid, T),
++            "finalInterfaceT": dot3(final_mid, T),
++            "initialInterfaceN": dot3(initial_mid, N),
++            "finalInterfaceN": dot3(final_mid, N),
++            "initialNormalGap": initial_normal_gap,
++            "finalNormalGap": final_normal_gap,
++            "normalGapChange": final_normal_gap - initial_normal_gap,
++            "initialTangentialSlip": initial_tangential_slip,
++            "finalTangentialSlip": final_tangential_slip,
++            "tangentialSlipChange": final_tangential_slip - initial_tangential_slip,
++        })
++
++    summary.update({
++        "interfaceKinematicsStatus": "processed" if rows else "no matched weak-interface particles",
++        "interfaceInitialParticleCount": len(initial_points),
++        "interfaceFinalParticleCount": len(final_points),
++        "interfaceInitialWeakParticleCount": sum(1 for p in initial_points if int(p.get("surfaceFlag", -1)) == WEAK_DISCONTINUITY_FLAG),
++        "interfaceFinalWeakParticleCount": sum(1 for p in final_points if int(p.get("surfaceFlag", -1)) == WEAK_DISCONTINUITY_FLAG),
++        "interfaceInitialCohesiveParticleCount": sum(1 for p in initial_points if int(p.get("surfaceFlag", -1)) in (COHESIVE_FLAG, DAMAGED_COHESIVE_FLAG)),
++        "interfaceFinalCohesiveParticleCount": sum(1 for p in final_points if int(p.get("surfaceFlag", -1)) in (COHESIVE_FLAG, DAMAGED_COHESIVE_FLAG)),
++        "interfaceMatchedPairs": len(rows),
++        "interfaceRestartInitial": str(restart_dirs[0]),
++        "interfaceRestartFinal": str(restart_dirs[-1]),
++    })
++    if rows:
++        for key in ["initialNormalGap", "finalNormalGap", "normalGapChange", "initialTangentialSlip", "finalTangentialSlip", "tangentialSlipChange"]:
++            vals = [float(r[key]) for r in rows]
++            cap = capitalized_metric_name(key)
++            summary[f"interfaceMean{cap}"] = sum(vals) / len(vals)
++            summary[f"interfaceMin{cap}"] = min(vals)
++            summary[f"interfaceMax{cap}"] = max(vals)
++            summary[f"interfaceMeanAbs{cap}"] = sum(abs(v) for v in vals) / len(vals)
++            summary[f"interfaceMaxAbs{cap}"] = max(abs(v) for v in vals)
++            max_row = max(rows, key=lambda r: abs(float(r[key])))
++            summary[f"interfaceMaxAbs{cap}PairIndex"] = int(max_row.get("pairIndex", -1))
++            summary[f"interfaceMaxAbs{cap}T"] = float(max_row.get("initialInterfaceT", math.nan))
++    return rows, summary
++
++
++def process_variant(source_dir: Path, subcase: dict, analytic: dict) -> tuple[list[dict], list[dict], list[dict], list[dict], dict]:
++    if subcase.get("placeholder"):
++        return [], [], [], [], {"variant": subcase.get("name"), "label": subcase.get("label"), "status": "placeholder"}
++    run_dir = run_dir_from_subcase(source_dir, subcase)
++    if run_dir is None:
++        return [], [], [], [], {"variant": subcase.get("name"), "label": subcase.get("label"), "status": "missing run directory"}
++    interface_rows, interface_summary = process_interface_kinematics(subcase, run_dir)
++    nodal_rows, nodal_summary = process_nodal_interface_diagnostics(subcase, run_dir)
++    files = tracer_files(run_dir)
++    if not files:
++        summary = {"variant": subcase.get("name"), "label": subcase.get("label"), "status": "missing tracer files", "run_dir": str(run_dir)}
++        summary.update(interface_summary)
++        summary.update(nodal_summary)
++        return [], [], interface_rows, nodal_rows, summary
++
++    rows = []
++    for idx, path in enumerate(files):
++        layer = tracer_layer(idx)
++        for row in parse_tracer(path):
++            sig = stress_from_row(row)
++            if sig is None:
++                continue
++            t = float(row.get("t", row.get("time", 0.0)))
++            rows.append({
++                "variant": subcase.get("name"),
++                "label": subcase.get("label"),
++                "tracer": path.name,
++                "tracerIndex": idx,
++                "layer": layer,
++                "time": t,
++                "sigmaNN": normal_stress(sig),
++                "vonMisesStress": von_mises(sig),
++                "plasticStrainMagnitude": float(row.get("plasticStrainMagnitude", 0.0) or 0.0),
++                "materialType": row.get("materialType", ""),
++                "density": row.get("density", ""),
++            })
++
++    by = defaultdict(list)
++    for r in rows:
++        key = (r["variant"], r["label"], r["layer"], r["time"])
++        by[key].append(r)
++    layer_rows = []
++    for (variant, label, layer, t), vals in sorted(by.items(), key=lambda kv: (kv[0][0], kv[0][2], kv[0][3])):
++        n = len(vals)
++        layer_row = {
++            "variant": variant,
++            "label": label,
++            "layer": layer,
++            "time": t,
++            "numTracers": n,
++            "meanSigmaNN": sum(v["sigmaNN"] for v in vals) / n,
++            "meanVonMisesStress": sum(v["vonMisesStress"] for v in vals) / n,
++            "meanPlasticStrainMagnitude": sum(v["plasticStrainMagnitude"] for v in vals) / n,
++        }
++        add_analytical_layer_fields(layer_row, analytic)
++        layer_rows.append(layer_row)
++    final_by_layer = {r["layer"]: r for r in layer_rows if r["time"] == max((x["time"] for x in layer_rows), default=0.0)}
++    summary = {
++        "variant": subcase.get("name"),
++        "label": subcase.get("label"),
++        "status": "processed",
++        "run_dir": str(run_dir),
++        "numTracerRows": len(rows),
++    }
++    summary.update(solver_attributes(run_dir))
++    for layer in LAYER_ORDER:
++        if layer in final_by_layer:
++            summary[f"final_{layer}_vm"] = final_by_layer[layer]["meanVonMisesStress"]
++            summary[f"final_{layer}_sigmaNN"] = final_by_layer[layer]["meanSigmaNN"]
++            summary[f"final_{layer}_sigmaNN_error"] = final_by_layer[layer]["sigmaNNError"]
++            summary[f"final_{layer}_sigmaNN_relative_error"] = final_by_layer[layer]["sigmaNNRelativeError"]
++            summary[f"final_{layer}_sigmaNN_measured_over_expected"] = final_by_layer[layer]["sigmaNNMeasuredOverExpected"]
++            summary[f"final_{layer}_vm_yield_ratio"] = final_by_layer[layer]["vonMisesYieldRatio"]
++            summary[f"final_{layer}_plastic"] = final_by_layer[layer]["meanPlasticStrainMagnitude"]
++    summary.update(interface_summary)
++    summary.update(nodal_summary)
++    return rows, layer_rows, interface_rows, nodal_rows, summary
++
++
++def plot_layers(output_dir: Path, layer_rows: list[dict], column: str, filename: str, ylabel: str, expected_series: list[tuple[float, float]] | None = None):
++    series = []
++    for variant in sorted({r["variant"] for r in layer_rows}):
++        for layer in LAYER_ORDER:
++            data = sorted([r for r in layer_rows if r["variant"] == variant and r["layer"] == layer], key=lambda r: r["time"])
++            if data:
++                series.append((f"{variant} / {layer}", [r["time"] for r in data], [r[column] for r in data]))
++    if expected_series:
++        series.append(("bonded analytical", [p[0] for p in expected_series], [p[1] for p in expected_series]))
++    plot_metric(output_dir, filename, filename.replace("_", " ").replace(".png", ""), "time", ylabel, series)
++
++
++def plot_interface_gaps(output_dir: Path, interface_rows: list[dict]) -> list[str]:
++    outputs = []
++    for column, filename, ylabel in [
++        ("normalGapChange", "weak_trace_rotated_bar_interface_normal_gap.png", "final-initial normal gap"),
++        ("tangentialSlipChange", "weak_trace_rotated_bar_interface_tangential_slip.png", "final-initial tangential slip"),
++    ]:
++        series = []
++        for variant in sorted({r["variant"] for r in interface_rows}):
++            data = sorted([r for r in interface_rows if r["variant"] == variant], key=lambda r: float(r.get("initialInterfaceT", 0.0)))
++            if data:
++                series.append((variant, [float(r["initialInterfaceT"]) for r in data], [float(r[column]) for r in data]))
++        if plot_metric(output_dir, filename, filename.replace("_", " ").replace(".png", ""), "interface tangential coordinate", ylabel, series):
++            outputs.append(filename)
++    return outputs
++
++
++def render_visit(args, subcases: list[dict], output_dir: Path, analytic: dict):
++    messages = []
++    if args.no_visit:
++        return [], ["VisIt render skipped: --no-visit was requested."]
++    visit = args.visit_cmd or os.environ.get("VISIT_COMMAND", "") or shutil.which("visit")
++    if not visit:
++        return [], ["VisIt render skipped: no VISIT_COMMAND was supplied and visit was not found on PATH."]
++    if not Path(visit).is_file():
++        resolved = shutil.which(visit)
++        if not resolved:
++            return [], [f"VisIt render skipped: command {visit!r} was not found on PATH."]
++        visit = resolved
++    renderer = Path(args.source_dir) / "visitRender_primalWeakInterfaceDynamicBar.py"
++    grid_renderer = Path(args.source_dir) / "visitRender_weakTraceGridDiagnostics.py"
++    frames = []
++    render_specs = [
++        ("vm", "final", "vm_final"),
++        ("sigmaNN", "fraction:0.4", "sigmaNN_trace_band"),
++    ]
++    grid_render_specs = [
++        ("mechanism", "final", "grid_mechanism_final", "all"),
++        ("materialWeakActive", "final", "grid_material_weak_active_final", "all"),
++        ("materialWeakOverflow", "final", "grid_material_weak_overflow_final", "all"),
++        ("materialWeakPrimary", "final", "grid_material_weak_primary_final", "all"),
++        ("materialWeakSecondary", "final", "grid_material_weak_secondary_final", "all"),
++        ("normalForce", "final", "grid_normal_force_final", "all"),
++        ("normalVelocityJump", "final", "grid_normal_velocity_jump_final", "all"),
++        ("normalDisplacementJump", "final", "grid_normal_displacement_jump_final", "all"),
++        ("surfaceNormal", "final", "grid_surface_normal_field0_final", "0"),
++        ("surfaceNormal", "final", "grid_surface_normal_field1_final", "1"),
++        ("explicitSurfaceNormal", "initial", "grid_explicit_surface_normal_initial", "all"),
++    ]
++    for subcase in subcases:
++        if subcase.get("placeholder"):
++            continue
++        run_dir = run_dir_from_subcase(Path(args.source_dir), subcase)
++        if run_dir is None or not (run_dir / "siloFiles").is_dir():
++            continue
++        render_script = renderer if renderer.is_file() else run_dir / "visitRender_primalWeakInterfaceDynamicBar.py"
++        for quantity, state, suffix in render_specs:
++            out = output_dir / f"weak_trace_rotated_bar_{subcase.get('name')}_{suffix}.png"
++            color_min, color_max = visit_color_range(quantity, state, analytic)
++            cmd = [
++                visit,
++                "-nowin",
++                "-cli",
++                "-s",
++                str(render_script),
++                "--run-dir",
++                str(run_dir),
++                "--output",
++                str(out),
++                "--state",
++                state,
++                "--quantity",
++                quantity,
++            ]
++            if color_min is not None:
++                cmd.extend(["--color-min", str(color_min)])
++            if color_max is not None:
++                cmd.extend(["--color-max", str(color_max)])
++            try:
++                if out.is_file():
++                    out.unlink()
++                result = subprocess.run(cmd, cwd=run_dir, timeout=args.visit_timeout, check=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
++                if out.is_file():
++                    frames.append(out)
++                    scale = f" color=[{color_min}, {color_max}]" if color_min is not None and color_max is not None else ""
++                    messages.append(f"Rendered {out.name} from {subcase.get('name')} quantity={quantity} state={state}{scale}.")
++                else:
++                    messages.append(f"Missing VisIt frame {out.name}; returncode={result.returncode}.")
++                    if result.stdout:
++                        messages.append(result.stdout[-4000:])
++            except Exception as exc:
++                messages.append(f"Failed to render {out.name}: {exc}")
++        if grid_renderer.is_file():
++            for quantity, state, suffix, field_index in grid_render_specs:
++                out = output_dir / f"weak_trace_rotated_bar_{subcase.get('name')}_{suffix}.png"
++                cmd = [
++                    visit,
++                    "-nowin",
++                    "-cli",
++                    "-s",
++                    str(grid_renderer),
++                    "--run-dir",
++                    str(run_dir),
++                    "--output",
++                    str(out),
++                    "--state",
++                    state,
++                    "--quantity",
++                    quantity,
++                    "--field-index",
++                    field_index,
++                ]
++                try:
++                    if out.is_file():
++                        out.unlink()
++                    result = subprocess.run(cmd, cwd=run_dir, timeout=args.visit_timeout, check=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
++                    if out.is_file():
++                        frames.append(out)
++                        messages.append(f"Rendered {out.name} from {subcase.get('name')} nodal quantity={quantity} state={state}.")
++                    else:
++                        messages.append(f"Missing VisIt grid frame {out.name}; returncode={result.returncode}.")
++                        if result.stdout:
++                            messages.append(result.stdout[-4000:])
++                except Exception as exc:
++                    messages.append(f"Failed to render {out.name}: {exc}")
++        else:
++            messages.append(f"VisIt grid render skipped: {grid_renderer} was not found.")
++    return frames, messages
++
++
++def main() -> int:
++    args = parse_args()
++    source_dir = Path(args.source_dir)
++    output_dir = Path(args.output_dir)
++    output_dir.mkdir(parents=True, exist_ok=True)
++    manifest = find_manifest(source_dir, output_dir, args.case_id)
++    analytic_run_dir = None
++    for subcase in manifest.get("subcases", []):
++        if subcase.get("name") == "traceContactGroups":
++            analytic_run_dir = run_dir_from_subcase(source_dir, subcase)
++            break
++    if analytic_run_dir is None and manifest.get("subcases"):
++        analytic_run_dir = run_dir_from_subcase(source_dir, manifest.get("subcases", [])[0])
++    analytic = analytical_solution(analytic_run_dir)
++
++    all_rows = []
++    all_layers = []
++    all_interface_rows = []
++    all_nodal_rows = []
++    summaries = []
++    for subcase in manifest.get("subcases", []):
++        rows, layers, interface_rows, nodal_rows, summary = process_variant(source_dir, subcase, analytic)
++        all_rows.extend(rows)
++        all_layers.extend(layers)
++        all_interface_rows.extend(interface_rows)
++        all_nodal_rows.extend(nodal_rows)
++        summaries.append(summary)
++
++    write_rows(output_dir / "weak_trace_rotated_bar_tracer_metrics.csv", all_rows)
++    write_rows(output_dir / "weak_trace_rotated_bar_layer_metrics.csv", all_layers)
++    final_layers = []
++    for variant in sorted({r["variant"] for r in all_layers}):
++        max_t = max((r["time"] for r in all_layers if r["variant"] == variant), default=None)
++        if max_t is not None:
++            final_layers.extend([r for r in all_layers if r["variant"] == variant and r["time"] == max_t])
++    write_rows(output_dir / "weak_trace_rotated_bar_final_layer_metrics.csv", final_layers)
++    write_rows(output_dir / "weak_trace_rotated_bar_interface_kinematics.csv", all_interface_rows)
++    write_rows(output_dir / "weak_trace_rotated_bar_nodal_interface_diagnostics.csv", all_nodal_rows)
++    write_rows(output_dir / "weak_trace_rotated_bar_analytical_solution.csv", [analytic])
++    write_json(output_dir / "weak_trace_rotated_bar_summary.json", {"analyticalSolution": analytic, "summaries": summaries})
++
++    expected_curve = []
++    for t in sorted({float(r["time"]) for r in all_layers}):
++        expected_curve.append((t, analytical_sigma_at_time(t, analytic)))
++    plot_layers(output_dir, all_layers, "meanSigmaNN", "weak_trace_rotated_bar_layer_normal_stress.png", "layer mean normal stress", expected_series=expected_curve)
++    plot_layers(output_dir, all_layers, "meanVonMisesStress", "weak_trace_rotated_bar_layer_vm_stress.png", "layer mean von Mises stress")
++    plot_layers(output_dir, all_layers, "meanPlasticStrainMagnitude", "weak_trace_rotated_bar_layer_plastic.png", "layer mean plastic strain")
++    interface_gap_plots = plot_interface_gaps(output_dir, all_interface_rows)
++    frames, visit_messages = render_visit(args, manifest.get("subcases", []), output_dir, analytic)
++    if visit_messages:
++        (output_dir / "weak_trace_rotated_bar_visit_render_log.txt").write_text("\n".join(visit_messages) + "\n")
++
++    tex = []
++    tex.append(r"\paragraph{Local stress diagnostics.} The rotated-bar verification compares local tracer stresses on both sides of the inclined interface.  The primary quantities are the material-normal stress $\sigma_{nn}=\mathbf{n}\cdot\boldsymbol{\sigma}\mathbf{n}$ and von Mises stress reconstructed from tracer stress components.  The stiff phase is deliberately weak so that a mixed-cell stress spike can cause spurious plasticity even though the correct series response is elastic.")
++    tex.append(r"\paragraph{Analytical bonded-series solution.} The analytical reference treats the two material segments as a bonded series bar along $\mathbf{n}=(1,1,0)/\sqrt{2}$, using the plane-strain axial modulus $E(1-\nu)/((1+\nu)(1-2\nu))$ and the same F-table ramp as the input deck.  This is a local stress-transfer target for the weak trace, not a global reaction-force check.")
++    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrr}\toprule $\epsilon_{nn}$ & $L_c/L$ & $L_s/L$ & expected $\sigma_{nn}$ & $\epsilon_c$ & $\epsilon_s$ & stiff expected $\sigma/y$ \\\midrule")
++    tex.append(
++        compact_float(analytic["finalStrainAA"]) + " & " +
++        compact_float(analytic["compliantLengthFraction"]) + " & " +
++        compact_float(analytic["stiffLengthFraction"]) + " & " +
++        compact_float(analytic["expectedSigmaNN"]) + " & " +
++        compact_float(analytic["expectedCompliantStrainAA"]) + " & " +
++        compact_float(analytic["expectedStiffStrainAA"]) + " & " +
++        compact_float(analytic["expectedStiffYieldRatio"]) + r" \\"
++    )
++    tex.append(r"\bottomrule\end{tabular}}")
++    tex.append(r"{\scriptsize\begin{tabular}{lrrrr}\toprule Variant & stiff near VM & stiff far VM & stiff near plastic & status \\\midrule")
++    for s in summaries:
++        tex.append(latex_escape(s.get("label", s.get("variant", ""))) + " & " + compact_float(s.get("final_stiff_near_vm")) + " & " + compact_float(s.get("final_stiff_far_vm")) + " & " + compact_float(s.get("final_stiff_near_plastic")) + " & " + latex_escape(s.get("status", "")) + r" \\")
++    tex.append(r"\bottomrule\end{tabular}}")
++    if frames:
++        tex.append(r"\paragraph{VisIt field diagnostics.} The report includes particle pseudocolor frames for final von Mises stress and an intermediate-time $\sigma_{nn}=0.5\sigma_{xx}+0.5\sigma_{yy}+\sigma_{xy}$ trace-band view, plus nodal grid frames for interface mechanism, normal force, normal velocity jump, and normal displacement jump.  Grid surface normals are rendered as vector glyphs for each velocity field, with the explicit CZ partitioning normal rendered when that grid field is present.  The particle $\sigma_{nn}$ frame uses the same color limits for both material particle regions, capped by the bonded analytical stress at that render time, so local overshoots saturate instead of rescaling the two sides independently.")
++    elif visit_messages:
++        tex.append(r"\paragraph{VisIt field diagnostics.} VisIt field frames were requested but not generated in this post-processing environment.  See \texttt{weak\_trace\_rotated\_bar\_visit\_render\_log.txt} in the case output directory for the command or expression failure.")
++    if final_layers:
++        tex.append(r"{\scriptsize\begin{tabular}{llrrrr}\toprule Variant & layer & measured $\sigma_{nn}$ & expected $\sigma_{nn}$ & measured/expected & VM/yield \\\midrule")
++        for r in sorted(final_layers, key=lambda x: (str(x.get("variant", "")), LAYER_ORDER.index(x.get("layer", LAYER_ORDER[-1])) if x.get("layer") in LAYER_ORDER else 99)):
++            tex.append(
++                latex_escape(r.get("label", r.get("variant", ""))) + " & " +
++                latex_escape(r.get("layer", "")) + " & " +
++                compact_float(r.get("meanSigmaNN")) + " & " +
++                compact_float(r.get("expectedSigmaNN")) + " & " +
++                compact_float(r.get("sigmaNNMeasuredOverExpected")) + " & " +
++                compact_float(r.get("vonMisesYieldRatio")) + r" \\"
++            )
++        tex.append(r"\bottomrule\end{tabular}}")
++    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrr}\toprule Variant & pairs & mean $\Delta g_n$ & mean $|\Delta g_n|$ & max $|\Delta g_n|$ & $t$ at max & mean $|\Delta s_t|$ \\\midrule")
++    for s in summaries:
++        tex.append(
++            latex_escape(s.get("label", s.get("variant", ""))) + " & " +
++            compact_int(s.get("interfaceMatchedPairs")) + " & " +
++            compact_float(s.get("interfaceMeanNormalGapChange")) + " & " +
++            compact_float(s.get("interfaceMeanAbsNormalGapChange")) + " & " +
++            compact_float(s.get("interfaceMaxAbsNormalGapChange")) + " & " +
++            compact_float(s.get("interfaceMaxAbsNormalGapChangeT")) + " & " +
++            compact_float(s.get("interfaceMeanAbsTangentialSlipChange")) + r" \\"
++        )
++    tex.append(r"\bottomrule\end{tabular}}")
++    tex.append(r"\paragraph{Nodal interface diagnostics.} The common grid diagnostics classify each velocity-field node entry by the dominant interface mechanism: 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, 5 contact suppressed without an active trace, and 6 material weak discontinuity.  The force and jump columns below are absolute values over entries with a nonzero mechanism in the final restart; material weak entries report passive A/B jumps and no applied force.")
++    tex.append(r"{\scriptsize\begin{tabular}{lrrrrrrrrrrr}\toprule Variant & CZ & contact & weak anchor & weak support & suppressed & material weak & p95 $|f_n|$ & max $|f_n|$ & p95 $|[\![v_n]\!]|$ & p95 $|[\![u_n]\!]|$ & p95 $|[\![u_t]\!]|$ \\\midrule")
++    for s in summaries:
++        tex.append(
++            latex_escape(s.get("label", s.get("variant", ""))) + " & " +
++            compact_int(s.get("nodalMechanism_1_cohesive_zone_count")) + " & " +
++            compact_int(s.get("nodalMechanism_2_ordinary_contact_count")) + " & " +
++            compact_int(s.get("nodalMechanism_3_weak_trace_anchor_count")) + " & " +
++            compact_int(s.get("nodalMechanism_4_weak_trace_support_count")) + " & " +
++            compact_int(s.get("nodalMechanism_5_contact_suppressed_trace_inactive_count")) + " & " +
++            compact_int(s.get("nodalMechanism_6_material_weak_discontinuity_count")) + " & " +
++            compact_float(s.get("nodal_gridInterfaceNormalForce_p95Abs")) + " & " +
++            compact_float(s.get("nodal_gridInterfaceNormalForce_maxAbs")) + " & " +
++            compact_float(s.get("nodal_gridInterfaceNormalVelocityJump_p95Abs")) + " & " +
++            compact_float(s.get("nodal_gridInterfaceNormalDisplacementJump_p95Abs")) + " & " +
++            compact_float(s.get("nodal_gridInterfaceTangentialDisplacementJump_p95Abs")) + r" \\"
++        )
++    tex.append(r"\bottomrule\end{tabular}}")
++    trace_summary = next((s for s in summaries if s.get("variant") == "traceContactGroups"), None)
++    if trace_summary and trace_summary.get("interfaceKinematicsStatus") == "processed":
++        measured = trace_summary.get("final_stiff_near_sigmaNN", trace_summary.get("final_compliant_near_sigmaNN"))
++        measured_ratio = None
++        try:
++            measured_ratio = float(measured) / float(analytic["expectedSigmaNN"])
++        except Exception:
++            measured_ratio = None
++        gap_change = trace_summary.get("interfaceMeanAbsNormalGapChange")
++        slip_change = trace_summary.get("interfaceMeanAbsTangentialSlipChange")
++        normal_influence = trace_summary.get("solver_explicitSurfaceNormalInfluence", "--")
++        max_gap_correction = trace_summary.get("solver_weakInterfaceTraceMaxGapCorrectionVelocity", "--")
++        if gap_change is not None:
++            if abs(float(gap_change)) > 1.0e-4:
++                cz_summary = next((s for s in summaries if s.get("variant") == "falseElasticCZ"), None)
++                cz_gap_text = ""
++                if cz_summary and cz_summary.get("interfaceKinematicsStatus") == "processed":
++                    cz_gap_text = (
++                        r"  The false-elastic CZ reference gives mean $|\Delta g_n|="
++                        + compact_float(cz_summary.get("interfaceMeanAbsNormalGapChange"))
++                        + r"$ and max $|\Delta g_n|="
++                        + compact_float(cz_summary.get("interfaceMaxAbsNormalGapChange"))
++                        + r"$ in the same restart-paired diagnostic."
++                    )
++                tex.append(
++                    r"\paragraph{Current trace-run interpretation.} The restart-based weak-interface surface points separate in the normal direction: mean $|\Delta g_n|="
++                    + compact_float(gap_change)
++                    + r"$ and max $|\Delta g_n|="
++                    + compact_float(trace_summary.get("interfaceMaxAbsNormalGapChange"))
++                    + r"$.  The tangential mismatch is much smaller, mean $|\Delta s_t|="
++                    + compact_float(slip_change)
++                    + r"$."
++                    + cz_gap_text
++                    + r"  The trace run used explicit surface-normal influence "
++                    + latex_escape(normal_influence)
++                    + r" and gap stabilization "
++                    + latex_escape(trace_summary.get("solver_weakInterfaceTraceGapStabilization", "--"))
++                    + r" with max gap-correction velocity "
++                    + latex_escape(max_gap_correction)
++                    + r"; with zero gap stabilization, the projection damps velocity mismatch but does not drive accumulated surface-position opening back to zero.  The final near-interface stiff $\sigma_{nn}$ is "
++                    + (compact_float(measured_ratio) if measured_ratio is not None else "--")
++                    + r" of the bonded-series target.  This points to weak-trace normal separation/opening in the present run, not merely a residual stress artifact at an otherwise tied interface."
++                )
++            else:
++                tex.append(
++                    r"\paragraph{Current trace-run interpretation.} The restart-based weak-interface surface points remain nearly coincident.  The trace run used explicit surface-normal influence "
++                    + latex_escape(normal_influence)
++                    + r" and max gap-correction velocity "
++                    + latex_escape(max_gap_correction)
++                    + r", so remaining error is more consistent with a stress reconstruction or mixed-cell artifact than with macroscopic trace separation."
++                )
++    for name in [
++        "weak_trace_rotated_bar_layer_normal_stress.png",
++        "weak_trace_rotated_bar_layer_vm_stress.png",
++        "weak_trace_rotated_bar_layer_plastic.png",
++        *interface_gap_plots,
++    ]:
++        if (output_dir / name).is_file():
++            tex.append(r"\includegraphics[width=0.49\linewidth]{\CaseOutputDir/" + name + "}")
++    for frame in frames:
++        try:
++            rel = frame.relative_to(output_dir)
++        except ValueError:
++            rel = frame.name
++        tex.append(r"\includegraphics[width=0.49\linewidth]{\CaseOutputDir/" + str(rel).replace(os.sep, "/") + "}")
++    (output_dir / "weak_trace_rotated_bar_results.tex").write_text("\n".join(tex) + "\n")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/runTest b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/runTest
+new file mode 100755
+index 0000000..8a35ae7
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/runTest
+@@ -0,0 +1,206 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
++PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd)
++PYTHON_CMD=${PFW_PYTHON:-${PYTHON:-/usr/tce/bin/python3}}
++SUITE="verification"
++CASE_ID="primalWeakInterfaceDynamicBar"
++POST_WALLTIME="00:05:00"
++POST_PARTITION="pdebug"
++JOBS=1
++FORCE=0
++PREPARE_ONLY=0
++NO_VISIT=0
++ATS_FAST=0
++WALLTIME=""
++VARIANT_FILTER=""
++GEOMETRY_ONLY=0
++DIAGNOSE_GEOMETRY=0
++
++ARGS=()
++while [ "$#" -gt 0 ]; do
++  case "$1" in
++    --suite) SUITE="$2"; shift 2 ;;
++    --case-id) CASE_ID="$2"; shift 2 ;;
++    --python) PYTHON_CMD="$2"; shift 2 ;;
++    --post-walltime) POST_WALLTIME="$2"; shift 2 ;;
++    --post-partition) POST_PARTITION="$2"; shift 2 ;;
++    --jobs) JOBS="$2"; shift 2 ;;
++    --walltime) WALLTIME="$2"; shift 2 ;;
++    --variant) VARIANT_FILTER="$2"; shift 2 ;;
++    --geometry-only) GEOMETRY_ONLY=1; shift ;;
++    --diagnose-geometry) DIAGNOSE_GEOMETRY=1; shift ;;
++    --force|-y) FORCE=1; ARGS+=("$1"); shift ;;
++    --prepare-only) PREPARE_ONLY=1; ARGS+=("$1"); shift ;;
++    --no-visit) NO_VISIT=1; ARGS+=("$1"); shift ;;
++    --ats-fast) ATS_FAST=1; ARGS+=("$1"); shift ;;
++    *) ARGS+=("$1"); shift ;;
++  esac
++done
++
++ACTIVE_VARIANTS=(singleField falseElasticCZ traceContactGroups materialWeak materialWeakSurface)
++PLACEHOLDER_VARIANTS=(dfgSurfaceFlags stressResidualPartition)
++
++selected_variants=()
++if [ -n "$VARIANT_FILTER" ]; then
++  selected_variants=("$VARIANT_FILTER")
++else
++  selected_variants=("${ACTIVE_VARIANTS[@]}")
++fi
++
++run_geometry_diagnostics() {
++  local status=0
++  for variant in "${selected_variants[@]}"; do
++    echo "[primalWeakInterfaceDynamicBar] geometry diagnostics for $variant"
++    if ! "$PYTHON_CMD" "$SCRIPT_DIR/diagnoseGeometry_primalWeakInterfaceDynamicBar.py" \
++      --variant "$variant" \
++      --output-dir "$SCRIPT_DIR/output/$CASE_ID/geometryDiagnostics"; then
++      status=1
++    fi
++  done
++  return "$status"
++}
++
++if [ "$GEOMETRY_ONLY" -eq 1 ]; then
++  run_geometry_diagnostics
++  exit $?
++fi
++
++if [ "$DIAGNOSE_GEOMETRY" -eq 1 ]; then
++  run_geometry_diagnostics
++fi
++
++RUNNER="$PFW_ROOT/mpm_vv_case_runner.py"
++OUT_DIR="$SCRIPT_DIR/output/$CASE_ID"
++mkdir -p "$OUT_DIR"
++
++SUBCASE_JSONS=()
++for variant in "${selected_variants[@]}"; do
++  case_name="primalWeakInterfaceDynamicBar_${variant}"
++  subcase_id="${CASE_ID}__${variant}"
++  output_prefix="primalWeakInterfaceDynamicBar_${variant}"
++  echo "[primalWeakInterfaceDynamicBar] dispatching $variant"
++  cmd=("$PYTHON_CMD" "$RUNNER" \
++    --suite "$SUITE" \
++    --case-id "$subcase_id" \
++    --input "pfw_input_primalWeakInterfaceDynamicBar.py" \
++    --source-dir "$SCRIPT_DIR" \
++    --output-prefix "$output_prefix" \
++    --python "$PYTHON_CMD" \
++    --post-walltime "$POST_WALLTIME" \
++    --post-partition "$POST_PARTITION" \
++    --no-post)
++  if [ "$FORCE" -eq 1 ]; then cmd+=(--force); fi
++  if [ "$PREPARE_ONLY" -eq 1 ]; then cmd+=(--prepare-only); fi
++  if [ "$NO_VISIT" -eq 1 ]; then cmd+=(--no-visit); fi
++  if [ "$ATS_FAST" -eq 1 ]; then cmd+=(--ats-fast); fi
++  if [ -n "$WALLTIME" ]; then cmd+=(--walltime "$WALLTIME"); fi
++  WEAK_TRACE_VARIANT="$variant" \
++  WEAK_TRACE_CASE_NAME="$case_name" \
++  WEAK_TRACE_VARIANT_LABEL="$variant" \
++    "${cmd[@]}"
++  SUBCASE_JSONS+=("$SCRIPT_DIR/output/$subcase_id/${output_prefix}_jobs.json")
++done
++
++"$PYTHON_CMD" - "$OUT_DIR/primalWeakInterfaceDynamicBar_jobs.json" "$CASE_ID" "${SUBCASE_JSONS[@]}" <<'PY'
++import json
++import sys
++from pathlib import Path
++out = Path(sys.argv[1])
++case_id = sys.argv[2]
++jsons = [Path(p) for p in sys.argv[3:]]
++labels = {
++    "singleField": "single-field baseline",
++    "falseElasticCZ": "false-elastic CZ reference",
++    "traceContactGroups" "primalEnrichment" : "trace projection, contact groups",
++    "materialWeak": "material weak discontinuity, material LR geometry",
++    "materialWeakSurface": "material weak discontinuity, surface geometry",
++    "dfgSurfaceFlags": "DFG surface flags placeholder",
++    "stressResidualPartition": "stress-residual partition placeholder",
++}
++subcases = []
++for p in jsons:
++    variant = p.parent.name.rsplit("__", 1)[-1]
++    jobs = {}
++    if p.is_file():
++        try:
++            jobs = json.loads(p.read_text())
++        except Exception:
++            jobs = {}
++    subcases.append({
++        "name": variant,
++        "label": labels.get(variant, variant),
++        "case_id": f"{case_id}__{variant}",
++        "case_name": f"primalWeakInterfaceDynamicBar_{variant}",
++        "jobs": jobs,
++        "placeholder": False,
++    })
++for variant in ["dfgSurfaceFlags", "stressResidualPartition"]:
++    if not any(s["name"] == variant for s in subcases):
++        subcases.append({
++            "name": variant,
++            "label": labels[variant],
++            "case_id": f"{case_id}__{variant}",
++            "case_name": f"primalWeakInterfaceDynamicBar_{variant}",
++            "jobs": {},
++            "placeholder": True,
++        })
++out.write_text(json.dumps({"case_id": case_id, "subcases": subcases}, indent=2, sort_keys=True))
++PY
++
++if [ "$PREPARE_ONLY" -eq 1 ]; then
++  echo "[primalWeakInterfaceDynamicBar] prepared subcases; skipping aggregate post-process"
++  exit 0
++fi
++
++# Submit a single aggregate post-processing job if GEOS jobs were submitted.
++mapfile -t GEOS_JOBS < <("$PYTHON_CMD" - "$OUT_DIR/primalWeakInterfaceDynamicBar_jobs.json" <<'PY'
++import json, sys
++from pathlib import Path
++m = json.loads(Path(sys.argv[1]).read_text())
++for s in m.get('subcases', []):
++    jid = str(s.get('jobs', {}).get('geos_job_id', '')).strip()
++    if jid:
++        print(jid)
++PY
++)
++BANK=$("$PYTHON_CMD" - "$OUT_DIR/primalWeakInterfaceDynamicBar_jobs.json" <<'PY'
++import json, sys
++from pathlib import Path
++m=json.loads(Path(sys.argv[1]).read_text())
++for s in m.get('subcases', []):
++    b=str(s.get('jobs', {}).get('bank','')).strip()
++    if b:
++        print(b); break
++PY
++)
++
++POST_CMD=("$PYTHON_CMD" "$SCRIPT_DIR/postProcess_primalWeakInterfaceDynamicBar.py" \
++  --source-dir "$SCRIPT_DIR" \
++  --output-dir "$OUT_DIR" \
++  --case-id "$CASE_ID" \
++  --python "$PYTHON_CMD" \
++  --visit-cmd "${VISIT_COMMAND:-}")
++if [ "$NO_VISIT" -eq 1 ]; then POST_CMD+=(--no-visit); fi
++
++if [ "${#GEOS_JOBS[@]}" -gt 0 ] && command -v sbatch >/dev/null 2>&1; then
++  dep=$(IFS=:; echo "${GEOS_JOBS[*]}")
++  script="$OUT_DIR/post_primalWeakInterfaceDynamicBar.sbatch"
++  cat > "$script" <<EOS
++#!/bin/bash
++#SBATCH -A ${BANK:-debug}
++#SBATCH -p $POST_PARTITION
++#SBATCH -N 1
++#SBATCH -n 1
++#SBATCH -t $POST_WALLTIME
++#SBATCH -J post_primalWeakInterfaceDynamicBar
++#SBATCH --dependency=afterany:$dep
++set -euo pipefail
++cd "$SCRIPT_DIR"
++$(printf '%q ' "${POST_CMD[@]}")
++EOS
++  sbatch "$script"
++else
++  "${POST_CMD[@]}"
++fi
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/test.tex b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/test.tex
+new file mode 100644
+index 0000000..92f272f
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/test.tex
+@@ -0,0 +1,29 @@
++\subsection{Weak-interface trace projection: rotated bi-material bar}
++\label{sec:primalWeakInterfaceDynamicBar}
++
++This folder verifies the local-stress behavior of the prescribed weak-interface
++trace projection.  A diagonal two-material coupon is loaded in plane-strain
++tension by moving the global x and y F-table faces.  The stiff phase is assigned
++a low Von Mises yield stress, while the prescribed strain is chosen so the ideal
++series response remains elastic.  A single-field mixed-cell stress error can
++therefore be detected as local stiff-side stress elevation and spurious
++plasticity near the inclined interface.
++
++The active variants are: single-field baseline, false-elastic cohesive-zone
++coupling, and prescribed-surface trace projection between contact groups.  DFG
++surface-flag and stress-residual partitioning variants are included as
++placeholders for future development.
++
++\paragraph{Geometry convention.}  The two material segments are standard PFW
++polygon objects.  They extend into the lower-left and upper-right loading
++corners so the moving boundaries load finite boundary segments.  Only the
++internal material contact face is assigned a nonzero surface flag in the CZ and
++weak-discontinuity trace variants.
++
++\paragraph{Diagnostics.}  The quantitative metrics use tracer particles placed
++on near-interface and far-field layers in both materials.  The post-processor
++computes the material-normal stress and von Mises stress from tracer stress
++components.  Optional VisIt frames render both particle material regions using a
++case-specific multi-region plot script.
++
++\input{\CaseOutputDir/weak_trace_rotated_bar_results.tex}
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitRender_primalWeakInterfaceDynamicBar.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitRender_primalWeakInterfaceDynamicBar.py
+new file mode 100755
+index 0000000..260a75d
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitRender_primalWeakInterfaceDynamicBar.py
+@@ -0,0 +1,216 @@
++#!/usr/bin/env python3
++"""Case-specific VisIt renderer for primalWeakInterfaceDynamicBar.
++
++This renderer does not require, request, or create any GEOS output field named
++vonMisesStress.  The database is expected to contain the ordinary particle
++stress components written by GEOS-MPM.  The von-Mises pseudocolor variable used
++for the figure is a transient VisIt CLI scalar expression reconstructed from
++those components separately for each particle region.
++"""
++
++import argparse
++from pathlib import Path
++
++
++def _call(name, *args):
++    fn = globals().get(name)
++    if fn is None:
++        import __main__
++        fn = getattr(__main__, name)
++    if not args:
++        return fn
++    return fn(*args)
++
++
++def parse_args():
++    p = argparse.ArgumentParser()
++    p.add_argument("--run-dir", default=".")
++    p.add_argument("--output", default="weak_trace_rotated_bar_vm.png")
++    p.add_argument("--state", default="final")
++    p.add_argument("--quantity", choices=["vm", "stressXX", "sigmaNN"], default="vm")
++    p.add_argument("--color-min", type=float, default=None)
++    p.add_argument("--color-max", type=float, default=None)
++    return p.parse_known_args()[0]
++
++
++def open_database(run_dir):
++    run_dir = Path(run_dir)
++    silo = run_dir / "siloFiles"
++    candidates = []
++    if silo.is_dir():
++        matches = sorted(silo.glob("mpm_cpdi_*")) or sorted(silo.glob("mpm_*"))
++        if len(matches) > 1:
++            visit_file = run_dir / "primalWeakInterfaceDynamicBar.visit"
++            visit_file.write_text("\n".join(str(p.relative_to(run_dir)) for p in matches) + "\n")
++            candidates.append(str(visit_file))
++        candidates.extend(str(p) for p in matches[:1])
++    for db in candidates:
++        try:
++            if _call("OpenDatabase", db):
++                return True
++        except Exception:
++            pass
++    return False
++
++
++def quote_visit_var(name):
++    return f"<{name}>"
++
++
++def region_stress_array(region):
++    return f"{region}_ParticleDomains_ParticleFields/particleStress"
++
++
++def stress_component_expression(region, component):
++    return "array_decompose({array},{index})".format(
++        array=quote_visit_var(region_stress_array(region)),
++        index=component_index(component),
++    )
++
++
++def component_index(component):
++    return {"XX": 0, "YY": 1, "ZZ": 2, "YZ": 3, "XZ": 4, "XY": 5}[component.upper()]
++
++
++def add_vm_expression(region):
++    sxx = stress_component_expression(region, "XX")
++    syy = stress_component_expression(region, "YY")
++    szz = stress_component_expression(region, "ZZ")
++    syz = stress_component_expression(region, "YZ")
++    sxz = stress_component_expression(region, "XZ")
++    sxy = stress_component_expression(region, "XY")
++
++    expr_name = f"weakTraceVM_{region}"
++    expr = (
++        "sqrt(0.5*((({sxx})-({syy}))^2+(({syy})-({szz}))^2+(({szz})-({sxx}))^2)"
++        "+3.0*((({sxy})^2)+(({sxz})^2)+(({syz})^2)))"
++    ).format(sxx=sxx, syy=syy, szz=szz, syz=syz, sxz=sxz, sxy=sxy)
++    _call("DefineScalarExpression", expr_name, expr)
++    print(f"Defined VisIt expression {expr_name} from {region_stress_array(region)}")
++    return expr_name
++
++
++def add_sigma_nn_expression(region):
++    expr_name = f"weakTraceSigmaNN_{region}"
++    expr = "0.5*({sxx})+0.5*({syy})+({sxy})".format(
++        sxx=stress_component_expression(region, "XX"),
++        syy=stress_component_expression(region, "YY"),
++        sxy=stress_component_expression(region, "XY"),
++    )
++    _call("DefineScalarExpression", expr_name, expr)
++    print(f"Defined VisIt expression {expr_name} from {region_stress_array(region)}")
++    return expr_name
++
++
++def stress_xx_variable(region):
++    expr_name = f"weakTraceStressXX_{region}"
++    _call("DefineScalarExpression", expr_name, stress_component_expression(region, "XX"))
++    print(f"Defined VisIt expression {expr_name} from {region_stress_array(region)}")
++    return expr_name
++
++
++def plot_variable(region, quantity):
++    if quantity == "vm":
++        return add_vm_expression(region)
++    if quantity == "sigmaNN":
++        return add_sigma_nn_expression(region)
++    if quantity == "stressXX":
++        return stress_xx_variable(region)
++    return None
++
++
++def set_time_state(state):
++    try:
++        nstates = _call("TimeSliderGetNStates")()
++        if state == "final":
++            target = max(0, nstates - 1)
++        elif state == "middle":
++            target = max(0, nstates // 2)
++        elif state == "initial":
++            target = 0
++        elif state.startswith("fraction:"):
++            fraction = min(1.0, max(0.0, float(state.split(":", 1)[1])))
++            target = int(round(fraction * max(0, nstates - 1)))
++        else:
++            target = int(state)
++        _call("SetTimeSliderState", target)
++        print(f"Set VisIt time-slider state {target} of {nstates} for requested state {state}")
++    except Exception as exc:
++        print(f"Could not set VisIt time-slider state {state}: {exc}")
++
++
++def main():
++    args = parse_args()
++    if not open_database(args.run_dir):
++        raise SystemExit("could not open database")
++    set_time_state(args.state)
++
++    _call("DeleteAllPlots")()
++    added = 0
++    for region in ["ParticleRegion1", "ParticleRegion2"]:
++        var = plot_variable(region, args.quantity)
++        if not var:
++            var = f"{region}_ParticleDomains_ParticleFields/particleDensity"
++        try:
++            _call("AddPlot", "Pseudocolor", var)
++            try:
++                _call("SetActivePlots", added)
++            except Exception:
++                pass
++            pc = _call("PseudocolorAttributes")()
++            if args.color_min is not None:
++                pc.minFlag = 1
++                pc.min = args.color_min
++            else:
++                pc.minFlag = 0
++            if args.color_max is not None:
++                pc.maxFlag = 1
++                pc.max = args.color_max
++            else:
++                pc.maxFlag = 0
++            pc.colorTableName = "hot_desaturated"
++            try:
++                pc.pointType = pc.Point
++                pc.pointSizePixels = 5
++            except Exception:
++                pass
++            _call("SetPlotOptions", pc)
++            added += 1
++        except Exception as exc:
++            print(f"Skipping {region}: {exc}")
++    try:
++        _call("AddPlot", "Mesh", "CellRegion1")
++        ma = _call("MeshAttributes")()
++        ma.legendFlag = 0
++        ma.lineWidth = 1
++        _call("SetPlotOptions", ma)
++    except Exception:
++        pass
++    if added == 0:
++        raise SystemExit("no particle-region plots were added")
++    _call("DrawPlots")()
++    try:
++        v = _call("View2DAttributes")()
++        v.windowCoords = (-0.58, 0.58, -0.58, 0.58)
++        _call("SetView2D", v)
++    except Exception:
++        pass
++    out = Path(args.output)
++    out.parent.mkdir(parents=True, exist_ok=True)
++    swa = _call("SaveWindowAttributes")()
++    try:
++        swa.outputToCurrentDirectory = 0
++    except Exception:
++        pass
++    swa.outputDirectory = str(out.parent)
++    swa.fileName = out.stem
++    swa.family = 0
++    swa.format = swa.PNG
++    swa.width = 1400
++    swa.height = 1100
++    _call("SetSaveWindowAttributes", swa)
++    _call("SaveWindow")()
++
++
++if __name__ == "__main__":
++    main()
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitRender_weakTraceGridDiagnostics.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitRender_weakTraceGridDiagnostics.py
+new file mode 100644
+index 0000000..d734e80
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitRender_weakTraceGridDiagnostics.py
+@@ -0,0 +1,335 @@
++#!/usr/bin/env python3
++"""VisIt renderer for primalWeakInterfaceDynamicBar nodal interface diagnostics."""
++
++import argparse
++from pathlib import Path
++
++
++SCALAR_QUANTITY_FIELDS = {
++    "mechanism": ("gridInterfaceMechanism", False, 0.0, 6.0),
++    "materialWeakActive": ("gridMaterialWeakActive", False, 0.0, 1.0),
++    "materialWeakOverflow": ("gridMaterialWeakOverflow", False, 0.0, 1.0),
++    "materialWeakPrimary": ("gridMaterialWeakPrimaryMaterial", False, 0.0, None),
++    "materialWeakSecondary": ("gridMaterialWeakSecondaryMaterial", False, 0.0, None),
++    "normalForce": ("gridInterfaceNormalForce", True, None, None),
++    "tangentialForce": ("gridInterfaceTangentialForce", True, None, None),
++    "normalVelocityJump": ("gridInterfaceNormalVelocityJump", True, None, None),
++    "tangentialVelocityJump": ("gridInterfaceTangentialVelocityJump", True, None, None),
++    "normalDisplacementJump": ("gridInterfaceNormalDisplacementJump", True, None, None),
++    "tangentialDisplacementJump": ("gridInterfaceTangentialDisplacementJump", True, None, None),
++    "traceActive": ("gridWeakInterfaceTraceActive", False, 0.0, 1.0),
++    "traceSkipReason": ("gridWeakInterfaceTraceSkipReason", False, 0.0, 10.0),
++    "traceContactSuppressed": ("gridWeakInterfaceTraceContactSuppressed", False, 0.0, 1.0),
++}
++
++
++VECTOR_QUANTITY_FIELDS = {
++    "surfaceNormal": "gridSurfaceNormal",
++    "explicitSurfaceNormal": "gridExplicitSurfaceNormal",
++    "principalExplicitSurfaceNormal": "gridPrincipalExplicitSurfaceNormal",
++    "surfacePosition": "gridSurfacePosition",
++    "traceForce": "gridWeakInterfaceTraceForce",
++    "tracePoint": "gridWeakInterfaceTracePoint",
++    "traceSurfaceJump": "gridWeakInterfaceTraceSurfaceJump",
++    "traceVelocityJump": "gridWeakInterfaceTraceVelocityJump",
++    "traceVelocityJumpPost": "gridWeakInterfaceTraceVelocityJumpPost",
++}
++
++
++QUANTITY_NAMES = sorted(set(SCALAR_QUANTITY_FIELDS) | set(VECTOR_QUANTITY_FIELDS))
++
++
++def _call(name, *args):
++    fn = globals().get(name)
++    if fn is None:
++        import __main__
++        fn = getattr(__main__, name)
++    if not args:
++        return fn
++    return fn(*args)
++
++
++def parse_args():
++    p = argparse.ArgumentParser()
++    p.add_argument("--run-dir", default=".")
++    p.add_argument("--output", default="weak_trace_grid_mechanism.png")
++    p.add_argument("--state", default="final")
++    p.add_argument("--quantity", choices=QUANTITY_NAMES, default="mechanism")
++    p.add_argument("--field-index", default="all", help="'all' or zero-based velocity-field index")
++    p.add_argument("--field-count", type=int, default=2)
++    p.add_argument("--color-min", type=float, default=None)
++    p.add_argument("--color-max", type=float, default=None)
++    p.add_argument("--vector-stride", type=int, default=1)
++    p.add_argument("--vector-scale", type=float, default=0.04)
++    return p.parse_known_args()[0]
++
++
++def open_database(run_dir):
++    run_dir = Path(run_dir)
++    silo = run_dir / "siloFiles"
++    candidates = []
++    if silo.is_dir():
++        matches = sorted(silo.glob("mpm_cpdi_*")) or sorted(silo.glob("mpm_*"))
++        if len(matches) > 1:
++            visit_file = run_dir / "primalWeakInterfaceDynamicBar.visit"
++            visit_file.write_text("\n".join(str(p.relative_to(run_dir)) for p in matches) + "\n")
++            candidates.append(str(visit_file))
++        candidates.extend(str(p) for p in matches[:1])
++    for db in candidates:
++        try:
++            if _call("OpenDatabase", db):
++                return True
++        except Exception:
++            pass
++    return False
++
++
++def set_time_state(state):
++    try:
++        nstates = _call("TimeSliderGetNStates")()
++        if state == "final":
++            target = max(0, nstates - 1)
++        elif state == "middle":
++            target = max(0, nstates // 2)
++        elif state == "initial":
++            target = 0
++        elif state.startswith("fraction:"):
++            fraction = min(1.0, max(0.0, float(state.split(":", 1)[1])))
++            target = int(round(fraction * max(0, nstates - 1)))
++        else:
++            target = int(state)
++        _call("SetTimeSliderState", target)
++        print(f"Set VisIt time-slider state {target} of {nstates} for requested state {state}")
++    except Exception as exc:
++        print(f"Could not set VisIt time-slider state {state}: {exc}")
++
++
++def metadata_variable_names():
++    names = set()
++    try:
++        md = _call("GetMetaData")()
++        for attr in ("scalars", "vectors", "tensors", "symmTensors"):
++            values = getattr(md, attr, None)
++            if values is None:
++                continue
++            for i in range(len(values)):
++                try:
++                    names.add(values[i].name)
++                except Exception:
++                    pass
++    except Exception:
++        return names
++    return names
++
++
++def grid_field_candidates(field_name, field_index):
++    suffixes = [f"velocityField{field_index + 1}", str(field_index)]
++    prefixes = ["CellRegion1_GridFields", "CellRegion1_NodalFields", "/CellRegion1_GridFields", "/CellRegion1_NodalFields", ""]
++    out = []
++    for prefix in prefixes:
++        for suffix in suffixes:
++            out.append(f"{prefix}/{field_name}_{suffix}" if prefix else f"{field_name}_{suffix}")
++        out.append(f"{prefix}/{field_name}" if prefix else field_name)
++    return out
++
++
++def quote_var(name):
++    return f"<{name}>"
++
++
++def nested_max(expressions):
++    if not expressions:
++        return None
++    out = expressions[0]
++    for expr in expressions[1:]:
++        out = f"max({out},{expr})"
++    return out
++
++
++def selected_grid_variables(field_name, field_index, field_count, metadata_names):
++    indices = range(field_count) if field_index == "all" else [int(field_index)]
++    variables = []
++    seen = set()
++    for idx in indices:
++        candidates = grid_field_candidates(field_name, idx)
++        if metadata_names:
++            candidates = [candidate for candidate in candidates if candidate in metadata_names]
++        if candidates:
++            variable = candidates[0]
++            if variable not in seen:
++                variables.append(variable)
++                seen.add(variable)
++    return variables
++
++
++def expression_safe_name(name):
++    return "".join(ch if ch.isalnum() else "_" for ch in name).strip("_")
++
++
++def define_vector_from_components(quantity, candidate, metadata_names):
++    component_sets = [
++        [f"{candidate}_{i}" for i in range(3)],
++        [f"{candidate}/{axis}" for axis in ("X", "Y", "Z")],
++    ]
++    for components in component_sets:
++        if metadata_names and not all(component in metadata_names for component in components):
++            continue
++        expr_name = f"weakTraceVector_{quantity}_{expression_safe_name(candidate)}"
++        expr = "{" + ",".join(quote_var(component) for component in components) + "}"
++        _call("DefineVectorExpression", expr_name, expr)
++        print(f"Defined VisIt vector expression {expr_name} = {expr}")
++        return expr_name
++    return None
++
++
++def diagnostic_scalar_variable(quantity, field_index, field_count):
++    field_name, use_abs, default_min, default_max = SCALAR_QUANTITY_FIELDS[quantity]
++    metadata_names = metadata_variable_names()
++    variables = selected_grid_variables(field_name, field_index, field_count, metadata_names)
++    if not variables:
++        raise RuntimeError(f"could not find VisIt variables for {field_name}")
++
++    terms = [f"abs({quote_var(v)})" if use_abs else quote_var(v) for v in variables]
++    if len(terms) == 1:
++        return variables[0], terms[0], variables, default_min, default_max
++
++    expr_name = f"weakTraceGrid_{quantity}_{field_index}"
++    expr = nested_max(terms)
++    _call("DefineScalarExpression", expr_name, expr)
++    print(f"Defined VisIt expression {expr_name} = {expr}")
++    return expr_name, terms[0], variables, default_min, default_max
++
++
++def diagnostic_vector_variables(quantity, field_index, field_count):
++    field_name = VECTOR_QUANTITY_FIELDS[quantity]
++    metadata_names = metadata_variable_names()
++    variables = selected_grid_variables(field_name, field_index, field_count, metadata_names)
++    if not variables:
++        indices = range(field_count) if field_index == "all" else [int(field_index)]
++        seen = set()
++        for idx in indices:
++            for candidate in grid_field_candidates(field_name, idx):
++                expr_name = define_vector_from_components(quantity, candidate, metadata_names)
++                if expr_name and expr_name not in seen:
++                    variables.append(expr_name)
++                    seen.add(expr_name)
++                    break
++    if not variables:
++        raise RuntimeError(f"could not find VisIt vector variables for {field_name}")
++    return variables
++
++
++def _set_attr(obj, name, value):
++    try:
++        setattr(obj, name, value)
++    except Exception:
++        pass
++
++
++def add_mesh_overlay():
++    try:
++        _call("AddPlot", "Mesh", "CellRegion1")
++        ma = _call("MeshAttributes")()
++        ma.legendFlag = 0
++        ma.lineWidth = 1
++        _call("SetPlotOptions", ma)
++    except Exception:
++        pass
++
++
++def set_default_view():
++    try:
++        v = _call("View2DAttributes")()
++        v.windowCoords = (-0.58, 0.58, -0.58, 0.58)
++        _call("SetView2D", v)
++    except Exception:
++        pass
++
++
++def render_scalar(args):
++    plot_var, fallback_expr, variables, default_min, default_max = diagnostic_scalar_variable(
++        args.quantity, args.field_index, args.field_count
++    )
++    _call("DeleteAllPlots")()
++    try:
++        _call("AddPlot", "Pseudocolor", plot_var)
++    except Exception as exc:
++        print(f"Could not add combined plot {plot_var}: {exc}")
++        if not variables:
++            raise
++        plot_var = variables[0]
++        _call("AddPlot", "Pseudocolor", plot_var)
++    pc = _call("PseudocolorAttributes")()
++    color_min = args.color_min if args.color_min is not None else default_min
++    color_max = args.color_max if args.color_max is not None else default_max
++    if color_min is not None:
++        pc.minFlag = 1
++        pc.min = color_min
++    if color_max is not None:
++        pc.maxFlag = 1
++        pc.max = color_max
++    pc.colorTableName = "viridis"
++    try:
++        pc.centering = pc.Nodal
++    except Exception:
++        pass
++    _call("SetPlotOptions", pc)
++    add_mesh_overlay()
++    _call("DrawPlots")()
++    set_default_view()
++
++
++def render_vector(args):
++    variables = diagnostic_vector_variables(args.quantity, args.field_index, args.field_count)
++    _call("DeleteAllPlots")()
++    for variable in variables:
++        _call("AddPlot", "Vector", variable)
++        try:
++            va = _call("VectorAttributes")()
++            _set_attr(va, "useStride", 1)
++            _set_attr(va, "stride", max(1, args.vector_stride))
++            _set_attr(va, "scale", args.vector_scale)
++            _set_attr(va, "scaleByMagnitude", 0)
++            _set_attr(va, "autoScale", 0)
++            _set_attr(va, "colorByMagnitude", 1)
++            _call("SetPlotOptions", va)
++        except Exception:
++            pass
++    add_mesh_overlay()
++    _call("DrawPlots")()
++    set_default_view()
++
++
++def save_window(output):
++    out = Path(output)
++    out.parent.mkdir(parents=True, exist_ok=True)
++    swa = _call("SaveWindowAttributes")()
++    try:
++        swa.outputToCurrentDirectory = 0
++    except Exception:
++        pass
++    swa.outputDirectory = str(out.parent)
++    swa.fileName = out.stem
++    swa.family = 0
++    swa.format = swa.PNG
++    swa.width = 1400
++    swa.height = 1100
++    _call("SetSaveWindowAttributes", swa)
++    _call("SaveWindow")()
++
++
++def main():
++    args = parse_args()
++    if not open_database(args.run_dir):
++        raise SystemExit("could not open database")
++    set_time_state(args.state)
++
++    if args.quantity in VECTOR_QUANTITY_FIELDS:
++        render_vector(args)
++    else:
++        render_scalar(args)
++    save_window(args.output)
++
++
++if __name__ == "__main__":
++    main()
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitlog.py b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitlog.py
+new file mode 100644
+index 0000000..0fe24ce
+--- /dev/null
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/visitlog.py
+@@ -0,0 +1,259 @@
++# Visit 3.5.0 log file
++ScriptVersion = "3.5.0"
++if ScriptVersion != Version():
++    print "This script is for VisIt %s. It may not work with version %s" % (ScriptVersion, Version())
++ShowAllWindows()
++OpenDatabase("/p/lustre1/homel1/geosxTests/verification/primalWeakInterfaceDynamicBar_scale1_iter8__traceContactGroups/primalWeakInterfaceDynamicBar.visit", 0)
++# The UpdateDBPluginInfo RPC is not supported in the VisIt module so it will not be logged.
++SetTimeSliderState(32)
++DefineScalarExpression("weakTraceSigmaNN_ParticleRegion1", "0.5*(array_decompose(<ParticleRegion1_ParticleDomains_ParticleFields/particleStress>,0))+0.5*(array_decompose(<ParticleRegion1_ParticleDomains_ParticleFields/particleStress>,1))+(array_decompose(<ParticleRegion1_ParticleDomains_ParticleFields/particleStress>,5))")
++AddPlot("Pseudocolor", "weakTraceSigmaNN_ParticleRegion1", 1, 1)
++PseudocolorAtts = PseudocolorAttributes()
++PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
++PseudocolorAtts.skewFactor = 1
++PseudocolorAtts.limitsMode = PseudocolorAtts.OriginalData  # OriginalData, ActualData
++PseudocolorAtts.minFlag = 0
++PseudocolorAtts.min = 0
++PseudocolorAtts.useBelowMinColor = 0
++PseudocolorAtts.belowMinColor = (0, 0, 0, 255)
++PseudocolorAtts.maxFlag = 0
++PseudocolorAtts.max = 1
++PseudocolorAtts.useAboveMaxColor = 0
++PseudocolorAtts.aboveMaxColor = (0, 0, 0, 255)
++PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
++PseudocolorAtts.colorTableName = "hot_desaturated"
++PseudocolorAtts.invertColorTable = 0
++PseudocolorAtts.opacityType = PseudocolorAtts.FullyOpaque  # ColorTable, FullyOpaque, Constant, Ramp, VariableRange
++PseudocolorAtts.opacityVariable = ""
++PseudocolorAtts.opacity = 1
++PseudocolorAtts.opacityVarMin = 0
++PseudocolorAtts.opacityVarMax = 1
++PseudocolorAtts.opacityVarMinFlag = 0
++PseudocolorAtts.opacityVarMaxFlag = 0
++PseudocolorAtts.pointSize = 0.05
++PseudocolorAtts.pointType = PseudocolorAtts.Point  # Box, Axis, Icosahedron, Octahedron, Tetrahedron, SphereGeometry, Point, Sphere
++PseudocolorAtts.pointSizeVarEnabled = 0
++PseudocolorAtts.pointSizeVar = "default"
++PseudocolorAtts.pointSizePixels = 5
++PseudocolorAtts.lineType = PseudocolorAtts.Line  # Line, Tube, Ribbon
++PseudocolorAtts.lineWidth = 0
++PseudocolorAtts.tubeResolution = 10
++PseudocolorAtts.tubeRadiusSizeType = PseudocolorAtts.FractionOfBBox  # Absolute, FractionOfBBox
++PseudocolorAtts.tubeRadiusAbsolute = 0.125
++PseudocolorAtts.tubeRadiusBBox = 0.005
++PseudocolorAtts.tubeRadiusVarEnabled = 0
++PseudocolorAtts.tubeRadiusVar = ""
++PseudocolorAtts.tubeRadiusVarRatio = 10
++PseudocolorAtts.tailStyle = PseudocolorAtts.NONE  # NONE, Spheres, Cones
++PseudocolorAtts.headStyle = PseudocolorAtts.NONE  # NONE, Spheres, Cones
++PseudocolorAtts.endPointRadiusSizeType = PseudocolorAtts.FractionOfBBox  # Absolute, FractionOfBBox
++PseudocolorAtts.endPointRadiusAbsolute = 0.125
++PseudocolorAtts.endPointRadiusBBox = 0.05
++PseudocolorAtts.endPointResolution = 10
++PseudocolorAtts.endPointRatio = 5
++PseudocolorAtts.endPointRadiusVarEnabled = 0
++PseudocolorAtts.endPointRadiusVar = ""
++PseudocolorAtts.endPointRadiusVarRatio = 10
++PseudocolorAtts.renderSurfaces = 1
++PseudocolorAtts.renderWireframe = 0
++PseudocolorAtts.renderPoints = 0
++PseudocolorAtts.smoothingLevel = 0
++PseudocolorAtts.legendFlag = 1
++PseudocolorAtts.lightingFlag = 1
++PseudocolorAtts.wireframeColor = (0, 0, 0, 0)
++PseudocolorAtts.wireframeColorByVar = 0
++PseudocolorAtts.pointColor = (0, 0, 0, 0)
++PseudocolorAtts.pointColorByVar = 0
++SetPlotOptions(PseudocolorAtts)
++DefineScalarExpression("weakTraceSigmaNN_ParticleRegion1", "0.5*(array_decompose(<ParticleRegion1_ParticleDomains_ParticleFields/particleStress>,0))+0.5*(array_decompose(<ParticleRegion1_ParticleDomains_ParticleFields/particleStress>,1))+(array_decompose(<ParticleRegion1_ParticleDomains_ParticleFields/particleStress>,5))")
++DefineScalarExpression("weakTraceSigmaNN_ParticleRegion2", "0.5*(array_decompose(<ParticleRegion2_ParticleDomains_ParticleFields/particleStress>,0))+0.5*(array_decompose(<ParticleRegion2_ParticleDomains_ParticleFields/particleStress>,1))+(array_decompose(<ParticleRegion2_ParticleDomains_ParticleFields/particleStress>,5))")
++AddPlot("Pseudocolor", "weakTraceSigmaNN_ParticleRegion2", 1, 1)
++PseudocolorAtts = PseudocolorAttributes()
++PseudocolorAtts.scaling = PseudocolorAtts.Linear  # Linear, Log, Skew
++PseudocolorAtts.skewFactor = 1
++PseudocolorAtts.limitsMode = PseudocolorAtts.OriginalData  # OriginalData, ActualData
++PseudocolorAtts.minFlag = 0
++PseudocolorAtts.min = 0
++PseudocolorAtts.useBelowMinColor = 0
++PseudocolorAtts.belowMinColor = (0, 0, 0, 255)
++PseudocolorAtts.maxFlag = 0
++PseudocolorAtts.max = 1
++PseudocolorAtts.useAboveMaxColor = 0
++PseudocolorAtts.aboveMaxColor = (0, 0, 0, 255)
++PseudocolorAtts.centering = PseudocolorAtts.Natural  # Natural, Nodal, Zonal
++PseudocolorAtts.colorTableName = "hot_desaturated"
++PseudocolorAtts.invertColorTable = 0
++PseudocolorAtts.opacityType = PseudocolorAtts.FullyOpaque  # ColorTable, FullyOpaque, Constant, Ramp, VariableRange
++PseudocolorAtts.opacityVariable = ""
++PseudocolorAtts.opacity = 1
++PseudocolorAtts.opacityVarMin = 0
++PseudocolorAtts.opacityVarMax = 1
++PseudocolorAtts.opacityVarMinFlag = 0
++PseudocolorAtts.opacityVarMaxFlag = 0
++PseudocolorAtts.pointSize = 0.05
++PseudocolorAtts.pointType = PseudocolorAtts.Point  # Box, Axis, Icosahedron, Octahedron, Tetrahedron, SphereGeometry, Point, Sphere
++PseudocolorAtts.pointSizeVarEnabled = 0
++PseudocolorAtts.pointSizeVar = "default"
++PseudocolorAtts.pointSizePixels = 5
++PseudocolorAtts.lineType = PseudocolorAtts.Line  # Line, Tube, Ribbon
++PseudocolorAtts.lineWidth = 0
++PseudocolorAtts.tubeResolution = 10
++PseudocolorAtts.tubeRadiusSizeType = PseudocolorAtts.FractionOfBBox  # Absolute, FractionOfBBox
++PseudocolorAtts.tubeRadiusAbsolute = 0.125
++PseudocolorAtts.tubeRadiusBBox = 0.005
++PseudocolorAtts.tubeRadiusVarEnabled = 0
++PseudocolorAtts.tubeRadiusVar = ""
++PseudocolorAtts.tubeRadiusVarRatio = 10
++PseudocolorAtts.tailStyle = PseudocolorAtts.NONE  # NONE, Spheres, Cones
++PseudocolorAtts.headStyle = PseudocolorAtts.NONE  # NONE, Spheres, Cones
++PseudocolorAtts.endPointRadiusSizeType = PseudocolorAtts.FractionOfBBox  # Absolute, FractionOfBBox
++PseudocolorAtts.endPointRadiusAbsolute = 0.125
++PseudocolorAtts.endPointRadiusBBox = 0.05
++PseudocolorAtts.endPointResolution = 10
++PseudocolorAtts.endPointRatio = 5
++PseudocolorAtts.endPointRadiusVarEnabled = 0
++PseudocolorAtts.endPointRadiusVar = ""
++PseudocolorAtts.endPointRadiusVarRatio = 10
++PseudocolorAtts.renderSurfaces = 1
++PseudocolorAtts.renderWireframe = 0
++PseudocolorAtts.renderPoints = 0
++PseudocolorAtts.smoothingLevel = 0
++PseudocolorAtts.legendFlag = 1
++PseudocolorAtts.lightingFlag = 1
++PseudocolorAtts.wireframeColor = (0, 0, 0, 0)
++PseudocolorAtts.wireframeColorByVar = 0
++PseudocolorAtts.pointColor = (0, 0, 0, 0)
++PseudocolorAtts.pointColorByVar = 0
++SetPlotOptions(PseudocolorAtts)
++AddPlot("Mesh", "CellRegion1", 1, 1)
++MeshAtts = MeshAttributes()
++MeshAtts.legendFlag = 0
++MeshAtts.lineWidth = 1
++MeshAtts.meshColor = (0, 0, 0, 255)
++MeshAtts.meshColorSource = MeshAtts.Foreground  # Foreground, MeshCustom, MeshRandom
++MeshAtts.opaqueColorSource = MeshAtts.Background  # Background, OpaqueCustom, OpaqueRandom
++MeshAtts.opaqueMode = MeshAtts.Auto  # Auto, On, Off
++MeshAtts.pointSize = 0.05
++MeshAtts.opaqueColor = (255, 255, 255, 255)
++MeshAtts.smoothingLevel = MeshAtts.NONE  # NONE, Fast, High
++MeshAtts.pointSizeVarEnabled = 0
++MeshAtts.pointSizeVar = "default"
++MeshAtts.pointType = MeshAtts.Point  # Box, Axis, Icosahedron, Octahedron, Tetrahedron, SphereGeometry, Point, Sphere
++MeshAtts.showInternal = 0
++MeshAtts.showGenerated = 0
++MeshAtts.pointSizePixels = 2
++MeshAtts.opacity = 1
++SetPlotOptions(MeshAtts)
++DrawPlots()
++View2DAtts = View2DAttributes()
++View2DAtts.windowCoords = (-0.58, 0.58, -0.58, 0.58)
++View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
++View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
++View2DAtts.fullFrameAutoThreshold = 100
++View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
++View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
++View2DAtts.windowValid = 0
++SetView2D(View2DAtts)
++SaveWindowAtts = SaveWindowAttributes()
++SaveWindowAtts.outputToCurrentDirectory = 0
++SaveWindowAtts.outputDirectory = "/g/g19/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/primalWeakInterfaceDynamicBar/output/primalWeakInterfaceDynamicBar_scale1_iter8"
++SaveWindowAtts.fileName = "weak_trace_rotated_bar_traceContactGroups_sigmaNN_trace_band"
++SaveWindowAtts.family = 0
++SaveWindowAtts.format = SaveWindowAtts.PNG  # BMP, CURVE, JPEG, OBJ, PNG, POSTSCRIPT, POVRAY, PPM, RGB, STL, TIFF, ULTRA, VTK, PLY, EXR
++SaveWindowAtts.width = 1400
++SaveWindowAtts.height = 1100
++SaveWindowAtts.screenCapture = 0
++SaveWindowAtts.saveTiled = 0
++SaveWindowAtts.quality = 80
++SaveWindowAtts.progressive = 0
++SaveWindowAtts.binary = 0
++SaveWindowAtts.stereo = 0
++SaveWindowAtts.compression = SaveWindowAtts.NONE  # NONE, PackBits, Jpeg, Deflate, LZW
++SaveWindowAtts.forceMerge = 0
++SaveWindowAtts.resConstraint = SaveWindowAtts.ScreenProportions  # NoConstraint, EqualWidthHeight, ScreenProportions
++SaveWindowAtts.pixelData = 1
++SaveWindowAtts.advancedMultiWindowSave = 0
++SaveWindowAtts.subWindowAtts.win1.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win1.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win1.layer = 0
++SaveWindowAtts.subWindowAtts.win1.transparency = 0
++SaveWindowAtts.subWindowAtts.win1.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win2.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win2.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win2.layer = 0
++SaveWindowAtts.subWindowAtts.win2.transparency = 0
++SaveWindowAtts.subWindowAtts.win2.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win3.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win3.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win3.layer = 0
++SaveWindowAtts.subWindowAtts.win3.transparency = 0
++SaveWindowAtts.subWindowAtts.win3.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win4.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win4.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win4.layer = 0
++SaveWindowAtts.subWindowAtts.win4.transparency = 0
++SaveWindowAtts.subWindowAtts.win4.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win5.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win5.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win5.layer = 0
++SaveWindowAtts.subWindowAtts.win5.transparency = 0
++SaveWindowAtts.subWindowAtts.win5.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win6.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win6.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win6.layer = 0
++SaveWindowAtts.subWindowAtts.win6.transparency = 0
++SaveWindowAtts.subWindowAtts.win6.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win7.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win7.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win7.layer = 0
++SaveWindowAtts.subWindowAtts.win7.transparency = 0
++SaveWindowAtts.subWindowAtts.win7.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win8.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win8.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win8.layer = 0
++SaveWindowAtts.subWindowAtts.win8.transparency = 0
++SaveWindowAtts.subWindowAtts.win8.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win9.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win9.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win9.layer = 0
++SaveWindowAtts.subWindowAtts.win9.transparency = 0
++SaveWindowAtts.subWindowAtts.win9.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win10.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win10.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win10.layer = 0
++SaveWindowAtts.subWindowAtts.win10.transparency = 0
++SaveWindowAtts.subWindowAtts.win10.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win11.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win11.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win11.layer = 0
++SaveWindowAtts.subWindowAtts.win11.transparency = 0
++SaveWindowAtts.subWindowAtts.win11.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win12.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win12.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win12.layer = 0
++SaveWindowAtts.subWindowAtts.win12.transparency = 0
++SaveWindowAtts.subWindowAtts.win12.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win13.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win13.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win13.layer = 0
++SaveWindowAtts.subWindowAtts.win13.transparency = 0
++SaveWindowAtts.subWindowAtts.win13.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win14.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win14.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win14.layer = 0
++SaveWindowAtts.subWindowAtts.win14.transparency = 0
++SaveWindowAtts.subWindowAtts.win14.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win15.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win15.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win15.layer = 0
++SaveWindowAtts.subWindowAtts.win15.transparency = 0
++SaveWindowAtts.subWindowAtts.win15.omitWindow = 0
++SaveWindowAtts.subWindowAtts.win16.position = (0, 0)
++SaveWindowAtts.subWindowAtts.win16.size = (128, 128)
++SaveWindowAtts.subWindowAtts.win16.layer = 0
++SaveWindowAtts.subWindowAtts.win16.transparency = 0
++SaveWindowAtts.subWindowAtts.win16.omitWindow = 0
++SaveWindowAtts.opts.types = ()
++SaveWindowAtts.opts.help = ""
++SetSaveWindowAttributes(SaveWindowAtts)
++SaveWindow()
+diff --git ascripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/__pycache__/pfw_input_weakTraceRotatedBar.cpython-313.pyc b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/__pycache__/pfw_input_weakTraceRotatedBar.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..98cac91b2915b6d2bff22eb95729ab750ad27c23
+GIT binary patch
+literal 16066
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/runTest b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/runTest
+index 6de261e..cd134a0 100755
+--- a/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/runTest
++++ b/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/weakTraceRotatedBar/runTest
+@@ -113,7 +113,7 @@ jsons = [Path(p) for p in sys.argv[3:]]
+ labels = {
+     "singleField": "single-field baseline",
+     "falseElasticCZ": "false-elastic CZ reference",
+-    "traceContactGroups": "trace projection, contact groups",
++    "traceContactGroups" "primalEnrichment" : "trace projection, contact groups",
+     "materialWeak": "material weak discontinuity, material LR geometry",
+     "materialWeakSurface": "material weak discontinuity, surface geometry",
+     "dfgSurfaceFlags": "DFG surface flags placeholder",
+diff --git a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
+index 870ea7f..21da1e9 100644
+--- a/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
++++ b/src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp
+@@ -229,7 +229,25 @@ public:
+     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
+ 
+     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
+-  } solidMechanicsViewKeys;
++      static constexpr char const * enableWeakInterfacePrimalEnrichmentString() { return "enableWeakInterfacePrimalEnrichment"; }
++    static constexpr char const * weakInterfacePrimalGeometryTypeString() { return "weakInterfacePrimalGeometryType"; }
++    static constexpr char const * weakInterfacePrimalPointXString() { return "weakInterfacePrimalPointX"; }
++    static constexpr char const * weakInterfacePrimalPointYString() { return "weakInterfacePrimalPointY"; }
++    static constexpr char const * weakInterfacePrimalNormalXString() { return "weakInterfacePrimalNormalX"; }
++    static constexpr char const * weakInterfacePrimalNormalYString() { return "weakInterfacePrimalNormalY"; }
++    static constexpr char const * weakInterfacePrimalRadiusString() { return "weakInterfacePrimalRadius"; }
++    static constexpr char const * weakInterfacePrimalMinMassRatioString() { return "weakInterfacePrimalMinMassRatio"; }
++    static constexpr char const * weakInterfacePrimalMassCFLString() { return "weakInterfacePrimalMassCFL"; }
++    static constexpr char const * gridWeakPrimalCrossMassString() { return "gridWeakPrimalCrossMass"; }
++    static constexpr char const * gridWeakPrimalRawMassString() { return "gridWeakPrimalRawMass"; }
++    static constexpr char const * gridWeakPrimalRawMomentumString() { return "gridWeakPrimalRawMomentum"; }
++    static constexpr char const * gridWeakPrimalRawInternalForceString() { return "gridWeakPrimalRawInternalForce"; }
++    static constexpr char const * gridWeakPrimalMeanString() { return "gridWeakPrimalMean"; }
++    static constexpr char const * gridWeakPrimalMassString() { return "gridWeakPrimalMass"; }
++    static constexpr char const * gridWeakPrimalMassRatioString() { return "gridWeakPrimalMassRatio"; }
++    static constexpr char const * gridWeakPrimalVelocityString() { return "gridWeakPrimalVelocity"; }
++    static constexpr char const * gridWeakPrimalActiveString() { return "gridWeakPrimalActive"; }
++} solidMechanicsViewKeys;
+ 
+   struct ExplicitStepManagers
+   {
+@@ -1478,6 +1496,16 @@ protected:
+   int m_enableBoreholePressure;
+   int m_enableConfiningPressure;
+   int m_enableContact;
++  integer m_enableWeakInterfacePrimalEnrichment = 0;
++  integer m_weakInterfacePrimalGeometryType = 0; // 1: plane, 2: circle
++  real64 m_weakInterfacePrimalPointX = 0.0;
++  real64 m_weakInterfacePrimalPointY = 0.0;
++  real64 m_weakInterfacePrimalNormalX = 1.0;
++  real64 m_weakInterfacePrimalNormalY = 0.0;
++  real64 m_weakInterfacePrimalRadius = 0.0;
++  real64 m_weakInterfacePrimalMinMassRatio = 1.0e-8;
++  real64 m_weakInterfacePrimalMassCFL = 0.35;
++
+   int m_enableWeakInterfaceTraceProjection;
+   array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
+   int m_enableSurfaceTension;
+@@ -1729,6 +1757,12 @@ private:
+   };
+ 
+   void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
++  /// Experimental CPU/serial primal weak-interface enrichment.
++  void zeroPrimalWeakInterfaceGrid( NodeManager & nodeManager );
++
++  /// Orthogonalize and advance the enriched grid mode after the standard grid update.
++  void finalizePrimalWeakInterfaceGrid( real64 const dt, NodeManager & nodeManager );
++
+ };
+ 
+ } /* namespace geos */
