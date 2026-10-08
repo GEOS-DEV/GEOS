@@ -176,12 +176,13 @@ public:
             ghostRank,
             minNormalizer ),
     m_numPhases( fluid.numFluidPhases()),
+    m_targetPhaseIndex( wellControls.isProducer() ? wellControls.getConstraintPhaseIndex() : -1 ),
     m_dt( dt ),
     m_isLocallyOwned( subRegion.isLocallyOwned() ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( std::numeric_limits< real64 >::max() ),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() ),
@@ -206,10 +207,6 @@ public:
     else
     {
       m_constraintValue = currentConstraint->getConstraintValue( time );
-      if( currentControl == ConstraintTypeId::PHASEVOLRATE )
-      {
-        m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
-      }
     }
   }
 
