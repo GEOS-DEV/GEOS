@@ -1,0 +1,202 @@
+/* SPDX-License-Identifier: LGPL-2.1-only */
+#ifndef GEOS_MPM_MORTAR_INDEXED_SEARCH_HPP
+#define GEOS_MPM_MORTAR_INDEXED_SEARCH_HPP
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <limits>
+#include <map>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
+namespace geos { namespace mpm { namespace mortarSearch {
+
+/** Exact k-nearest search INSIDE the existing coarse-bin candidate set.
+ *
+ * Do not replace the legacy fit by a radius-filtered fit: its availability test
+ * checks only the closest marker, and its other k-1 markers can lie outside the
+ * fit radius. A tree per ORIGINAL bin preserves that candidate set, including
+ * clamped symmetry images and wrapped periodic bins, without visiting every
+ * marker in the bin. Bounds use the actual marker coordinates, not bin faces.
+ *
+ * Coordinates used for bounds must be canonical in periodic directions. Point
+ * distances and the metadata tie order are supplied by the caller, unchanged.
+ * Equal-distance bounds are NOT pruned. When the old comparator cannot order
+ * distinct selected/cutoff markers, query() returns true so the caller can replay
+ * the old partial_sort on the original sequence. No tie semantics are invented.
+ *
+ * The tree is immutable after construction; each query has caller-owned output
+ * and local scratch. No particles are removed or merged. Rebuild when markers
+ * move (currently once per pair per projection, exactly like the original bins).
+ */
+template< class Key, class Index >
+class IndexedBins
+{
+public:
+  using Point = std::array< double, 3 >;
+  using Neighbor = std::pair< double, Index >;
+  struct Statistics
+  {
+    std::size_t candidates = 0;       // full legacy candidate-set cardinality
+    std::size_t distances = 0;        // actual marker distance evaluations
+    std::size_t treeNodes = 0;
+  };
+
+  template< class BinMap, class GetPoint >
+  IndexedBins( BinMap const & bins, GetPoint getPoint, int const dimensions,
+               std::array< bool, 3 > const & periodic, Point const & extent )
+    : m_dimensions( dimensions ), m_periodic( periodic ), m_extent( extent )
+  {
+    if( dimensions != 2 && dimensions != 3 ) throw std::invalid_argument( "Invalid mortar search dimension." );
+    for( int d=0; d<dimensions; ++d )
+      if( periodic[d] && !(extent[d]>0.0) ) throw std::invalid_argument( "Invalid periodic mortar search extent." );
+    std::size_t count=0;
+    for( auto const & bin : bins ) count += bin.second.size();
+    m_entries.reserve( count );
+    m_nodes.reserve( count / leafSize * 4 + bins.size() );
+    for( auto const & bin : bins )
+    {
+      std::size_t const begin=m_entries.size();
+      for( Index const index : bin.second )
+      {
+        Point const point=getPoint( index );
+        for( int d=0; d<dimensions; ++d )
+          if( !std::isfinite(point[d]) ) throw std::invalid_argument( "Nonfinite mortar search point." );
+        m_entries.push_back( Entry{point,index} );
+      }
+      if( m_entries.size()!=begin ) m_roots.emplace( bin.first, build(begin,m_entries.size()) );
+    }
+  }
+
+  // Returns true only when the ORIGINAL partial_sort must be replayed to retain
+  // its behavior for comparator-equivalent, distinct marker records.
+  template< class Distance, class Less >
+  bool query( std::array< Key, 27 > keys, std::size_t keyCount,
+              Point const & point, std::size_t const k, Distance distance, Less less,
+              std::vector< Neighbor > & result, Statistics & stats ) const
+  {
+    if( keyCount>keys.size() ) throw std::invalid_argument("Too many mortar search bins.");
+    result.clear(); stats=Statistics{};
+    if( k==0 ) return false;
+    for( int d=0; d<m_dimensions; ++d )
+      if( !std::isfinite(point[d]) ) throw std::invalid_argument("Nonfinite mortar search query.");
+    std::sort(keys.begin(), keys.begin()+keyCount);
+    auto equivalent=[](Key const & a, Key const & b){ return !(a<b) && !(b<a); };
+    keyCount=std::size_t(std::unique(keys.begin(),keys.begin()+keyCount,equivalent)-keys.begin());
+    std::array< std::pair< double, std::size_t >, 27 > roots{};
+    std::size_t count=0;
+    for( std::size_t i=0; i<keyCount; ++i )
+    {
+      auto const found=m_roots.find(keys[i]);
+      if( found==m_roots.end() ) continue;
+      Node const & node=m_nodes[found->second];
+      stats.candidates += node.end-node.begin;
+      roots[count++]={lowerBound(node,point),found->second};
+    }
+    std::sort(roots.begin(),roots.begin()+count);
+    bool ambiguous=false;
+    for( std::size_t i=0; i<count; ++i )
+    {
+      if( result.size()==k && roots[i].first>result.back().first ) break;
+      visit(roots[i].second,point,k,distance,less,result,stats,ambiguous);
+    }
+    return ambiguous;
+  }
+
+private:
+  static constexpr std::size_t leafSize=24;
+  static constexpr std::size_t invalid=std::numeric_limits<std::size_t>::max();
+  struct Entry { Point point; Index index; };
+  struct Node
+  {
+    Point low{},high{};
+    std::size_t begin=0,end=0,left=invalid,right=invalid;
+  };
+  int m_dimensions;
+  std::array< bool,3 > m_periodic;
+  Point m_extent;
+  std::vector<Entry> m_entries;
+  std::vector<Node> m_nodes;
+  std::map<Key,std::size_t> m_roots;
+
+  std::size_t build(std::size_t begin, std::size_t end)
+  {
+    Node node; node.begin=begin; node.end=end;
+    node.low=node.high=m_entries[begin].point;
+    for( std::size_t i=begin+1; i<end; ++i )
+      for( int d=0; d<m_dimensions; ++d )
+      { node.low[d]=std::min(node.low[d],m_entries[i].point[d]); node.high[d]=std::max(node.high[d],m_entries[i].point[d]); }
+    std::size_t const id=m_nodes.size(); m_nodes.push_back(node);
+    if(end-begin<=leafSize) return id;
+    int axis=0;
+    for(int d=1;d<m_dimensions;++d)
+      if(node.high[d]-node.low[d]>node.high[axis]-node.low[axis]) axis=d;
+    std::size_t const mid=begin+(end-begin)/2;
+    std::nth_element(m_entries.begin()+begin,m_entries.begin()+mid,m_entries.begin()+end,
+      [axis](Entry const & a, Entry const & b)
+      { return a.point[axis] < b.point[axis] || (a.point[axis] <= b.point[axis] && a.index < b.index); });
+    std::size_t const left=build(begin,mid), right=build(mid,end);
+    m_nodes[id].left=left; m_nodes[id].right=right;
+    return id;
+  }
+
+  double lowerBound(Node const & node, Point const & q) const
+  {
+    double sum=0.0;
+    for(int d=0;d<m_dimensions;++d)
+    {
+      auto intervalDistance=[&](double x)
+      { return std::max(0.0,std::max(node.low[d]-x,x-node.high[d])); };
+      double delta=intervalDistance(q[d]);
+      if(m_periodic[d])
+      {
+        // Points/queries are canonical. Include the two adjacent images to get
+        // the periodic minimum distance even for a box spanning a domain seam.
+        delta=std::min(delta,std::min(intervalDistance(q[d]-m_extent[d]),intervalDistance(q[d]+m_extent[d])));
+      }
+      double const scale=std::max({std::abs(q[d]),std::abs(node.low[d]),std::abs(node.high[d]),
+                                   m_periodic[d]?m_extent[d]:0.0,std::numeric_limits<double>::min()});
+      // Conservative roundoff margin: a slightly underestimated bound costs
+      // work; an overestimated bound could omit a legitimate neighbor.
+      delta=std::max(0.0,delta-64.0*std::numeric_limits<double>::epsilon()*scale);
+      sum+=delta*delta;
+    }
+    return sum*(1.0-16.0*std::numeric_limits<double>::epsilon());
+  }
+
+  template<class Distance,class Less>
+  void visit(std::size_t const id, Point const & q, std::size_t const k,
+             Distance & distance, Less & less, std::vector<Neighbor> & best,
+             Statistics & stats, bool & ambiguous) const
+  {
+    Node const & node=m_nodes[id];
+    ++stats.treeNodes;
+    if(best.size()==k && lowerBound(node,q)>best.back().first) return;
+    if(node.left!=invalid)
+    {
+      double const l=lowerBound(m_nodes[node.left],q), r=lowerBound(m_nodes[node.right],q);
+      visit(l<=r?node.left:node.right,q,k,distance,less,best,stats,ambiguous);
+      if(best.size()<k || (l<=r?r:l)<=best.back().first)
+        visit(l<=r?node.right:node.left,q,k,distance,less,best,stats,ambiguous);
+      return;
+    }
+    for(std::size_t i=node.begin;i<node.end;++i)
+    {
+      Neighbor value{distance(m_entries[i].index),m_entries[i].index}; ++stats.distances;
+      auto const position=std::lower_bound(best.begin(),best.end(),value,less);
+      if(position!=best.end() && !less(value,*position) && !less(*position,value) && value.second!=position->second)
+        ambiguous=true;
+      if(best.size()<k || position!=best.end())
+      {
+        best.insert(position,value);
+        if(best.size()>k) best.pop_back();
+      }
+    }
+  }
+};
+
+}}} // geos::mpm::mortarSearch
+#endif
