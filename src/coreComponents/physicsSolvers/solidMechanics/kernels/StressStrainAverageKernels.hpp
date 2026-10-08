@@ -30,6 +30,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
+#include <utility>
+
 namespace geos
 {
 
@@ -213,8 +215,13 @@ public:
 
 protected:
 
+  /// Use the concrete wrapper returned by the model factory. This preserves
+  /// final wrappers for device compilation instead of slicing them to the
+  /// model's polymorphic base wrapper.
+  using KernelWrapper = decltype( std::declval< SOLID_TYPE const & >().createKernelUpdates() );
+
   /// The material
-  typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
+  KernelWrapper const m_solidUpdate;
 
   /// The displacement solution
   fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const m_displacement;
