@@ -23,4 +23,45 @@
       component="0"
       scale="2000.0"/>
   </FieldSpecifications>
+
+  <Events
+    maxTime="40.0">
+    <PeriodicEvent
+      name="solverApplications0"
+      endTime="24.0"
+      maxEventDt="0.1"
+      target="/Solvers/pfSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="24.0"
+      endTime="30.0"
+      maxEventDt="0.005"
+      target="/Solvers/pfSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="30.0"
+      maxEventDt="0.1"
+      target="/Solvers/pfSolve"/>
+
+    <PeriodicEvent
+      name="vtkOutputEvent"
+      cycleFrequency="10"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="sourcePressureHistoryCollection"
+      cycleFrequency="1"
+      target="/Tasks/sourcePressureCollection"/>
+    <PeriodicEvent
+      name="sourcePressureHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/sourcePressureHistoryOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="50"
+      target="/Outputs/restartOutput"/>
+  </Events>
 </Problem>

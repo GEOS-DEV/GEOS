@@ -114,7 +114,7 @@
       irreversibilityFlag="1"
       damageUpperBound="1.0"
       fracturePressureTermFlag="0"
-      viscousRegularizationCoeff="1.0"
+      viscousRegularizationCoeff="1000.0"
       logLevel="1"
       targetRegions="{ Source, Rock }">
       <NonlinearSolverParameters
@@ -141,7 +141,7 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="./meshes/wellboreFill2DMeterBased.vtu"
+      file="./meshes/wellboreFill2DMeterBased_RefRadius=10R_NRefRadial=500_NOutEdge=120.vtu"
       regionAttribute="SOURCE-MATRIX"
       nodesetNames="{ xneg, xpos, yneg, ypos, zneg, zpos }"/>
   </Mesh>
@@ -192,6 +192,7 @@
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"
       crackPorosity="0.1"
+      crackPoreCompressibility="5e-9"
       surfaceAreaDamageExponent="1"
       intactPressureCoefficient="0.0"/>
 
@@ -204,13 +205,13 @@
       defaultDensity="0.0"
       defaultBulkModulus="24.6914e9"
       defaultShearModulus="16.2602e9"
-      lengthScale="0.0005"
-      defaultCriticalFractureEnergy="12.5"
+      lengthScale="0.0004"
+      defaultCriticalFractureEnergy="10.0"
       criticalStrainEnergy="0.0"
       fractureModelType="Brittle"
       localDissipationOption="Linear"
       degradationLowerLimit="1e-6"
-      hybridSplit="1"/>
+      hybridSplit="0"/>
 
     <!-- one mineral: (NH4)2SO4, M = 0.13214 kg/mol, rho = 1770 kg/m3, no initial AS in the rock -->
     <ReactivePorosity
@@ -249,7 +250,7 @@
       defaultDensity="0.0"
       defaultBulkModulus="24.6914e5"
       defaultShearModulus="16.2602e5"
-      lengthScale="0.0005"
+      lengthScale="0.0004"
       defaultCriticalFractureEnergy="1e12"
       criticalStrainEnergy="0.0"
       fractureModelType="Brittle"
@@ -258,7 +259,8 @@
 
     <ReactivePorosity
       name="voidPorosity"
-      defaultReferencePorosity="0.9999"
+      defaultReferencePorosity="15"
+      fixedPorosity="1"
       defaultInitialVolumeFractions="{ 0.0 }"
       molarWeights="{ 0.13214 }"
       mineralDensities="{ 1770.0 }"/>
@@ -278,12 +280,11 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="1e-8"
+      compressibility="5e-10"
       referenceDensity="1000"
       viscosibility="0.0"
       solventMassFraction="0.5670682731"
       chemicalSystemType="ammoniumSulfate"/>
-
   </Constitutive>
 
   <Geometry>
@@ -292,12 +293,23 @@
          else. -->
     <Box
       name="symX"
-      xMin="{ -2.0e-5, -0.0751, -0.0006 }"
-      xMax="{  2.0e-5,  0.0751,  0.0006 }"/>
+      xMin="{ -2.0e-5, -0.07501, -0.0006 }"
+      xMax="{  2.0e-5,  0.07501,  0.0006 }"/>
     <Box
       name="symY"
-      xMin="{ -0.0751, -2.0e-5, -0.0006 }"
-      xMax="{  0.0751,  2.0e-5,  0.0006 }"/>
+      xMin="{ -0.07501, -2.0e-5, -0.0006 }"
+      xMax="{  0.07501,  2.0e-5,  0.0006 }"/>
+
+    <!-- Approximately two outer element widths (~1.2 mm) are retained as an
+         intact damage rim.  These sets are used only for the damage constraint. -->
+    <Box
+      name="damageBandYneg"
+      xMin="{ -0.07501, -0.07501, -0.0006 }"
+      xMax="{  0.07501, -0.0738,   0.0006 }"/>
+    <Box
+      name="damageBandYpos"
+      xMin="{ -0.07501,  0.0738,  -0.0006 }"
+      xMax="{  0.07501,  0.07501,  0.0006 }"/>
 
 
     <!-- Inner core of the borehole disc, used to pin damage. The true wall is at 6.35 mm; this
@@ -333,7 +345,7 @@
       objectPath="ElementRegions/Rock"
       fieldName="rockSolid_stress"
       component="1"
-      scale="-1e5"/>
+      scale="-1e6"/>
 
     <FieldSpecification
       name="Sv_rock"
@@ -367,6 +379,17 @@
       scale="0.0"
       setNames="{ boreCore }"/>
 
+    <!-- Keep an intact boundary ligament.  Once the crack reaches an outer face,
+         this zero-damage condition prevents the damaged solid from disconnecting
+         completely and removes the free-body mode that otherwise appears in the
+         quasi-static mechanics solve. The outer faces remain traction-free. -->
+    <!-- <FieldSpecification
+      name="damagePinOuterBoundary"
+      objectPath="nodeManager"
+      fieldName="damage"
+      scale="0.0"
+      setNames="{ damageBandYneg, damageBandYpos }"/> -->
+
     <!-- ===== displacement: traction-free outer faces, plane strain in z =====
          The sample is unconfined, so the side faces get no constraint at all - an absent
          FieldSpecification IS the traction-free condition. The in-plane rigid-body modes are
@@ -384,7 +407,7 @@
       fieldName="totalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{ symX }"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -422,12 +445,12 @@
          The borehole injection stays cell-based by necessity: a face Dirichlet cannot set
          composition - inflow always upwinds the interior cell concentration - so the injected AS
          composition can only be imposed on the meshed Source cells. -->
-    <FieldSpecification
+    <!-- <FieldSpecification
       name="outerPressure"
       setNames="{ xneg, xpos, yneg, ypos }"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="0.0"/>
+      scale="0.0"/> -->
 
     <!-- Mass injection; a negative scale is injection. SourceFlux feeds the total mass row only,
          so the injected composition comes entirely from the species Dirichlet and AS enters the
@@ -514,38 +537,6 @@
 
   </Tasks>
 
-  <!-- Coarse steps until 17 s, then 0.01 s through breakdown and propagation. maxTime leaves room
-       for the later breakdown at l = 0.5 mm. Once the crack reaches the drained outer boundary,
-       results are boundary-controlled. -->
-  <Events
-    maxTime="40.0">
-    <PeriodicEvent
-      name="solverApplications0"
-      endTime="17.0"
-      maxEventDt="0.1"
-      target="/Solvers/pfSolve"/>
-
-    <PeriodicEvent
-      name="solverApplications1"
-      beginTime="17.0"
-      maxEventDt="0.01"
-      target="/Solvers/pfSolve"/>
-
-    <PeriodicEvent
-      name="vtkOutputEvent"
-      cycleFrequency="10"
-      target="/Outputs/vtkOutput"/>
-
-    <PeriodicEvent
-      name="sourcePressureHistoryCollection"
-      cycleFrequency="1"
-      target="/Tasks/sourcePressureCollection"/>
-    <PeriodicEvent
-      name="sourcePressureHistoryOutput"
-      cycleFrequency="1"
-      target="/Outputs/sourcePressureHistoryOutput"/>
-  </Events>
-
   <Outputs>
     <VTK
       name="vtkOutput"
@@ -555,6 +546,9 @@
       name="sourcePressureHistoryOutput"
       sources="{ /Tasks/sourcePressureCollection }"
       filename="sourcePressureHistory"/>
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 
 </Problem>

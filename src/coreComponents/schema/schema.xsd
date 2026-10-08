@@ -491,6 +491,14 @@
 					<xsd:selector xpath="SinglePhaseReactiveTransport" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseReactiveTransportPhaseFieldPoromechUniqueName">
+					<xsd:selector xpath="SinglePhaseReactiveTransportPhaseFieldPoromech" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseReactiveTransportPoromechanicsUniqueName">
+					<xsd:selector xpath="SinglePhaseReactiveTransportPoromechanics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseReservoirUniqueName">
 					<xsd:selector xpath="SinglePhaseReservoir" />
 					<xsd:field xpath="@name" />
@@ -667,6 +675,10 @@
 					<xsd:selector xpath="BiotPorosity" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveBiotReactivePorosityUniqueName">
+					<xsd:selector xpath="BiotReactivePorosity" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveBlackOilFluidUniqueName">
 					<xsd:selector xpath="BlackOilFluid" />
 					<xsd:field xpath="@name" />
@@ -779,6 +791,14 @@
 					<xsd:selector xpath="Coulomb" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveDamageCloggingPermeabilityUniqueName">
+					<xsd:selector xpath="DamageCloggingPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveDamageDiffusionUniqueName">
+					<xsd:selector xpath="DamageDiffusion" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveDamageElasticIsotropicUniqueName">
 					<xsd:selector xpath="DamageElasticIsotropic" />
 					<xsd:field xpath="@name" />
@@ -805,6 +825,38 @@
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveDruckerPragerUniqueName">
 					<xsd:selector xpath="DruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveEigenStrainReactiveDamageElasticIsotropicDamageCloggingPermeabilityUniqueName">
+					<xsd:selector xpath="EigenStrainReactiveDamageElasticIsotropicDamageCloggingPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveEigenStrainReactiveDamageElasticIsotropicDamagePermeabilityUniqueName">
+					<xsd:selector xpath="EigenStrainReactiveDamageElasticIsotropicDamagePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveEigenStrainReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusionUniqueName">
+					<xsd:selector xpath="EigenStrainReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusion" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveEigenStrainReactiveDamageSpectralElasticIsotropicDamageCloggingPermeabilityUniqueName">
+					<xsd:selector xpath="EigenStrainReactiveDamageSpectralElasticIsotropicDamageCloggingPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveEigenStrainReactiveDamageSpectralElasticIsotropicDamagePermeabilityUniqueName">
+					<xsd:selector xpath="EigenStrainReactiveDamageSpectralElasticIsotropicDamagePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveEigenStrainReactiveDamageVolDevElasticIsotropicDamagePermeabilityUniqueName">
+					<xsd:selector xpath="EigenStrainReactiveDamageVolDevElasticIsotropicDamagePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveEigenStrainReactiveElasticIsotropicUniqueName">
+					<xsd:selector xpath="EigenStrainReactiveElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveEigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveElasticIsotropicUniqueName">
@@ -945,6 +997,50 @@
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousModifiedCamClayCarmanKozenyPermeabilityUniqueName">
 					<xsd:selector xpath="PorousModifiedCamClayCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageElasticIsotropicDamageCloggingPermeabilityUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageElasticIsotropicDamageCloggingPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageElasticIsotropicDamagePermeabilityUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageElasticIsotropicDamagePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusionUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusion" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageSpectralElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageSpectralElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageSpectralElasticIsotropicDamageCloggingPermeabilityUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageSpectralElasticIsotropicDamageCloggingPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageSpectralElasticIsotropicDamagePermeabilityUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageSpectralElasticIsotropicDamagePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageVolDevElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageVolDevElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveDamageVolDevElasticIsotropicDamagePermeabilityUniqueName">
+					<xsd:selector xpath="PorousReactiveDamageVolDevElasticIsotropicDamagePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousReactiveElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousReactiveElasticIsotropicCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousReactiveElasticIsotropicCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousViscoDruckerPragerUniqueName">
@@ -2816,6 +2912,8 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="SinglePhasePoromechanicsReservoir" type="SinglePhasePoromechanicsReservoirType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReactiveTransport" type="SinglePhaseReactiveTransportType" />
+			<xsd:element name="SinglePhaseReactiveTransportPhaseFieldPoromech" type="SinglePhaseReactiveTransportPhaseFieldPoromechType" />
+			<xsd:element name="SinglePhaseReactiveTransportPoromechanics" type="SinglePhaseReactiveTransportPoromechanicsType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanics" type="SinglePhaseReservoirPoromechanicsType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFractures" type="SinglePhaseReservoirPoromechanicsConformingFracturesType" />
@@ -5376,6 +5474,101 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseReactiveTransportPhaseFieldPoromechType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
+		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--damageSolverName => Name of the damage solver used by the coupled solver-->
+		<xsd:attribute name="damageSolverName" type="groupNameRef" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Convergence information
+ - Linear solver information
+ - Output residual norm
+ - Solution information (scaling, maximum changes, quality check)
+ - Time step information
+ - Solver timers information
+ - Coupling information
+2
+ - The summary of declared fields and coupling-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
+		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
+		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
+		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseReactiveTransportPoromechanicsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
+		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--damageFlag => The flag to indicate whether a damage solid model is used-->
+		<xsd:attribute name="damageFlag" type="integer" default="0" />
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Convergence information
+ - Linear solver information
+ - Output residual norm
+ - Solution information (scaling, maximum changes, quality check)
+ - Time step information
+ - Solver timers information
+ - Coupling information
+2
+ - The summary of declared fields and coupling-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
+		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
+		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
+		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
+		<!--stabilizationType => StabilizationType. Options are:
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
+Local- Add jump stabilization on interior of macro elements-->
+		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
+		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
+		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
+		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -7010,6 +7203,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
+			<xsd:element name="BiotReactivePorosity" type="BiotReactivePorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
@@ -7038,6 +7232,8 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="ConstantDiffusion" type="ConstantDiffusionType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
+			<xsd:element name="DamageCloggingPermeability" type="DamageCloggingPermeabilityType" />
+			<xsd:element name="DamageDiffusion" type="DamageDiffusionType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamagePermeability" type="DamagePermeabilityType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
@@ -7045,6 +7241,14 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="DeadOilFluid" type="DeadOilFluidType" />
 			<xsd:element name="DelftEgg" type="DelftEggType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
+			<xsd:element name="EigenStrainReactiveDamageElasticIsotropicDamageCloggingPermeability" type="EigenStrainReactiveDamageElasticIsotropicDamageCloggingPermeabilityType" />
+			<xsd:element name="EigenStrainReactiveDamageElasticIsotropicDamagePermeability" type="EigenStrainReactiveDamageElasticIsotropicDamagePermeabilityType" />
+			<xsd:element name="EigenStrainReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusion" type="EigenStrainReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusionType" />
+			<xsd:element name="EigenStrainReactiveDamageSpectralElasticIsotropicDamageCloggingPermeability" type="EigenStrainReactiveDamageSpectralElasticIsotropicDamageCloggingPermeabilityType" />
+			<xsd:element name="EigenStrainReactiveDamageSpectralElasticIsotropicDamagePermeability" type="EigenStrainReactiveDamageSpectralElasticIsotropicDamagePermeabilityType" />
+			<xsd:element name="EigenStrainReactiveDamageVolDevElasticIsotropicDamagePermeability" type="EigenStrainReactiveDamageVolDevElasticIsotropicDamagePermeabilityType" />
+			<xsd:element name="EigenStrainReactiveElasticIsotropic" type="EigenStrainReactiveElasticIsotropicType" />
+			<xsd:element name="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeability" type="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
@@ -7080,6 +7284,17 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="PorousExtendedDruckerPragerCarmanKozenyPermeability" type="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
 			<xsd:element name="PorousModifiedCamClayCarmanKozenyPermeability" type="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousReactiveDamageElasticIsotropic" type="PorousReactiveDamageElasticIsotropicType" />
+			<xsd:element name="PorousReactiveDamageElasticIsotropicDamageCloggingPermeability" type="PorousReactiveDamageElasticIsotropicDamageCloggingPermeabilityType" />
+			<xsd:element name="PorousReactiveDamageElasticIsotropicDamagePermeability" type="PorousReactiveDamageElasticIsotropicDamagePermeabilityType" />
+			<xsd:element name="PorousReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusion" type="PorousReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusionType" />
+			<xsd:element name="PorousReactiveDamageSpectralElasticIsotropic" type="PorousReactiveDamageSpectralElasticIsotropicType" />
+			<xsd:element name="PorousReactiveDamageSpectralElasticIsotropicDamageCloggingPermeability" type="PorousReactiveDamageSpectralElasticIsotropicDamageCloggingPermeabilityType" />
+			<xsd:element name="PorousReactiveDamageSpectralElasticIsotropicDamagePermeability" type="PorousReactiveDamageSpectralElasticIsotropicDamagePermeabilityType" />
+			<xsd:element name="PorousReactiveDamageVolDevElasticIsotropic" type="PorousReactiveDamageVolDevElasticIsotropicType" />
+			<xsd:element name="PorousReactiveDamageVolDevElasticIsotropicDamagePermeability" type="PorousReactiveDamageVolDevElasticIsotropicDamagePermeabilityType" />
+			<xsd:element name="PorousReactiveElasticIsotropic" type="PorousReactiveElasticIsotropicType" />
+			<xsd:element name="PorousReactiveElasticIsotropicCarmanKozenyPermeability" type="PorousReactiveElasticIsotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoDruckerPrager" type="PorousViscoDruckerPragerType" />
 			<xsd:element name="PorousViscoDruckerPragerCarmanKozenyPermeability" type="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoExtendedDruckerPrager" type="PorousViscoExtendedDruckerPragerType" />
@@ -7134,6 +7349,24 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
 		<!--useUniaxialFixedStress => Flag enabling uniaxial approximation in fixed stress update-->
 		<xsd:attribute name="useUniaxialFixedStress" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BiotReactivePorosityType">
+		<!--defaultGrainBulkModulus => Default grain bulk modulus-->
+		<xsd:attribute name="defaultGrainBulkModulus" type="real64" use="required" />
+		<!--defaultInitialVolumeFractions => Default initial volume fractions-->
+		<xsd:attribute name="defaultInitialVolumeFractions" type="real64_array" use="required" />
+		<!--defaultMineralBulkModulus => Default mineral bulk modulus-->
+		<xsd:attribute name="defaultMineralBulkModulus" type="real64" use="required" />
+		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
+		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
+		<!--fixedPorosity => Flag to update volume fractions without changing porosity (0 = update porosity, 1 = fixed porosity)-->
+		<xsd:attribute name="fixedPorosity" type="integer" default="0" />
+		<!--mineralDensities => Mineral densities-->
+		<xsd:attribute name="mineralDensities" type="real64_array" use="required" />
+		<!--molarWeights => Mineral molar weights-->
+		<xsd:attribute name="molarWeights" type="real64_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -7889,6 +8122,30 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="DamageCloggingPermeabilityType">
+		<!--bulkPermeability => Permeability of the intact bulk material-->
+		<xsd:attribute name="bulkPermeability" type="real64" use="required" />
+		<!--cloggingExponent => Exponent n of the clogging multiplier (1 - cloggedPoreFraction)^n-->
+		<xsd:attribute name="cloggingExponent" type="real64" default="3" />
+		<!--damageDependenceConstant => Damage dependency coefficient-->
+		<xsd:attribute name="damageDependenceConstant" type="real64" use="required" />
+		<!--minCloggingMultiplier => Lower bound of the clogging multiplier, so a fully clogged cell keeps a residual permeability-->
+		<xsd:attribute name="minCloggingMultiplier" type="real64" default="1e-06" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="DamageDiffusionType">
+		<!--damageDependenceConstant => xx, yy and zz exponents controlling how diffusivity scales with damage in each direction: D_dim = bulkDiffusivity * exp( alpha_dim * damage )-->
+		<xsd:attribute name="damageDependenceConstant" type="R1Tensor" use="required" />
+		<!--defaultBulkDiffusivity => Default diffusivity of the intact bulk material [m^2/s]-->
+		<xsd:attribute name="defaultBulkDiffusivity" type="real64" use="required" />
+		<!--defaultPhaseDiffusivityMultipliers => List of phase diffusivity multipliers-->
+		<xsd:attribute name="defaultPhaseDiffusivityMultipliers" type="real64_array" default="{1}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
@@ -8088,6 +8345,120 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveDamageElasticIsotropicDamageCloggingPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveDamageElasticIsotropicDamagePermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusionType">
+		<!--diffusionModelName => Name of the diffusion constitutive model-->
+		<xsd:attribute name="diffusionModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveDamageSpectralElasticIsotropicDamageCloggingPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveDamageSpectralElasticIsotropicDamagePermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveDamageVolDevElasticIsotropicDamagePermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveElasticIsotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="EigenStrainReactiveElasticIsotropicCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -8621,6 +8992,184 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageElasticIsotropicType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageElasticIsotropicDamageCloggingPermeabilityType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageElasticIsotropicDamagePermeabilityType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageElasticIsotropicDamagePermeabilityDamageDiffusionType">
+		<!--diffusionModelName => Name of the diffusion constitutive model-->
+		<xsd:attribute name="diffusionModelName" type="string" use="required" />
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageSpectralElasticIsotropicType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageSpectralElasticIsotropicDamageCloggingPermeabilityType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageSpectralElasticIsotropicDamagePermeabilityType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageVolDevElasticIsotropicType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveDamageVolDevElasticIsotropicDamagePermeabilityType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveElasticIsotropicType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousReactiveElasticIsotropicCarmanKozenyPermeabilityType">
+		<!--fluidModelName => Name of the fluid constitutive model. Its (constant) compressibility is handed to the porosity model for the pore-mineral-pressure / porosity coupling.-->
+		<xsd:attribute name="fluidModelName" type="string" use="required" />
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--surfaceAreaDamageExponent => Exponent confining the reactive surface area to damaged cells: A = A0 (1-theta)^(2/3) d^s. The default 0 leaves the area ungated, since d^0 = 1 even in an intact cell.-->
+		<xsd:attribute name="surfaceAreaDamageExponent" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousViscoDruckerPragerType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
@@ -8811,7 +9360,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveCompressibleSinglePhaseFluidType">
-		<!--chemicalSystemType => Chemical System type. Available options are: ``carbonate|carbonateAllEquilibrium|ultramafic|momasEasy|momasMedium|chainSerialAllKinetic``-->
+		<!--chemicalSystemType => Chemical System type. Available options are: ``carbonate|carbonateAllEquilibrium|ultramafic|serpentinization|kineticCarbonate|momasEasy|momasMedium|chainSerialAllKinetic|ammoniumSulfate``-->
 		<xsd:attribute name="chemicalSystemType" type="geos_constitutive_reactivefluid_ChemicalSystemType" use="required" />
 		<!--compressibility => Fluid compressibility [Pa^-1]-->
 		<xsd:attribute name="compressibility" type="real64" default="0" />
@@ -8830,8 +9379,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
-		<!--solventMassPerSolutionVolume => Mass of solvent per unit volume of solution [kg/m^3], used to convert species molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 approximates an aqueous solution by the density of pure water.-->
-		<xsd:attribute name="solventMassPerSolutionVolume" type="real64" default="1000" />
+		<!--solventMassFraction => Mass fraction of solvent in the solution [-]. Species molality [mol/kg solvent] times this fraction is the amount per kg of solution, and times the fluid density the amount per m^3 of solution. The default of 1 is a dilute aqueous solution.-->
+		<xsd:attribute name="solventMassFraction" type="real64" default="1" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
 		<!--viscosityModelType => Type of viscosity model. Valid options:
@@ -8844,7 +9393,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	</xsd:complexType>
 	<xsd:simpleType name="geos_constitutive_reactivefluid_ChemicalSystemType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|carbonate|carbonateAllEquilibrium|ultramafic|momasEasy|momasMedium|chainSerialAllKinetic" />
+			<xsd:pattern value=".*[\[\]`$].*|carbonate|carbonateAllEquilibrium|ultramafic|serpentinization|kineticCarbonate|momasEasy|momasMedium|chainSerialAllKinetic|ammoniumSulfate" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="ReactivePorosityType">
@@ -8852,6 +9401,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="defaultInitialVolumeFractions" type="real64_array" use="required" />
 		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
+		<!--fixedPorosity => Flag to update volume fractions without changing porosity (0 = update porosity, 1 = fixed porosity)-->
+		<xsd:attribute name="fixedPorosity" type="integer" default="0" />
 		<!--mineralDensities => Mineral densities-->
 		<xsd:attribute name="mineralDensities" type="real64_array" use="required" />
 		<!--molarWeights => Mineral molar weights-->
@@ -8896,7 +9447,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveThermalCompressibleSinglePhaseFluidType">
-		<!--chemicalSystemType => Chemical System type. Available options are: ``carbonate|carbonateAllEquilibrium|ultramafic|momasEasy|momasMedium|chainSerialAllKinetic``-->
+		<!--chemicalSystemType => Chemical System type. Available options are: ``carbonate|carbonateAllEquilibrium|ultramafic|serpentinization|kineticCarbonate|momasEasy|momasMedium|chainSerialAllKinetic|ammoniumSulfate``-->
 		<xsd:attribute name="chemicalSystemType" type="geos_constitutive_reactivefluid_ChemicalSystemType" use="required" />
 		<!--compressibility => Fluid compressibility [Pa^-1]-->
 		<xsd:attribute name="compressibility" type="real64" default="0" />

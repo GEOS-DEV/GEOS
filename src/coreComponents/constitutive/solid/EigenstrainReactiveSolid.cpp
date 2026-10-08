@@ -68,6 +68,11 @@ EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::EigenstrainReactiv
                     "damage: the crack's storage as its opening grows with pressure, ~4(1-nu^2) a / (E w_band) for a "
                     "crack of half-length a. Default 0." );
 
+  this->registerWrapper( "eigenstrainFactor", &m_eigenstrainFactor ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Factor on the precipitation eigenstrain in the mechanics." );
+
   if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
   {
     this->registerWrapper( "diffusionModelName", &m_diffusionModelName ).

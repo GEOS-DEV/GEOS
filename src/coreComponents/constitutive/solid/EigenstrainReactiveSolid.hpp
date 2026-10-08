@@ -64,12 +64,14 @@ public:
                                    real64 const intactPressureCoefficient,
                                    real64 const crackPorosity,
                                    real64 const crackPoreCompressibility,
+                                   real64 const eigenstrainFactor,
                                    DIFF_TYPE const * diffModel = nullptr ):
     CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( solidModel, porosityModel, permModel ),
     m_surfaceAreaDamageExponent( surfaceAreaDamageExponent ),
     m_intactPressureCoefficient( intactPressureCoefficient ),
     m_crackPorosity( crackPorosity ),
     m_crackPoreCompressibility( crackPoreCompressibility ),
+    m_eigenstrainFactor( eigenstrainFactor ),
     m_diffUpdate( initDiffUpdate( diffModel ) )
   {}
 
@@ -331,6 +333,9 @@ private:
   /// Additional porosity gained per unit gauge pressure in a fully cracked cell [1/Pa]
   real64 m_crackPoreCompressibility;
 
+  /// Factor on the precipitation eigenstrain
+  real64 m_eigenstrainFactor;
+
   /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
   typename DIFF_TYPE::KernelWrapper m_diffUpdate;
 
@@ -380,9 +385,9 @@ private:
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
     real64 mechanicsStrainIncrement[6]{};
-    mechanicsStrainIncrement[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
-    mechanicsStrainIncrement[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
-    mechanicsStrainIncrement[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
+    mechanicsStrainIncrement[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement * m_eigenstrainFactor;
+    mechanicsStrainIncrement[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement * m_eigenstrainFactor;
+    mechanicsStrainIncrement[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement * m_eigenstrainFactor;
     mechanicsStrainIncrement[3] = strainIncrement[3];
     mechanicsStrainIncrement[4] = strainIncrement[4];
     mechanicsStrainIncrement[5] = strainIncrement[5];
@@ -487,7 +492,8 @@ public:
                             m_surfaceAreaDamageExponent,
                             m_intactPressureCoefficient,
                             m_crackPorosity,
-                            m_crackPoreCompressibility );
+                            m_crackPoreCompressibility,
+                            m_eigenstrainFactor );
     }
     else
     {
@@ -498,6 +504,7 @@ public:
                             m_intactPressureCoefficient,
                             m_crackPorosity,
                             m_crackPoreCompressibility,
+                            m_eigenstrainFactor,
                             &getDiffModel() );
     }
   }
@@ -539,6 +546,9 @@ private:
 
   /// Additional porosity gained per unit gauge pressure in a fully cracked cell [1/Pa]
   real64 m_crackPoreCompressibility;
+
+  /// Factor on the precipitation eigenstrain
+  real64 m_eigenstrainFactor;
 };
 
 
