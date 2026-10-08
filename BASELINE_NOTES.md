@@ -9,6 +9,10 @@ PR #3996 (2026-09-20) <https://storage.googleapis.com/geosx/integratedTests/base
 Switch the single-phase reactive transport solver to a molality-based primary
 species concentration by introducing solventMassFraction.
 
+PR #3994 (2026-09-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4146-17737-3af8343.tar.gz>
+=====================
+Add integrated test for singlephase thermal with wells
+
 PR #3994 (2026-09-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3994-17525-4ae3593.tar.gz>
 =====================
 Introduce mimetic inner products for saddle-point operators and align face-centroid computation with exact volume integration on planar polyhedra.

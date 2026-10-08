@@ -190,6 +190,15 @@ public:
   {
     const WellConstraintBase * currentConstraint = wellControls.getCurrentConstraint();
     ConstraintTypeId currentControl = wellControls.getControl();
+    // Note this assumes that there is only one rate constraint
+    // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
+    // This is one of the reasons for restricting  constraint type for a production well
+    // Another pr will remove fix this (so the cause for difference results is isolated to one change)
+    auto const * rateConstraint = wellControls.getRateConstraints().front();
+    if( rateConstraint != nullptr )
+    {
+      m_constraintValue = rateConstraint->getConstraintValue( time );
+    }
     if( currentControl == ConstraintTypeId::BHP )
     {
       m_targetBHP = currentConstraint->getConstraintValue( time );
