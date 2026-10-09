@@ -755,6 +755,10 @@ namespace poromechanicsMatrixBubbleKernels
  * Physics:
  *   R_b = -∫ B_b^T * (biot * p * I) * detJ dΩ
  *   dR_b/dP = -∫ B_b^T * (biot * I) * detJ dΩ
+ *   dR_b/dT = +∫ B_b^T * (3 alpha K * I) * detJ dΩ   (thermal only)
+ *
+ * Only its derivative w.r.t. temperature is missing, hence the dR_b/dT column below.
+ * sigma is already updated w.r.t temperature so no need for extra edition of residuals.
  *
  * where B_b is the strain-displacement matrix for bubble functions.
  */
@@ -812,7 +816,8 @@ public:
                                arrayView1d< real64 > const inputRhs,
                                real64 const inputDt,
                                string const pressureDofKey,
-                               string const fluidModelKey ):
+                               string const fluidModelKey,
+                               integer const isThermal ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -831,6 +836,7 @@ public:
     m_bubbleElems( elementSubRegion.bubbleElementsList() ),
     m_elemsToFaces( elementSubRegion.faceElementsList() ),
     m_pressure( elementSubRegion.template getField< fields::flow::pressure >().toViewConst() ),
+    m_isThermal( isThermal ),
     m_incrBubbleDisp( faceManager.getField< fields::contact::incrementalBubbleDisplacement >().toViewConst() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
                       elementSubRegion.template getReference< string >( fluidModelKey ) ).density() )
@@ -862,9 +868,11 @@ public:
       bEqnRowIndices{},
       bColIndices{},
       pColIndex( 0 ),
+      tColIndex( 0 ),
       pRowIndex( 0 ),
       localRb{},
       localdRbdP{},
+      localdRbdT{},
       localdRpdB{},
       X{ {} },
       pLocal{}
@@ -879,6 +887,9 @@ public:
     /// Column index for pressure DOF (for A_bp)
     globalIndex pColIndex;
 
+    /// Column index for temperature DOF (for A_bT, thermal only), packed right after pressure
+    globalIndex tColIndex;
+
     /// Row index (local) for pressure DOF (for A_pb)
     globalIndex pRowIndex;
 
@@ -887,6 +898,9 @@ public:
 
     /// C-array storage for the element local dRb/dP Jacobian.
     real64 localdRbdP[numBubbleUdofs];
+
+    /// C-array storage for the element local dRb/dT Jacobian (thermal only).
+    real64 localdRbdT[numBubbleUdofs];
 
     /// C-array storage for the element local dRp/dB Jacobian (A_pb bulk term).
     real64 localdRpdB[numBubbleUdofs];
@@ -965,6 +979,7 @@ public:
     }
 
     stack.pColIndex = m_pDofNumber[k];
+    stack.tColIndex = m_pDofNumber[k] + 1;
     stack.pRowIndex = m_pDofNumber[k] - m_dofRankOffset;
     stack.pLocal[0] = m_pressure( k );
   }
@@ -1015,6 +1030,23 @@ public:
     LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( dRbdP_gauss, strainBubbleMatrix, biotIdentity );
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRbdP, dRbdP_gauss, -detJ );
 
+    // Jacobian contribution: dR_b/dT += B_b^T * ( -3 alpha K * I ) * (-detJ) (thermal only), i.e. the
+    // temperature derivative of -B_b^T sigma_new, sigma_new carrying -3 alpha K dT I
+    if( m_isThermal )
+    {
+      real64 thermalExpansionCoefficient;
+      m_constitutiveUpdate.getThermalExpansionCoefficient( k, thermalExpansionCoefficient );
+      real64 bulkModulus;
+      m_constitutiveUpdate.getBulkModulus( k, bulkModulus );
+      real64 const thermalStressCoefficient = 3.0 * thermalExpansionCoefficient * bulkModulus;
+
+      real64 thermalIdentity[6] = {0};
+      LvArray::tensorOps::symAddIdentity< 3 >( thermalIdentity, -thermalStressCoefficient );
+      real64 dRbdT_gauss[nBubbleUdof];
+      LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( dRbdT_gauss, strainBubbleMatrix, thermalIdentity );
+      LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRbdT, dRbdT_gauss, -detJ );
+    }
+
     // ---- A_pb^Omega : transpose Biot term for the fluid-mass equation ----
     // The bubble mode contributes to the cell volumetric strain, hence to the
     // fluid mass storage.  With dPorosity_dVolStrain = biot (BiotPorosity),
@@ -1039,11 +1071,13 @@ public:
     // on which the bubble function was applied.
     real64 localRb[3];
     real64 localdRbdP[3];
+    real64 localdRbdT[3];
     real64 localdRpdB[3];
     for( localIndex i = 0; i < 3; ++i )
     {
       localRb[i] = stack.localRb[parentFaceIndex*3+i];
       localdRbdP[i] = stack.localdRbdP[parentFaceIndex*3+i];
+      localdRbdT[i] = stack.localdRbdT[parentFaceIndex*3+i];
       localdRpdB[i] = stack.localdRpdB[parentFaceIndex*3+i];
     }
 
@@ -1063,6 +1097,15 @@ public:
                                                           &stack.pColIndex,
                                                           &localdRbdP[i],
                                                           1 );
+
+      // Add Jacobian dR_b/dT (thermal only)
+      if( m_isThermal )
+      {
+        m_matrix.template addToRow< parallelDeviceAtomic >( dof,
+                                                            &stack.tColIndex,
+                                                            &localdRbdT[i],
+                                                            1 );
+      }
     }
 
     // ---- A_pb^Omega : fluid-mass row (dR_p/db) + storage residual ----
@@ -1109,6 +1152,9 @@ protected:
   /// The array containing the pressure of each element.
   arrayView1d< real64 const > const m_pressure;
 
+  /// Flag indicating whether the temperature DOF (and its Jacobian column) is present.
+  integer const m_isThermal;
+
   /// Incremental bubble displacement (face field) -- used for the fluid-mass storage residual.
   arrayView2d< real64 const > const m_incrBubbleDisp;
 
@@ -1126,7 +1172,8 @@ using MatrixPressureBubbleFactory = finiteElement::KernelFactory< MatrixPressure
                                                                   arrayView1d< real64 > const,
                                                                   real64 const,
                                                                   string const,
-                                                                  string const >;
+                                                                  string const,
+                                                                  integer const >;
 
 } // namespace poromechanicsMatrixBubbleKernels
 

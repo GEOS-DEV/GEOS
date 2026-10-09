@@ -156,12 +156,11 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    * @param dR_dAper derivative of the flux residual with respect to the aperture
-   * @param dR_dAperOffsets first row of @p dR_dAper belonging to each mesh body,
-   *        keyed by mesh body name. The caller and this solver walk their own
-   *        mesh targets, so the mesh body name is the only key they are
-   *        guaranteed to agree on; the caller must therefore target each body at
-   *        a single discretization level. Pass nullptr when @p dR_dAper uses a
-   *        single index space, i.e. when the caller has a single mesh target.
+   * @param useAugmentedLagrangianMultiplier true to assemble against the Augmented-Lagrangian-Multiplier
+   *        conforming-fractures kernels, false (default) for the Lagrange-multiplier formulation.
+   * @param dR_dAperEnergyOffset first row of the energy-balance block appended after the
+   *        mass-balance rows in @p dR_dAper, when the flow solver is thermal (ignored otherwise).
+   *        Pass -1 when no energy block was built.
    */
   virtual void assembleHydrofracFluxTerms( real64 const time_n,
                                            real64 const dt,
@@ -170,10 +169,13 @@ public:
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs,
                                            CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                           stdMap< string, localIndex > const * const dR_dAperOffsets )
+                                           bool const useAugmentedLagrangianMultiplier = false,
+                                           localIndex const dR_dAperEnergyOffset = -1 )
   {
-    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets );
-    GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
+    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset );
+    GEOS_ERROR( (useAugmentedLagrangianMultiplier
+               ? "Poroelastic fluxes with conforming fractures ALM not yet implemented."
+               : "Poroelastic fluxes with conforming fractures not yet implemented.") );
   }
 
   void initializeState( DomainPartition & domain );

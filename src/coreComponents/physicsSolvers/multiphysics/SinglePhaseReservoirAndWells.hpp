@@ -93,8 +93,9 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              stdMap< string, localIndex > const * const dR_dAperOffsets )
-  { flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets ); }
+                              bool const useAugmentedLagrangianMultiplier = false,
+                              localIndex const dR_dAperEnergyOffset = -1 )
+  { flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, useAugmentedLagrangianMultiplier, dR_dAperEnergyOffset ); }
 
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,
@@ -110,6 +111,8 @@ public:
 
   void updateMass( CellElementSubRegion & subRegion ) const
   { flowSolver()->updateMass( subRegion ); }
+
+  integer numFluidComponents() const { return flowSolver()->numFluidComponents(); };
 
 protected:
 
