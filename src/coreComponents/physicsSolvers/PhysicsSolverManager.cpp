@@ -20,6 +20,7 @@
 #include "PhysicsSolverManager.hpp"
 
 #include "PhysicsSolverBase.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -41,6 +42,15 @@ PhysicsSolverManager::PhysicsSolverManager( string const & name,
 
 PhysicsSolverManager::~PhysicsSolverManager()
 {}
+
+void PhysicsSolverManager::initializePostInitialConditionsPostSubGroups()
+{
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  forSubGroups< PhysicsSolverBase >( [&]( PhysicsSolverBase & solver )
+  {
+    solver.finalizeInitialState( domain );
+  } );
+}
 
 
 //START_SPHINX_INCLUDE_00
