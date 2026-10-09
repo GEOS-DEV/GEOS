@@ -288,10 +288,16 @@ public:
 
   TimeIntegrationOption timeIntegrationOption() const { return m_timeIntegrationOption; }
 
+  virtual void finalizeInitialState( DomainPartition & domain ) override;
+
 protected:
   virtual void postInputInitialization() override;
 
   void initializeMass( MeshLevel & mesh, CellElementSubRegion & subRegion );
+
+  void updateStressStrainAverages( MeshLevel & mesh,
+                                  string_array const & regionNames,
+                                  bool const accumulatePlasticStrain );
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
