@@ -183,7 +183,7 @@ public:
         kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegDens } );
 
       if( stack.localNumNegTotalDens > 0 )
-        kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegTotalDens } );
+        kernelComponent.m_negTotalDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegTotalDens } );
     } );
 
     return KernelStats( globalMinVal.get(),
@@ -285,6 +285,9 @@ public:
     }
     {
       bool const isNewTotalDensTooLow = totalDens <= 0.0;
+      // Chopping can remove every component. Reject that trial before the
+      // fraction update divides by the remaining total component density.
+      stack.localMinVal = isNewTotalDensTooLow ? 0 : stack.localMinVal;
       stack.localNumNegTotalDens += isNewTotalDensTooLow;
       stack.localMinNegTotalDens = isNewTotalDensTooLow ?
                                    LvArray::math::min( stack.localMinNegTotalDens, totalDens ) :

@@ -602,6 +602,44 @@ real64 constexpr CompositionalMultiphaseReservoirSolverTest::time;
 real64 constexpr CompositionalMultiphaseReservoirSolverTest::dt;
 real64 constexpr CompositionalMultiphaseReservoirSolverTest::eps;
 
+TEST_F( CompositionalMultiphaseReservoirSolverTest, RejectZeroTotalDensityAfterChopping )
+{
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+  DofManager const & dofs = solver->getDofManager();
+  WellManager & manager = *solver->wellSolver();
+  string const key = dofs.getKey( manager.wellElementDofName() );
+  array1d< real64 > update( dofs.numLocalDofs() );
+  for( integer mode = 0; mode < 3; ++mode )
+  {
+    update.zero();
+    manager.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+      [&]( string const &, MeshLevel & mesh, string_array const & regions )
+    {
+      mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regions,
+        [&]( localIndex const, WellElementSubRegion const & subRegion )
+      {
+        auto const densities = subRegion.getField< fields::well::globalCompDensity >();
+        auto const numbers = subRegion.getReference< array1d< globalIndex > >( key ).toViewConst();
+        densities.move( hostMemorySpace, false );
+        numbers.move( hostMemorySpace, false );
+        for( localIndex e = 0; e < subRegion.size(); ++e )
+        {
+          if( subRegion.ghostRank()[e] >= 0 ) continue;
+          localIndex const row = numbers[e] - dofs.rankOffset();
+          for( integer c = 0; c < densities.size( 1 ); ++c )
+          {
+            // Zero and all-negative trials must be rejected before chopping.
+            // A negative trace component is allowed if positive density remains.
+            if( mode == 0 ) update[row+c+1] = -densities[e][c];
+            else if( mode == 1 || c == 0 ) update[row+c+1] = -2.0*densities[e][c]-1.0;
+          }
+        }
+      } );
+    } );
+    EXPECT_EQ( solver->checkSystemSolution( domain, dofs, update.toViewConst(), 1.0 ), mode == 2 );
+  }
+}
+
 #if 0
 
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
