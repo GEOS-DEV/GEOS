@@ -86,6 +86,19 @@ public:
     KernelWrapper & operator=( KernelWrapper && ) = default;
     /// @endcond
 
+    /**
+     * @brief Populate the stock-tank fractions and densities used by well controls.
+     * @details Black-oil components are defined at stock-tank conditions. Their
+     * surface volumes are component mass (or moles) divided by the supplied
+     * surface density. Reservoir PVT tables must not be evaluated for this
+     * conversion, even when their pressure range contains the surface pressure.
+     * This method updates separator fractions, densities, and their derivatives.
+     */
+    GEOS_HOST_DEVICE
+    void updateSurfaceState( localIndex k,
+                             localIndex q,
+                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const;
+
 protected:
 
     KernelWrapper( arrayView1d< integer const > phaseTypes,
@@ -217,6 +230,59 @@ protected:
   array1d< TableFunction::KernelWrapper > m_viscosityTableKernels;
 
 };
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void BlackOilFluidBase::KernelWrapper::updateSurfaceState(
+  localIndex const k,
+  localIndex const q,
+  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition ) const
+{
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+  integer const numPhase = numPhases();
+  integer const numComp = numComponents();
+  integer const numDof = numComp + 2;
+  auto const phaseFrac = m_phaseFraction( k, q );
+  auto const phaseDens = m_phaseDensity( k, q );
+  auto const phaseMassDens = m_phaseMassDensity( k, q );
+  auto const phaseComp = m_phaseCompFraction( k, q );
+  auto const totalDens = m_totalDensity( k, q );
+
+  real64 inverseDensity = 0.0;
+  for( integer ip = 0; ip < numPhase; ++ip )
+  {
+    // BlackOilFluidBase assigns the same order to phases and components.
+    real64 const massDensity = m_surfacePhaseMassDensity[ip];
+    real64 const density = m_useMass ? massDensity : massDensity / m_componentMolarWeight[ip];
+    phaseFrac.value[ip] = composition[ip];
+    phaseDens.value[ip] = density;
+    phaseMassDens.value[ip] = massDensity;
+    inverseDensity += composition[ip] / density;
+    for( integer idof = 0; idof < numDof; ++idof )
+    {
+      phaseFrac.derivs[ip][idof] = idof == Deriv::dC + ip ? 1.0 : 0.0;
+      phaseDens.derivs[ip][idof] = 0.0;
+      phaseMassDens.derivs[ip][idof] = 0.0;
+    }
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      phaseComp.value[ip][ic] = ip == ic ? 1.0 : 0.0;
+      for( integer idof = 0; idof < numDof; ++idof )
+      {
+        phaseComp.derivs[ip][ic][idof] = 0.0;
+      }
+    }
+  }
+  totalDens.value = 1.0 / inverseDensity;
+  totalDens.derivs[Deriv::dP] = 0.0;
+  totalDens.derivs[Deriv::dT] = 0.0;
+  // Include derivatives at zero phase fraction: a newly present component
+  // changes surface volume even if its current phase fraction is zero.
+  for( integer ic = 0; ic < numComp; ++ic )
+  {
+    totalDens.derivs[Deriv::dC + ic] = -totalDens.value * totalDens.value / phaseDens.value[ic];
+  }
+}
 
 } //namespace constitutive
 

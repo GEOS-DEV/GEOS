@@ -149,6 +149,78 @@ void MultiFluidBlackOilTestFixture< USE_MASS >::fillPhysicalProperties( BlackOil
 using MultiFluidBlackOilTestMass = MultiFluidBlackOilTestFixture< true >;
 using MultiFluidBlackOilTestMolar = MultiFluidBlackOilTestFixture< false >;
 
+template< bool USE_MASS >
+void testStockTankVolumes( BlackOilFluid & fluid )
+{
+  using Deriv = constitutive::multifluid::DerivativeOffset;
+  fluid.allocateConstitutiveData( fluid.getParent(), 1 );
+  auto wrapper = fluid.createKernelWrapper();
+  auto totalDensity = fluid.totalDensity();
+  auto dTotalDensity = fluid.dTotalDensity();
+  auto phaseFraction = fluid.phaseFraction();
+  auto phaseMassDensity = fluid.phaseMassDensity();
+  auto phaseDensity = fluid.phaseDensity();
+  auto dPhaseFraction = fluid.dPhaseFraction();
+  array1d< real64 > feed( 3 );
+  real64 const densities[] = {800.0, 1022.0, 0.9907};
+  real64 const weights[] = {114e-3, 18e-3, 16e-3};
+  real64 const samples[][3] = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0},
+                             {0.0, 0.0, 1.0}, {0.6, 0.2, 0.2}};
+  for( auto const & sample : samples )
+  {
+    real64 volume = 0.0;
+    for( integer ic = 0; ic < 3; ++ic )
+    {
+      feed[ic] = sample[ic];
+      volume += USE_MASS ? sample[ic] / densities[ic] : sample[ic] * weights[ic] / densities[ic];
+    }
+    wrapper.updateSurfaceState( 0, 0, feed.toSliceConst() );
+    EXPECT_NEAR( totalDensity( 0, 0 ), 1.0 / volume, 1e-10 / volume );
+    for( integer ic = 0; ic < 3; ++ic )
+    {
+      EXPECT_DOUBLE_EQ( phaseFraction( 0, 0, ic ), sample[ic] );
+      EXPECT_DOUBLE_EQ( phaseMassDensity( 0, 0, ic ), densities[ic] );
+      EXPECT_DOUBLE_EQ( phaseDensity( 0, 0, ic ), USE_MASS ? densities[ic] : densities[ic] / weights[ic] );
+      EXPECT_DOUBLE_EQ( dPhaseFraction( 0, 0, ic, Deriv::dC + ic ), 1.0 );
+      EXPECT_DOUBLE_EQ( dTotalDensity( 0, 0, Deriv::dP ), 0.0 );
+      EXPECT_DOUBLE_EQ( dTotalDensity( 0, 0, Deriv::dT ), 0.0 );
+    }
+    // The PVDG starts at 3 MPa, and PVTW has Bw != 1. Neither table
+    // supplies the stock-tank volumes. Check the mixed-stream Jacobian
+    // against independent centered perturbations of the component feed.
+    if( sample[0] > 0.0 && sample[0] < 1.0 )
+    {
+      real64 derivatives[3];
+      for( integer ic = 0; ic < 3; ++ic )
+      {
+        derivatives[ic] = dTotalDensity( 0, 0, Deriv::dC + ic );
+      }
+      real64 constexpr eps = 1e-6;
+      for( integer ic = 0; ic < 3; ++ic )
+      {
+        feed[ic] = sample[ic] + eps;
+        wrapper.updateSurfaceState( 0, 0, feed.toSliceConst() );
+        real64 const plus = totalDensity( 0, 0 );
+        feed[ic] = sample[ic] - eps;
+        wrapper.updateSurfaceState( 0, 0, feed.toSliceConst() );
+        real64 const minus = totalDensity( 0, 0 );
+        EXPECT_NEAR( derivatives[ic], (plus - minus) / (2 * eps), 1e-7 * std::abs( derivatives[ic] ) );
+        feed[ic] = sample[ic];
+      }
+    }
+  }
+}
+
+TEST_F( MultiFluidBlackOilTestMass, stockTankSurfaceVolumes )
+{
+  testStockTankVolumes< true >( *this->getFluid( this->getFluidName() ) );
+}
+
+TEST_F( MultiFluidBlackOilTestMolar, stockTankSurfaceVolumes )
+{
+  testStockTankVolumes< false >( *this->getFluid( this->getFluidName() ) );
+}
+
 template< typename FIXTURE >
 stdVector< typename FIXTURE::Base::TestPoint > getTestData()
 {

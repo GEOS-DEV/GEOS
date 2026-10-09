@@ -390,7 +390,9 @@ void CompositionalMultiphaseWell::validateFluidModel(
 {
   compareMultiphaseModels( fluid, referenceFluid );
   compareMulticomponentModels( fluid, referenceFluid );
-  if( useSurfaceConditions() )
+  // Black-oil surface volumes use stock-tank component densities directly.
+  // The reservoir PVT pressure range does not constrain that conversion.
+  if( useSurfaceConditions() && dynamicCast< BlackOilFluidBase const * >( &fluid ) == nullptr )
   {
     try
     {
@@ -931,6 +933,7 @@ void CompositionalMultiphaseWell::updateSeparator( real64 const time_n,
 
   constitutive::constitutiveUpdatePassThru( fluidSeparator, [&] ( auto & castedFluidSeparator )
   {
+    using SeparatorType = TYPEOFREF( castedFluidSeparator );
     // typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     typename TYPEOFREF( castedFluidSeparator ) ::KernelWrapper fluidSeparatorWrapper = castedFluidSeparator.createKernelWrapper();
     // bring everything back to host, capture the scalars by reference
@@ -938,11 +941,27 @@ void CompositionalMultiphaseWell::updateSeparator( real64 const time_n,
                                 wellControlsName,
                                 flashPressure,
                                 flashTemperature,
+                                useSurfaceCond,
                                 logSurfaceCondition,
                                 iwelemRef,
                                 compFrac] ( localIndex const )
     {
-      fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
+      if constexpr( std::is_base_of_v< BlackOilFluidBase, SeparatorType > )
+      {
+        if( useSurfaceCond )
+        {
+          fluidSeparatorWrapper.updateSurfaceState( iwelemRef, 0, compFrac[iwelemRef] );
+        }
+        else
+        {
+          fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
+        }
+      }
+      else
+      {
+        GEOS_UNUSED_VAR( useSurfaceCond );
+        fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
+      }
       if( logSurfaceCondition )
       {
         GEOS_LOG_RANK( GEOS_FMT( "{}: separator density computed with P = {} Pa and T = {} K",
