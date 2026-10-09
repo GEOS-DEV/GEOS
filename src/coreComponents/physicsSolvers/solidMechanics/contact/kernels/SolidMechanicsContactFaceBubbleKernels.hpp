@@ -434,6 +434,249 @@ using FaceBubbleFactory = finiteElement::KernelFactory< FaceBubbleKernels,
                                                         real64 const,
                                                         real64 const (&) [3] >;
 
+/**
+ * @brief Adds the face bubble enrichment to the cell-averaged strain and stress of the bubble elements.
+ * @copydoc geos::finiteElement::KernelBase
+ *
+ * @detail The bubble enters the equilibrium as the enhanced strain B_b * b, but the constitutive stress
+ * (and averageStrain/averageStress, computed from it and from the nodal displacement) only carry the
+ * nodal part. This kernel adds (1/V) * int( B_b * b ) and (1/V) * int( D * B_b * b ) to the averages.
+ * It is an output-only correction: the constitutive stress is left untouched, as FaceBubbleKernels
+ * recovers the initial stress from it. It assumes a linear elastic model, as FaceBubbleKernels does,
+ * and must be launched after the averages have been recomputed.
+ */
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+class FaceBubbleAverageStressStrain :
+  public finiteElement::KernelBase< SUBREGION_TYPE,
+                                    CONSTITUTIVE_TYPE,
+                                    FE_TYPE,
+                                    3,
+                                    3 >
+{
+public:
+  /// Alias for the base class;
+  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
+                                          3,
+                                          3 >;
+
+  /// Number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
+
+  /// Compile time value for the number of faces per element.
+  static constexpr int numFacesPerElem = FE_TYPE::numFaces;
+
+  /// Compile time value for the number of quadrature points per element.
+  static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+  using Base::m_elemsToNodes;
+  using Base::m_finiteElementSpace;
+  using Base::m_constitutiveUpdate;
+
+  /**
+   * @brief Constructor
+   * @copydoc geos::finiteElement::KernelBase::KernelBase
+   */
+  FaceBubbleAverageStressStrain( NodeManager const & nodeManager,
+                                 EdgeManager const & edgeManager,
+                                 FaceManager const & faceManager,
+                                 localIndex const targetRegionIndex,
+                                 SUBREGION_TYPE const & elementSubRegion,
+                                 FE_TYPE const & finiteElementSpace,
+                                 CONSTITUTIVE_TYPE & inputConstitutiveType ):
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_X( nodeManager.referencePosition() ),
+    m_bubbleDisp( faceManager.getField< fields::contact::totalBubbleDisplacement >().toViewConst() ),
+    m_bubbleElems( elementSubRegion.bubbleElementsList() ),
+    m_elemsToFaces( elementSubRegion.faceElementsList() ),
+    m_elementVolume( elementSubRegion.getElementVolume() ),
+    // the kernel factory only hands out a const subregion, but these output averages are written here
+    m_avgStrain( const_cast< SUBREGION_TYPE & >( elementSubRegion ).template getField< fields::solidMechanics::averageStrain >().toView() ),
+    m_avgStress( const_cast< SUBREGION_TYPE & >( elementSubRegion ).template getField< fields::solidMechanics::averageStress >().toView() )
+  {
+    GEOS_UNUSED_VAR( edgeManager, targetRegionIndex );
+  }
+
+  /**
+   * @copydoc finiteElement::KernelBase::StackVariables
+   */
+  struct StackVariables
+  {
+public:
+
+    /**
+     * Default constructor
+     */
+    GEOS_HOST_DEVICE
+    StackVariables():
+      X{ {} },
+      bLocal{},
+      constitutiveStiffness{ {} },
+      avgStrain{},
+      avgStress{}
+    {}
+
+    /// local nodal coordinates
+    real64 X[ numNodesPerElem ][ 3 ];
+
+    /// Stack storage for the bubble displacement of the parent face
+    real64 bLocal[3];
+
+    /// Stack storage for the constitutive stiffness at a quadrature point.
+    real64 constitutiveStiffness[ 6 ][ 6 ];
+
+    /// Bubble contribution to the average strain (Voigt, engineering shear)
+    real64 avgStrain[6];
+
+    /// Bubble contribution to the average stress (Voigt)
+    real64 avgStress[6];
+  };
+
+  /**
+   * @copydoc ::geos::finiteElement::KernelBase::kernelLaunch
+   *
+   * @detail it only launches the kernel on the set of elements that have bubble dof within the subregion.
+   */
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static
+  real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+    GEOS_UNUSED_VAR( numElems );
+
+    forAll< POLICY >( kernelComponent.m_bubbleElems.size(),
+                      [=] GEOS_HOST_DEVICE ( localIndex const i )
+    {
+      typename KERNEL_TYPE::StackVariables stack;
+
+      kernelComponent.setup( i, stack );
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+        kernelComponent.quadraturePointKernel( i, q, stack );
+      }
+      kernelComponent.complete( i, stack );
+    } );
+
+    return 0.0;
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  void setup( localIndex const kk,
+              StackVariables & stack ) const
+  {
+    localIndex const k = m_bubbleElems[kk];
+
+    for( localIndex a=0; a<numNodesPerElem; ++a )
+    {
+      localIndex const localNodeIndex = m_elemsToNodes( k, a );
+      for( int i=0; i<3; ++i )
+      {
+        stack.X[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+      }
+    }
+
+    localIndex const localFaceIndex = m_elemsToFaces[kk][0];
+    for( int i=0; i<3; ++i )
+    {
+      stack.bLocal[ i ] = m_bubbleDisp[ localFaceIndex ][i];
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  void quadraturePointKernel( localIndex const kk,
+                              localIndex const q,
+                              StackVariables & stack ) const
+  {
+    localIndex const k = m_bubbleElems[kk];
+    constexpr int nBubbleUdof = numFacesPerElem*3;
+
+    real64 dBubbleNdX[ numFacesPerElem ][ 3 ];
+    // Next line is needed because only a placeholder for calcGradFaceBubbleN exists in some finite elements
+    LvArray::tensorOps::fill< numFacesPerElem, 3 >( dBubbleNdX, 0 );
+    real64 const detJxW = m_finiteElementSpace.calcGradFaceBubbleN( q, stack.X, dBubbleNdX );
+
+    real64 strainBubbleMatrix[6][nBubbleUdof];
+    solidMechanicsConformingContactKernelsHelper::assembleStrainOperator< 6, nBubbleUdof, numFacesPerElem >( strainBubbleMatrix, dBubbleNdX );
+
+    // Only the bubble of the parent face is active
+    localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
+    real64 strainBubble[6] = {0};
+    for( int i = 0; i < 6; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        strainBubble[i] += strainBubbleMatrix[i][parentFaceIndex*3+j] * stack.bLocal[j];
+      }
+    }
+
+    m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
+    real64 stressBubble[6] = {0};
+    LvArray::tensorOps::Ri_eq_AijBj< 6, 6 >( stressBubble, stack.constitutiveStiffness, strainBubble );
+
+    LvArray::tensorOps::scaledAdd< 6 >( stack.avgStrain, strainBubble, detJxW );
+    LvArray::tensorOps::scaledAdd< 6 >( stack.avgStress, stressBubble, detJxW );
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  void complete( localIndex const kk,
+                 StackVariables & stack ) const
+  {
+    localIndex const k = m_bubbleElems[kk];
+
+
+    // as in AverageStressStrainOverQuadraturePoints
+    real64 const conversionFactor[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5};
+
+    //atomics for single neighboring sharing 2 fractured fraces
+    for( int icomp = 0; icomp < 6; ++icomp )
+    {
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_avgStrain[k][icomp],
+                                               conversionFactor[icomp] * stack.avgStrain[icomp] / m_elementVolume[k] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_avgStress[k][icomp],
+                                               stack.avgStress[icomp] / m_elementVolume[k] );
+
+    }
+  }
+
+protected:
+
+  /// The reference position of the nodes.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  /// The array containing the bubble displacement.
+  arrayView2d< real64 const > const m_bubbleDisp;
+
+  /// The array containing the list of bubble elements.
+  arrayView1d< localIndex const > const m_bubbleElems;
+
+  /// The array containing the element to bubble face map (mesh face index, local face index in the element).
+  arrayView2d< localIndex const > const m_elemsToFaces;
+
+  /// The element volume
+  arrayView1d< real64 const > const m_elementVolume;
+
+  /// The average strain
+  fields::solidMechanics::arrayView2dLayoutStrain const m_avgStrain;
+
+  /// The average stress
+  fields::solidMechanics::arrayView2dLayoutAvgStress const m_avgStress;
+
+};
+
+/// The factory used to construct a FaceBubbleAverageStressStrain kernel.
+using FaceBubbleAverageStressStrainFactory = finiteElement::KernelFactory< FaceBubbleAverageStressStrain >;
+
 } // namespace SolidMechanicsContactFaceBubbleKernels
 
 } // namespace geos

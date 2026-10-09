@@ -813,6 +813,21 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
 
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
+  // The averages computed above only carry the nodal strain - add the face bubble enrichment (output only)
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    solidMechanicsConformingContactKernels::FaceBubbleAverageStressStrainFactory kernelFactory;
+
+    finiteElement::regionBasedKernelApplication< parallelDevicePolicy< >, ElasticIsotropic, CellElementSubRegion >( mesh,
+                                                                                                                    regionNames,
+                                                                                                                    getDiscretizationName(),
+                                                                                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::
+                                                                                                                      solidMaterialNamesString(),
+                                                                                                                    kernelFactory );
+  } );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
