@@ -422,12 +422,12 @@ struct ComputeTractionKernel
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
- // Open elements carry no traction (as in UpdateStateKernel), see ComputeTractionSimultaneousKernel
- if( fractureState[k] == fields::contact::FractureState::Open )
- {
-   LvArray::tensorOps::fill< 3 >( tractionNew[k], 0.0 );
-   return;
- }
+      // Open elements carry no traction (as in UpdateStateKernel), see ComputeTractionSimultaneousKernel
+      if( fractureState[k] == fields::contact::FractureState::Open )
+      {
+        LvArray::tensorOps::fill< 3 >( tractionNew[k], 0.0 );
+        return;
+      }
       contactWrapper.updateTractionOnly( k, dispJump[k], deltaDispJump[k],
                                          penalty[k], traction[k], tractionNew[k] );
 
