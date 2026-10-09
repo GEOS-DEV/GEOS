@@ -377,6 +377,51 @@ void testNumericalJacobian( ImmiscibleMultiphaseFlow & solver,
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 }
 
+TEST( InitialImmiscibleState, PhaseInventoryAvailableBeforeFirstStep )
+{
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+  setupProblemFromXML( state.getProblemManager(), xmlInput );
+  MeshLevel const & mesh = state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+  {
+    auto const & saturation = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+    auto const & mass = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMass >();
+    saturation.move( hostMemorySpace, false );
+    mass.move( hostMemorySpace, false );
+    // These unit cells have unit porosity and constant unit phase density.
+    for( localIndex k = 0; k < subRegion.size(); ++k )
+    {
+      EXPECT_NEAR( saturation[k][0] + saturation[k][1], 1.0, 1e-14 );
+      EXPECT_NEAR( mass[k][0], 0.3, 1e-14 );
+      EXPECT_NEAR( mass[k][1], 0.7, 1e-14 );
+    }
+  } );
+}
+
+TEST( InitialImmiscibleState, DependentSaturationSatisfiesVolumeConstraint )
+{
+  string input( xmlInput );
+  size_t const start = input.rfind( "<FieldSpecification", input.find( "name=\"initialSat2\"" ) );
+  size_t const end = input.find( "/>", start ) + 2;
+  input.erase( start, end - start );
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+  setupProblemFromXML( state.getProblemManager(), input.c_str() );
+  MeshLevel const & mesh = state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+  {
+    auto const & saturation = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+    auto const & mass = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMass >();
+    saturation.move( hostMemorySpace, false );
+    mass.move( hostMemorySpace, false );
+    for( localIndex k = 0; k < subRegion.size(); ++k )
+    {
+      EXPECT_NEAR( saturation[k][0], 0.3, 1e-14 );
+      EXPECT_NEAR( saturation[k][1], 0.7, 1e-14 );
+      EXPECT_NEAR( mass[k][0] + mass[k][1], 1.0, 1e-14 );
+    }
+  } );
+}
+
 class ImmiscibleMultiphaseFlowTest : public ::testing::Test
 {
 public:
