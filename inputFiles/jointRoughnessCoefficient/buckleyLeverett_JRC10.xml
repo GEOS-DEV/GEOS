@@ -1,0 +1,260 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  
+  <Included>
+      <File name="./../fractures_data.xml"/>
+  </Included>
+  
+  <Solvers>
+    <ImmiscibleMultiphaseFlow
+      name="FlowSolver"
+      logLevel="4"
+      discretization="TPFA"
+      temperature="300"
+      initialDt="0.001"
+      targetRegions="{ region, fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="50"
+        maxTimeStepCuts="2"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"  
+        logLevel="0"/>
+    </ImmiscibleMultiphaseFlow>
+  </Solvers>
+  
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="TPFA"/>
+    </FiniteVolume>
+
+    <FiniteElements>
+      <FiniteElementSpace
+      name="FE1"
+      order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+  
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ cellBlock }"
+      materialList="{ fluid, rock, relperm }"/>
+
+    <SurfaceElementRegion
+      name="fracture"
+      defaultAperture="1e-4"
+      materialList="{ fluid, fractureFilling, relperm }"
+      subRegionType="embeddedElement"/>
+  </ElementRegions>
+  
+  <Functions>
+    <TableFunction
+      name="densityTablePhase1"
+      coordinates="{ 0.0}"
+      values="{ 1000 }" />
+    <TableFunction
+      name="densityTablePhase2"
+      coordinates="{ 0.0 }"
+      values="{ 700 }" />
+    <TableFunction
+      name="viscosityTablePhase1"
+      coordinates="{ 0.0}"
+      values="{ 1e-3 }" />                  
+    <TableFunction
+      name="viscosityTablePhase2"
+      coordinates="{ 0.0 }"
+      values="{ 1e-3 }" />
+ </Functions>
+
+  <Constitutive>
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.3"
+      referencePressure="0"
+      compressibility="0"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.0"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+	  permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15}"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"
+	  jointRoughnessCoefficient="10.0"/>   
+
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ water, oil }"
+      phaseMinVolumeFraction="{ 0.0, 0.0 }"
+      phaseRelPermExponent="{ 2, 2 }"
+      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+    
+    <TwoPhaseImmiscibleFluid
+      name="fluid"
+      phaseNames="{water, oil}"
+      densityTableNames="{densityTablePhase1, densityTablePhase2}"    
+      viscosityTableNames="{viscosityTablePhase1, viscosityTablePhase2}" />
+  </Constitutive>
+  
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="5000000"/>
+
+    <FieldSpecification
+      name="initialSaturation_Water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="phaseVolumeFraction"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialSaturation_Oil"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="phaseVolumeFraction"
+      component="1"
+      scale="1.0"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions"
+      scale="-10"
+      component="0"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sinkTermPressure"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="5000000"
+      setNames="{ sink }"/>
+
+    <FieldSpecification
+      name="sinkTermSaturation_gas"
+      setNames="{ sink }"
+      objectPath="ElementRegions"
+      fieldName="phaseVolumeFraction"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="sinkTermComposition_water"
+      setNames="{ sink }"
+      objectPath="ElementRegions"
+      fieldName="phaseVolumeFraction"
+      component="1"
+      scale="1.0"/>   
+  </FieldSpecifications>
+  
+  <Outputs>
+    <VTK
+      name="vtkOutput_JRC10"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/phaseVolumeFractionCollection}"
+      filename="saturationHistory" />
+
+    <Restart
+      name="restartOutput"/> 
+  </Outputs>
+  
+  <Tasks>
+    <PackCollection
+      name="phaseVolumeFractionCollection"
+      objectPath="ElementRegions/region/cellBlock"
+      fieldName="phaseVolumeFraction"/>
+  </Tasks>
+  
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 50 }"
+      ny="{ 50 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{-0.00001, -0.00001, -0.00001}"
+      xMax="{ 3, 3, 1.00001}"/>
+
+    <Box
+      name="sink"
+      xMin="{ 97, 97, -0.00001}"
+      xMax="{ 101, 101, 1.00001}"/>
+    
+  </Geometry>
+
+  <Events
+    maxTime="3e5">
+
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+    
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1500"
+      targetExactTimestep="1500"
+      target="/Outputs/vtkOutput_JRC10"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="1500"
+      targetExactTimestep="1500"
+      target="/Outputs/timeHistoryOutput" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1500"
+      targetExactTimestep="1500"
+      target="/Tasks/phaseVolumeFractionCollection" />
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="100"
+      target="/Solvers/FlowSolver"/>    
+  </Events>
+  
+  
+</Problem>
