@@ -992,6 +992,18 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
   {
     // Initialize/update dependent state quantities
 
+    // Clipping above can change a primary density or overall composition.
+    // Refresh fractions and the fluid before saving phase state so that the
+    // initial component amounts and constitutive phase inventories agree.
+    if( m_allowCompDensChopping )
+    {
+      if( m_formulationType == CompositionalMultiphaseFormulationType::ComponentDensities )
+      {
+        updateGlobalComponentFraction( subRegion );
+      }
+      updateFluidModel( subRegion );
+    }
+
     updateCompAmount( subRegion );
     updatePhaseVolumeFraction( subRegion );
 

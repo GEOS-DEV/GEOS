@@ -198,6 +198,92 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 }
 
+TEST( InitialCompositionalState, DensityFloorUpdatesFractionsAndFluid )
+{
+  string input( xmlInput );
+  // Set one component to zero and keep the prescribed sum equal to one.
+  string const oldN2 = "scale=\"0.1\"";
+  input.replace( input.find( oldN2, input.find( "initialComposition_N2" ) ), oldN2.size(), "scale=\"0.0\"" );
+  string const oldWater = "scale=\"0.1\"";
+  input.replace( input.find( oldWater, input.find( "initialComposition_H20" ) ), oldWater.size(), "scale=\"0.2\"" );
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+  setupProblemFromXML( state.getProblemManager(), input.c_str() );
+  MeshLevel const & mesh = state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+  {
+    auto const & densities = subRegion.getField< fields::flow::globalCompDensity >();
+    auto const & fractions = subRegion.getField< fields::flow::globalCompFraction >();
+    auto const & saturation = subRegion.getField< fields::flow::phaseVolumeFraction >();
+    auto const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( "fluid" );
+    auto const phaseDensity = fluid.phaseDensity();
+    auto const phaseComposition = fluid.phaseCompFraction();
+    densities.move( hostMemorySpace, false );
+    fractions.move( hostMemorySpace, false );
+    saturation.move( hostMemorySpace, false );
+    phaseDensity.move( hostMemorySpace, false );
+    phaseComposition.move( hostMemorySpace, false );
+    for( localIndex k = 0; k < subRegion.size(); ++k )
+    {
+      real64 total = 0.0;
+      for( localIndex c = 0; c < densities.size( 1 ); ++c ) total += densities[k][c];
+      EXPECT_GT( densities[k][0], 0.0 );
+      EXPECT_GT( fractions[k][0], 0.0 );
+      for( localIndex c = 0; c < densities.size( 1 ); ++c )
+      {
+        EXPECT_NEAR( fractions[k][c], densities[k][c] / total, 5e-16 );
+      }
+      real64 recoveredTraceDensity = 0.0;
+      for( localIndex phase = 0; phase < saturation.size( 1 ); ++phase )
+      {
+        recoveredTraceDensity += saturation[k][phase] * phaseDensity[k][0][phase] * phaseComposition[k][0][phase][0];
+      }
+      EXPECT_NEAR( recoveredTraceDensity, densities[k][0], 1e-14 );
+    }
+  } );
+}
+
+TEST( InitialCompositionalState, FractionFloorUpdatesFluid )
+{
+  string input( xmlInput );
+  string const solverName = "name=\"compflow\"";
+  input.replace( input.find( solverName ), solverName.size(),
+                 solverName + " formulationType=\"OverallComposition\" minCompFrac=\"1e-10\"" );
+  string const initialFraction = "scale=\"0.1\"";
+  input.replace( input.find( initialFraction, input.find( "initialComposition_N2" ) ),
+                 initialFraction.size(), "scale=\"0.0\"" );
+  input.replace( input.find( initialFraction, input.find( "initialComposition_H20" ) ),
+                 initialFraction.size(), "scale=\"0.2\"" );
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+  setupProblemFromXML( state.getProblemManager(), input.c_str() );
+  MeshLevel const & mesh = state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+  {
+    auto const & fractions = subRegion.getField< fields::flow::globalCompFraction >();
+    auto const & saturation = subRegion.getField< fields::flow::phaseVolumeFraction >();
+    auto const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( "fluid" );
+    auto const phaseDensity = fluid.phaseDensity();
+    auto const phaseComposition = fluid.phaseCompFraction();
+    fractions.move( hostMemorySpace, false );
+    saturation.move( hostMemorySpace, false );
+    phaseDensity.move( hostMemorySpace, false );
+    phaseComposition.move( hostMemorySpace, false );
+    for( localIndex k = 0; k < subRegion.size(); ++k )
+    {
+      EXPECT_GT( fractions[k][0], 0.0 );
+      real64 recoveredDensity = 0.0;
+      real64 recoveredTraceDensity = 0.0;
+      for( localIndex phase = 0; phase < saturation.size( 1 ); ++phase )
+      {
+        real64 const density = saturation[k][phase] * phaseDensity[k][0][phase];
+        recoveredDensity += density;
+        recoveredTraceDensity += density * phaseComposition[k][0][phase][0];
+      }
+      ASSERT_GT( recoveredDensity, 0.0 );
+      EXPECT_NEAR( recoveredTraceDensity / recoveredDensity, fractions[k][0], 1e-14 );
+    }
+  } );
+}
+
 class CompositionalMultiphaseFlowTest : public ::testing::Test
 {
 public:
