@@ -349,7 +349,12 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
                                               [&]( localIndex const,
                                                    ElementSubRegionBase & subRegion )
   {
-    // 2. Assume global component fractions have been prescribed.
+    // The first phase fraction is independent; the second must satisfy the
+    // same volume constraint used by all subsequent state updates. Enforce it
+    // before relative permeability, capillary pressure, and their histories
+    // use the initial saturations.
+    updateVolumeConstraint( subRegion );
+
     // Initialize constitutive state to get fluid density.
     updateFluidModel( subRegion );
 
@@ -450,7 +455,9 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     initPres.setValues< parallelDevicePolicy<> >( pres );
     initTemp.setValues< parallelDevicePolicy<> >( temp );
 
-    // TODO: Missing updatePhaseMass?
+    // Populate the initial inventory after porosity and density are available,
+    // so time-zero output represents the same state as the first step setup.
+    updatePhaseMass( subRegion );
   } );
 }
 
