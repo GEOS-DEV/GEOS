@@ -121,6 +121,8 @@ public:
   string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
+
+  virtual void finalizeInitialState( DomainPartition & domain ) override;
   /**
    * @brief Get a well solver for a given well element sub-region
    * @param subRegion the well subRegion whose well solver is requested
