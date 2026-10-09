@@ -22,7 +22,7 @@
 
 #include "SolidMechanicsConformingContactKernelsBase.hpp"
 #include "mesh/MeshFields.hpp"
-
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 
 namespace geos
 {
@@ -416,12 +416,18 @@ struct ComputeTractionKernel
           arrayView2d< real64 const > const & traction,
           arrayView2d< real64 const > const & dispJump,
           arrayView2d< real64 const > const & deltaDispJump,
+          arrayView1d< integer const > const & fractureState,
           arrayView2d< real64 > const & tractionNew )
   {
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
+ // Open elements carry no traction (as in UpdateStateKernel), see ComputeTractionSimultaneousKernel
+ if( fractureState[k] == fields::contact::FractureState::Open )
+ {
+   LvArray::tensorOps::fill< 3 >( tractionNew[k], 0.0 );
+   return;
+ }
       contactWrapper.updateTractionOnly( k, dispJump[k], deltaDispJump[k],
                                          penalty[k], traction[k], tractionNew[k] );
 
