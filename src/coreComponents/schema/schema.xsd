@@ -3299,6 +3299,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density in a Newton iteration-->
@@ -3420,6 +3422,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density in a Newton iteration-->
@@ -4138,6 +4142,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
@@ -4713,6 +4719,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxProppantConcentration => Maximum proppant concentration-->
 		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
@@ -4777,6 +4785,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
@@ -4888,6 +4898,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
@@ -4943,6 +4955,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
@@ -5296,6 +5310,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
@@ -5357,6 +5373,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
@@ -6223,6 +6241,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density between two Newton iterations-->
@@ -6473,6 +6493,10 @@ Information output from lower logLevels is added with the desired log level
 1
  - Well control information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--referenceReservoirRegion => Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.
 Frequency of pressure update is set in SinglePhase/CompositionalMultiphaseStatistics definition.
 Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint propertiesNote the event associated with the statists task must be entered before the solver event.
@@ -8830,8 +8854,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
-		<!--solventMassPerSolutionVolume => Mass of solvent per unit volume of solution [kg/m^3], used to convert species molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 approximates an aqueous solution by the density of pure water.-->
-		<xsd:attribute name="solventMassPerSolutionVolume" type="real64" default="1000" />
+		<!--solventMassFraction => Mass fraction of solvent in the solution [-]. Species molality [mol/kg solvent] times this fraction is the amount per kg of solution, and times the fluid density the amount per m^3 of solution. The default of 1 is a dilute aqueous solution.-->
+		<xsd:attribute name="solventMassFraction" type="real64" default="1" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
 		<!--viscosityModelType => Type of viscosity model. Valid options:
