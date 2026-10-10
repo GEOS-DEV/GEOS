@@ -80,3 +80,10 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
     set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
     target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
 endif()
+
+# Initial derived fields must be available before the first solver step.
+blt_add_executable( NAME testInitialStressOutput
+                    SOURCES testInitialStressOutput.cpp
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+geos_add_test( NAME testInitialStressOutput COMMAND testInitialStressOutput )
