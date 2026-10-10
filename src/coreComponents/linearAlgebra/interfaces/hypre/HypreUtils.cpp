@@ -19,11 +19,15 @@
 
 #include "HypreUtils.hpp"
 
+#include "common/MpiWrapper.hpp"
+#include "linearAlgebra/common/common.hpp"
+#include "linearAlgebra/DofManager.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
 
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_parcsr_ls.h>
-
+#include <algorithm>
 #include <numeric>
 
 namespace geos
@@ -31,6 +35,67 @@ namespace geos
 
 namespace hypre
 {
+
+namespace
+{
+array1d< int > s_testingKrylovDofLabels;
+}
+
+void fillKrylovDofLabels( HypreMatrix const & mat,
+                          array1d< int > & labels )
+{
+  labels.clear();
+  if( DofManager const * const dofManager = mat.dofManager() )
+  {
+    dofManager->getLocalDofComponentLabels( labels );
+    return;
+  }
+  if( s_testingKrylovDofLabels.size() == mat.numLocalRows() )
+  {
+    labels = s_testingKrylovDofLabels;
+  }
+}
+
+void assignKrylovDofTags( arrayView1d< int const > const & labels,
+                          MPI_Comm const comm,
+                          array1d< HYPRE_Int > & tags,
+                          HYPRE_Int & numTags )
+{
+  int localMax = -1;
+  for( localIndex i = 0; i < labels.size(); ++i )
+  {
+    localMax = std::max( localMax, labels[i] );
+  }
+
+  numTags = LvArray::integerConversion< HYPRE_Int >( std::max( MpiWrapper::max( localMax, comm ) + 1, 1 ) );
+  if( numTags <= 1 )
+  {
+    tags.clear();
+    return;
+  }
+
+  tags.resize( labels.size() );
+  for( localIndex i = 0; i < labels.size(); ++i )
+  {
+    tags[i] = LvArray::integerConversion< HYPRE_Int >( labels[i] );
+  }
+}
+
+namespace testing
+{
+
+void setKrylovDofLabels( arrayView1d< int const > const & labels )
+{
+  s_testingKrylovDofLabels.resize( labels.size() );
+  std::copy( labels.begin(), labels.end(), s_testingKrylovDofLabels.begin() );
+}
+
+void clearKrylovDofLabels()
+{
+  s_testingKrylovDofLabels.clear();
+}
+
+}
 
 HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec )
 {
@@ -82,7 +147,7 @@ HYPRE_Vector parVectorToVector( HYPRE_ParVector const vec, int const targetRank 
     newVec = hypre_SeqVectorCreate( globalSize );
     hypre_SeqVectorInitialize_v2( newVec, HYPRE_MEMORY_HOST );
 
-    std::vector< MPI_Request > requests( numProcs, MPI_REQUEST_NULL );
+    stdVector< MPI_Request > requests( numProcs, MPI_REQUEST_NULL );
     for( int i = 0; i < numProcs; ++i )
     {
       HYPRE_Real * const data = hypre_VectorData( newVec ) + offsets[i];

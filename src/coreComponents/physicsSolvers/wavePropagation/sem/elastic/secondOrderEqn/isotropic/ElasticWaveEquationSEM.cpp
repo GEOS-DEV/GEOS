@@ -729,7 +729,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    WaveSolverBase::viewKeyStruct::freeSurfaceString(),
-                   [&]( FieldSpecificationBase const & bc,
+                   [&]( FieldSpecification const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group &,

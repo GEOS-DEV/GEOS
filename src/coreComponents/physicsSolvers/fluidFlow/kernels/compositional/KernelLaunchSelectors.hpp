@@ -55,7 +55,7 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
     case 5:
     { lambda( std::integral_constant< T, 5 >() ); return; }
     default:
-    { GEOS_ERROR( "Unsupported number of components: " << value ); }
+    { GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", value ) ); }
   }
 }
 
@@ -99,7 +99,7 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
   }
   else
   {
-    GEOS_ERROR( "Unsupported number of phases: " << numPhase );
+    GEOS_ERROR( GEOS_FMT( "Unsupported number of phases: {}", numPhase ) );
   }
 }
 
@@ -125,7 +125,7 @@ void KernelLaunchSelector_NC_NP_THERM( integer const numComp, integer const numP
     }
     else
     {
-      GEOS_ERROR( "Unsupported number of phases: " << numPhase );
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of phases: {}", numPhase ) );
     }
   }
   else
@@ -146,7 +146,7 @@ void KernelLaunchSelector_NC_NP_THERM( integer const numComp, integer const numP
     }
     else
     {
-      GEOS_ERROR( "Unsupported number of phases: " << numPhase );
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of phases: {}", numPhase ) );
     }
   }
 }

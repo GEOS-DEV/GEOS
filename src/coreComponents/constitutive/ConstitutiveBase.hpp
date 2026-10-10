@@ -170,7 +170,7 @@ public:
   /**
    * @return A const vector containing all fields
    */
-  std::vector< std::string > const & getUserFields() const
+  stdVector< std::string > const & getUserFields() const
   {
     return m_userFields;
   }
@@ -189,7 +189,7 @@ private:
   bool m_isClone;
 
   // Vector containing all fields registered with `registerField()`
-  std::vector< std::string > m_userFields;
+  stdVector< std::string > m_userFields;
 };
 
 }

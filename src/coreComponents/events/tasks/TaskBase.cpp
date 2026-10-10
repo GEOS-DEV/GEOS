@@ -24,6 +24,8 @@ namespace geos
 
 using namespace dataRepository;
 
+string TaskBase::s_outputDir;
+
 TaskBase::TaskBase( string const & name,
                     Group * const parent ):
   ExecutableGroup( name, parent )
@@ -42,5 +44,15 @@ TaskBase::CatalogInterface::CatalogType & TaskBase::getCatalog()
 
 void TaskBase::postInputInitialization()
 { }
+
+string const TaskBase::getOutputDirectory()
+{
+  return s_outputDir;
+}
+
+void TaskBase::setOutputDirectory( string const & outputDir )
+{
+  s_outputDir = outputDir;
+}
 
 } /* namespace */

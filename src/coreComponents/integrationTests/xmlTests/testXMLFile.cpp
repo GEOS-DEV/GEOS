@@ -18,7 +18,6 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/FieldSpecificationBase.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/DataContext.hpp"
 
@@ -39,7 +38,7 @@ TEST( testXML, testXMLFile )
   problemManager.parseInputFile();
 
   // Check that we've read the full XML with all nested includes by inspecting boundary conditions
-  EXPECT_TRUE( problemManager.getFieldSpecificationManager().hasGroup< FieldSpecificationBase >( "v0" ) );
+  EXPECT_TRUE( problemManager.getFieldSpecificationManager().hasGroup< FieldSpecification >( "v0" ) );
 }
 
 /**

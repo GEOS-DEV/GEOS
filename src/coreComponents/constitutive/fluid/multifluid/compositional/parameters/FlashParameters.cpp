@@ -86,6 +86,7 @@ void FlashParameters::registerParametersImpl( MultiFluidBase * fluid )
 void FlashParameters::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                    ComponentProperties const & componentProperties )
 {
+  GEOS_UNUSED_VAR( fluid );
   GEOS_UNUSED_VAR( componentProperties );
 
   auto const checkLowerBound = [&]( auto const & value, auto const & bound, string const & attribute )

@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<Problem>
+    <Mesh>
+        <VTKMesh
+            name="mesh"
+            file="dome_bench.vti"
+            logLevel="2">
+            <InternalWell
+                logLevel="1"
+                name="well.WATER.INJECTOR"
+                wellRegionName="WATER.INJECTOR"
+                wellControlsName="WATER.INJECTOR.CONTROL"
+                polylineNodeCoords="{{ 125.0, 25.0, -4500.0 }, { 125.0, 25.0, -4510.0 }}"
+                polylineSegmentConn="{{0,1}}"
+                radius="0.083350"
+                numElementsPerSegment="1">
+                <Perforation
+                    name="WATER.INJECTOR.1"
+                    distanceFromHead="5.0" />
+            </InternalWell>
+            <InternalWell
+                logLevel="1"
+                name="well.GAS.INJECTOR"
+                wellRegionName="GAS.INJECTOR"
+                wellControlsName="GAS.INJECTOR.CONTROL"
+                polylineNodeCoords="{{ 125.0, 25.0, -4500.0 }, { 125.0, 25.0, -4510.0 }}"
+                polylineSegmentConn="{{0,1}}"
+                radius="0.083350"
+                numElementsPerSegment="1">
+                <Perforation
+                    name="GAS.INJECTOR.1"
+                    distanceFromHead="5.0" />
+            </InternalWell>
+            <InternalWell
+                logLevel="1"
+                name="well.PRODUCER"
+                wellRegionName="PRODUCER"
+                wellControlsName="PRODUCER.CONTROL"
+                polylineNodeCoords="{{ 2056.25, 25.0, -4125.0 }, { 2056.25, 25.0, -4127.5 }}"
+                polylineSegmentConn="{{0,1}}"
+                radius="0.083350"
+                numElementsPerSegment="1">
+                <Perforation
+                    name="PRODUCER.1"
+                    distanceFromHead="1.25" />
+            </InternalWell>
+        </VTKMesh>
+    </Mesh>
+</Problem>

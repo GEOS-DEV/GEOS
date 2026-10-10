@@ -32,6 +32,9 @@
 
 extern "C"
 {
+/// IJVector struct forward declaration
+struct hypre_IJVector_struct;
+
 /// ParVector struct forward declaration
 struct hypre_ParVector_struct;
 }
@@ -199,6 +202,9 @@ public:
 
 private:
 
+  /// IJVector pointer alias
+  using HYPRE_IJVector = struct hypre_IJVector_struct *;
+
   /// ParVector pointer alias
   using HYPRE_ParVector = struct hypre_ParVector_struct *;
 
@@ -210,7 +216,24 @@ public:
    */
   HYPRE_ParVector const & unwrapped() const;
 
+  /**
+   * @brief Returns a pointer to the IJ wrapper implementation.
+   * @return the underlying HYPRE_IJVector object.
+   */
+  HYPRE_IJVector const & unwrappedIJ() const;
+
 private:
+
+  /**
+   * @brief Create an IJ wrapper around an existing ParVector.
+   * @param parVector the ParVector to wrap
+   */
+  void parVectorToIJ( HYPRE_ParVector const & parVector );
+
+  /**
+   * Pointer to underlying HYPRE_IJVector type.
+   */
+  HYPRE_IJVector m_ij_vec;
 
   /**
    * Pointer to underlying HYPRE_ParVector type.

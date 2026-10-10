@@ -30,6 +30,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -49,6 +50,7 @@
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -149,6 +151,23 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
 void SolidMechanicsLagrangianFEM::postInputInitialization()
 {
   PhysicsSolverBase::postInputInitialization();
+
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::mgr &&
+      linParams.mgr.strategy == LinearSolverParameters::MGR::StrategyType::invalid )
+  {
+    GEOS_WARNING( GEOS_FMT( "{}: standalone solid mechanics does not define an MGR strategy; "
+                            "switching preconditionerType from `{}` to `{}`",
+                            getName(),
+                            linParams.preconditionerType,
+                            LinearSolverParameters::PreconditionerType::amg ) );
+
+    linParams.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+    if( linParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::constantModes )
+    {
+      linParams.amg.nullSpaceType = LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes;
+    }
+  }
 
   m_surfaceGenerator = this->getParent().getGroupPointer< PhysicsSolverBase >( m_surfaceGeneratorName );
 }
@@ -499,6 +518,18 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   {
     int const maxNumResolves = m_maxNumResolves;
     int globallyFractured = 0;
+
+    // Check if mesh was modified by an external event (e.g., SurfaceGen) before this solver step
+    // This ensures setupSystem is called before implicitStepSetup when topology changes occur
+    Timestamp const initialMeshModificationTimestamp = getMeshModificationTimestamp( domain );
+    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName );
+    if( initialMeshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() )
+    {
+      m_dofManager.clear();
+      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, true );
+      setSystemSetupTimestamp( LvArray::math::max( initialMeshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
+    }
+
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
     {
@@ -507,10 +538,10 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
       // Only build the sparsity pattern if the mesh has changed
-      if( meshModificationTimestamp > getSystemSetupTimestamp() || globallyFractured )
+      if( meshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() || globallyFractured )
       {
         setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-        setSystemSetupTimestamp( meshModificationTimestamp );
+        setSystemSetupTimestamp( LvArray::math::max( meshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
       }
 
       dtReturn = nonlinearImplicitStep( time_n,
@@ -607,7 +638,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     fsManager.applyFieldValue( time_n + dt,
                                mesh,
                                solidMechanics::totalDisplacement::key(),
-                               [&]( FieldSpecificationBase const & bc,
+                               [&]( FieldSpecification const & bc,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
@@ -621,7 +652,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
         vel( a, component ) = u( a, component );
       } );
     },
-                               [&]( FieldSpecificationBase const & bc,
+                               [&]( FieldSpecification const & bc,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
@@ -701,21 +732,22 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
     fsManager.apply< NodeManager >( time,
                                     mesh,
                                     solidMechanics::totalDisplacement::key(),
-                                    [&]( FieldSpecificationBase const & bc,
+                                    [&]( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup,
                                          string const fieldName )
     {
-      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy<  > >( targetSet,
-                                                                     time,
-                                                                     targetGroup,
-                                                                     fieldName,
-                                                                     dofKey,
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                                              parallelDevicePolicy<  > >( bc,
+                                                                                          targetSet,
+                                                                                          time,
+                                                                                          targetGroup,
+                                                                                          fieldName,
+                                                                                          dofKey,
+                                                                                          dofManager.rankOffset(),
+                                                                                          localMatrix,
+                                                                                          localRhs );
 
       if( targetSet.size() > 0 && bc.getComponent() == 0 )
       {
@@ -750,14 +782,15 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
         "\nWarning!"
         "\nThere is no displacement boundary condition applied to this problem in the {} direction. \n"
         "The problem may be ill-posed.\n";
+      GEOS_UNUSED_VAR( bcLogMessage );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage, 'x' ),
+                       GEOS_FMT_RUNTIME( bcLogMessage, 'x' ),
                        getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage, 'y' ),
+                       GEOS_FMT_RUNTIME( bcLogMessage, 'y' ),
                        getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage, 'z' ),
+                       GEOS_FMT_RUNTIME( bcLogMessage, 'z' ),
                        getDataContext() );
     }
   }
@@ -798,6 +831,7 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
                  blockLocalDofNumber,
                  dofRankOffset,
                  faceManager,
+                 nodeManager.referencePosition(),
                  targetSet,
                  localRhs );
     } );
@@ -969,6 +1003,16 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       solidMechanics::arrayView2dLayoutStrain avgPlasticStrain = subRegion.getField< solidMechanics::averagePlasticStrain >();
       solidMechanics::arrayView2dLayoutAvgStress avgStress = subRegion.getField< solidMechanics::averageStress >();
 
+      arrayView1d< real64 const > const temperature =
+        subRegion.hasField< fields::flow::temperature >()
+        ? subRegion.getField< fields::flow::temperature >().toViewConst()
+        : arrayView1d< real64 const >{};
+
+      arrayView1d< real64 const > const temperature_n =
+        subRegion.hasField< fields::flow::temperature_n >()
+        ? subRegion.getField< fields::flow::temperature_n >().toViewConst()
+        : arrayView1d< real64 const >{};
+
       constitutive::ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, [&] ( auto & solidModel )
       {
         using SOLID_TYPE = TYPEOFREF( solidModel );
@@ -988,7 +1032,9 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
                                                                                                                                 avgStrain,
                                                                                                                                 avgPlasticStrain,
                                                                                                                                 stress,
-                                                                                                                                avgStress );
+                                                                                                                                avgStress,
+                                                                                                                                temperature,
+                                                                                                                                temperature_n );
         } );
 
 
@@ -1230,22 +1276,23 @@ SolidMechanicsLagrangianFEM::
     fsManager.apply< NodeManager >( time_n + dt,
                                     mesh,
                                     viewKeyStruct::forceString(),
-                                    [&]( FieldSpecificationBase const & bc,
+                                    [&]( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup,
                                          string const & GEOS_UNUSED_PARAM( fieldName ) )
     {
       // TODO: fix use of dummy name
-      bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                         parallelDevicePolicy<  > >( targetSet,
-                                                                     time_n + dt,
-                                                                     targetGroup,
-                                                                     solidMechanics::totalDisplacement::key(),
-                                                                     dofKey,
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationAdd,
+                                                              parallelDevicePolicy<  > >( bc,
+                                                                                          targetSet,
+                                                                                          time_n + dt,
+                                                                                          targetGroup,
+                                                                                          solidMechanics::totalDisplacement::key(),
+                                                                                          dofKey,
+                                                                                          dofManager.rankOffset(),
+                                                                                          localMatrix,
+                                                                                          localRhs );
     } );
 
   } );
@@ -1389,12 +1436,15 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
                                                      ParallelMatrix & matrix,
                                                      ParallelVector & rhs,
-                                                     ParallelVector & solution )
+                                                     ParallelVector & solution,
+                                                     integer const cycleNumber,
+                                                     integer const nonlinearIteration )
 {
   // Flip system sign to ensure matrix is positive definite
   matrix.scale( -1.0 );
   rhs.scale( -1.0 );
-  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
+  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution,
+                                        cycleNumber, nonlinearIteration );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )

@@ -55,7 +55,8 @@ DofManager::FieldDescription const & DofManager::getField( string const & name )
 {
   auto const it = std::find_if( m_fields.begin(), m_fields.end(),
                                 [&]( FieldDescription const & f ) { return f.name == name; } );
-  GEOS_ASSERT_MSG( it != m_fields.end(), "DofManager: field does not exist: " << name );
+  GEOS_ASSERT_MSG( it != m_fields.end(),
+                   GEOS_FMT( "DofManager: field does not exist: {}", name ) );
   return *it;
 }
 

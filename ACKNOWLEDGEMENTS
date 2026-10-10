@@ -1,8 +1,14 @@
 ACKNOWLEDGEMENTS
 ----------------
-GEOSX was developed with supporting funding from a number of organizations, including:
+GEOS is developed by numerous contributors across many organizations, and it is difficult to maintain an up-to-date accounting of all sources of support. Authors are asked to cite the appropriate sources in the acknowledgements section of any reports or publications related to GEOS.
 
--	Lawrence Livermore National Laboratory operated by Lawrence Livermore National Security, LLC for the United States Department of Energy under Contract DE-AC52-07NA27344
--	TotalEnergies through its subsidiary Total American Services, Inc. in collaboration with The Board of Trustees of the Leland Stanford Junior University and Lawrence Livermore National Security, LLC under Cooperative Research and Development Agreement (CRADA) TC02278
+Significant support for GEOS development has been provided by:
 
-This support is gratefully acknowledged.
+- U.S. Department of Energy, Office of Science, Exascale Computing Project
+- U.S. Department of Energy, Hydrocarbons and Geothermal Energy Office
+- TotalEnergies
+- Chevron
+- Lawrence Livermore National Laboratory
+- Stanford University
+
+All support, both financial and in-kind, is gratefully acknowledged.

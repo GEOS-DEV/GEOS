@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
@@ -29,16 +30,17 @@
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-/// Device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE GEOS_DEVICE
-#else
-/// Device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE
-#endif
+/**
+ * @def GEOS_HYPRE_DEVICE
+ * @brief Host/device annotation used by hypre wrappers.
+ */
+#define GEOS_HYPRE_DEVICE GEOS_HOST_DEVICE
 
 namespace geos
 {
+
+class HypreMatrix;
+class HypreVector;
 
 /**
  * @brief Container for hypre preconditioner function pointers.
@@ -163,8 +165,9 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 }
 
 /**
- * @brief Check for previous device errors and report with line information.
- * @param msg custom message to add
+ * @def GEOS_HYPRE_CHECK_DEVICE_ERRORS
+ * @brief Check for previous device errors and report with file/line information.
+ * @param msg Custom message to add.
  */
 #define GEOS_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 
@@ -227,6 +230,47 @@ HYPRE_Int dummySetup( HYPRE_Solver,
                       HYPRE_ParCSRMatrix,
                       HYPRE_ParVector,
                       HYPRE_ParVector );
+
+/**
+ * @brief Copy DoF-component labels used to tag hypre Krylov vectors.
+ * @param mat Matrix whose DofManager (when present) provides the labels.
+ * @param labels Output local DoF-component labels; emptied when none are available.
+ *
+ * Prefers `mat.dofManager()` when present. A testing override is used only when
+ * the matrix has no DofManager, so unit tests can exercise tagged GMRES without
+ * building a mesh.
+ */
+void fillKrylovDofLabels( HypreMatrix const & mat,
+                          array1d< int > & labels );
+
+/**
+ * @brief Convert local DoF-component labels into hypre Krylov tag arrays.
+ * @param labels Local DoF-component labels (empty on ranks that own no rows).
+ * @param comm Communicator used to agree on the global tag count.
+ * @param tags Output per-row tags; emptied when only one tag is present.
+ * @param numTags Output global tag count (at least 1).
+ */
+void assignKrylovDofTags( arrayView1d< int const > const & labels,
+                          MPI_Comm const comm,
+                          array1d< HYPRE_Int > & tags,
+                          HYPRE_Int & numTags );
+
+namespace testing
+{
+
+/**
+ * @brief Install fallback Krylov DoF labels for unit tests without a DofManager.
+ * @param labels Local labels; copied and used by fillKrylovDofLabels when the
+ *   matrix has no DofManager and `labels.size()` matches the local row count.
+ */
+void setKrylovDofLabels( arrayView1d< int const > const & labels );
+
+/**
+ * @brief Clear fallback Krylov DoF labels installed by setKrylovDofLabels().
+ */
+void clearKrylovDofLabels();
+
+}
 
 /**
  * @brief The missing wrapper compatible with hypre solver solve signature.
@@ -591,6 +635,7 @@ enum class MGRFRelaxationType : HYPRE_Int
   l1forwardGaussSeidel = 13,        //!< \f$\ell_1\f$ Gauss-Seidel, forward solve
   l1backwardGaussSeidel = 14,       //!< \f$\ell_1\f$ Gauss-Seidel, backward solve
   l1jacobi = 18,                    //!< \f$\ell_1\f$-scaled Jacobi
+  ilu = 32,                         //!< incomplete LU factorization
   gsElimWPivoting = 99,             //!< Gaussian Elimination with pivoting direct solver (for small systems)
   gsElimWInverse = 199              //!< Direct Inversion with Gaussian Elimination (OK for larger systems)
 };

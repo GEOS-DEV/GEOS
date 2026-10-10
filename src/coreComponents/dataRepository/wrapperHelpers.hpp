@@ -135,7 +135,7 @@ public:
   {
     GEOS_ERROR_IF_LT( dim, 0 );
     GEOS_ERROR_IF_GE( dim, NDIM );
-    return { m_values[dim].begin(), m_values[dim].end() };
+    return { m_values[dim].data(), m_values[dim].size() };
   }
 
 private:
@@ -238,10 +238,46 @@ numElementsFromByteSize( localIndex const byteSize )
 }
 
 
+/// @cond DO_NOT_DOCUMENT
+namespace detail
+{
+template< typename T >
+std::enable_if_t< traits::HasMemberFunction_reserveValues< T const > >
+reserveValuesIfAvailable( T & value, localIndex const newCapacity )
+{
+  localIndex const oldCapacity = value.size();
+  double const oldValueCapacity = value.valueCapacity();
+  localIndex const newValueCapacity = oldValueCapacity * newCapacity / oldCapacity;
+  value.reserveValues( newValueCapacity );
+}
+
+template< typename T >
+std::enable_if_t< !traits::HasMemberFunction_reserveValues< T const > >
+reserveValuesIfAvailable( T &, localIndex const )
+{}
+}
+/// @endcond
+
 template< typename T >
 std::enable_if_t< traits::HasMemberFunction_reserve< T > >
 reserve( T & value, localIndex const newCapacity )
-{ value.reserve( newCapacity ); }
+{
+  value.reserve( newCapacity );
+  detail::reserveValuesIfAvailable( value, newCapacity );
+}
+
+template< typename T,
+          int NDIM,
+          typename PERMUTATION >
+void reserve( Array< T, NDIM, PERMUTATION > & value, localIndex newCapacity )
+{
+  localIndex const * const dims = value.dims();
+  for( int i=1; i<NDIM; ++i )
+  {
+    newCapacity *= dims[ i ];
+  }
+  value.reserve( newCapacity );
+}
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_reserve< T > >
@@ -484,7 +520,10 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
   localIndex numBytesFromArray =  var.size() * sizeof( T );
   GEOS_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
-  std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
+  if( numBytesFromArray > 0 )
+  {
+    std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
+  }
 }
 
 
@@ -609,7 +648,10 @@ pullDataFromConduitNode( ArrayOfArrays< T, INDEX_TYPE > & var,
   // copy the values
   localIndex numBytesFromArray =  allocatedSize * sizeof( T );
   GEOS_ERROR_IF_NE( numBytesFromArray, valuesDataType.strided_bytes() );
-  std::memcpy( const_cast< T * >(varView.getValues()), valuesNode.data_ptr(), numBytesFromArray );
+  if( numBytesFromArray > 0 )
+  {
+    std::memcpy( const_cast< T * >(varView.getValues()), valuesNode.data_ptr(), numBytesFromArray );
+  }
 }
 
 
@@ -693,8 +735,9 @@ void addBlueprintField( T const &,
                         string const &,
                         stdVector< string > const & )
 {
-  GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
-              "\nWas trying to write it to " << fields.path() );
+  GEOS_ERROR( GEOS_FMT( "Cannot create a mcarray out of {}\nWas trying to write it to {}",
+                        LvArray::system::demangleType< T >(),
+                        fields.path() ) );
   GEOS_UNUSED_VAR( fields );
 }
 
@@ -740,8 +783,9 @@ void populateMCArray( T const &,
                       conduit::Node & node,
                       stdVector< string > const & )
 {
-  GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
-              "\nWas trying to write it to " << node.path() );
+  GEOS_ERROR( GEOS_FMT( "Cannot create a mcarray out of {}\nWas trying to write it to {}",
+                        LvArray::system::demangleType< T >(),
+                        node.path() ) );
   GEOS_UNUSED_VAR( node );
 }
 
@@ -791,7 +835,7 @@ averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 template< typename T >
 std::unique_ptr< int > averageOverSecondDim( T const & )
 {
-  GEOS_ERROR( "Cannot average over the second dimension of " << LvArray::system::demangleType< T >() );
+  GEOS_ERROR( GEOS_FMT( "Cannot average over the second dimension of {}", LvArray::system::demangleType< T >() ) );
   return std::unique_ptr< int >( nullptr );
 }
 
@@ -840,7 +884,8 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 PackByIndex( buffer_unit_type * &, T &, IDX & )
 {
-  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) by index. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -853,7 +898,8 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) by index. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -868,7 +914,8 @@ template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * &, T const &, parallelDeviceEvents & )
 {
-  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) on device. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -881,7 +928,8 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
-  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) by index on device. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -894,7 +942,8 @@ template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) on device. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -907,7 +956,8 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents &, MPI_Op )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) by index on device. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -926,7 +976,8 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
-  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) by index on device. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -939,7 +990,8 @@ template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) on device. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -952,7 +1004,8 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents &, MPI_Op )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) by index on device. Operation not supported.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 

@@ -572,19 +572,23 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
       {
         if( columns[ j ] == dof )
         {
+          volatile real64 entry = entries[ j ];
+
           // check that the entry is large enough to enforce the boundary condition
-          if( entries[j] >= 0 && entries[j] < minDiagonal )
+          if( entry >= 0 && entry < minDiagonal )
           {
             entries[ j ] = minDiagonal;
           }
-          else if( entries[j] < 0 && entries[j] > -minDiagonal )
+          else if( entry < 0 && entry > -minDiagonal )
           {
             entries[ j ] = -minDiagonal;
           }
-          diagonal = entries[j];
+          diagonal = entries[ j ];
         }
         else
-        { entries[ j ] = 0; }
+        {
+          entries[ j ] = 0;
+        }
       }
 
       rhs = -diagonal * (bcValue - fieldValue);

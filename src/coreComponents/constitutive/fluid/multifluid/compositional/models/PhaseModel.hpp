@@ -39,7 +39,7 @@ class ModelParameters;
  * @tparam VISCOSITY Class describing the viscosity model
  * @tparam ENTHALPY Class describing the enthalpy model
  */
-template< typename DENSITY, typename VISCOSITY, typename ENTHALPY >
+template< typename DENSITY, typename VISCOSITY, typename ENTHALPY = NullModel >
 struct PhaseModel
 {
   using Density = DENSITY;
@@ -85,7 +85,6 @@ struct PhaseModel
    */
   struct KernelWrapper
   {
-
     /**
      * @brief Constructor for the kernel wrapper
      * @param[in] dens the density model
@@ -120,7 +119,6 @@ struct PhaseModel
 
     /// Kernel wrapper for enthalpy updates
     typename Enthalpy::KernelWrapper enthalpy;
-
   };
 
   /**
@@ -143,11 +141,7 @@ struct PhaseModel
     phaseParameters = Enthalpy::createParameters( std::move( phaseParameters ) );
     return phaseParameters;
   }
-
 };
-
-// A no-op phase model
-using NullPhaseModel = PhaseModel< NullModel, NullModel, NullModel >;
 
 } // namespace compositional
 

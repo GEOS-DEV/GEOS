@@ -276,8 +276,9 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
       {
         if( m_params.logLevel > 0 && MpiWrapper::commRank( rhs.comm() ) == 0 )
         {
-          GEOS_WARNING( "SuiteSparse: failed to reduce residual below tolerance.\n"
-                        "Condition number estimate: " << condEst );
+          GEOS_WARNING( GEOS_FMT( "SuiteSparse: failed to reduce residual below tolerance.\n"
+                                  "Condition number estimate: {}",
+                                  condEst ) );
         }
         m_result.status = LinearSolverResult::Status::Breakdown;
       }

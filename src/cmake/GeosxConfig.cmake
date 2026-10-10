@@ -9,13 +9,13 @@ set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
+                          HYPREDRV
                           MATHPRESSO
                           METIS
                           MKL
                           MPI
                           PARMETIS
                           PETSC
-                          PVTPackage
                           PYGEOSX
                           RAJA
                           SCOTCH

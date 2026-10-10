@@ -126,17 +126,17 @@ void MsrsbLevelBuilderCoupled< LAI >::initializeFineLevel( DomainPartition & dom
   createSmoothers();
 }
 
-std::unordered_map< globalIndex, globalIndex >
+stdUnorderedMap< globalIndex, globalIndex >
 makeGhostDofMap( MeshObjectManager const & manager,
                  string const & oldDofKey,
                  string const & newDofKey )
 {
-  std::unordered_map< globalIndex, globalIndex > ghostDofMap;
+  stdUnorderedMap< globalIndex, globalIndex > ghostDofMap;
   arrayView1d< globalIndex const > const oldDofNumber = manager.getReference< array1d< globalIndex > >( oldDofKey );
   arrayView1d< globalIndex const > const newDofNumber = manager.getReference< array1d< globalIndex > >( newDofKey );
   for( localIndex i = manager.numOwnedObjects(); i < manager.size(); ++i )
   {
-    ghostDofMap[oldDofNumber[i]] = newDofNumber[i];
+    ghostDofMap.get_inserted( oldDofNumber[i] ) = newDofNumber[i];
   }
   return ghostDofMap;
 }
@@ -176,7 +176,7 @@ void MsrsbLevelBuilderCoupled< LAI >::buildProlongationStructure( DofManager con
 
     integer const numComp = m_dofManager.numComponents( fieldName );
 
-    std::unordered_map< globalIndex, globalIndex > const ghostDofMap =
+    stdUnorderedMap< globalIndex, globalIndex > const ghostDofMap =
       makeGhostDofMap( m_builders[blockId]->manager(), dofManager.key( fieldName ), m_dofManager.key( fieldName ) );
 
     auto const mapGhostCol = [numComp, &ghostDofMap]( globalIndex const col )

@@ -18,8 +18,6 @@
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "dataRepository/Group.hpp"
-#include "common/DataTypes.hpp"
-#include "LvArray/src/MallocBuffer.hpp"
 // TPL includes
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
@@ -216,7 +214,7 @@ TEST( testTable, tableHiddenColumn )
 TEST( testTable, tableMergeOverflowParadox )
 {
   string const title = "Lorem Ipsum";
-  TableLayout tableLayout( title,
+  TableLayout const tableLayout( title,
   {
     TableLayout::Column()
       .setName( "A" ),
@@ -858,6 +856,28 @@ TEST( testTable, tableSpecialsValues )
              );
 }
 
+TEST( testTable, testTitleWithNoColumnIndented )
+{
+  TableLayout const tableLayout = TableLayout().
+                                    setTitle( "Title" ).
+                                    setIndentation( 4 ).
+                                    setMargin( TableLayout::MarginValue::small );
+
+  TableData tableData;
+  tableData.addRow( "Global Id", 1234, 40, 5678, 60 );
+  tableData.addRow( "pressure", 0.1234, 0.40, 0.5678, 0.60 );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "    -------------------------------------------\n"
+             "    |                  Title                  |\n"
+             "    |-----------------------------------------|\n"
+             "    | Global Id |   1234 |  40 |   5678 |  60 |\n"
+             "    |  pressure | 0.1234 | 0.4 | 0.5678 | 0.6 |\n"
+             "    -------------------------------------------\n"
+             );
+}
 
 int main( int argc, char * * argv )
 {

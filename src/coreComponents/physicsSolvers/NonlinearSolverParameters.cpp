@@ -215,8 +215,9 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 void NonlinearSolverParameters::postInputInitialization()
 {
   GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
-                        viewKeysStruct::timeStepIncreaseIterLimString() <<
-                        " Value should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString(),
+                        GEOS_FMT( "{} Value should be smaller than {}",
+                                  viewKeysStruct::timeStepIncreaseIterLimString(),
+                                  viewKeysStruct::timeStepDecreaseIterLimString() ),
                         getDataContext() );
 
   GEOS_ERROR_IF_LE_MSG( m_lineSearchResidualFactor, 0.0,

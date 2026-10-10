@@ -24,31 +24,41 @@
 namespace geos
 {
 
-void TableLayout::addColumns( stdVector< string > const & columnNames )
+TableLayout & TableLayout::addColumns( stdVector< string > const & columnNames )
 {
   for( auto const & columnName : columnNames )
   {
     addColumn( columnName );
   }
+  return *this;
 }
 
-void TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
+TableLayout & TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
 {
   for( auto const & column : columns )
   {
     addColumn( column );
   }
+  return *this;
 }
 
-void TableLayout::addColumn( string_view columnName )
+TableLayout & TableLayout::addColumns( TableLayoutArgs columns )
+{
+  processArguments( columns );
+  return *this;
+}
+
+TableLayout & TableLayout::addColumn( string_view columnName )
 {
   TableLayout::Column column = TableLayout::Column().setName( columnName );
   m_tableColumns.emplace_back( column );
+  return *this;
 }
 
-void TableLayout::addColumn( TableLayout::Column const & column )
+TableLayout & TableLayout::addColumn( TableLayout::Column const & column )
 {
   m_tableColumns.emplace_back( column );
+  return *this;
 }
 
 TableLayout & TableLayout::setTitle( string_view title )
@@ -75,6 +85,23 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
 TableLayout & TableLayout::setMaxColumnWidth( size_t width )
 {
   m_maxColumnWidth = width;
+  return *this;
+}
+
+TableLayout & TableLayout::setIndentation( size_t spacesCount )
+{
+  m_indentation = spacesCount;
+  return *this;
+}
+
+TableLayout & TableLayout::setDefaultHeaderAlignment( TableLayout::Alignment alignment )
+{
+  m_defaultHeaderAlignment = alignment;
+  return *this;
+}
+TableLayout & TableLayout::setDefaultValueAlignment( TableLayout::Alignment alignment )
+{
+  m_defaultValueAlignment = alignment;
   return *this;
 }
 
@@ -159,7 +186,7 @@ void TableLayout::Cell::setText( string_view text )
 }
 
 TableLayout::Column::Column():
-  m_header( CellType::Header, defaultHeaderAlignment )
+  m_header( CellType::Header, Alignment::center )
 {}
 
 TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement alignment ):
@@ -298,14 +325,16 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
 PreparedTableLayout::PreparedTableLayout(  ):
   TableLayout(),
   m_columnLayersCount( 0 ),
-  m_visibleLowermostColumnCount( 0 )
+  m_visibleLowermostColumnCount( 0 ),
+  m_indentationStr( m_indentation, ' ' )
 {}
 
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   TableLayout( other ),
   m_columnLayersCount( 0 ),
   m_totalLowermostColumnCount( 0 ),
-  m_visibleLowermostColumnCount( 0 )
+  m_visibleLowermostColumnCount( 0 ),
+  m_indentationStr( m_indentation, ' ' )
 {
   prepareLayoutRecusive( m_tableColumns, 0 );
 

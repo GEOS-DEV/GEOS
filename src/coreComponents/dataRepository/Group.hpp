@@ -319,8 +319,9 @@ public:
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "No child named " << key << " found." << std::endl << dumpSubGroupsNames(),
+                   GEOS_FMT( "No child named '{}' found.\n{}", geos::format::toStringForFmt( key ), dumpSubGroupsNames() ),
                    geos::DomainError, getDataContext() );
+
     T * const castedChild = dynamicCast< T * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
                    GEOS_FMT( "'{}' was expected to be a '{}'.",
@@ -337,8 +338,9 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "No child named " << key << " found." << std::endl << dumpSubGroupsNames(),
+                   GEOS_FMT( "No child named '{}' found.\n{}", geos::format::toStringForFmt( key ), dumpSubGroupsNames() ),
                    geos::DomainError, getDataContext() );
+
     T const * const castedChild = dynamicCast< T const * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
                    GEOS_FMT( "'{}' was expected to be a '{}'.",
@@ -1122,8 +1124,7 @@ public:
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "No wrapper named " << key << " found." << std::endl
-                                       << dumpWrappersNames(),
+                   GEOS_FMT( "No wrapper named '{}' found.\n{}", geos::format::toStringForFmt( key ), dumpWrappersNames() ),
                    geos::DomainError, getDataContext() );
 
     return *wrapper;
@@ -1137,8 +1138,7 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "No wrapper named " << key << " found." << std::endl
-                                       << dumpWrappersNames(),
+                   GEOS_FMT( "No wrapper named '{}' found.\n{}", geos::format::toStringForFmt( key ), dumpWrappersNames() ),
                    geos::DomainError, getDataContext() );
 
     return *wrapper;

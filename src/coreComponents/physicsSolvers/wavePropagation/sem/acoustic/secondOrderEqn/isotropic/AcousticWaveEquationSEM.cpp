@@ -637,7 +637,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   string( "FreeSurface" ),
-                                  [&]( FieldSpecificationBase const & bc,
+                                  [&]( FieldSpecification const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
                                        FaceManager &,
@@ -1071,12 +1071,12 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       "Could not open file "<< fileName << " for writing",
+                       GEOS_FMT( "Could not open file {} for writing", fileName ),
                        InputError, getDataContext() );
         wf.write( (char *)&p_n[0], p_n.size()*sizeof( real32 ) );
         wf.close( );
         GEOS_THROW_IF( !wf.good(),
-                       "An error occured while writing "<< fileName,
+                       GEOS_FMT( "An error occured while writing {}", fileName ),
                        InputError, getDataContext() );
       }
 
@@ -1138,7 +1138,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressure_forward_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-        GEOS_THROW_IF( !wf, "Could not open file "<< fileName << " for reading",
+        GEOS_THROW_IF( !wf, GEOS_FMT( "Could not open file {} for reading", fileName ),
                        InputError, getDataContext() );
 
         p_forward.move( LvArray::MemorySpace::host, true );

@@ -35,7 +35,7 @@ MultivariableTableFunction::MultivariableTableFunction( const string & name,
 void MultivariableTableFunction::initializeFunctionFromFile( string const & filename )
 {
   std::ifstream file( filename.c_str() );
-  GEOS_THROW_IF( !file, "Could not read input file " << filename,
+  GEOS_THROW_IF( !file, GEOS_FMT( "Could not read input file {}", filename ),
                  InputError, getDataContext() );
 
   integer numDims, numOps;

@@ -46,7 +46,7 @@ LevelBuilderBase< LAI >::create( string name, LinearSolverParameters params )
     }
     default:
     {
-      GEOS_ERROR( "Unsupported interpolation type: " << params.multiscale.basisType );
+      GEOS_ERROR( GEOS_FMT( "Unsupported interpolation type: {}", params.multiscale.basisType ) );
     }
   }
   return std::unique_ptr< LevelBuilderBase< LAI > >();

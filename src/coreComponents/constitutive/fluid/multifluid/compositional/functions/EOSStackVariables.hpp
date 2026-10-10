@@ -145,7 +145,7 @@ struct EOSStackVariables_Impl< T, true > : public EOSStackVariables_Impl< T, fal
                           arraySlice2d< real64 const > const dbip_dT ):
     EOSStackVariables_Impl< T, false >( numComps, bip ),
     dkij_dT( dbip_dT ),
-    m_derivativeData( 8, numComps+2 ),
+    m_derivativeData( 9, numComps+2 ),
     daic_dp( m_derivativeData[0] ),
     dbic_dp( m_derivativeData[1] ),
     daic_dt( m_derivativeData[2] ),
@@ -153,14 +153,15 @@ struct EOSStackVariables_Impl< T, true > : public EOSStackVariables_Impl< T, fal
     d2aic_dt2( m_derivativeData[4] ),
     d2bic_dt2( m_derivativeData[5] ),
     daMixture( m_derivativeData[6] ),
-    dbMixture( m_derivativeData[7] )
+    dbMixture( m_derivativeData[7] ),
+    ddaMixture( m_derivativeData[8] )
   {}
 
   /// Temperature derivatives of binary interaction parameters (dk_ij/dT).
   arraySlice2d< real64 const > const dkij_dT;
 
   /// Internal storage for all derivative-related temporary data.
-  StackArray< real64, 2, 8 * maxNumDof > m_derivativeData;
+  StackArray< real64, 2, 9 * maxNumDof > m_derivativeData;
 
   /// Pressure derivatives of component-specific 'a_i' coefficients (da_i/dp).
   arraySlice1d< real64 > const daic_dp;
@@ -185,6 +186,9 @@ struct EOSStackVariables_Impl< T, true > : public EOSStackVariables_Impl< T, fal
 
   /// Derivatives of mixture parameter 'b' with respect to all degrees of freedom.
   DerivativeType<> const dbMixture;
+
+  /// Derivatives of temperature derivatives of mixture parameter 'a' with respect to all degrees of freedom.
+  DerivativeType<> const ddaMixture;
 };
 
 /**

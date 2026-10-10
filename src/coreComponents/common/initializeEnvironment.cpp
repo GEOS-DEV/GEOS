@@ -19,7 +19,6 @@
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "common/LifoStorageCommon.hpp"
-#include "common/MemoryInfos.hpp"
 #include "logger/ErrorHandling.hpp"
 #include "logger/ExternalErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
@@ -148,9 +147,12 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLvArray()
 {
-#if defined(GEOS_USE_FPE)
+#if defined(GEOS_USE_FPE) && !defined(GEOS_USE_HIP)
   LvArray::system::setFPE();
 #else
+  // ROCm's HSA runtime raises SIGFPE while unloading HIP when host floating
+  // point traps are enabled. Host FPE trapping is therefore not supported in
+  // HIP builds, even when GEOS_ENABLE_FPE is set.
   LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 #endif
 
@@ -192,10 +194,12 @@ void setupMPI( int argc, char * argv[] )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void finalizeMPI()
+void finalizeMPI( bool inError )
 {
-  MpiWrapper::commFree( MPI_COMM_GEOS );
-  MpiWrapper::finalize();
+  if( !inError )
+  {
+    MpiWrapper::finalize();
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,7 +211,7 @@ void setupCUDA()
   {
     cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
     GEOS_ERROR_IF( status != cudaSuccess,
-                   "Failed to set CUDA stack size. Error " << status << ": " << cudaGetErrorString( status ) );
+                   GEOS_FMT( "Failed to set CUDA stack size. Error {}: {}", status, cudaGetErrorString( status ) ) );
   }
 #endif
 }
@@ -219,7 +223,8 @@ void setupCaliper( cali::ConfigManager & caliperManager,
                    CommandLineOptions const & commandLineOptions )
 {
   caliperManager.add( commandLineOptions.timerOutput.c_str() );
-  GEOS_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
+  GEOS_ERROR_IF( caliperManager.error(),
+                 GEOS_FMT( "Caliper config error: {}", caliperManager.error_msg() ) );
   caliperManager.start();
 
 #if defined( GEOS_USE_ADIAK )
@@ -329,13 +334,12 @@ void setupEnvironment( int argc, char * argv[] )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void cleanupEnvironment()
+void cleanupEnvironment( bool inError )
 {
-  MemoryLogging::getInstance().memoryStatsReport();
   LvArray::system::resetSignalHandling();
   finalizeLogger();
   finalizeCaliper();
-  finalizeMPI();
+  finalizeMPI( inError );
 }
 
 } // namespace geos

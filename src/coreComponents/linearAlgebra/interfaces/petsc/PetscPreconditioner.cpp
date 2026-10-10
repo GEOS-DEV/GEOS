@@ -71,7 +71,8 @@ PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & 
     { LinearSolverParameters::PreconditionerType::l1sgs, PCSOR },
   };
 
-  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Petsc smoother option: " << type );
+  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0,
+                       GEOS_FMT( "Unsupported Petsc smoother option: {}", type ) );
   return typeMap.at( type );
 }
 
@@ -334,7 +335,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
       }
       default:
       {
-        GEOS_ERROR( "Preconditioner type not supported in PETSc interface: " << m_params.preconditionerType );
+        GEOS_ERROR( GEOS_FMT( "Preconditioner type not supported in PETSc interface: {}", m_params.preconditionerType ) );
       }
     }
   }

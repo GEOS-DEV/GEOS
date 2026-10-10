@@ -28,7 +28,7 @@ static_assert( std::is_same< SCOTCH_Num, int64_t >::value,
 #define GEOS_SCOTCH_CHECK( call ) \
   do { \
     auto const ierr = call; \
-    GEOS_ERROR_IF_NE_MSG( ierr, 0, "Error in call to:\n" << #call ); \
+    GEOS_ERROR_IF_NE_MSG( ierr, 0, "Error in call to:\n" #call ); \
   } while( false )
 
 namespace geos

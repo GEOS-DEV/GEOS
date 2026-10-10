@@ -21,6 +21,10 @@
  #include "constitutive/fluid/multifluid/blackOil/BlackOilFluid.hpp"
  #include "common/initializeEnvironment.hpp"
 
+ #include <chrono>
+ #include <cstdint>
+ #include <filesystem>
+
 using namespace geos::constitutive;
 
 namespace geos
@@ -72,11 +76,20 @@ public:
 public:
   MultiFluidBlackOilTestFixture()
   {
-    writeTableToFile( pvtoFileName, pvtoTableContent );
-    writeTableToFile( pvdgFileName, pvdgTableContent );
-    writeTableToFile( pvtwFileName, pvtwTableContent );
+    // Use a unique directory per fixture instance so parallel CTest runs do not race on shared filenames.
+    auto const uniqueSuffix = GEOS_FMT( "{}_{}",
+                                        std::chrono::steady_clock::now().time_since_epoch().count(),
+                                        static_cast< uint64_t >( reinterpret_cast< uintptr_t >( this ) ) );
+    m_tableDir = ( std::filesystem::temp_directory_path() / GEOS_FMT( "geos_blackoil_tables_{}", uniqueSuffix ) ).string();
+    std::error_code ec;
+    std::filesystem::create_directories( m_tableDir, ec );
+    EXPECT_FALSE( ec );
 
-    Base::createFluid( getFluidName(), []( BlackOilFluid & fluid ){
+    writeTableToFile( getTableFilePath( pvtoFileName ), pvtoTableContent );
+    writeTableToFile( getTableFilePath( pvdgFileName ), pvdgTableContent );
+    writeTableToFile( getTableFilePath( pvtwFileName ), pvtwTableContent );
+
+    Base::createFluid( getFluidName(), [this]( BlackOilFluid & fluid ){
       fillPhysicalProperties( fluid );
       fluid.setMassFlag( USE_MASS );
     } );
@@ -84,18 +97,26 @@ public:
 
   ~MultiFluidBlackOilTestFixture() override
   {
-    removeFile( pvtoFileName );
-    removeFile( pvdgFileName );
-    removeFile( pvtwFileName );
+    removeFile( getTableFilePath( pvtoFileName ) );
+    removeFile( getTableFilePath( pvdgFileName ) );
+    removeFile( getTableFilePath( pvtwFileName ) );
+    std::error_code ec;
+    std::filesystem::remove( m_tableDir, ec );
   }
 
   static string getFluidName();
 
 private:
-  static void fillPhysicalProperties( BlackOilFluid & fluid );
+  string getTableFilePath( char const * fileName ) const
+  {
+    return ( std::filesystem::path( m_tableDir ) / fileName ).string();
+  }
+
+  void fillPhysicalProperties( BlackOilFluid & fluid ) const;
   static constexpr const char * pvtoFileName = "pvto.txt";
   static constexpr const char * pvdgFileName = "pvdg.txt";
   static constexpr const char * pvtwFileName = "pvtw.txt";
+  string m_tableDir;
 };
 
 template< bool USE_MASS >
@@ -105,7 +126,7 @@ string MultiFluidBlackOilTestFixture< USE_MASS >::getFluidName()
 }
 
 template< bool USE_MASS >
-void MultiFluidBlackOilTestFixture< USE_MASS >::fillPhysicalProperties( BlackOilFluid & fluid )
+void MultiFluidBlackOilTestFixture< USE_MASS >::fillPhysicalProperties( BlackOilFluid & fluid ) const
 {
   string_array & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
   phaseNames = {"oil", "water", "gas"};
@@ -120,9 +141,9 @@ void MultiFluidBlackOilTestFixture< USE_MASS >::fillPhysicalProperties( BlackOil
   fill( surfaceDens, Feed< 3 >{800.0, 1022.0, 0.9907} );
 
   path_array & tableNames = fluid.getReference< path_array >( BlackOilFluidBase::viewKeyStruct::tableFilesString() );
-  tableNames.emplace_back( Path( pvtoFileName ));
-  tableNames.emplace_back( Path( pvtwFileName ));
-  tableNames.emplace_back( Path( pvdgFileName ));
+  tableNames.emplace_back( Path( getTableFilePath( pvtoFileName ).c_str() ) );
+  tableNames.emplace_back( Path( getTableFilePath( pvtwFileName ).c_str() ) );
+  tableNames.emplace_back( Path( getTableFilePath( pvdgFileName ).c_str() ) );
 }
 
 using MultiFluidBlackOilTestMass = MultiFluidBlackOilTestFixture< true >;

@@ -41,7 +41,7 @@ char const * xmlInput =
                                    discretization="fluidTPFA"
                                    targetRegions="{region}"
                                    temperature="297.15"
-                                   useMass="1">
+                                   useMass="0">
 
         <NonlinearSolverParameters newtonTol="1.0e-6"
                                    newtonMaxIter="2"/>
@@ -69,19 +69,16 @@ char const * xmlInput =
       <CellElementRegion name="region" cellBlocks="{*}" materialList="{fluid, rock, relperm, cappressure}" />
     </ElementRegions>
     <Constitutive>
-      <CompositionalMultiphaseFluid name="fluid"
+      <CompositionalTwoPhaseFluid name="fluid"
                                     phaseNames="{oil, gas}"
-                                    equationsOfState="{PR, PR}"
+                                    equationsOfState="{PengRobinson, PengRobinson}"
                                     componentNames="{N2, C10, C20, H2O}"
                                     componentCriticalPressure="{34e5, 25.3e5, 14.6e5, 220.5e5}"
                                     componentCriticalTemperature="{126.2, 622.0, 782.0, 647.0}"
                                     componentAcentricFactor="{0.04, 0.443, 0.816, 0.344}"
                                     componentMolarWeight="{28e-3, 134e-3, 275e-3, 18e-3}"
                                     componentVolumeShift="{0, 0, 0, 0}"
-                                    componentBinaryCoeff="{ {0, 0, 0, 0},
-                                                            {0, 0, 0, 0},
-                                                            {0, 0, 0, 0},
-                                                            {0, 0, 0, 0} }"/>
+                                    constantPhaseViscosity="{ 1.0e-3, 1.0e-3 }" />
       <CompressibleSolidConstantPermeability name="rock"
           solidModelName="nullSolid"
           porosityModelName="rockPorosity"
@@ -119,14 +116,14 @@ char const * xmlInput =
                  objectPath="ElementRegions/region/cb1"
                  fieldName="globalCompFraction"
                  component="0"
-                 scale="0.099"/>
+                 scale="0.1"/>
       <FieldSpecification name="initialComposition_C10"
                  initialCondition="1"
                  setNames="{all}"
                  objectPath="ElementRegions/region/cb1"
                  fieldName="globalCompFraction"
                  component="1"
-                 scale="0.3"/>
+                 scale="0.2"/>
       <FieldSpecification name="initialComposition_C20"
                  initialCondition="1"
                  setNames="{all}"
@@ -140,7 +137,7 @@ char const * xmlInput =
                  objectPath="ElementRegions/region/cb1"
                  fieldName="globalCompFraction"
                  component="3"
-                 scale="0.001"/>
+                 scale="0.1"/>
     </FieldSpecifications>
     <Functions>
       <TableFunction name="initialPressureFunc"
@@ -235,10 +232,6 @@ protected:
   CompositionalMultiphaseFVM * solver;
 };
 
-real64 constexpr CompositionalMultiphaseFlowTest::time;
-real64 constexpr CompositionalMultiphaseFlowTest::dt;
-real64 constexpr CompositionalMultiphaseFlowTest::eps;
-
 TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_composition )
 {
   real64 const perturb = std::sqrt( eps );
@@ -260,8 +253,8 @@ TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseVolumeFra
 
 TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_phaseMobility )
 {
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 5e-2; // 5% error margin
+  real64 constexpr perturb = 1.0e-4;
+  real64 constexpr tol = 5e-2; // 5% error margin
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

@@ -79,7 +79,7 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
     { lambda( std::integral_constant< T, 12 >() ); return;}
     case 13:
     { lambda( std::integral_constant< T, 13 >() ); return;}
-    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
+    default: GEOS_ERROR( GEOS_FMT( "Unknown numFacesInElem value: {}", value ) );
   }
 }
 

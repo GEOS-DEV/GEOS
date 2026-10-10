@@ -18,6 +18,7 @@ set( SUITESPARSE_DIR "${GEOS_TPL_DIR}/suite-sparse-5.10.1" CACHE PATH "" )
 # HYPRE options
 set( ENABLE_HYPRE_DEVICE "HIP" CACHE STRING "" )
 set( ENABLE_HYPRE_MIXINT TRUE CACHE STRING "" )
+set( ENABLE_HYPREDRV ON CACHE BOOL "" )
 
 set( HYPRE_DIR "/lustre/orion/geo127/world-shared/hypre/hypre_v2.27.0-218-ge2806c33d_cce-15.0.0_rocm-5.4.3_mixint_umpire-2022.03.0_caliper-2.8.0_rel/" CACHE PATH "" )
 

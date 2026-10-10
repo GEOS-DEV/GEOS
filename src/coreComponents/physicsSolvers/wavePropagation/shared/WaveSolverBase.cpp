@@ -459,7 +459,8 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOS_THROW_IF( feDiscretization == nullptr, "FE discretization not found: " << m_discretizationName,
+  GEOS_THROW_IF( feDiscretization == nullptr,
+                 GEOS_FMT( "FE discretization not found: {}", m_discretizationName ),
                  InputError, getDataContext() );
 
   localIndex numNodesPerElem = 0;
@@ -551,10 +552,10 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
   if( m_nsamplesSeismoTrace == 0 )
     return;
   integer const dir = m_forward ? +1 : -1;
-  integer const beginIndex = m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace;
+  integer const beginIndex = m_forward ? m_indexSeismoTrace : (m_nsamplesSeismoTrace - 1) - m_indexSeismoTrace;
   for( localIndex iSeismo = beginIndex; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
-    localIndex seismoIndex = m_forward ? iSeismo : m_nsamplesSeismoTrace-iSeismo;
+    localIndex seismoIndex = m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo;
     real64 const timeSeismo = m_dtSeismoTrace * seismoIndex;
     if( dir * timeSeismo > dir * time_n + epsilonLoc )
       break;
@@ -573,10 +574,10 @@ void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIn
   if( m_nsamplesSeismoTrace == 0 )
     return;
   integer const dir = m_forward ? +1 : -1;
-  integer const beginIndex = m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace;
+  integer const beginIndex = m_forward ? m_indexSeismoTrace : (m_nsamplesSeismoTrace - 1) - m_indexSeismoTrace;
   for( localIndex iSeismo = beginIndex; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
-    localIndex seismoIndex = m_forward ? iSeismo : m_nsamplesSeismoTrace-iSeismo;
+    localIndex seismoIndex = m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo;
     real64 const timeSeismo = m_dtSeismoTrace * seismoIndex;
     if( dir * timeSeismo > dir * time_n + epsilonLoc )
       break;

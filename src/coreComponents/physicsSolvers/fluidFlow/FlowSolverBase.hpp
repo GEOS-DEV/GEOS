@@ -156,7 +156,13 @@ public:
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
-   * @param dR_dAper
+   * @param dR_dAper derivative of the flux residual with respect to the aperture
+   * @param dR_dAperOffsets first row of @p dR_dAper belonging to each mesh body,
+   *        keyed by mesh body name. The caller and this solver walk their own
+   *        mesh targets, so the mesh body name is the only key they are
+   *        guaranteed to agree on; the caller must therefore target each body at
+   *        a single discretization level. Pass nullptr when @p dR_dAper uses a
+   *        single index space, i.e. when the caller has a single mesh target.
    */
   virtual void assembleHydrofracFluxTerms( real64 const time_n,
                                            real64 const dt,
@@ -164,9 +170,10 @@ public:
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs,
-                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                           CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                           stdMap< string, localIndex > const * const dR_dAperOffsets )
   {
-    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );
+    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets );
     GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
   }
 
@@ -204,7 +211,32 @@ public:
 
   integer numberOfDofsPerCell() const { return m_numDofPerCell; }
 
+  /**
+   * @brief Apply the delta volume to the element volume and reset delta volume to zero
+   * @detail This is needed for newly created fracture elements that have a non-zero deltaVolume
+   *         (set by SurfaceGenerator) but zero element volume.
+   * @param[in/out] subRegion the element subRegion
+   */
+  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
+
 protected:
+
+  /**
+   * @brief Utility function that encapsulates the call to FieldSpecificationImpl::applyFieldValue in BC application
+   * @param[in] time_n the time at the beginning of the step
+   * @param[in] dt the time step
+   * @param[in] mesh the mesh level object
+   * @param[in] logMessage the log message issued by the solver if the bc is called
+   * @param[in] fieldKey the key of the field specified in the xml file
+   * @param[in] boundaryFieldKey the key of the boundary field
+   */
+  template< typename OBJECT_TYPE >
+  void applyFieldValue( real64 const & time_n,
+                        real64 const & dt,
+                        MeshLevel & mesh,
+                        char const logMessage[],
+                        string const fieldKey,
+                        string const boundaryFieldKey ) const;
 
   /**
    * @brief Increment the cumulative flux from each aquifer

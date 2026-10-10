@@ -17,6 +17,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
@@ -40,7 +41,7 @@ void RegisterAndApplyField( DomainPartition & domain,
 {
   FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::getInstance();
 
-  FieldSpecificationBase & fieldSpec = fieldSpecificationManager.registerGroup< FieldSpecificationBase >( fieldName );
+  FieldSpecification & fieldSpec = fieldSpecificationManager.registerGroup< FieldSpecification >( fieldName );
   fieldSpec.setFieldName( fieldName );
   fieldSpec.setObjectPath( objectPath );
   fieldSpec.setMeshObjectPath( domain.getMeshBodies() );
@@ -51,13 +52,13 @@ void RegisterAndApplyField( DomainPartition & domain,
   fieldSpecificationManager.apply( 0.,
                                    domain.getMeshBody( 0 ).getBaseDiscretization(),
                                    "",
-                                   [&] ( FieldSpecificationBase const & bc,
+                                   [&] ( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          Group & targetGroup,
                                          string const name )
   {
-    bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, name );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual >( bc, targetSet, 0.0, targetGroup, name );
   } );
 }
 

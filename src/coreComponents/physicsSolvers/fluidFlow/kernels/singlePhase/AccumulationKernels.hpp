@@ -321,7 +321,7 @@ public:
     else
     {
       GEOS_UNUSED_VAR( rankOffset, dofKey, subRegion, localMatrix, localRhs );
-      GEOS_ERROR( "Unsupported subregion type: " << typeid(SUBREGION_TYPE).name() );
+      GEOS_ERROR( GEOS_FMT( "Unsupported subregion type: {}", typeid( SUBREGION_TYPE ).name() ) );
     }
   }
 

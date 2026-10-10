@@ -278,9 +278,9 @@ public:
    * @brief Get a list of neighbor ranks.
    * @return Container of neighbor ranks.
    */
-  std::vector< int > getNeighborRanks() const
+  stdVector< int > getNeighborRanks() const
   {
-    std::vector< int > ranks;
+    stdVector< int > ranks;
     ranks.reserve( m_neighbors.size() );
     for( NeighborCommunicator const & neighbor : m_neighbors )
     {

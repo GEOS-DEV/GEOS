@@ -1494,7 +1494,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ElementRegionBase const & region = getRegion( er );
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr,
@@ -1511,7 +1511,9 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         else
         {
           GEOS_ERROR_IF( !allowMissingViews,
-                         " : Material " << constitutiveRelation.getName() << " does not contain " << viewName,
+                         GEOS_FMT( " : Material {} does not contain {}",
+                                   constitutiveRelation.getName(),
+                                   viewName ),
                          subRegion.getDataContext(), constitutiveRelation.getDataContext() );
         }
       } );
@@ -1544,7 +1546,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ElementRegionBase & region = getRegion( er );
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
@@ -1559,8 +1561,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialName
-                                                         << " does not contain " << viewName,
+          GEOS_ERROR_IF( !allowMissingViews,
+                         GEOS_FMT( "Material {} does not contain {}", materialName, viewName ),
                          region.getDataContext(), subRegion.getDataContext() );
         }
       } );

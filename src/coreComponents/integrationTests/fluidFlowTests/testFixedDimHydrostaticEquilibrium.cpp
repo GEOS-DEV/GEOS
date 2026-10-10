@@ -1,0 +1,46 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file testFixedDimHydrostaticEquilibrium.cpp
+ *
+ * Serial (single-rank) integration test for fixed-dimensional meshes
+ * initialized with hydrostatic equilibrium.
+ * Covers two-phase and three-phase immiscible cases.
+ */
+
+#include "integrationTests/fluidFlowTests/testFixedDimHydrostaticEquilibriumFixture.hpp"
+
+CommandLineOptions g_commandLineOptions;
+
+INSTANTIATE_TEST_SUITE_P(
+  FixedDimHydrostaticCases,
+  FixedDimensionalHydrostaticEquilibriumTest,
+  ::testing::Values( "two_phases",
+                     "three_phases" ),
+  []( ::testing::TestParamInfo< std::string > const & paramInfo )
+{
+  return paramInfo.param;     // use case name as the test suffix
+}
+  );
+
+int main( int argc, char * * argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
+  int const result = RUN_ALL_TESTS();
+  geos::basicCleanup();
+  return result;
+}

@@ -439,5 +439,4 @@ blt                 develop
 LvArray             develop
 integratedTests     develop
 hdf5_interface      master
-PVTPackage          master
 ================    ================

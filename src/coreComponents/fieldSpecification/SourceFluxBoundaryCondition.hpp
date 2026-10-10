@@ -21,7 +21,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_
 #define GEOS_FIELDSPECIFICATION_SOURCEFLUXBOUNDARYCONDITION_HPP_
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 
 namespace geos
 {
@@ -30,12 +30,12 @@ namespace geos
  * @class SourceFluxBoundaryCondition
  * A class to manage Neumann boundary conditions
  */
-class SourceFluxBoundaryCondition : public FieldSpecificationBase
+class SourceFluxBoundaryCondition : public FieldSpecification
 {
 public:
   /**
    * @brief constructor
-   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param name the name of the FieldSpecification in the data repository
    * @param parent the parent group of this group.
    */
   SourceFluxBoundaryCondition( string const & name, dataRepository::Group * const parent );

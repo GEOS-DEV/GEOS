@@ -22,6 +22,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
+#include "denseLinearAlgebra/denseLASolvers.hpp"
 
 namespace geos
 {
@@ -167,9 +168,7 @@ static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
                                arraySlice2d< real64, USD > const & X )
 {
 #if defined(GEOS_DEVICE_COMPILE)
-  GEOS_UNUSED_VAR( A );
-  GEOS_UNUSED_VAR( X );
-  return false;
+  return denseLinearAlgebra::solveGaussianElimination( A, X );
 #else
   BlasLapackLA::solveLinearSystem( A, X );
   return true;

@@ -23,6 +23,7 @@ set( multiPhysicsSolvers_headers
     CoupledReservoirAndWellsBase.hpp
     CoupledReservoirAndWellKernels.hpp
     CoupledSolver.hpp
+    FieldApplicator.hpp
     PoromechanicsSolver.hpp
     PoromechanicsConformingFractures.hpp
     FlowProppantTransportSolver.hpp
@@ -70,6 +71,7 @@ set( multiPhysicsSolvers_sources
     CoupledReservoirAndWellsBase.cpp
     FlowProppantTransportSolver.cpp
     HydrofractureSolver.cpp
+    FieldApplicator.cpp
     MultiphasePoromechanics.cpp
     OneWayCoupledFractureFlowContactMechanics.cpp
     MultiphasePoromechanicsConformingFractures.cpp
@@ -85,7 +87,7 @@ set( multiPhysicsSolvers_sources
 
 #include(poromechanicsKernels/PoromechanicsKernels.cmake)
 
-set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMechanicsSolvers )
+set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMechanicsSolvers surfaceGeneration )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

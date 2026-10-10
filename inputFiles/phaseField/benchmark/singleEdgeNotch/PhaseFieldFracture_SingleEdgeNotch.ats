@@ -1,0 +1,24 @@
+from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+
+restartcheck_params = {}
+restartcheck_params["atol"] = 1.0E-6
+restartcheck_params["rtol"] = 1.0E-5
+
+decks = [
+    TestDeck(
+        name="PhaseFieldFracture_SingleEdgeNotchShear_smoke",
+        description="Smoke test for single-edge notch shear phase-field fracture",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=16,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="PhaseFieldFracture_SingleEdgeNotchTension_smoke",
+        description="Smoke test for single-edge notch tension phase-field fracture",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=14,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+]
+
+generate_geos_tests(decks)

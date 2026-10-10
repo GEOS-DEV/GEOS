@@ -69,6 +69,7 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/CO2BrineFluid.hpp
      fluid/multifluid/CO2Brine/PhaseModel.hpp
      fluid/multifluid/CO2Brine/functions/BrineEnthalpy.hpp
+     fluid/multifluid/CO2Brine/functions/BrineFluidParameters.hpp
      fluid/multifluid/CO2Brine/functions/CO2Enthalpy.hpp
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp
      fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp
@@ -102,6 +103,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/StabilityTest.hpp
      fluid/multifluid/compositional/functions/Utilities.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
+     fluid/multifluid/compositional/models/CompositionalEnthalpy.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp
@@ -121,6 +123,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/parameters/CriticalVolume.hpp
      fluid/multifluid/compositional/parameters/EquationOfState.hpp
      fluid/multifluid/compositional/parameters/FlashParameters.hpp
+     fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.hpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp
      fluid/multifluid/compositional/parameters/KValueFlashParameters.hpp
      fluid/multifluid/compositional/parameters/ModelParameters.hpp
@@ -251,6 +254,7 @@ set( constitutive_sources
      fluid/multifluid/blackOil/DeadOilFluid.cpp
      fluid/multifluid/blackOil/PVTOData.cpp
      fluid/multifluid/CO2Brine/CO2BrineFluid.cpp
+     fluid/multifluid/CO2Brine/functions/BrineFluidParameters.cpp
      fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.cpp
      fluid/multifluid/CO2Brine/functions/PhillipsBrineViscosity.cpp
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineDensity.cpp
@@ -267,6 +271,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
+     fluid/multifluid/compositional/models/CompositionalEnthalpy.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.cpp
@@ -280,6 +285,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/ComponentProperties.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
      fluid/multifluid/compositional/parameters/FlashParameters.cpp
+     fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/parameters/KValueFlashParameters.cpp
      fluid/multifluid/compositional/parameters/PhaseType.cpp
@@ -352,21 +358,6 @@ set( constitutive_sources
    )
 
 set( dependencyList ${parallelDeps} functions denseLinearAlgebra )
-
-if( ENABLE_PVTPackage )
-    set( constitutive_headers
-         ${constitutive_headers}
-         fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp )
-
-    set( constitutive_sources
-         ${constitutive_sources}
-         fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.cpp
-          )
-
-    add_subdirectory( PVTPackage )
-
-    list( APPEND dependencyList PVTPackage )
-endif()
 
 if (ENABLE_HPCREACT)
     set( constitutive_headers

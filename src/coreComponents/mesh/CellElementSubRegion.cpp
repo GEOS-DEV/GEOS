@@ -392,13 +392,13 @@ void CellElementSubRegion::
     }
     default:
     {
-      GEOS_ERROR( GEOS_FMT( "Volume calculation not supported for element type {} in subregion {}",
+      GEOS_ERROR( GEOS_FMT( "Volume calculation not supported for element type {}",
                             m_elementType ), getDataContext()  );
     }
   }
 
   GEOS_ERROR_IF( m_elementVolume[k] <= 0.0,
-                 GEOS_FMT( "Negative volume for element {} type {} in subregion {}",
+                 GEOS_FMT( "Negative volume for element {} type {}",
                            k, m_elementType ), getDataContext()  );
 }
 
@@ -409,7 +409,7 @@ void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
-  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=, this] ( localIndex const k )
   {
     calculateElementCenterAndVolume( k, X );
   } );

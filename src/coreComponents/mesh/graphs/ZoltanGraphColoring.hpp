@@ -61,7 +61,7 @@ public:
  * @param colors Vector of color assignments.
  * @return Number of unique colors.
  */
-  size_t getNumberOfColors( const std::vector< int > & colors ) const;
+  size_t getNumberOfColors( const stdVector< int > & colors ) const;
 
 /**
  * @brief Returns the number of colors assuming one node per rank.
@@ -76,7 +76,7 @@ public:
  * @param color Color of the node.
  * @return True if the coloring is valid, false otherwise.
  */
-  bool isColoringValid( const std::vector< camp::idx_t > & adjncy, const int color ) const;
+  bool isColoringValid( const stdVector< size_t > & adjncy, const int color ) const;
 
   /**
    * @brief Colors a graph.
@@ -84,14 +84,14 @@ public:
    * @param adjncy Adjacency list.
    * @return A vector of assigned colors.
    */
-  std::vector< int > colorGraph( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy ) override;
+  stdVector< int > colorGraph( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy ) override;
 
   /**
    * @brief Simplified coloring assuming one node per rank.
    * @param adjncy Local adjacency list.
    * @return Number of colors used.
    */
-  int colorGraph( const std::vector< camp::idx_t > & adjncy ) override;
+  int colorGraph( const stdVector< size_t > & adjncy ) override;
 
 
 private:
@@ -100,9 +100,9 @@ private:
   struct ZoltanGraph
   {
     int m_numVertices;
-    std::vector< int > m_vertexGID;
-    std::vector< int > m_xadj;
-    std::vector< int > m_adjncy;
+    stdVector< int > m_vertexGID;
+    stdVector< int > m_xadj;
+    stdVector< int > m_adjncy;
     int m_rank;
   };
 

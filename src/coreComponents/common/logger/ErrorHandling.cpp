@@ -309,7 +309,7 @@ void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & 
   }
   os << PREFIX << "Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
   // --- ERROR CONTEXT & MESSAGE ---
-  std::vector< ErrorContext > const & contexts = errMsg.m_contextsInfo;
+  stdVector< ErrorContext > const & contexts = errMsg.m_contextsInfo;
   if( contexts.empty() || contexts.front().m_formattedContext.empty())
   {
     os << PREFIX << "Message :\n";
@@ -374,7 +374,7 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
     // context information
     if( !errMsg.m_contextsInfo.empty() )
     {
-      std::vector< ErrorContext > contextInfo = errMsg.m_contextsInfo;
+      stdVector< ErrorContext > contextInfo = errMsg.m_contextsInfo;
       // Sort contextual information by decreasing priority
       std::sort( contextInfo.begin(), contextInfo.end(),
                  []( const ErrorContext & a, const ErrorContext & b ) {

@@ -73,6 +73,8 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override final;
 
+  virtual void initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const override;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ConstantDiffusionUpdate;
 

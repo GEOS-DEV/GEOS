@@ -286,7 +286,9 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
   GEOS_ERROR_IF( bufferSize != packedSize,
-                 "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
+                 GEOS_FMT( "Allocated Buffer Size ({}) is not equal to packed buffer size({})",
+                           bufferSize,
+                           packedSize ) );
 
 
 }
@@ -294,8 +296,6 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * const neighbor,
                                                      MeshLevel * const mesh,
                                                      int const commID,
-//                                          array1d<array1d< std::set<localIndex> > > & allNewElements,
-//                                          array1d<array1d< std::set<localIndex> > > & allModifiedElements,
                                                      ModifiedObjectLists & receivedObjects )
 {
   GEOS_MARK_FUNCTION;
@@ -371,7 +371,6 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   unpackedSize += nodeManager.unpack( receiveBufferPtr, modifiedLocalNodes, 0, false, events );
   unpackedSize += edgeManager.unpack( receiveBufferPtr, modifiedLocalEdges, 0, false, events );
   unpackedSize += faceManager.unpack( receiveBufferPtr, modifiedLocalFaces, 0, false, events );
-//    unpackedSize += elemManager.Unpack( receiveBufferPtr, modifiedElements );
 
   waitAllDeviceEvents( events );
 

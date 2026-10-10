@@ -96,14 +96,14 @@ public:
    * @param fieldNames the list of field names to write
    * @param depth counter used to track recursion depth (leave default value of 0)
    */
-  void writeCellData( std::vector< string > const & fieldNames, int depth = 0 ) const;
+  void writeCellData( stdVector< string > const & fieldNames, int depth = 0 ) const;
 
   /**
    * @brief Push node data to finer levels
    * @param fieldNames the list of field names to write
    * @param depth counter used to track recursion depth (leave default value of 0)
    */
-  void writeNodeData( std::vector< string > const & fieldNames, int depth = 0 ) const;
+  void writeNodeData( stdVector< string > const & fieldNames, int depth = 0 ) const;
 
   /**
    * @brief @return the level name
@@ -122,10 +122,10 @@ public:
 
 private:
 
-  void writeCellDataFine( std::vector< string > const & fieldNames, int depth ) const;
-  void writeCellDataCoarse( std::vector< string > const & fieldNames, int depth ) const;
-  void writeNodeDataFine( std::vector< string > const & fieldNames, int depth ) const;
-  void writeNodeDataCoarse( std::vector< string > const & fieldNames, int depth ) const;
+  void writeCellDataFine( stdVector< string > const & fieldNames, int depth ) const;
+  void writeCellDataCoarse( stdVector< string > const & fieldNames, int depth ) const;
+  void writeNodeDataFine( stdVector< string > const & fieldNames, int depth ) const;
+  void writeNodeDataCoarse( stdVector< string > const & fieldNames, int depth ) const;
 
   string m_name; ///< Unique name prefix
 
