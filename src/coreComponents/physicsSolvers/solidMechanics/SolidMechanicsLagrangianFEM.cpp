@@ -953,16 +953,16 @@ SolidMechanicsLagrangianFEM::
 void SolidMechanicsLagrangianFEM::finalizeInitialState( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                              MeshLevel & mesh,
-                                                              string_array const & regionNames )
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
   {
     updateStressStrainAverages( mesh, regionNames, false );
   } );
 }
 
 void SolidMechanicsLagrangianFEM::updateStressStrainAverages( MeshLevel & mesh,
-                                                            string_array const & regionNames,
-                                                            bool const accumulatePlasticStrain )
+                                                              string_array const & regionNames,
+                                                              bool const accumulatePlasticStrain )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
   ElementRegionManager & elementRegionManager = mesh.getElemManager();
@@ -1061,8 +1061,8 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
     // Save constitutive history only after averaging the converged increment.
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                      [&]( localIndex const,
-                                                                           CellElementSubRegion & subRegion )
+                                                                       [&]( localIndex const,
+                                                                            CellElementSubRegion & subRegion )
     {
       string const & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       getConstitutiveModel< SolidBase >( subRegion, solidMaterialName ).saveConvergedState();

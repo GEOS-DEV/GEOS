@@ -23,7 +23,8 @@
 using namespace geos;
 CommandLineOptions g_commandLineOptions;
 
-char const * xmlInput = R"xml(
+char const * xmlInput =
+  R"xml(
 <Problem>
   <Solvers gravityVector="{ 0, 0, 0 }">
     <SolidMechanicsLagrangianFEM name="mechanics" discretization="FE1"
