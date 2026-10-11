@@ -1,0 +1,131 @@
+<?xml version="1.0" ?>
+
+<!-- Same mesh, material, stress pulse, and time step as sedov_ssle_smoke.xml.
+     This standalone example uses VTK and time histories for visualization.
+     Collectors precede the solver so their times describe the sampled state. -->
+<Problem>
+  <!-- SPHINX_SEDOV_SOLVER -->
+  <Solvers gravityVector="{ 0, 0, 0 }">
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      timeIntegrationOption="ExplicitDynamic"
+      discretization="FE1"
+      targetRegions="{ Region2 }"/>
+  </Solvers>
+  <!-- SPHINX_SEDOV_SOLVER_END -->
+
+  <!-- SPHINX_SEDOV_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ 0, 10 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+  <!-- SPHINX_SEDOV_MESH_END -->
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace name="FE1" order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion name="Region2" cellBlocks="{ cb1 }" materialList="{ shale }"/>
+  </ElementRegions>
+
+  <!-- SPHINX_SEDOV_MATERIAL -->
+  <Constitutive>
+    <ElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+  </Constitutive>
+  <!-- SPHINX_SEDOV_MATERIAL_END -->
+
+  <!-- SPHINX_SEDOV_GEOMETRY -->
+  <Geometry>
+    <Box name="source" xMin="{ -1, -1, -1 }" xMax="{ 1.1, 1.1, 1.1 }"/>
+  </Geometry>
+  <!-- SPHINX_SEDOV_GEOMETRY_END -->
+
+  <FieldSpecifications>
+    <!-- SPHINX_SEDOV_SOURCE -->
+    <FieldSpecification
+      name="source0"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions"
+      fieldName="shale_stress"
+      component="0"
+      scale="-1.0e6"/>
+    <FieldSpecification
+      name="source1"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions"
+      fieldName="shale_stress"
+      component="1"
+      scale="-1.0e6"/>
+    <FieldSpecification
+      name="source2"
+      initialCondition="1"
+      setNames="{ source }"
+      objectPath="ElementRegions"
+      fieldName="shale_stress"
+      component="2"
+      scale="-1.0e6"/>
+    <!-- SPHINX_SEDOV_SOURCE_END -->
+
+    <!-- SPHINX_SEDOV_BOUNDARIES -->
+    <FieldSpecification name="xconstraint" objectPath="nodeManager"
+      fieldName="velocity" component="0" scale="0" setNames="{ xneg }"/>
+    <FieldSpecification name="yconstraint" objectPath="nodeManager"
+      fieldName="velocity" component="1" scale="0" setNames="{ yneg }"/>
+    <FieldSpecification name="zconstraint" objectPath="nodeManager"
+      fieldName="velocity" component="2" scale="0" setNames="{ zneg }"/>
+    <!-- SPHINX_SEDOV_BOUNDARIES_END -->
+  </FieldSpecifications>
+
+  <!-- SPHINX_SEDOV_TASKS -->
+  <Tasks>
+    <PackCollection name="stressCollection" objectPath="ElementRegions/Region2/cb1"
+      fieldName="shale_stress"/>
+    <PackCollection name="averageStressCollection" objectPath="ElementRegions/Region2/cb1"
+      fieldName="averageStress"/>
+    <PackCollection name="displacementCollection" objectPath="nodeManager"
+      fieldName="totalDisplacement"/>
+    <PackCollection name="velocityCollection" objectPath="nodeManager"
+      fieldName="velocity"/>
+  </Tasks>
+  <!-- SPHINX_SEDOV_TASKS_END -->
+
+  <!-- SPHINX_SEDOV_OUTPUTS -->
+  <Outputs>
+    <VTK name="vtkOutput" plotLevel="1" fieldNames="{ shale_stress }"/>
+    <Restart name="restartOutput"/>
+    <TimeHistory name="historyOutput" filename="sedovHistory"
+      sources="{ /Tasks/stressCollection, /Tasks/averageStressCollection,
+                 /Tasks/displacementCollection, /Tasks/velocityCollection }"/>
+  </Outputs>
+  <!-- SPHINX_SEDOV_OUTPUTS_END -->
+
+  <!-- SPHINX_SEDOV_EVENTS -->
+  <Events maxTime="1.0e-3">
+    <PeriodicEvent name="collectStress" cycleFrequency="1" target="/Tasks/stressCollection"/>
+    <PeriodicEvent name="collectAverageStress" cycleFrequency="1" target="/Tasks/averageStressCollection"/>
+    <PeriodicEvent name="collectDisplacement" cycleFrequency="1" target="/Tasks/displacementCollection"/>
+    <PeriodicEvent name="collectVelocity" cycleFrequency="1" target="/Tasks/velocityCollection"/>
+    <PeriodicEvent name="writeHistory" cycleFrequency="25" target="/Outputs/historyOutput"/>
+    <PeriodicEvent name="writeVTK" cycleFrequency="25" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="writeRestart" cycleFrequency="50" target="/Outputs/restartOutput"/>
+    <PeriodicEvent name="solverApplications" forceDt="1.0e-5" target="/Solvers/lagsolve"/>
+  </Events>
+  <!-- SPHINX_SEDOV_EVENTS_END -->
+</Problem>
