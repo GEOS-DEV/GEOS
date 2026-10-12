@@ -964,9 +964,12 @@ SinglePhaseWell::scalingForLocalSystemSolution( WellElementSubRegion & subRegion
   arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+  arrayView1d< real64 > const pressureScalingFactor = subRegion.getField< well::pressureScalingFactor >();
+
+  real64 scalingFactor = 1.0;
+
   if( isThermal() )
   {
-    arrayView1d< real64 > const pressureScalingFactor = subRegion.getField< well::pressureScalingFactor >();
     arrayView1d< real64 > const temperatureScalingFactor = subRegion.getField< well::temperatureScalingFactor >();
 
     integer const tempDofOffset = 2;
@@ -976,22 +979,25 @@ SinglePhaseWell::scalingForLocalSystemSolution( WellElementSubRegion & subRegion
                                                                    m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
                                                                    pressureScalingFactor, temperatureScalingFactor );
 
+    scalingFactor = std::get< 0 >( subRegionData );
     maxDeltaPres = std::get< 1 >( subRegionData );
     maxDeltaTemp = std::get< 2 >( subRegionData );
     minPresScalingFactor = std::get< 3 >( subRegionData );
     minTempScalingFactor = std::get< 4 >( subRegionData );
+  }
+  else
+  {
+    auto const subRegionData = singlePhaseBaseKernels::
+                                 SolutionScalingKernel::
+                                 launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
+                                                                   m_maxAbsolutePresChange, pressureScalingFactor );
 
-    return std::get< 0 >( subRegionData );
+    scalingFactor = subRegionData.first;
+    maxDeltaPres = subRegionData.second;
+    minPresScalingFactor = subRegionData.first;
   }
 
-  auto const subRegionData = singlePhaseBaseKernels::
-                               SolutionScalingKernel::
-                               launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
-
-  maxDeltaPres = subRegionData.second;
-  minPresScalingFactor = subRegionData.first;
-
-  return subRegionData.first;
+  return scalingFactor;
 }
 
 real64

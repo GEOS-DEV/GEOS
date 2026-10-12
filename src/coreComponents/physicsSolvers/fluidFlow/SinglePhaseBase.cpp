@@ -1360,9 +1360,12 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
         arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
+
         auto const subRegionData = singlePhaseBaseKernels::
                                      SolutionScalingKernel::
-                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
+                                                                       m_maxAbsolutePresChange, pressureScalingFactor );
 
         scalingFactor = std::min( scalingFactor, subRegionData.first );
         minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.first );
