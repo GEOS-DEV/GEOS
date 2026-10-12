@@ -1181,16 +1181,20 @@ bool SinglePhaseWell::checkWellSystemSolution( WellElementSubRegion & subRegion,
 
   // get a reference to the primary variables on well elements
   arrayView1d< real64 const > const & pressure = subRegion.getField< well::pressure >();
+  arrayView1d< real64 const > const & pressureScalingFactor = subRegion.getField< well::pressureScalingFactor >();
   auto const negPresCollector = negPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
   using Kernel = singlePhaseBaseKernels::SolutionCheckKernel;
 
+  // the well solution is always scaled with the global factor
   auto const results = Kernel::launch< parallelDevicePolicy<> >( localSolution,
                                                                  rankOffset,
                                                                  dofNumber,
                                                                  ghostRank,
                                                                  pressure,
+                                                                 flowSolverUtilities::ScalingType::Global,
                                                                  scalingFactor,
+                                                                 pressureScalingFactor,
                                                                  negPresCollector );
 
   minPressure = std::min( minPressure, results.minNegPres );
@@ -1214,7 +1218,7 @@ SinglePhaseWell::applyWellSystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                well::pressure::key(),
-                               well::pressureScalingFactor::key(),
+                               scalingFactor,
                                pressureMask );
 
   dofManager.addVectorToField( localSolution,
@@ -1230,7 +1234,7 @@ SinglePhaseWell::applyWellSystemSolution( DofManager const & dofManager,
     dofManager.addVectorToField( localSolution,
                                  wellElementDofName(),
                                  fields::well::temperature::key(),
-                                 well::temperatureScalingFactor::key(),
+                                 scalingFactor,
                                  temperatureMask );
 
   }
