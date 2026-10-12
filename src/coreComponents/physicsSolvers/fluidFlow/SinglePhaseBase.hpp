@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/AccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalAccumulationKernels.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
@@ -380,6 +381,9 @@ protected:
    * @param[in] subRegion the element subRegion
    */
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override;
+
+  /// Solution scaling type
+  flowSolverUtilities::ScalingType m_scalingType;
 
 private:
 

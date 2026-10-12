@@ -1757,7 +1757,7 @@ CompositionalMultiphaseWell::checkWellSystemSolution( WellElementSubRegion & sub
   integer localCheck = 1;
 
   integer constexpr allowNegativePressure = 0;
-  compositionalMultiphaseUtilities::ScalingType constexpr scalingType = compositionalMultiphaseUtilities::ScalingType::Global;
+  flowSolverUtilities::ScalingType constexpr scalingType = flowSolverUtilities::ScalingType::Global;
 
   arrayView1d< real64 const > const pressure = subRegion.getField< well::pressure >();
   arrayView1d< real64 const > const temperature = subRegion.getField< well::temperature >();

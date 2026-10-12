@@ -62,7 +62,8 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ),
+  m_scalingType( flowSolverUtilities::ScalingType::Global )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setApplyDefaultValue( 0.0 ).
@@ -1421,6 +1422,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      arrayView1d< real64 const > const pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
       auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
       auto const statistics = singlePhaseBaseKernels::SolutionCheckKernel::
@@ -1429,7 +1431,9 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
                                                                   dofNumber,
                                                                   ghostRank,
                                                                   pres,
-                                                                  scalingFactor,
+                                                                  m_scalingType,
+                                                                  scalingFactor, // global scaling factor
+                                                                  pressureScalingFactor, // per-element scaling factors
                                                                   negPresCollector );
 
       minPressure = std::min( minPressure, statistics.minNegPres );

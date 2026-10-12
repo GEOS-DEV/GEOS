@@ -57,12 +57,19 @@ using namespace constitutive;
 using namespace fields;
 using namespace singlePhaseBaseKernels;
 using namespace singlePhaseFVMKernels;
+using namespace flowSolverUtilities; // for ScalingType
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
 {
+  this->registerWrapper( viewKeyStruct::scalingTypeString(), &m_scalingType ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( ScalingType::Global ).
+    setDescription( "Solution scaling type."
+                    "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
+
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.multiscale.fieldName = BASE::viewKeyStruct::elemDofFieldString();
   linParams.multiscale.label = "flow";
@@ -74,6 +81,15 @@ void SinglePhaseFVM< BASE >::initializePreSubGroups()
   BASE::initializePreSubGroups();
 
   this->checkDiscretizationName();
+
+  if( m_scalingType == ScalingType::Local &&
+      m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
+  {
+    GEOS_ERROR( GEOS_FMT( "line search is not supported for {} = {}",
+                          viewKeyStruct::scalingTypeString(),
+                          EnumStrings< ScalingType >::toString( ScalingType::Local )),
+                this->getDataContext());
+  }
 
   if( m_isThermal )
   {
@@ -270,29 +286,48 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                   DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( dt );
-  if( m_isThermal )
-  {
-    DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
-    DofManager::CompMask temperatureMask( m_numDofPerCell, 1, 2 );
 
+  bool const localScaling = m_scalingType == ScalingType::Local;
+
+  DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
+
+  if( localScaling )
+  {
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
                                  flow::pressure::key(),
                                  flow::pressureScalingFactor::key(),
                                  pressureMask );
-
-    dofManager.addVectorToField( localSolution,
-                                 BASE::viewKeyStruct::elemDofFieldString(),
-                                 flow::temperature::key(),
-                                 flow::temperatureScalingFactor::key(),
-                                 temperatureMask );
   }
   else
   {
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
                                  flow::pressure::key(),
-                                 scalingFactor );
+                                 scalingFactor,
+                                 pressureMask );
+  }
+
+  if( m_isThermal )
+  {
+    DofManager::CompMask temperatureMask( m_numDofPerCell, 1, 2 );
+
+    if( localScaling )
+    {
+      dofManager.addVectorToField( localSolution,
+                                   BASE::viewKeyStruct::elemDofFieldString(),
+                                   flow::temperature::key(),
+                                   flow::temperatureScalingFactor::key(),
+                                   temperatureMask );
+    }
+    else
+    {
+      dofManager.addVectorToField( localSolution,
+                                   BASE::viewKeyStruct::elemDofFieldString(),
+                                   flow::temperature::key(),
+                                   scalingFactor,
+                                   temperatureMask );
+    }
   }
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

@@ -20,6 +20,7 @@ Contains:
 set( fluidFlowSolvers_headers
      FlowSolverBase.hpp
      FlowSolverBaseFields.hpp
+     FlowSolverUtilities.hpp
      CompositionalMultiphaseBase.hpp
      CompositionalMultiphaseBaseFields.hpp
      CompositionalMultiphaseStatisticsAggregator.hpp
