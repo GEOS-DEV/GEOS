@@ -14,8 +14,8 @@ There are two versions of the model highlighting two different types of fluid mo
 
 .. code-block:: console
 
-inputFiles/compositionalMultiphaseWell/dome_kvalue_bench.xml
-inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_bench.xml
+   inputFiles/compositionalMultiphaseWell/dome_kvalue_bench.xml
+   inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_bench.xml
 
 The main difference between these two files is how the thermodynamic equilibrium between phases is handled. The first file uses a K-value-based approach (`CompositionalTwoPhaseKValueFluidPhillipsBrine`), which relies on pre-tabulated equilibrium constants. The second file uses a direct Equation of State approach (`CompositionalTwoPhaseFluidPhillipsBrine`) combining the Peng-Robinson and Soreide-Whitson models for rigorous phase behavior calculations.
 
@@ -44,7 +44,7 @@ he mesh is defined via a VTK file in the regular VTI format, located at:
 
 .. code-block:: console
 
-inputFiles/compositionalMultiphaseWell/dome_bench.vti
+   inputFiles/compositionalMultiphaseWell/dome_bench.vti
 
 The mesh encompasses three distinct regions, layered in a dome-like structure as seen in the visualization:
 
@@ -54,12 +54,14 @@ The mesh encompasses three distinct regions, layered in a dome-like structure as
 
 * **CAPROCK**: A sealing rock located at the very top of the domain (shown in green) sitting above the clay, which does not take part in the flow simulation.
 
-.. figure:: dome-rock-types.png
+.. plot::
     :align: center
-    :alt: Visualization of the dome mesh showing SAND (blue) at the bottom, CLAY (red) in the middle, and CAPROCK (green) at the top.
-    :figclass: align-center
+    :width: 80%
+    :context: close-figs
+    :caption: Visualization of the dome mesh highlighting the three rock types.
 
-    Visualization of the dome mesh highlighting the three rock types.
+    from props import plot_attribute
+    _ = plot_attribute("output_0.h5")
 
 -------------------
 Fluid
@@ -67,13 +69,13 @@ Fluid
 
 Both fluid configurations model an isothermal system at a temperature of 344.15 K and feature a 4-component mixture consisting of CH4, CO2, H2S, and H2O. The brine salinity in both models is set to 2.3.
 
-The defining difference lies in the constitutive models (see `EquilibriumInitialCondition'_). The K-value case directly queries `KV_CH4`, `KV_CO2`, `KV_H2S`, and `KV_H2O` tables for component partitioning, whereas the Soreide-Whitson case evaluates these interactions numerically at runtime using critical pressures, critical temperatures, and binary interaction coefficients.
+The defining difference lies in the constitutive models (see :ref:`EquilibriumInitialCondition`). The K-value case directly queries `KV_CH4`, `KV_CO2`, `KV_H2S`, and `KV_H2O` tables for component partitioning, whereas the Soreide-Whitson case evaluates these interactions numerically at runtime using critical pressures, critical temperatures, and binary interaction coefficients.
 
 -------------------
 Initialization
 -------------------
 
-The model is initialized with a gas-water contact at an elevation depth of -4400.0 meters. A capillary pressure gravity equilibrium is then performed (see `EquilibriumInitialCondition`_).
+The model is initialized with a gas-water contact at an elevation depth of -4400.0 meters. A capillary pressure gravity equilibrium is then performed (see :ref:`EquilibriumInitialCondition`).
 
 In the `HydrostaticEquilibrium` block (as shown in the snippet below), the reference datum elevation is set to -4453.75 m with a reference datum pressure of 2.7e7 Pa. The expected initial state is a gravitationally stable phase distribution where a predominant gas cap (rich in CH4) sits above the contact point at -4400.0 m, and a brine-rich water zone sits below it. 
 
@@ -82,38 +84,31 @@ In the `HydrostaticEquilibrium` block (as shown in the snippet below), the refer
     :start-after: <!-- SPHINX_DOME_EQUILIBRIUM_BEGIN -->
     :end-before: <!-- SPHINX_DOME_EQUILIBRIUM_END -->
 
-The initial composition is defined via depth tables which specify a constant composition in this case. Note that as explained in `EquilibriumInitialCondition`_, the initial composition is used as a starting point for the initialisation and the actual initial compositions are calculated to ensure that the initial phase saturations conform to the capillary pressure model. 
+The initial composition is defined via depth tables which specify a constant composition in this case. Note that as explained in :ref:`EquilibriumInitialCondition`, the initial composition is used as a starting point for the initialisation and the actual initial compositions are calculated to ensure that the initial phase saturations conform to the capillary pressure model. 
 
 The initial state is established by defining a reference datum and a horizontal gas-water contact, which generates a gravitationally stable hydrostatic pressure gradient (**see the initial pressure distribution in the table below**). Below the contact, the reservoir is fully saturated with the aqueous phase (predominantly H2O), while above the contact, a gas cap exists (rich in CH4, **as visualized in the initial composition fraction images**).
 
 The impact of the different capillary pressure models assigned to the distinct rock types is clearly visible in the **initial gas saturation distribution image**. In the higher-quality SAND region at the bottom of the reservoir, the phase transition at the gas-water contact is relatively sharp. Conversely, in the lower-quality CLAY region sitting above the sand, the capillary transition zone is much broader. This illustrates how the equilibrium calculation conforms the initial phase saturations to the specific rock properties, reflecting the higher entry pressure and stronger capillary forces present in the clay.
 
-.. list-table:: Initial State Visualizations
-:widths: 50 50
-:align: center
+.. plot::
+    :width: 48%
+    :context: close-figs
+    :caption: Initial pressure.
+    
+    import matplotlib.pyplot as plt
+    plt.close('all')
+    from props import plot_property
+    plot_property("output_0.h5", "pressure", units="Pa", value_range=[2.5e7, 3.0e7])
 
-* * .. figure:: dome-initial-pressure.png
-:width: 100%
-:align: center
-:alt: Initial pressure distribution
-Initial hydrostatic pressure distribution increasing with depth.
-* .. figure:: dome-initial-saturation.png
-:width: 100%
-:align: center
-:alt: Initial gas saturation showing varying transition zones
-Initial gas phase volume fraction. Note the sharp contact in the lower SAND region and the broader transition zone in the middle CLAY layer.
-
-
-* * .. figure:: dome-initial-ch4.png
-:width: 100%
-:align: center
-:alt: Initial CH4 fraction
-Initial global composition fraction of CH4, dominating the gas cap.
-* .. figure:: dome-initial-h2o.png
-:width: 100%
-:align: center
-:alt: Initial H2O fraction
-Initial global composition fraction of H2O, dominating the reservoir below the contact.
+.. plot::
+    :width: 48%
+    :context: close-figs
+    :caption: Initial gas saturation.
+    
+    import matplotlib.pyplot as plt
+    plt.close('all')
+    from props import plot_property
+    _ = plot_property("output_0.h5", "phaseVolumeFraction", component_idx=1, component_name="gas", value_range=[0.0, 0.8])
 
 -------------------
 Wells
