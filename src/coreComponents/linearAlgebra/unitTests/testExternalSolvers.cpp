@@ -21,8 +21,10 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "common/MpiWrapper.hpp"
 
-#if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
+#if defined(GEOS_USE_HYPRE)
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
+#endif
+#if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #endif
 #if defined(GEOS_USE_HIP) && defined(GEOS_USE_HYPREDRV)
@@ -215,6 +217,65 @@ private:
   LinearSolverParameters & m_params;
   std::string m_path;
 };
+#endif
+
+#if defined(GEOS_USE_HYPRE)
+TEST( HypreSolver, ReportsSetupTimeOnlyOnce )
+{
+  // A distributed SPD tridiagonal matrix exercises multiple right-hand sides with the same AMG hierarchy.
+  HypreMatrix matrix;
+  matrix.createWithLocalSize( 12, 12, 3, MPI_COMM_GEOS );
+  globalIndex const numRows = matrix.numGlobalRows();
+  matrix.open();
+  for( globalIndex row = matrix.ilower(); row < matrix.iupper(); ++row )
+  {
+    if( row > 0 )
+      matrix.insert( row, row - 1, -1.0 );
+    matrix.insert( row, row, 2.0 );
+    if( row + 1 < numRows )
+      matrix.insert( row, row + 1, -1.0 );
+  }
+  matrix.close();
+  HypreVector expected, rhs, solution, residual;
+  expected.create( matrix.numLocalCols(), matrix.comm() );
+  rhs.create( matrix.numLocalRows(), matrix.comm() );
+  solution.create( matrix.numLocalCols(), matrix.comm() );
+  residual.create( matrix.numLocalRows(), matrix.comm() );
+
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::cg;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.krylov.relTolerance = 1e-10;
+  params.krylov.maxIterations = 100;
+  HypreSolver solver( params );
+  solver.setup( matrix );
+
+  for( integer i = 0; i < 2; ++i )
+  {
+    expected.rand( 1984u + static_cast< unsigned >( i ) );
+    matrix.apply( expected, rhs );
+    solution.zero();
+    solver.solve( rhs, solution );
+    EXPECT_TRUE( solver.result().success() );
+    if( i == 0 )
+      EXPECT_GT( solver.result().setupTime, 0.0 );
+    else
+      EXPECT_DOUBLE_EQ( solver.result().setupTime, 0.0 );
+    matrix.residual( solution, rhs, residual );
+    EXPECT_LT( residual.norm2() / rhs.norm2(), 1e-8 );
+  }
+
+  // The zero-RHS shortcut must not retain the setup cost, and a new setup must be reported again.
+  rhs.zero();
+  solver.solve( rhs, solution );
+  EXPECT_DOUBLE_EQ( solver.result().setupTime, 0.0 );
+  EXPECT_DOUBLE_EQ( solver.result().solveTime, 0.0 );
+  solver.setup( matrix );
+  solver.solve( rhs, solution );
+  EXPECT_GT( solver.result().setupTime, 0.0 );
+  solver.solve( rhs, solution );
+  EXPECT_DOUBLE_EQ( solver.result().setupTime, 0.0 );
+}
 #endif
 
 #if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
