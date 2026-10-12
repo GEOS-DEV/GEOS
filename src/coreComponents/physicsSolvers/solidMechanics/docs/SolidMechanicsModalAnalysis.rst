@@ -56,6 +56,9 @@ A negative frequency gives a negative shift :math:`\sigma = -\alpha`.
 The shifted matrix :math:`\mathbf{K} - \sigma \mathbf{M} = \mathbf{K} + \alpha \mathbf{M}` is then symmetric positive definite, even for a free body.
 Its linear solver is the one given in the ``LinearSolverParameters`` block of the solver.
 The multigrid preconditioner of an elastic problem uses the rigid-body modes as near-null space.
+The shifted matrix stays fixed during an eigensolve, so the linear solver and its preconditioner are set up once and reused for every operator application, including Arnoldi restarts and completeness checks.
+LOBPCG likewise sets up its standalone preconditioner once and reuses it for every residual application.
+A new modal solver execution assembles a new matrix and performs a new setup.
 
 Two eigensolvers are available, with the ``modalSolverType`` attribute.
 Both are accessed through a common interface, so a new method can be added with one class and one entry in the factory.
@@ -148,8 +151,10 @@ The implementation has these properties:
 
 In each iteration, the preconditioner and :math:`\mathbf{M}` are applied to the residual of every iterate that is not locked, and of the locked iterates in the iterations where they are tested, because the convergence test uses the preconditioned residual.
 :math:`\mathbf{K}` is applied to the residual of every active vector, and :math:`\mathbf{K}` and :math:`\mathbf{M}` to the new iterates.
+The images of the active previous directions are refreshed after their projection against the iterates, immediately before Rayleigh-Ritz extraction.
+Only their mass images are computed when the new directions are formed; their stiffness images would be overwritten after the next projection.
 The dense work is :math:`O(n^2)` vector operations.
-The memory is about fifteen blocks of :math:`n` vectors.
+The memory is about fourteen blocks of :math:`n` vectors.
 
 Deflation of the rigid-body modes
 ---------------------------------

@@ -97,6 +97,22 @@ struct DiagonalPencil
   VEC inverse;
 };
 
+/// Diagonal operator that counts matrix applications to check the cost of an eigensolve.
+template< typename VECTOR >
+class CountingDiagonalOperator : public DiagonalOperator< VECTOR >
+{
+public:
+  using DiagonalOperator< VECTOR >::DiagonalOperator;
+
+  void apply( VECTOR const & src, VECTOR & dst ) const override
+  {
+    ++numApplications;
+    DiagonalOperator< VECTOR >::apply( src, dst );
+  }
+
+  mutable integer numApplications = 0;
+};
+
 } // namespace
 
 template< typename LAI >
@@ -128,13 +144,14 @@ public:
   }
 
   /// Solve the pencil 1, 2, 3, ... with LOBPCG and a damped (inexact) diagonal preconditioner
-  static EigenSolverResult solveLobpcg( integer const numModes, real64 const damping )
+  static EigenSolverResult solveLobpcg( integer const numModes, real64 const damping,
+                                        integer * const numStiffnessApplications = nullptr )
   {
     real64 constexpr sigma = -1.0;
     DiagonalPencil< Vector > const pencil( sigma, 1 );
     Vector damped( pencil.inverse );
     damped.scale( damping );
-    DiagonalOperator< Vector > const stiffness( pencil.k );
+    CountingDiagonalOperator< Vector > const stiffness( pencil.k );
     DiagonalOperator< Vector > const mass( pencil.m );
     DiagonalOperator< Vector > const preconditioner( damped );
 
@@ -147,7 +164,12 @@ public:
 
     typename GeneralizedEigenSolver< Vector >::Problem problem{ stiffness, mass, nullptr, &preconditioner };
     stdVector< Vector > modes;
-    return GeneralizedEigenSolver< Vector >::create( params )->solve( problem, pencil.k, modes );
+    EigenSolverResult const result = GeneralizedEigenSolver< Vector >::create( params )->solve( problem, pencil.k, modes );
+    if( numStiffnessApplications != nullptr )
+    {
+      *numStiffnessApplications = stiffness.numApplications;
+    }
+    return result;
   }
 
   /// Solve the pencil with the six zeros and check the returned eigenvalues against the exact ones
@@ -266,7 +288,23 @@ TYPED_TEST_P( EigenSolversTest, lobpcgLocksConvergedColumns )
   }
 }
 
+// Each iteration needs at most one stiffness application per X, W and P column. Initialization and final
+// residual reporting need three more per column; computing K P before its next projection wastes an application.
+TYPED_TEST_P( EigenSolversTest, lobpcgStiffnessApplicationBudget )
+{
+  integer numStiffnessApplications = 0;
+  EigenSolverResult const result = TestFixture::solveLobpcg( 1, 0.3, &numStiffnessApplications );
+  ASSERT_TRUE( result.converged );
+  ASSERT_EQ( result.eigenvalues.size(), 1 );
+  EXPECT_NEAR( result.eigenvalues[0], 1.0, 1.0e-8 );
+  EXPECT_LE( result.residuals[0], 1.0e-7 );
+  ::testing::Test::RecordProperty( "stiffnessApplications", numStiffnessApplications );
+  ::testing::Test::RecordProperty( "iterations", result.numIterations );
+  EXPECT_LE( numStiffnessApplications, 3 * ( result.numIterations + 1 ) );
+}
+
 REGISTER_TYPED_TEST_SUITE_P( EigenSolversTest,
+                             lobpcgStiffnessApplicationBudget,
                              lobpcgLocksConvergedColumns,
                              arnoldiClusteredDoubleEigenvalues,
                              arnoldiClusteredHigherMultiplicity,

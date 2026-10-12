@@ -250,7 +250,6 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
   stdVector< Vector > KP = makeBlock();
   stdVector< Vector > MP = makeBlock();
   stdVector< Vector > Pn = makeBlock();
-  stdVector< Vector > KPn = makeBlock();
   stdVector< Vector > MPn = makeBlock();
   stdVector< Vector > W = makeBlock();
   stdVector< Vector > KW = makeBlock();
@@ -284,7 +283,7 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       {
         return;
       }
-      for( integer t = rank; t <= n; ++t )
+      for( integer t = rank; t < n; ++t )
       {
         padding.push_back( std::make_unique< Vector >( Base::makeVector( prototype ) ) );
         padding.push_back( std::make_unique< Vector >( Base::makeVector( prototype ) ) );
@@ -511,17 +510,15 @@ EigenSolverResult LobpcgEigenSolver< VECTOR >::solve( Problem const & problem,
       problem.stiffness.apply( Xn[c], KXn[c] );
       combine( S, coefficients, c, n, Pn[c] );
       constraints.project( Pn[c] );
-      // Search directions can be formed by cancellation of almost parallel vectors.
-      // Updating their images by the same recurrence then ceases to represent K P and M P,
-      // corrupting the next projected pencil. Refresh them just like the iterate images.
-      problem.stiffness.apply( Pn[c], KPn[c] );
+      // Cancellation in the new directions makes recurrences for their images unreliable. Refresh M P now
+      // for the next projection; K P is only needed after that projection and is computed above for active
+      // columns immediately before extraction. Computing it here would be overwritten without being used.
       problem.mass.apply( Pn[c], MPn[c] );
     }
     std::swap( X, Xn );
     std::swap( KX, KXn );
     std::swap( MX, MXn );
     std::swap( P, Pn );
-    std::swap( KP, KPn );
     std::swap( MP, MPn );
     havePrevious = true;
   }
