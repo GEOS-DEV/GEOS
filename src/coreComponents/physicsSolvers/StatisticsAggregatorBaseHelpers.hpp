@@ -23,8 +23,7 @@
 #include "common/logger/Logger.hpp"
 #include "dataRepository/DataContext.hpp"
 #include "dataRepository/Group.hpp"
-#include "mesh/CellElementRegion.hpp"
-#include "mesh/CellElementSubRegion.hpp"
+#include "mesh/ElementRegionBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/MeshLevel.hpp"
 
@@ -102,11 +101,11 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
 
     for( size_t i = 0; i < path.m_regionNames.size(); ++i )
     {
-      CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.m_regionNames[i] );
+      ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( path.m_regionNames[i] );
       StatsGroupType & regionStats = registerStatsFunc( meshRegionsStats,
                                                         region.getName() );
 
-      region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
+      region.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
       {
         registerStatsFunc( regionStats,
                            subRegion.getName() );
@@ -142,13 +141,13 @@ template< typename Impl >
 void
 StatsAggregatorBase< Impl >::forRegionStatistics( MeshLevel & mesh,
                                                   StatsGroupType & meshRegionsStatistics,
-                                                  RegionStatsFunc< CellElementRegion > const & func ) const
+                                                  RegionStatsFunc< ElementRegionBase > const & func ) const
 {
   ElementRegionManager & elemManager = mesh.getElemManager();
   meshRegionsStatistics.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & regionStatistics )
   {
     string_view targetName = regionStatistics.getTargetName();
-    CellElementRegion & region = elemManager.getRegion< CellElementRegion >( string( targetName ) );
+    ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( string( targetName ) );
 
     func( region, regionStatistics );
   } );
@@ -156,14 +155,14 @@ StatsAggregatorBase< Impl >::forRegionStatistics( MeshLevel & mesh,
 
 template< typename Impl >
 void
-StatsAggregatorBase< Impl >::forRegionStatistics( CellElementRegion & region,
+StatsAggregatorBase< Impl >::forRegionStatistics( ElementRegionBase & region,
                                                   StatsGroupType & regionStatistics,
-                                                  RegionStatsFunc< CellElementSubRegion > const & func ) const
+                                                  RegionStatsFunc< ElementSubRegionBase > const & func ) const
 {
   regionStatistics.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & subRegionStatistics )
   {
     string_view targetName = subRegionStatistics.getTargetName();
-    CellElementSubRegion & subRegion = region.getSubRegion< CellElementSubRegion >( string( targetName ) );
+    ElementSubRegionBase & subRegion = region.getSubRegion< ElementSubRegionBase >( string( targetName ) );
     func( subRegion, subRegionStatistics );
   } );
 }
@@ -201,11 +200,11 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
   {
     forRegionStatistics( mesh,
                          meshRegionsStats,
-                         [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
+                         [&, timeRequest] ( ElementRegionBase & region, StatsGroupType & regionStats )
     {
       forRegionStatistics( region,
                            regionStats,
-                           [&, timeRequest] ( CellElementSubRegion & subRegion, StatsGroupType & subRegionStats )
+                           [&, timeRequest] ( ElementSubRegionBase & subRegion, StatsGroupType & subRegionStats )
       {
         initStats( subRegionStats, timeRequest );
         computeSubRegionRankStats( subRegion, subRegionStats );
@@ -220,13 +219,13 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
 
     forRegionStatistics( mesh,
                          meshRegionsStats,
-                         [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
+                         [&, timeRequest] ( ElementRegionBase & region, StatsGroupType & regionStats )
     {
       initStats( regionStats, timeRequest );
 
       forRegionStatistics( region,
                            regionStats,
-                           [&] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
+                           [&] ( ElementSubRegionBase &, StatsGroupType & subRegionStats )
       {
         aggregateStats( regionStats, subRegionStats );
 

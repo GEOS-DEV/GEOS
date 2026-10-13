@@ -187,7 +187,7 @@ public:
   /// @cond DO_NOT_DOCUMENT
 
   void initStats( RegionStatistics & stats, real64 time ) const;
-  void computeSubRegionRankStats( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats ) const;
+  void computeSubRegionRankStats( ElementSubRegionBase & subRegion, RegionStatistics & subRegionStats ) const;
   void aggregateStats( RegionStatistics & stats, RegionStatistics const & other ) const;
   void mpiAggregateStats( RegionStatistics & stats ) const;
   void postAggregateStats( RegionStatistics & stats );
