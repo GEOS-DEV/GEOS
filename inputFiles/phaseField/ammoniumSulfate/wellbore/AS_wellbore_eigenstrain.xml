@@ -194,7 +194,8 @@
       crackPorosity="0.1"
       crackPoreCompressibility="5e-9"
       surfaceAreaDamageExponent="1"
-      intactPressureCoefficient="0.0"/>
+      intactPressureCoefficient="0.0"
+      eigenstrainFactor="0.0"/>
 
     <!-- E = 40 GPa, nu = 0.23 => K = 24.6914e9, G = 16.2602e9. Brittle AT1: the damage threshold is
          psi_c = 3 Gc / (16 l) = 4690 J/m3, so Gc and l scale together to keep the strength.
@@ -229,7 +230,7 @@
       name="rockPerm"
       bulkPermeability="5.0e-18"
       damageDependenceConstant="8.0"
-      cloggingExponent="3"
+      cloggingExponent="10"
       minCloggingMultiplier="1e-6"/>
 
     <!-- ================= BOREHOLE (soft "void") =================

@@ -21,27 +21,27 @@
       objectPath="ElementRegions/Rock"
       fieldName="initialSurfaceArea"
       component="0"
-      scale="2000.0"/>
+      scale="1e4"/>
   </FieldSpecifications>
 
   <Events
-    maxTime="40.0">
+    maxTime="30.0">
     <PeriodicEvent
       name="solverApplications0"
-      endTime="24.0"
+      endTime="13.0"
       maxEventDt="0.1"
       target="/Solvers/pfSolve"/>
 
     <PeriodicEvent
       name="solverApplications1"
-      beginTime="24.0"
-      endTime="30.0"
+      beginTime="13.0"
+      endTime="25.0"
       maxEventDt="0.005"
       target="/Solvers/pfSolve"/>
 
     <PeriodicEvent
       name="solverApplications2"
-      beginTime="30.0"
+      beginTime="25.0"
       maxEventDt="0.1"
       target="/Solvers/pfSolve"/>
 
@@ -61,7 +61,7 @@
 
     <PeriodicEvent
       name="restarts"
-      cycleFrequency="50"
+      cycleFrequency="100"
       target="/Outputs/restartOutput"/>
   </Events>
 </Problem>
