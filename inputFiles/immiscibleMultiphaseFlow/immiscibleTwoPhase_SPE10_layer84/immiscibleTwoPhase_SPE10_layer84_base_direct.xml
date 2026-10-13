@@ -183,26 +183,30 @@
     <TableFunction 
       name="permxFunc"
       inputVarNames="{elementCenter}"
-      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
-      voxelFile="layer84_permx.geos"
+      hdf5File="SPE10_layer84_permeability_porosity.hdf5"
+      hdf5CoordinateDatasetNames="{x, y, z}"
+      hdf5TableDatasetName="horizontal_permeability"
       interpolation="linear" />
     <TableFunction 
       name="permyFunc"
       inputVarNames="{elementCenter}"
-      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
-      voxelFile="layer84_permy.geos"
+      hdf5File="SPE10_layer84_permeability_porosity.hdf5"
+      hdf5CoordinateDatasetNames="{x, y, z}"
+      hdf5TableDatasetName="horizontal_permeability"
       interpolation="linear" />
     <TableFunction 
       name="permzFunc"
       inputVarNames="{elementCenter}"
-      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
-      voxelFile="layer84_permz.geos"
+      hdf5File="SPE10_layer84_permeability_porosity.hdf5"
+      hdf5CoordinateDatasetNames="{x, y, z}"
+      hdf5TableDatasetName="vertical_permeability"
       interpolation="linear" />
     <TableFunction 
       name="poroFunc"
+      hdf5File="SPE10_layer84_permeability_porosity.hdf5"
+      hdf5CoordinateDatasetNames="{x, y, z}"
+      hdf5TableDatasetName="porosity"
       inputVarNames="{elementCenter}"
-      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
-      voxelFile="layer84_poro.geos"
       interpolation="linear" />
 
     <TableFunction
