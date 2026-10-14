@@ -71,6 +71,7 @@ public:
    * @param avgStress the stress averaged over quadrature points
    * @param temperature the temperature field (may be empty for non-thermal simulations)
    * @param temperature_n the temperature at the previous time step (may be empty for non-thermal simulations)
+   * @param accumulatePlasticStrain whether to accumulate a converged step's plastic strain increment
    */
   AverageStressStrainOverQuadraturePoints( NodeManager & nodeManager,
                                            EdgeManager const & edgeManager,
@@ -85,7 +86,8 @@ public:
                                            arrayView3d< real64 const, solid::STRESS_USD > const stress,
                                            fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress,
                                            arrayView1d< real64 const > const temperature,
-                                           arrayView1d< real64 const > const temperature_n ):
+                                           arrayView1d< real64 const > const temperature_n,
+                                           bool const accumulatePlasticStrain ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -99,7 +101,8 @@ public:
     m_stress( stress ),
     m_avgStress( avgStress ),
     m_temperature( temperature ),
-    m_temperature_n( temperature_n )
+    m_temperature_n( temperature_n ),
+    m_accumulatePlasticStrain( accumulatePlasticStrain )
   {}
 
   /**
@@ -158,10 +161,13 @@ public:
     finiteElement::feOps::symmetricGradient( dNdX, stack.uHatLocal, strainInc );
 
     real64 elasticStrainInc[6] = {0.0};
-    m_solidUpdate.getElasticStrainInc( k, q, elasticStrainInc );
+    if( m_accumulatePlasticStrain )
+    {
+      m_solidUpdate.getElasticStrainInc( k, q, elasticStrainInc );
+    }
 
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-    real64 const deltaTemperature = ( m_temperature.size() > 0 )
+    real64 const deltaTemperature = ( m_accumulatePlasticStrain && m_temperature.size() > 0 )
                                     ? ( m_temperature[k] - m_temperature_n[k] )
                                     : 0.0;
 
@@ -180,7 +186,7 @@ public:
       // This is a hack to handle boundary conditions such as those seen in plane-strain wellbore problems
       // Essentially, if bcs are constraining the strain (and thus total displacement), we do not accumulate any plastic strain (regardless
       // of stresses in material law)
-      if( std::abs( mechanicalStrainInc ) > 1.0e-8 )
+      if( m_accumulatePlasticStrain && std::abs( mechanicalStrainInc ) > 1.0e-8 )
       {
         m_avgPlasticStrain[k][icomp] += conversionFactor[icomp]*detJxW*(mechanicalStrainInc - elasticStrainInc[icomp])/m_elementVolume[k];
       }
@@ -247,6 +253,9 @@ protected:
   /// The temperature at the previous time step (empty for non-thermal simulations)
   arrayView1d< real64 const > const m_temperature_n;
 
+  /// Initial output must not accumulate an artificial plastic strain increment.
+  bool const m_accumulatePlasticStrain;
+
 };
 
 
@@ -290,12 +299,13 @@ public:
                    arrayView3d< real64 const, solid::STRESS_USD > const stress,
                    fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress,
                    arrayView1d< real64 const > const temperature = {},
-                   arrayView1d< real64 const > const temperature_n = {} )
+                   arrayView1d< real64 const > const temperature_n = {},
+                   bool const accumulatePlasticStrain = true )
   {
     AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
             solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain, stress, avgStress,
-            temperature, temperature_n );
+            temperature, temperature_n, accumulatePlasticStrain );
 
     AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );

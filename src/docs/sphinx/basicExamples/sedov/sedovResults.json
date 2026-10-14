@@ -1,0 +1,116 @@
+{
+  "input_file": "inputFiles/solidMechanics/sedov_basicExample.xml",
+  "input_sha256": "db63153f0b1b79411dd1da3a67065ebf6a5382c03f7bb1fc80b105e9d0bce302",
+  "history_sha256": "b7cf5ff2663d44cf30ef16af36e39ceaa8d48634ef9692b794000307378a2326",
+  "curated_data_sha256": "e5be817ad61a8a3f90c7ea4f839331eacf62aa2907e9c498a1c219005f864d11",
+  "parameters": {
+    "density_kg_m3": 2700.0,
+    "bulk_modulus_Pa": 5555600000.0,
+    "shear_modulus_Pa": 4166670000.0,
+    "cell_count": 1000,
+    "end_time_s": 0.001,
+    "time_step_s": 1e-05
+  },
+  "snapshots_s": [
+    0.0,
+    0.00025,
+    0.0005000000000000007,
+    0.000990000000000002
+  ],
+  "history_records": 100,
+  "source_node_m": [
+    1,
+    1,
+    1
+  ],
+  "stress_components": [
+    "xx",
+    "yy",
+    "zz",
+    "yz",
+    "xz",
+    "xy"
+  ],
+  "stress_reduction": "Arithmetic mean of eight equally weighted quadrature points in each regular cube.",
+  "spatial_coordinates": "Reference coordinates; all selected points are retained, with no smoothing.",
+  "initial_average_stress_max_error_Pa": 0.0,
+  "average_stress_at_last_sample_equals_initial": true,
+  "unit_changes_for_plots": "s to ms, Pa to MPa, displacement m to micrometers; velocity remains m/s.",
+  "runtime": [
+    "GEOS version: 1.1.0 (fix/paludettomag1/initial-mechanical-fields, sha1: dffac6a84f)",
+    "- C++ compiler: clang 18.1.3"
+  ],
+  "smoke_reference_comparison": {
+    "reference_archive": "https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4162-17746-ae273b9.tar.gz",
+    "reference_case": "solidMechanics/sedov_ssle_smoke_01/0to100_restart_000000100/rank_0000000.hdf5",
+    "checkpoint_cycle": 100,
+    "checkpoint_time_s": 0.001,
+    "comparison": {
+      "elementCenter": {
+        "shape": [
+          1000,
+          3
+        ],
+        "maximum_difference": 0.0,
+        "equal": true
+      },
+      "shale/stress": {
+        "shape": [
+          1000,
+          8,
+          6
+        ],
+        "maximum_difference": 0.0,
+        "equal": true
+      },
+      "averageStress": {
+        "shape": [
+          1000,
+          6
+        ],
+        "maximum_difference": 0.0,
+        "equal": true
+      },
+      "averageStrain": {
+        "shape": [
+          1000,
+          6
+        ],
+        "maximum_difference": 0.0,
+        "equal": true
+      },
+      "averagePlasticStrain": {
+        "shape": [
+          1000,
+          6
+        ],
+        "maximum_difference": 0.0,
+        "equal": true
+      },
+      "ReferencePosition": {
+        "shape": [
+          1331,
+          3
+        ],
+        "maximum_difference": 0.0,
+        "equal": true
+      },
+      "totalDisplacement": {
+        "shape": [
+          1331,
+          3
+        ],
+        "maximum_difference": 0.0,
+        "equal": true
+      },
+      "velocity": {
+        "shape": [
+          1331,
+          3
+        ],
+        "maximum_difference": 0.0,
+        "equal": true
+      }
+    }
+  }
+}

@@ -950,6 +950,77 @@ SolidMechanicsLagrangianFEM::
 
 }
 
+void SolidMechanicsLagrangianFEM::finalizeInitialState( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    updateStressStrainAverages( mesh, regionNames, false );
+  } );
+}
+
+void SolidMechanicsLagrangianFEM::updateStressStrainAverages( MeshLevel & mesh,
+                                                              string_array const & regionNames,
+                                                              bool const accumulatePlasticStrain )
+{
+  NodeManager & nodeManager = mesh.getNodeManager();
+  ElementRegionManager & elementRegionManager = mesh.getElemManager();
+  elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                     [&]( localIndex const,
+                                                                          CellElementSubRegion & subRegion )
+  {
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+
+    arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
+
+    solidMechanics::arrayView2dLayoutStrain avgStrain = subRegion.getField< solidMechanics::averageStrain >();
+    solidMechanics::arrayView2dLayoutStrain avgPlasticStrain = subRegion.getField< solidMechanics::averagePlasticStrain >();
+    solidMechanics::arrayView2dLayoutAvgStress avgStress = subRegion.getField< solidMechanics::averageStress >();
+
+    arrayView1d< real64 const > const temperature =
+      subRegion.hasField< fields::flow::temperature >()
+      ? subRegion.getField< fields::flow::temperature >().toViewConst()
+      : arrayView1d< real64 const >{};
+
+    arrayView1d< real64 const > const temperature_n =
+      subRegion.hasField< fields::flow::temperature_n >()
+      ? subRegion.getField< fields::flow::temperature_n >().toViewConst()
+      : arrayView1d< real64 const >{};
+
+    constitutive::ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, [&] ( auto & solidModel )
+    {
+      using SOLID_TYPE = TYPEOFREF( solidModel );
+
+      finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
+      finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = decltype( finiteElement );
+        AverageStressStrainOverQuadraturePointsKernelFactory::createAndLaunch< FE_TYPE, SOLID_TYPE, parallelDevicePolicy<> >( nodeManager,
+                                                                                                                              mesh.getEdgeManager(),
+                                                                                                                              mesh.getFaceManager(),
+                                                                                                                              subRegion,
+                                                                                                                              finiteElement,
+                                                                                                                              solidModel,
+                                                                                                                              nodeManager.getField< solidMechanics::totalDisplacement >(),
+                                                                                                                              nodeManager.getField< solidMechanics::incrementalDisplacement >(),
+                                                                                                                              avgStrain,
+                                                                                                                              avgPlasticStrain,
+                                                                                                                              stress,
+                                                                                                                              avgStress,
+                                                                                                                              temperature,
+                                                                                                                              temperature_n,
+                                                                                                                              accumulatePlasticStrain );
+      } );
+
+
+    } );
+
+
+  } );
+}
+
 void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                         real64 const & dt,
                                                         DomainPartition & domain )
@@ -964,9 +1035,6 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
     solidMechanics::arrayView2dLayoutIncrDisplacement const uhat =
       nodeManager.getField< solidMechanics::incrementalDisplacement >();
-
-    solidMechanics::arrayView2dLayoutTotalDisplacement const disp =
-      nodeManager.getField< solidMechanics::totalDisplacement >();
 
     if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
@@ -989,59 +1057,15 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       } );
     }
 
-    // save (converged) constitutive state data
+    updateStressStrainAverages( mesh, regionNames, true );
+
+    // Save constitutive history only after averaging the converged increment.
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                        [&]( localIndex const,
                                                                             CellElementSubRegion & subRegion )
     {
-      string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-      SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-
-      arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
-
-      solidMechanics::arrayView2dLayoutStrain avgStrain = subRegion.getField< solidMechanics::averageStrain >();
-      solidMechanics::arrayView2dLayoutStrain avgPlasticStrain = subRegion.getField< solidMechanics::averagePlasticStrain >();
-      solidMechanics::arrayView2dLayoutAvgStress avgStress = subRegion.getField< solidMechanics::averageStress >();
-
-      arrayView1d< real64 const > const temperature =
-        subRegion.hasField< fields::flow::temperature >()
-        ? subRegion.getField< fields::flow::temperature >().toViewConst()
-        : arrayView1d< real64 const >{};
-
-      arrayView1d< real64 const > const temperature_n =
-        subRegion.hasField< fields::flow::temperature_n >()
-        ? subRegion.getField< fields::flow::temperature_n >().toViewConst()
-        : arrayView1d< real64 const >{};
-
-      constitutive::ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, [&] ( auto & solidModel )
-      {
-        using SOLID_TYPE = TYPEOFREF( solidModel );
-
-        finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
-        finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
-        {
-          using FE_TYPE = decltype( finiteElement );
-          AverageStressStrainOverQuadraturePointsKernelFactory::createAndLaunch< FE_TYPE, SOLID_TYPE, parallelDevicePolicy<> >( nodeManager,
-                                                                                                                                mesh.getEdgeManager(),
-                                                                                                                                mesh.getFaceManager(),
-                                                                                                                                subRegion,
-                                                                                                                                finiteElement,
-                                                                                                                                solidModel,
-                                                                                                                                disp,
-                                                                                                                                uhat,
-                                                                                                                                avgStrain,
-                                                                                                                                avgPlasticStrain,
-                                                                                                                                stress,
-                                                                                                                                avgStress,
-                                                                                                                                temperature,
-                                                                                                                                temperature_n );
-        } );
-
-
-      } );
-
-      constitutiveRelation.saveConvergedState();
-
+      string const & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+      getConstitutiveModel< SolidBase >( subRegion, solidMaterialName ).saveConvergedState();
     } );
   } );
 

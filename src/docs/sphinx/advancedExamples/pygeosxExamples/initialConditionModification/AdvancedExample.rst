@@ -26,8 +26,13 @@ This example requires an input xml and python script located at:
 Description of the case
 ------------------------------------------------------------------
 
-This example is derived from the sedov integrated test (`GEOS/src/coreComponents/physicsSolvers/solidMechanics/integratedTests/sedov.xml`), which looks at the propagation of elastic waves due to an initial stress field.
+This example uses the elastic stress-pulse problem from :ref:`SedovBasicExample`.
+That basic example describes the physical setup, explicit time stepping, and output fields.
 The pygeosx interface is used to modify the initial conditions of the problem to something of our choosing.
+
+The script changes the material stress after GEOS applies its initial conditions.
+Such a Python write does not automatically refresh the derived ``averageStress`` field.
+Use the material stress when inspecting the modified state.
 
 
 ---------------------------------

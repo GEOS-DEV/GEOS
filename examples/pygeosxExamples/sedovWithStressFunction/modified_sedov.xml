@@ -4,7 +4,7 @@
   <!-- SPHINX_SEDOV_INCLUDED -->
   <Included>
     <File
-      name="../../../inputFiles/solidMechanics/sedov.xml"/>
+      name="../../../inputFiles/solidMechanics/sedov_ssle_smoke.xml"/>
   </Included>
 
   <!-- SPHINX_SEDOV_INCLUDED_END -->
