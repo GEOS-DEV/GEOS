@@ -839,7 +839,11 @@ public:
     m_isThermal( isThermal ),
     m_incrBubbleDisp( faceManager.getField< fields::contact::incrementalBubbleDisplacement >().toViewConst() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
-                      elementSubRegion.template getReference< string >( fluidModelKey ) ).density() )
+                      elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
+    m_fluidInternalEnergy( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
+                             elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy() ),
+    // the solid internal energy model only exists in thermal runs
+    m_rockInternalEnergy( isThermal ? inputConstitutiveType.getInternalEnergy() : arrayView2d< real64 const >() )
   {}
 
   //***************************************************************************
@@ -874,6 +878,7 @@ public:
       localdRbdP{},
       localdRbdT{},
       localdRpdB{},
+      localdRTdB{},
       X{ {} },
       pLocal{}
     {}
@@ -904,6 +909,9 @@ public:
 
     /// C-array storage for the element local dRp/dB Jacobian (A_pb bulk term).
     real64 localdRpdB[numBubbleUdofs];
+
+    /// C-array storage for the element local dRT/dB Jacobian (A_Tb bulk term, thermal only).
+    real64 localdRTdB[numBubbleUdofs];
 
     /// local nodal coordinates
     real64 X[ numNodesPerElem ][ 3 ];
@@ -1055,6 +1063,15 @@ public:
     // times the fluid density that puts it in mass units). We reuse dRbdP_gauss.
     real64 const rhof = m_fluidDensity( k, 0 );
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRpdB, dRbdP_gauss, -detJ * rhof );
+
+    // ---- A_Tb^Omega : same term for the energy equation (thermal only) ----
+    // As in ThermalSinglePhasePoromechanics::computeFluidIncrement,
+    //   dEnergyIncrement_dVolStrainIncrement = biot * ( fluidDensity * fluidInternalEnergy - rockInternalEnergy ).
+    if( m_isThermal )
+    {
+      real64 const energyFactor = rhof * m_fluidInternalEnergy( k, 0 ) - m_rockInternalEnergy( k, 0 );
+      LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRTdB, dRbdP_gauss, -detJ * energyFactor );
+    }
   }
 
   /**
@@ -1073,12 +1090,14 @@ public:
     real64 localdRbdP[3];
     real64 localdRbdT[3];
     real64 localdRpdB[3];
+    real64 localdRTdB[3];
     for( localIndex i = 0; i < 3; ++i )
     {
       localRb[i] = stack.localRb[parentFaceIndex*3+i];
       localdRbdP[i] = stack.localdRbdP[parentFaceIndex*3+i];
       localdRbdT[i] = stack.localdRbdT[parentFaceIndex*3+i];
       localdRpdB[i] = stack.localdRpdB[parentFaceIndex*3+i];
+      localdRTdB[i] = stack.localdRTdB[parentFaceIndex*3+i];
     }
 
     // ---- A_bp : bubble-momentum row (dR_b/dP) ----
@@ -1127,6 +1146,23 @@ public:
                                                                               stack.bColIndices,
                                                                               localdRpdB,
                                                                               3 );
+
+      // ---- A_Tb^Omega : energy row (dR_T/db) + storage residual, temperature packed right after pressure ----
+      localIndex const tRow = pRow + 1;
+      if( m_isThermal && tRow < m_matrix.numRows() )
+      {
+        real64 rT = 0.0;
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          rT += localdRTdB[i] * m_incrBubbleDisp[bFace][i];
+        }
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[tRow], rT );
+
+        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( tRow,
+                                                                                stack.bColIndices,
+                                                                                localdRTdB,
+                                                                                3 );
+      }
     }
 
     return 0.0;
@@ -1160,6 +1196,12 @@ protected:
 
   /// Fluid density [elem][q].
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_fluidDensity;
+
+  /// Fluid internal energy [elem][q] (used in thermal runs only).
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_fluidInternalEnergy;
+
+  /// Rock internal energy [elem][q] (thermal only, empty otherwise).
+  arrayView2d< real64 const > const m_rockInternalEnergy;
 
 };
 
