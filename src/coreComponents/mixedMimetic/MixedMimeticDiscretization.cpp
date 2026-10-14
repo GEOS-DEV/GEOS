@@ -1,0 +1,168 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file MixedMimeticDiscretization.cpp
+ */
+
+#include "MixedMimeticDiscretization.hpp"
+
+#include "finiteVolume/MimeticInnerProductDispatch.hpp"
+#include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/RTInnerProduct.hpp"
+
+namespace geos
+{
+
+using namespace dataRepository;
+using namespace mimeticInnerProduct;
+
+MixedMimeticDiscretization::MixedMimeticDiscretization( string const & name,
+                                                        Group * const parent )
+  : Group( name, parent ),
+  m_adaptiveConsistency( 1 ),
+  m_consistencyTolerance( 1e-3 ),
+  m_nominalGradient( { 1.0, 1.0, 1.0 } ),
+  m_degeneracyTolerance( 0.1 )
+{
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  registerWrapper( viewKeyStruct::innerProductTypeString(), &m_innerProductType ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Type of inner product used in the MFD-compatible cells of the mixed mimetic solver" );
+
+  registerWrapper( viewKeyStruct::adaptiveConsistencyString(), &m_adaptiveConsistency ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag enabling the consistency layer: when enabled (1, default), the cell-wise inner product is "
+                    "TPFA where the consistency indicator is below consistencyTolerance and innerProductType elsewhere; "
+                    "when disabled (0), innerProductType is used in every cell" );
+
+  registerWrapper( viewKeyStruct::consistencyToleranceString(), &m_consistencyTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1e-3 ).
+    setDescription( "Tolerance of the consistency layer: the consistent (MFD) product is selected where the indicator exceeds it" );
+
+  registerWrapper( viewKeyStruct::nominalGradientString(), &m_nominalGradient ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_nominalGradient ).
+    setDescription( "Nominal pressure gradient inducing the projected admissible flow field used by the residual indicators" );
+
+  registerWrapper( viewKeyStruct::degeneracyToleranceString(), &m_degeneracyTolerance ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Degeneracy tolerance in percent: a free cell whose volume is below this percentage of the total "
+                    "volume of its node star is not admissible for the consistent (MFD) product and uses the diagonal "
+                    "(TPFA) product, whatever the consistency indicator says; a prescribed cell is not altered; "
+                    "0 disables the layer" );
+}
+
+void MixedMimeticDiscretization::postInputInitialization()
+{
+  Group::postInputInitialization();
+
+  GEOS_THROW_IF_LT_MSG( m_consistencyTolerance, 0.0,
+                        GEOS_FMT( "{}: the consistency tolerance cannot be negative",
+                                  getWrapperDataContext( viewKeyStruct::consistencyToleranceString() ) ),
+                        InputError );
+
+  GEOS_THROW_IF_LT_MSG( m_degeneracyTolerance, 0.0,
+                        GEOS_FMT( "{}: the degeneracy tolerance cannot be negative",
+                                  getWrapperDataContext( viewKeyStruct::degeneracyToleranceString() ) ),
+                        InputError );
+
+  GEOS_THROW_IF_LT_MSG( LvArray::tensorOps::l2Norm< 3 >( m_nominalGradient.data ), LvArray::NumericLimits< real64 >::epsilon,
+                        GEOS_FMT( "{}: the nominal gradient cannot be the zero vector",
+                                  getWrapperDataContext( viewKeyStruct::nominalGradientString() ) ),
+                        InputError );
+
+  // with a TPFA inner product both branches of the selection coincide: the indicators are only a diagnostic
+  if( isAdaptiveConsistency() && m_innerProductType == mimeticInnerProduct::MimeticInnerProductTypeStrings::TPFA )
+  {
+    GEOS_WARNING( GEOS_FMT( "{}: 'adaptiveConsistency' is enabled but 'innerProductType' is TPFA: the adaptation has no "
+                            "effect on the discretization (both operators of the adaptive blend coincide), and "
+                            "the scheme reduces to full TPFA. The consistency indicators are still computed and "
+                            "output. Select an MFD inner product (e.g. quasiTPFA) to activate the adaptation.",
+                            getDataContext() ) );
+  }
+}
+
+void MixedMimeticDiscretization::initializePostInitialConditionsPreSubGroups()
+{
+  Group::initializePostInitialConditionsPreSubGroups();
+
+  std::unique_ptr< MimeticInnerProductBase > newMimeticIP = factory( m_innerProductType );
+
+  registerWrapper< MimeticInnerProductBase >( viewKeyStruct::innerProductString(), std::move( newMimeticIP ) ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+}
+
+bool MixedMimeticDiscretization::isTpfaInnerProduct() const
+{
+  return m_innerProductType == mimeticInnerProduct::MimeticInnerProductTypeStrings::TPFA;
+}
+
+MixedMimeticDiscretization::CatalogInterface::CatalogType &
+MixedMimeticDiscretization::getCatalog()
+{
+  static MixedMimeticDiscretization::CatalogInterface::CatalogType catalog;
+  return catalog;
+}
+
+std::unique_ptr< MimeticInnerProductBase >
+MixedMimeticDiscretization::factory( string const & mimeticInnerProductType ) const
+{
+  std::unique_ptr< MimeticInnerProductBase > rval;
+  if( mimeticInnerProductType == MimeticInnerProductTypeStrings::TPFA )
+  {
+    rval = std::make_unique< TPFAInnerProduct >();
+  }
+  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::QuasiTPFA )
+  {
+    rval = std::make_unique< QuasiTPFAInnerProduct >();
+  }
+  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::Simple )
+  {
+    rval = std::make_unique< SimpleInnerProduct >();
+  }
+  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::BdVLM )
+  {
+    rval = std::make_unique< BdVLMInnerProduct >();
+  }
+  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::RT )
+  {
+    rval = std::make_unique< RTInnerProduct >();
+  }
+  else
+  {
+    GEOS_ERROR( GEOS_FMT( "Key value of {} does not have an associated mimetic inner product implementing the mixed-form "
+                          "mass matrix (valid options: {}, {}, {}, {}, {}).",
+                          mimeticInnerProductType,
+                          MimeticInnerProductTypeStrings::TPFA,
+                          MimeticInnerProductTypeStrings::QuasiTPFA,
+                          MimeticInnerProductTypeStrings::Simple,
+                          MimeticInnerProductTypeStrings::BdVLM,
+                          MimeticInnerProductTypeStrings::RT ),
+                getDataContext() );
+  }
+  return rval;
+}
+
+REGISTER_CATALOG_ENTRY( MixedMimeticDiscretization, MixedMimeticDiscretization, string const &, Group * const )
+
+}
