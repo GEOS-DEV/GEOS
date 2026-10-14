@@ -129,8 +129,8 @@ void StatsAggregator::initStatisticsAggregation( CompositionalMultiphaseBase & s
 
 void StatsAggregator::enableRegionStatisticsAggregation()
 {
-  auto const registerStats = [=] ( Group & parent,
-                                   string const & targetName ) -> RegionStatistics &
+  auto const registerStats = [=, this] ( Group & parent,
+                                         string const & targetName ) -> RegionStatistics &
   {
     return parent.registerGroup( targetName,
                                  std::make_unique< RegionStatistics >( targetName,

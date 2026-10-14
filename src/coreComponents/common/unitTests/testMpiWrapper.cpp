@@ -53,7 +53,7 @@ string reductionTestFailureMsg( PairTestCase< FIRST, SECOND > const & testCase,
                                 int rankId,
                                 string_view opName )
 {
-  return GEOS_FMT( "Test case '{}', rank {}:\n  Error in {} reduction, incorrect first value in pair ({}, {}}).",
+  return GEOS_FMT( "Test case '{}', rank {}:\n  Error in {} reduction, incorrect first value in pair ({}, {}).",
                    testCase.testName, rankId, opName, pair.first, pair.second );
 }
 

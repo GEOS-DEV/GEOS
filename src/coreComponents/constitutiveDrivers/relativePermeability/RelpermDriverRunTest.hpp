@@ -26,8 +26,11 @@ namespace geos
 {
 
 // Hysteresis traits
-template< typename RELPERM_TYPE >
+template< typename RELPERM_TYPE, typename = void >
 struct HasHysteresis : std::false_type {};
+
+template< typename RELPERM_TYPE >
+struct HasHysteresis< RELPERM_TYPE, std::void_t< decltype(RELPERM_TYPE::viewKeyStruct::phaseHasHysteresisString()) > > : std::true_type {};
 
 template< typename RELPERM_TYPE >
 void

@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PoroElastic_Terzaghi_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_POROELASTIC_SOLVER -->
+    <SinglePhasePoromechanics
+      name="PoroelasticitySolver"
+      solidSolverName="LinearElasticitySolver"
+      flowSolverName="SinglePhaseFlowSolver"
+      logLevel="1"
+      targetRegions="{ Domain }">
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="LinearElasticitySolver"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain }"/>
+  </Solvers>
+
+  <!-- SPHINX_POROELASTIC_SOLVER_END -->
+</Problem>

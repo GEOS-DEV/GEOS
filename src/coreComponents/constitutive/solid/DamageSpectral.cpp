@@ -32,7 +32,21 @@ namespace constitutive
 template< typename BASE >
 DamageSpectral< BASE >::DamageSpectral( string const & name, Group * const parent ):
   Damage< BASE >( name, parent )
-{}
+{
+  // Preserve historical behavior: DamageSpectral defaults to the Cohesive degradation function.
+  this->template getWrapper< FractureModelType >( Damage< BASE >::viewKeyStruct::fractureModelTypeString() ).
+    setApplyDefaultValue( FractureModelType::Cohesive );
+}
+
+template< typename BASE >
+void DamageSpectral< BASE >::postInputInitialization()
+{
+  Damage< BASE >::postInputInitialization();
+
+  GEOS_ERROR_IF( this->getFractureModelType() == FractureModelType::Nucleation,
+                 "the Nucleation crack model is not supported with the Spectral split",
+                 this->getDataContext() );
+}
 
 typedef DamageSpectral< ElasticIsotropic > DamageSpectralElasticIsotropic;
 

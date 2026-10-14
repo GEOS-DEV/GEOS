@@ -53,6 +53,7 @@
       functionName="timeFunction"
       scale="1.0"/>
   
+    <!-- SPHINX_CONSTRAINTS -->
     <FieldSpecification
       name="xconstraint"
       fieldName="totalDisplacement"
@@ -73,14 +74,17 @@
       component="2"
       objectPath="nodeManager"
       setNames="{ zneg }"/>
+    <!-- SPHINX_CONSTRAINTS_END -->
   </FieldSpecifications>
 
   <Functions>
+    <!-- SPHINX_COOLING_RAMP -->
     <TableFunction
       name="timeFunction"
       inputVarNames="{ time }"
       coordinates="{ 0, 1e-10, 100.0 }"
       values="{ 100.0, 100.0, 20.0 }"/>
+    <!-- SPHINX_COOLING_RAMP_END -->
   </Functions>
 
   <Tasks>

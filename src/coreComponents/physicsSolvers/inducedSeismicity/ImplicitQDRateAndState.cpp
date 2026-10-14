@@ -68,7 +68,7 @@ void ImplicitQDRateAndState::solveRateAndStateEquations( real64 const time_n,
     {
       string const & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
       constitutive::ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( frictionLawName );
-      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [=, &subRegion] ( auto & castedFrictionLaw )
+      constitutive::ConstitutivePassThru< constitutive::RateAndStateFrictionBase >::execute( frictionLaw, [=, &subRegion, this] ( auto & castedFrictionLaw )
       {
 
         // solve rate and state equations.

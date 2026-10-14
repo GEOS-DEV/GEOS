@@ -65,6 +65,30 @@ public:
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
 
+  /**
+   * @brief Compute the mimetic inner product matrix M in a given element using the Simple inner product.
+   * @param[in] nodePosition the position of the nodes
+   * @param[in] faceToNodes the map from the face to their nodes
+   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
+   * @param[in] elemCenter the center of the element
+   * @param[in] elemVolume the volume of the element
+   * @param[in] elemPerm the permeability in the element
+   * @param[in] lengthTolerance the tolerance used in the trans calculations
+   * @param[inout] M the output inner product matrix
+   *
+   * @details Reference: K-A Lie, An Introduction to Reservoir Simulation Using MATLAB/GNU Octave (2019)
+   */
+  template< localIndex NF >
+  GEOS_HOST_DEVICE
+  static void
+  computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+            ArrayOfArraysView< localIndex const > const & faceToNodes,
+            arraySlice1d< localIndex const > const & elemToFaces,
+            arraySlice1d< real64 const > const & elemCenter,
+            real64 const & elemVolume,
+            real64 const (&elemPerm)[ 3 ],
+            real64 const & lengthTolerance,
+            arraySlice2d< real64 > const & M );
 };
 
 template< localIndex NF >
@@ -113,17 +137,12 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
                                                  faceNormal,
                                                  areaTolerance );
 
-    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-    LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
 
     q0[ ifaceLoc ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 0 ];
     q1[ ifaceLoc ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 1 ];
     q2[ ifaceLoc ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 2 ];
-
-    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
-    {
-      LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
-    }
 
     // the two-point transmissibility is computed to computed here because it is needed
     // in the implementation of the transmissibility multiplier (see below)
@@ -194,6 +213,77 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
   }
 
 }
+
+template< localIndex NF >
+GEOS_HOST_DEVICE
+void
+SimpleInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                              ArrayOfArraysView< localIndex const > const & faceToNodes,
+                              arraySlice1d< localIndex const > const & elemToFaces,
+                              arraySlice1d< real64 const > const & elemCenter,
+                              real64 const & elemVolume,
+                              real64 const (&elemPerm)[ 3 ],
+                              real64 const & lengthTolerance,
+                              arraySlice2d< real64 > const & M )
+{
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
+
+  // 1) Compute C, N, A and the consistency part C K^{-1} C^T / volume
+  real64 C[ NF ][ 3 ] = {{ 0 }};
+  real64 N[ NF ][ 3 ] = {{ 0 }};
+  real64 A[ NF ] = { 0.0 };
+  real64 CKCt[ NF ][ NF ] = {{0}};
+
+  MimeticInnerProductHelpers::computeCellToFaceGeometry< NF >( nodePosition, faceToNodes, elemToFaces,
+                                                               elemCenter, areaTolerance, C, N, A );
+  MimeticInnerProductHelpers::computeConsistencyTerm< NF >( C, elemVolume, elemPerm, CKCt );
+
+  // 3) Q = orth(N / A)
+  real64 q0[ NF ], q1[ NF ], q2[ NF ];
+  real64 Qmat[ NF ][ 3 ];
+  for( localIndex i = 0; i < NF; ++i )
+  {
+    q0[i] = N[i][0] / A[i];
+    q1[i] = N[i][1] / A[i];
+    q2[i] = N[i][2] / A[i];
+  }
+
+  MimeticInnerProductHelpers::orthonormalize< NF >( q0, q1, q2, Qmat );
+
+  // 4) M = CKCt + (v / t) * A^{-1} * ( I - Q Q^T ) * A^{-1}
+  real64 invA[NF];
+  for( localIndex i = 0; i < NF; ++i )
+  {
+    invA[i] = real64( 1 ) / A[i];
+  }
+
+  // scale = elemVolume / tParam, where tParam = 2 * trace(K)
+  real64 const tParam = real64( 2 ) * (elemPerm[0] + elemPerm[1] + elemPerm[2]);
+  real64 const scale  = elemVolume / tParam;
+
+  for( localIndex i = 0; i < NF; ++i )
+  {
+    real64 const invAiScaled = scale * invA[i];
+
+    real64 const qi0 = Qmat[i][0];
+    real64 const qi1 = Qmat[i][1];
+    real64 const qi2 = Qmat[i][2];
+
+    for( localIndex j = i; j < NF; ++j )
+    {
+      // qdot = (Q Q^T)_{ij} = sum_k Qik * Qjk, with k in [0,2]
+      real64 const qdot = qi0*Qmat[j][0] + qi1*Qmat[j][1] + qi2*Qmat[j][2];
+
+      real64 const u = (i == j ? real64( 1 ) : real64( 0 )) - qdot;
+
+      real64 const mij = CKCt[i][j] + (invAiScaled * invA[j]) * u;
+
+      M[i][j] = mij;
+      M[j][i] = mij; // symmetry fill
+    }
+  }
+}
+
 
 } // end namespace mimeticInnerProduct
 

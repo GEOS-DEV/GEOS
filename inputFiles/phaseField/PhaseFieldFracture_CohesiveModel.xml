@@ -31,8 +31,6 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
-      localDissipation="Linear"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -110,7 +108,9 @@
       defaultShearModulus="8.3333e9"
       lengthScale="0.2"
       defaultCriticalFractureEnergy="2.7"
-      criticalStrainEnergy="1.0"/>
+      criticalStrainEnergy="1.0"
+      fractureModelType="Cohesive"
+      localDissipationOption="Linear"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -119,14 +119,6 @@
                         objectPath="nodeManager"
                         scale="0"
                         setNames="{xneg, xpos, yneg, ypos, zneg, zpos}"/> -->
-    <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="shale_criticalFractureEnergy"
-       scale="2.7"/>
-
     <FieldSpecification
       name="xpos"
       objectPath="nodeManager"
@@ -167,25 +159,17 @@
       setNames="{ all }"/>
 
     <!-- <FieldSpecification name="pointSource"
-                        fieldName="Damage"
+                        fieldName="damage"
                         initialCondition="0"
                         objectPath="nodeManager"
                         scale="1"
                         setNames="{centerLine}"/> -->
     <!-- FieldSpecification name="pointSource2"
-                        fieldName="Damage"
+                        fieldName="damage"
                         initialCondition="0"
                         objectPath="nodeManager"
                         scale="0"
                         setNames="{xneg,xpos}"/> -->
-    <!-- <FieldSpecification name="diffusionCoeff"
-                        initialCondition="1"
-                        setNames="{all}"
-                        objectPath="ElementRegions"
-                        fieldName="coeffField"
-                        scale="2e3"
-                        functionName="f_b"
-                        /> -->
   </FieldSpecifications>
 
   <Functions>

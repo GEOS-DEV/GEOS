@@ -89,6 +89,13 @@ blt_add_library( NAME       dataRepository
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14.3 )
+  # See the matching workaround in common/CMakeLists.txt. xmlWrapper also
+  # instantiates libstdc++'s std::regex implementation.
+  set_source_files_properties( ${CMAKE_CURRENT_SOURCE_DIR}/xmlWrapper.cpp
+                                PROPERTIES COMPILE_OPTIONS "-fno-inline" )
+endif()
+
 target_include_directories( dataRepository PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 install( TARGETS dataRepository LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 

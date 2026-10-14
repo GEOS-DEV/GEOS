@@ -95,7 +95,7 @@ class EzrokhiBrineViscosity : public PVTFunctionBase
 public:
 
   EzrokhiBrineViscosity( string const & name,
-                         string_array const & inputPara,
+                         BrineFluidParameters const & brineFluidParameters,
                          string_array const & componentNames,
                          array1d< real64 > const & componentMolarWeight,
                          TableFunction::OutputOptions const pvtOutputOpts );
@@ -125,7 +125,7 @@ public:
 
 private:
 
-  void makeCoefficients( string_array const & inputPara );
+  void makeCoefficients( arrayView1d< real64 const > const & coefficients );
 
   /// Table with water viscosity tabulated as a function (T)
   TableFunction const * m_waterViscosityTable = nullptr;
