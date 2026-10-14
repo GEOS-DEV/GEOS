@@ -45,54 +45,46 @@ The reservoir is initially filled with methane at 50 bar and 45 °C. The water i
 The parameters of the problem are summarized in the following table.
 
 .. list-table:: Parameters of the problem
-    :widths: 22 39 39
+    :widths: 30 70
     :header-rows: 1
+    :class: align-top
 
     * - Parameter
-      - Paper (Oldenburg, 2007)
-      - *GEOS* input
+      - Value
     * - Geometry
       - 1D radial, :math:`R = 1130` m, thickness 50 m
-      - 1° sector, :math:`r \in [0.1, 1130]` m, thickness 50 m, 1009 radial cells (one cell in :math:`\theta` and :math:`z`)
+
+        GEOS is modeled as a 1° sector, :math:`r \in [0.1, 1130]` m.
     * - Permeability
       - :math:`5\times 10^{-15}` m\ :sup:`2` (5 mD)
-      - :math:`5\times 10^{-15}` m\ :sup:`2`, isotropic
     * - Porosity
       - 0.30
-      - 0.30 at 50 bar, rock compressibility :math:`10^{-12}` Pa\ :sup:`-1`
-    * - Rock density x heat capacity
-      - 2600 kg/m\ :sup:`3` x 1000 J/kg/K
+    * - Rock volumetric heat capacity
       - :math:`2.6\times 10^{6}` J/m\ :sup:`3`/K
     * - Thermal conductivity
       - 2.51 W/m/K
-      - 2.51 W/m/K, isotropic
     * - Residual saturations
-      - :math:`S_{lr} = 0.2`, :math:`S_{gr} = 0.01`
-      - 0.2 (water), 0.01 (gas)
+      - :math:`S_{lr} = 0.2` (water), :math:`S_{gr} = 0.01` (gas)
     * - Relative permeability
       - Corey curves
-      - Brooks-Corey, exponents 4 (water) and 2 (gas)
     * - Initial pressure
-      - 50 bar
-      - :math:`5\times 10^{6}` Pa
+      - 50 bar (:math:`5\times 10^{6}` Pa)
     * - Initial temperature
-      - 45 °C
-      - 318.15 K
+      - 45 °C (318.15 K)
     * - Initial fluids
       - CH4 gas, water at :math:`S_l = S_{lr} = 0.2`
-      - mass fractions :math:`z_{CO_2} = 0`, :math:`z_{CH_4} = 0.115401`, :math:`z_{H_2O} = 0.884599`
+
+        GEOS initializes this via mass fractions: :math:`z_{CO_2} = 0`, :math:`z_{CH_4} = 0.115401`, :math:`z_{H_2O} = 0.884599`.
     * - CO2 injection
-      - 3 kg/s of CO2 at :math:`T_{inj}` = 45 °C
-      - :math:`3/360 = 8.3333\times 10^{-3}` kg/s of CO2 at 318.15 K
+      - 3 kg/s of CO2 at 45 °C
     * - CH4 production
       - 0.56 kg/s at the outer boundary (1100 m)
-      - :math:`0.56/360 \approx 1.556\times 10^{-3}` kg/s, i.e. :math:`2.2887\times 10^{-3}` m\ :sup:`3`/s of gas at surface conditions, at :math:`r \approx 1097` m
     * - Simulated time
       - 15 years
-      - :math:`4.738\times 10^{8}` s (slightly more than 15 years)
     * - Equation of state
-      - Peng-Robinson (EOS7C, GasEOS)
-      - Peng-Robinson (gas phase), Søreide-Whitson (aqueous phase)
+      - Peng-Robinson for the gas phase
+
+        The paper uses EOS7C/GasEOS, while GEOS explicitly uses Soreide-Whitson for the aqueous phase.
 
 ..
   **What the paper finds for this case**
@@ -109,8 +101,6 @@ This benchmark test is based on the XML file located below:
 .. code-block:: console
 
   inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/jouleThomsonCooling.xml
-
-The input is a single, self-contained file: there is no include and no external table. All the fluid properties are computed from the equations of state described below.
 
 The mesh is a thin wedge of cylinder (``InternalWellbore``), 1° wide, which is refined near the injection well by the radial bias ``rBias``. The 360° of the paper are accounted for by dividing all the well rates by 360.
 
@@ -138,11 +128,11 @@ The fluid is a mixture of three components (CO2, CH4 and H2O) distributed in two
     :language: xml
     :start-after: <!-- SPHINX_FLUID -->
     :end-before: <!-- SPHINX_FLUID_END -->
-    :emphasize-lines: 4,10,11-15
+    :emphasize-lines: 4,10-19
 
 The main ingredients of this model are the following:
 
-- ``equationsOfState`` lists one equation of state for each phase, in the order of ``phaseNames``. The gas phase uses the   Peng-Robinson (PR) cubic equation of state, as in the paper (EOS7C computes the properties of the CO2-CH4-H2O gas mixtures with PR). The aqueous phase uses the Søreide-Whitson variant of PR, which modifies the attractive term for water and uses salinity-dependent interaction parameters, in order to represent the mutual solubilities of the gases and of water. The aqueous phase stays at its residual saturation in this problem and acts mostly as a heat reservoir, so that the solubility effects are weak, but the model remains fully compositional.
+- ``equationsOfState`` lists one equation of state for each phase, in the order of ``phaseNames``. The gas phase uses the   Peng-Robinson (PR) cubic equation of state, as in the paper (EOS7C computes the properties of the CO2-CH4-H2O gas mixtures with PR). The aqueous phase uses the Soreide-Whitson variant of PR, which modifies the attractive term for water and uses salinity-dependent interaction parameters, in order to represent the mutual solubilities of the gases and of water. The aqueous phase stays at its residual saturation in this problem and acts mostly as a heat reservoir, so that the solubility effects are weak, but the model remains fully compositional.
 - the component data (``componentMolarWeight`` in kg/mol, critical pressures and temperatures, acentric factors) are the standard values of CO2, CH4 and H2O, given in this order, which is the order of ``componentNames``. The same order is used for the ``injectionStream``, the ``globalCompFraction`` components and the binary and heat capacity coefficients. 
 - the aqueous phase density and viscosity follow the brine correlations of Phillips et al., with ``salinity`` equal to 0 (fresh water).
 - ``pressureCoordinates`` and ``temperatureCoordinates`` define the pressure-temperature grid on which the fluid properties are evaluated. They must bracket all the states visited during the simulation: here from 1 bar (the minimum bottom-hole pressure of the producer) to 300 bar (the maximum bottom-hole pressure of the injector), and from -10 °C to 110 °C. The states actually visited are between about 5 and 7 MPa, and between 31 and 45 °C.
@@ -151,7 +141,7 @@ The main ingredients of this model are the following:
 
 **Heat capacity coefficients**
 
-The enthalpy of a phase is the sum of an *ideal-gas* contribution and of a *departure* (residual) contribution given by the equation of state, which accounts for the non-ideal behavior of the real gas. The ideal-gas part is obtained by integrating the isobaric ideal-gas heat capacity of each component, which is provided by ``componentHeatCapacityCoefficients`` (one row per component, in the order of ``componentNames``):
+The enthalpy of a phase is the sum of an ideal-gas contribution and of a departure (residual) contribution given by the equation of state, which accounts for the non-ideal behavior of the real gas. The ideal-gas part is obtained by integrating the isobaric ideal-gas heat capacity of each component, which is provided by ``componentHeatCapacityCoefficients`` (one row per component, in the order of ``componentNames``):
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/jouleThomsonCooling.xml
     :language: xml
@@ -167,10 +157,7 @@ with respect to 25 °C:
 
     c_p^{0}(T) = \sum_{i=0}^{4} a_i \, (T - 298.15)^i \qquad [\mathrm{J/mol/K}], \quad T \text{ in K}.
 
-The first coefficient :math:`a_0` is therefore the ideal-gas molar heat capacity at 25 °C (37.14 J/mol/K for CO2, 35.71 for CH4 and 33.59 for H2O). The following table
-gives the resulting values at the reservoir temperature, which are in agreement with the reference ideal-gas heat capacities
-of the NIST equations of state within 0.01 J/mol/K over the whole temperature range of the
-fluid tables (-10 to 110 °C).
+The first coefficient :math:`a_0` is therefore the ideal-gas molar heat capacity at 25 °C (37.14 J/mol/K for CO2, 35.71 for CH4 and 33.59 for H2O). The following table gives the resulting values at the reservoir temperature, which are in agreement with the reference ideal-gas heat capacities of the NIST equations of state within 0.01 J/mol/K over the whole temperature range of the fluid tables (-10 to 110 °C).
 
 .. list-table:: Ideal-gas heat capacity :math:`c_p^0` at 318.15 K
     :widths: 20 20 20 20
@@ -185,18 +172,13 @@ fluid tables (-10 to 110 °C).
       - 36.50
       - 33.69
 
-These coefficients are important for two reasons. First, the JT coefficient is inversely proportional to the heat capacity
-(see the formula above), and the heat capacity of the gas, which is the sum of the ideal-gas part and of the real-gas
-departure, controls how much the gas cools for a given enthalpy variation. Second, the heat capacity sets the thermal inertia
-of the fluids against that of the rock, which determines how fast the cooling is attenuated by the matrix.
+These coefficients are important for two reasons. First, the JT coefficient is inversely proportional to the heat capacity (see the formula above), and the heat capacity of the gas, which is the sum of the ideal-gas part and of the real-gas departure, controls how much the gas cools for a given enthalpy variation. Second, the heat capacity sets the thermal inertia of the fluids against that of the rock, which determines how fast the cooling is attenuated by the matrix.
 
-.. _JTBinaryCoeff:
+.. _jouleThomsonBinaryCoeff:
 
 **Binary interaction parameters**
 
-The Peng-Robinson equation of state uses a mixing rule for the attractive term of the mixture in which the cross term of
-each pair of components :math:`(i,j)` is scaled by :math:`(1 - k_{ij})`. The binary interaction parameters :math:`k_{ij}` are given
-by ``componentBinaryCoeff`` as a symmetric matrix with a zero diagonal, in the order CO2, CH4, H2O:
+The Peng-Robinson equation of state uses a mixing rule for the attractive term of the mixture in which the cross term of each pair of components :math:`(i,j)` is scaled by :math:`(1 - k_{ij})`. The binary interaction parameters :math:`k_{ij}` are given by ``componentBinaryCoeff`` as a symmetric matrix with a zero diagonal, in the order CO2, CH4, H2O:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/jouleThomsonCooling.xml
     :language: xml
@@ -205,11 +187,7 @@ by ``componentBinaryCoeff`` as a symmetric matrix with a zero diagonal, in the o
     :lines: 10
     :dedent: 6
 
-so that :math:`k_{CO_2-CH_4} = 0.1` and :math:`k_{CO_2-H_2O} = k_{CH_4-H_2O} = 0.03`. The CO2-CH4 coefficient is the one
-that matters most for this problem, since the gas phase is a CO2-CH4 mixture in the region where the CO2 front
-progresses and displaces the methane. The coefficients involving water are small, which is consistent with the fact that the gas
-phase contains only a very small amount of water vapor at 45 °C; the interactions of water with the dissolved gases in the aqueous
-phase are handled by the specific correlations of the Søreide-Whitson formulation.
+so that :math:`k_{CO_2-CH_4} = 0.1` and :math:`k_{CO_2-H_2O} = k_{CH_4-H_2O} = 0.03`. The CO2-CH4 coefficient is the one that matters most for this problem, since the gas phase is a CO2-CH4 mixture in the region where the CO2 front progresses and displaces the methane. The coefficients involving water are small, which is consistent with the fact that the gas phase contains only a very small amount of water vapor at 45 °C; the interactions of water with the dissolved gases in the aqueous phase are handled by the specific correlations of the Soreide-Whitson formulation.
 
 **Rock, relative permeability and thermal conductivity**
 
@@ -246,7 +224,7 @@ The thermal conductivity of the formation is constant and isotropic:
     - the capillary pressure (van Genuchten) and the molecular diffusion of the paper (Table 2) are not included in the
       *GEOS* input. They are expected to have little influence, since the water remains at its residual saturation, but
       they are a difference with the published model;
-    - the aqueous phase uses the Søreide-Whitson equation of state, whereas EOS7C uses PR for the whole system;
+    - the aqueous phase uses the Soreide-Whitson equation of state, whereas EOS7C uses PR for the whole system;
     - the producer is a well with a prescribed surface gas rate located at 1097 m, instead of a source term in the outermost grid block.
 
 ------------------------------------------------------------------------
@@ -283,7 +261,7 @@ The reservoir and the wells are coupled in a fully implicit way by ``Composition
 Initial and boundary conditions
 ------------------------------------------------------------------------
 
-.. _JTInitialState:
+.. _jouleThomsonInitialState:
 
 **Initial state**
 
