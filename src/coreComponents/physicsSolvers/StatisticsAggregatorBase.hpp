@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/DataContext.hpp"
 #include "dataRepository/Group.hpp"
-#include "mesh/CellElementRegion.hpp"
+#include "mesh/ElementRegionBase.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshLevel.hpp"
 
@@ -85,7 +85,7 @@ public:
   /**
    * @brief Standard function signature for any functor that applies on statistics group instances (StatsGroupType)
    *        - param 0: OwnerType &, the group instance containing the data for which we want to aggregate the statistics (MeshLevel,
-   * CellElementRegion...)
+   * ElementRegionBase...)
    *        - param 1: StatsAggregateGroupType &, the statistics aggregate Group where to store the data
    * @tparam OwnerType the concrete type of the OwnerType param
    */
@@ -137,11 +137,11 @@ public:
 
   void forRegionStatistics( MeshLevel & mesh,
                             StatsGroupType & meshRegionsStatistics,
-                            RegionStatsFunc< CellElementRegion > const & functor ) const;
+                            RegionStatsFunc< ElementRegionBase > const & functor ) const;
 
-  void forRegionStatistics( CellElementRegion & region,
+  void forRegionStatistics( ElementRegionBase & region,
                             StatsGroupType & regionStatistics,
-                            RegionStatsFunc< CellElementSubRegion > const & functor ) const;
+                            RegionStatsFunc< ElementSubRegionBase > const & functor ) const;
 
   /**
    * @param[in] timeRequest The time for which we want to know if the statistics are computed.
@@ -248,7 +248,7 @@ protected:
    * @param subRegionStats the stats group instance for the subregion
    * @note Must be implemented for each type that implements this template (CRTP).
    */
-  void computeSubRegionRankStats( CellElementSubRegion & subRegion, StatsGroupType & subRegionStats ) const
+  void computeSubRegionRankStats( ElementSubRegionBase & subRegion, StatsGroupType & subRegionStats ) const
   { static_cast< Impl const * >(this)->computeSubRegionRankStats( subRegion, subRegionStats ); }
 
   /**

@@ -206,7 +206,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
   outputRegionStats( GEOS_FMT( "Discretization '{}'", mesh.getName() ), meshRegionsStatistics );
 
   m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
-                                     [&] ( CellElementRegion & region, RegionStatistics & stats )
+                                     [&] ( ElementRegionBase & region, RegionStatistics & stats )
   {
     outputRegionStats( GEOS_FMT( "Region '{}'", region.getName() ), stats );
   } );
@@ -258,7 +258,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
   outputRegionStats( mesh.getName(), meshRegionsStatistics );
 
   m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
-                                     [&] ( CellElementRegion & region, RegionStatistics & stats )
+                                     [&] ( ElementRegionBase & region, RegionStatistics & stats )
   {
     outputRegionStats( region.getName(), stats );
   } );
