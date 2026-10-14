@@ -308,8 +308,7 @@ public:
         singlePhaseFluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
 
         // Conductive contribution to dEnergyFlux/dAperture (same convention as dFlux_dAperture, i.e. wrt the
-        // normal jump): conductiveFlux = T_th * ( T_0 - T_1 ), and T_th depends on the hydraulic aperture
-        // through the stencil weights (weight_k proportional to hydraulicAperture_k).
+        // normal jump): conductiveFlux = Trans_th * ( T_0 - T_1 ), and Trans_th depends linearly on the hydraulic aperture.
         {
           real64 const dConductiveFlux_dTrans = m_temp[seri[0]][sesri[0]][sei[0]] - m_temp[seri[1]][sesri[1]][sei[1]];
 
