@@ -139,7 +139,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   GEOS_UNUSED_VAR( regionNames );
 
   // The mass-balance block of getDerivativeFluxResidual_dNormalJump() below is one row per
-  // fracture element, as always. When m_isThermal, a second (advective-only) block for the
+  // fracture element, as always. When m_isThermal, a second (advective + conductive) block for the
   // energy balance is appended after it - see setUpDflux_dApertureMatrix and
   // getDerivativeFluxResidual_dApertureEnergyOffset(), scattered further down (Part 3).
   using namespace contact;
@@ -465,8 +465,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       }
     }
 
-    // ==== Part 3: Energy-balance flux derivative (advective contribution only) ====
-    // The conductive term's aperture sensitivity
+    // ==== Part 3: Energy-balance flux derivative (advective and conductive contributions) ====
     if( this->m_isThermal )
     {
       localIndex const energyOffset = this->getDerivativeFluxResidual_dApertureEnergyOffset();

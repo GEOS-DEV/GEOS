@@ -467,6 +467,9 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
       arrayView1d< real64 > const hydraulicAperture =
         subRegion.template getField< flow::hydraulicAperture >();
 
+      arrayView1d< real64 > const dHydraulicAperture_dNormalJump =
+        subRegion.template getField< flow::dHydraulicAperture_dNormalJump >();
+
       arrayView1d< real64 const > const oldHydraulicAperture =
         subRegion.template getField< flow::aperture0 >();
 
@@ -512,6 +515,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
                                               aperture,
                                               oldHydraulicAperture,
                                               hydraulicAperture,
+                                              dHydraulicAperture_dNormalJump,
                                               fractureContactTraction,
                                               fractureState );
 

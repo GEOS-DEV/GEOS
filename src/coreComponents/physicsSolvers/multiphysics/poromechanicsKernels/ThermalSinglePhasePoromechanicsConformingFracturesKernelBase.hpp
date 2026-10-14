@@ -91,6 +91,9 @@ public:
     StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
 
+  using FractureApertureAccessors =
+    StencilAccessors< fields::flow::hydraulicAperture,
+                      fields::flow::dHydraulicAperture_dNormalJump >;
 
 
   ThermalConformingFracturesConnectorBasedAssemblyKernel( globalIndex const rankOffset,
@@ -103,6 +106,7 @@ public:
                                                           PermeabilityAccessors const & permeabilityAccessors,
                                                           FracturePermeabilityAccessors const & edfmPermeabilityAccessors,
                                                           ThermalConductivityAccessors const & thermalConductivityAccessors,
+                                                          FractureApertureAccessors const & fractureApertureAccessors,
                                                           real64 const & dt,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs,
@@ -123,6 +127,8 @@ public:
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
+    m_hydraulicAperture( fractureApertureAccessors.get( fields::flow::hydraulicAperture {} ) ),
+    m_dHydraulicAperture_dNormalJump( fractureApertureAccessors.get( fields::flow::dHydraulicAperture_dNormalJump {} ) ),
     m_dR_dAper( dR_dAper ),
     m_dR_dAperEnergyOffset( dR_dAperEnergyOffset )
   {}
@@ -159,9 +165,14 @@ public:
     using SinglePhaseFVMBase::StackVariables::localFluxJacobian;
     using Base::StackVariables::dFlux_dAperture;
 
-    // Thermal transmissibility (for now, no derivatives)
+    // Thermal transmissibility (no derivative wrt conductivity: conductivity is treated explicitly)
 
     real64 thermalTransmissibility[maxNumConns][2]{};
+
+    /// t_k * d(thermalTransmissibility)/d(t_k) for each half-transmissibility t_k = weight_k * conductivity_k
+    /// (sign convention of the stencil: entry [1] is negated). Since the stencil weight is linear in the
+    /// hydraulic aperture, multiplying by d(ln hydraulicAperture_k)/d(normalJump_k) gives the aperture derivative.
+    real64 dThermalTrans_dLogAperture[maxNumConns][2]{};
 
     // Energy fluxes and derivatives
 
@@ -173,7 +184,7 @@ public:
     stackArray1d< real64, maxStencilSize > dEnergyFlux_dP;
     /// Derivatives of energy fluxes wrt temperature
     stackArray1d< real64, maxStencilSize > dEnergyFlux_dT;
-    /// Derivatives of the (advective, enthalpy-carried) energy flux wrt aperture (i.e. wrt the normal
+    /// Derivatives of the (advective + conductive) energy flux wrt aperture (i.e. wrt the normal
     /// component of the displacement jump, same convention as dFlux_dAperture), same shape/convention as
     /// dFlux_dAperture.
     stackArray2d< real64, maxNumElems *maxStencilSize > dEnergyFlux_dAperture;
@@ -272,11 +283,13 @@ public:
     // Note that this term is computed using an explicit treatment of conductivity for now
 
     // Step 1: compute the thermal transmissibilities at this face
+    // Passing the conductivity as "dCoeff" makes the stencil return t_k * dT/dt_k (t_k = weight_k * conductivity_k),
+    // used below for the aperture derivative of the conductive flux.
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
-                                     m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
+                                     m_thermalConductivity,
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
+                                     stack.dThermalTrans_dLogAperture );
 
     localIndex k[2];
     localIndex connectionIndex = 0;
@@ -293,6 +306,32 @@ public:
 
         // Step 2: compute temperature difference at the interface
         singlePhaseFluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
+
+        // Conductive contribution to dEnergyFlux/dAperture (same convention as dFlux_dAperture, i.e. wrt the
+        // normal jump): conductiveFlux = T_th * ( T_0 - T_1 ), and T_th depends on the hydraulic aperture
+        // through the stencil weights (weight_k proportional to hydraulicAperture_k).
+        {
+          real64 const dConductiveFlux_dTrans = m_temp[seri[0]][sesri[0]][sei[0]] - m_temp[seri[1]][sesri[1]][sei[1]];
+
+          real64 dLogAperture_dNormalJump[2]{};
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            real64 const hydraulicAperture = m_hydraulicAperture[seri[ke]][sesri[ke]][sei[ke]];
+            if( hydraulicAperture > 0.0 )
+            {
+              dLogAperture_dNormalJump[ke] = m_dHydraulicAperture_dNormalJump[seri[ke]][sesri[ke]][sei[ke]] / hydraulicAperture;
+            }
+          }
+
+          real64 const dCondFlux_dAper[2] =
+          {  m_dt * dConductiveFlux_dTrans * stack.dThermalTrans_dLogAperture[connectionIndex][0] * dLogAperture_dNormalJump[0],
+             -m_dt * dConductiveFlux_dTrans * stack.dThermalTrans_dLogAperture[connectionIndex][1] * dLogAperture_dNormalJump[1] };
+
+          stack.dEnergyFlux_dAperture[k[0]][k[0]] += dCondFlux_dAper[0];
+          stack.dEnergyFlux_dAperture[k[0]][k[1]] += dCondFlux_dAper[1];
+          stack.dEnergyFlux_dAperture[k[1]][k[0]] -= dCondFlux_dAper[0];
+          stack.dEnergyFlux_dAperture[k[1]][k[1]] -= dCondFlux_dAper[1];
+        }
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
         stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;
@@ -335,7 +374,7 @@ public:
                                                                                                       stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
                                                                                                       stack.stencilSize * numDof );
 
-      // Advective dEnergyFlux/dAperture -> energy-balance block of dR_dAper, appended after
+      // dEnergyFlux/dAperture (advective + conductive) -> energy-balance block of dR_dAper, appended after
       // all mass-balance rows
       if( m_dR_dAperEnergyOffset >= 0 )
       {
@@ -363,6 +402,10 @@ private:
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
+
+  /// Views on the hydraulic aperture and its derivative wrt the normal jump
+  ElementViewConst< arrayView1d< real64 const > > const m_hydraulicAperture;
+  ElementViewConst< arrayView1d< real64 const > > const m_dHydraulicAperture_dNormalJump;
 
   /// View on dR_dAper
   CRSMatrixView< real64, localIndex const > m_dR_dAper;
@@ -425,11 +468,12 @@ struct ThermalConformingFracturesConnectorBasedAssemblyKernelFactory
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
     typename kernelType::FracturePermeabilityAccessors edfmPermAccessors( elemManager, solverName );
     typename kernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+    typename kernelType::FractureApertureAccessors fractureApertureAccessors( elemManager, solverName );
 
     kernelType kernel( rankOffset, stencilWrapper,
                        flowDofNumberAccessor,
                        flowAccessors, thermalFlowAccessors, fluidAccessors, thermalFluidAccessors,
-                       permAccessors, edfmPermAccessors, thermalConductivityAccessors,
+                       permAccessors, edfmPermAccessors, thermalConductivityAccessors, fractureApertureAccessors,
                        dt, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
