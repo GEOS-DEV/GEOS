@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<!-- 
+<!--
      Joule-Thomson cooling during constant-rate CO2 injection into a depleted CH4 reservoir.
      Reproduces the 5 mD case (Fig. 7) of Oldenburg (2007), Energy Conversion and Management 48, 1808-1815.
      1D radial model (1-degree sector of a cylinder, R = 1130 m, h = 50 m), k = 5e-15 m2, porosity 0.3,
@@ -57,7 +57,7 @@
         statusTableName="wellStatus"
         useSurfaceConditions="1"
         surfacePressure="101325.0"
-        surfaceTemperature="288.15"        
+        surfaceTemperature="288.15"
         enableCrossflow="0"
         logLevel="1"
         writeCSV="1">
@@ -147,7 +147,7 @@
         numElementsPerSegment="1">
         <Perforation name="prodPerf" distanceFromHead="25.0" transmissibility="1.7371254075664246e-12"/>
       </InternalWell>
-    </InternalWellbore>    
+    </InternalWellbore>
   </Mesh>
   <!-- SPHINX_MESH_END -->
 
@@ -180,7 +180,7 @@
       beginTime="0"
       timeFrequency="3.155760e+07"
       target="/Tasks/compflowStatistics"/>
-      
+
     <PeriodicEvent name="collectHistory_1" beginTime="82800" timeFrequency="3600" endTime="93600" targetExactTimestep="1">
       <PeriodicEvent name="collectCellCenters" target="/Tasks/collectCellCenters"/>
       <PeriodicEvent name="collectPressure" target="/Tasks/collectPressure"/>
@@ -299,7 +299,7 @@
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ water, gas }"
-      phaseMinVolumeFraction="{ 0.25, 0.01 }"
+      phaseMinVolumeFraction="{ 0.2, 0.01 }"
       phaseRelPermExponent="{ 4.0, 2.0 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
     <!-- SPHINX_RELPERM_END -->
@@ -311,15 +311,15 @@
       thermalConductivityComponents="{ 2.51, 2.51, 2.51 }"/>
     <!-- SPHINX_THC_END -->
   </Constitutive>
-  
+
   <Functions>
     <TableFunction
       name="wellStatus"
       interpolation="lower"
       coordinates="{ -1.0e8, 0.0, 1.0e8 }"
       values="{ 0.0, 1.0, 1.0 }"/>
-  </Functions>      
-  
+  </Functions>
+
   <!-- SPHINX_INIT -->
   <FieldSpecifications>
     <FieldSpecification
@@ -351,7 +351,7 @@
       objectPath="ElementRegions"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.126402"/>
+      scale="0.115401"/>
     <FieldSpecification
       name="initialH2O"
       initialCondition="1"
@@ -359,7 +359,7 @@
       objectPath="ElementRegions"
       fieldName="globalCompFraction"
       component="2"
-      scale="0.873598"/>
+      scale="0.884599"/>
   </FieldSpecifications>
   <!-- SPHINX_INIT_END -->
 
@@ -408,7 +408,6 @@
     <TimeHistory
       name="timeHistory"
       filename="jouleThomsonCooling"
-      logLevel="3"
       sources="{ /Tasks/collectCellCenters, /Tasks/collectPressure, /Tasks/collectTemperature, /Tasks/collectMoleFractions }"/>
   </Outputs>
 </Problem>
