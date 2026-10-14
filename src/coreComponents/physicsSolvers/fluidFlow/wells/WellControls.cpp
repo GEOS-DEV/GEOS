@@ -73,6 +73,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_estimateSolution( 0 ),
   m_enableIsoThermalEstimator( 0 ),
   m_thermalEffectsEnabled( false ),
+  m_maxAbsolutePresChange( -1.0 ), // disabled by default
+  m_maxAbsoluteTempChange( -1.0 ), // disabled by default
   /// Nonlinear solver parameters
   m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
@@ -152,6 +154,18 @@ WellControls::WellControls( string const & name, Group * const parent )
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable isothermal estimator prior to coupled reservoir and well solve." );
+
+  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
+
+  this->registerWrapper( viewKeyStruct::maxAbsoluteTempChangeString(), &m_maxAbsoluteTempChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) temperature change in a Newton iteration" );
 
   registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).

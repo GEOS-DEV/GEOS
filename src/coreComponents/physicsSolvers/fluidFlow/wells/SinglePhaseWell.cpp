@@ -53,6 +53,8 @@
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhasePerforationFluxKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhaseWellConstraintKernels.hpp"
 #include "physicsSolvers/multiphysics/CoupledReservoirAndSinglePhaseWellKernels.hpp"
@@ -160,6 +162,12 @@ void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
     perforationData.registerField< well::dEnergyPerforationFlux >( getName() ).
       reference().resizeDimension< 1, 2 >( 2, 2 );
     perforationData.registerField< well::gravityCoefficient >( getName() );
+  }
+
+  subRegion.registerField< well::pressureScalingFactor >( getName() );
+  if( isThermal() )
+  {
+    subRegion.registerField< well::temperatureScalingFactor >( getName() );
   }
 
   // write rates output header
@@ -936,17 +944,74 @@ void SinglePhaseWell::computeWellPerforationRates( real64 const & time_n,
     }
   }
 }
+
+real64
+SinglePhaseWell::scalingForLocalSystemSolution( WellElementSubRegion & subRegion,
+                                                DofManager const & dofManager,
+                                                real64 & maxDeltaPres,
+                                                real64 & maxDeltaTemp,
+                                                real64 & minPresScalingFactor,
+                                                real64 & minTempScalingFactor,
+                                                arrayView1d< real64 const > const & localSolution )
+{
+  GEOS_MARK_FUNCTION;
+
+  maxDeltaTemp = 0.0;
+  minTempScalingFactor = 1.0;
+
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+  globalIndex const rankOffset = dofManager.rankOffset();
+  arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+  arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+  arrayView1d< real64 > const pressureScalingFactor = subRegion.getField< well::pressureScalingFactor >();
+
+  real64 scalingFactor = 1.0;
+
+  if( isThermal() )
+  {
+    arrayView1d< real64 > const temperatureScalingFactor = subRegion.getField< well::temperatureScalingFactor >();
+
+    integer const tempDofOffset = 2;
+    auto const subRegionData = thermalSinglePhaseBaseKernels::
+                                 SolutionScalingKernel::
+                                 launch< parallelDevicePolicy<> >( localSolution, rankOffset, tempDofOffset, dofNumber, ghostRank,
+                                                                   m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
+                                                                   pressureScalingFactor, temperatureScalingFactor );
+
+    scalingFactor = std::get< 0 >( subRegionData );
+    maxDeltaPres = std::get< 1 >( subRegionData );
+    maxDeltaTemp = std::get< 2 >( subRegionData );
+    minPresScalingFactor = std::get< 3 >( subRegionData );
+    minTempScalingFactor = std::get< 4 >( subRegionData );
+  }
+  else
+  {
+    auto const subRegionData = singlePhaseBaseKernels::
+                                 SolutionScalingKernel::
+                                 launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
+                                                                   m_maxAbsolutePresChange, pressureScalingFactor );
+
+    scalingFactor = subRegionData.first;
+    maxDeltaPres = subRegionData.second;
+    minPresScalingFactor = subRegionData.first;
+  }
+
+  return scalingFactor;
+}
+
 real64
 SinglePhaseWell::scalingForWellSystemSolution( WellElementSubRegion & subRegion,
                                                DofManager const & dofManager,
                                                arrayView1d< real64 const > const & localSolution )
 {
-  GEOS_MARK_FUNCTION;
-  GEOS_UNUSED_VAR( subRegion );
-  GEOS_UNUSED_VAR( dofManager );
-  GEOS_UNUSED_VAR( localSolution );
+  real64 maxDeltaPres = 0.0, maxDeltaTemp = 0.0;
+  real64 minPresScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
-  return 1.0;
+  return scalingForLocalSystemSolution( subRegion, dofManager,
+                                        maxDeltaPres, maxDeltaTemp,
+                                        minPresScalingFactor, minTempScalingFactor,
+                                        localSolution );
 }
 
 array1d< real64 >
@@ -1116,16 +1181,20 @@ bool SinglePhaseWell::checkWellSystemSolution( WellElementSubRegion & subRegion,
 
   // get a reference to the primary variables on well elements
   arrayView1d< real64 const > const & pressure = subRegion.getField< well::pressure >();
+  arrayView1d< real64 const > const & pressureScalingFactor = subRegion.getField< well::pressureScalingFactor >();
   auto const negPresCollector = negPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
   using Kernel = singlePhaseBaseKernels::SolutionCheckKernel;
 
+  // the well solution is always scaled with the global factor
   auto const results = Kernel::launch< parallelDevicePolicy<> >( localSolution,
                                                                  rankOffset,
                                                                  dofNumber,
                                                                  ghostRank,
                                                                  pressure,
+                                                                 flowSolverUtilities::ScalingType::Global,
                                                                  scalingFactor,
+                                                                 pressureScalingFactor,
                                                                  negPresCollector );
 
   minPressure = std::min( minPressure, results.minNegPres );
