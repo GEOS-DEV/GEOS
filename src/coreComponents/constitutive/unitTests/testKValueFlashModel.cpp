@@ -109,7 +109,11 @@ public:
   string getCatalogName() const override { return ""; }
   void checkTablesParameters( real64, real64 ) const override {}
   integer getWaterPhaseIndex() const override { return 0; };
-
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override
+  {
+    GEOS_UNUSED_VAR( phaseName );
+    return 0;
+  }
   void setProperties( ComponentProperties const & componentProperties )
   {
     string_array & phaseNames = getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );

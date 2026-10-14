@@ -39,6 +39,8 @@ TEST( WellControlsEnums, Control )
   ASSERT_EQ( "BHP", toString( EnumType::BHP ) );
   ASSERT_EQ( "phaseVolRate", toString( EnumType::PHASEVOLRATE ) );
   ASSERT_EQ( "totalVolRate", toString( EnumType::TOTALVOLRATE ) );
+  ASSERT_EQ( "liquidRate", toString( EnumType::LIQUIDRATE ) );
+  ASSERT_EQ( "WHP", toString( EnumType::WHP ) );
 }
 
 

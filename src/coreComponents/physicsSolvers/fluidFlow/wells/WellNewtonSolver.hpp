@@ -683,12 +683,11 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
                                              ElementRegionManager & elemManager,
                                              WellElementSubRegion & subRegion )
 {
-  integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
+  integer maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
   integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
   real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
 
 // keep residual from previous iteration in case we need to do a line search
-
   integer newtonIter = 0;
   real64 scaleFactor = 1.0;
 

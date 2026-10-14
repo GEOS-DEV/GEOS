@@ -140,9 +140,13 @@ set( fluidFlowSolvers_headers
      wells/WellInjectionConstraint.hpp
      wells/WellProductionConstraint.hpp
      wells/WellBHPConstraints.hpp
+     wells/WellWHPConstraint.hpp
      wells/WellVolumeRateConstraint.hpp
      wells/WellMassRateConstraint.hpp
      wells/WellPhaseVolumeRateConstraint.hpp
+     wells/WellLiquidRateConstraint.hpp
+     wells/ProdPipeFlowTableFunction.hpp
+     wells/InjPipeFlowTableFunction.hpp
      wells/WellManager.hpp
      wells/WellNewtonSolver.hpp
      wells/LogLevelsInfo.hpp
@@ -189,9 +193,13 @@ set( fluidFlowSolvers_sources
      wells/WellInjectionConstraint.cpp
      wells/WellProductionConstraint.cpp
      wells/WellBHPConstraints.cpp
+     wells/WellWHPConstraint.cpp
+     wells/WellLiquidRateConstraint.cpp
      wells/WellVolumeRateConstraint.cpp
      wells/WellMassRateConstraint.cpp
      wells/WellPhaseVolumeRateConstraint.cpp
+     wells/ProdPipeFlowTableFunction.cpp
+     wells/InjPipeFlowTableFunction.cpp
      wells/WellManager.cpp
      wells/WellNewtonSolver.cpp
      proppantTransport/ProppantTransport.cpp

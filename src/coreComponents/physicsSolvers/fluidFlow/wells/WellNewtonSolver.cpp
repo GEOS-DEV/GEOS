@@ -102,6 +102,9 @@ WellNewtonSolver::WellNewtonSolver( string const & name,
   addLogLevel< logInfo::TimeStep >();
   addLogLevel< logInfo::Timers >();
 
+  m_nonlinearSolverParameters.getWrapper< integer >( NonlinearSolverParameters::viewKeysStruct::newtonMaxIterString() ).
+    setApplyDefaultValue( 15 );
+
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );

@@ -92,6 +92,13 @@ integer CompositionalMultiphaseFluid< FLASH, PHASES... >::getWaterPhaseIndex() c
 }
 
 template< typename FLASH, typename ... PHASES >
+integer CompositionalMultiphaseFluid< FLASH, PHASES... >::getPhaseIndex( const std::string & phaseName ) const
+{
+  integer const phaseIndex = findPhaseIndex( phaseName );
+  return m_phaseOrder.size() > phaseIndex ? m_phaseOrder[phaseIndex] : -1;
+}
+
+template< typename FLASH, typename ... PHASES >
 string CompositionalMultiphaseFluid< FLASH, PHASES... >::catalogName()
 {
   // Use the first phase viscosity
@@ -290,7 +297,21 @@ array1d< integer > CompositionalMultiphaseFluid< FLASH, PHASES... >::getPhaseTyp
   }
   return phaseTypes;
 }
+template< typename FLASH, typename ... PHASES >
+integer CompositionalMultiphaseFluid< FLASH, PHASES... >::findPhaseIndex( string names ) const
+{
+  auto const nameContainer = stringutilities::tokenize( names, ",", true, false );
 
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  {
+    std::string const phaseName = stringutilities::toLower( m_phaseNames[ip] );
+    if( std::find( nameContainer.begin(), nameContainer.end(), phaseName ) != nameContainer.end())
+    {
+      return ip;
+    }
+  }
+  return -1;
+}
 // Create the fluid models
 template< typename FLASH, typename ... PHASES >
 std::unique_ptr< compositional::ModelParameters >
