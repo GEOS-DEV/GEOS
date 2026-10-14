@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./modalFreeFreeBeam_base.xml"/>
+  </Included>
+
+  <!-- A block size equal to the multiplicity of the rigid-body modes finds all of them without
+       the completeness check of the single-vector iteration. -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsModalAnalysis
+      name="modal"
+      discretization="FE1"
+      targetRegions="{ Region }"
+      modalSolverType="arnoldi"
+      modalNumModes="10"
+      modalShiftFrequency="-5.0"
+      modalBlockSize="6"
+      modalCompletenessCheck="0"
+      modalTolerance="1.0e-8">
+      <LinearSolverParameters
+        solverType="cg"
+        preconditionerType="amg"
+        krylovTol="1.0e-10"
+        krylovMaxIter="2000"/>
+    </SolidMechanicsModalAnalysis>
+  </Solvers>
+
+</Problem>

@@ -22,6 +22,7 @@ set( solidMechanicsSolvers_headers
      SolidMechanicsFields.hpp
      SolidMechanicsLagrangianFEM.hpp
      SolidMechanicsLagrangianFEM.hpp
+     SolidMechanicsModalAnalysis.hpp
      kernels/SolidMechanicsLagrangianFEMKernels.hpp
      SolidMechanicsMPM.hpp
      MPMSolverFields.hpp
@@ -62,6 +63,7 @@ set( solidMechanicsSolvers_headers
 # Specify solver sources
 set( solidMechanicsSolvers_sources
      SolidMechanicsLagrangianFEM.cpp
+     SolidMechanicsModalAnalysis.cpp
      SolidMechanicsMPM.cpp
      SolidMechanicsInitialization.cpp
      SolidMechanicsStateReset.cpp
@@ -115,4 +117,8 @@ install( TARGETS solidMechanicsSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFI
 
 if( externalComponentDeps )
   target_include_directories( solidMechanicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+endif()
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
 endif()

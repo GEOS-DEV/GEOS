@@ -669,6 +669,30 @@ struct BlasLapackLA
                                  Vec< std::complex< real64 > > const & lambda );
 
   /**
+   * @brief Computes the eigenvalues and eigenvectors of a real symmetric matrix A
+   *
+   * If size(A) = (N,N), this function expects:
+   * size(lambda) = N and size(V) = (N,N).
+   * Only the upper triangle of A is referenced.
+   * On exit, lambda contains the eigenvalues of A in ascending order and
+   * the columns of V contain the corresponding orthonormal eigenvectors.
+   *
+   * @param [in]    A GEOSX array2d.
+   * @param [out]   lambda GEOSX array1d.
+   * @param [out]   V GEOSX array2d.
+   */
+  static void matrixSymmetricEigen( MatColMajor< real64 const > const & A,
+                                    Vec< real64 > const & lambda,
+                                    MatColMajor< real64 > const & V );
+
+  /**
+   * @copydoc matrixSymmetricEigen
+   */
+  static void matrixSymmetricEigen( MatRowMajor< real64 const > const & A,
+                                    Vec< real64 > const & lambda,
+                                    MatRowMajor< real64 > const & V );
+
+  /**
    * @brief Computes the least squares solution of B - AX
    *
    * @param [in]    A GEOSX array2d.

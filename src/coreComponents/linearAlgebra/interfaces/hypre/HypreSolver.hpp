@@ -94,6 +94,9 @@ private:
   /// Pointers to hypre functions for the krylov solver
   std::unique_ptr< HypreSolverWrapper > m_solver;
 
+  /// Whether the most recent setup cost still needs to be attributed to a solve.
+  mutable bool m_setupTimePending = false;
+
 };
 
 } // end geos namespace

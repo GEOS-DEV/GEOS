@@ -99,6 +99,13 @@ HypreVector::~HypreVector()
 void HypreVector::create( localIndex const localSize,
                           MPI_Comm const & comm )
 {
+  // The vector is zeroed in the memory space of hypre below. A vector without storage is allocated there
+  // directly: allocating it on the host first would copy the host values to the device at the first move.
+  if( m_values.capacity() == 0 && localSize > 0 )
+  {
+    m_values.resizeWithoutInitializationOrDestruction( hypre::memorySpace, localSize );
+  }
+
   VectorBase::create( localSize, comm );
 
   // Compute partitioning information

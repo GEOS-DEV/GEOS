@@ -1,0 +1,592 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file ArnoldiEigenSolver.cpp
+ */
+
+#include "ArnoldiEigenSolver.hpp"
+
+#include "common/Stopwatch.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+
+#include <algorithm>
+#include <cfloat>
+#include <cmath>
+#include <numeric>
+
+namespace geos
+{
+
+namespace
+{
+
+/// Ritz pairs of the projected operator, ordered by decreasing modulus of the Ritz value
+struct RitzPairs
+{
+  /// Dimension of the Rayleigh-Ritz problem
+  integer m = 0;
+  /// Ritz values theta of the operator T = (K - sigma M)^{-1} M
+  stdVector< real64 > theta;
+  /// Coefficients of the Ritz vectors in the Krylov basis (column i is the vector of theta[i])
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > Y;
+  /// Residual estimates ||T x_i - theta_i x_i||_M
+  stdVector< real64 > rho;
+  /// Coefficients of the residuals in the (not yet expanded) next block of the basis: coupling[c + b*i]
+  stdVector< real64 > coupling;
+};
+
+/**
+ * @brief State of a block Krylov-Schur iteration.
+ *
+ * The basis V[0..m+b-1] is M-orthonormal; V[0..m-1] spans the Krylov space, and V[m..m+b-1] is the next block,
+ * not yet expanded. The (m+b) x m matrix H holds the coefficients of T V[j] on the basis, so that
+ * T V_m = V_{m+b} H. The Rayleigh-Ritz matrix is the symmetrized leading m x m block of H.
+ */
+template< typename VECTOR >
+class KrylovSchurState
+{
+public:
+
+  using Problem = GeneralizedEigenProblem< VECTOR >;
+  using Constraints = typename GeneralizedEigenSolver< VECTOR >::ConstraintSpace;
+
+  KrylovSchurState( EigenSolverParameters const & params,
+                    Problem const & problem,
+                    Constraints const & constraints,
+                    VECTOR const & prototype,
+                    integer const ncv,
+                    integer const blockSize ):
+    m_params( params ),
+    m_problem( problem ),
+    m_constraints( constraints ),
+    m_b( blockSize ),
+    m_ld( ncv + blockSize ),
+    m_H( static_cast< size_t >( m_ld ) * static_cast< size_t >( ncv ), 0.0 )
+  {
+    size_t const numBasis = static_cast< size_t >( ncv + blockSize );
+    m_V.reserve( numBasis );
+    m_MV.reserve( numBasis );
+    for( size_t i = 0; i < numBasis; ++i )
+    {
+      m_V.push_back( GeneralizedEigenSolver< VECTOR >::makeVector( prototype ) );
+      m_MV.push_back( GeneralizedEigenSolver< VECTOR >::makeVector( prototype ) );
+    }
+    m_X.reserve( static_cast< size_t >( ncv ) );
+    for( integer i = 0; i < ncv; ++i )
+    {
+      m_X.push_back( GeneralizedEigenSolver< VECTOR >::makeVector( prototype ) );
+    }
+  }
+
+  /// @return the number of applications of the shift-and-invert operator so far
+  integer numOperatorApplications() const { return m_numOperatorApplications; }
+
+  /// Fill the first block of the basis with random vectors in the range of T
+  void initialize()
+  {
+    for( integer c = 0; c < m_b; ++c )
+    {
+      randomVector( c );
+    }
+  }
+
+  /// Append one block of b vectors to the basis. @p m is the current number of columns of H.
+  void extendBlock( integer const m )
+  {
+    stdVector< real64 > coefficients( static_cast< size_t >( m_ld ) );
+    for( integer c = 0; c < m_b; ++c )
+    {
+      integer const column = m + c;
+      integer const index = m + m_b + c;
+
+      applyOperator( m_MV[column], m_V[index] );
+
+      std::fill( coefficients.begin(), coefficients.end(), 0.0 );
+      real64 const norm = orthonormalize( index, coefficients.data() );
+      for( integer i = 0; i < index; ++i )
+      {
+        h( i, column ) = coefficients[i];
+      }
+      if( norm > 0.0 )
+      {
+        h( index, column ) = norm;
+      }
+      else
+      {
+        // The Krylov space is invariant (or numerically so): continue with a fresh direction
+        h( index, column ) = 0.0;
+        randomVector( index );
+      }
+    }
+  }
+
+  /// Compute the Ritz pairs of the Rayleigh-Ritz problem of dimension @p m
+  RitzPairs ritz( integer const m ) const
+  {
+    array2d< real64, MatrixLayout::COL_MAJOR_PERM > S( m, m );
+    array2d< real64, MatrixLayout::COL_MAJOR_PERM > Yraw( m, m );
+    array1d< real64 > lambda( m );
+    for( integer j = 0; j < m; ++j )
+    {
+      for( integer i = 0; i <= j; ++i )
+      {
+        S( i, j ) = h( i, j );
+        S( j, i ) = h( i, j );
+      }
+    }
+    BlasLapackLA::matrixSymmetricEigen( S.toSliceConst(), lambda.toSlice(), Yraw.toSlice() );
+
+    stdVector< integer > order( static_cast< size_t >( m ) );
+    std::iota( order.begin(), order.end(), 0 );
+    std::stable_sort( order.begin(), order.end(), [&]( integer const a, integer const b )
+    {
+      return std::fabs( lambda[a] ) > std::fabs( lambda[b] );
+    } );
+
+    RitzPairs r;
+    r.m = m;
+    r.theta.resize( m );
+    r.rho.resize( m );
+    r.coupling.assign( static_cast< size_t >( m_b ) * static_cast< size_t >( m ), 0.0 );
+    r.Y.resize( m, m );
+    for( integer i = 0; i < m; ++i )
+    {
+      integer const o = order[i];
+      r.theta[i] = lambda[o];
+      for( integer j = 0; j < m; ++j )
+      {
+        r.Y( j, i ) = Yraw( j, o );
+      }
+      real64 norm2 = 0.0;
+      for( integer c = 0; c < m_b; ++c )
+      {
+        real64 s = 0.0;
+        for( integer j = 0; j < m; ++j )
+        {
+          s += h( m + c, j ) * r.Y( j, i );
+        }
+        r.coupling[c + m_b * i] = s;
+        norm2 += s * s;
+      }
+      r.rho[i] = std::sqrt( norm2 );
+    }
+    return r;
+  }
+
+  /**
+   * @brief Number of leading Ritz pairs satisfying rho <= tol * |theta|.
+   * @param r the Ritz pairs
+   * @param wanted number of leading pairs to examine
+   * @return the number of converged pairs
+   */
+  integer countConverged( RitzPairs const & r, integer const wanted ) const
+  {
+    // Relative to the largest Ritz value, so that the test does not depend on the units of the problem
+    real64 const floor = std::pow( DBL_EPSILON, 2.0 / 3.0 ) * std::fabs( r.theta[0] );
+    integer n = 0;
+    for( integer i = 0; i < wanted; ++i )
+    {
+      if( r.rho[i] <= m_params.tolerance * std::max( std::fabs( r.theta[i] ), floor ) )
+      {
+        ++n;
+      }
+    }
+    return n;
+  }
+
+  /**
+   * @brief Krylov-Schur restart.
+   * @param k number of Ritz vectors kept
+   * @param r Ritz pairs of the current basis of dimension r.m
+   * @param injectRandomBlock if true, the next block is random (orthogonal to the kept vectors) instead of the
+   *        residual direction of the current basis
+   *
+   * Afterwards the basis has k + b vectors and H is arrow-shaped.
+   */
+  void restart( integer const k, RitzPairs const & r, bool const injectRandomBlock )
+  {
+    integer const m = r.m;
+    ritzVectors( k, r );
+
+    if( !injectRandomBlock )
+    {
+      for( integer c = 0; c < m_b; ++c )
+      {
+        m_V[k + c].copy( m_V[m + c] );
+        m_MV[k + c].copy( m_MV[m + c] );
+      }
+    }
+    for( integer i = 0; i < k; ++i )
+    {
+      m_V[i].copy( m_X[i] );
+      m_problem.mass.apply( m_V[i], m_MV[i] );
+    }
+
+    std::fill( m_H.begin(), m_H.end(), 0.0 );
+    for( integer i = 0; i < k; ++i )
+    {
+      h( i, i ) = r.theta[i];
+    }
+    if( injectRandomBlock )
+    {
+      for( integer c = 0; c < m_b; ++c )
+      {
+        randomVector( k + c );
+      }
+    }
+    else
+    {
+      for( integer c = 0; c < m_b; ++c )
+      {
+        for( integer i = 0; i < k; ++i )
+        {
+          h( k + c, i ) = r.coupling[c + m_b * i];
+          h( i, k + c ) = r.coupling[c + m_b * i];
+        }
+      }
+    }
+  }
+
+  /// Move the first @p count Ritz vectors to @p modes
+  void extractModes( integer const count, RitzPairs const & r, stdVector< VECTOR > & modes )
+  {
+    ritzVectors( count, r );
+    modes.clear();
+    modes.reserve( static_cast< size_t >( count ) );
+    for( integer i = 0; i < count; ++i )
+    {
+      modes.push_back( std::move( m_X[i] ) );
+    }
+  }
+
+private:
+
+  real64 & h( integer const i, integer const j ) { return m_H[ i + static_cast< size_t >( j ) * m_ld ]; }
+  real64 h( integer const i, integer const j ) const { return m_H[ i + static_cast< size_t >( j ) * m_ld ]; }
+
+  /// dst = (K - sigma M)^{-1} src
+  void applyOperator( VECTOR const & src, VECTOR & dst )
+  {
+    dst.zero();
+    m_problem.shiftedInverse->apply( src, dst );
+    ++m_numOperatorApplications;
+  }
+
+  /// m_X[0..count-1] = V[0..m-1] Y[:, 0..count-1]
+  void ritzVectors( integer const count, RitzPairs const & r )
+  {
+    stdVector< VECTOR const * > basis;
+    for( integer j = 0; j < r.m; ++j )
+    {
+      basis.push_back( &m_V[j] );
+    }
+    stdVector< real64 > column( static_cast< size_t >( r.m ) );
+    for( integer i = 0; i < count; ++i )
+    {
+      for( integer j = 0; j < r.m; ++j )
+      {
+        column[j] = r.Y( j, i );
+      }
+      multiVectorOperations::combine( basis, column, m_X[i], false );
+    }
+  }
+
+  /**
+   * @brief M-orthonormalize V[index] against V[0..index-1] (modified Gram-Schmidt, two passes).
+   * @param index index of the vector to process
+   * @param coefficients if non-null, receives the Gram-Schmidt coefficients (accumulated over the passes)
+   * @return the M-norm of the vector after orthogonalization, or zero if it is numerically in the span of
+   *         the previous vectors (the vector is then left unnormalized)
+   */
+  real64 orthonormalize( integer const index, real64 * const coefficients )
+  {
+    VECTOR & w = m_V[index];
+    VECTOR & mw = m_MV[index];
+
+    m_problem.mass.apply( w, mw );
+    real64 const norm0 = std::sqrt( std::max( w.dot( mw ), 0.0 ) );
+    if( norm0 <= 0.0 )
+    {
+      return 0.0;
+    }
+
+    // Classical Gram-Schmidt with one reorthogonalization. The products with the whole basis are one batched
+    // device operation, instead of one reduction and one synchronization for each basis vector.
+    stdVector< VECTOR const * > basis;
+    stdVector< VECTOR const * > massBasis;
+    for( integer i = 0; i < index; ++i )
+    {
+      basis.push_back( &m_V[i] );
+      massBasis.push_back( &m_MV[i] );
+    }
+    array2d< real64 > products;
+    stdVector< real64 > update( static_cast< size_t >( index ) );
+    for( int pass = 0; pass < 2; ++pass )
+    {
+      m_constraints.project( w );
+      if( index > 0 )
+      {
+        multiVectorOperations::dots( massBasis, stdVector< VECTOR const * >{ & w }, products );
+        for( integer i = 0; i < index; ++i )
+        {
+          update[i] = -products( i, 0 );
+          if( coefficients != nullptr )
+          {
+            coefficients[i] -= update[i];
+          }
+        }
+        multiVectorOperations::combine( basis, update, w, true );
+      }
+    }
+
+    m_problem.mass.apply( w, mw );
+    real64 const norm = std::sqrt( std::max( w.dot( mw ), 0.0 ) );
+    if( norm <= breakdownTolerance * norm0 )
+    {
+      return 0.0;
+    }
+    w.scale( 1.0 / norm );
+    mw.scale( 1.0 / norm );
+    return norm;
+  }
+
+  /// Fill V[index] with a random vector in the range of T, M-orthonormal to V[0..index-1]
+  void randomVector( integer const index )
+  {
+    for( int attempt = 0; attempt < 5; ++attempt )
+    {
+      m_V[index].rand( static_cast< unsigned >( m_params.seed ) + 7919u * static_cast< unsigned >( m_randomCount++ ) );
+      // M r must be M-orthogonal to the constraints: they span the null space of K - shift M when the shift is an
+      // eigenvalue of the deflated modes (e.g. the rigid-body modes for a zero shift), and the system is then
+      // only consistent for a right-hand side without component in it
+      m_constraints.project( m_V[index] );
+      m_problem.mass.apply( m_V[index], m_MV[index] );
+      applyOperator( m_MV[index], m_V[index] );
+      if( orthonormalize( index, nullptr ) > 0.0 )
+      {
+        return;
+      }
+    }
+    GEOS_ERROR( "Eigensolver could not generate a new starting vector: the problem is too small for the "
+                "requested subspace size, M is singular on the whole space, or the linear solves with K - shift M "
+                "failed (for example because the shift is, to rounding, an eigenvalue: use a slightly different "
+                "shift frequency, or a more robust linear solver)." );
+  }
+
+  /// Relative drop of the norm below which a vector is considered to be in the span of the basis
+  static constexpr real64 breakdownTolerance = 1.0e-8;
+
+  EigenSolverParameters const & m_params;
+  Problem const & m_problem;
+  Constraints const & m_constraints;
+  integer const m_b;
+  integer const m_ld;
+  stdVector< real64 > m_H;
+  stdVector< VECTOR > m_V;
+  stdVector< VECTOR > m_MV;
+  stdVector< VECTOR > m_X;
+  integer m_numOperatorApplications = 0;
+  integer m_randomCount = 0;
+};
+
+} // namespace
+
+template< typename VECTOR >
+EigenSolverResult ArnoldiEigenSolver< VECTOR >::solve( Problem const & problem,
+                                                       Vector const & prototype,
+                                                       stdVector< Vector > & modes ) const
+{
+  GEOS_ERROR_IF( problem.shiftedInverse == nullptr,
+                 "The Arnoldi eigensolver requires the shift-and-invert operator (K - shift M)^{-1}" );
+
+  EigenSolverParameters const & params = this->m_params;
+  GEOS_ERROR_IF_LT_MSG( params.numEigenvalues, 1, "The number of requested eigenvalues must be positive" );
+  GEOS_ERROR_IF_LT_MSG( params.blockSize, 1, "The eigensolver block size must be positive" );
+
+  Stopwatch watch;
+
+  // Deflate the known eigenvectors: the iteration runs in their M-orthogonal complement
+  ConstraintSpace constraints = this->makeConstraintSpace( problem, prototype );
+  integer const numConstraints = constraints.size();
+  integer const nev = params.numEigenvalues - numConstraints;
+  integer const b = params.blockSize;
+  if( nev <= 0 )
+  {
+    EigenSolverResult trivial = this->returnConstraintsOnly( problem, constraints, modes );
+    trivial.solveTime = watch.elapsedTime();
+    return trivial;
+  }
+
+  // Basis dimension: a multiple of the block size, large enough to hold the wanted vectors and a block, and
+  // small enough for the basis to be linearly independent. The default is at least twice the number of wanted
+  // vectors and never below 20: a small basis restarts too often and can stagnate on a clustered spectrum.
+  integer constexpr minDefaultBasis = 20;
+  integer ncv = params.subspaceSize > 0 ? params.subspaceSize : std::max( { 2 * nev, nev + 2 * b, minDefaultBasis } );
+  ncv = std::max( ncv, nev + b );
+  ncv = ( ncv + b - 1 ) / b * b;
+  globalIndex const maxBasis = ( problem.numUnknowns > 0 ? problem.numUnknowns : prototype.globalSize() ) - numConstraints;
+  if( static_cast< globalIndex >( ncv + b ) > maxBasis )
+  {
+    ncv = LvArray::integerConversion< integer >( ( maxBasis - b ) / b * b );
+  }
+  GEOS_ERROR_IF( ncv < nev + b,
+                 GEOS_FMT( "The problem has {} unknowns, which is too small for {} eigenpairs with block size {}",
+                           maxBasis, nev, b ) );
+
+  KrylovSchurState< Vector > state( params, problem, constraints, prototype, ncv, b );
+  state.initialize();
+
+  // Completeness check. After the wanted pairs converge, the solver keeps them and expands the Krylov space of a
+  // random vector that is M-orthogonal to them. That space contains a direction in every eigenspace that is left,
+  // so a missed copy of a repeated eigenvalue appears as a Ritz pair among the wanted ones. The check is complete
+  // only when the best Ritz pair that is not kept, the sentinel, has converged too: a missed copy is then not
+  // hidden behind a Ritz value that has not yet converged to it. This matters when the Ritz values are clustered,
+  // for example with a shift far below the spectrum. A check that changes the wanted Ritz values has found new
+  // copies, and another check follows. Each check that finds copies replaces at least one wanted pair by a pair
+  // closer to the shift, so at most nev + 1 checks run.
+  integer const sentinel = ( params.completenessCheck != 0 && ncv >= nev + b + 1 ) ? 1 : 0;
+  integer const maxCompletenessChecks = nev + 1;
+  stdVector< real64 > checkedTheta;
+  integer m = 0;
+  integer restarts = 0;
+  integer numChecks = 0;
+  bool verifying = false;
+  bool checkIncomplete = false;
+  RitzPairs ritz;
+
+  // True if the wanted Ritz values differ from those recorded at the start of the current check
+  auto const wantedChanged = [&]( RitzPairs const & r )
+  {
+    real64 const floor = std::pow( DBL_EPSILON, 2.0 / 3.0 ) * std::fabs( r.theta[0] );
+    for( integer i = 0; i < nev; ++i )
+    {
+      real64 const scale = std::max( std::fabs( r.theta[i] ), floor );
+      if( std::fabs( r.theta[i] - checkedTheta[i] ) > 10.0 * params.tolerance * scale )
+      {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  for(;; )
+  {
+    integer const wanted = verifying ? nev + sentinel : nev;
+    bool haveRitz = false;
+    while( m + b <= ncv )
+    {
+      state.extendBlock( m );
+      m += b;
+      haveRitz = false;
+      if( m >= wanted )
+      {
+        ritz = state.ritz( m );
+        haveRitz = true;
+        if( state.countConverged( ritz, wanted ) == wanted )
+        {
+          break;
+        }
+      }
+    }
+    if( !haveRitz )
+    {
+      ritz = state.ritz( m );
+    }
+    integer const numConvergedWanted = state.countConverged( ritz, wanted );
+
+    GEOS_LOG_RANK_0_IF( params.logLevel >= 1,
+                        GEOS_FMT( "  Arnoldi {}: restart {:3}, basis {:3}, converged {:3}/{}, operator applications {}",
+                                  verifying ? "check" : "     ", restarts, m, numConvergedWanted, wanted,
+                                  state.numOperatorApplications() ) );
+
+    if( numConvergedWanted == wanted )
+    {
+      bool const foundNewCopies = verifying && wantedChanged( ritz );
+      GEOS_LOG_RANK_0_IF( params.logLevel >= 1 && foundNewCopies,
+                          "  Arnoldi check: the wanted eigenvalues changed, new copies were found" );
+      if( params.completenessCheck == 0 || ( verifying && !foundNewCopies ) )
+      {
+        break;
+      }
+      if( numChecks >= maxCompletenessChecks )
+      {
+        checkIncomplete = true;
+        break;
+      }
+      // Look for missed copies of repeated eigenvalues: keep the converged vectors and expand a random block
+      // that is orthogonal to them
+      ++numChecks;
+      verifying = true;
+      checkedTheta.assign( ritz.theta.begin(), ritz.theta.begin() + nev );
+      state.restart( nev, ritz, true );
+      m = nev;
+      continue;
+    }
+
+    if( restarts >= params.maxIterations )
+    {
+      checkIncomplete = verifying;
+      break;
+    }
+    ++restarts;
+    if( verifying && wantedChanged( ritz ) )
+    {
+      // New copies entered the wanted pairs: converge them first, then check again
+      verifying = false;
+    }
+    integer const keepWanted = verifying ? nev + sentinel : nev;
+    integer const keep = keepWanted + std::min( numConvergedWanted, ( ncv - b - keepWanted ) / 2 );
+    state.restart( keep, ritz, false );
+    m = keep;
+  }
+
+  GEOS_WARNING_IF( checkIncomplete,
+                   "Arnoldi: the completeness check did not finish, so copies of repeated eigenvalues may be missing. "
+                   "Increase modalMaxIterations or use a larger modalBlockSize." );
+
+  integer const numConverged = state.countConverged( ritz, nev );
+  state.extractModes( nev, ritz, modes );
+  modes.insert( modes.begin(),
+                std::make_move_iterator( constraints.vectors.begin() ),
+                std::make_move_iterator( constraints.vectors.end() ) );
+
+  EigenSolverResult result;
+  result.converged = ( numConverged == nev );
+  result.numConverged = numConverged + numConstraints;
+  result.numIterations = restarts;
+  result.numOperatorApplications = state.numOperatorApplications();
+  this->finalizeResult( problem, modes, result );
+  result.solveTime = watch.elapsedTime();
+  return result;
+}
+
+// -----------------------
+// Explicit Instantiations
+// -----------------------
+#ifdef GEOS_USE_TRILINOS
+template class ArnoldiEigenSolver< TrilinosInterface::ParallelVector >;
+#endif
+
+#ifdef GEOS_USE_HYPRE
+template class ArnoldiEigenSolver< HypreInterface::ParallelVector >;
+#endif
+
+#ifdef GEOS_USE_PETSC
+template class ArnoldiEigenSolver< PetscInterface::ParallelVector >;
+#endif
+
+} // namespace geos

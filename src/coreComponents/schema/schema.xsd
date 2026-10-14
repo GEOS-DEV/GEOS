@@ -527,6 +527,10 @@
 					<xsd:selector xpath="SolidMechanicsLagrangianFEM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversSolidMechanicsModalAnalysisUniqueName">
+					<xsd:selector xpath="SolidMechanicsModalAnalysis" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversSolidMechanics_MPMUniqueName">
 					<xsd:selector xpath="SolidMechanics_MPM" />
 					<xsd:field xpath="@name" />
@@ -2825,6 +2829,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="SolidMechanicsLagrangeContact" type="SolidMechanicsLagrangeContactType" />
 			<xsd:element name="SolidMechanicsLagrangeContactBubbleStab" type="SolidMechanicsLagrangeContactBubbleStabType" />
 			<xsd:element name="SolidMechanicsLagrangianFEM" type="SolidMechanicsLagrangianFEMType" />
+			<xsd:element name="SolidMechanicsModalAnalysis" type="SolidMechanicsModalAnalysisType" />
 			<xsd:element name="SolidMechanics_MPM" type="SolidMechanics_MPMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 			<xsd:element name="WellManager" type="WellManagerType">
@@ -5919,6 +5924,107 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsModalAnalysisType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
+		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--contactPenaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
+		<xsd:attribute name="contactPenaltyStiffness" type="real64" default="0" />
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
+		<xsd:attribute name="contactRelationName" type="groupNameRef" default="NOCONTACT" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Convergence information
+ - Linear solver information
+ - Output residual norm
+ - Solution information (scaling, maximum changes, quality check)
+ - Time step information
+ - Solver timers information
+2
+ - The summary of declared fields and coupling-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--massDamping => Value of mass based damping coefficient. -->
+		<xsd:attribute name="massDamping" type="real64" default="0" />
+		<!--maxNumResolves => Value to indicate how many resolves may be executed after some other event is executed. For example, if a SurfaceGenerator is specified, it will be executed after the mechanics solve. However if a new surface is generated, then the mechanics solve must be executed again due to the change in topology.-->
+		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
+		<!--modalBlockSize => Number of vectors expanded at once by the Arnoldi eigensolver. Use a value at least equal to the multiplicity of the eigenvalues (e.g. 6 for the rigid-body modes of a free structure) to find repeated eigenvalues without relying on the completeness check.-->
+		<xsd:attribute name="modalBlockSize" type="integer" default="1" />
+		<!--modalCompletenessCheck => If 1, the Arnoldi eigensolver verifies after convergence that no copy of a repeated eigenvalue was missed, at the cost of additional Krylov cycles. The check repeats while it finds new modes.-->
+		<xsd:attribute name="modalCompletenessCheck" type="integer" default="1" />
+		<!--modalDeflateRigidBodyModes => If 1, the rigid-body modes of a free structure (three translations and three rotations) are computed analytically and deflated from the eigensolve. They are the first modes of the result, with a zero eigenvalue, and they count in the number of modes. This avoids the rounding noise of the rigid modes in the convergence test, which is useful with the `lobpcg` eigensolver. It requires that no displacement boundary condition is applied.-->
+		<xsd:attribute name="modalDeflateRigidBodyModes" type="integer" default="0" />
+		<!--modalMassType => Mass discretization of the modal analysis. `lumped` is the row-sum lumped (diagonal) mass. `consistent` is the exact consistent mass, available for first-order tetrahedra only. Options are:
+* lumped
+* consistent-->
+		<xsd:attribute name="modalMassType" type="geos_SolidMechanicsModalAnalysis_MassType" default="lumped" />
+		<!--modalMaxIterations => Maximum number of restarts (Arnoldi) or iterations (LOBPCG) of the eigensolver.-->
+		<xsd:attribute name="modalMaxIterations" type="integer" default="300" />
+		<!--modalNumModes => Number of vibration modes computed.-->
+		<xsd:attribute name="modalNumModes" type="integer" default="10" />
+		<!--modalSeed => Seed of the random starting vectors of the eigensolver.-->
+		<xsd:attribute name="modalSeed" type="integer" default="1" />
+		<!--modalShiftFrequency => Spectral shift of the modal analysis, as a signed frequency f. The modes closest to the shift sigma = sign(f) (2 pi f)^2 in the eigenvalue spectrum lambda = omega^2 are computed. Use a negative value for structures with rigid-body modes, so that K - sigma M is positive definite. Frequencies are in the units of the model (Hz if SI units are used).-->
+		<xsd:attribute name="modalShiftFrequency" type="real64" default="-1" />
+		<!--modalSolverType => Eigensolver of the modal analysis. `arnoldi` applies the shift-and-invert operator (a linear solve with K - sigma M per Krylov vector) and finds the modes closest to the shift. `lobpcg` only applies the linear solver preconditioner and finds the lowest modes (use a shift at or below the first mode). Options are:
+* arnoldi
+* lobpcg-->
+		<xsd:attribute name="modalSolverType" type="geos_EigenSolverParameters_SolverType" default="arnoldi" />
+		<!--modalSubspaceSize => Maximum dimension of the Krylov basis of the Arnoldi eigensolver, or block size of the LOBPCG eigensolver if larger than the number of modes (guard vectors). The default (0) selects the larger of twice the number of modes and 20 for Arnoldi, and no guard vector for LOBPCG.-->
+		<xsd:attribute name="modalSubspaceSize" type="integer" default="0" />
+		<!--modalTolerance => Relative convergence tolerance of the eigensolver. With `arnoldi`, set the linear solver tolerance (`krylovTol`) at least two orders of magnitude tighter.-->
+		<xsd:attribute name="modalTolerance" type="real64" default="1e-08" />
+		<!--modalVerifyFreeBody => If 1, require a free body with six independent analytical rigid modes, verify their stiffness residuals, and check numerical nullity, eigenpair residuals and mass orthogonality.-->
+		<xsd:attribute name="modalVerifyFreeBody" type="integer" default="0" />
+		<!--newmarkBeta => Value of :math:`\beta` in the Newmark Method for Implicit Dynamic time integration option. This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing.-->
+		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
+		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
+		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
+		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
+		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
+		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
+ 0 - Infinitesimal Strain 
+ 1 - Finite Strain-->
+		<xsd:attribute name="strainTheory" type="integer" default="0" />
+		<!--surfaceGeneratorName => Name of the surface generator to use-->
+		<xsd:attribute name="surfaceGeneratorName" type="string" default="" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* QuasiStatic
+* ImplicitDynamic
+* ExplicitDynamic-->
+		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="QuasiStatic" />
+		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
+		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
+		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
+		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_SolidMechanicsModalAnalysis_MassType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|lumped|consistent" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_EigenSolverParameters_SolverType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|arnoldi|lobpcg" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="SolidMechanics_MPMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />

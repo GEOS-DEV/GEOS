@@ -297,6 +297,7 @@ void HypreSolver::setup( HypreMatrix const & mat )
                                          mat.unwrapped(),
                                          m_solver->setupVector.unwrapped(),
                                          m_solver->setupVector.unwrapped() ) );
+  m_setupTimePending = true;
 }
 
 int HypreSolver::doSolve( HypreVector const & rhs,
@@ -324,6 +325,14 @@ void HypreSolver::solve( HypreVector const & rhs,
                          HypreVector & sol ) const
 {
   GEOS_MARK_FUNCTION;
+
+  // Attribute setup to the first solve after setup(), including the zero-RHS shortcut. Repeated solves
+  // reuse the same solver and preconditioner, so retaining the initial time would count and log it again.
+  if( !m_setupTimePending )
+  {
+    m_result.setupTime = 0.0;
+  }
+  m_setupTimePending = false;
 
   if( isZero( rhs.norm2(), 0.0 ) )
   {
@@ -371,6 +380,7 @@ void HypreSolver::solve( HypreVector const & rhs,
 
 void HypreSolver::clear()
 {
+  m_setupTimePending = false;
   Base::clear();
   m_precond.clear();
 

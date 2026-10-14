@@ -1015,6 +1015,79 @@ void set_get_random_number_generator_seed_test()
 }
 
 template< typename LAI >
+void matrix_symmetric_eigen_test()
+{
+  // Row-major and column-major variants on the 1D Laplacian, whose eigenvalues are known in closed form,
+  // plus a random symmetric matrix to check the eigen-decomposition identities.
+  INDEX_TYPE const N = 12;
+
+  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > A( N, N );
+  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > V( N, N );
+  array1d< real64 > lambda( N );
+
+  A.zero();
+  for( INDEX_TYPE i = 0; i < N; ++i )
+  {
+    A( i, i ) = 2.0;
+    if( i > 0 )
+    {
+      A( i, i - 1 ) = -1.0;
+      A( i - 1, i ) = -1.0;
+    }
+  }
+
+  LAI::matrixSymmetricEigen( A.toSliceConst(), lambda.toSlice(), V.toSlice() );
+
+  for( INDEX_TYPE k = 0; k < N; ++k )
+  {
+    real64 const expected = 2.0 - 2.0 * std::cos( ( k + 1 ) * pi / ( N + 1 ) );
+    EXPECT_NEAR( lambda[k], expected, machinePrecision );
+  }
+
+  // Random symmetric matrix, column-major variant
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > B( N, N );
+  array2d< real64, MatrixLayout::COL_MAJOR_PERM > W( N, N );
+  LAI::matrixRand( B.toSlice(), LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  for( INDEX_TYPE i = 0; i < N; ++i )
+  {
+    for( INDEX_TYPE j = 0; j < i; ++j )
+    {
+      B( i, j ) = B( j, i );
+    }
+  }
+
+  LAI::matrixSymmetricEigen( B.toSliceConst(), lambda.toSlice(), W.toSlice() );
+
+  for( INDEX_TYPE k = 1; k < N; ++k )
+  {
+    EXPECT_LE( lambda[k - 1], lambda[k] );
+  }
+
+  for( INDEX_TYPE k = 0; k < N; ++k )
+  {
+    // residual of B w = lambda w and orthonormality of the eigenvectors
+    for( INDEX_TYPE i = 0; i < N; ++i )
+    {
+      real64 Bw = 0.0;
+      for( INDEX_TYPE j = 0; j < N; ++j )
+      {
+        Bw += B( i, j ) * W( j, k );
+      }
+      EXPECT_NEAR( Bw, lambda[k] * W( i, k ), 10.0 * machinePrecision );
+    }
+    for( INDEX_TYPE l = 0; l < N; ++l )
+    {
+      real64 dot = 0.0;
+      for( INDEX_TYPE i = 0; i < N; ++i )
+      {
+        dot += W( i, k ) * W( i, l );
+      }
+      EXPECT_NEAR( dot, k == l ? 1.0 : 0.0, machinePrecision );
+    }
+  }
+}
+
+template< typename LAI >
 void matrix_svd_test()
 {
   array1d< INDEX_TYPE > M_indices;
@@ -1299,6 +1372,11 @@ TEST( Array2D, matrixRand )
 TEST( DenseLAInterface, setGetRandomNumberGeneratorSeed )
 {
   set_get_random_number_generator_seed_test< BlasLapackLA >();
+}
+
+TEST( DenseLAInterface, matrixSymmetricEigen )
+{
+  matrix_symmetric_eigen_test< BlasLapackLA >();
 }
 
 TEST( DenseLAInterface, matrixSVD )

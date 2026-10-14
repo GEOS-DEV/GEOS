@@ -350,7 +350,7 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
     {
       real64 N[ maxSupportPoints ];
       real64 xLocal[ numNodesPerElem ][3];
-      real64 J[3][3];
+      real64 dNdX[ maxSupportPoints ][3];
       real64 detJxW = 0.0;
       typename FE_TYPE::StackVariables feStack;
       element.template setup< FE_TYPE >( ei, meshData, feStack );
@@ -368,7 +368,9 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         FE_TYPE::calcN( q, feStack, N );
-        detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+        // calcGradN() returns the full integration weight. calcJacobian() omits the parent-element volume of the Tet4,
+        // which makes the mass six times too large.
+        detJxW = FE_TYPE::calcGradN( q, xLocal, feStack, dNdX );
         for( localIndex a = 0; a < numSupportPoints; ++a )
         {
           mass[ elemsToNodes[ ei ][ a ] ] += rho[ ei ][ q ] * detJxW * N[ a ];

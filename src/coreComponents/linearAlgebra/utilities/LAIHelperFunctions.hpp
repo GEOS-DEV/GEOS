@@ -27,6 +27,8 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
+#include <array>
+
 namespace geos
 {
 namespace LAIHelperFunctions
@@ -210,14 +212,19 @@ MATRIX permuteMatrix( MATRIX const & matrix,
  * @param dofIndex array of nodal degree-of-freedom indices
  * @param dofOffset global dof offset for displacement field
  * @param numLocalDof the number of locally owned displacement dofs
+ * @param centerOnGeometry if true, the rotations are taken about the geometric center of the owned nodes (one
+ *        collective reduction) instead of the origin. This keeps the rotations well-conditioned against the
+ *        translations for a body that is far from the origin, at the price of a different (equivalent) basis.
  * @return the output array of linear algebra vectors containing RBMs
+ * @note The function is collective on MPI_COMM_GEOS.
  */
 template< typename VECTOR >
 array1d< VECTOR >
 computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                        arrayView1d< globalIndex const > const & dofIndex,
                        globalIndex const dofOffset,
-                       localIndex const numLocalDof )
+                       localIndex const numLocalDof,
+                       bool const centerOnGeometry = false )
 {
   GEOS_ASSERT_EQ( nodePosition.size( 0 ), dofIndex.size() );
   integer const numComponents = nodePosition.size( 1 );
@@ -230,7 +237,9 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
   {
     rigidBodyModes[k].create( numLocalDof, MPI_COMM_GEOS );
     arrayView1d< real64 > const values = rigidBodyModes[k].open();
-    forAll< parallelHostPolicy >( dofIndex.size(), [=]( localIndex const i )
+    // The vector lives in the memory space of the linear algebra backend: fill it with a device kernel
+    // instead of a host loop, so that it does not depend on unified memory
+    forAll< parallelDevicePolicy<> >( dofIndex.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const localDof = LvArray::integerConversion< localIndex >( dofIndex[i] - dofOffset );
       if( 0 <= localDof && localDof < numLocalDof )
@@ -242,6 +251,34 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
     rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
   }
 
+  // Center of the rotations: the origin, or the geometric center of the owned nodes of all the MPI partitions
+  real64 center[3] = { 0.0, 0.0, 0.0 };
+  if( centerOnGeometry )
+  {
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > sumX( 0.0 ), sumY( 0.0 ), sumZ( 0.0 ), count( 0.0 );
+    forAll< parallelDevicePolicy<> >( dofIndex.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    {
+      globalIndex const localDof = dofIndex[i] - dofOffset;
+      if( dofIndex[i] >= 0 && 0 <= localDof && localDof < numLocalDof )
+      {
+        sumX += nodePosition( i, 0 );
+        sumY += nodePosition( i, 1 );
+        if( numComponents == 3 )
+          sumZ += nodePosition( i, 2 );
+        count += 1.0;
+      }
+    } );
+    // One reduction for the sums and the count. A target without any owned node keeps the origin as center.
+    std::array< real64, 4 > const localSums{ sumX.get(), sumY.get(), sumZ.get(), count.get() };
+    std::array< real64, 4 > globalSums{};
+    MpiWrapper::allReduce( localSums, globalSums, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+    if( globalSums[3] > 0.0 )
+    {
+      for( integer c = 0; c < 3; ++c )
+        center[c] = globalSums[c] / globalSums[3];
+    }
+  }
+
   // Rotation RBMs
   for( localIndex k = numComponents; k < numRidigBodyModes; ++k )
   {
@@ -249,13 +286,13 @@ computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD 
     arrayView1d< real64 > const values = rigidBodyModes[k].open();
     integer const ind[2] = { ( k - numComponents + 1 ) % numComponents,
                              ( k - numComponents + 2 ) % numComponents };
-    forAll< parallelHostPolicy >( dofIndex.size(), [=]( localIndex const i )
+    forAll< parallelDevicePolicy<> >( dofIndex.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const localDof = LvArray::integerConversion< localIndex >( dofIndex[i] - dofOffset );
       if( 0 <= localDof && localDof < numLocalDof )
       {
-        values[localDof + ind[0]] = -nodePosition( i, ind[1] );
-        values[localDof + ind[1]] = +nodePosition( i, ind[0] );
+        values[localDof + ind[0]] = -( nodePosition( i, ind[1] ) - center[ind[1]] );
+        values[localDof + ind[1]] = +( nodePosition( i, ind[0] ) - center[ind[0]] );
       }
     } );
     rigidBodyModes[k].close();
