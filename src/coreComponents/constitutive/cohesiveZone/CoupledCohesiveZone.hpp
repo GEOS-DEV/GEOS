@@ -120,10 +120,10 @@ public:
         real64 normalizedNormalDisplacement = normalDisplacement / m_characteristicNormalDisplacement;
         real64 normalizedTangentialDisplacement = tangentialDisplacement/ m_characteristicTangentialDisplacement;
 
-        normalStress = -( normalWorkOfSeparation / m_characteristicNormalDisplacement ) * exp( -normalizedNormalDisplacement ) *
+        normalStress = -( normalWorkOfSeparation / m_characteristicNormalDisplacement ) * LvArray::math::exp( -normalizedNormalDisplacement ) *
                         ( normalizedNormalDisplacement *
                         LvArray::math::exp( -LvArray::math::pow( normalizedTangentialDisplacement,
-                                    2 ) ) + ( 1.0 - q ) / ( r - 1.0 ) * ( 1.0 - LvArray::math::exp( -pow( normalizedTangentialDisplacement, 2 ) ) ) * ( r - normalizedNormalDisplacement ) );
+                                    2 ) ) + ( 1.0 - q ) / ( r - 1.0 ) * ( 1.0 - LvArray::math::exp( -LvArray::math::pow( normalizedTangentialDisplacement, 2 ) ) ) * ( r - normalizedNormalDisplacement ) );
         shearStress = -( shearWorkOfSeparation / m_characteristicTangentialDisplacement ) * ( 2.0 * m_characteristicNormalDisplacement / m_characteristicTangentialDisplacement ) * normalizedTangentialDisplacement *
                         ( q + ( r - q ) / ( r - 1.0 ) * normalizedNormalDisplacement ) *
                         LvArray::math::exp( -normalizedNormalDisplacement ) * LvArray::math::exp( -LvArray::math::pow( normalizedTangentialDisplacement, 2 ) );

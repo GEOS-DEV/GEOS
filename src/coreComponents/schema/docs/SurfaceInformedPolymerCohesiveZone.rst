@@ -29,4 +29,11 @@ yieldStrengthCrystallinityCoeff   real64    0        Linear crystallinity coeffi
 
 Notes
 -----
+``normalStrainMeasure`` is an optional enumeration with default ``Engineering``.
+``Engineering`` uses ``delta_n/h0`` and ``Logarithmic`` uses
+``log(max(1+delta_n/h0, 1e-16))`` in the normal stress and plastic update.
+Both options retain engineering shear strain and the physical film deformation
+gradient for stretch hardening and failure.  Compare modes with fresh runs;
+existing plastic normal strain history is not converted between measures.
+
 The compressive pressure cap limits only pressure strengthening in the deviatoric return.  The retained volumetric film stress is not clipped by this input, and maximum-stretch failure remains active under pressure.

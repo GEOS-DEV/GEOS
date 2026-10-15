@@ -11,6 +11,7 @@
 
 set( solidMechanicsMPM_tests
      testProjectedGaussSeidelContact.cpp
+     testCohesiveZonePairDebug.cpp
      testCohesiveZoneMultipleFields.cpp )
 
 set( dependencyList gtest solidMechanicsSolvers ${parallelDeps} )

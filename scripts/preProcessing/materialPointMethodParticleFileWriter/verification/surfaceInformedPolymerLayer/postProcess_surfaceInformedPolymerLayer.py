@@ -15,6 +15,7 @@ import math
 import os
 from pathlib import Path
 import sys
+import xml.etree.ElementTree as ET
 
 import numpy as np
 
@@ -236,7 +237,8 @@ def cohesive_update(film_strain: float,
                     plastic_normal_old: float,
                     plastic_tangential_old: float,
                     kappa_old: float,
-                    tangential_strain: float = 0.0) -> tuple[float, float, float, float]:
+                    tangential_strain: float = 0.0,
+                    normal_strain_measure: str = "Engineering") -> tuple[float, float, float, float]:
     """Reduced normal-shear cohesive update matching the C++ thin-film law.
 
     The cohesive-zone projection now uses the same volumetric/deviatoric split as
@@ -246,9 +248,13 @@ def cohesive_update(film_strain: float,
     curve from being plotted on a different stress scale than the continuum film
     when the polymer is nearly incompressible.
     """
-    p_trial = POLYMER_BULK_MODULUS * film_strain
+    if normal_strain_measure not in ("Engineering", "Logarithmic"):
+        raise ValueError("normal strain measure must be Engineering or Logarithmic")
+    normal_strain = (math.log(max(1.0 + film_strain, 1.0e-16))
+                     if normal_strain_measure == "Logarithmic" else film_strain)
+    p_trial = POLYMER_BULK_MODULUS * normal_strain
     normal_deviatoric_modulus = 4.0 * POLYMER_SHEAR_MODULUS / 3.0
-    s_n_trial = normal_deviatoric_modulus * (film_strain - plastic_normal_old)
+    s_n_trial = normal_deviatoric_modulus * (normal_strain - plastic_normal_old)
     tau_trial = POLYMER_SHEAR_MODULUS * (tangential_strain - plastic_tangential_old)
     q_trial = math.sqrt(max(2.25 * s_n_trial * s_n_trial + 3.0 * tau_trial * tau_trial, 0.0))
 
@@ -278,11 +284,12 @@ def cohesive_update(film_strain: float,
         kappa = kappa_new
     if not plastic:
         return sigma_n, plastic_normal_old, plastic_tangential_old, kappa_old
-    plastic_normal_new = film_strain - s_n / max(normal_deviatoric_modulus, 1.0e-16)
+    plastic_normal_new = normal_strain - s_n / max(normal_deviatoric_modulus, 1.0e-16)
     plastic_tangential_new = tangential_strain - tau / max(POLYMER_SHEAR_MODULUS, 1.0e-16)
     return sigma_n, plastic_normal_new, plastic_tangential_new, max(kappa_old, kappa)
 
-def geos_card_analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tuple[list[float], list[float], list[float]]:
+def geos_card_analytical_series(model_kind: str, final_strain: float, n: int = 251,
+                               normal_strain_measure: str = "Engineering") -> tuple[list[float], list[float], list[float]]:
     xs: list[float] = []
     stresses_mpa: list[float] = []
     kappas: list[float] = []
@@ -316,15 +323,18 @@ def geos_card_analytical_series(model_kind: str, final_strain: float, n: int = 2
         for i in range(n):
             tfrac = i / max(n - 1, 1)
             film_strain = imposed_film_strain(model_kind, final_strain * tfrac)
-            stress_scalar, plastic_normal, plastic_tangential, kappa = cohesive_update(film_strain, plastic_normal, plastic_tangential, kappa)
+            stress_scalar, plastic_normal, plastic_tangential, kappa = cohesive_update(
+                film_strain, plastic_normal, plastic_tangential, kappa,
+                normal_strain_measure=normal_strain_measure)
             xs.append(film_strain)
             stresses_mpa.append(stress_scalar * STRESS_TO_MPA)
             kappas.append(kappa)
     return xs, stresses_mpa, kappas
 
 
-def analytical_series(model_kind: str, final_strain: float, n: int = 251) -> tuple[list[float], list[float], list[float]]:
-    return geos_card_analytical_series(model_kind, final_strain, n)
+def analytical_series(model_kind: str, final_strain: float, n: int = 251,
+                      normal_strain_measure: str = "Engineering") -> tuple[list[float], list[float], list[float]]:
+    return geos_card_analytical_series(model_kind, final_strain, n, normal_strain_measure)
 
 
 def pick_stress_y(row: dict) -> float | None:
@@ -527,14 +537,16 @@ def interpolate_series(xs: list[float], ys: list[float], x: float) -> float:
     return pairs[-1][1]
 
 
-def expected_at_film_strain(model_kind: str, final_strain: float, film_strain: float) -> tuple[float, float, float]:
-    xs, ss, ps = analytical_series(model_kind, final_strain, n=501)
+def expected_at_film_strain(model_kind: str, final_strain: float, film_strain: float,
+                           normal_strain_measure: str = "Engineering") -> tuple[float, float, float]:
+    xs, ss, ps = analytical_series(model_kind, final_strain, n=501, normal_strain_measure=normal_strain_measure)
     return film_strain, interpolate_series(xs, ss, film_strain), interpolate_series(xs, ps, film_strain)
 
 
-def expected_at_time(model_kind: str, final_strain: float, time: float) -> tuple[float, float, float]:
+def expected_at_time(model_kind: str, final_strain: float, time: float,
+                     normal_strain_measure: str = "Engineering") -> tuple[float, float, float]:
     film_strain = imposed_film_strain(model_kind, final_strain * cosine_load_fraction(time))
-    return expected_at_film_strain(model_kind, final_strain, film_strain)
+    return expected_at_film_strain(model_kind, final_strain, film_strain, normal_strain_measure)
 
 
 def normalize_measured_stress_units(measured: list[float], expected_mpa: list[float]) -> tuple[list[float], float]:
@@ -557,6 +569,29 @@ def series_completion_status(model_kind: str, final_strain: float, measured_x: l
     tolerance = max(1.0e-3, 2.0e-2 * abs(target))
     complete = abs(final_x - target) <= tolerance
     return ("complete" if complete else "incomplete"), complete, final_x, target
+
+
+def cohesive_normal_strain_measure(run_dir: Path | None) -> str:
+    """Read the material option from the saved input, independently of the current environment."""
+    if run_dir is not None:
+        preferred = find_first(run_dir, ["mpm_surfaceInformedPolymerLayer.xml"])
+        candidates = ([preferred] if preferred else []) + sorted(run_dir.glob("**/*.xml"))
+        for xml_path in dict.fromkeys(candidates):
+            try:
+                root = ET.parse(xml_path).getroot()
+            except (OSError, ET.ParseError):
+                continue
+            for element in root.iter():
+                if element.tag.rsplit("}", 1)[-1] == "SurfaceInformedPolymerCohesiveZone":
+                    measure = element.get("normalStrainMeasure", "Engineering")
+                    if measure not in ("Engineering", "Logarithmic"):
+                        raise ValueError(f"Invalid normalStrainMeasure {measure!r} in {xml_path}")
+                    return measure
+    # Before a run has emitted XML, use the same environment default as the input generator.
+    measure = os.environ.get("SURFACE_POLYMER_CZ_NORMAL_STRAIN_MEASURE", "Engineering")
+    if measure not in ("Engineering", "Logarithmic"):
+        raise ValueError("SURFACE_POLYMER_CZ_NORMAL_STRAIN_MEASURE must be Engineering or Logarithmic")
+    return measure
 
 
 def reaction_measure(run_dir: Path) -> str:
@@ -664,9 +699,16 @@ def main() -> int:
     manifest_variant_names = {str(subcase.get("name", "")) for subcase in manifest.get("subcases", [])}
     variants_for_analytical = [variant for variant in VARIANTS if not manifest_variant_names or variant["name"] in manifest_variant_names]
     for variant in variants_for_analytical:
-        xs, ss, ps = analytical_series(str(variant["model_kind"]), float(variant["final_global_strain"]))
-        stress_series.append(("analytical " + variant["label"], xs, ss))
-        plastic_series.append(("analytical " + variant["label"], xs, ps))
+        subcase = next((s for s in manifest.get("subcases", []) if s.get("name") == variant["name"]), None)
+        run_dir = run_dir_from_subcase(source_dir, subcase) if subcase is not None else None
+        measure = cohesive_normal_strain_measure(run_dir) if variant["model_kind"] == "cohesive" else "Engineering"
+        xs, ss, ps = analytical_series(str(variant["model_kind"]), float(variant["final_global_strain"]),
+                                       normal_strain_measure=measure)
+        label = "analytical " + variant["label"]
+        if variant["model_kind"] == "cohesive":
+            label += " (" + measure + ")"
+        stress_series.append((label, xs, ss))
+        plastic_series.append((label, xs, ps))
 
     for subcase in manifest.get("subcases", []):
         variant_name = str(subcase.get("name", ""))
@@ -679,6 +721,7 @@ def main() -> int:
             continue
 
         final_strain = float(variant["final_global_strain"])
+        normal_strain_measure = cohesive_normal_strain_measure(run_dir) if variant["model_kind"] == "cohesive" else "Engineering"
         reaction_series = read_reaction_stress_y(run_dir, str(variant["model_kind"]), final_strain)
         domain_reaction_series = read_reaction_stress_domain_stretch_y(run_dir, str(variant["model_kind"]), final_strain)
         box_path = find_first(run_dir, ["boxAverageHistory.csv"])
@@ -705,7 +748,7 @@ def main() -> int:
 
         if use_reaction_stress:
             for time, film_strain, stress in reaction_series:
-                _film_strain, expected_stress, expected_plastic = expected_at_film_strain(str(variant["model_kind"]), final_strain, film_strain)
+                _film_strain, expected_stress, expected_plastic = expected_at_film_strain(str(variant["model_kind"]), final_strain, film_strain, normal_strain_measure)
                 measured_x.append(film_strain)
                 measured_stress.append(stress)
                 stress_expected.append(expected_stress)
@@ -728,7 +771,7 @@ def main() -> int:
         else:
             for row in box_rows:
                 time, film_strain = film_strain_from_history(str(variant["model_kind"]), row, final_strain)
-                _film_strain, expected_stress, expected_plastic = expected_at_film_strain(str(variant["model_kind"]), final_strain, film_strain)
+                _film_strain, expected_stress, expected_plastic = expected_at_film_strain(str(variant["model_kind"]), final_strain, film_strain, normal_strain_measure)
                 sy = pick_box_material_stress_y(row)
                 if sy is None:
                     continue
@@ -773,7 +816,7 @@ def main() -> int:
 
         for row in box_rows:
             time, film_strain = film_strain_from_history(str(variant["model_kind"]), row, final_strain)
-            _film_strain, _expected_stress, expected_plastic = expected_at_film_strain(str(variant["model_kind"]), final_strain, film_strain)
+            _film_strain, _expected_stress, expected_plastic = expected_at_film_strain(str(variant["model_kind"]), final_strain, film_strain, normal_strain_measure)
             ep = pick_plastic(row)
             if ep is None:
                 continue
@@ -797,6 +840,7 @@ def main() -> int:
             "complete": complete,
             "stress_source": stress_source,
             "reaction_measure": reaction_source,
+            "normal_strain_measure": normal_strain_measure if variant["model_kind"] == "cohesive" else "Logarithmic",
             "target_film_strain": target_film_strain,
             "final_measured_film_strain": final_measured_film_strain,
             "num_stress_samples": len(stress_errors),
@@ -898,8 +942,10 @@ def main() -> int:
     analytical_text = (
         r"The analytical comparison uses the generic FKM/Viton material card constants from "
         r"\texttt{pfw\_materials.py}; the continuum expected curve integrates log film "
-        r"strain from the finite-strain update, while the cohesive expected curve uses "
-        r"normal jump divided by thickness as in the CZ law."
+        r"strain from the finite-strain update, while each cohesive expected curve uses "
+        r"the normal strain measure read from that run's material XML.  Engineering uses "
+        r"normal jump divided by thickness; Logarithmic uses the log of physical normal stretch. "
+        r"The film-strain coordinate is engineering strain in both modes."
     )
     tex = [
         r"\paragraph{Quantitative result.} The continuum variants place a finite-thickness continuum polymer layer between elastic loading bars; the cohesive-zone variants place a finite-thickness polymer CZ between elastic blocks.  Measured curves use boundary reactions when present and fall back to material-volume-corrected box averages otherwise.  "

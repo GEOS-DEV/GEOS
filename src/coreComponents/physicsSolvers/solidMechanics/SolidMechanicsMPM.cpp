@@ -2692,6 +2692,15 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_profilingTimes(),
   m_reactionHistory( 0 ),
   m_reactionWriteInterval( 0.0 ),
+  m_czPairDump( 0 ),
+  m_czPairDumpCycleInterval( 1 ),
+  m_czPairDumpTimeInterval( 0.0 ),
+  m_czPairDumpStartTime( 0.0 ),
+  m_czPairDumpEndTime( DBL_MAX ),
+  m_czPairDumpRank( 0 ),
+  m_czPairDumpFilePrefix( "czPairDump" ),
+  m_nextCzPairDumpTime( 0.0 ),
+  m_lastCzPairDumpCycle( -1 ),
   m_rigidBodyActiveEventName(),
   m_rigidBodyAnchorParticleIDs(),
   m_rigidBodyAngularDamping( 0.0 ),
@@ -3683,6 +3692,58 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Interval between writing reactions to files" );
 
+  registerWrapper( "czPairDump", &m_czPairDump ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czPairDump ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Enable human-readable dumps captured during each cohesive pair calculation" );
+
+  registerWrapper( "czPairDumpCycleInterval", &m_czPairDumpCycleInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czPairDumpCycleInterval ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Dump on cycle multiples of this interval; ignored when czPairDumpTimeInterval is positive" );
+
+  registerWrapper( "czPairDumpTimeInterval", &m_czPairDumpTimeInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czPairDumpTimeInterval ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Positive simulation-time dump interval, anchored at czPairDumpStartTime; takes precedence over cycle cadence" );
+
+  registerWrapper( "czPairDumpStartTime", &m_czPairDumpStartTime ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czPairDumpStartTime ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Inclusive step-start time at which cohesive pair dumps may begin" );
+
+  registerWrapper( "czPairDumpEndTime", &m_czPairDumpEndTime ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czPairDumpEndTime ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Inclusive step-start time at which cohesive pair dumps stop" );
+
+  registerWrapper( "czPairDumpRank", &m_czPairDumpRank ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czPairDumpRank ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "MPI rank to dump; -1 writes a separate file on every rank" );
+
+  registerWrapper( "czPairDumpFilePrefix", &m_czPairDumpFilePrefix ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czPairDumpFilePrefix ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Dump filename prefix; an optional parent directory must already exist" );
+
+  registerWrapper( "nextCzPairDumpTime", &m_nextCzPairDumpTime ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Internal next cohesive pair dump time" );
+
+  registerWrapper( "lastCzPairDumpCycle", &m_lastCzPairDumpCycle ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Internal last dumped cohesive pair cycle" );
+
 
   registerWrapper( "rigidBodyMaxGridFields", &m_rigidBodyMaxGridFields ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -4383,6 +4444,19 @@ void SolidMechanicsMPM::processInputFileRecursive( xmlWrapper::xmlDocument & xml
 void SolidMechanicsMPM::postInputInitialization()
 {
   PhysicsSolverBase::postInputInitialization();
+
+  GEOS_THROW_IF( m_czPairDump != 0 && m_czPairDump != 1,
+                 "czPairDump must be 0 or 1.", InputError );
+  GEOS_THROW_IF( m_czPairDumpCycleInterval < 0 ||
+                 !std::isfinite( m_czPairDumpTimeInterval ) || m_czPairDumpTimeInterval < 0.0 ||
+                 ( m_czPairDump == 1 && m_czPairDumpCycleInterval == 0 && m_czPairDumpTimeInterval <= 0.0 ),
+                 "Cohesive pair dump intervals must be nonnegative; enable a positive cycle or time interval.", InputError );
+  GEOS_THROW_IF( !std::isfinite( m_czPairDumpStartTime ) || m_czPairDumpStartTime < 0.0 ||
+                 !std::isfinite( m_czPairDumpEndTime ) || m_czPairDumpEndTime < m_czPairDumpStartTime,
+                 "Cohesive pair dump times must be finite with 0 <= start <= end.", InputError );
+  GEOS_THROW_IF( m_czPairDumpRank < -1 || m_czPairDumpRank >= MpiWrapper::commSize( MPI_COMM_GEOS ),
+                 "czPairDumpRank must be -1 or a valid MPI rank.", InputError );
+  GEOS_THROW_IF( m_czPairDumpFilePrefix.empty(), "czPairDumpFilePrefix must not be empty.", InputError );
 
   GEOS_ERROR_IF( m_surfaceQualityThreshold < 0.0 || m_surfaceQualityThreshold > 1.0,
                  "surfaceQualityThreshold must be in [0,1]." );
@@ -6224,7 +6298,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    * ------------------------------------------------------------------------------------------------------------
    */
   logAndProfile( "07. Update cohesive-zone state", particleManager, nodeManager );
-  updateCohesiveZonesForExplicitStep( dt,
+  updateCohesiveZonesForExplicitStep( time_n,
+                                      dt,
+                                      cycleNumber,
                                       domain,
                                       particleManager,
                                       nodeManager,
@@ -8239,7 +8315,9 @@ void SolidMechanicsMPM::resetCohesiveSurfaceFlags( ParticleManager & particleMan
 /**
  * @brief Clears particle CZ forces, initializes new cohesive zones, and evaluates cohesive-zone reactions.
  */
-void SolidMechanicsMPM::updateCohesiveZonesForExplicitStep( real64 const dt,
+void SolidMechanicsMPM::updateCohesiveZonesForExplicitStep( real64 const time_n,
+                                                            real64 const dt,
+                                                            int const cycleNumber,
                                                             DomainPartition & domain,
                                                             ParticleManager & particleManager,
                                                             NodeManager & nodeManager,
@@ -8279,7 +8357,9 @@ void SolidMechanicsMPM::updateCohesiveZonesForExplicitStep( real64 const dt,
 
     ExplicitStepManagers managers = getExplicitStepManagers( domain );
     SpatialPartition & partition = managers.partition;
-    enforceCohesiveLaw( dt,
+    enforceCohesiveLaw( time_n,
+                        dt,
+                        cycleNumber,
                         particleManager,
                         nodeManager,
                         partition );
@@ -21670,7 +21750,9 @@ real64 SolidMechanicsMPM::convexHullAreaIntegration( real64 const (& hEl)[3],
  *
  * Updates all active cohesive field pairs and maps their accumulated slot forces to particles.
  */
-void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
+void SolidMechanicsMPM::enforceCohesiveLaw( real64 const time_n,
+                                            real64 const dt,
+                                            int const cycleNumber,
                                             ParticleManager & particleManager,
                                             NodeManager & nodeManager,
                                             SpatialPartition & partition )
@@ -21687,6 +21769,38 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
   real64 domainExtent[3] = { };
   // Tensor equation: domainExtent = m_domainExtent.
   LvArray::tensorOps::copy< 3 >( domainExtent, m_domainExtent );
+
+  using PairDebug = solidMechanicsMPMKernels::CohesivePairDebug;
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  bool const dumpPairs = m_czPairDump == 1 &&
+                        ( m_czPairDumpRank == -1 || m_czPairDumpRank == rank ) &&
+                        solidMechanicsMPMKernels::cohesivePairDumpDue(
+                          time_n, cycleNumber, m_czPairDumpCycleInterval, m_czPairDumpTimeInterval,
+                          m_czPairDumpStartTime, m_czPairDumpEndTime,
+                          m_nextCzPairDumpTime, m_lastCzPairDumpCycle );
+  std::ofstream pairDumpFile;
+  string pairDumpFileName;
+  if( dumpPairs )
+  {
+    std::ostringstream name;
+    name << m_czPairDumpFilePrefix << "_" << getName() << "_cycle"
+         << std::setw( 8 ) << std::setfill( '0' ) << cycleNumber << "_rank" << rank << ".txt";
+    pairDumpFileName = name.str();
+    pairDumpFile.open( pairDumpFileName, std::ios::out );
+    GEOS_ERROR_IF( !pairDumpFile, "Cannot open cohesive pair dump '" << pairDumpFileName << "'." );
+    pairDumpFile << std::scientific << std::setprecision( 17 )
+                 << "GEOS MPM cohesive pair dump, format_version=1\n"
+                 << "solver=" << getName() << " rank=" << rank << " cycle=" << cycleNumber
+                 << " step_start_time=" << time_n << " dt=" << dt << '\n'
+                 << "stage=cohesive_law_before_particle_to_grid; values_use_solver_units\n"
+                 << "planeStrain=" << planeStrain << " smallMass=" << smallMass
+                 << " preventCZInterpenetration=" << preventCZInterpenetration << '\n'
+                 << "periodic=[" << periodic[0] << ", " << periodic[1] << ", " << periodic[2]
+                 << "] domain_extent=[" << domainExtent[0] << ", " << domainExtent[1]
+                 << ", " << domainExtent[2] << "]\n"
+                 << "Pair inputs are normalized compact grid-slot data, globally reduced across MPI.\n"
+                 << "Pair forces are individual contributions; slot forces include all incident pairs.\n";
+  }
 
   CohesiveZoneManager & cohesiveZoneManager = getGroup< CohesiveZoneManager >( groupKeyStruct::cohesiveZoneManagerString() );
   cohesiveZoneManager.forCohesiveZoneRegions< CohesiveZoneRegion >( [&]( CohesiveZoneRegion & czRegion )
@@ -21733,6 +21847,23 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     array2d< real64 > tempFieldSlotParticleSurfaceNormalGlobal( numCohesiveFieldSlots, 3 );
     array3d< real64 > tempFieldSlotDeformationGradientCofactorGlobal( numCohesiveFieldSlots, 3, 3 );
     array2d< real64 > tempFieldSlotCohesiveForce( numCohesiveFieldSlots, 3 );
+    // Keep diagnostic copies separate from the live grid and constitutive arrays.
+    // Only selected dump cycles/ranks allocate these buffers or perform host transfers.
+    array2d< real64 > pairDebugValuesStorage;
+    array1d< int > pairDebugStatusStorage;
+    array2d< globalIndex > pairDebugTopologyStorage;
+    array1d< real64 > pairDamageBeforeStorage;
+    if( dumpPairs )
+    {
+      pairDebugValuesStorage.resize( numCohesivePairs, PairDebug::numColumns );
+      pairDebugStatusStorage.resize( numCohesivePairs );
+      pairDebugTopologyStorage.resize( numCohesivePairs, 6 );
+      pairDamageBeforeStorage.resize( numCohesivePairs );
+    }
+    arrayView2d< real64 > const pairDebugValues = pairDebugValuesStorage;
+    arrayView1d< int > const pairDebugStatus = pairDebugStatusStorage;
+    arrayView2d< globalIndex > const pairDebugTopology = pairDebugTopologyStorage;
+    arrayView1d< real64 > const pairDamageBefore = pairDamageBeforeStorage;
     array1d< int > fieldSlotHasUndamagedPairStorage( numCohesiveFieldSlots );
     arrayView1d< int > const fieldSlotHasUndamagedPair = fieldSlotHasUndamagedPairStorage;
 
@@ -22124,30 +22255,54 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     // Nothing to currently update so this is empty
 
     // New cohesive zone dispatch for traction update
+    if( dumpPairs )
+    {
+      forAll< parallelDevicePolicy<> >( numCohesivePairs, [=] GEOS_HOST_DEVICE ( localIndex const pair )
+      {
+        pairDamageBefore[pair] = czDamage[pair];
+      } );
+    }
     ConstitutivePassThruCohesiveZone< CohesiveZoneBase >::execute( cohesiveZone, [&]( auto& castedCohesiveZone )
     {
       using CohesiveZoneType = TYPEOFREF( castedCohesiveZone );
       typename CohesiveZoneType::KernelWrapper constitutiveModelWrapper = castedCohesiveZone.createKernelUpdates();
-      solidMechanicsMPMKernels::CohesiveZoneStateUpdateKernel::launch< parallelDevicePolicy<> >( czRegion.size(),
-                                                                                                 constitutiveModelWrapper,
-                                                                                                 dt,
-                                                                                                 planeStrain,
-                                                                                                 smallMass,
-                                                                                                 preventCZInterpenetration,
-                                                                                                 pairToFieldSlot,
-                                                                                                 periodic[0],
-                                                                                                 periodic[1],
-                                                                                                 periodic[2],
-                                                                                                 domainExtent[0],
-                                                                                                 domainExtent[1],
-                                                                                                 domainExtent[2],
-                                                                                                 tempFieldSlotMassGlobal,
-                                                                                                 tempFieldSlotDisplacementGlobal,
-                                                                                                 tempFieldSlotParticleSurfaceNormalGlobal,
-                                                                                                 tempFieldSlotDeformationGradientCofactorGlobal,
-                                                                                                 tempFieldSlotCohesiveForce,
-                                                                                                 czReferenceSurfaceNormal,
-                                                                                                 czReferenceArea );
+      auto launch = [&]( auto const captureTag )
+      {
+        constexpr bool capture = decltype( captureTag )::value;
+        solidMechanicsMPMKernels::CohesiveZoneStateUpdateKernel::launch< parallelDevicePolicy<>,
+                                                                      typename CohesiveZoneType::KernelWrapper,
+                                                                      capture >(
+          czRegion.size(),
+          constitutiveModelWrapper,
+          dt,
+          planeStrain,
+          smallMass,
+          preventCZInterpenetration,
+          pairToFieldSlot,
+          periodic[0],
+          periodic[1],
+          periodic[2],
+          domainExtent[0],
+          domainExtent[1],
+          domainExtent[2],
+          tempFieldSlotMassGlobal,
+          tempFieldSlotDisplacementGlobal,
+          tempFieldSlotParticleSurfaceNormalGlobal,
+          tempFieldSlotDeformationGradientCofactorGlobal,
+          tempFieldSlotCohesiveForce,
+          czReferenceSurfaceNormal,
+          czReferenceArea,
+          pairDebugValues,
+          pairDebugStatus );
+      };
+      if( dumpPairs )
+      {
+        launch( std::true_type{} );
+      }
+      else
+      {
+        launch( std::false_type{} );
+      }
     } );
 
     // Copy updated values from constitutive model back to cohesive zones (e.g. damage)
@@ -22158,6 +22313,73 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
       {
         czDamage[g] = LvArray::math::max( czDamage[g], constitutiveDamage[g] );
       } );
+    }
+
+    if( dumpPairs )
+    {
+      arrayView1d< real64 const > const pairTemperature = czRegion.getTemperature();
+      arrayView2d< real64 const > const slotCohesiveForce = tempFieldSlotCohesiveForce;
+      // Pack topology, post-update state and accumulated forces on the device.
+      // Do not migrate the live slot arrays merely to produce a debug file.
+      forAll< parallelDevicePolicy<> >( numCohesivePairs,
+                                        [=] GEOS_HOST_DEVICE ( localIndex const pair )
+      {
+        localIndex const slotA = pairToFieldSlot[pair][0];
+        localIndex const slotB = pairToFieldSlot[pair][1];
+        localIndex const nodeA = fieldSlotNode[slotA];
+        localIndex const nodeB = fieldSlotNode[slotB];
+        pairDebugTopology[pair][0] = slotA;
+        pairDebugTopology[pair][1] = slotB;
+        pairDebugTopology[pair][2] = cohesiveNodeGlobalID[nodeA];
+        pairDebugTopology[pair][3] = cohesiveNodeGlobalID[nodeB];
+        pairDebugTopology[pair][4] = fieldSlotVelocityField[slotA];
+        pairDebugTopology[pair][5] = fieldSlotVelocityField[slotB];
+        pairDebugValues[pair][PairDebug::temperature] = pairTemperature[pair];
+        pairDebugValues[pair][PairDebug::damageBefore] = pairDamageBefore[pair];
+        pairDebugValues[pair][PairDebug::damageAfter] = czDamage[pair];
+        for( int i = 0; i < 3; ++i )
+        {
+          pairDebugValues[pair][PairDebug::slotForceA + i] = slotCohesiveForce[slotA][i];
+          pairDebugValues[pair][PairDebug::slotForceB + i] = slotCohesiveForce[slotB][i];
+          pairDebugValues[pair][PairDebug::referencePositionA + i] = czReferencePosition[nodeA][i];
+          pairDebugValues[pair][PairDebug::referencePositionB + i] = czReferencePosition[nodeB][i];
+        }
+      } );
+      parallelDeviceSync();
+      pairDebugValuesStorage.move( hostMemorySpace, true );
+      pairDebugStatusStorage.move( hostMemorySpace, true );
+      pairDebugTopologyStorage.move( hostMemorySpace, true );
+
+      pairDumpFile << "\nregion=" << czRegion.getName() << " tag=" << czTag
+                   << " material=" << cohesiveZone.getName() << " model=" << cohesiveZone.getCatalogName()
+                   << " pairs=" << numCohesivePairs << " field_slots=" << numCohesiveFieldSlots
+                   << " surface_displacement_update=" << czRegion.getCZSurfaceDisplacementUpdate()
+                   << " (0=TypeA, 1=TypeB, 2=Nodal)\n";
+      if( cohesiveZone.getCatalogName() == SurfaceInformedPolymerCohesiveZone::catalogName() )
+      {
+        auto const measure = cohesiveZone.getReference< PolymerCohesiveNormalStrainMeasure >( "normalStrainMeasure" );
+        pairDumpFile << "  normalStrainMeasure="
+                     << ( measure == PolymerCohesiveNormalStrainMeasure::Logarithmic ? "Logarithmic" : "Engineering" ) << '\n';
+        for( char const * key : { "thickness", "bulkModulus", "shearModulus", "glassTransitionTemperature",
+                                 "temperatureColdSlope", "temperatureHotSlope", "temperatureTransitionMagnitude",
+                                 "temperatureTransitionWidth", "crystallinity", "referenceCrystallinity",
+                                 "crystallinityTransitionWidth", "elasticCrystallinityCoeff" } )
+        {
+          pairDumpFile << "  " << key << "=" << cohesiveZone.getReference< real64 >( key ) << '\n';
+        }
+        pairDumpFile << "  bulkModulus/shearModulus are reference values; temperature/crystallinity scaling applies.\n";
+      }
+      // Fresh host views after moving the independent diagnostic buffers.
+      auto const values = pairDebugValuesStorage.toViewConst();
+      auto const status = pairDebugStatusStorage.toViewConst();
+      auto const topology = pairDebugTopologyStorage.toViewConst();
+      for( localIndex pair = 0; pair < numCohesivePairs; ++pair )
+      {
+        pairDumpFile << "\npair=" << pair << " slot_A=" << topology[pair][0] << " slot_B=" << topology[pair][1]
+                     << " node_global_A=" << topology[pair][2] << " node_global_B=" << topology[pair][3]
+                     << " velocity_field_A=" << topology[pair][4] << " velocity_field_B=" << topology[pair][5] << '\n';
+        solidMechanicsMPMKernels::writeCohesivePairDebugRecord( pairDumpFile, values[pair], status[pair], smallMass );
+      }
     }
 
     // Damage can reach one in the constitutive update above. Rebuild the
@@ -22262,6 +22484,18 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
         } );
     } );
   } );
+
+  if( dumpPairs )
+  {
+    pairDumpFile.close();
+    GEOS_ERROR_IF( !pairDumpFile, "Failed writing cohesive pair dump '" << pairDumpFileName << "'." );
+    m_lastCzPairDumpCycle = cycleNumber;
+    if( m_czPairDumpTimeInterval > 0.0 )
+    {
+      m_nextCzPairDumpTime = solidMechanicsMPMKernels::nextCohesivePairDumpTime(
+        time_n, m_czPairDumpTimeInterval, m_czPairDumpStartTime );
+    }
+  }
 
   updateInterfaceMechanismDiagnostics( nodeManager );
 }

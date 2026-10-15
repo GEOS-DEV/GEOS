@@ -380,13 +380,14 @@ def generateSurfaceInformedPolymerMaterialString(material):
         'yieldStrengthCrystallinityCoeff',
         'pressureAsymmetryAmplitude',
         'pressureAsymmetryWidth',
-        'compressivePressureStrengtheningCap',
+        'compressivePressureStrengtheningCap'
     ])
 
 
 def generateSurfaceInformedPolymerCohesiveZoneMaterialString(material):
     return _format_material_xml(material, [
         'thickness',
+        'normalStrainMeasure',
         'bulkModulus',
         'shearModulus',
         'defaultYieldStrength',
@@ -412,7 +413,7 @@ def generateSurfaceInformedPolymerCohesiveZoneMaterialString(material):
         'yieldStrengthCrystallinityCoeff',
         'pressureAsymmetryAmplitude',
         'pressureAsymmetryWidth',
-        'compressivePressureStrengtheningCap',
+        'compressivePressureStrengtheningCap'
     ])
 
 

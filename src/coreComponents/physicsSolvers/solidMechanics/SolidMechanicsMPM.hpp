@@ -445,7 +445,9 @@ public:
 
   void resetCohesiveSurfaceFlags( ParticleManager & particleManager );
 
-  void updateCohesiveZonesForExplicitStep( real64 const dt,
+  void updateCohesiveZonesForExplicitStep( real64 const time_n,
+                                           real64 const dt,
+                                           int const cycleNumber,
                                            DomainPartition & domain,
                                            ParticleManager & particleManager,
                                            NodeManager & nodeManager,
@@ -915,7 +917,9 @@ public:
                        real64 const (&normal)[3],
                        real64 ( &projection )[3] );
 
-  void enforceCohesiveLaw( real64 dt,
+  void enforceCohesiveLaw( real64 const time_n,
+                           real64 const dt,
+                           int const cycleNumber,
                            ParticleManager & particleManager,
                            NodeManager & nodeManager,
                            SpatialPartition & partition );
@@ -1520,6 +1524,15 @@ protected:
   stdVector< real64 > m_profilingTimes;
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
+  int m_czPairDump;
+  int m_czPairDumpCycleInterval;
+  real64 m_czPairDumpTimeInterval;
+  real64 m_czPairDumpStartTime;
+  real64 m_czPairDumpEndTime;
+  int m_czPairDumpRank;
+  string m_czPairDumpFilePrefix;
+  real64 m_nextCzPairDumpTime;
+  int m_lastCzPairDumpCycle;
   string m_rigidBodyActiveEventName;
   array1d< globalIndex > m_rigidBodyAnchorParticleIDs;
   real64 m_rigidBodyAngularDamping;

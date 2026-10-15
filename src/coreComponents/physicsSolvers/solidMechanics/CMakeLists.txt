@@ -34,6 +34,7 @@ if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
         ProjectedGaussSeidelContact.hpp
         SolidMechanicsMPM.hpp
         MPMSolverFields.hpp
+        kernels/CohesiveZonePairDebug.hpp
         kernels/ExplicitMPM.hpp )
 
   list( APPEND solidMechanicsSolvers_sources

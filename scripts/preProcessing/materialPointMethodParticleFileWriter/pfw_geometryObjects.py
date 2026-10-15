@@ -3354,14 +3354,36 @@ class czPrill(Geometry):
     than one face of their Voronoi cell receive the standard contact-surface
     flag (2) rather than a cohesive flag.  The default True value preserves
     the original corner-marking behavior.
+
+    Optional precomputed input:
+      * precomputedInterfaces: JSON filename or document from
+        pfw_voronoiInterfaces.py (centers, phases, and pair designations).
+      * grainCenters: ordered (N, dim) array, optionally accompanied by
+        grainPhases and a complete interfaceDesignations pair mapping or
+        record list. Designations are "unbonded", "bonded", "neat", "pore".
+
+    Precomputed assignments take precedence over random fraction selection.
+    Neat interfaces use CZ tag 10; other bonded interfaces use tag 20.
+    With explicit centers, the face graph is clipped to this object's box.
+    Areas and achieved fractions are exposed through interfaceAreaSummary.
+
+    domainGeometry optionally defines a 3D cylinder with keys type="cylinder",
+    center, axis, radius, height, and optional preview_segments. xmin/xmax
+    must be its axis-aligned envelope. Saved documents restore this domain
+    automatically; outside-cylinder particles are excluded by isInterior.
+
+    grainDiameter and seed may be omitted with precomputedInterfaces. Missing
+    values are restored from the document's generation metadata when present;
+    documents without that metadata can still supply the complete geometry.
+    Both arguments remain required for construction without an interface file.
     """
 
     def __init__(self,
                  name,
                  xmin,
                  xmax,
-                 grainDiameter,
-                 seed,
+                 grainDiameter=None,
+                 seed=None,
                  porosity=0.0,
                  radialBias=1.0,
                  vel=_defaultVelocity,
@@ -3374,7 +3396,12 @@ class czPrill(Geometry):
                  porosityDistribution="spherical",
                  cylinderAxis=(0.0, 0.0, 1.0),
                  assignCellVelocityGroups: bool=False,
-                 markVoronoiCellCorners: bool=True):
+                 markVoronoiCellCorners: bool=True,
+                 grainCenters=None,
+                 interfaceDesignations=None,
+                 grainPhases=None,
+                 precomputedInterfaces=None,
+                 domainGeometry=None):
         super().__init__(name,
                          vel=vel,
                          mat=mat,
@@ -3441,26 +3468,93 @@ class czPrill(Geometry):
         self.bondedSurfaceFraction = bondedSurfaceFraction
         self.neatSurfaceFraction = neatSurfaceFraction
 
-        # Use a local generator so the phase and interface selections are
-        # reproducible without changing NumPy's process-global random state.
-        self.rng = np.random.default_rng(self.seed)
+        if precomputedInterfaces is not None and any(
+            value is not None
+            for value in (grainCenters, interfaceDesignations, grainPhases, domainGeometry)
+        ):
+            raise ValueError(
+                "Use precomputedInterfaces or the separate grainCenters/"
+                "interfaceDesignations/grainPhases/domainGeometry inputs, not both"
+            )
+        if grainCenters is None and precomputedInterfaces is None and any(
+            value is not None for value in (interfaceDesignations, grainPhases)
+        ):
+            raise ValueError("interfaceDesignations/grainPhases require grainCenters")
+        if precomputedInterfaces is None:
+            if self.grainDiameter is None:
+                raise ValueError("grainDiameter is required when precomputedInterfaces is not supplied")
+            if self.seed is None:
+                raise ValueError("seed is required when precomputedInterfaces is not supplied")
 
-        # Create evenly distributed densely packed points used as Voronoi seeds.
-        self.vpts = poisson(
-            self.grainDiameter,
-            x0=self.xmin,
-            dx=self.dx,
-            seed=self.seed,
-            dim=self.dim,
-        )
-        self.vpts = self.vpts[:, 0:self.dim]
+        self.interfaceRecords = None
+        self.interfaceDesignations = None
+        self.interfaceAreaSummary = None
+        self.interfaceAreas = None
+        self.precomputedInterfaceTargets = None
+        self.interfaceThickness = 1.0
+        self.domainGeometry = None
+        explicitCenters = (grainCenters is not None or precomputedInterfaces is not None
+                           or domainGeometry is not None)
+        if explicitCenters:
+            import pfw_voronoiInterfaces as interfaceUtils
+
+            if precomputedInterfaces is not None:
+                (grainCenters, grainPhases, interfaceDesignations,
+                 self.interfaceThickness, interfaceDocument) = interfaceUtils.load_precomputed(
+                    precomputedInterfaces, self.xmin, self.xmax, self.dim
+                )
+                self.precomputedInterfaceTargets = interfaceDocument.get("target_fractions")
+                domainGeometry = interfaceDocument.get("domain")
+                generation = interfaceDocument.get("generation") or {}
+                if not isinstance(generation, dict):
+                    raise ValueError("interface generation metadata must be a mapping")
+                if self.grainDiameter is None:
+                    self.grainDiameter = generation.get("grain_diameter")
+                if self.seed is None:
+                    self.seed = generation.get("seed")
+            self.domainGeometry = interfaceUtils.normalize_domain(
+                domainGeometry, self.xmin, self.xmax, self.dim
+            )
+            if self.domainGeometry["type"] == "cylinder" and self.porosityDistribution == "cylindrical":
+                self.cylinderAxis = np.asarray(self.domainGeometry["axis"])
+            if grainCenters is None:
+                grainCenters = poisson(self.grainDiameter, x0=self.xmin,
+                                       dx=self.dx, seed=self.seed, dim=self.dim)[:, :self.dim]
+                grainCenters = grainCenters[interfaceUtils.contains_domain(grainCenters, self.domainGeometry)]
+            self.vpts = interfaceUtils.validate_centers(
+                grainCenters, self.xmin, self.xmax, self.dim
+            )
+            if grainPhases is not None:
+                grainPhases = interfaceUtils.validate_phases(grainPhases, len(self.vpts))
+            self.interfaceRecords = interfaceUtils.compute_interfaces(
+                self.vpts, self.xmin, self.xmax, self.dim, self.interfaceThickness,
+                domain=self.domainGeometry
+            )
+            self.voronoi = interfaceUtils.clipped_voronoi(self.vpts, self.interfaceRecords)
+        else:
+            # Preserve the original generation path when no input is supplied.
+            self.vpts = poisson(
+                self.grainDiameter,
+                x0=self.xmin,
+                dx=self.dx,
+                seed=self.seed,
+                dim=self.dim,
+            )
+            self.vpts = self.vpts[:, 0:self.dim]
+            self.voronoi = Voronoi(self.vpts)
+        if self.grainDiameter is not None and (
+            not np.isfinite(self.grainDiameter) or self.grainDiameter <= 0.0
+        ):
+            raise ValueError("grainDiameter must be finite and positive when provided")
+        # Resolve optional file metadata before creating the local generator.
+        # Saved phases and designations bypass random selection on this path.
+        self.rng = np.random.default_rng(self.seed)
         self.npts = self.vpts.shape[0]
         self.kdt = KDTree(
             self.vpts,
             leaf_size=int(np.ceil(len(self.vpts) / 2)),
             metric="euclidean",
         )
-        self.voronoi = Voronoi(self.vpts)
 
         # Optionally treat the Voronoi-cell adjacency as a graph-coloring
         # problem.  Each color is a velocity group, so cells that share a
@@ -3499,9 +3593,12 @@ class czPrill(Geometry):
         self.phase = []
         self.matDirs = []
         for i in range(self.npts):
-            probability, canBePore = self._porosityProbability(self.vpts[i, :])
-            isPore = canBePore and self.rng.random() < probability
-            self.phase.append(0 if isPore else 1)
+            if grainPhases is None:
+                probability, canBePore = self._porosityProbability(self.vpts[i, :])
+                isPore = canBePore and self.rng.random() < probability
+                self.phase.append(0 if isPore else 1)
+            else:
+                self.phase.append(int(grainPhases[i]))
 
             d = random_direction(dim=self.dim)
             if self.dim == 2:
@@ -3519,9 +3616,20 @@ class czPrill(Geometry):
         # fraction of bonded surfaces.
         self.ridgePtFlags = []
         self.neatPtFlags = []
+        if interfaceDesignations is not None:
+            interfaceUtils.apply_designations(
+                self.interfaceRecords, interfaceDesignations, self.phase
+            )
         for r in self.voronoi.ridge_points:
             p0 = r[0]
             p1 = r[1]
+
+            if interfaceDesignations is not None:
+                record = self.interfaceRecords[len(self.ridgePtFlags)]
+                designation = record["designation"]
+                self.ridgePtFlags.append(3 if designation in ("bonded", "neat") else 2)
+                self.neatPtFlags.append({"neat": 10, "bonded": 20}.get(designation, _defaultCZTag))
+                continue
 
             rFlag = 2
             if self.phase[p0] != 0 and self.phase[p1] != 0:
@@ -3537,6 +3645,27 @@ class czPrill(Geometry):
                 self.neatPtFlags.append(
                     10 if self.rng.random() <= bondedNeatProbability else 20
                 )
+
+        if self.interfaceRecords is not None:
+            if interfaceDesignations is None:
+                for i, record in enumerate(self.interfaceRecords):
+                    p0, p1 = record["grains"]
+                    if self.phase[p0] == 0 or self.phase[p1] == 0:
+                        record["designation"] = "pore"
+                    elif self.ridgePtFlags[i] != 3:
+                        record["designation"] = "unbonded"
+                    else:
+                        record["designation"] = "neat" if self.neatPtFlags[i] == 10 else "bonded"
+            self.interfaceAreas = np.asarray([r["area"] for r in self.interfaceRecords])
+            self.interfaceDesignations = {
+                tuple(r["grains"]): r["designation"] for r in self.interfaceRecords
+            }
+            self.interfaceAreaSummary = interfaceUtils.area_summary(self.interfaceRecords, self.phase)
+            self.totalInterfaceArea = self.interfaceAreaSummary["total_interface_area"]
+            self.bondedInterfaceArea = self.interfaceAreaSummary["bonded_area"]
+            self.neatInterfaceArea = self.interfaceAreaSummary["neat_area"]
+            self.otherBondedInterfaceArea = self.interfaceAreaSummary["other_bonded_area"]
+            self.unbondedInterfaceArea = self.interfaceAreaSummary["unbonded_area"]
 
     def _buildVoronoiNeighborList(self):
         """Return the cells that share a Voronoi ridge with each cell."""
@@ -3597,6 +3726,17 @@ class czPrill(Geometry):
         )
         insideBoxSkin = distanceToBoxSurface >= self.grainDiameter
 
+        if self.domainGeometry is not None and self.domainGeometry["type"] == "cylinder":
+            domainAxis = np.asarray(self.domainGeometry["axis"])
+            domainOffset = point - np.asarray(self.domainGeometry["center"])
+            domainAxial = np.dot(domainOffset, domainAxis)
+            domainRadial = np.linalg.norm(domainOffset - domainAxial * domainAxis)
+            distanceToDomainSurface = min(
+                self.domainGeometry["radius"] - domainRadial,
+                .5 * self.domainGeometry["height"] - abs(domainAxial),
+            )
+            insideBoxSkin = distanceToDomainSurface >= self.grainDiameter
+
         if self.porosityDistribution == "uniform":
             return self.porosity, insideBoxSkin
 
@@ -3628,6 +3768,8 @@ class czPrill(Geometry):
                 halfWidths[intersectedFaces]
                 / perpendicularComponents[intersectedFaces]
             )
+            if self.domainGeometry is not None and self.domainGeometry["type"] == "cylinder":
+                radius = self.domainGeometry["radius"]
 
         usableRadius = radius - self.grainDiameter
 
@@ -3650,6 +3792,15 @@ class czPrill(Geometry):
 
     def isInterior(self, pt, skinDepth):
         x = np.asarray(pt[:self.dim])
+
+        if self.domainGeometry is not None and self.domainGeometry["type"] == "cylinder":
+            offset = x - np.asarray(self.domainGeometry["center"])
+            axis = np.asarray(self.domainGeometry["axis"])
+            axial = np.dot(offset, axis)
+            radial = offset - axial * axis
+            if (abs(axial) > .5 * self.domainGeometry["height"]
+                    or np.dot(radial, radial) > self.domainGeometry["radius"]**2):
+                return -1
 
         if inside_box(x, self.xmin, self.dx, [False for _ in range(self.dim)]):
             _, index = self.kdt.query(x.reshape(1, -1), k=1)

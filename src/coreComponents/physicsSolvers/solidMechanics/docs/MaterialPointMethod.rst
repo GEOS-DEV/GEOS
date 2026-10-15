@@ -99,6 +99,83 @@ Cohesive Zones
 
 In development (Will be updated later)
 
+Cohesive pair debug dumps
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set the optional solver input ``czPairDump=1`` to write human-readable text for
+every compact grid cohesive pair in each enabled cohesive-zone region. The
+default is off. Capture occurs inside the actual traction-update kernel, before
+mapping the accumulated grid-slot forces back to particles; it does not call the
+constitutive model a second time. No diagnostic buffers or device-to-host copies
+are used on cycles/ranks that are not selected for a dump.
+
+For example, add these keys to the particle-file-writer input dictionary and
+regenerate the XML after rebuilding GEOS::
+
+  pfw["czPairDump"] = 1
+  pfw["czPairDumpCycleInterval"] = 100
+  pfw["czPairDumpFilePrefix"] = "czPairs"
+
+This samples cycles 0, 100, 200, and so on. Set the cycle interval to 1 to inspect
+every pair calculation at every step. To sample by simulation time instead::
+
+  pfw["czPairDump"] = 1
+  pfw["czPairDumpTimeInterval"] = 0.05
+  pfw["czPairDumpStartTime"] = 0.0
+  pfw["czPairDumpEndTime"] = 1.0
+
+A positive time interval takes precedence over the cycle interval. Target times
+are anchored at ``czPairDumpStartTime``. Each target is sampled at the first
+cohesive update whose step-start time reaches it. If an adaptive step skips
+several targets, only the current state is dumped, and the next target advances
+past that state. The start/end bounds are inclusive and use the step-start time,
+not the end-of-step reaction-history timestamp. The last cycle and next target
+time are retained in restart files.
+
+These are attributes of ``SolidMechanics_MPM`` when editing XML directly, e.g.::
+
+  <SolidMechanics_MPM name="mpmsolve"
+    discretization="FE1" targetRegions="{ backgroundGrid/CellRegion1, block }"
+    czPairDump="1" czPairDumpCycleInterval="100" czPairDumpFilePrefix="czPairs">
+    <!-- Existing cohesive-zone regions and other solver settings go here. -->
+  </SolidMechanics_MPM>
+
+The default rank is 0 because the compact pair inputs are already globally
+reduced across MPI. Set ``czPairDumpRank=-1`` for a separate file on each rank,
+or select a particular rank. Output names include the solver, cycle and rank,
+for example ``czPairs_mpmsolve_cycle00000100_rank0.txt``. An optional directory
+in the prefix must already exist. File-open/write failures terminate the run
+with the filename in the error.
+
+Each pair block reports its region, pair index, global node IDs, compact slot
+IDs and velocity-field IDs, together with:
+
+* mapped masses, absolute slot displacements, reference positions/areas/normals,
+  mapped normals and the deformation-gradient cofactors used to update area;
+* current side-area vectors, the mass-weighted normal before normalization and
+  the unit normal used for the traction;
+* the displacement jump before and after periodic minimum-image reduction,
+  normal opening and tangential opening;
+* the mass-weighted area vector and actual projected pair area;
+* returned normal/shear stresses, normal stress after optional compression
+  suppression, tractions, and each pair's force contribution on both sides;
+* accumulated slot forces from all incident pairs, pair temperature, and region
+  damage before/after the constitutive update.
+
+Skipped pairs also appear, with the first failed mass/normal criterion or a
+degenerate-normal reason. Unevaluated stresses are omitted. All values use
+solver units and scientific notation with 17 digits after the decimal point.
+For ``SurfaceInformedPolymerCohesiveZone``, each region header also reports
+thickness, the selected normal strain measure, reference moduli, and thermal/
+crystallinity stiffness parameters.
+
+``this_pair_force_A/B`` are individual contributions. The repeated
+``accumulated_slot_force_A/B_all_pairs`` values are totals over all incident pairs
+within that region; summing these repeated totals across pair blocks counts
+shared slots multiple times. To inspect the apparent factor of two in a planar
+test, compare ``projected_pair_area`` with a single interface's area, then compare
+``normal_opening`` and returned stress with the prescribed jump and film law.
+
 Grid Velocity Boundary Conditions
 ----------------------------------
 
@@ -655,6 +732,34 @@ This solver has many solver specific variables. The following list describes eac
      - input
      - default
      - description
+   * - int
+     - czPairDump
+     - 0
+     - Enable text dumps of cohesive grid-pair calculations.
+   * - int
+     - czPairDumpCycleInterval
+     - 1
+     - Sample cycle multiples; 0 disables cycle sampling.
+   * - real
+     - czPairDumpTimeInterval
+     - 0.0
+     - Positive simulation-time interval overrides cycle sampling.
+   * - real
+     - czPairDumpStartTime
+     - 0.0
+     - Inclusive step-start time at which dumps may begin.
+   * - real
+     - czPairDumpEndTime
+     - maximum finite real
+     - Inclusive step-start time at which dumps stop.
+   * - int
+     - czPairDumpRank
+     - 0
+     - Rank to dump; -1 writes one file per rank.
+   * - string
+     - czPairDumpFilePrefix
+     - czPairDump
+     - Filename prefix; an optional parent directory must exist.
 
 .. list-table:: Events
 

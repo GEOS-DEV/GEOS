@@ -893,6 +893,13 @@ parameters = {
                'profileWriteInterval': ( None, True ),  # MPM: profile-history time interval.
                'reactionHistory': ( None, True ),  # MPM: enable boundary reaction history.
                'reactionWriteInterval': ( None, True ),  # MPM: reaction-history write interval.
+               'czPairDump': ( None, True ),  # MPM: human-readable cohesive pair calculation dumps.
+               'czPairDumpCycleInterval': ( None, True ),  # MPM: dump on cycle multiples.
+               'czPairDumpTimeInterval': ( None, True ),  # MPM: positive time cadence takes precedence over cycles.
+               'czPairDumpStartTime': ( None, True ),  # MPM: inclusive dump start time.
+               'czPairDumpEndTime': ( None, True ),  # MPM: inclusive dump end time.
+               'czPairDumpRank': ( None, True ),  # MPM: selected MPI rank; -1 dumps every rank.
+               'czPairDumpFilePrefix': ( None, True ),  # MPM: dump file prefix; parent directory must exist.
                'resetDefGradForFullyDamagedParticles': ( None, True ),  # MPM: reset F for fully damaged particles.
                'resetDefGradForMeltedParticles': ( None, True ),  # MPM: reset F for melted particles
                'resetDefGradForScaledSurfaceParticles': ( None, True ),  # MPM: reset F for CPDI-scaled surface particles.

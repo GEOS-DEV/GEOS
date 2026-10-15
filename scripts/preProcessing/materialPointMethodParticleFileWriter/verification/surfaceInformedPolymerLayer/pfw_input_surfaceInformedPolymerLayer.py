@@ -152,6 +152,11 @@ elastic_tie_cz = material_db.surfacePolymerVerificationElasticTieCohesiveZone.co
 polymer_cz = material_db.vitonFKM75SurfacePolymerCohesiveZone.copy()
 
 polymer_cz["thickness"] = film_thickness
+polymer_cz["normalStrainMeasure"] = os.environ.get("SURFACE_POLYMER_CZ_NORMAL_STRAIN_MEASURE", "Engineering")
+if polymer_cz["normalStrainMeasure"] not in ("Engineering", "Logarithmic"):
+    raise ValueError("SURFACE_POLYMER_CZ_NORMAL_STRAIN_MEASURE must be Engineering or Logarithmic")
+# Regenerate the XML with the selected thickness and normal strain measure.
+polymer_cz["materialString"] = material_db.generateMaterialString(polymer_cz)
 
 def temperature_profile_event():
     # TemperatureProfile updates both active particles and all cohesive-zone entries.
@@ -289,6 +294,7 @@ pfw_expected = {
     "final_global_strain": final_global_strain,
     "gage_length": domain_height,
     "film_thickness": film_thickness,
+    "cohesive_normal_strain_measure": polymer_cz["normalStrainMeasure"] if model_kind == "cohesive" else None,
     "stop_time": stop_time,
     "benchmark_temperature": benchmark_temperature,
     "bulk_modulus": polymer["defaultBulkModulus"],

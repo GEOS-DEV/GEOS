@@ -24,6 +24,7 @@
 #include "constitutive/solid/SolidUtilities.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ExplicitFiniteStrain.hpp"
 #include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
+#include "physicsSolvers/solidMechanics/kernels/CohesiveZonePairDebug.hpp"
 
 namespace geos
 {
@@ -182,6 +183,7 @@ struct CohesiveZoneStateUpdateKernel
    * @brief Launch the kernel function doing constitutive updates
    * @tparam POLICY the type of policy used in the kernel launch
    * @tparam CONSTITUTIVE_WRAPPER the type of consitutive wrapper doing the constitutive updates
+   * @tparam CAPTURE_PAIR_DATA Capture pair inputs and intermediate values in independent debug buffers
    * @param[in] dt The time step
    * @param[in] planeStrain Flag for plane strain problems
    * @param[in] smallMass Minimum grid mass
@@ -200,9 +202,11 @@ struct CohesiveZoneStateUpdateKernel
    * @param[out] fieldSlotCohesiveForce Cohesive forces accumulated into the compact field slots
    * @param[in] fieldSlotReferenceSurfaceNormal Reference surface normal for every active field slot
    * @param[in] fieldSlotReferenceArea Reference area for every active field slot
-   
+   * @param[out] debugValues Per-pair diagnostic values; required only when CAPTURE_PAIR_DATA is true
+   * @param[out] debugStatus Per-pair evaluated/skip status; required only when CAPTURE_PAIR_DATA is true
+
    */
-  template< typename POLICY, typename CONSTITUTIVE_WRAPPER >
+  template< typename POLICY, typename CONSTITUTIVE_WRAPPER, bool CAPTURE_PAIR_DATA = false >
   static void launch( int numPairs,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       real64 dt,
@@ -222,7 +226,9 @@ struct CohesiveZoneStateUpdateKernel
                       arrayView3d< real64 const > const fieldSlotDeformationGradientCofactor,
                       arrayView2d< real64 > const fieldSlotCohesiveForce,
                       arrayView2d< real64 const > const fieldSlotReferenceSurfaceNormal,
-                      arrayView1d< real64 const > const fieldSlotReferenceArea )
+                      arrayView1d< real64 const > const fieldSlotReferenceArea,
+                      arrayView2d< real64 > const debugValues = {},
+                      arrayView1d< int > const debugStatus = {} )
   {
     GEOS_UNUSED_VAR( dt );
 
@@ -232,10 +238,59 @@ struct CohesiveZoneStateUpdateKernel
       localIndex const slotA = pairToFieldSlot[k][0];
       localIndex const slotB = pairToFieldSlot[k][1];
 
-      bool active = ( fieldSlotMass[slotA] > smallMass ) &&
-                    ( LvArray::tensorOps::l2NormSquared< 3 >( fieldSlotParticleSurfaceNormal[slotA] ) > 1.0e-16 ) &&
-                    ( fieldSlotMass[slotB] > smallMass ) &&
-                    ( LvArray::tensorOps::l2NormSquared< 3 >( fieldSlotParticleSurfaceNormal[slotB] ) > 1.0e-16 );
+      using D = CohesivePairDebug;
+      if constexpr( CAPTURE_PAIR_DATA )
+      {
+        for( int column = 0; column < D::numColumns; ++column )
+        {
+          debugValues[k][column] = 0.0;
+        }
+        debugStatus[k] = D::inactive;
+        debugValues[k][D::massA] = fieldSlotMass[slotA];
+        debugValues[k][D::massB] = fieldSlotMass[slotB];
+        debugValues[k][D::referenceAreaA] = fieldSlotReferenceArea[slotA];
+        debugValues[k][D::referenceAreaB] = fieldSlotReferenceArea[slotB];
+        for( int i = 0; i < 3; ++i )
+        {
+          debugValues[k][D::displacementA + i] = fieldSlotDisplacement[slotA][i];
+          debugValues[k][D::displacementB + i] = fieldSlotDisplacement[slotB][i];
+          debugValues[k][D::mappedNormalA + i] = fieldSlotParticleSurfaceNormal[slotA][i];
+          debugValues[k][D::mappedNormalB + i] = fieldSlotParticleSurfaceNormal[slotB][i];
+          debugValues[k][D::referenceNormalA + i] = fieldSlotReferenceSurfaceNormal[slotA][i];
+          debugValues[k][D::referenceNormalB + i] = fieldSlotReferenceSurfaceNormal[slotB][i];
+          for( int j = 0; j < 3; ++j )
+          {
+            debugValues[k][D::cofactorA + 3 * i + j] = fieldSlotDeformationGradientCofactor[slotA][i][j];
+            debugValues[k][D::cofactorB + 3 * i + j] = fieldSlotDeformationGradientCofactor[slotB][i][j];
+          }
+        }
+      }
+
+      bool active = false;
+      if constexpr( CAPTURE_PAIR_DATA )
+      {
+        // Preserve the original short-circuit order, recording its first failed test.
+        if( fieldSlotMass[slotA] > smallMass )
+        {
+          debugStatus[k] = D::inactiveNormalA;
+          if( LvArray::tensorOps::l2NormSquared< 3 >( fieldSlotParticleSurfaceNormal[slotA] ) > 1.0e-16 )
+          {
+            debugStatus[k] = D::inactiveMassB;
+            if( fieldSlotMass[slotB] > smallMass )
+            {
+              debugStatus[k] = D::inactiveNormalB;
+              active = LvArray::tensorOps::l2NormSquared< 3 >( fieldSlotParticleSurfaceNormal[slotB] ) > 1.0e-16;
+            }
+          }
+        }
+      }
+      else
+      {
+        active = ( fieldSlotMass[slotA] > smallMass ) &&
+                 ( LvArray::tensorOps::l2NormSquared< 3 >( fieldSlotParticleSurfaceNormal[slotA] ) > 1.0e-16 ) &&
+                 ( fieldSlotMass[slotB] > smallMass ) &&
+                 ( LvArray::tensorOps::l2NormSquared< 3 >( fieldSlotParticleSurfaceNormal[slotB] ) > 1.0e-16 );
+      }
 
       if( active )
       {
@@ -294,6 +349,17 @@ struct CohesiveZoneStateUpdateKernel
 
         // If normal magnitude is zero for any reason just skip (e.g. no traction from cohesive law)
         real64 norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
+        if constexpr( CAPTURE_PAIR_DATA )
+        {
+          debugStatus[k] = D::degenerateNormal;
+          debugValues[k][D::normalMagnitude] = norm;
+          for( int i = 0; i < 3; ++i )
+          {
+            debugValues[k][D::rawNormal + i] = nAB[i];
+            debugValues[k][D::currentAreaA + i] = sA[i];
+            debugValues[k][D::currentAreaB + i] = sB[i];
+          }
+        }
         if( norm < 1e-20 )
         {
           return;
@@ -305,6 +371,13 @@ struct CohesiveZoneStateUpdateKernel
         real64 displacementVector[3] = {};
         LvArray::tensorOps::copy< 3 >( displacementVector, dA );
         LvArray::tensorOps::subtract< 3 >( displacementVector, dB );
+        if constexpr( CAPTURE_PAIR_DATA )
+        {
+          for( int i = 0; i < 3; ++i )
+          {
+            debugValues[k][D::rawJump + i] = displacementVector[i];
+          }
+        }
 
         // The two cohesive fields may choose different periodic images for their absolute nodal displacements after
         // particles advect through a periodic boundary. The cohesive law depends on the opening vector, so reduce that
@@ -338,6 +411,11 @@ struct CohesiveZoneStateUpdateKernel
                                                     normalStress,
                                                     shearStress );
 
+        if constexpr( CAPTURE_PAIR_DATA )
+        {
+          debugValues[k][D::returnedNormalStress] = normalStress;
+        }
+
         if( preventCZInterpentration == 1 && normalStress > 0 ) // Change from < to > since consititutive law returns negative stress for positive displacement
         {
           normalStress = 0.0;
@@ -364,6 +442,26 @@ struct CohesiveZoneStateUpdateKernel
         LvArray::tensorOps::scale< 3 >( areaAB, 1 / mAB );
 
         real64 surfaceArea = LvArray::tensorOps::AiBi< 3 >( nAB, areaAB ); // Should we take the absolute value to ensure surface area can never be negative. However, if nAB is consistent with areaAB then it should also never be negative so negative surface area could indicate an error
+        if constexpr( CAPTURE_PAIR_DATA )
+        {
+          debugStatus[k] = D::evaluated;
+          debugValues[k][D::normalDisplacement] = totalNormalDisplacement;
+          debugValues[k][D::tangentialDisplacement] = totalTangentialDisplacement;
+          debugValues[k][D::pairArea] = surfaceArea;
+          debugValues[k][D::appliedNormalStress] = normalStress;
+          debugValues[k][D::shearStress] = shearStress;
+          for( int i = 0; i < 3; ++i )
+          {
+            debugValues[k][D::normal + i] = nAB[i];
+            debugValues[k][D::jump + i] = displacementVector[i];
+            debugValues[k][D::tangentialJump + i] = tangentialInterfaceDisplacement[i];
+            debugValues[k][D::pairAreaVector + i] = areaAB[i];
+            debugValues[k][D::tractionA + i] = tA[i];
+            debugValues[k][D::tractionB + i] = tB[i];
+            debugValues[k][D::pairForceA + i] = tA[i] * surfaceArea;
+            debugValues[k][D::pairForceB + i] = tB[i] * surfaceArea;
+          }
+        }
         for( localIndex i = 0; i < 3; ++i )
         {
           RAJA::atomicAdd( parallelDeviceAtomic{}, &fieldSlotCohesiveForce[slotA][i], tA[i] * surfaceArea );
