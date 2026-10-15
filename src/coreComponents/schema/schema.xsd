@@ -4068,6 +4068,8 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--matrixTemperature => Constant matrix temperature. Required for a thermal simulation with a matrix that is not poroelastic: the matrix then carries no temperature degree of freedom, and this value is the reference the fracture thermal stress is computed from.-->
+		<xsd:attribute name="matrixTemperature" type="real64" default="-1" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--newFractureInitializationType => Type of new fracture element initialization. Can be Pressure or Displacement. -->
