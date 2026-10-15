@@ -33,8 +33,13 @@ string ProblemRepositoryABC::getNoProblemPath( string const & originalPath )
 {
   // In the Conduit node hierarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
-  size_t const lengthToRemove = stringutilities::cstrlen( ProblemGroupKeys::problemString() );
-  string const noProblem = originalPath.substr( lengthToRemove );
+  std::string_view const path( originalPath );
+  std::string_view const problemPrefix( ProblemGroupKeys::problemString() );
+
+  if( !stringutilities::startswith( path, problemPrefix ) )
+    return string( path );
+
+  string const noProblem = path.substr( problemPrefix.size() );
   return noProblem.empty() ? "/" : noProblem;
 }
 
