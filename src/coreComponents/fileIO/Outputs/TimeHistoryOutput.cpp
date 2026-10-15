@@ -15,6 +15,7 @@
 
 #include "TimeHistoryOutput.hpp"
 
+#include "dataRepository/ProblemRepository.hpp"
 #include "fileIO/timeHistory/HDFFile.hpp"
 #include "fileIO/LogLevelsInfo.hpp"
 
@@ -130,7 +131,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOS );
   }
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   GEOS_LOG_LEVEL_BY_RANK( logInfo::DataCollectorInitialization,
                           GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
   for( auto collectorPath : m_collectorPaths )

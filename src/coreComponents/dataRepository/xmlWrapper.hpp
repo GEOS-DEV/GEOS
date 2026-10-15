@@ -300,6 +300,7 @@ constexpr char const includedFileTag[] = "File";
  * a new input xml file with an included block if neccesary
  */
 string buildMultipleInputXML( string_array const & inputFileList,
+                              string const & rootNodeName,
                               string const & outputDir = {} );
 
 /**

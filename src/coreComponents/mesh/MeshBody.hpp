@@ -21,7 +21,6 @@
 #define GEOS_MESH_MESHBODY_HPP_
 
 #include "MeshLevel.hpp"
-#include "dataRepository/KeyNames.hpp"
 
 namespace geos
 {
@@ -188,17 +187,52 @@ public:
    * @return The CellBlockManager.
    */
   CellBlockManagerABC const & getCellBlockManager() const
-  {
-    return this->getGroup< CellBlockManagerABC >( dataRepository::keys::cellManager );
-  }
+  { return this->getGroup< CellBlockManagerABC >( groupStructKeys::cellManagerString() ); }
+
+  /**
+   * @return True if a cell-block manager is registered.
+   */
+  bool hasCellBlockManager() const
+  { return this->hasGroup( groupStructKeys::cellManagerString() ); }
+
+  /**
+   * @brief Get the Abstract representation of the CellBlockManager attached to the MeshBody.
+   * @return The CellBlockManager.
+   */
+  CellBlockManagerABC & getCellBlockManager()
+  { return this->getGroup< CellBlockManagerABC >( groupStructKeys::cellManagerString() ); }
+
+  /**
+   * @brief Get the Abstract representation of the ParticleBlockManager attached to the MeshBody.
+   * @return The ParticleBlockManager.
+   */
+  ParticleBlockManagerABC const & getParticleBlockManager() const
+  { return this->getGroup< ParticleBlockManagerABC >( groupStructKeys::particleManagerString() ); }
+
+  /**
+   * @return True if a particle-block manager is registered.
+   */
+  bool hasParticleBlockManager() const
+  { return this->hasGroup( groupStructKeys::particleManagerString() ); }
+
+  /**
+   * @brief Get the Abstract representation of the ParticleBlockManager attached to the MeshBody.
+   * @return The ParticleBlockManager.
+   */
+  ParticleBlockManagerABC & getParticleBlockManager()
+  { return this->getGroup< ParticleBlockManagerABC >( groupStructKeys::particleManagerString() ); }
 
   /**
    * @brief De register the CellBlockManager from this meshBody
    */
   void deregisterCellBlockManager()
-  {
-    this->deregisterGroup( dataRepository::keys::cellManager );
-  }
+  { this->deregisterGroup( groupStructKeys::cellManagerString() ); }
+
+  /**
+   * @brief De register the CellBlockManager from this meshBody
+   */
+  void deregisterParticleBlockManager()
+  { this->deregisterGroup( groupStructKeys::particleManagerString() ); }
 
   /**
    * @brief Data repository keys
@@ -213,9 +247,17 @@ public:
   {
     /// @return The key/string used to register/access the Group that contains the MeshLevel objects.
     static constexpr char const * meshLevelsString() { return "meshLevels"; }
-
     /// @return The key/string used to register/access the Group that contains the base discretization.
     static constexpr char const * baseDiscretizationString() { return "Level0"; }
+    /// @return the key/string used to register/access the cell block manager
+    static constexpr char const * cellManagerString() { return "cellManager"; }
+    /// @return the key/string used to register/access the particle block manager
+    static constexpr char const * particleManagerString() { return "particleManager"; }
+
+    dataRepository::GroupKey meshLevels         = { meshLevelsString() };
+    dataRepository::GroupKey baseDiscretization = { baseDiscretizationString() };
+    dataRepository::GroupKey cellManager        = { cellManagerString() };
+    dataRepository::GroupKey particleManager    = { particleManagerString() };
   } groupKeys; ///< groupKeys
 
 

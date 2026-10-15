@@ -51,6 +51,7 @@ MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
   return m_meshLevels.registerGroup( newLevelName,
                                      std::make_unique< MeshLevel >( newLevelName,
                                                                     this,
+                                                                    getCellBlockManager(),
                                                                     sourceMeshLevel,
                                                                     order ) );
 }

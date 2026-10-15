@@ -245,7 +245,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
     WaveSolverBase::initializePostInitialConditionsPreSubGroups();
   }
 
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getDomainPartition();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & mesh,
