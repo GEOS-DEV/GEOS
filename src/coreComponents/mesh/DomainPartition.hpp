@@ -132,7 +132,7 @@ public:
     /// View key to the Group holding the MeshBodies
     dataRepository::GroupKey meshBodies = { "MeshBodies" };
     /// View key to the Group holding the ConstitutiveManager
-    dataRepository::GroupKey::index_type constitutiveManager = 0;
+    dataRepository::GroupKey::index_type constitutiveManager = dataRepository::GroupKey::invalid_index;
   }
   /// groupKey struct for the DomainPartition class
   groupKeys;

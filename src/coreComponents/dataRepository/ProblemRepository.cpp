@@ -18,7 +18,7 @@
  */
 
 #include "ProblemRepository.hpp"
-#include "RTTypes.hpp"
+#include "codingUtilities/RTTypes.hpp"
 
 namespace geos
 {
@@ -37,7 +37,7 @@ string ProblemRepositoryABC::getNoProblemPath( string const & originalPath )
   std::string_view const path( originalPath );
   std::string_view const problemPrefix( ProblemGroupKeys::problemString() );
 
-  if( !stringutilities::startswith( path, problemPrefix ) )
+  if( !stringutilities::startsWith( path, problemPrefix ) )
     return string( path );
 
   string const noProblem = path.substr( problemPrefix.size() );
