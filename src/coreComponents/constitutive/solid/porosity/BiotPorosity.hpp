@@ -219,6 +219,14 @@ public:
     RAJA::atomicAdd< parallelDeviceAtomic >( &m_meanTotalStressIncrement_k[k][q], meanTotalStressIncrement );
   }
 
+  GEOS_HOST_DEVICE
+  void addToPorosity( localIndex const k,
+                      localIndex const q,
+                      real64 const & porosityIncrement ) const
+  {
+    RAJA::atomicAdd< parallelDeviceAtomic >( &m_newPorosity[k][q], porosityIncrement );
+  }
+
 protected:
 
   /// Grain bulk modulus (read from XML)

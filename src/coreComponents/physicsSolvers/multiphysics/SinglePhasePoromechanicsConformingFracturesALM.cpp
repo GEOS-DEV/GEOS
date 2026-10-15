@@ -627,7 +627,8 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
                                                                                  dt,
                                                                                  flowDofKey,
                                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString(),
-                                                                                 this->m_isThermal );
+                                                                                 this->m_isThermal,
+                                                                                 this->m_performStressInitialization );
 
     real64 maxResidual = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy<>,

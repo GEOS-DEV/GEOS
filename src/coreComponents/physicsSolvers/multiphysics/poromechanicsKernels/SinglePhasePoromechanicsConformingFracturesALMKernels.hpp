@@ -577,7 +577,8 @@ public:
                                real64 const inputDt,
                                string const pressureDofKey,
                                string const fluidModelKey,
-                               integer const isThermal ):
+                               integer const isThermal,
+                               integer const performStressInitialization ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -597,6 +598,7 @@ public:
     m_elemsToFaces( elementSubRegion.faceElementsList() ),
     m_pressure( elementSubRegion.template getField< fields::flow::pressure >().toViewConst() ),
     m_isThermal( isThermal ),
+    m_performStressInitialization( performStressInitialization ),
     m_incrBubbleDisp( faceManager.getField< fields::contact::incrementalBubbleDisplacement >().toViewConst() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
                       elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
@@ -826,6 +828,23 @@ public:
     // Here we only accumulate the geometric factor G = int biot*div(beta) (reusing dRbdP_gauss);
     // the prefactors are cell-wise constant and applied, with their p/T derivatives, in complete().
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localG, dRbdP_gauss, -detJ );
+
+    // Persist the bubble storage in the porosity state: 
+    // The residual/Jacobian are not affected (the bulk kernel has already used its own porosity).
+    if( !m_performStressInitialization )
+    {
+      localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
+      localIndex const bFace = m_elemsToFaces[kk][0];
+      real64 bubbleVolumetricStrainIncrement = 0.0;
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        for( localIndex j = 0; j < 3; ++j )
+        {
+          bubbleVolumetricStrainIncrement += strainBubbleMatrix[i][parentFaceIndex*3+j] * m_incrBubbleDisp[bFace][j];
+        }
+      }
+      m_constitutiveUpdate.addVolumetricStrainIncrementToPorosity( k, q, bubbleVolumetricStrainIncrement );
+    }
   }
 
   /**
@@ -978,6 +997,9 @@ protected:
   /// Flag indicating whether the temperature DOF (and its Jacobian column) is present.
   integer const m_isThermal;
 
+  /// Flag indicating the poromechanics stress initialization, during which the porosity is not updated.
+  integer const m_performStressInitialization;
+
   /// Incremental bubble displacement (face field) -- used for the fluid-mass storage residual.
   arrayView2d< real64 const > const m_incrBubbleDisp;
 
@@ -1011,6 +1033,7 @@ using MatrixPressureBubbleFactory = finiteElement::KernelFactory< MatrixPressure
                                                                   real64 const,
                                                                   string const,
                                                                   string const,
+                                                                  integer const,
                                                                   integer const >;
 
 } // namespace poromechanicsMatrixBubbleKernels
