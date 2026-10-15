@@ -67,7 +67,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
   GEOS_MARK_FUNCTION;
 
   // The mass-balance block of getDerivativeFluxResidual_dNormalJump() below is one row per
-  // fracture element. When m_isThermal, a second (advective-only) block is appended after it
+  // fracture element. When m_isThermal, a second (advective + conductive) block for the energy
+  // balance is appended after it - see getDerivativeFluxResidual_dApertureEnergyOffset().
 
   using namespace contact;
 
@@ -220,21 +221,20 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
         }
       }
 
-      // flux derivative
-      bool skipAssembly = true;
-      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
-
-      skipAssembly &= !isFractureOpen;
-
-      for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
+      // Flux derivative w.r.t. the nodal displacements of each stencil neighbour kfe2:
+      // dR/du = dR/dNormalJump(kfe2) * dNormalJump(kfe2)/du, with the geometry (node count, normal,
+      // nodal areas) of kfe2. Fills nodeDOF/dRdU and returns the number of displacement dofs of kfe2.
+      auto computeFluxDerivative = [&]( localIndex const kfe2,
+                                        real64 const dR_dNormalJump ) -> localIndex
       {
-        real64 const dR_dAper = values[kfe1];
-        localIndex const kfe2 = columns[kfe1];
+        localIndex const kf0_2 = elemsToFaces[kfe2][0], kf1_2 = elemsToFaces[kfe2][1];
+        localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
 
-        bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
-        skipAssembly &= !isOpen;
+        real64 Nbar2[3];
+        Nbar2[ 0 ] = faceNormal[kf0_2][0] - faceNormal[kf1_2][0];
+        Nbar2[ 1 ] = faceNormal[kf0_2][1] - faceNormal[kf1_2][1];
+        Nbar2[ 2 ] = faceNormal[kf0_2][2] - faceNormal[kf1_2][2];
+        LvArray::tensorOps::normalize< 3 >( Nbar2 );
 
         for( localIndex kf=0; kf<2; ++kf )
         {
@@ -250,33 +250,46 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
                                                               faceAreas,
                                                               nodalArea );
 
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          for( localIndex a=0; a<numNodesPerFace2; ++a )
           {
             for( localIndex i=0; i<3; ++i )
             {
-              nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                        + LvArray::integerConversion< globalIndex >( i );
-              real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
-              dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
+              nodeDOF[ kf*3*numNodesPerFace2 + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
+                                                         + LvArray::integerConversion< globalIndex >( i );
+              real64 const dAper_dU = -pow( -1, kf ) * Nbar2[i] * ( nodalArea[a] / area[kfe2] );
+              dRdU( kf*3*numNodesPerFace2 + 3*a+i ) = dR_dNormalJump * dAper_dU;
             }
           }
         }
+        return 2 * 3 * numNodesPerFace2;
+      };
 
-        if( !skipAssembly )
+      // Mass-balance flux derivative: a column is skipped only when both kfe and kfe2 are closed
+      {
+        localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
+        localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
+        arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
+        arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
+
+        for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
         {
-          localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
+          localIndex const kfe2 = columns[kfe1];
+          if( !isFractureOpen && fractureState[kfe2] != FractureState::Open )
+            continue;
+
+          localIndex const numUdofs2 = computeFluxDerivative( kfe2, values[kfe1] );
 
           if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
             localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
                                                                       nodeDOF,
                                                                       dRdU.data(),
-                                                                      2 * 3 * numNodesPerFace );
+                                                                      numUdofs2 );
           }
         }
       }
 
-      // Energy-balance flux derivative (advective contribution only; the conductive term's not modeled yet
+      // Energy-balance flux derivative (advective and conductive contributions), same gating
       if( this->m_isThermal )
       {
         localIndex const energyOffset = this->getDerivativeFluxResidual_dApertureEnergyOffset();
@@ -287,55 +300,23 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
           arraySlice1d< localIndex const > const & energyColumns = dFluxResidual_dNormalJump.getColumns( energyRow );
           arraySlice1d< real64 const > const & energyValues = dFluxResidual_dNormalJump.getEntries( energyRow );
 
-          globalIndex elemDOFEnergy[1];
-          elemDOFEnergy[0] = presDofNumber[kfe] + 1; // temperature/energy dof, packed right after pressure
-
-          bool skipEnergyAssembly = !isFractureOpen;
+          // temperature/energy dof, packed right after pressure
+          localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( presDofNumber[kfe] + 1 - rankOffset );
 
           for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
           {
-            real64 const dREnergy_dAper = energyValues[kfe1];
             localIndex const kfe2 = energyColumns[kfe1];
+            if( !isFractureOpen && fractureState[kfe2] != FractureState::Open )
+              continue;
 
-            bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
-            skipEnergyAssembly &= !isOpen;
+            localIndex const numUdofs2 = computeFluxDerivative( kfe2, energyValues[kfe1] );
 
-            for( localIndex kf=0; kf<2; ++kf )
+            if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
             {
-              stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
-              this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
-                                                                  nodePosition,
-                                                                  faceToNodeMap,
-                                                                  faceToEdgeMap,
-                                                                  edgeToNodeMap,
-                                                                  faceCenters,
-                                                                  faceNormal,
-                                                                  faceAreas,
-                                                                  nodalArea );
-
-              for( localIndex a=0; a<numNodesPerFace; ++a )
-              {
-                for( localIndex i=0; i<3; ++i )
-                {
-                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                            + LvArray::integerConversion< globalIndex >( i );
-                  real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
-                  dRdU( kf*3*numNodesPerFace + 3*a+i ) = dREnergy_dAper * dAper_dU;
-                }
-              }
-            }
-
-            if( !skipEnergyAssembly )
-            {
-              localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( elemDOFEnergy[0] - rankOffset );
-
-              if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
-              {
-                localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
-                                                                          nodeDOF,
-                                                                          dRdU.data(),
-                                                                          2 * 3 * numNodesPerFace );
-              }
+              localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
+                                                                        nodeDOF,
+                                                                        dRdU.data(),
+                                                                        numUdofs2 );
             }
           }
         }
