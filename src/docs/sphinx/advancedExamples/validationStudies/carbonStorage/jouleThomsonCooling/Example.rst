@@ -1,9 +1,11 @@
 .. |oslash| unicode:: U+00F8
 
-.. _jouleThomsonCooling:
+.. |degree| unicode:: U+00B0
+
+.. _jouleThomsonCoolingExample:
 
 ##########################################################################
-Joule-Thomson Cooling during CO2 Injection into a Gas Reservoir
+Cooling during CO2 Injection into a Gas Reservoir
 ##########################################################################
 
 
@@ -32,7 +34,7 @@ In the classical JT experiment, a gas flows through a porous plug in a thermally
 
     \Delta T \approx \mu_{JT} \, \Delta P, \qquad \mu_{JT} = \left(\frac{\partial T}{\partial P}\right)_H = \frac{1}{c_p}\left[ T \left(\frac{\partial v}{\partial T}\right)_P - v \right],
 
-where :math:`c_p` and :math:`v` are the specific heat capacity and the specific volume of the gas. For CO2 at 45 °C (318.15 K) and 50 bar, :math:`\mu_{JT}` is approximately 0.9 K/bar according to the NIST reference equation of state (`Lemmon et al., 1998 <https://webbook.nist.gov/chemistry/fluid/>`__), and it decreases when the pressure increases (approximately 0.4 K/bar at 100 bar). The product :math:`\mu_{JT}\,\Delta P` is thus the maximum cooling that can be obtained for a given pressure drop. In a reservoir, this maximum is never reached: the rock grains and the residual water, with a volumetric heat capacity much larger than that of the gas, release heat as the gas cools down. This is a transient effect: the matrix progressively loses its heat during a prolonged expansion. The cooling therefore depends not only on the pressure drop, but also on the porosity, the residual water saturation, the heat capacity of the grains and the thermal conductivity.
+where :math:`c_p` and :math:`v` are the specific heat capacity and the specific volume of the gas. For CO2 at 45 \ |degree|\  C (318.15 K) and 50 bar, :math:`\mu_{JT}` is approximately 0.9 K/bar according to the NIST reference equation of state (`Lemmon et al., 1998 <https://webbook.nist.gov/chemistry/fluid/>`__), and it decreases when the pressure increases (approximately 0.4 K/bar at 100 bar). The product :math:`\mu_{JT}\,\Delta P` is thus the maximum cooling that can be obtained for a given pressure drop. In a reservoir, this maximum is never reached: the rock grains and the residual water, with a volumetric heat capacity much larger than that of the gas, release heat as the gas cools down. This is a transient effect: the matrix progressively loses its heat during a prolonged expansion. The cooling therefore depends not only on the pressure drop, but also on the porosity, the residual water saturation, the heat capacity of the grains and the thermal conductivity.
 
 **Reservoir model of the paper**
 
@@ -42,7 +44,7 @@ The paper considers an idealized depleted gas reservoir, with the geometry and t
 
     injection well (r = 0)  --->  CO2-rich gas  | CH4-rich gas  --->  production (r ~ 1100 m)
 
-The reservoir is initially filled with methane at 50 bar and 45 °C. The water is immobile (the water saturation is equal to the residual saturation :math:`S_{lr} = 0.2`), and the only mobile phase is the gas. Pure CO2 is injected at a constant rate of 3 kg/s and at the reservoir temperature. Methane is produced at the outer boundary, at 0.56 kg/s, to represent the production of four surrounding wells located at a distance of 1100 m in a five-spot pattern. The system is closed: no fluid or heat crosses the outer boundary. Because the injection temperature is equal to the initial reservoir temperature, every temperature change in the reservoir is caused by the JT effect (attenuated by the heat provided by the rock and the water), which makes this setup well suited to isolate and validate this effect.
+The reservoir is initially filled with methane at 50 bar and 45 \ |degree|\ C. The water is immobile (the water saturation is equal to the residual saturation :math:`S_{lr} = 0.2`), and the only mobile phase is the gas. Pure CO2 is injected at a constant rate of 3 kg/s and at the reservoir temperature. Methane is produced at the outer boundary, at 0.56 kg/s, to represent the production of four surrounding wells located at a distance of 1100 m in a five-spot pattern. The system is closed: no fluid or heat crosses the outer boundary. Because the injection temperature is equal to the initial reservoir temperature, every temperature change in the reservoir is caused by the JT effect (attenuated by the heat provided by the rock and the water), which makes this setup well suited to isolate and validate this effect.
 
 The parameters of the problem are summarized in the following table.
 
@@ -56,7 +58,7 @@ The parameters of the problem are summarized in the following table.
     * - Geometry
       - 1D radial, :math:`R = 1130` m, thickness 50 m
 
-        GEOS is modeled as a 1° sector, :math:`r \in [0.1, 1130]` m.
+        GEOS is modeled as a 1\ |degree|\  sector, :math:`r \in [0.1, 1130]` m.
     * - Permeability
       - :math:`5\times 10^{-15}` m\ :sup:`2` (5 mD)
     * - Porosity
@@ -72,13 +74,13 @@ The parameters of the problem are summarized in the following table.
     * - Initial pressure
       - 50 bar (:math:`5\times 10^{6}` Pa)
     * - Initial temperature
-      - 45 °C (318.15 K)
+      - 45 \ |degree|\ C (318.15 K)
     * - Initial fluids
       - CH4 gas, water at :math:`S_l = S_{lr} = 0.2`
 
         GEOS initializes this via mass fractions: :math:`z_{CO_2} = 0`, :math:`z_{CH_4} = 0.115401`, :math:`z_{H_2O} = 0.884599`.
     * - CO2 injection
-      - 3 kg/s of CO2 at 45 °C
+      - 3 kg/s of CO2 at 45 \ |degree|\ C
     * - CH4 production
       - 0.56 kg/s at the outer boundary (1100 m)
     * - Simulated time
@@ -92,7 +94,7 @@ The parameters of the problem are summarized in the following table.
   **What the paper finds for this case**
 
 ..
-  For a constant injection rate, the pressure build-up near the well scales inversely with the permeability. The paper reports a cooling of about 2 °C for 100 mD, 8 °C for 10 mD, and about 14 °C for 5 mD (Figure 8) after 15 years of injection. For 5 mD (Figure 7), the cooled region extends over more than 100 m after 15 years and it remains inside the region occupied by nearly pure CO2. The minimum temperature remains around 31 °C, well above the temperatures at which CO2 hydrates are stable at these pressures (below approximately 10 °C), so that the problem is not expected to be a concern for CSEGR in this setting.
+  For a constant injection rate, the pressure build-up near the well scales inversely with the permeability. The paper reports a cooling of about 2 \ |degree|\ C for 100 mD, 8 \ |degree|\ C for 10 mD, and about 14 \ |degree|\ C for 5 mD (Figure 8) after 15 years of injection. For 5 mD (Figure 7), the cooled region extends over more than 100 m after 15 years and it remains inside the region occupied by nearly pure CO2. The minimum temperature remains around 31 \ |degree|\ C, well above the temperatures at which CO2 hydrates are stable at these pressures (below approximately 10 \ |degree|\ C), so that the problem is not expected to be a concern for CSEGR in this setting.
 
 ------------------------------------------------------------------------
 Input base
@@ -104,14 +106,14 @@ This benchmark test is based on the XML file located below:
 
   inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/jouleThomsonCooling.xml
 
-The mesh is a thin wedge of cylinder (``InternalWellbore``), 1° wide (``theta`` from -0.5° to 0.5°). The 109 radial cells are defined explicitly through the ``radius`` and ``nr`` arrays: the cell size grows geometrically with the distance to the injection well (the ratio between successive radii decreases from 1.2 close to the well to about 1.08 at the outer boundary), which refines the mesh where the pressure and temperature gradients are the strongest. The 360° of the paper are accounted for by dividing all the well rates by 360.
+The mesh is a thin wedge of cylinder (``InternalWellbore``), 1\ |degree|\  wide (``theta`` from -0.5\ |degree|\  to 0.5\ |degree|\ ). The 109 radial cells are defined explicitly through the ``radius`` and ``nr`` arrays: the cell size grows geometrically with the distance to the injection well (the ratio between successive radii decreases from 1.2 close to the well to about 1.08 at the outer boundary), which refines the mesh where the pressure and temperature gradients are the strongest. The 360\ |degree|\  of the paper are accounted for by dividing all the well rates by 360.
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/jouleThomsonCooling.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
 
-The mesh is only one cell thick in the angular and vertical directions, so the flow is purely radial. The two wells are vertical and are located in the mid-plane of the wedge (:math:`\theta = 0°`): the injector is at :math:`r = 0.101` m, in the first cell of the mesh, and the producer is at :math:`r = 1129.5` m, in the outermost cell, which ends at the outer boundary at 1130 m. As in the paper, the production is therefore taken from the outermost grid block. Since there is a single cell over the thickness, the position of the perforation along the well (``distanceFromHead``) has no influence on the solution. The well-to-reservoir transmissibility of each perforation is prescribed explicitly (``transmissibility``). The two wells are listed in the ``ElementRegions`` together with the reservoir region. All the regions share the same fluid, relative permeability and thermal conductivity models:
+The mesh is only one cell thick in the angular and vertical directions, so the flow is purely radial. The two wells are vertical and are located in the mid-plane of the wedge (:math:`\theta = 0^{\circ}`): the injector is at :math:`r = 0.101` m, in the first cell of the mesh, and the producer is at :math:`r = 1129.5` m, in the outermost cell, which ends at the outer boundary at 1130 m. As in the paper, the production is therefore taken from the outermost grid block. Since there is a single cell over the thickness, the position of the perforation along the well (``distanceFromHead``) has no influence on the solution. The well-to-reservoir transmissibility of each perforation is prescribed explicitly (``transmissibility``). The two wells are listed in the ``ElementRegions`` together with the reservoir region. All the regions share the same fluid, relative permeability and thermal conductivity models:
 
 .. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/jouleThomsonCooling.xml
     :language: xml
@@ -137,7 +139,7 @@ The main ingredients of this model are the following:
 - ``equationsOfState`` lists one equation of state for each phase, in the order of ``phaseNames``. The gas phase uses the   Peng-Robinson (PR) cubic equation of state, as in the paper (EOS7C computes the properties of the CO2-CH4-H2O gas mixtures with PR). The aqueous phase uses the S\ |oslash|\ reide-Whitson variant of PR, which modifies the attractive term for water and uses salinity-dependent interaction parameters, in order to represent the mutual solubilities of the gases and of water. The aqueous phase stays at its residual saturation in this problem and acts mostly as a heat reservoir, so that the solubility effects are weak, but the model remains fully compositional.
 - the component data (``componentMolarWeight`` in kg/mol, critical pressures and temperatures, acentric factors) are the standard values of CO2, CH4 and H2O, given in this order, which is the order of ``componentNames``. The same order is used for the ``injectionStream``, the ``globalCompFraction`` components and the binary and heat capacity coefficients. 
 - the aqueous phase density and viscosity follow the brine correlations of Phillips et al., with ``salinity`` equal to 0 (fresh water).
-- ``pressureCoordinates`` and ``temperatureCoordinates`` define the pressure-temperature grid on which the fluid properties are evaluated. They must bracket all the states visited during the simulation: here from 1 bar (the minimum bottom-hole pressure of the producer) to 300 bar (the maximum bottom-hole pressure of the injector), and from -10 °C to 110 °C. The states actually visited are between about 5 and 7 MPa, and between 31 and 45 °C.
+- ``pressureCoordinates`` and ``temperatureCoordinates`` define the pressure-temperature grid on which the fluid properties are evaluated. They must bracket all the states visited during the simulation: here from 1 bar (the minimum bottom-hole pressure of the producer) to 300 bar (the maximum bottom-hole pressure of the injector), and from -10 \ |degree|\ C to 110 \ |degree|\ C. The states actually visited are between about 5 and 7 MPa, and between 31 and 45 \ |degree|\ C.
 
 .. _jouleThomsonCoolingHeatCapacity:
 
@@ -153,13 +155,13 @@ The enthalpy of a phase is the sum of an ideal-gas contribution and of a departu
     :dedent: 6
 
 Each row contains the five coefficients :math:`a_0, \ldots, a_4` of a polynomial in the temperature difference
-with respect to 25 °C:
+with respect to 25 \ |degree|\ C:
 
 .. math::
 
     c_p^{0}(T) = \sum_{i=0}^{4} a_i \, (T - 298.15)^i \qquad [\mathrm{J/mol/K}], \quad T \text{ in K}.
 
-The first coefficient :math:`a_0` is therefore the ideal-gas molar heat capacity at 25 °C (37.14 J/mol/K for CO2, 35.71 for CH4 and 33.59 for H2O). The following table gives the resulting values at the reservoir temperature, which are in agreement with the reference ideal-gas heat capacities of the NIST equations of state within 0.01 J/mol/K over the whole temperature range of the fluid tables (-10 to 110 °C).
+The first coefficient :math:`a_0` is therefore the ideal-gas molar heat capacity at 25 \ |degree|\ C (37.14 J/mol/K for CO2, 35.71 for CH4 and 33.59 for H2O). The following table gives the resulting values at the reservoir temperature, which are in agreement with the reference ideal-gas heat capacities of the NIST equations of state within 0.01 J/mol/K over the whole temperature range of the fluid tables (-10 to 110 \ |degree|\ C).
 
 .. list-table:: Ideal-gas heat capacity :math:`c_p^0` at 318.15 K
     :widths: 20 20 20 20
@@ -180,7 +182,7 @@ These coefficients are important for two reasons. First, the JT coefficient is i
 
 **Binary interaction parameters**
 
-The Peng-Robinson equation of state uses a mixing rule for the attractive term of the mixture in which the cross term of each pair of components :math:`(i,j)` is scaled by :math:`(1 - k_{ij})`. The binary interaction parameters :math:`k_{ij}` are given by ``componentBinaryCoeff`` as a symmetric matrix with a zero diagonal, in the order CO2, CH4, H2O (the same order as ``componentNames``), so that :math:`k_{CO_2-CH_4} = 0.1`, :math:`k_{CO_2-H_2O} = 0.1896` and :math:`k_{CH_4-H_2O} = 0.4850`. The CO2-CH4 coefficient is the one that matters most for this problem, since the gas phase is a CO2-CH4 mixture in the region where the CO2 front progresses and displaces the methane. The coefficients involving water are larger, and they only affect the small amount of water vapor in the gas phase at 45 °C and the solubility of the gases in the aqueous phase, which stays at its residual saturation.
+The Peng-Robinson equation of state uses a mixing rule for the attractive term of the mixture in which the cross term of each pair of components :math:`(i,j)` is scaled by :math:`(1 - k_{ij})`. The binary interaction parameters :math:`k_{ij}` are given by ``componentBinaryCoeff`` as a symmetric matrix with a zero diagonal, in the order CO2, CH4, H2O (the same order as ``componentNames``), so that :math:`k_{CO_2-CH_4} = 0.1`, :math:`k_{CO_2-H_2O} = 0.1896` and :math:`k_{CH_4-H_2O} = 0.4850`. The CO2-CH4 coefficient is the one that matters most for this problem, since the gas phase is a CO2-CH4 mixture in the region where the CO2 front progresses and displaces the methane. The coefficients involving water are larger, and they only affect the small amount of water vapor in the gas phase at 45 \ |degree|\ C and the solubility of the gases in the aqueous phase, which stays at its residual saturation.
 
 **Rock, relative permeability and thermal conductivity**
 
@@ -278,7 +280,7 @@ It is chosen to match the initial conditions of the paper, for the following rea
 - **Composition.** The reservoir contains methane and water, with no CO2. In *GEOS*, the saturations are not primary inputs: the initial
   phase distribution is computed by a flash from the global composition, pressure and temperature. The paper
   prescribes an initial water saturation equal to the residual saturation, :math:`S_w = 0.2`, so that the water is immobile and the only mobile
-  phase is gas. The global mass fractions are calibrated to obtain exactly this saturation. At 50 bar and 45 °C, the density of CH4 gas
+  phase is gas. The global mass fractions are calibrated to obtain exactly this saturation. At 50 bar and 45 \ |degree|\ C, the density of CH4 gas
   is :math:`\rho_g = 32.36` kg/m\ :sup:`3` and the density of water is :math:`\rho_w = 992.3` kg/m\ :sup:`3`, so that
 
   .. math::
@@ -291,7 +293,7 @@ It is chosen to match the initial conditions of the paper, for the following rea
 
 .. note::
     These mass fractions are specific to the initial pressure and temperature. If these values are modified (for example
-    to reproduce the cases of the paper with a reservoir at 75 °C), the densities change and the compositions must be
+    to reproduce the cases of the paper with a reservoir at 75 \ |degree|\ C), the densities change and the compositions must be
     computed again to keep :math:`S_w = 0.2`.
 
 **Boundary conditions**
@@ -331,11 +333,11 @@ The correspondence with the paper is the following:
       - Relation to the paper
     * - Injector control
       - ``control="massRate"`` with ``InjectionMassRateConstraint``, ``massRate`` = 8.3333e-3 kg/s
-      - Constant-rate injection of 3 kg/s. The rate is divided by 360 because the model is a 1° sector
+      - Constant-rate injection of 3 kg/s. The rate is divided by 360 because the model is a 1\ |degree|\  sector
         (:math:`3 \times 1/360`).
     * - Injected fluid
       - ``injectionStream`` = {0.9999, 1e-4, 0}, ``injectionTemperature`` = 318.15 K
-      - Pure CO2 at :math:`T_{inj}` = 45 °C, equal to the reservoir temperature. The stream is
+      - Pure CO2 at :math:`T_{inj}` = 45 \ |degree|\ C, equal to the reservoir temperature. The stream is
         99.99 % CO2 (in mass), with a trace of CH4 and no H2O, which is equivalent to pure CO2 for this problem.
     * - Injector safeguard
       - ``MaximumBHPConstraint``, 300 bar at the mid-height of the reservoir (``referenceElevation`` = 25 m)
@@ -391,15 +393,15 @@ The profiles of the CO2 mass fraction in the gas phase, of the pressure and of t
 The main features to retrieve are:
 
 - a cold region around the injector whose temperature decreases and whose extent increases with time. After 15 years the cooling is
-  about 14 °C with respect to the initial 45 °C (minimum temperature around 31 °C), and the cooled region extends over
+  about 14 \ |degree|\ C with respect to the initial 45 \ |degree|\ C (minimum temperature around 31 \ |degree|\ C), and the cooled region extends over
   more than 100 m;
 - a pressure increase near the well, of about 22 bar after 15 years, which decreases quickly with the distance to the well;
 - a cooled and pressurized region that remains inside the region where the gas is almost pure CO2;
-- a temperature that remains at 45 °C farther from the well.
+- a temperature that remains at 45 \ |degree|\ C farther from the well.
 
 **CO2 front**
 
-The CO2 mass fraction in the gas phase is the quantity that locates the injected CO2: it is equal to 1 behind the front and to 0 ahead of it, where the gas is methane. The front is already at about 9 m from the well after 1 day. It reaches about 25 m after 10 days, 40 m after 30 days, 70 m after 90 days, 150 m after 1 year and 550-600 m after 15 years, which is about half of the domain. The producer, at 1129.5 m, therefore only produces methane during the whole simulation, as assumed in the definition of the well controls. The front radius grows approximately as the square root of time, as expected for a constant-rate injection in a radial geometry (the injected volume is proportional to :math:`r^2`), and slightly more slowly at late times because the CO2 is compressed when the pressure increases. A volume balance gives the same order of magnitude: 3 kg/s during 15 years is :math:`1.4 \times 10^{9}` kg of CO2, which fills the gas-filled pore volume (:math:`\phi\,(1-S_{lr})\,\pi r^2 h`) up to 500-600 m for CO2 densities between 120 and 150 kg/m\ :sup:`3`, which are typical values at 50-70 bar and 31-45 °C.
+The CO2 mass fraction in the gas phase is the quantity that locates the injected CO2: it is equal to 1 behind the front and to 0 ahead of it, where the gas is methane. The front is already at about 9 m from the well after 1 day. It reaches about 25 m after 10 days, 40 m after 30 days, 70 m after 90 days, 150 m after 1 year and 550-600 m after 15 years, which is about half of the domain. The producer, at 1129.5 m, therefore only produces methane during the whole simulation, as assumed in the definition of the well controls. The front radius grows approximately as the square root of time, as expected for a constant-rate injection in a radial geometry (the injected volume is proportional to :math:`r^2`), and slightly more slowly at late times because the CO2 is compressed when the pressure increases. A volume balance gives the same order of magnitude: 3 kg/s during 15 years is :math:`1.4 \times 10^{9}` kg of CO2, which fills the gas-filled pore volume (:math:`\phi\,(1-S_{lr})\,\pi r^2 h`) up to 500-600 m for CO2 densities between 120 and 150 kg/m\ :sup:`3`, which are typical values at 50-70 bar and 31-45 \ |degree|\ C.
 
 The front is sharp, with a transition from 1 to 0 over a factor of about 1.5 in radius. In the absence of molecular diffusion and dispersion in the *GEOS* model, this width is controlled by the numerical dispersion of the scheme and by the mesh size, and the paper, which includes molecular diffusion, can be expected to show a somewhat wider transition. The CO2 profile is important for the interpretation of the two other profiles, since the viscosity and the density of the gas change across the front.
 
@@ -419,29 +421,29 @@ The pressure perturbation travels much faster than the CO2 front, since it propa
 
 **Temperature and comparison with the paper**
 
-The temperature profiles show the three zones that are expected for this problem. Far from the injector, the temperature is unchanged (45 °C). Behind the cold front, the gas is cooled by the JT expansion between the well and the rest of the reservoir, and the temperature goes through a minimum. Near the well, the temperature increases again toward the injection temperature (about 43 °C in the first cell), because the injected gas has not yet expanded much when it enters the first cells. The minimum is deeper and further from the well as time goes on: it is about 38 °C at 0.7 m after 1 day, 36 °C at about 2 m after 10 days, 34-35 °C at 5-8 m after 90 days, 33 °C at about 12 m after 1 year, and 31 °C at 30-40 m after 15 years, which is a cooling of about 14 °C. These values are read from the figure and are accurate to about 0.5 °C.
+The temperature profiles show the three zones that are expected for this problem. Far from the injector, the temperature is unchanged (45 \ |degree|\ C). Behind the cold front, the gas is cooled by the JT expansion between the well and the rest of the reservoir, and the temperature goes through a minimum. Near the well, the temperature increases again toward the injection temperature (about 43 \ |degree|\ C in the first cell), because the injected gas has not yet expanded much when it enters the first cells. The minimum is deeper and further from the well as time goes on: it is about 38 \ |degree|\ C at 0.7 m after 1 day, 36 \ |degree|\ C at about 2 m after 10 days, 34-35 \ |degree|\ C at 5-8 m after 90 days, 33 \ |degree|\ C at about 12 m after 1 year, and 31 \ |degree|\ C at 30-40 m after 15 years, which is a cooling of about 14 \ |degree|\ C. These values are read from the figure and are accurate to about 0.5 \ |degree|\ C.
 
-The cold region is much smaller than the region invaded by the CO2: after 15 years the temperature is back to about 45 °C beyond 100-150 m, while the CO2 front is at 550-600 m. The thermal front is retarded with respect to the gas front by the heat capacity of the rock and of the immobile water, which have to be cooled before the cooling can move forward. A simple estimate is the ratio between the heat capacity of the gas (:math:`\phi\,S_g\,\rho_g c_{p,g} \approx 4\times 10^{4}` J/m\ :sup:`3`/K, for typical values of the CO2 density and heat capacity) and the total heat capacity of the rock, water and gas (about :math:`2\times 10^{6}` J/m\ :sup:`3`/K): the thermal front moves approximately 50 times more slowly in volume, which is a ratio of :math:`\sqrt{1/50} \approx 0.15` in radius, so that a CO2 front at 550-600 m corresponds to a thermal front at 80-100 m, in agreement with the figure. This is the transient effect mentioned above: the matrix attenuates the cooling, but the thermal front keeps propagating, and the minimum temperature keeps decreasing because the pressure drop that drives the JT cooling increases with time. The weak undershoot below 45 °C (a few tenths of a degree) at 15 years between the thermal front and the CO2 front is the cooling due to the small pressure drop in this region.
+The cold region is much smaller than the region invaded by the CO2: after 15 years the temperature is back to about 45 \ |degree|\ C beyond 100-150 m, while the CO2 front is at 550-600 m. The thermal front is retarded with respect to the gas front by the heat capacity of the rock and of the immobile water, which have to be cooled before the cooling can move forward. A simple estimate is the ratio between the heat capacity of the gas (:math:`\phi\,S_g\,\rho_g c_{p,g} \approx 4\times 10^{4}` J/m\ :sup:`3`/K, for typical values of the CO2 density and heat capacity) and the total heat capacity of the rock, water and gas (about :math:`2\times 10^{6}` J/m\ :sup:`3`/K): the thermal front moves approximately 50 times more slowly in volume, which is a ratio of :math:`\sqrt{1/50} \approx 0.15` in radius, so that a CO2 front at 550-600 m corresponds to a thermal front at 80-100 m, in agreement with the figure. This is the transient effect mentioned above: the matrix attenuates the cooling, but the thermal front keeps propagating, and the minimum temperature keeps decreasing because the pressure drop that drives the JT cooling increases with time. The weak undershoot below 45 \ |degree|\ C (a few tenths of a degree) at 15 years between the thermal front and the CO2 front is the cooling due to the small pressure drop in this region.
 
-The magnitude of the minimum temperature is larger than a simple estimate based on the JT coefficient at the initial conditions. The pressure difference between the well and the location of the minimum at 15 years is about 10 bar (72 bar at the well, 61-62 bar at 30-40 m), so that a cooling of 14 °C requires an apparent JT coefficient of at least 1.4 K/bar, larger than the 0.9 K/bar of CO2 at 45 °C and 50 bar. This is consistent with the strong increase of :math:`\mu_{JT}` when CO2 approaches its critical point (31 °C and 73.8 bar), which is the case in the cold region, and it means that the cooling is sensitive to the thermodynamic model.
+The magnitude of the minimum temperature is larger than a simple estimate based on the JT coefficient at the initial conditions. The pressure difference between the well and the location of the minimum at 15 years is about 10 bar (72 bar at the well, 61-62 bar at 30-40 m), so that a cooling of 14 \ |degree|\ C requires an apparent JT coefficient of at least 1.4 K/bar, larger than the 0.9 K/bar of CO2 at 45 \ |degree|\ C and 50 bar. This is consistent with the strong increase of :math:`\mu_{JT}` when CO2 approaches its critical point (31 \ |degree|\ C and 73.8 bar), which is the case in the cold region, and it means that the cooling is sensitive to the thermodynamic model.
 
 .. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/plot_joule_thomson_profile.py plot_temperature
     :align: center
-    :caption: Radial profiles of the temperature at the output times (lines: *GEOS*; dots: results of Figure 7 of Oldenburg (2007), digitized). There is no reference curve for 1 day. The minimum temperature after 15 years (about 31 °C at 30-40 m) is reproduced, while *GEOS* is warmer than the paper close to the well (r < 10 m).
+    :caption: Radial profiles of the temperature at the output times (lines: *GEOS*; dots: results of Figure 7 of Oldenburg (2007), digitized). There is no reference curve for 1 day. The minimum temperature after 15 years (about 31 \ |degree|\ C at 30-40 m) is reproduced, while *GEOS* is warmer than the paper close to the well (r < 10 m).
 
 The comparison with the points taken from the paper (dots) shows a good overall agreement, with some differences that are worth noting:
 
-- **Good agreement on the cold front and on the minimum temperature.** The position and the steepness of the thermal front are close to the digitized points at all times (for instance the rise from 35 to 45 °C between about 10 and 30 m after 1 year, and from 35 to 40 °C between about 60 and 100 m after 15 years), and the minimum temperature after 15 years, about 31 °C at 30-40 m, is the same as in the paper. This minimum is the quantity that matters for the risk of hydrate or ice formation, and it remains far above the temperature of hydrate stability. The thermal front and the CO2 front also have the same relative position as in the paper (the cooled zone stays inside the CO2-rich region).
-- **Warmer temperatures in the near-well region.** For :math:`r` smaller than about 10 m, the digitized points are lower than the *GEOS* curves. At early times (10 to 90 days), the paper gives 34-35 °C at 1.5-3 m, about 2 °C below the *GEOS* curves, and after 15 years the paper gives 35.5 °C at 3 m and 33.8 °C at 7 m, while *GEOS* is about 3-4 °C warmer. The paper also shows a minimum that is more flat and more extended (about 31-34 °C between 7 and 40 m at 15 years), whereas the *GEOS* profile decreases almost linearly with :math:`\log r` up to about 10 m and then drops more rapidly toward the minimum. *GEOS* therefore predicts a weaker cooling than the paper in the first meters around the injector.
+- **Good agreement on the cold front and on the minimum temperature.** The position and the steepness of the thermal front are close to the digitized points at all times (for instance the rise from 35 to 45 \ |degree|\ C between about 10 and 30 m after 1 year, and from 35 to 40 \ |degree|\ C between about 60 and 100 m after 15 years), and the minimum temperature after 15 years, about 31 \ |degree|\ C at 30-40 m, is the same as in the paper. This minimum is the quantity that matters for the risk of hydrate or ice formation, and it remains far above the temperature of hydrate stability. The thermal front and the CO2 front also have the same relative position as in the paper (the cooled zone stays inside the CO2-rich region).
+- **Warmer temperatures in the near-well region.** For :math:`r` smaller than about 10 m, the digitized points are lower than the *GEOS* curves. At early times (10 to 90 days), the paper gives 34-35 \ |degree|\ C at 1.5-3 m, about 2 \ |degree|\ C below the *GEOS* curves, and after 15 years the paper gives 35.5 \ |degree|\ C at 3 m and 33.8 \ |degree|\ C at 7 m, while *GEOS* is about 3-4 \ |degree|\ C warmer. The paper also shows a minimum that is more flat and more extended (about 31-34 \ |degree|\ C between 7 and 40 m at 15 years), whereas the *GEOS* profile decreases almost linearly with :math:`\log r` up to about 10 m and then drops more rapidly toward the minimum. *GEOS* therefore predicts a weaker cooling than the paper in the first meters around the injector.
 - **Small-scale features at early times.** The 1 day and 10 day curves show small kinks at 0.2-0.8 m, at the scale of the first cells (a few centimeters to decimeters). They have no counterpart in the paper, which has no data below 1.5 m, and they are related to the resolution of the mesh and of the time step at the beginning of the injection.
 - **No reference at 1 day.** The dark blue curve is only given by *GEOS*.
 
 The origin of these differences has not been isolated, and several effects are likely to contribute:
 
 - the thermodynamic model. The JT effect is very sensitive to the equation of state in the near-critical region reached by the CO2 in the cold zone, and the enthalpy depends on the ideal-gas heat capacities and on the departure functions. *GEOS* uses Peng-Robinson with polynomial ideal-gas heat capacities, whereas the thermodynamic properties of EOS7C may differ in these respects, and a few percent of difference on :math:`\mu_{JT}` or on :math:`c_p` close to the critical point leads to a difference of several degrees of cooling;
-- the representation of the injector. In the paper, the CO2 is injected as a source term at 45 °C in the first grid block, whereas *GEOS* injects it through a thermal well, which has its own pressure and temperature state and is connected to the reservoir by a perforation with a prescribed transmissibility. This changes the pressure drop and the enthalpy balance in the first cells, which can modify the temperature a few meters away, where the heat is exchanged with the rock;
+- the representation of the injector. In the paper, the CO2 is injected as a source term at 45 \ |degree|\ C in the first grid block, whereas *GEOS* injects it through a thermal well, which has its own pressure and temperature state and is connected to the reservoir by a perforation with a prescribed transmissibility. This changes the pressure drop and the enthalpy balance in the first cells, which can modify the temperature a few meters away, where the heat is exchanged with the rock;
 - the physical processes that are not in the *GEOS* model: the capillary pressure and the molecular diffusion of the paper, and the slightly different gas relative permeability (Brooks-Corey instead of Corey);
-- the accuracy of the reference: the dots are read from a figure with a logarithmic radial axis, so that the uncertainty is about 0.5 °C on the temperature and 10-15 % on the radius, which is a significant part of the differences at large radius but cannot explain the 3-4 °C close to the well.
+- the accuracy of the reference: the dots are read from a figure with a logarithmic radial axis, so that the uncertainty is about 0.5 \ |degree|\ C on the temperature and 10-15 % on the radius, which is a significant part of the differences at large radius but cannot explain the 3-4 \ |degree|\ C close to the well.
 
 .. note::
     The cooling can be compared with the upper bound :math:`\mu_{JT}\,\Delta P`. The relevant pressure difference is the one between the well and the point of interest, and not the total pressure increase at the well, since the gas is injected at the reservoir temperature and cools as it expands toward lower pressures. As discussed above, the cooling observed in the simulation corresponds to an apparent JT coefficient larger than the one at the initial conditions, because of the proximity of the critical point, even though the heat released by the matrix, which is important in the first days and progressively exhausted, attenuates the cooling.
@@ -456,7 +458,7 @@ The other cases of the paper can be obtained from this input by changing a few p
   the injection rate is kept unchanged, so the pressure drop and the JT cooling vary with the permeability;
 - the porosity (``rockPorosity``), to study the compensation between the permeability and the heat supplied by the matrix (Figure 9);
 - the injection temperature and the initial reservoir temperature (``injectionTemperature``, ``initialTemperature``) for the
-  cases of Figures 10 and 11 (20 °C injection in a 75 °C reservoir). The initial compositions must then be computed again, as explained above.
+  cases of Figures 10 and 11 (20 \ |degree|\ C injection in a 75 \ |degree|\ C reservoir). The initial compositions must then be computed again, as explained above.
 
 **Feedback on this example**
 
