@@ -109,8 +109,11 @@ public:
   void updateStencilWeights( DomainPartition & domain ) const
   { flowSolver()->updateStencilWeights( domain ); }
 
-  void updateMass( CellElementSubRegion & subRegion ) const
+  void updateMass( ElementSubRegionBase & subRegion ) const
   { flowSolver()->updateMass( subRegion ); }
+
+  void updateEnergy( ElementSubRegionBase & subRegion ) const
+  { flowSolver()->updateEnergy( subRegion ); }
 
   integer numFluidComponents() const { return flowSolver()->numFluidComponents(); };
 

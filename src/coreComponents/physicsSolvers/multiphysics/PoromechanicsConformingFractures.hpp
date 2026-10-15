@@ -452,6 +452,29 @@ public:
 
     // update the stencil weights using the updated hydraulic aperture
     this->flowSolver()->updateStencilWeights( domain );
+
+    // Base::updateState above computed the fracture mass (and energy) with the previous deltaVolume.
+    // Refresh them with the volume just updated
+    // Note that the order cannot simply be swapped:
+    // the flow porosity/permeability update of the surface elements would then overwrite dPerm_dDispJump
+    if constexpr ( std::is_base_of_v< SinglePhaseBase, FLOW_SOLVER > || std::is_same_v< FLOW_SOLVER, SinglePhaseReservoirAndWells<> > )
+    {
+      this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                          MeshLevel & mesh,
+                                                                          string_array const & regionNames )
+      {
+        mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                                            [&]( localIndex const,
+                                                                                 FaceElementSubRegion & subRegion )
+        {
+          this->flowSolver()->updateMass( subRegion );
+          if( this->m_isThermal )
+          {
+            this->flowSolver()->updateEnergy( subRegion );
+          }
+        } );
+      } );
+    }
   }
 
 protected:
