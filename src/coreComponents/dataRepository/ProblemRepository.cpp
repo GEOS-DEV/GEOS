@@ -18,6 +18,7 @@
  */
 
 #include "ProblemRepository.hpp"
+#include "RTTypes.hpp"
 
 namespace geos
 {
@@ -52,8 +53,9 @@ ProblemRepository & ProblemRepository::get( Group & group )
     current = &current->getParent();
   }
 
-  ProblemRepository * const root = dynamic_cast< ProblemRepository * >( current );
-  return *root;
+  // if wrong/unknown type requested, we will have a GEOS_ERROR here
+  ProblemRepository & root = dynamicCast< ProblemRepository & >( *current );
+  return root;
 }
 
 ProblemRepository const & ProblemRepository::get( Group const & group )
@@ -65,8 +67,9 @@ ProblemRepository const & ProblemRepository::get( Group const & group )
     current = &current->getParent();
   }
 
-  ProblemRepository const * const root = dynamic_cast< ProblemRepository const * >( current );
-  return *root;
+  // if wrong/unknown type requested, we will have a GEOS_ERROR here
+  ProblemRepository const & root = dynamicCast< ProblemRepository const & >( *current );
+  return root;
 }
 
 } /* namespace dataRepository */
