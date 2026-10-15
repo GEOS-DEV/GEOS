@@ -46,6 +46,7 @@ WellNewtonSolver::WellNewtonSolver( string const & name,
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 ),
   m_activeCoupledIterations( 1 ),
+  m_thermalEffectsEnabled( false ),
   m_enableIsoThermalEstimator( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );

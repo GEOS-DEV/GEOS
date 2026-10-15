@@ -148,7 +148,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
 
   for( auto const & columnValue : m_columnValues )
   {
-    tableData1D.headerNames.push_back( GEOS_FMT( columnFmt, columnValue ) );
+    tableData1D.headerNames.push_back( GEOS_FMT_RUNTIME( columnFmt, columnValue ) );
   }
 
   for( auto const & error : *m_errors )
@@ -161,7 +161,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   {
     stdVector< TableData::CellData > currentRowValues;
     currentRowValues.reserve( rowMap.size() );
-    currentRowValues.push_back( {CellType::Value, GEOS_FMT( rowFmt, rowValue )} );
+    currentRowValues.push_back( {CellType::Value, GEOS_FMT_RUNTIME( rowFmt, rowValue )} );
 
     std::set< real64 >::const_iterator columnIt = m_columnValues.begin();
     for( auto const & [columnValue, cellValue] : rowMap )

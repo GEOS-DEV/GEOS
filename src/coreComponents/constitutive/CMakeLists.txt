@@ -69,6 +69,7 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/CO2BrineFluid.hpp
      fluid/multifluid/CO2Brine/PhaseModel.hpp
      fluid/multifluid/CO2Brine/functions/BrineEnthalpy.hpp
+     fluid/multifluid/CO2Brine/functions/BrineFluidParameters.hpp
      fluid/multifluid/CO2Brine/functions/CO2Enthalpy.hpp
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp
      fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp
@@ -253,6 +254,7 @@ set( constitutive_sources
      fluid/multifluid/blackOil/DeadOilFluid.cpp
      fluid/multifluid/blackOil/PVTOData.cpp
      fluid/multifluid/CO2Brine/CO2BrineFluid.cpp
+     fluid/multifluid/CO2Brine/functions/BrineFluidParameters.cpp
      fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.cpp
      fluid/multifluid/CO2Brine/functions/PhillipsBrineViscosity.cpp
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineDensity.cpp

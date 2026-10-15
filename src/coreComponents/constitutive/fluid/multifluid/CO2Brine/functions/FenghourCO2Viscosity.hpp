@@ -73,7 +73,7 @@ class FenghourCO2Viscosity : public PVTFunctionBase
 public:
 
   FenghourCO2Viscosity( string const & name,
-                        string_array const & inputParams,
+                        BrineFluidParameters const & brineFluidParameters,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight,
                         TableFunction::OutputOptions const pvtOutputOpts );

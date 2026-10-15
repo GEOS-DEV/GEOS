@@ -1,63 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
-    <SinglePhaseReservoir
-      name="coupledFlowAndWells"
-      flowSolverName="singlePhaseFlow"
-      wellSolverName="singlePhaseWell"
-      logLevel="1"
-      initialDt="1e3"
-      targetRegions="{ region , wellRegion2 }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-3"
-        maxTimeStepCuts="10"
-        lineSearchAction="None"
-        timeStepIncreaseIterLimit="0.3"
-        timeStepDecreaseIterLimit="0.6"
-        maxSubSteps="20"
-        newtonMaxIter="15"/>
-      <LinearSolverParameters
-        solverType="fgmres"
-        krylovMaxIter="100"
-        krylovTol="1e-6"
-        logLevel="1"/>
-    </SinglePhaseReservoir>
-
-    <SinglePhaseFVM
-      name="singlePhaseFlow"
-      logLevel="1"
-      discretization="tpfaFlow"
-      temperature="353.0"
-      isThermal="1"
-      targetRegions="{ region }"/>
-
-    <WellManager
-      name="singlePhaseWell"
-      logLevel="1"
-      isThermal="1"
-      targetRegions="{ wellRegion2 }">
-      <SinglePhaseWell
-        name="wellControls2"
-        type="injector"
-        control="BHP"
-        enableCrossflow="0"
-        useSurfaceConditions="1"
-        surfacePressure="1.45e7"
-        surfaceTemperature="300.15">
-        <MaximumBHPConstraint
-          name="maxbhp"
-          targetBHP="1.45e7"
-          referenceElevation="-0.01"/>
-        <InjectionVolumeRateConstraint
-          name="maxvolrateinj"
-          volumeRate="15"
-          injectionStream="{ 1.0, 0.0 }"
-          injectionTemperature="323"/>
-      </SinglePhaseWell>
-    </WellManager>
-  </Solvers>
-
   <Geometry>
     <Box
       name="sink"

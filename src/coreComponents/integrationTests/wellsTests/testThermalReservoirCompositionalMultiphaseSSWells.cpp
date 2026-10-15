@@ -37,28 +37,6 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-void writeTableToFile( string const & filename, char const * str )
-{
-  std::ofstream os( filename );
-  ASSERT_TRUE( os.is_open() );
-  os << str;
-  os.close();
-}
-
-void removeFile( string const & filename )
-{
-  int const ret = std::remove( filename.c_str() );
-  ASSERT_TRUE( ret == 0 );
-}
-char const * co2flash = "FlashModel CO2Solubility  1e6 7.5e7 5e5 299.15 369.15 10 0";
-char const * pvtLiquid = "DensityFun PhillipsBrineDensity 1e6 7.5e7 5e5 299.15 369.15 10 0\n"
-                         "ViscosityFun PhillipsBrineViscosity 0\n"
-                         "EnthalpyFun BrineEnthalpy 1e6 7.5e7 5e5 299.15 369.15 10 0\n";
-
-char const * pvtGas = "DensityFun SpanWagnerCO2Density 1e6 7.5e7 5e5 299.15 369.15 10\n"
-                      "ViscosityFun FenghourCO2Viscosity 1e6 7.5e7 5e5 299.15 369.15 10\n"
-                      "EnthalpyFun CO2Enthalpy 1e6 7.5e7 5e5 299.15 369.15 10\n";
-
 char const * xmlInput =
   R"xml(
 
@@ -230,8 +208,10 @@ char const * xmlInput =
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ testThermalReservoirCompositionalMultiphaseSSWells_pvtgas.txt, testThermalReservoirCompositionalMultiphaseSSWells_pvtliquid.txt }"
-      flashModelParaFile="testThermalReservoirCompositionalMultiphaseSSWells_co2flash.txt"/>
+      pressureCoordinates="{1e6, 7.5e7}"
+      pressureInterval="5e5"
+      temperatureCoordinates="{299.15, 369.15}"
+      temperatureInterval="10" />
 
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -847,16 +827,10 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
 #endif
 int main( int argc, char * * argv )
 {
-  writeTableToFile( "testThermalReservoirCompositionalMultiphaseSSWells_co2flash.txt", co2flash );
-  writeTableToFile( "testThermalReservoirCompositionalMultiphaseSSWells_pvtliquid.txt", pvtLiquid );
-  writeTableToFile( "testThermalReservoirCompositionalMultiphaseSSWells_pvtgas.txt", pvtGas );
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
   geos::basicCleanup();
-  removeFile( "testThermalReservoirCompositionalMultiphaseSSWells_co2flash.txt" );
-  removeFile( "testThermalReservoirCompositionalMultiphaseSSWells_pvtliquid.txt" );
-  removeFile( "testThermalReservoirCompositionalMultiphaseSSWells_pvtgas.txt" );
 
   return result;
 }

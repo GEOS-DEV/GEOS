@@ -47,6 +47,9 @@ namespace geos::vtk
  * Partition with index i represents a piece of mesh that must be shipped off to rank i.
  * Some partitions (usually most of them) can be empty, indicating nothing to send.
  * The return value on each rank is a combination of mesh pieces sent to current rank.
+ *
+ * Empty destination ranks reconstruct cell, point, and field arrays from
+ * vtkAbstractArray metadata, including non-numeric types such as vtkStringArray.
  */
 vtkSmartPointer< vtkUnstructuredGrid >
 redistribute( vtkPartitionedDataSet & localParts, MPI_Comm mpiComm );

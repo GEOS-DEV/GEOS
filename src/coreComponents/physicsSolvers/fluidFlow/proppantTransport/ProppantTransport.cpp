@@ -362,7 +362,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
       arrayView1d< real64 > const excessPackVolume = subRegion.getField< proppant::proppantExcessPackVolume >();
       arrayView2d< real64 > const cellBasedFlux = subRegion.getField< proppant::cellBasedFlux >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         for( localIndex c = 0; c < m_numComponents; ++c )
         {
@@ -778,7 +778,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         arrayView2d< real64 const > const bcCompConc =
           subRegion.getReference< array2d< real64 > >( proppant::bcComponentConcentration::key() );
 
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const a )
         {
           localIndex const ei = targetSet[a];
           if( ghostRank[ei] >= 0 )

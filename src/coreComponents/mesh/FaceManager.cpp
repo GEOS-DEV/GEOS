@@ -198,13 +198,13 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
       {
         if( faceIndex != -1 )
         {
-          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( faceIndex, 0 ), -1, GEOS_FMT( err, faceIndex ) );
-          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( faceIndex, 0 ), -1, GEOS_FMT( err, faceIndex ) );
-          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( faceIndex, 0 ), -1, GEOS_FMT( err, faceIndex ) );
+          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( faceIndex, 0 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
+          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( faceIndex, 0 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
+          GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( faceIndex, 0 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
 
-          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( faceIndex, 1 ), -1, GEOS_FMT( err, faceIndex ) );
-          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( faceIndex, 1 ), -1, GEOS_FMT( err, faceIndex ) );
-          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( faceIndex, 1 ), -1, GEOS_FMT( err, faceIndex ) );
+          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( faceIndex, 1 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
+          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( faceIndex, 1 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
+          GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( faceIndex, 1 ), -1, GEOS_FMT_RUNTIME( err, faceIndex ) );
 
           m_toElements.m_toElementRegion( faceIndex, 1 ) = er;
           m_toElements.m_toElementSubRegion( faceIndex, 1 ) = esr;
@@ -285,7 +285,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
-  forAll< parallelHostPolicy >( size(), [=, elemCenter = elemCenter.toNestedViewConst()]( localIndex const faceIndex )
+  forAll< parallelHostPolicy >( size(), [=, elemCenter = elemCenter.toNestedViewConst(), this]( localIndex const faceIndex )
   {
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )

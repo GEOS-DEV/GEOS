@@ -239,6 +239,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
 
       {
         // perturb pressure in each cell
+#if defined(GEOS_USE_CUDA)
+        pres.move( hostMemorySpace, true );
+#endif
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
@@ -274,6 +277,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         solver.resetStateToBeginningOfStep( domain );
 
         // perturb a single component density in each cell
+#if defined(GEOS_USE_CUDA)
+        compDens.move( hostMemorySpace, true );
+#endif
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
@@ -316,6 +322,9 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         solver.resetStateToBeginningOfStep( domain );
 
         // perturb temperature in each cell
+#if defined(GEOS_USE_CUDA)
+        temp.move( hostMemorySpace, true );
+#endif
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
@@ -398,22 +407,38 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 
       // make a copy of unperturbed values of component fractions
       array2d< real64, compflow::LAYOUT_PHASE > phaseMobOrig( subRegion.size(), numPhase );
+#if defined(GEOS_USE_CUDA)
+      phaseMob.move( hostMemorySpace, false );
+#endif
       phaseMobOrig.setValues< serialPolicy >( phaseMob );
 
       // Step 1: update pressure and check derivatives
 
       {
         // perturb pressure in each cell
+#if defined(GEOS_USE_CUDA)
+        pres.move( hostMemorySpace, true );
+#endif
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
         } );
 
+#if defined(GEOS_USE_CUDA)
+        pres.move( parallelDeviceMemorySpace, false );
+#endif
+
         // recompute component fractions
         solver.updateFluidState( subRegion );
 
         // check values in each cell
+#if defined(GEOS_USE_CUDA)
+        pres.move( hostMemorySpace, false );
+        pres_n.move( hostMemorySpace, false );
+        phaseMob.move( hostMemorySpace, false );
+        dPhaseMob.move( hostMemorySpace, false );
+#endif
         forAll< serialPolicy >( subRegion.size(), [=, &phaseMobOrig] ( localIndex const ei )
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
@@ -439,6 +464,10 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
         solver.resetStateToBeginningOfStep( domain );
 
+#if defined(GEOS_USE_CUDA)
+        compDens.move( hostMemorySpace, true );
+#endif
+
         // perturb a single component density in each cell
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
@@ -446,10 +475,20 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
           compDens[ei][jc] += dRho;
         } );
 
+#if defined(GEOS_USE_CUDA)
+        compDens.move( parallelDeviceMemorySpace, false );
+#endif
+
         // recompute component fractions
         solver.updateFluidState( subRegion );
 
         // check values in each cell
+#if defined(GEOS_USE_CUDA)
+        compDens.move( hostMemorySpace, false );
+        compDens_n.move( hostMemorySpace, false );
+        phaseMob.move( hostMemorySpace, false );
+        dPhaseMob.move( hostMemorySpace, false );
+#endif
         forAll< serialPolicy >( subRegion.size(), [=, &phaseMobOrig] ( localIndex const ei )
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
@@ -482,16 +521,29 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
         solver.resetStateToBeginningOfStep( domain );
 
         // perturb temperature in each cell
+#if defined(GEOS_USE_CUDA)
+        temp.move( hostMemorySpace, true );
+#endif
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
           temp[ei] += dT;
         } );
 
+#if defined(GEOS_USE_CUDA)
+        temp.move( parallelDeviceMemorySpace, false );
+#endif
+
         // recompute component fractions
         solver.updateFluidState( subRegion );
 
         // check values in each cell
+#if defined(GEOS_USE_CUDA)
+        temp.move( hostMemorySpace, false );
+        temp_n.move( hostMemorySpace, false );
+        phaseMob.move( hostMemorySpace, false );
+        dPhaseMob.move( hostMemorySpace, false );
+#endif
         forAll< serialPolicy >( subRegion.size(), [=, &phaseMobOrig] ( localIndex const ei )
         {
           SCOPED_TRACE( "Element " + std::to_string( ei ) );
