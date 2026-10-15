@@ -91,9 +91,10 @@ public:
     StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
 
-  using FractureApertureAccessors =
-    StencilAccessors< fields::flow::hydraulicAperture,
-                      fields::flow::dHydraulicAperture_dNormalJump >;
+  /// Hydraulic aperture and its derivative wrt the normal jump, held by the mass-flux base kernel
+  using FractureApertureAccessors = typename Base::FractureApertureAccessors;
+  using Base::m_hydraulicAperture;
+  using Base::m_dHydraulicAperture_dNormalJump;
 
 
   ThermalConformingFracturesConnectorBasedAssemblyKernel( globalIndex const rankOffset,
@@ -119,6 +120,7 @@ public:
             singlePhaseFluidAccessors,
             permeabilityAccessors,
             edfmPermeabilityAccessors,
+            fractureApertureAccessors,
             dt,
             localMatrix,
             localRhs,
@@ -127,8 +129,6 @@ public:
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
-    m_hydraulicAperture( fractureApertureAccessors.get( fields::flow::hydraulicAperture {} ) ),
-    m_dHydraulicAperture_dNormalJump( fractureApertureAccessors.get( fields::flow::dHydraulicAperture_dNormalJump {} ) ),
     m_dR_dAper( dR_dAper ),
     m_dR_dAperEnergyOffset( dR_dAperEnergyOffset )
   {}
@@ -401,10 +401,6 @@ private:
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
-
-  /// Views on the hydraulic aperture and its derivative wrt the normal jump
-  ElementViewConst< arrayView1d< real64 const > > const m_hydraulicAperture;
-  ElementViewConst< arrayView1d< real64 const > > const m_dHydraulicAperture_dNormalJump;
 
   /// View on dR_dAper
   CRSMatrixView< real64, localIndex const > m_dR_dAper;

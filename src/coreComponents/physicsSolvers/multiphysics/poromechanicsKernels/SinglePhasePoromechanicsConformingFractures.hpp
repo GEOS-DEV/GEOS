@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -51,6 +52,8 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
   using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
                                                                   fields::permeability::dPerm_dDispJump >;
+  using FractureApertureAccessors = StencilAccessors< fields::flow::hydraulicAperture,
+                                                      fields::flow::dHydraulicAperture_dNormalJump >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -84,6 +87,7 @@ public:
                                 SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
                                 PermeabilityAccessors const & permeabilityAccessors,
                                 FracturePermeabilityAccessors const & fracturePermeabilityAccessors,
+                                FractureApertureAccessors const & fractureApertureAccessors,
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
@@ -98,7 +102,9 @@ public:
             localMatrix,
             localRhs ),
     m_dR_dAper( dR_dAper ),
-    m_dPerm_dDispJump( fracturePermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
+    m_dPerm_dDispJump( fracturePermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) ),
+    m_hydraulicAperture( fractureApertureAccessors.get( fields::flow::hydraulicAperture {} ) ),
+    m_dHydraulicAperture_dNormalJump( fractureApertureAccessors.get( fields::flow::dHydraulicAperture_dNormalJump {} ) )
   {}
 
 
@@ -128,6 +134,12 @@ public:
 
     /// Derivatives of transmissibility with respect to the dispJump
     real64 dTrans_dDispJump[maxNumConns][2][3]{};
+
+    /// t_k * d(transmissibility)/d(t_k) for each half-transmissibility t_k = weight_k * permeability_k
+    /// (sign convention of the stencil: entry [1] is negated). Since the stencil weight is linear in the
+    /// hydraulic aperture, multiplying by d(ln hydraulicAperture_k)/d(normalJump_k) gives the weight part of
+    /// the aperture derivative, which dTrans_dDispJump (permeability part only) does not carry.
+    real64 dTrans_dLogAperture[maxNumConns][2]{};
   };
 
   /**
@@ -174,6 +186,15 @@ public:
                                      stack.dTrans_dPres,
                                      stack.dTrans_dDispJump );
 
+    // Passing the permeability as "dCoeff" makes the stencil return t_k * dT/dt_k, used below for the
+    // aperture derivative of the stencil weights (see addHydraulicApertureContribution).
+    real64 transmissibility[maxNumConns][2]{};
+    m_stencilWrapper.computeWeights( iconn,
+                                     m_permeability,
+                                     m_permeability,
+                                     transmissibility,
+                                     stack.dTrans_dLogAperture );
+
 
     localIndex k[2];
     localIndex connectionIndex = 0;
@@ -213,9 +234,23 @@ public:
         stack.localFlux[k[0]* numDof] += m_dt * fluxVal;
         stack.localFlux[k[1]* numDof] -= m_dt * fluxVal;
 
+        // trans = weight(hydraulicAperture) * perm(hydraulicAperture): permeability part (dTrans_dDispJump)
+        // plus stencil-weight part (dTrans_dLogAperture * d(ln hydraulicAperture)/d(normalJump))
+        real64 dLogAperture_dNormalJump[2]{};
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          real64 const hydraulicAperture = m_hydraulicAperture[regionIndex[ke]][subRegionIndex[ke]][elementIndex[ke]];
+          if( hydraulicAperture > 0.0 )
+          {
+            dLogAperture_dNormalJump[ke] = m_dHydraulicAperture_dNormalJump[regionIndex[ke]][subRegionIndex[ke]][elementIndex[ke]] / hydraulicAperture;
+          }
+        }
+
         real64 dFlux_dAper[2] = {0.0, 0.0};
-        dFlux_dAper[0] =  m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][0][0];
-        dFlux_dAper[1] = -m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][1][0];
+        dFlux_dAper[0] =  m_dt * dFlux_dTrans * ( stack.dTrans_dDispJump[connectionIndex][0][0]
+                                                  + stack.dTrans_dLogAperture[connectionIndex][0] * dLogAperture_dNormalJump[0] );
+        dFlux_dAper[1] = -m_dt * dFlux_dTrans * ( stack.dTrans_dDispJump[connectionIndex][1][0]
+                                                  + stack.dTrans_dLogAperture[connectionIndex][1] * dLogAperture_dNormalJump[1] );
 
         stack.localFluxJacobian[k[0]*numEqn][k[0]* numDof] += dFlux_dP[0] * m_dt;
         stack.localFluxJacobian[k[0]*numEqn][k[1]* numDof] += dFlux_dP[1] * m_dt;
@@ -266,6 +301,12 @@ private:
   CRSMatrixView< real64, localIndex const > m_dR_dAper;
 
   ElementViewConst< arrayView4d< real64 const > > const m_dPerm_dDispJump;
+
+protected:
+
+  /// Views on the hydraulic aperture and its derivative wrt the normal jump
+  ElementViewConst< arrayView1d< real64 const > > const m_hydraulicAperture;
+  ElementViewConst< arrayView1d< real64 const > > const m_dHydraulicAperture_dNormalJump;
 };
 
 
@@ -314,9 +355,10 @@ public:
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
     typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
+    typename kernelType::FractureApertureAccessors fractureApertureAccessors( elemManager, solverName );
 
     kernelType kernel( rankOffset, stencilWrapper, flowDofNumberAccessor,
-                       flowAccessors, fluidAccessors, permAccessors, fracPermAccessors,
+                       flowAccessors, fluidAccessors, permAccessors, fracPermAccessors, fractureApertureAccessors,
                        dt, localMatrix, localRhs, dR_dAper );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
