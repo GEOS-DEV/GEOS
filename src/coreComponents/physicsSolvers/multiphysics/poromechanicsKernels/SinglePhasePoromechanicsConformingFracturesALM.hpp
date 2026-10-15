@@ -262,7 +262,10 @@ public:
         stack.dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
         stack.dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
 
-        kernelOp( k, regionIndex, subRegionIndex, elementIndex, iconn, alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP );
+        // per-connection quantities (incl. this connection's aperture derivative of the flux, before it is
+        // accumulated over the connections of the stencil), e.g. for the thermal terms at fracture junctions
+        kernelOp( k, regionIndex, subRegionIndex, elementIndex, iconn, connectionIndex,
+                  alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP, dFlux_dAper );
         connectionIndex++;
       }
     }

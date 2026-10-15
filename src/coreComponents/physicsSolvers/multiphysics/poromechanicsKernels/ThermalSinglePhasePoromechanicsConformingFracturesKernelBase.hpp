@@ -150,10 +150,6 @@ public:
     GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
-      energyFlux( 0.0 ),
-      dEnergyFlux_dTrans( 0.0 ),
-      dEnergyFlux_dP( size ),
-      dEnergyFlux_dT( size ),
       dEnergyFlux_dAperture( numElems, size )
     {}
     using SinglePhaseFVMBase::StackVariables::stencilSize;
@@ -174,16 +170,9 @@ public:
     /// hydraulic aperture, multiplying by d(ln hydraulicAperture_k)/d(normalJump_k) gives the aperture derivative.
     real64 dThermalTrans_dLogAperture[maxNumConns][2]{};
 
-    // Energy fluxes and derivatives
+    // The energy flux and its p/T derivatives are per connection (local to computeFlux), so that
+    // stencils with more than two elements (fracture junctions) are handled correctly.
 
-    /// Energy fluxes
-    real64 energyFlux;
-    /// Derivative of the Energy fluxes wrt transmissibility
-    real64 dEnergyFlux_dTrans;
-    /// Derivatives of energy fluxes wrt pressure
-    stackArray1d< real64, maxStencilSize > dEnergyFlux_dP;
-    /// Derivatives of energy fluxes wrt temperature
-    stackArray1d< real64, maxStencilSize > dEnergyFlux_dT;
     /// Derivatives of the (advective + conductive) energy flux wrt aperture (i.e. wrt the normal
     /// component of the displacement jump, same convention as dFlux_dAperture), same shape/convention as
     /// dFlux_dAperture.
@@ -202,29 +191,42 @@ public:
                     StackVariables & stack ) const
 
   {
-    // ***********************************************
-    // First, we call the base computeFlux to compute:
-    //  1) compFlux and its derivatives (including derivatives wrt temperature),
-    //  2) enthalpy part of energyFlux  and its derivatives (including derivatives wrt temperature)
-    //
-    // Computing dFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
-    // such as potGrad, fluxVal, and the indices of the upwind cell
-    // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
+    // Thermal transmissibilities of all the connections of this face (conductivity treated explicitly).
+    // Passing the conductivity as "dCoeff" makes the stencil return t_k * dT/dt_k (t_k = weight_k * conductivity_k),
+    // used below for the aperture derivative of the conductive flux.
+    m_stencilWrapper.computeWeights( iconn,
+                                     m_thermalConductivity,
+                                     m_thermalConductivity,
+                                     stack.thermalTransmissibility,
+                                     stack.dThermalTrans_dLogAperture );
+
+    // The base computeFlux computes the mass flux and its derivatives connection by connection, and calls the
+    // lambda below for each connection (pair k[0], k[1] of the stencil), with the quantities of that connection
+    // only (potGrad, upwinding, dFlux_dAper, ...). The energy flux of the connection (advective + conductive)
+    // and its derivatives are computed and assembled there, so that junctions (> 2 elements) are handled.
     Base::computeFlux( iconn, stack, [&] ( localIndex const (&k)[2],
                                            localIndex const (&seri)[2],
                                            localIndex const (&sesri)[2],
                                            localIndex const (&sei)[2],
                                            localIndex const,
+                                           localIndex const connectionIndex,
                                            real64 const & alpha,
                                            real64 const & mobility,
                                            real64 const & potGrad,
                                            real64 const & massFlux,
                                            real64 const & dMassFlux_dTrans,
-                                           real64 const (&dMassFlux_dP)[2] )
+                                           real64 const (&dMassFlux_dP)[2],
+                                           real64 const (&dMassFlux_dAper)[2] )
     {
-      real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
+      real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
+
+      real64 energyFlux = 0.0;
+      real64 dEnergyFlux_dTrans = 0.0;
+      real64 dEnergyFlux_dP[2]{};
+      real64 dEnergyFlux_dT[2]{};
       real64 dMassFlux_dT[2]{};
 
+      // ***** Advective (enthalpy-carried) part *****
       singlePhaseFluxKernelsHelper::computeEnthalpyFlux( seri, sesri, sei,
                                                          trans,
                                                          m_enthalpy,
@@ -239,13 +241,14 @@ public:
                                                          dMassFlux_dTrans,
                                                          dMassFlux_dP,
                                                          dMassFlux_dT,
-                                                         stack.energyFlux,
-                                                         stack.dEnergyFlux_dTrans,
-                                                         stack.dEnergyFlux_dP,
-                                                         stack.dEnergyFlux_dT );
+                                                         energyFlux,
+                                                         dEnergyFlux_dTrans,
+                                                         dEnergyFlux_dP,
+                                                         dEnergyFlux_dT );
 
-      // Advective (enthalpy-carried) contribution to dEnergyFlux/dAperture: energyFlux =
-      // massFlux * enthalpyTimesMobWeight, and enthalpy does not depend on aperture (for now)
+      // Advective contribution to dEnergyFlux/dAperture: energyFlux = massFlux * enthalpyTimesMobWeight,
+      // and enthalpy does not depend on aperture (for now). dMassFlux_dAper is this connection's only
+      // (already multiplied by dt), with the same sign convention as the mass flux.
       {
         real64 enthalpyTimesMobWeight = 0.0;
         if( alpha <= 0.0 || alpha >= 1.0 )
@@ -262,10 +265,10 @@ public:
           }
         }
 
-        stack.dEnergyFlux_dAperture[k[0]][k[0]] += stack.dFlux_dAperture[k[0]][k[0]] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[0]][k[1]] += stack.dFlux_dAperture[k[0]][k[1]] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[1]][k[0]] += stack.dFlux_dAperture[k[1]][k[0]] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[1]][k[1]] += stack.dFlux_dAperture[k[1]][k[1]] * enthalpyTimesMobWeight;
+        stack.dEnergyFlux_dAperture[k[0]][k[0]] += dMassFlux_dAper[0] * enthalpyTimesMobWeight;
+        stack.dEnergyFlux_dAperture[k[0]][k[1]] += dMassFlux_dAper[1] * enthalpyTimesMobWeight;
+        stack.dEnergyFlux_dAperture[k[1]][k[0]] -= dMassFlux_dAper[0] * enthalpyTimesMobWeight;
+        stack.dEnergyFlux_dAperture[k[1]][k[1]] -= dMassFlux_dAper[1] * enthalpyTimesMobWeight;
       }
 
       // add dMassFlux_dT to localFluxJacobian
@@ -275,80 +278,50 @@ public:
         stack.localFluxJacobian[k[0]*numEqn][localDofIndexTemp] += m_dt * dMassFlux_dT[ke];
         stack.localFluxJacobian[k[1]*numEqn][localDofIndexTemp] -= m_dt * dMassFlux_dT[ke];
       }
-    } );
 
-    // *****************************************************
-    // Computation of the conduction term in the energy flux
-    // Note that the enthalpy term in the energy was computed above
-    // Note that this term is computed using an explicit treatment of conductivity for now
+      // ***** Conductive part (explicit conductivity) *****
+      real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
+      singlePhaseFluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, energyFlux, dEnergyFlux_dT );
 
-    // Step 1: compute the thermal transmissibilities at this face
-    // Passing the conductivity as "dCoeff" makes the stencil return t_k * dT/dt_k (t_k = weight_k * conductivity_k),
-    // used below for the aperture derivative of the conductive flux.
-    m_stencilWrapper.computeWeights( iconn,
-                                     m_thermalConductivity,
-                                     m_thermalConductivity,
-                                     stack.thermalTransmissibility,
-                                     stack.dThermalTrans_dLogAperture );
-
-    localIndex k[2];
-    localIndex connectionIndex = 0;
-
-    for( k[0] = 0; k[0] < stack.numFluxElems; ++k[0] )
-    {
-      for( k[1] = k[0] + 1; k[1] < stack.numFluxElems; ++k[1] )
+      // Conductive contribution to dEnergyFlux/dAperture (same convention as dFlux_dAperture, i.e. wrt the
+      // normal jump): conductiveFlux = Trans_th * ( T_0 - T_1 ), and Trans_th depends linearly on the hydraulic aperture.
       {
-        real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
+        real64 const dConductiveFlux_dTrans = m_temp[seri[0]][sesri[0]][sei[0]] - m_temp[seri[1]][sesri[1]][sei[1]];
 
-        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
-        localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
-        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
-
-        // Step 2: compute temperature difference at the interface
-        singlePhaseFluxKernelsHelper::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
-
-        // Conductive contribution to dEnergyFlux/dAperture (same convention as dFlux_dAperture, i.e. wrt the
-        // normal jump): conductiveFlux = Trans_th * ( T_0 - T_1 ), and Trans_th depends linearly on the hydraulic aperture.
-        {
-          real64 const dConductiveFlux_dTrans = m_temp[seri[0]][sesri[0]][sei[0]] - m_temp[seri[1]][sesri[1]][sei[1]];
-
-          real64 dLogAperture_dNormalJump[2]{};
-          for( integer ke = 0; ke < 2; ++ke )
-          {
-            real64 const hydraulicAperture = m_hydraulicAperture[seri[ke]][sesri[ke]][sei[ke]];
-            if( hydraulicAperture > 0.0 )
-            {
-              dLogAperture_dNormalJump[ke] = m_dHydraulicAperture_dNormalJump[seri[ke]][sesri[ke]][sei[ke]] / hydraulicAperture;
-            }
-          }
-
-          real64 const dCondFlux_dAper[2] =
-          {  m_dt * dConductiveFlux_dTrans * stack.dThermalTrans_dLogAperture[connectionIndex][0] * dLogAperture_dNormalJump[0],
-             -m_dt * dConductiveFlux_dTrans * stack.dThermalTrans_dLogAperture[connectionIndex][1] * dLogAperture_dNormalJump[1] };
-
-          stack.dEnergyFlux_dAperture[k[0]][k[0]] += dCondFlux_dAper[0];
-          stack.dEnergyFlux_dAperture[k[0]][k[1]] += dCondFlux_dAper[1];
-          stack.dEnergyFlux_dAperture[k[1]][k[0]] -= dCondFlux_dAper[0];
-          stack.dEnergyFlux_dAperture[k[1]][k[1]] -= dCondFlux_dAper[1];
-        }
-
-        // add energyFlux and its derivatives to localFlux and localFluxJacobian
-        stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;
-        stack.localFlux[k[1]*numEqn + numEqn - 1] -= m_dt * stack.energyFlux;
-
+        real64 dLogAperture_dNormalJump[2]{};
         for( integer ke = 0; ke < 2; ++ke )
         {
-          integer const localDofIndexPres = k[ke] * numDof;
-          stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexPres] =  m_dt * stack.dEnergyFlux_dP[ke];
-          stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
-          integer const localDofIndexTemp = localDofIndexPres + 1;
-          stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexTemp] =  m_dt * stack.dEnergyFlux_dT[ke];
-          stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
+          real64 const hydraulicAperture = m_hydraulicAperture[seri[ke]][sesri[ke]][sei[ke]];
+          if( hydraulicAperture > 0.0 )
+          {
+            dLogAperture_dNormalJump[ke] = m_dHydraulicAperture_dNormalJump[seri[ke]][sesri[ke]][sei[ke]] / hydraulicAperture;
+          }
         }
 
-        connectionIndex++;
+        real64 const dCondFlux_dAper[2] =
+        {  m_dt * dConductiveFlux_dTrans * stack.dThermalTrans_dLogAperture[connectionIndex][0] * dLogAperture_dNormalJump[0],
+           -m_dt * dConductiveFlux_dTrans * stack.dThermalTrans_dLogAperture[connectionIndex][1] * dLogAperture_dNormalJump[1] };
+
+        stack.dEnergyFlux_dAperture[k[0]][k[0]] += dCondFlux_dAper[0];
+        stack.dEnergyFlux_dAperture[k[0]][k[1]] += dCondFlux_dAper[1];
+        stack.dEnergyFlux_dAperture[k[1]][k[0]] -= dCondFlux_dAper[0];
+        stack.dEnergyFlux_dAperture[k[1]][k[1]] -= dCondFlux_dAper[1];
       }
-    }
+
+      // ***** Assemble the energy flux of this connection and its derivatives *****
+      stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * energyFlux;
+      stack.localFlux[k[1]*numEqn + numEqn - 1] -= m_dt * energyFlux;
+
+      for( integer ke = 0; ke < 2; ++ke )
+      {
+        integer const localDofIndexPres = k[ke] * numDof;
+        stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexPres] += m_dt * dEnergyFlux_dP[ke];
+        stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexPres] -= m_dt * dEnergyFlux_dP[ke];
+        integer const localDofIndexTemp = localDofIndexPres + 1;
+        stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexTemp] += m_dt * dEnergyFlux_dT[ke];
+        stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexTemp] -= m_dt * dEnergyFlux_dT[ke];
+      }
+    } );
   }
 
   /**

@@ -686,27 +686,24 @@ protected:
       forAll< serialPolicy >( stencil.size(), [=, this] ( localIndex const iconn )
       {
         localIndex const numFluxElems = stencil.stencilSize( iconn );
+        typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-
-
-        // A fracture connector has to be an edge shared by two faces
-        if( numFluxElems == 2 )
+        // A fracture connector is an edge shared by two faces, or by more at a fracture junction:
+        // the flow rows of each element k0 couple to the (nodal/bubble) displacements of every other
+        // element k1 of the connector (the element's own displacements come from the dofManager coupling).
+        for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
         {
-          typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+          localIndex const rowIndex = flowDofNumber[sei[iconn][k0]] - rankOffset;
+          if( rowIndex < 0 || rowIndex >= pattern.numRows() )
+            continue;
 
-          // First index: face element. Second index: node
-          for( localIndex kf = 0; kf < 2; ++kf )
+          for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
           {
-            // Set row DOF index
-            // Note that the 1-kf index is intentional, as this is coupling the pressure of one face cell
-            // to the nodes of the adjacent cell
-            localIndex const rowIndex = flowDofNumber[sei[iconn][1-kf]] - rankOffset;
+            if( k1 == k0 )
+              continue;
 
-            if( rowIndex >= 0 && rowIndex < pattern.numRows() )
             {
-
-              // Get fracture, face and region/subregion/element indices (for elements on both sides)
-              localIndex const fractureIndex = sei[iconn][kf];
+              localIndex const fractureIndex = sei[iconn][k1];
 
               // Loop over the two sides of each fracture element
               for( localIndex kf1 = 0; kf1 < 2; ++kf1 )
@@ -794,9 +791,9 @@ protected:
 
       // Layout: numComp mass-balance rows per fracture element, then (when thermal) one
       // energy-balance row per fracture element appended as a second block, not interleaved.
-      // Only the advective (enthalpy-carried) energy contribution is assembled; the conductive
-      // term's sensitivity is not modeled (no dConductivity/dDispJump constitutive derivative yet).
-      // One column per fracture element.
+      // The energy rows carry the advective (enthalpy-carried) and conductive contributions; the
+      // latter through the aperture dependence of the stencil weights only (the conductivity itself
+      // has no dConductivity/dDispJump constitutive derivative). One column per fracture element.
       localIndex const numElems = fractureSubRegion.size();
       localIndex const numMassRows = numElems * numComp;
       m_derivativeFluxResidual_dApertureEnergyOffset = this->m_isThermal ? numMassRows : -1;
