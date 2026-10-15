@@ -203,6 +203,31 @@ void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPr
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   validateTetrahedralQuadrature( domain.getMeshBodies() );
+  validateFaceBubbleSolidModel( domain.getMeshBodies() );
+}
+
+void SolidMechanicsAugmentedLagrangianContact::validateFaceBubbleSolidModel( Group & meshBodies )
+{
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
+                                                   MeshLevel const & mesh,
+                                                   string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             CellElementSubRegion const & subRegion )
+    {
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+      constitutive::ConstitutiveBase const & solid = subRegion.getConstitutiveModel( solidName );
+
+      // exact match: models deriving from ElasticIsotropic would pass the kernel dispatch silently
+      GEOS_THROW_IF( solid.getCatalogName() != ElasticIsotropic::catalogName(),
+                     GEOS_FMT( "{}: the face-bubble contributions of the augmented Lagrangian contact are only implemented "
+                               "for {} solids, but region '{}' uses '{}' of type {}.",
+                               getName(), ElasticIsotropic::catalogName(), subRegion.getParent().getParent().getName(),
+                               solidName, solid.getCatalogName() ),
+                     InputError );
+    } );
+  } );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::validateTetrahedralQuadrature( Group & meshBodies )
