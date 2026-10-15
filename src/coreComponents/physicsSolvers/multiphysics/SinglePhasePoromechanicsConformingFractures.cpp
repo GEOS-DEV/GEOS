@@ -100,11 +100,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
                                                             [&]( localIndex const,
                                                                  FaceElementSubRegion const & subRegion )
   {
-    string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
-    SingleFluidBase const & fluid = this->template getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
-    arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & density = fluid.density();
-
     arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
 
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
@@ -112,21 +107,30 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
-    // When thermal, the energy accumulation term energy = vol * ( phi*rho*u_f + (1-phi)*u_rock ),
-    // is dependent on the displacement through the volume, so we need to compute energy/vol for each element
+    // vol = hydraulicAperture * area, so dVol/du = nodalArea * dHydraulicAperture_dNormalJump * dNormalJump/du
+    arrayView1d< real64 const > const dHydraulicAperture_dNormalJump = subRegion.getField< flow::dHydraulicAperture_dNormalJump >();
+
+    // mass = vol * phi*rho and, when thermal, energy = vol * ( phi*rho*u_f + (1-phi)*u_rock ),
+    // depend on the displacement through the volume, so we need mass/vol and energy/vol for each element
+    array1d< real64 > massPerVolume( subRegion.size() );
     array1d< real64 > energyPerVolume( subRegion.size() );
-    if( this->m_isThermal )
     {
-      arrayView1d< real64 const > const energy = subRegion.getField< flow::energy >();
+      arrayView1d< real64 const > const mass = subRegion.getField< flow::mass >();
       arrayView1d< real64 const > const deltaVolume = subRegion.getField< flow::deltaVolume >();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-      // energy.move( hostMemorySpace, false );
-      // deltaVolume.move( hostMemorySpace, false );
-      // volume.move( hostMemorySpace, false );
       for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
       {
         real64 const vol = volume[kfe] + deltaVolume[kfe];
-        energyPerVolume[kfe] = vol > 0.0 ? energy[kfe] / vol : 0.0;
+        massPerVolume[kfe] = vol > 0.0 ? mass[kfe] / vol : 0.0;
+      }
+      if( this->m_isThermal )
+      {
+        arrayView1d< real64 const > const energy = subRegion.getField< flow::energy >();
+        for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
+        {
+          real64 const vol = volume[kfe] + deltaVolume[kfe];
+          energyPerVolume[kfe] = vol > 0.0 ? energy[kfe] / vol : 0.0;
+        }
       }
     }
 
@@ -149,8 +153,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
       bool const isFractureOpen = ( fractureState[kfe] == FractureState::Open );
 
-      // Accumulation derivative
-      if( isFractureOpen )
+      // Accumulation derivative: zero when the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis)
+      if( !isZero( dHydraulicAperture_dNormalJump[kfe] ) )
       {
         for( localIndex kf=0; kf<2; ++kf )
         {
@@ -177,9 +181,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
                                                         + LvArray::integerConversion< globalIndex >( i );
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
-              //reminder: the volume of the fault element is the area of the fracture times the aperture, so dVol_dAperture is nodalArea
-              dVol_dU( kf*3*numNodesPerFace + 3*a+i ) = nodalArea[a] * dAper_dU;
-              dRdU( kf*3*numNodesPerFace + 3*a+i ) = density[kfe][0] * dVol_dU( kf*3*numNodesPerFace + 3*a+i );
+              //reminder: the volume of the fault element is the area of the fracture times the hydraulic aperture,
+              // so dVol_dNormalJump is nodalArea * dHydraulicAperture_dNormalJump
+              dVol_dU( kf*3*numNodesPerFace + 3*a+i ) = nodalArea[a] * dHydraulicAperture_dNormalJump[kfe] * dAper_dU;
+              dRdU( kf*3*numNodesPerFace + 3*a+i ) = massPerVolume[kfe] * dVol_dU( kf*3*numNodesPerFace + 3*a+i );
             }
           }
         }
