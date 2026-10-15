@@ -299,11 +299,12 @@ public:
             }
           }
 
-          // (pressure_row, bubble_col): the matrix cell pressure couples to its 3 bubble DOFs (A_pb)
+          // (pressure_row, bubble_col): the matrix cell pressure couples to its 3 bubble DOFs (A_pb),
+          // and so does the energy row packed right after the mass rows when thermal (A_Tb)
           globalIndex const pRow = pressureDofNumber[k] - rankOffset;
           if( pRow >= 0 && pRow < rowLengths.size() )
           {
-            for( integer ic = 0; ic<numComp; ++ic )
+            for( integer ic = 0; ic < numComp + ( isThermal ? 1 : 0 ); ++ic )
               rowLengths[pRow + ic] += 3; // Three bubble DOFs
           }
         } );
@@ -361,13 +362,13 @@ public:
             }
           }
 
-          // (pressure_row, bubble_col) : A_pb -- transpose location
+          // (pressure_row, bubble_col) : A_pb -- transpose location, plus (temperature_row, bubble_col) : A_Tb
           globalIndex const pRow = pressureDofNumber[k] - rankOffset;
           if( pRow >= 0 && pRow < pattern.numRows() )
           {
             for( localIndex i = 0; i < 3; ++i )
             {
-              for( integer ic = 0; ic < numComp; ++ic )
+              for( integer ic = 0; ic < numComp + ( isThermal ? 1 : 0 ); ++ic )
                 pattern.insertNonZero( pRow + ic, bubbleDofNumber[faceIndex] + i );
             }
           }
