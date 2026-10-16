@@ -1,3 +1,5 @@
+.. _RelpermDriver:
+
 Relperm Driver
 ===============
 
@@ -11,7 +13,7 @@ Fitting relative permeability parameters to experimental or benchmark data often
 
 .. code-block:: sh
 
-   ./bin/geosx -i myRelpermTest.xml
+   geos -i myRelpermTest.xml
 
 This driver will work for any 2-phase or 3-phase relative permeability model enabled within GEOS.
 

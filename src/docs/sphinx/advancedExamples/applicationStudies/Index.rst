@@ -1,7 +1,0 @@
-.. _ApplicationStudies:
-
-
-Application Studies
-=================================
-
-

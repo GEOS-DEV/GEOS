@@ -1,23 +1,23 @@
-"""Post-traitement LOCAL du cas de consolidation thermo-poro-elastique.
+"""LOCAL post-processing of the thermo-poro-elastic consolidation case.
 
-A executer a la main, dans le repertoire ou GEOS a tourne (celui qui contient les .hdf5) :
+To be run by hand, in the directory where GEOS was run (the one containing the .hdf5 files):
 
-    python3 postprocessTests_tutorial_THM.py [-o <dossier_de_sortie>]
+    python3 postprocessTests_tutorial_THM.py [-o <output_directory>]
 
-Il lit les sorties TimeHistory de GEOS et calcule la solution analytique, puis ecrit deux
-fichiers CSV legers :
+It reads the GEOS TimeHistory outputs and computes the analytical solution, then writes two
+lightweight CSV files:
 
-    thermalConsolidation_geos.csv         resultats GEOS (une ligne par instant collecte)
-    thermalConsolidation_analytical.csv   solution analytique (100 instants log-espaces)
+    thermalConsolidation_geos.csv         GEOS results (one line per collected time)
+    thermalConsolidation_analytical.csv   analytical solution (100 log-spaced times)
 
-Ce sont ces deux CSV qui sont versionnes dans le depot. Les .hdf5 (plusieurs Mo) ne le sont
-pas : la figure de la documentation est produite par plotTests_tutorial_THM.py, qui ne lit
-que ces CSV et n'a besoin ni de h5py ni de mpmath.
+These two CSV files are the ones versioned in the repository. The .hdf5 files (several MB) are
+not: the documentation figure is produced by plotTests_tutorial_THM.py, which only reads these
+CSV files and needs neither h5py nor mpmath.
 
-Entrees attendues (sorties du cas benchmark) :
+Expected inputs (outputs of the benchmark case):
     pressureHistory.hdf5  temperatureHistory.hdf5  displacementHistory.hdf5  stressHistory.hdf5
-La sortie stress suppose que le XML active le Task 'stressCollection' et l'Output
-'stressHistoryOutput' (voir ThermoPoroElastic_consolidation_base.xml).
+The stress output assumes that the XML enables the 'stressCollection' Task and the
+'stressHistoryOutput' Output (see ThermoPoroElastic_consolidation_base.xml).
 """
 import argparse
 import os
@@ -29,7 +29,7 @@ import math
 
 
 # --------------------------------------------------------------------------------------
-# Solution analytique (identique a la version historique du script de tracé)
+# Analytical solution (identical to the historical version of the plotting script)
 # --------------------------------------------------------------------------------------
 def computePP(x, t, h, phi12, phi11, r11, r22):
     p = nsum(lambda m: 1 / ((2 * m + 1) * math.pi / 2 / h) *
@@ -56,7 +56,7 @@ def computeDisp(x, t, h, t1, t2, r11, r22, A, M):
 
 
 def analyticalParameters():
-    """Parametres du probleme et coefficients de la solution analytique."""
+    """Problem parameters and coefficients of the analytical solution."""
     E = 6.0e3
     nu = 0.4
     Ks = 1.0e27
@@ -111,11 +111,11 @@ def analyticalParameters():
 
 
 # --------------------------------------------------------------------------------------
-# Lecture des sorties GEOS
+# Reading of the GEOS outputs
 # --------------------------------------------------------------------------------------
 def _valid_length(t):
-    """Nombre d'echantillons reellement ecrits : le tampon HDF5 peut etre pre-alloue et
-    complete par des zeros, auquel cas le temps repasse a 0."""
+    """Number of samples actually written: the HDF5 buffer may be pre-allocated and
+    padded with zeros, in which case the time goes back to 0."""
     for j in range(1, len(t)):
         if t[j] < 1e-12:
             return j
@@ -123,7 +123,7 @@ def _valid_length(t):
 
 
 def _pick(coords, targets):
-    """Premier indice dont la cote y atteint chaque cible (meme regle que le script d'origine)."""
+    """First index whose y coordinate reaches each target (same rule as the original script)."""
     out = []
     for c in targets:
         idx = next((j for j in range(len(coords)) if coords[j] >= c), len(coords) - 1)
@@ -136,8 +136,8 @@ def readGeos(biot=1.0):
               "displacementHistory.hdf5", "stressHistory.hdf5"):
         if not os.path.exists(f):
             raise FileNotFoundError(
-                f"{f} introuvable. Lancez le cas benchmark (ThermoPoroElastic_consolidation_"
-                f"benchmark_fim.xml) et executez ce script dans le repertoire de sortie.")
+                f"{f} not found. Run the benchmark case (ThermoPoroElastic_consolidation_"
+                f"benchmark_fim.xml) and execute this script in its output directory.")
 
     hp = h5py.File("pressureHistory.hdf5", 'r')
     t = np.array(hp.get('pressure Time')).ravel()
@@ -162,19 +162,19 @@ def readGeos(biot=1.0):
     S = np.array(hs.get('averageStress'))[:n]
     isg = [int(np.argmin(np.abs(sc - d))) for d in (0.0, 4.2, 5.6)]
 
-    # contrainte TOTALE = averageStress - biot * pression, prises dans la MEME cellule
-    # (maillages identiques -> l'indice de cellule stress est valable pour la pression)
+    # TOTAL stress = averageStress - biot * pressure, taken in the SAME cell
+    # (identical meshes -> the stress cell index is valid for the pressure)
     sxx = [0.5 * (S[:, i, 0] + S[:, i, 2]) - biot * P[:, i] for i in isg]
     syy = S[:, isg[0], 1] - biot * P[:, isg[0]]
 
-    # positions reellement echantillonnees (utiles pour tracer des labels honnetes)
+    # actually sampled positions (useful to plot accurate labels)
     pos = dict(p=[float(pc[i]) for i in ip], T=[float(tc[i]) for i in it],
                u=[float(dc[i]) for i in iu], s=[float(sc[i]) for i in isg])
 
     cols = [t]
     cols += [P[:, i] for i in ip]
     cols += [T[:, i] for i in it]
-    cols += [-U[:, i, 1] for i in iu]          # signe du trace : tassement compte positif
+    cols += [-U[:, i, 1] for i in iu]          # plot sign: settlement counted positive
     cols += list(sxx) + [syy]
     return np.column_stack(cols), pos
 
@@ -184,8 +184,8 @@ def computeAnalytical(par):
     lamda, G, alpha, beta, F = par["lamda"], par["G"], par["alpha"], par["beta"], par["F"]
     time = np.logspace(-2, 5, 100, endpoint=True)
 
-    zp = [0.0, 0.6, 0.8]        # z/h pour pression, temperature et sigma_xx
-    zu = [0.2, 0.6, 1.0]        # z/h pour le deplacement (z = 1.4, 4.2, 7.0 m)
+    zp = [0.0, 0.6, 0.8]        # z/h for pressure, temperature and sigma_xx
+    zu = [0.2, 0.6, 1.0]        # z/h for the displacement (z = 1.4, 4.2, 7.0 m)
 
     P = np.empty((len(time), 3)); T = np.empty((len(time), 3))
     U = np.empty((len(time), 3)); SXX = np.empty((len(time), 3))
@@ -213,22 +213,22 @@ ANA_HEADER = ("time,p_zh0p0,p_zh0p6,p_zh0p8,T_zh0p0,T_zh0p6,T_zh0p8,"
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("-o", "--outdir", default=".", help="dossier ou ecrire les CSV")
+    ap.add_argument("-o", "--outdir", default=".", help="directory where the CSV files are written")
     args = ap.parse_args()
     os.makedirs(args.outdir, exist_ok=True)
 
     geos, pos = readGeos()
     fg = os.path.join(args.outdir, "thermalConsolidation_geos.csv")
     np.savetxt(fg, geos, delimiter=",", header=GEOS_HEADER, comments="", fmt="%.8e")
-    print(f"{fg}  ({geos.shape[0]} instants)")
-    print(f"  cotes echantillonnees  pression/temperature {pos['p']} m, "
-          f"deplacement {pos['u']} m, contrainte {pos['s']} m")
+    print(f"{fg}  ({geos.shape[0]} times)")
+    print(f"  sampled coordinates  pressure/temperature {pos['p']} m, "
+          f"displacement {pos['u']} m, stress {pos['s']} m")
 
     par = analyticalParameters()
     ana = computeAnalytical(par)
     fa = os.path.join(args.outdir, "thermalConsolidation_analytical.csv")
     np.savetxt(fa, ana, delimiter=",", header=ANA_HEADER, comments="", fmt="%.8e")
-    print(f"{fa}  ({ana.shape[0]} instants)")
+    print(f"{fa}  ({ana.shape[0]} times)")
 
 
 if __name__ == "__main__":

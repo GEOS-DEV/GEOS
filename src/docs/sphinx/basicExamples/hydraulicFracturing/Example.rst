@@ -28,7 +28,7 @@ This example uses a set of input files and table files located at:
 
   inputFiles/hydraulicFracturing
 
-Because the input files use the advanced xml features, they must be preprocessed using the geosx_xml_tools package.
+Because the input files use the advanced xml features, they must be preprocessed using the ``geos-xml-tools`` Python package (see :ref:`AdvancedXMLFeatures`).
 If you have not already done so, setup these features by following the instructions here: :ref:`AdvancedXMLFeatures` .
 
 ------------------------------------------------------------------
@@ -76,7 +76,7 @@ Parameters can be used throughout the input file (or an included input file) by 
 Barring any circular-definition errors, parameters can be used within other parameters.
 For example, see the parameter ``mu_upscaled``.
 The value of this parameter is a symbolic expression, which is denoted by the surrounding back-ticks, and is dependent upon two other parameters.
-During pre-processing, geosx_xml_tools will substitute the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
+During pre-processing, ``geos-xml-tools`` will substitute the parameter definitions, and evaluate the symbolic expression using a python-derived syntax.
 
 A number of the input parameters include optional unit definitions, which are denoted by the square brackets following a value.
 For example, the parameter ``t_max`` is used to set the maximum time for the simulation to 20 minutes.
@@ -240,23 +240,30 @@ The interpolation method used here is upper, so the values in the table indicate
 Running GEOS
 ---------------------------------
 
-Assuming that the preprocessing tools have been correctly installed (see :ref:`AdvancedXMLFeatures` ), there will be a script in the GEOS build/bin directory called `geosx_preprocessed`.
-Replacing `geosx` with `geosx_preprocessed` in an input command will automatically apply the preprocessor and send the results to GEOS.
+Because this example uses advanced XML features, the input file must be preprocessed before GEOS can read it.
+The preprocessing tools are installed by ``scripts/setupPythonEnvironment.bash`` (see :ref:`AdvancedXMLFeatures`),
+which also creates a wrapper script called ``geosx_preprocessed`` in the GEOS ``bin`` directory.
+This wrapper preprocesses the input file and then runs GEOS on the result, accepting the same arguments as ``geos``.
 
-Before beginning, we reccomend that you make a local copy of the example and its tables.
-Because we are using advanced xml features in this example, the input file must be pre-processed before running.
-For example, this will run the code on a debug partition using a total of 36 cores.
-
+Before beginning, we recommend that you make a local copy of the example and its tables.
+For example, this will run the code using a total of 36 MPI processes (6 x 2 x 3 partitions):
 
 .. code-block:: bash
 
-  cp -r examples/hydraulicFracturing ./hf_example
+  cp -r inputFiles/hydraulicFracturing ./hf_example
   cd hf_example
-  srun -n 36 -ppdebug geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -x 6 -y 2 -z 3 -o hf_results
+  mpirun -np 36 geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -x 6 -y 2 -z 3 -o hf_results
 
+On a cluster using SLURM, replace ``mpirun -np 36`` with ``srun -n 36`` and the partition options of your system.
+Alternatively, you can run the two steps separately:
 
-Note that as part of the automatic preprocessing step a compiled xml file is written to the disk (by default '[input_name].preprocessed').
-When developing an xml with advanced features, we reccomend that you check this file to ensure its accuracy.
+.. code-block:: bash
+
+  preprocess_xml -i heterogeneousInSitu_benchmark.xml -c heterogeneousInSitu_benchmark.xml.preprocessed
+  mpirun -np 36 geos -i heterogeneousInSitu_benchmark.xml.preprocessed -x 6 -y 2 -z 3 -o hf_results
+
+Note that as part of the automatic preprocessing step a compiled xml file is written to the disk (by default ``[input_name].preprocessed``).
+When developing an xml with advanced features, we recommend that you check this file to ensure its accuracy.
 
 
 ---------------------------------
@@ -296,7 +303,7 @@ To illustrate this feature, we can re-run the previous analysis with viscosity i
 
 .. code-block:: bash
 
-  srun -n 36 -ppdebug geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -p mu 0.005 -x 6 -y 2 -z 3 -o hf_results_lower_mu
+  mpirun -np 36 geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -p mu 0.005 -x 6 -y 2 -z 3 -o hf_results_higher_mu
 
 
 ------------------------------------------------------------------
