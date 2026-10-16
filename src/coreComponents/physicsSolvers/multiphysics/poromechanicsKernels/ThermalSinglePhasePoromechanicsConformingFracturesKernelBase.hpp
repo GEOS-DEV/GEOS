@@ -165,10 +165,14 @@ public:
 
     real64 thermalTransmissibility[maxNumConns][2]{};
 
-    /// t_k * d(thermalTransmissibility)/d(t_k) for each half-transmissibility t_k = weight_k * conductivity_k
-    /// (sign convention of the stencil: entry [1] is negated). Since the stencil weight is linear in the
-    /// hydraulic aperture, multiplying by d(ln hydraulicAperture_k)/d(normalJump_k) gives the aperture derivative.
-    real64 dThermalTrans_dLogAperture[maxNumConns][2]{};
+    /// t_j * d(thermalTransmissibility)/d(t_j) of each connection, for every half-transmissibility
+    /// t_j = weight_j * conductivity_j of the stencil (unsigned: derivative of entry [0]). Since the stencil weight is
+    /// linear in the hydraulic aperture, multiplying by d(ln hydraulicAperture_j)/d(normalJump_j) gives the aperture
+    /// derivative. At a fracture junction it also involves the elements the connection does not link.
+    real64 dThermalTrans_dLogHalfTrans[maxNumConns][maxNumElems]{};
+
+    /// d(ln hydraulicAperture_j)/d(normalJump_j) for every element j of the stencil
+    real64 dLogAperture_dNormalJump[maxNumElems]{};
 
     // The energy flux and its p/T derivatives are per connection (local to computeFlux), so that
     // stencils with more than two elements (fracture junctions) are handled correctly.
@@ -192,13 +196,20 @@ public:
 
   {
     // Thermal transmissibilities of all the connections of this face (conductivity treated explicitly).
-    // Passing the conductivity as "dCoeff" makes the stencil return t_k * dT/dt_k (t_k = weight_k * conductivity_k),
-    // used below for the aperture derivative of the conductive flux.
-    m_stencilWrapper.computeWeights( iconn,
-                                     m_thermalConductivity,
-                                     m_thermalConductivity,
-                                     stack.thermalTransmissibility,
-                                     stack.dThermalTrans_dLogAperture );
+    // Their log-derivatives wrt the half-transmissibility of every element of the stencil (t_j = weight_j * conductivity_j)
+    // are used below for the aperture derivative of the conductive flux.
+    m_stencilWrapper.computeWeightsAndLogDerivatives( iconn,
+                                                      m_thermalConductivity,
+                                                      stack.thermalTransmissibility,
+                                                      stack.dThermalTrans_dLogHalfTrans );
+
+    for( localIndex j = 0; j < stack.numFluxElems; ++j )
+    {
+      real64 const hydraulicAperture = m_hydraulicAperture[m_seri[iconn][j]][m_sesri[iconn][j]][m_sei[iconn][j]];
+      stack.dLogAperture_dNormalJump[j] = ( hydraulicAperture > 0.0 )
+        ? m_dHydraulicAperture_dNormalJump[m_seri[iconn][j]][m_sesri[iconn][j]][m_sei[iconn][j]] / hydraulicAperture
+        : 0.0;
+    }
 
     // The base computeFlux computes the mass flux and its derivatives connection by connection, and calls the
     // lambda below for each connection (pair k[0], k[1] of the stencil), with the quantities of that connection
@@ -216,7 +227,7 @@ public:
                                            real64 const & massFlux,
                                            real64 const & dMassFlux_dTrans,
                                            real64 const (&dMassFlux_dP)[2],
-                                           real64 const (&dMassFlux_dAper)[2] )
+                                           real64 const (&dMassFlux_dAper)[maxNumElems] )
     {
       real64 const trans[2] = { stack.transmissibility[connectionIndex][0], stack.transmissibility[connectionIndex][1] };
 
@@ -248,7 +259,7 @@ public:
 
       // Advective contribution to dEnergyFlux/dAperture: energyFlux = massFlux * enthalpyTimesMobWeight,
       // and enthalpy does not depend on aperture (for now). dMassFlux_dAper is this connection's only
-      // (already multiplied by dt), with the same sign convention as the mass flux.
+      // (already multiplied by dt), with the same sign convention as the mass flux, for every element of the stencil.
       {
         real64 enthalpyTimesMobWeight = 0.0;
         if( alpha <= 0.0 || alpha >= 1.0 )
@@ -265,10 +276,11 @@ public:
           }
         }
 
-        stack.dEnergyFlux_dAperture[k[0]][k[0]] += dMassFlux_dAper[0] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[0]][k[1]] += dMassFlux_dAper[1] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[1]][k[0]] -= dMassFlux_dAper[0] * enthalpyTimesMobWeight;
-        stack.dEnergyFlux_dAperture[k[1]][k[1]] -= dMassFlux_dAper[1] * enthalpyTimesMobWeight;
+        for( localIndex j = 0; j < stack.numFluxElems; ++j )
+        {
+          stack.dEnergyFlux_dAperture[k[0]][j] += dMassFlux_dAper[j] * enthalpyTimesMobWeight;
+          stack.dEnergyFlux_dAperture[k[1]][j] -= dMassFlux_dAper[j] * enthalpyTimesMobWeight;
+        }
       }
 
       // add dMassFlux_dT to localFluxJacobian
@@ -288,24 +300,13 @@ public:
       {
         real64 const dConductiveFlux_dTrans = m_temp[seri[0]][sesri[0]][sei[0]] - m_temp[seri[1]][sesri[1]][sei[1]];
 
-        real64 dLogAperture_dNormalJump[2]{};
-        for( integer ke = 0; ke < 2; ++ke )
+        for( localIndex j = 0; j < stack.numFluxElems; ++j )
         {
-          real64 const hydraulicAperture = m_hydraulicAperture[seri[ke]][sesri[ke]][sei[ke]];
-          if( hydraulicAperture > 0.0 )
-          {
-            dLogAperture_dNormalJump[ke] = m_dHydraulicAperture_dNormalJump[seri[ke]][sesri[ke]][sei[ke]] / hydraulicAperture;
-          }
+          real64 const dCondFlux_dAper = m_dt * dConductiveFlux_dTrans
+                                         * stack.dThermalTrans_dLogHalfTrans[connectionIndex][j] * stack.dLogAperture_dNormalJump[j];
+          stack.dEnergyFlux_dAperture[k[0]][j] += dCondFlux_dAper;
+          stack.dEnergyFlux_dAperture[k[1]][j] -= dCondFlux_dAper;
         }
-
-        real64 const dCondFlux_dAper[2] =
-        {  m_dt * dConductiveFlux_dTrans * stack.dThermalTrans_dLogAperture[connectionIndex][0] * dLogAperture_dNormalJump[0],
-           -m_dt * dConductiveFlux_dTrans * stack.dThermalTrans_dLogAperture[connectionIndex][1] * dLogAperture_dNormalJump[1] };
-
-        stack.dEnergyFlux_dAperture[k[0]][k[0]] += dCondFlux_dAper[0];
-        stack.dEnergyFlux_dAperture[k[0]][k[1]] += dCondFlux_dAper[1];
-        stack.dEnergyFlux_dAperture[k[1]][k[0]] -= dCondFlux_dAper[0];
-        stack.dEnergyFlux_dAperture[k[1]][k[1]] -= dCondFlux_dAper[1];
       }
 
       // ***** Assemble the energy flux of this connection and its derivatives *****
