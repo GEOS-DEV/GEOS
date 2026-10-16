@@ -16,6 +16,42 @@ a ``Wrapper`` out of the data repository.
 
 Only Python 3 is supported.
 
+Building pygeosx
+----------------
+
+``pygeosx`` is not built by default. To build it, configure GEOS with ``-DENABLE_PYGEOSX=ON``
+(for instance in your host-config file). The build then creates a Python virtual environment in
+``<build-dir>/lib/PYGEOSX`` that contains the ``pygeosx`` and ``pylvarray`` modules; use the Python
+interpreter of this environment (``<build-dir>/lib/PYGEOSX/bin/python``) to run your scripts.
+
+Minimal example
+---------------
+
+The following script runs a GEOS input file from Python, with the same command-line arguments as the ``geos`` executable
+(e.g. ``mpirun -np 2 <build-dir>/lib/PYGEOSX/bin/python run.py -i input.xml -x 2``):
+
+.. code:: python
+
+  import sys
+  from mpi4py import MPI
+  import pygeosx
+
+  rank = MPI.COMM_WORLD.Get_rank()
+  problem = pygeosx.initialize(rank, sys.argv)
+  pygeosx.apply_initial_conditions()
+
+  # Advance the simulation one event-loop step at a time,
+  # with the opportunity to read or modify data in between
+  while pygeosx.run() != pygeosx.COMPLETED:
+      # the path depends on the names of the mesh, region and cell block in the input file
+      pressure = problem.get_wrapper("domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region1/elementSubRegions/cb1/pressure").value()
+      # ... inspect or modify the data here
+
+  pygeosx.finalize()
+
+The ``run`` function returns control to Python each time a ``Python`` output (see :ref:`OutputTasks`) is triggered by an event.
+More complete examples are given in the :ref:`AdvancedExamples` (pygeosx examples).
+
 Module Functions
 ----------------
 
@@ -185,16 +221,3 @@ code snippet, for instance, could segfault:
   my_array = pygeosx.get_wrapper("path").value()
   pygeosx.run()
   view = my_array.to_numpy() # segfault
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-

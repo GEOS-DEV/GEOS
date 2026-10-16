@@ -12,6 +12,16 @@ These solvers are designed to be coupled with the flow solvers.
 Their specific task is to implement the multi-segment well discretization using the fluid model used in the corresponding flow solver -- i.e., either single-phase flow or compositional multiphase flow.
 In particular, the perforation terms computed by the well solvers are a source/sink term for the discrete reservoir equations assembled by the flow solvers.
 
+In the input file, wells are handled by a ``WellManager`` solver.
+It contains one child block per well, of type ``CompositionalMultiphaseWell`` (or ``SinglePhaseWell`` for single-phase flow),
+and each well block in turn contains the operating constraints of the well (see :ref:`well_controls`).
+The ``WellManager`` is then coupled to the reservoir flow solver by a reservoir solver,
+``CompositionalMultiphaseReservoir`` (or ``SinglePhaseReservoir``), whose ``flowSolverName`` and ``wellSolverName`` attributes
+point to the flow solver and to the ``WellManager``, respectively.
+The geometry of each well (trajectory, radius, perforations) is defined in the ``Mesh`` block with an ``InternalWell`` or ``VTKWell``
+element, whose ``wellControlsName`` attribute points to the name of the corresponding well block, and whose ``wellRegionName``
+points to a ``WellElementRegion`` defined in the ``ElementRegions`` block.
+
 In the present description, we focus on the compositional multiphase well solver.
 The structure of the single-phase well solver is analogous and will not be described here for brevity.
 
@@ -71,25 +81,56 @@ In the current implementation of the well solver, we assume a hydrostatic equili
 where :math:`\rho_{m,(i,i+1)}` is the arithmetic average of the mixture densities evaluated in segments :math:`i` and :math:`i+1`.
 Pressure drop components due to friction and acceleration are not implemented at the moment.
 
-Pressure and Rate Controls
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _well_controls:
 
-The well solver supports two types of control, namely, pressure control and rate control.
+Well Controls and Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If pressure control is chosen, we add the following constraint for the pressure of the top segment of the well:
+The well is operated under a set of constraints, defined as child blocks of the well block.
+At any time, exactly one of them is *active* (it is the *control* of the well) and provides the control equation for the top segment;
+the other ones act as limits.
+
+If the well is controlled by its bottom-hole pressure (BHP), we add the following constraint for the pressure of the top segment of the well:
 
 .. math::
   p_0 - p^{target} = 0
 
-In this case, we check that at each iteration of the Newton solver, the rate at the top of the first segment is smaller than the maximum rate specified by the user.
-If this is not the case, we switch to rate control.
-
-If rate control is used, we add the following constraint for the rate at the top of the first segment, denoted by :math:`q_{(-1,0)}`:
+If the well is controlled by a rate, we add the following constraint for the rate at the top of the first segment, denoted by :math:`q_{(-1,0)}`:
 
 .. math::
   q_{(-1,0)} - q^{target} = 0
 
-For an injector well, if the pressure at the top segment becomes larger than the target pressure specified by the user, then we switch to pressure control. Similarly for a producer well, if the pressure at the top segment becomes smaller than the target pressure specified by the user, then we switch to pressure control.
+The available constraints are:
+
+================================================ ==================== ===================================================================
+Constraint                                       Well type            Meaning
+================================================ ==================== ===================================================================
+``MinimumBHPConstraint``                         producer             Lower limit on the bottom-hole pressure (``targetBHP``)
+``MaximumBHPConstraint``                         injector             Upper limit on the bottom-hole pressure (``targetBHP``)
+``ProductionPhaseVolumeRateConstraint``          producer             Limit on the volumetric rate of phase ``phaseName`` (``phaseRate``)
+``ProductionVolumeRateConstraint``               producer             Limit on the total volumetric rate (``volumeRate``)
+``ProductionMassRateConstraint``                 producer             Limit on the total mass rate (``massRate``)
+``InjectionVolumeRateConstraint``                injector             Limit on the total volumetric rate (``volumeRate``)
+``InjectionMassRateConstraint``                  injector             Limit on the total mass rate (``massRate``)
+``InjectionPhaseVolumeRateConstraint``           injector             Limit on the volumetric rate of phase ``phaseName`` (``phaseRate``)
+================================================ ==================== ===================================================================
+
+The BHP constraints require a ``referenceElevation``, the elevation at which the bottom-hole pressure is measured.
+The injection constraints also specify the composition (``injectionStream``, given as global component fractions)
+and the temperature (``injectionTemperature``) of the injected fluid.
+Each constraint value is either a constant (e.g. ``targetBHP``, ``volumeRate``) or a time-dependent function given
+by ``constraintScheduleTableName``; exactly one of the two must be provided.
+A constraint can be disabled with ``constraintActive="0"``.
+Rates are evaluated at reservoir conditions by default, or at surface conditions if ``useSurfaceConditions="1"``
+(using the ``surfacePressure`` and ``surfaceTemperature`` attributes of the well block).
+
+The attributes of the well block set the well ``type`` (``producer`` or ``injector``) and the initial control,
+``control``, which must be one of ``BHP``, ``phaseVolRate``, ``totalVolRate`` or ``massRate`` and must match one of the constraints
+(an injector cannot be controlled by ``phaseVolRate``).
+During the simulation, the well constraints are checked against the current solution: if the well violates one of
+its limits (for instance, the BHP of a rate-controlled producer drops below its ``MinimumBHPConstraint``), the well
+switches to that constraint, and the switch is reported in the log.
+The well can also be opened and shut in time using ``statusTableName``.
 
 To summarize, the compositional multiphase flow solver assembles a set of :math:`n_c+2` equations, i.e., :math:`n_c` mass conservation equations and 1 volume constraint equation in each segment, plus 1 pressure relation at the interface between a segment and the next segment in the direction of the well head.
 For the top segment, the pressure relation is replaced with the control equation.
@@ -125,14 +166,25 @@ Number of primary variables Variable type
 Parameters
 ================
 
-The following attributes are supported:
+The following attributes are supported by the ``WellManager``:
+
+.. include:: /docs/sphinx/datastructure/WellManager.rst
+
+The following attributes are supported by each ``CompositionalMultiphaseWell`` block:
 
 .. include:: /docs/sphinx/datastructure/CompositionalMultiphaseWell.rst
+
+The attributes of each constraint are listed in the :doc:`Datastructure Index </docs/sphinx/datastructure/CompleteXMLSchema>`.
 
 .. _well_input_example:
 
 Example
 =========================
+
+The following example defines two producers and one injector.
+The first producer starts under BHP control, with a limit on its oil rate;
+the second producer starts under oil rate control, with a minimum BHP;
+the injector starts under total volumetric rate control, with a maximum BHP.
 
 .. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseWell/compositional_multiphase_wells_2d.xml
   :language: xml
