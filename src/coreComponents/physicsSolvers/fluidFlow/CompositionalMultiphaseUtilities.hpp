@@ -182,8 +182,11 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numR
     {
       work[j] = mat[ind][j];
     }
-    for( integer i = ind; i > firstRow; --i )
+    integer const numIters = numRowsToShift - 1;
+    for( integer step = 0; step < numIters; ++step )
     {
+      integer const i = ind - step;
+
       for( integer j = 0; j < numColsInBlock; ++j )
       {
         mat[i][j] = mat[i-1][j];
