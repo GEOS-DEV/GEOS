@@ -106,8 +106,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
-    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
-
     // vol = hydraulicAperture * area, so dVol/du = nodalArea * dHydraulicAperture_dNormalJump * dNormalJump/du
     arrayView1d< real64 const > const dHydraulicAperture_dNormalJump = subRegion.getField< flow::dHydraulicAperture_dNormalJump >();
 
@@ -151,9 +149,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
       stackArray1d< real64, 2*3*m_maxFaceNodes > dRdU( 2*3*m_maxFaceNodes );
       stackArray1d< real64, 2*3*m_maxFaceNodes > dVol_dU( 2*3*m_maxFaceNodes );
-
-      bool const isFractureOpen = ( fractureState[kfe] == FractureState::Open );
-
+      //dHa/dU already set to zero for closed element no need for double testing
       // Accumulation derivative: zero when the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis)
       if( !isZero( dHydraulicAperture_dNormalJump[kfe] ) )
       {
@@ -264,7 +260,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
         return 2 * 3 * numNodesPerFace2;
       };
 
-      // Mass-balance flux derivative: a column is skipped only when both kfe and kfe2 are closed
+      // Mass-balance flux derivative (dR_dNormalJump already vanishes where the hydraulic aperture does not follow the jump)
       {
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
         localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
@@ -274,8 +270,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
         for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
         {
           localIndex const kfe2 = columns[kfe1];
-          if( !isFractureOpen && fractureState[kfe2] != FractureState::Open )
-            continue;
 
           localIndex const numUdofs2 = computeFluxDerivative( kfe2, values[kfe1] );
 
@@ -289,7 +283,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
         }
       }
 
-      // Energy-balance flux derivative (advective and conductive contributions), same gating
+      // Energy-balance flux derivative (advective and conductive contributions)
       if( this->m_isThermal )
       {
         localIndex const energyOffset = this->getDerivativeFluxResidual_dApertureEnergyOffset();
@@ -306,8 +300,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
           for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
           {
             localIndex const kfe2 = energyColumns[kfe1];
-            if( !isFractureOpen && fractureState[kfe2] != FractureState::Open )
-              continue;
 
             localIndex const numUdofs2 = computeFluxDerivative( kfe2, energyValues[kfe1] );
 

@@ -226,8 +226,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
   arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
-  arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
-
   // Get element area for proper scaling
   // Note: dAperturedU/dB are computed as (1/area) * unitNormal^T * Atu/Atb, i.e. d(normalJump)/du
   // For accumulation: vol = hydraulicAperture * area, so
@@ -271,8 +269,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     elemDOF[0] = presDofNumber[kfe];
 
     stackArray1d< real64, maxNumUdofs > dRdU( maxNumUdofs );
-
-    bool const isFractureOpen = ( fractureState[kfe] == FractureState::Open );
 
     // dVol/dNormalJump: zero when the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis)
     real64 const dVol_dNormalJump = area[kfe] * dHydraulicAperture_dNormalJump[kfe];
@@ -337,14 +333,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
     arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
 
-    for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
+    for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1)
     {
       real64 const dR_dAper = values[kfe1];
-      localIndex const kfe2 = columns[kfe1];
-
-      bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
-      if( !isOpen && !isFractureOpen )
-        continue;
+      localIndex const  kfe2 = columns[kfe1];
 
       localIndex const kf0_2 = elemsToFaces[kfe2][0];
       localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
@@ -442,10 +434,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       real64 const dR_dAper = values[kfe1];
       localIndex const kfe2 = columns[kfe1];
 
-      bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
-      if( !isOpen && !isFractureOpen )
-        continue;
-
       // Get DOF indices for bubble of element kfe2
       globalIndex bubbleDOF2[numBdofs];
       for( localIndex kf = 0; kf < 2; ++kf )
@@ -494,11 +482,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         {
           real64 const dREnergy_dAper = energyValues[kfe1];
           localIndex const kfe2 = energyColumns[kfe1];
-
-          bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
-          if( !isOpen && !isFractureOpen )
-            continue;
-
+        //dAperturedU and dAperturedB are set to zero for closed element through dHydraulicAperture_dNormalJump, so no need to check for closed elements here
           localIndex const kf0_2 = elemsToFaces[kfe2][0];
           localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
           localIndex const numUdofs2 = 2 * 3 * numNodesPerFace2;
@@ -536,10 +520,6 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         {
           real64 const dREnergy_dAper = energyValues[kfe1];
           localIndex const kfe2 = energyColumns[kfe1];
-
-          bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
-          if( !isOpen && !isFractureOpen )
-            continue;
 
           globalIndex bubbleDOF2Energy[numBdofs];
           for( localIndex kf = 0; kf < 2; ++kf )
