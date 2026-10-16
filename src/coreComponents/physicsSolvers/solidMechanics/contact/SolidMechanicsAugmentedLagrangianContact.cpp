@@ -1305,6 +1305,17 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
       real64 const slidingCheckTolerance = m_slidingCheckTolerance;
 
+      // Survive the normal traction through the checkConstraint to have correct opening dispatch later on 
+      array2d< real64 > checkTraction( subRegion.size(), 3 );
+      arrayView2d< real64 > const checkTraction_v = checkTraction.toView();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+      {
+        real64 const trialNormalTraction = traction_new_v[kfe][0];
+        checkTraction_v[kfe][0] = ( trialNormalTraction >= normalTractionTolerance[kfe] ) ? trialNormalTraction : traction[kfe][0];
+        checkTraction_v[kfe][1] = traction[kfe][1];
+        checkTraction_v[kfe][2] = traction[kfe][2];
+      } );
+
       constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
         using FrictionType = TYPEOFREF( castedFrictionLaw );
@@ -1314,7 +1325,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             frictionWrapper,
                                             ghostRank,
-                                            traction,
+                                            checkTraction_v,
                                             dispJump,
                                             deltaDispJump,
                                             normalTractionTolerance,
