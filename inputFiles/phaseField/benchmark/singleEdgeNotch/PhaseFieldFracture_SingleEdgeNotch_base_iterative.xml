@@ -3,6 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_PHASEFIELD_SOLVER -->
     <PhaseFieldFracture
       name="PhaseFieldSolve"
       solidSolverName="SolidMechSolve"
@@ -14,7 +15,9 @@
         lineSearchAction="None"
         subcycling="0"/>
     </PhaseFieldFracture>
+    <!-- SPHINX_PHASEFIELD_SOLVER_END -->
 
+    <!-- SPHINX_SOLID_SOLVER -->
     <SolidMechanicsLagrangianFEM
       name="SolidMechSolve"
       logLevel="1"
@@ -29,7 +32,9 @@
         krylovTol="1e-5"
         preconditionerType="amg"/>
     </SolidMechanicsLagrangianFEM>
+    <!-- SPHINX_SOLID_SOLVER_END -->
 
+    <!-- SPHINX_DAMAGE_SOLVER -->
     <PhaseFieldDamageFEM
       name="DamageSolve"
       discretization="FE1"
@@ -46,6 +51,7 @@
         solverType="gmres"
         preconditionerType="amg"/>
     </PhaseFieldDamageFEM>
+    <!-- SPHINX_DAMAGE_SOLVER_END -->
 
     <SurfaceGenerator
       name="SurfaceGen"
@@ -74,6 +80,7 @@
       materialList="{ concrete }"/>
   </ElementRegions>
 
+  <!-- SPHINX_MATERIAL -->
   <Constitutive>
     <DamageSpectralElasticIsotropic
       name="concrete"
@@ -87,7 +94,9 @@
       fractureModelType="Brittle"
       localDissipationOption="Quadratic"/>
   </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
 
+  <!-- SPHINX_LOADING -->
   <Functions>
     <TableFunction
       name="loadRamp"
@@ -95,4 +104,5 @@
       coordinates="{ 0.0, 1600.0 }"
       values="{ 0.0, 1600.0 }"/>
   </Functions>
+  <!-- SPHINX_LOADING_END -->
 </Problem>

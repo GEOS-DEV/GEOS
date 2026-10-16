@@ -21,3 +21,5 @@ Validation and Verification Studies
   
    thermoPoromechanics/Index
 
+   phaseField/Index
+
