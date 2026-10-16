@@ -80,6 +80,14 @@ public:
                                      real64 const & dt,
                                      DomainPartition & domain ) override final;
 
+  /**
+   * @brief Rewind the contact state to the beginning of the time step (e.g. on a time-step cut):
+   *        nodal and bubble displacements, tractions, iterative penalty coefficients,
+   *        displacement jumps and fracture states.
+   * @param domain the domain partition
+   */
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -305,6 +313,8 @@ private:
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
     constexpr static char const * dispJumpUpdPenaltyString() { return "dispJumpUpdPenalty"; }
+
+    constexpr static char const * iterativePenalty_nString() { return "iterativePenalty_n"; }
 
     constexpr static char const * simultaneousString() { return "simultaneous"; }
 

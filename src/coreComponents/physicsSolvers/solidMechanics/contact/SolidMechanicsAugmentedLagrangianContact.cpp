@@ -184,6 +184,16 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
         setDescription( "An array that stores the displacement jumps used to update the penalty coefficients." ).
         reference().resizeDimension< 1 >( 3 );
 
+      // Traction and penalty coefficients at the beginning of the time step, restored on a time-step cut
+      subRegion.registerField< contact::traction_n >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
+
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( getName()).
+        setDescription( "An array that stores the penalty coefficients at the beginning of the time step." ).
+        reference().resizeDimension< 1 >( 5 );
+
       // Register pressure fields for sequential poromechanics coupling and stress initialization
       // In coupled poromechanics, the flow solver will overwrite these with actual values
       subRegion.registerField< flow::pressure >( getName() ).
@@ -533,6 +543,105 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                                          true );
   } );
 
+  // Store the traction and the penalty coefficients the step starts with, see resetStateToBeginningOfStep
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    arrayView2d< real64 const > const traction = subRegion.getField< contact::traction >();
+    arrayView2d< real64 > const traction_n = subRegion.getField< contact::traction_n >();
+    arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >();
+    arrayView2d< real64 > const iterativePenalty_n =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() );
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      LvArray::tensorOps::copy< 3 >( traction_n[kfe], traction[kfe] );
+      LvArray::tensorOps::copy< 5 >( iterativePenalty_n[kfe], iterativePenalty[kfe] );
+    } );
+  } );
+
+}
+
+void SolidMechanicsAugmentedLagrangianContact::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  // nodal displacements
+  SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    // bubble displacements, rewound like the nodal ones
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    arrayView2d< real64 > const totalBubbleDisp = faceManager.getField< contact::totalBubbleDisplacement >();
+    arrayView2d< real64 > const incrBubbleDisp = faceManager.getField< contact::incrementalBubbleDisplacement >();
+
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+    {
+      for( integer i = 0; i < 3; ++i )
+      {
+        totalBubbleDisp[kf][i] -= incrBubbleDisp[kf][i];
+        incrBubbleDisp[kf][i] = 0.0;
+      }
+    } );
+
+    // contact state: tractions and penalty coefficients as stored by implicitStepSetup,
+    // displacement jumps and fracture states as stored by the previous implicitStepComplete
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
+    arrayView2d< real64 const > const traction_n = subRegion.getField< contact::traction_n >();
+    arrayView2d< real64 > const iterativePenalty = subRegion.getField< contact::iterativePenalty >();
+    arrayView2d< real64 const > const iterativePenalty_n =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() );
+    arrayView2d< real64 > const dispJumpUpdPenalty =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpUpdPenaltyString() );
+    arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
+    arrayView2d< real64 const > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
+    arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer const > const oldFractureState = subRegion.getField< contact::oldFractureState >();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      LvArray::tensorOps::copy< 3 >( traction[kfe], traction_n[kfe] );
+      LvArray::tensorOps::copy< 5 >( iterativePenalty[kfe], iterativePenalty_n[kfe] );
+      LvArray::tensorOps::copy< 3 >( dispJump[kfe], oldDispJump[kfe] );
+      LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
+      LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[kfe], 0.0 );
+      fractureState[kfe] = oldFractureState[kfe];
+    } );
+
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Face,
+                              { contact::incrementalBubbleDisplacement::key(),
+                                contact::totalBubbleDisplacement::key() } );
+    fieldsToBeSync.addElementFields( { contact::traction::key(),
+                                       contact::iterativePenalty::key(),
+                                       contact::dispJump::key(),
+                                       contact::deltaDispJump::key() },
+                                     { getUniqueFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
+
+  synchronizeFractureState( domain );
+
+  // the lists of stick and slip elements follow the (restored) fracture state
+  updateStickSlipList( domain );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time,

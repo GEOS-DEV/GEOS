@@ -477,6 +477,18 @@ public:
     }
   }
 
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override
+  {
+    GEOS_MARK_FUNCTION;
+
+    // rewind the flow and mechanics (incl. contact) states
+    Base::resetStateToBeginningOfStep( domain );
+
+    // the hydraulic aperture, fracture permeability, stencil weights and fracture mass (and energy)
+    // still hold the values of the failed attempt: recompute them from the restored displacement jump
+    updateState( domain );
+  }
+
 protected:
 
   /**
