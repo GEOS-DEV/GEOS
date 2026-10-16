@@ -31,6 +31,10 @@ PR #4096 (2026-08-27) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Refactor the phase-field module and add new benchmarks for baseline
 
+PR #4005 (2026-07-21) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4005-17120-0f3f87a.tar.gz>
+=====================
+Added a `Group` statistics layer for sets statistics
+
 PR #4127 (2026-08-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4127-17399-63445db.tar.gz>
 =====================
 Rebaseline five restart checks after the TPL update changed VTK/Scotch mesh partitioning. Global mesh topology and fields are unchanged.
