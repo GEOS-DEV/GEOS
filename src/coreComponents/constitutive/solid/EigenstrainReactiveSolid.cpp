@@ -73,6 +73,13 @@ EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::EigenstrainReactiv
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor on the precipitation eigenstrain in the mechanics." );
 
+  this->registerWrapper( "eigenstrainCloggingThreshold", &m_eigenstrainCloggingThreshold ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Clogged pore fraction below which precipitation adds no eigenstrain: crystals press on the pore "
+                    "walls only once they fill most of the space. The default 0 applies the eigenstrain from the first "
+                    "precipitate." );
+
   if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
   {
     this->registerWrapper( "diffusionModelName", &m_diffusionModelName ).

@@ -65,6 +65,7 @@ public:
                                    real64 const crackPorosity,
                                    real64 const crackPoreCompressibility,
                                    real64 const eigenstrainFactor,
+                                   real64 const eigenstrainCloggingThreshold,
                                    DIFF_TYPE const * diffModel = nullptr ):
     CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( solidModel, porosityModel, permModel ),
     m_surfaceAreaDamageExponent( surfaceAreaDamageExponent ),
@@ -72,6 +73,7 @@ public:
     m_crackPorosity( crackPorosity ),
     m_crackPoreCompressibility( crackPoreCompressibility ),
     m_eigenstrainFactor( eigenstrainFactor ),
+    m_eigenstrainCloggingThreshold( eigenstrainCloggingThreshold ),
     m_diffUpdate( initDiffUpdate( diffModel ) )
   {}
 
@@ -271,6 +273,12 @@ public:
       anelasticStrainIncrement -= mineralReactionMolarIncrements[r] * molarWeight/mineralDensity;
     }
 
+    // Precipitate expands the cell only once it fills most of the pore space and presses on the walls
+    if( m_porosityUpdate.getCloggedPoreFraction( k, q ) < m_eigenstrainCloggingThreshold )
+    {
+      anelasticStrainIncrement = 0.0;
+    }
+
     // Compute total stress increment and its derivative
     real64 const deltaTemperatureFromLastStep = temperature - temperature_n;
     computeTotalStress( k,
@@ -335,6 +343,9 @@ private:
 
   /// Factor on the precipitation eigenstrain
   real64 m_eigenstrainFactor;
+
+  /// Clogged pore fraction below which precipitation adds no eigenstrain
+  real64 m_eigenstrainCloggingThreshold;
 
   /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
   typename DIFF_TYPE::KernelWrapper m_diffUpdate;
@@ -493,7 +504,8 @@ public:
                             m_intactPressureCoefficient,
                             m_crackPorosity,
                             m_crackPoreCompressibility,
-                            m_eigenstrainFactor );
+                            m_eigenstrainFactor,
+                            m_eigenstrainCloggingThreshold );
     }
     else
     {
@@ -505,6 +517,7 @@ public:
                             m_crackPorosity,
                             m_crackPoreCompressibility,
                             m_eigenstrainFactor,
+                            m_eigenstrainCloggingThreshold,
                             &getDiffModel() );
     }
   }
@@ -549,6 +562,9 @@ private:
 
   /// Factor on the precipitation eigenstrain
   real64 m_eigenstrainFactor;
+
+  /// Clogged pore fraction below which precipitation adds no eigenstrain
+  real64 m_eigenstrainCloggingThreshold;
 };
 
 
