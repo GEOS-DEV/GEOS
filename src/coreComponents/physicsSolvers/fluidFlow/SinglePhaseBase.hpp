@@ -269,6 +269,12 @@ public:
   updateState ( DomainPartition & domain ) override;
 
   /**
+   * @brief Getter for the number of fluid components (species)
+   * @return the number of components
+   */
+  integer numFluidComponents() const { return 1; }
+
+  /**
    * @brief Function to update all constitutive state and dependent variables
    * @param subRegion subregion that contains the fields
    */

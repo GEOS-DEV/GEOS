@@ -597,15 +597,23 @@ inline void CoulombFrictionUpdates::constraintCheck( localIndex const k,
     {
       condConv = 1;
     }
-    tractionVector[0] = 0.0;
+    tractionVector[0] = 0.0;//TODO that shouldn't belong here
     tractionVector[1] = 0.0;
     tractionVector[2] = 0.0;
   }
   else
   {
-    // Case 2: compenetration
+    // Case 2: normal jump beyond tolerance on a closed element: opening (gN > 0, reported
+    // with Case 1) or compenetration (gN < 0)
     if(( LvArray::math::abs( dispJump[0] ) > normalDisplacementTolerance ) &&
        (fractureState != FractureState::Open))
+    {
+      condConv = ( dispJump[0] > 0.0 ) ? 1 : 2;
+    }
+    // Case 2bis: an open element that has closed beyond the tolerance (interpenetration) must be
+    // flagged too, otherwise the configuration is deemed converged and it can never go back to contact
+    if( fractureState == FractureState::Open &&
+        dispJump[0] < -normalDisplacementTolerance )
     {
       condConv = 2;
     }
