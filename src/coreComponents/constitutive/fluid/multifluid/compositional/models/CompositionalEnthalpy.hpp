@@ -102,8 +102,7 @@ public:
                                          real64 const & temperature,
                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                          real64 & enthalpy,
-                                         arraySlice1d< real64, USD2 > const & dEnthalpy,
-                                         PhaseType const & phaseType ) const;
+                                         arraySlice1d< real64, USD2 > const & dEnthalpy ) const;
 
 private:
   integer const m_phaseIndex{-1};
@@ -208,8 +207,7 @@ void CompositionalEnthalpyUpdate::compute(
                                                     temperature,
                                                     phaseComposition,
                                                     hEosEnthalpy,
-                                                    dhEosEnthalpy.toSlice(),
-                                                    m_phaseType );
+                                                    dhEosEnthalpy.toSlice() );
   } );
 
   // 3. Combine the 2 values for the actual fluid enthalpy
@@ -271,8 +269,7 @@ void CompositionalEnthalpyUpdate::calculateEquationOfStateEnthalpy(
   real64 const & temperature,
   arraySlice1d< real64 const, USD1 > const & phaseComposition,
   real64 & enthalpy,
-  arraySlice1d< real64, USD2 > const & dEnthalpy,
-  PhaseType const & phaseType ) const
+  arraySlice1d< real64, USD2 > const & dEnthalpy ) const
 {
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
@@ -280,8 +277,7 @@ void CompositionalEnthalpyUpdate::calculateEquationOfStateEnthalpy(
                                                        componentProperties.m_componentBinaryCoeff.toSliceConst(),
                                                        derivs.toSliceConst() );
 
-  typename EOS::SelectedRoot const root = phaseType == PhaseType::LIQUID ?
-                                          EOS::SelectedRoot::MINIMUM : EOS::SelectedRoot::MAXIMUM;
+  typename EOS::SelectedRoot constexpr root = EOS::SelectedRoot::AUTO;
 
   EOS::initialiseStack( numComps, pressure, temperature, componentProperties, stack );
   EOS::computeMixtureCoefficients( numComps, phaseComposition, stack );

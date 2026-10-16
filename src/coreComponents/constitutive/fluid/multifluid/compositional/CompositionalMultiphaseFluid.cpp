@@ -97,7 +97,9 @@ string CompositionalMultiphaseFluid< FLASH, PHASES... >::catalogName()
   // Use the first phase viscosity
   using FirstPhase = typename camp::at< camp::list< PHASES... >, camp::num< 0 > >::type;
   using ViscosityType = typename FirstPhase::Viscosity;
-  return GEOS_FMT( "Compositional{}Fluid{}", FLASH::catalogName(), ViscosityType::catalogName() );
+  return GEOS_FMT( "Compositional{}{}Fluid{}", FLASH::catalogName(),
+                   isThermalType() ? "Thermal": "",
+                   ViscosityType::catalogName() );
 }
 
 template< typename FLASH, typename ... PHASES >
@@ -328,6 +330,18 @@ template class CompositionalMultiphaseFluid<
     compositional::KValueFlashModel< 2 >,
     compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity >,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity > >;
+template class CompositionalMultiphaseFluid<
+    compositional::NegativeTwoPhaseFlashModel,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::CompositionalEnthalpy >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::CompositionalEnthalpy > >;
+template class CompositionalMultiphaseFluid<
+    compositional::NegativeTwoPhaseFlashModel,
+    compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::CompositionalEnthalpy >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::CompositionalEnthalpy > >;
+template class CompositionalMultiphaseFluid<
+    compositional::KValueFlashModel< 2 >,
+    compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::CompositionalEnthalpy >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::CompositionalEnthalpy > >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseConstantViscosity,
@@ -356,6 +370,21 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalKValuePhillipsBrine,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalThermalTwoPhaseLohrenzBrayClarkViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalThermalTwoPhasePhillipsBrine,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalThermalKValuePhillipsBrine,
                         string const &,
                         dataRepository::Group * const )
 
