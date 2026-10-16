@@ -869,6 +869,8 @@ protected:
     /// 3. assemble Force Residual w.r.t. pressure and Flow mass residual w.r.t. displacement
 
     Base::assembleElementBasedTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    // the bulk kernel has just recomputed the porosity from the nodal strain, discarding any enrichment increment
+    m_isPorosityReset = true;
 
     // Flow accumulation for fractures
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1055,6 +1057,11 @@ protected:
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
   /// First row of the energy-balance block in m_derivativeFluxResidual_dAperture (-1 if not thermal)
   localIndex m_derivativeFluxResidual_dApertureEnergyOffset = -1;
+
+  /// True when the bulk poromechanics kernel has reset the porosity and no enrichment (face bubble)
+  /// increment has been added to it since: such an increment is added on top of the stored porosity,
+  /// so adding it twice without a reset in between would count it twice.
+  bool m_isPorosityReset = false;
 
 };
 

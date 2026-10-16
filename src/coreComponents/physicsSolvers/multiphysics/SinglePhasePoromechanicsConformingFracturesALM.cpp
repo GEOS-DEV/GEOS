@@ -564,6 +564,13 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
 
   using namespace contact;
 
+  // The kernel below adds the bubble volumetric strain increment on top of the stored porosity: this is only
+  // correct if the bulk kernel has reset the porosity in this same assembly (assembleElementBasedContributions)
+  GEOS_ASSERT_MSG( this->m_isPorosityReset,
+                   GEOS_FMT( "{}: the bubble contribution would be added twice to the porosity "
+                             "(the bulk poromechanics kernel did not reset it since the last addition)", this->getName() ) );
+  this->m_isPorosityReset = false;
+
   string const flowDofKey = dofManager.getKey( this->getFlowDofKey() );
   string const mechanicsDiscretizationName = this->solidMechanicsSolver()->getDiscretizationName();
 
