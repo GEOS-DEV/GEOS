@@ -829,7 +829,7 @@ public:
     // the prefactors are cell-wise constant and applied, with their p/T derivatives, in complete().
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localG, dRbdP_gauss, -detJ );
 
-    // Persist the bubble storage in the porosity state: 
+    // Persist the bubble storage in the porosity state:
     // The residual/Jacobian are not affected (the bulk kernel has already used its own porosity).
     if( !m_performStressInitialization )
     {

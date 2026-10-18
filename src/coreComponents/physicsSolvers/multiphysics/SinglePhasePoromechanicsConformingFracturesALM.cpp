@@ -333,10 +333,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
     arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
 
-    for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1)
+    for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
     {
       real64 const dR_dAper = values[kfe1];
-      localIndex const  kfe2 = columns[kfe1];
+      localIndex const kfe2 = columns[kfe1];
 
       localIndex const kf0_2 = elemsToFaces[kfe2][0];
       localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
@@ -482,7 +482,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         {
           real64 const dREnergy_dAper = energyValues[kfe1];
           localIndex const kfe2 = energyColumns[kfe1];
-        //dAperturedU and dAperturedB are set to zero for closed element through dHydraulicAperture_dNormalJump, so no need to check for closed elements here
+          //dAperturedU and dAperturedB are set to zero for closed element through dHydraulicAperture_dNormalJump, so no need to check for
+          // closed elements here
           localIndex const kf0_2 = elemsToFaces[kfe2][0];
           localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
           localIndex const numUdofs2 = 2 * 3 * numNodesPerFace2;
@@ -566,7 +567,7 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
 
   // The kernel below adds the bubble volumetric strain increment on top of the stored porosity: this is only
   // correct if the bulk kernel has reset the porosity in this same assembly (assembleElementBasedContributions)
-  GEOS_ASSERT_MSG( this->m_isPorosityReset,
+  GEOS_ERROR_IF( !this->m_isPorosityReset,
                    GEOS_FMT( "{}: the bubble contribution would be added twice to the porosity "
                              "(the bulk poromechanics kernel did not reset it since the last addition)", this->getName() ) );
   this->m_isPorosityReset = false;

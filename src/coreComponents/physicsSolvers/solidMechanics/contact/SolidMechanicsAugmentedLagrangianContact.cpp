@@ -1305,7 +1305,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
       real64 const slidingCheckTolerance = m_slidingCheckTolerance;
 
-      // Survive the normal traction through the checkConstraint to have correct opening dispatch later on 
+      // Survive the normal traction through the checkConstraint to have correct opening dispatch later on
       array2d< real64 > checkTraction( subRegion.size(), 3 );
       arrayView2d< real64 > const checkTraction_v = checkTraction.toView();
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
