@@ -543,7 +543,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                                          true );
   } );
 
-  // Store the traction and the penalty coefficients the step starts with, see resetStateToBeginningOfStep
+  // Store the traction, the penalty coefficients, the displacement jumps and the fracture states
+  // the step starts with, see resetStateToBeginningOfStep (oldFractureState is not in restart files,
+  // so it cannot be left to the previous implicitStepComplete)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
@@ -557,11 +559,17 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >();
     arrayView2d< real64 > const iterativePenalty_n =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() );
+    arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+    arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
       LvArray::tensorOps::copy< 3 >( traction_n[kfe], traction[kfe] );
       LvArray::tensorOps::copy< 5 >( iterativePenalty_n[kfe], iterativePenalty[kfe] );
+      LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
+      oldFractureState[kfe] = fractureState[kfe];
     } );
   } );
 
@@ -593,8 +601,8 @@ void SolidMechanicsAugmentedLagrangianContact::resetStateToBeginningOfStep( Doma
       }
     } );
 
-    // contact state: tractions and penalty coefficients as stored by implicitStepSetup,
-    // displacement jumps and fracture states as stored by the previous implicitStepComplete
+    // contact state: tractions, penalty coefficients, displacement jumps and fracture states
+    // as stored by implicitStepSetup
     ElementRegionManager & elemManager = mesh.getElemManager();
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
