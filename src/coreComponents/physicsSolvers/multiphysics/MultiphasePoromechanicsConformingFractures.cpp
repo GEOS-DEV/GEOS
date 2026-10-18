@@ -18,6 +18,8 @@
  */
 
 #include "MultiphasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "codingUtilities/Utilities.hpp"
 
 
 namespace geos
@@ -240,7 +242,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
-    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+    // vol = hydraulicAperture * area, so dVol/du = nodalArea * dHydraulicAperture_dNormalJump * dNormalJump/du
+    arrayView1d< real64 const > const dHydraulicAperture_dNormalJump = subRegion.getField< flow::dHydraulicAperture_dNormalJump >();
 
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
     {
@@ -256,10 +259,11 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
       stackArray2d< real64, 2*3*m_maxFaceNodes * MultiFluidBase::MAX_NUM_COMPONENTS > dRdU( MultiFluidBase::MAX_NUM_COMPONENTS, 2*3*m_maxFaceNodes );
 
-      bool const isFractureOpen = ( fractureState[kfe] == FractureState::Open );
+      localIndex const localRow = LvArray::integerConversion< localIndex >( flowDofNumber[kfe] - rankOffset );
 
-      // Accumulation derivative
-      if( isFractureOpen )
+      // Accumulation derivative: zero when the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis).
+      // No fractureState gating: a closed element may still have dHa/dgN != 0 (e.g. HydraulicApertureTable slope at gN < 0)
+      if( !isZero( dHydraulicAperture_dNormalJump[kfe] ) )
       {
         for( localIndex kf=0; kf<2; ++kf )
         {
@@ -281,7 +285,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
-            real64 const dVolume_dAperture = nodalArea[a];
+            real64 const dVolume_dNormalJump = nodalArea[a] * dHydraulicAperture_dNormalJump[kfe];
             for( localIndex i=0; i<3; ++i )
             {
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
@@ -289,44 +293,47 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
               for( integer ic = 0; ic < numComp; ic++ )
               {
-                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dVolume_dAperture * dAper_dU * compDens[kfe][ic]; // assuming poro=1
+                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dVolume_dNormalJump * dAper_dU * compDens[kfe][ic]; // assuming poro=1
               }
             }
           }
         }
 
-        localIndex const localRow = LvArray::integerConversion< localIndex >( flowDofNumber[kfe] - rankOffset );
         if( localRow >= 0 && localRow < localMatrix.numRows() )
         {
-          integer const numRows = numComp;
-          for( integer i = 0; i < numRows; ++i )
+          for( integer ic = 0; ic < numComp; ++ic )
           {
-            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow+i,
+            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow+ic,
                                                                       nodeDOF,
-                                                                      dRdU[i],
+                                                                      dRdU[ic],
                                                                       2 * 3 * numNodesPerFace );
           }
         }
       }
 
-      // flux derivative
-      bool skipAssembly = true;
+      // Flux derivative w.r.t. the nodal displacements of each stencil neighbour kfe2, assembled neighbour by
+      // neighbour with the geometry (node count, normal, nodal areas) of kfe2:
+      // dR/du = dR/dNormalJump(kfe2) * dNormalJump(kfe2)/du
+      // (dR/dNormalJump already vanishes where the hydraulic aperture does not follow the jump)
       for( integer ic = 0; ic < numComp; ic++ )
       {
         localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe * numComp + ic );
         arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe * numComp + ic );
-        // TODO uncomment and fix build
         arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe * numComp + ic );
-
-        skipAssembly &= !isFractureOpen;
 
         for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
         {
-          real64 const dR_dAper = values[kfe1];
+          real64 const dR_dNormalJump = values[kfe1];
           localIndex const kfe2 = columns[kfe1];
 
-          bool const isOpen = ( fractureState[kfe2] == FractureState::Open );
-          skipAssembly &= !isOpen;
+          localIndex const kf0_2 = elemsToFaces[kfe2][0], kf1_2 = elemsToFaces[kfe2][1];
+          localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
+
+          real64 Nbar2[3];
+          Nbar2[ 0 ] = faceNormal[kf0_2][0] - faceNormal[kf1_2][0];
+          Nbar2[ 1 ] = faceNormal[kf0_2][1] - faceNormal[kf1_2][1];
+          Nbar2[ 2 ] = faceNormal[kf0_2][2] - faceNormal[kf1_2][2];
+          LvArray::tensorOps::normalize< 3 >( Nbar2 );
 
           for( localIndex kf = 0; kf < 2; ++kf )
           {
@@ -342,32 +349,24 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
                                                                 faceAreas,
                                                                 nodalArea );
 
-            for( localIndex a=0; a<numNodesPerFace; ++a )
+            for( localIndex a=0; a<numNodesPerFace2; ++a )
             {
               for( localIndex i=0; i<3; ++i )
               {
-                nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                          + LvArray::integerConversion< globalIndex >( i );
-                real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
-                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dR_dAper * dAper_dU;
+                nodeDOF[ kf*3*numNodesPerFace2 + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
+                                                           + LvArray::integerConversion< globalIndex >( i );
+                real64 const dAper_dU = -pow( -1, kf ) * Nbar2[i] * ( nodalArea[a] / area[kfe2] );
+                dRdU[ ic ][ kf*3*numNodesPerFace2 + 3*a + i ] = dR_dNormalJump * dAper_dU;
               }
             }
           }
-        }
 
-        if( !skipAssembly )
-        {
-          localIndex const localRow = LvArray::integerConversion< localIndex >( flowDofNumber[kfe] - rankOffset );
           if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
-            integer const numRows = numComp;
-            for( integer i = 0; i < numRows; ++i )
-            {
-              localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow+i,
-                                                                        nodeDOF,
-                                                                        dRdU[i],
-                                                                        2 * 3 * numNodesPerFace );
-            }
+            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow+ic,
+                                                                      nodeDOF,
+                                                                      dRdU[ic],
+                                                                      2 * 3 * numNodesPerFace2 );
           }
         }
       }
