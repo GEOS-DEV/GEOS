@@ -65,9 +65,10 @@ void HeatCapacityCoefficients::registerParametersImpl( MultiFluidBase * fluid )
     setDescription( "The polynomial coefficients for the specific heat capacity of each component." );
 
   // Register extra wrappers to enable auto-cloning
-  fluid->registerWrapper( "heatCapacityPhaseTypes", &m_phaseTypes )
-    .setSizedFromParent( 0 )
-    .setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+  fluid->registerWrapper( "heatCapacityPhaseTypes", &m_phaseTypes ).
+    setInputFlag( dataRepository::InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
 void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const * fluid,
