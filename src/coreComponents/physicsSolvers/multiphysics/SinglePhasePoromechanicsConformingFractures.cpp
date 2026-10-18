@@ -149,8 +149,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
       stackArray1d< real64, 2*3*m_maxFaceNodes > dRdU( 2*3*m_maxFaceNodes );
       stackArray1d< real64, 2*3*m_maxFaceNodes > dVol_dU( 2*3*m_maxFaceNodes );
-      //dHa/dU already set to zero for closed element no need for double testing
-      // Accumulation derivative: zero when the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis)
+      // Accumulation derivative: zero when the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis).
+      // No fractureState gating: a closed element may still have dHa/dgN != 0 (e.g. HydraulicApertureTable slope at gN < 0)
       if( !isZero( dHydraulicAperture_dNormalJump[kfe] ) )
       {
         for( localIndex kf=0; kf<2; ++kf )

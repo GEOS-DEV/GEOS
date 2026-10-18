@@ -482,8 +482,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         {
           real64 const dREnergy_dAper = energyValues[kfe1];
           localIndex const kfe2 = energyColumns[kfe1];
-          //dAperturedU and dAperturedB are set to zero for closed element through dHydraulicAperture_dNormalJump, so no need to check for
-          // closed elements here
+          // No fractureState gating: dREnergy_dAper already vanishes where the hydraulic aperture does not follow the jump
+          // (e.g. closed Barton-Bandis), and is the exact derivative where it does (e.g. HydraulicApertureTable slope at gN < 0)
           localIndex const kf0_2 = elemsToFaces[kfe2][0];
           localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
           localIndex const numUdofs2 = 2 * 3 * numNodesPerFace2;
