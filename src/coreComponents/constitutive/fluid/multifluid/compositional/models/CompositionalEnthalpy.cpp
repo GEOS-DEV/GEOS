@@ -30,14 +30,12 @@ namespace compositional
 
 CompositionalEnthalpyUpdate::CompositionalEnthalpyUpdate( integer const phaseIndex,
                                                           integer const vapourIndex,
-                                                          PhaseType const phaseType,
                                                           EquationOfStateType const equationOfState,
                                                           real64 const refTemperature,
                                                           arrayView2d< real64 const > const & referenceEnthalpy,
                                                           arrayView2d< real64 const > const & coefficients ):
   m_phaseIndex( phaseIndex ),
   m_vapourIndex( vapourIndex ),
-  m_phaseType( phaseType ),
   m_equationOfState( equationOfState ),
   m_refTemperature( refTemperature ),
   m_referenceEnthalpy( referenceEnthalpy ),
@@ -58,7 +56,6 @@ CompositionalEnthalpy::CompositionalEnthalpy( string const & name,
 
   integer const numPhases = m_heatCapacityCoefficients->m_phaseTypes.size();
 
-  m_phaseType = static_cast< PhaseType >(m_heatCapacityCoefficients->m_phaseTypes[phaseIndex]);
   for( integer ip = 0; ip < numPhases; ip++ )
   {
     if( isPhaseType( m_heatCapacityCoefficients->m_phaseTypes[ip], PhaseType::VAPOUR ) )
@@ -73,7 +70,6 @@ CompositionalEnthalpy::createKernelWrapper() const
 {
   return KernelWrapper( m_phaseIndex,
                         m_vapourIndex,
-                        m_phaseType,
                         m_equationOfState,
                         m_heatCapacityCoefficients->m_referenceTemperature,
                         m_heatCapacityCoefficients->m_referenceEnthalpy.toViewConst(),

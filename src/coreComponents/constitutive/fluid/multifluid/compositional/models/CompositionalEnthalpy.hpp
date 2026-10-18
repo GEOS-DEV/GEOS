@@ -47,7 +47,6 @@ class CompositionalEnthalpyUpdate final : public FunctionBaseUpdate
 public:
   CompositionalEnthalpyUpdate( integer const phaseIndex,
                                integer const vapourIndex,
-                               PhaseType const phaseType,
                                EquationOfStateType const equationOfState,
                                real64 const refTemperature,
                                arrayView2d< real64 const > const & referenceEnthalpy,
@@ -107,7 +106,6 @@ public:
 private:
   integer const m_phaseIndex{-1};
   integer const m_vapourIndex{-1};
-  PhaseType const m_phaseType;
   EquationOfStateType const m_equationOfState;
   real64 const m_refTemperature;
   arrayView2d< real64 const > const m_referenceEnthalpy;
@@ -144,7 +142,6 @@ public:
 private:
   integer m_phaseIndex{-1};
   integer m_vapourIndex{-1};
-  PhaseType m_phaseType;
   EquationOfStateType m_equationOfState;
   arrayView1d< real64 const > m_criticalTemperature;
   HeatCapacityCoefficients const * const m_heatCapacityCoefficients{nullptr};
