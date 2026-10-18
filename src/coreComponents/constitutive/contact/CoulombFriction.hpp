@@ -133,7 +133,8 @@ public:
   virtual void constraintCheck( localIndex const k,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 const > const & deltaDispJump,
-                                arraySlice1d< real64 > const & tractionVector,
+                                arraySlice1d< real64 const > const & tractionVector,
+                                real64 const trialNormalTraction,
                                 integer const fractureState,
                                 real64 const normalTractionTolerance,
                                 real64 const normalDisplacementTolerance,
@@ -564,7 +565,8 @@ GEOS_HOST_DEVICE
 inline void CoulombFrictionUpdates::constraintCheck( localIndex const k,
                                                      arraySlice1d< real64 const > const & dispJump,
                                                      arraySlice1d< real64 const > const & deltaDispJump,
-                                                     arraySlice1d< real64 > const & tractionVector,
+                                                     arraySlice1d< real64 const > const & tractionVector,
+                                                     real64 const trialNormalTraction,
                                                      integer const fractureState,
                                                      real64 const normalTractionTolerance,
                                                      real64 const normalDisplacementTolerance,
@@ -585,21 +587,22 @@ inline void CoulombFrictionUpdates::constraintCheck( localIndex const k,
                           tractionVector[2] };
   real64 const currentTau = LvArray::tensorOps::l2Norm< 2 >( tau );
 
+  // A tensile trial normal traction (updated from the current jump) detects the opening the stored
+  // traction lags behind, which would otherwise be misreported as slip
+  real64 const normalTraction = ( trialNormalTraction >= normalTractionTolerance ) ? trialNormalTraction : tractionVector[0];
+
   real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-  real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionVector[0],
+  real64 const limitTau = computeLimitTangentialTractionNorm( k, normalTraction,
                                                               dLimitTangentialTractionNorm_dTraction );
 
   condConv = 0;
   // Case 1: if it is open
-  if( tractionVector[0] >= normalTractionTolerance )
+  if( normalTraction >= normalTractionTolerance )
   {
     if( fractureState != FractureState::Open )
     {
       condConv = 1;
     }
-    tractionVector[0] = 0.0;//TODO that shouldn't belong here
-    tractionVector[1] = 0.0;
-    tractionVector[2] = 0.0;
   }
   else
   {

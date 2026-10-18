@@ -41,6 +41,7 @@ struct ConstraintCheckKernel
    * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
    * @param[in] size the size of the subregion
    * @param[in] traction the array containing the current traction
+   * @param[in] trialTraction the array containing the traction updated from the current displacement jump
    * @param[in] dispJump the array containing the displacement jump
    * @param[in] deltaDispJump the array containing the delta displacement jump
    * @param[in] normalTractionTolerance Check tolerance (normal traction)
@@ -61,7 +62,8 @@ struct ConstraintCheckKernel
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
           arrayView1d< integer const > const & ghostRank,
-          arrayView2d< real64 > const & traction,
+          arrayView2d< real64 const > const & traction,
+          arrayView2d< real64 const > const & trialTraction,
           arrayView2d< real64 const > const & dispJump,
           arrayView2d< real64 const > const & deltaDispJump,
           arrayView1d< real64 const > const & normalTractionTolerance,
@@ -80,6 +82,7 @@ struct ConstraintCheckKernel
                                         dispJump[k],
                                         deltaDispJump[k],
                                         traction[k],
+                                        trialTraction[k][0],
                                         fractureState[k],
                                         normalTractionTolerance[k],
                                         normalDisplacementTolerance[k],
