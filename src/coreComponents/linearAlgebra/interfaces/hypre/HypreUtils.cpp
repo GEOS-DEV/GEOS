@@ -27,7 +27,6 @@
 
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_parcsr_ls.h>
-
 #include <algorithm>
 #include <numeric>
 
@@ -53,11 +52,32 @@ void fillKrylovDofLabels( HypreMatrix const & mat,
   }
   if( s_testingKrylovDofLabels.size() == mat.numLocalRows() )
   {
-    labels.resize( s_testingKrylovDofLabels.size() );
-    for( localIndex i = 0; i < labels.size(); ++i )
-    {
-      labels[i] = s_testingKrylovDofLabels[i];
-    }
+    labels = s_testingKrylovDofLabels;
+  }
+}
+
+void assignKrylovDofTags( arrayView1d< int const > const & labels,
+                          MPI_Comm const comm,
+                          array1d< HYPRE_Int > & tags,
+                          HYPRE_Int & numTags )
+{
+  int localMax = -1;
+  for( localIndex i = 0; i < labels.size(); ++i )
+  {
+    localMax = std::max( localMax, labels[i] );
+  }
+
+  numTags = LvArray::integerConversion< HYPRE_Int >( std::max( MpiWrapper::max( localMax, comm ) + 1, 1 ) );
+  if( numTags <= 1 )
+  {
+    tags.clear();
+    return;
+  }
+
+  tags.resize( labels.size() );
+  for( localIndex i = 0; i < labels.size(); ++i )
+  {
+    tags[i] = LvArray::integerConversion< HYPRE_Int >( labels[i] );
   }
 }
 
@@ -67,10 +87,7 @@ namespace testing
 void setKrylovDofLabels( arrayView1d< int const > const & labels )
 {
   s_testingKrylovDofLabels.resize( labels.size() );
-  for( localIndex i = 0; i < labels.size(); ++i )
-  {
-    s_testingKrylovDofLabels[i] = labels[i];
-  }
+  std::copy( labels.begin(), labels.end(), s_testingKrylovDofLabels.begin() );
 }
 
 void clearKrylovDofLabels()

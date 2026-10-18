@@ -39,6 +39,7 @@ struct HypreMGRData
   array1d< HYPRE_Int > pointMarkers;  ///< array1d of unique tags for local degrees of freedom
   HyprePrecWrapper coarseSolver;      ///< MGR coarse solver pointer and functions
   HyprePrecWrapper mechSolver;        ///< MGR mechanics fine solver pointer and functions
+  HyprePrecWrapper iluSolver;         ///< MGR ILU fine solver pointer and functions
   HyprePrecWrapper nestedSolver;      ///< Optional nested MGR F-relaxation wrapper
 };
 
@@ -47,6 +48,274 @@ namespace hypre
 
 namespace mgr
 {
+
+/**
+ * @brief MGR settings shared by the legacy HYPRE setup and generated YAML.
+ *
+ * The values in this descriptor are the settings used when MGR is configured
+ * as a one-step preconditioner.  Strategy-specific reduction metadata remains
+ * in MGRStrategyBase, while these common settings are serialized by the
+ * hypredrive adapter and applied to HYPRE handles from the same object.
+ */
+struct MGRParameters
+{
+  HYPRE_Real tolerance{ 0.0 };
+  HYPRE_Int maxIterations{ 1 };
+  HYPRE_Int printLevel{ 0 };
+  HYPRE_Int cycleType{ 1 };
+  HYPRE_Int fRelaxCycle{ 1 };
+  HYPRE_Int globalSmoothCycle{ 1 };
+  HYPRE_Int nonCpointsToFpoints{ 1 };
+  HYPRE_Int nonGalerkinMaxElmts{ 1 };
+  HYPRE_Int pMaxElmts{ 0 };
+};
+
+inline MGRParameters defaultMGRParameters()
+{
+  return {};
+}
+
+HYPRE_Int constexpr hydrofractureMinCoarseSize = 1000;
+
+inline void setMGRCycleSettings( HYPRE_Solver const solver,
+                                 MGRParameters const & params = defaultMGRParameters() )
+{
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCycleType( solver, params.cycleType ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxCycle( solver, params.fRelaxCycle ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalSmoothCycle( solver, params.globalSmoothCycle ) );
+}
+
+/**
+ * @brief The BoomerAMG options used by the MGR strategies.
+ *
+ * This is the single description of the nested AMG instances. The legacy
+ * path applies it through the HYPRE API and the hypredrive path serializes
+ * the same values to YAML.
+ *
+ * A negative value means that an option is not part of a particular flavor.
+ */
+struct BoomerAMGParameters
+{
+  HYPRE_Real tolerance{ 0.0 };
+  HYPRE_Int maxIterations{ 1 };
+  HYPRE_Int printLevel{ 0 };
+  HYPRE_Int minCoarseSize{ -1 };
+  HYPRE_Int maxCoarseSize{ 9 };
+  HYPRE_Int smoothType{ 6 };
+  HYPRE_Int smoothNumLevels{ 0 };
+  HYPRE_Int smoothNumSweeps{ 1 };
+  HYPRE_Int smoothMaxRowNnz{ 20 };
+  HYPRE_Int iluLocalReordering{ 0 };
+
+  HYPRE_Real maxRowSum{ -1.0 };
+  HYPRE_Real strongThreshold{ -1.0 };
+  HYPRE_Int numFunctions{ -1 };
+  HYPRE_Int filterFunctions{ -1 };
+  HYPRE_Int pMaxElmts{ -1 };
+
+  HYPRE_Int aggressiveNumLevels{ -1 };
+  HYPRE_Int aggressiveInterpType{ -1 };
+  HYPRE_Int aggressivePMaxElmts{ -1 };
+  HYPRE_Int coarseningType{ -1 };
+
+  HYPRE_Int relaxType{ -1 };
+  HYPRE_Int downRelaxType{ -1 };
+  HYPRE_Int upRelaxType{ -1 };
+  HYPRE_Int coarseRelaxType{ -1 };
+  HYPRE_Int numSweeps{ -1 };
+  HYPRE_Int relaxOrder{ -1 };
+};
+
+inline BoomerAMGParameters displacementAMGParameters( integer const separateComponents,
+                                                      bool const filterFunctions,
+                                                      bool const useALMSmoother = false )
+{
+  BoomerAMGParameters result;
+  result.maxRowSum = 1.0;
+  result.strongThreshold = useALMSmoother ? 0.8 : 0.6;
+  result.numFunctions = 3;
+  result.filterFunctions = filterFunctions ? separateComponents : 0;
+
+  if( useALMSmoother )
+  {
+    result.pMaxElmts = 20;
+    result.aggressiveNumLevels = 1;
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
+    result.coarseningType = hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::Falgout );
+#endif
+  }
+
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  result.coarseningType = hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS );
+  result.relaxType = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::chebyshev );
+  result.numSweeps = useALMSmoother ? 2 : 1;
+#else
+  if( useALMSmoother )
+  {
+    result.downRelaxType = 89;
+    result.upRelaxType = 89;
+    result.coarseRelaxType = 9;
+    result.numSweeps = 2;
+    result.relaxOrder = 0;
+  }
+  else
+  {
+    result.relaxOrder = 1;
+  }
+#endif
+
+  return result;
+}
+
+inline BoomerAMGParameters almBubbleAMGParameters()
+{
+  BoomerAMGParameters result = displacementAMGParameters( 0, false, true );
+  result.strongThreshold = 0.75;
+  result.filterFunctions = 0;
+  result.pMaxElmts = 10;
+  result.aggressiveNumLevels = -1;
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  result.coarseningType = hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS );
+#else
+  result.coarseningType = -1;
+#endif
+  result.numSweeps = 1;
+  return result;
+}
+
+inline BoomerAMGParameters almReservoirDisplacementAMGParameters( integer const separateComponents )
+{
+  BoomerAMGParameters result = displacementAMGParameters( separateComponents, true );
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_CUDA && GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
+  result.downRelaxType = 89;
+  result.upRelaxType = 89;
+  result.coarseRelaxType = 9;
+  result.numSweeps = 1;
+  result.relaxOrder = 0;
+#endif
+  return result;
+}
+
+inline BoomerAMGParameters pressureAMGParameters( HYPRE_Int const minCoarseSize = -1 )
+{
+  BoomerAMGParameters result;
+  result.minCoarseSize = minCoarseSize;
+  result.aggressiveNumLevels = 1;
+  result.aggressivePMaxElmts = 20;
+  result.aggressiveInterpType = hypre::getAMGAggressiveInterpolationType( LinearSolverParameters::AMG::AggInterpType::multipass );
+
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  result.aggressiveInterpType = hypre::getAMGAggressiveInterpolationType( LinearSolverParameters::AMG::AggInterpType::modifiedExtendedE );
+  result.coarseningType = hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS );
+  result.maxRowSum = 1.0;
+  result.relaxType = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi );
+  result.numSweeps = 2;
+#else
+  result.relaxOrder = 1;
+#endif
+
+  return result;
+}
+
+inline BoomerAMGParameters pressureTemperatureAMGParameters()
+{
+  BoomerAMGParameters result;
+  result.aggressiveNumLevels = 1;
+  result.aggressivePMaxElmts = 16;
+  result.numFunctions = 2;
+
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  result.aggressiveNumLevels = 0;
+  result.coarseningType = hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS );
+  result.maxRowSum = 1.0;
+  result.relaxType = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi );
+  result.numSweeps = 2;
+#else
+  result.relaxOrder = 1;
+#endif
+
+  return result;
+}
+
+inline void configureBoomerAMG( HyprePrecWrapper & solver,
+                                BoomerAMGParameters const & params )
+{
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetILULocalReordering( solver.ptr, params.iluLocalReordering ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetILUMaxRowNnz( solver.ptr, params.smoothMaxRowNnz ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, params.tolerance ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, params.maxIterations ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, params.printLevel ) );
+  if( params.minCoarseSize >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMinCoarseSize( solver.ptr, params.minCoarseSize ) );
+  }
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxCoarseSize( solver.ptr, params.maxCoarseSize ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothType( solver.ptr, params.smoothType ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothNumLevels( solver.ptr, params.smoothNumLevels ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothNumSweeps( solver.ptr, params.smoothNumSweeps ) );
+
+  if( params.maxRowSum >= 0.0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, params.maxRowSum ) );
+  }
+  if( params.strongThreshold >= 0.0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( solver.ptr, params.strongThreshold ) );
+  }
+  if( params.numFunctions >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, params.numFunctions ) );
+  }
+  if( params.filterFunctions >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetFilterFunctions( solver.ptr, params.filterFunctions ) );
+  }
+  if( params.pMaxElmts >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( solver.ptr, params.pMaxElmts ) );
+  }
+  if( params.aggressiveNumLevels >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, params.aggressiveNumLevels ) );
+  }
+  if( params.aggressiveInterpType >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( solver.ptr, params.aggressiveInterpType ) );
+  }
+  if( params.aggressivePMaxElmts >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggPMaxElmts( solver.ptr, params.aggressivePMaxElmts ) );
+  }
+  if( params.coarseningType >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, params.coarseningType ) );
+  }
+  if( params.relaxType >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, params.relaxType ) );
+  }
+  if( params.numSweeps >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, params.numSweeps ) );
+  }
+  if( params.relaxOrder >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, params.relaxOrder ) );
+  }
+  if( params.downRelaxType >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, params.downRelaxType, 1 ) );
+  }
+  if( params.upRelaxType >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, params.upRelaxType, 2 ) );
+  }
+  if( params.coarseRelaxType >= 0 )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, params.coarseRelaxType, 3 ) );
+  }
+}
 
 /**
  * @brief Helper to simplify MGR setup
@@ -152,19 +421,8 @@ protected:
                      HypreMGRData & mgrData )
 
   {
-    // Ensure that if no F-relaxation or global smoothing is chosen the corresponding number
-    // of iteration is set to 0
-    for( HYPRE_Int i = 0; i < numLevels; ++i )
-    {
-      if( m_levelFRelaxType[i] == MGRFRelaxationType::none )
-      {
-        m_levelFRelaxIters[i] = 0;
-      }
-      if( m_levelGlobalSmootherType[i] == MGRGlobalSmootherType::none )
-      {
-        m_levelGlobalSmootherIters[i] = 0;
-      }
-    }
+    normalizeReductionParameters();
+    MGRParameters const mgrParameters = defaultMGRParameters();
 
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
                                                                  m_numBlocks, numLevels,
@@ -178,9 +436,43 @@ protected:
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, toUnderlyingPtr( m_levelGlobalSmootherType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelGlobalSmootherIters ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, m_coarseGridThreshold ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonGalerkinMaxElmts( precond.ptr, 1 ));
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, mgrParameters.nonCpointsToFpoints ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonGalerkinMaxElmts( precond.ptr, mgrParameters.nonGalerkinMaxElmts ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, mgrParameters.pMaxElmts ) );
   }
+
+public:
+  /**
+   * @brief Apply parameter-dependent changes to the reduction hierarchy.
+   * @param mgrParams MGR configuration parameters
+   */
+  void configure( LinearSolverParameters::MGR const & )
+  {}
+
+  /**
+   * @brief Normalize MGR iteration counts without touching a HYPRE handle.
+   *
+   * Generated hypredrive YAML needs the same normalization as the legacy
+   * setup, but does not need to construct a temporary MGR object.
+   */
+  void normalizeReductionParameters()
+  {
+    // Ensure that if no F-relaxation or global smoothing is chosen the corresponding number
+    // of iteration is set to 0
+    for( HYPRE_Int i = 0; i < numLevels; ++i )
+    {
+      if( m_levelFRelaxType[i] == MGRFRelaxationType::none )
+      {
+        m_levelFRelaxIters[i] = 0;
+      }
+      if( m_levelGlobalSmootherType[i] == MGRGlobalSmootherType::none )
+      {
+        m_levelGlobalSmootherIters[i] = 0;
+      }
+    }
+  }
+
+protected:
 
   /**
    * @brief Set up BoomerAMG to perform the solve for the displacement system
@@ -190,22 +482,7 @@ protected:
   void setDisplacementAMG( HyprePrecWrapper & solver,
                            integer const & separateComponents )
   {
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, 1.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( solver.ptr, 0.6 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::chebyshev ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, 1 ) );
-#else
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 1 ) );
-#endif
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, 3 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetFilterFunctions( solver.ptr, separateComponents ) );
+    configureBoomerAMG( solver, displacementAMGParameters( separateComponents, true ) );
 
     solver.setup = HYPRE_BoomerAMGSetup;
     solver.solve = HYPRE_BoomerAMGSolve;
@@ -226,38 +503,24 @@ protected:
                               integer const separateComponents,
                               bool const bubbleCoarse )
   {
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, 1.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( solver.ptr, bubbleCoarse ? 0.75 : 0.8 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, 3 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetFilterFunctions( solver.ptr, bubbleCoarse ? 0 : separateComponents ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPMaxElmts( solver.ptr, bubbleCoarse ? 10 : 20 ) );
+    configureBoomerAMG( solver, bubbleCoarse
+                        ? almBubbleAMGParameters()
+                        : displacementAMGParameters( separateComponents, true, true ) );
 
-    if( !bubbleCoarse )
-    {
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) );
-      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr,
-                                                           hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::Falgout ) ) );
-    }
+    solver.setup = HYPRE_BoomerAMGSetup;
+    solver.solve = HYPRE_BoomerAMGSolve;
+    solver.destroy = HYPRE_BoomerAMGDestroy;
+  }
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr,
-                                                         hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr,
-                                                       hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::chebyshev ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, bubbleCoarse ? 1 : 2 ) );
-#else
-    HYPRE_Int constexpr l1SymmetricHybridGaussSeidel = 89;
-    HYPRE_Int constexpr gaussianElimination = 9;
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, l1SymmetricHybridGaussSeidel, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, l1SymmetricHybridGaussSeidel, 2 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( solver.ptr, gaussianElimination, 3 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, bubbleCoarse ? 1 : 2 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 0 ) );
-#endif
+  /**
+   * @brief Set up the displacement F-solver used by the reservoir ALM strategy.
+   * @param solver solver wrapper to initialize
+   * @param separateComponents whether displacement components are filtered
+   */
+  void setALMReservoirDisplacementAMG( HyprePrecWrapper & solver,
+                                       integer const separateComponents )
+  {
+    configureBoomerAMG( solver, almReservoirDisplacementAMGParameters( separateComponents ) );
 
     solver.setup = HYPRE_BoomerAMGSetup;
     solver.solve = HYPRE_BoomerAMGSolve;
@@ -268,24 +531,10 @@ protected:
    * @brief Set up BoomerAMG to perform the solve for the pressure system
    * @param solver the solver wrapper
    */
-  void setPressureAMG( HyprePrecWrapper & solver )
+  void setPressureAMG( HyprePrecWrapper & solver,
+                       HYPRE_Int const minCoarseSize = -1 )
   {
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggPMaxElmts( solver.ptr, 20 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( solver.ptr, hypre::getAMGAggressiveInterpolationType( LinearSolverParameters::AMG::AggInterpType::multipass ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggInterpType( solver.ptr, hypre::getAMGAggressiveInterpolationType( LinearSolverParameters::AMG::AggInterpType::modifiedExtendedE ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, 2 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, 1.0 ) );
-#else
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 1 ) );
-#endif
+    configureBoomerAMG( solver, pressureAMGParameters( minCoarseSize ) );
 
     solver.setup = HYPRE_BoomerAMGSetup;
     solver.solve = HYPRE_BoomerAMGSolve;
@@ -298,22 +547,7 @@ protected:
    */
   void setPressureTemperatureAMG( HyprePrecWrapper & solver )
   {
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &solver.ptr ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( solver.ptr, 0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( solver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 1 ) ); // TODO: keep or not 1 aggressive level?
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggPMaxElmts( solver.ptr, 16 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( solver.ptr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( solver.ptr, 2 ) ); // pressure and temperature (CPTR)
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( solver.ptr, 0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( solver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( solver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( solver.ptr, 2 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( solver.ptr, 1.0 ) );
-#else
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( solver.ptr, 1 ) );
-#endif
+    configureBoomerAMG( solver, pressureTemperatureAMGParameters() );
 
     solver.setup = HYPRE_BoomerAMGSetup;
     solver.solve = HYPRE_BoomerAMGSolve;
@@ -336,6 +570,48 @@ protected:
     setDisplacementAMG( mgrData.mechSolver, separateComponents );
     HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
   }
+
+  /**
+   * @brief Configure the displacement F-solver attached to a specific MGR level.
+   */
+  void setMechanicsFSolverAtLevel( HyprePrecWrapper & precond,
+                                   HypreMGRData & mgrData,
+                                   integer const & separateComponents,
+                                   HYPRE_Int const level )
+  {
+    setDisplacementAMG( mgrData.mechSolver, separateComponents );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, level ) );
+  }
+  /**
+   * @brief Set up an explicitly configured ILU(0) F-solver for a given MGR level
+   * @param level the MGR level whose F system is solved with ILU
+   * @param precond the preconditioner wrapper
+   * @param mgrData auxiliary MGR data
+   *
+   * @note hypre's internal ILU F-relaxation (MGRFRelaxationType::ilu without an attached
+   *       F-solver) is configured with different defaults and has been observed to stall
+   *       on hybrid FVM cell-block eliminations; an explicitly configured ILU F-solver
+   *       matches the configuration hypredrive uses and is robust.
+   */
+  void setILUFSolverAtLevel( HYPRE_Int const level,
+                             HyprePrecWrapper & precond,
+                             HypreMGRData & mgrData )
+  {
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUCreate( &mgrData.iluSolver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetType( mgrData.iluSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( mgrData.iluSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( mgrData.iluSolver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetTol( mgrData.iluSolver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetLocalReordering( mgrData.iluSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_ILUSetPrintLevel( mgrData.iluSolver.ptr, 0 ) );
+
+    mgrData.iluSolver.setup = HYPRE_ILUSetup;
+    mgrData.iluSolver.solve = HYPRE_ILUSolve;
+    mgrData.iluSolver.destroy = HYPRE_ILUDestroy;
+
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.iluSolver.ptr, level ) );
+  }
+
   /**
    * @brief
    *

@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
@@ -241,6 +242,18 @@ HYPRE_Int dummySetup( HYPRE_Solver,
  */
 void fillKrylovDofLabels( HypreMatrix const & mat,
                           array1d< int > & labels );
+
+/**
+ * @brief Convert local DoF-component labels into hypre Krylov tag arrays.
+ * @param labels Local DoF-component labels (empty on ranks that own no rows).
+ * @param comm Communicator used to agree on the global tag count.
+ * @param tags Output per-row tags; emptied when only one tag is present.
+ * @param numTags Output global tag count (at least 1).
+ */
+void assignKrylovDofTags( arrayView1d< int const > const & labels,
+                          MPI_Comm const comm,
+                          array1d< HYPRE_Int > & tags,
+                          HYPRE_Int & numTags );
 
 namespace testing
 {
