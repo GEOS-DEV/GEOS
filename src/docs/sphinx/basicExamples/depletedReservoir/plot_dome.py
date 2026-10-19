@@ -406,6 +406,8 @@ def decorate_axes(axis, results_data, wells, gas_water_contact, add_labels=False
     axis.contour(results_data.unique_x, results_data.unique_z, results_data.get_region_2d(), levels=[0.5, 1.5], colors="k",
                linewidths=0.4, alpha=0.5)
     axis.axhline(gas_water_contact, color=label_color, ls="--", lw=0.7)
+
+    
     gas_injector = wells.get("GAS.INJECTOR", wells.get("WATER.INJECTOR"))
     producer_well = wells.get("PRODUCER")
 
