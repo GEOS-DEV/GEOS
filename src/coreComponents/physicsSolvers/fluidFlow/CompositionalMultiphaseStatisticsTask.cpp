@@ -399,7 +399,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
   TableCSVFormatter const & formatter = *formatterIter->second;
   TableData tableData;
 
-  stdVector< string > row;
+  stdVector< TableData::CellData > row;
   row.reserve( formatter.getLayout().getTotalLowermostColumnCount() );
 
   // lamda to apply for each region statistics
@@ -411,24 +411,22 @@ void StatsTask::outputCsvStats( real64 statsTime,
     auto addPhaseValues = []( auto & list, auto const & values )
     {
       for( auto value : values )
-        list.emplace_back( std::to_string( value ) );
+        list.push_back( TableData::CellData{ CellType::Value, std::to_string( value ) } );
     };
 
     row.clear();
-    row.insert( row.begin(),
-                { std::to_string( statsTime ),
-                  string( setName ),
-                  string( targetName ),
-                  std::to_string( stats.m_minPressure ),
-                  std::to_string( stats.m_averagePressure ),
-                  std::to_string( stats.m_maxPressure ),
-                  std::to_string( stats.m_minDeltaPressure ),
-                  std::to_string( stats.m_maxDeltaPressure ),
-                  std::to_string( stats.m_minTemperature ),
-                  std::to_string( stats.m_averageTemperature ),
-                  std::to_string( stats.m_maxTemperature ),
-                  std::to_string( stats.m_totalPoreVolume ),
-                } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( statsTime ) } );
+    row.push_back( TableData::CellData{ CellType::Value, string( setName ) } );
+    row.push_back( TableData::CellData{ CellType::Value, string( targetName ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_minPressure ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_averagePressure ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_maxPressure ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_minDeltaPressure ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_maxDeltaPressure ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_minTemperature ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_averageTemperature ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_maxTemperature ) } );
+    row.push_back( TableData::CellData{ CellType::Value, std::to_string( stats.m_totalPoreVolume ) } );
     addPhaseValues( row, stats.m_phaseDynamicPoreVolume );
     addPhaseValues( row, stats.m_phaseMass );
     addPhaseValues( row, stats.m_trappedPhaseMass );
