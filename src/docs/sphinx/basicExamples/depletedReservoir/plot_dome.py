@@ -260,8 +260,11 @@ class Results:
             target_y_coordinate (float, optional): The target y-coordinate to slice. Defaults to the median y.
         """
         import h5py
-        self.h5 = h5py.File(path, "r")
-        
+        try:
+            self.h5 = h5py.File(path, "r")
+        except Exception as e:
+            raise RuntimeError(f"Failed to open HDF5 file at {path} {e}") from e
+            
         # Handle updated time keys and conversion
         self.time_years = self.h5["times"]["years"][()]
 
