@@ -54,8 +54,6 @@ public:
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = SinglePhaseFVMAbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
-                                                                  fields::permeability::dPerm_dDispJump >;
   using SinglePhaseFVMAbstractBase::m_dt;
   using SinglePhaseFVMAbstractBase::m_rankOffset;
   using SinglePhaseFVMAbstractBase::m_dofNumber;
@@ -91,8 +89,10 @@ public:
     StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
 
-  /// Hydraulic aperture and its derivative wrt the normal jump, held by the mass-flux base kernel
+  /// Fracture permeability derivative, hydraulic aperture and its derivative wrt the normal jump, held by the mass-flux base kernel
+  using FracturePermeabilityAccessors = typename Base::FracturePermeabilityAccessors;
   using FractureApertureAccessors = typename Base::FractureApertureAccessors;
+  using Base::m_dR_dAper;
 
 
   ThermalConformingFracturesConnectorBasedAssemblyKernel( globalIndex const rankOffset,
@@ -127,7 +127,6 @@ public:
     m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
     m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
-    m_dR_dAper( dR_dAper ),
     m_dR_dAperEnergyOffset( dR_dAperEnergyOffset )
   {}
 
@@ -340,10 +339,10 @@ public:
       if( m_dR_dAperEnergyOffset >= 0 )
       {
         localIndex const energyRow = m_dR_dAperEnergyOffset + LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
-        m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( energyRow,
-                                                                 stack.localColIndices.data(),
-                                                                 stack.dEnergyFlux_dAperture[i].dataIfContiguous(),
-                                                                 stack.stencilSize );
+        m_dR_dAper.template addToRowBinarySearch< parallelDeviceAtomic >( energyRow,
+                                                                          stack.localColIndices.data(),
+                                                                          stack.dEnergyFlux_dAperture[i].dataIfContiguous(),
+                                                                          stack.stencilSize );
       }
 
     } );
@@ -363,9 +362,6 @@ private:
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
-
-  /// View on dR_dAper
-  CRSMatrixView< real64, localIndex const > m_dR_dAper;
 
   /// Row offset, in m_dR_dAper, of the energy-balance block.
   //  Negative (sentinel) means the caller did not build one - skip the energy-row write in complete().

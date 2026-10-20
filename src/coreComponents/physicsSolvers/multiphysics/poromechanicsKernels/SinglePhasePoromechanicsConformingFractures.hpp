@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ConformingFracturesFluxKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -32,7 +32,9 @@ namespace singlePhasePoromechanicsConformingFracturesKernels
 {
 
 template< integer NUM_EQN, integer NUM_DOF >
-class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
+class ConnectorBasedAssemblyKernel
+  : public poromechanicsConformingFracturesKernels::
+  ConformingFracturesFluxKernelBase< singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >
 {
 public:
 
@@ -50,10 +52,6 @@ public:
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
-                                                                  fields::permeability::dPerm_dDispJump >;
-  using FractureApertureAccessors = StencilAccessors< fields::flow::hydraulicAperture,
-                                                      fields::flow::dHydraulicAperture_dNormalJump >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -69,7 +67,10 @@ public:
   using AbstractBase::m_dDens;
 
 
-  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using Base = poromechanicsConformingFracturesKernels::
+    ConformingFracturesFluxKernelBase< singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >;
+  using FracturePermeabilityAccessors = typename Base::FracturePermeabilityAccessors;
+  using FractureApertureAccessors = typename Base::FractureApertureAccessors;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -79,6 +80,7 @@ public:
   using Base::m_seri;
   using Base::m_sesri;
   using Base::m_sei;
+  using Base::m_dR_dAper;
 
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
                                 SurfaceElementStencilWrapper const & stencilWrapper,
@@ -92,7 +94,10 @@ public:
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
                                 CRSMatrixView< real64, localIndex const > const & dR_dAper )
-    : Base( rankOffset,
+    : Base( fracturePermeabilityAccessors,
+            fractureApertureAccessors,
+            dR_dAper,
+            rankOffset,
             stencilWrapper,
             flowDofNumberAccessor,
             singlePhaseFlowAccessors,
@@ -100,11 +105,7 @@ public:
             permeabilityAccessors,
             dt,
             localMatrix,
-            localRhs ),
-    m_dR_dAper( dR_dAper ),
-    m_dPerm_dDispJump( fracturePermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) ),
-    m_hydraulicAperture( fractureApertureAccessors.get( fields::flow::hydraulicAperture {} ) ),
-    m_dHydraulicAperture_dNormalJump( fractureApertureAccessors.get( fields::flow::dHydraulicAperture_dNormalJump {} ) )
+            localRhs )
   {}
 
 
@@ -124,48 +125,11 @@ public:
     GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
-      localColIndices( numElems ),
       dFlux_dAperture( numElems, size )
     {}
 
-    stackArray1d< localIndex, maxNumElems > localColIndices;
-
     stackArray2d< real64, maxNumElems * maxStencilSize > dFlux_dAperture;
-
-    /// t_j * d(transmissibility)/d(t_j) of each connection, for every half-transmissibility t_j = weight_j * permeability_j
-    /// of the stencil (unsigned: derivative of entry [0] of the transmissibility). At a fracture junction the
-    /// transmissibility of a connection also depends on the elements it does not connect.
-    real64 dTrans_dLogHalfTrans[maxNumConns][maxNumElems]{};
-
-    /// d(ln t_j)/d(normalJump_j) for every element j of the stencil: permeability part plus stencil-weight part
-    /// (the stencil weight is linear in the hydraulic aperture)
-    real64 dLogHalfTrans_dNormalJump[maxNumElems]{};
-
-    /// d(ln hydraulicAperture_j)/d(normalJump_j) for every element j of the stencil (stencil-weight part of
-    /// dLogHalfTrans_dNormalJump), kept separately for the derived kernels (e.g. thermal conduction)
-    real64 dLogAperture_dNormalJump[maxNumElems]{};
   };
-
-  /**
-   * @brief Performs the setup phase for the kernel.
-   * @param[in] iconn the connection index
-   * @param[in] stack the stack variables
-   */
-  GEOS_HOST_DEVICE
-  void setup( localIndex const iconn,
-              StackVariables & stack ) const
-  {
-    // set degrees of freedom indices for this face
-    for( integer i = 0; i < stack.stencilSize; ++i )
-    {
-      globalIndex const offset = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
-      for( integer jdof = 0; jdof < numDof; ++jdof )
-      {
-        stack.dofColIndices[i * numDof + jdof] = offset + jdof;
-      }
-      stack.localColIndices[ i ] = m_sei( iconn, i );
-    }
-  }
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
@@ -181,37 +145,7 @@ public:
                     FUNC && kernelOp = NoOpFunc{} ) const
 
   {
-
-    // Transmissibilities, their pressure derivatives and their aperture derivatives (wrt the half-transmissibility
-    // of every element of the stencil), in a single stencil traversal
-    m_stencilWrapper.computeWeightsAndLogDerivatives( iconn,
-                                                      m_permeability,
-                                                      m_dPerm_dPres,
-                                                      stack.transmissibility,
-                                                      stack.dTrans_dPres,
-                                                      stack.dTrans_dLogHalfTrans );
-
-    // t_j = weight_j(hydraulicAperture_j) * perm_j(hydraulicAperture_j), the weight being linear in the hydraulic aperture
-    for( localIndex j = 0; j < stack.numFluxElems; ++j )
-    {
-      localIndex const er  = m_seri[iconn][j];
-      localIndex const esr = m_sesri[iconn][j];
-      localIndex const ei  = m_sei[iconn][j];
-
-      real64 const hydraulicAperture = m_hydraulicAperture[er][esr][ei];
-      stack.dLogAperture_dNormalJump[j] = ( hydraulicAperture > 0.0 )
-        ? m_dHydraulicAperture_dNormalJump[er][esr][ei] / hydraulicAperture
-        : 0.0;
-
-      real64 dLogHalfTrans_dNormalJump = stack.dLogAperture_dNormalJump[j];
-      real64 const perm = m_permeability[er][esr][ei][0][0];
-      if( perm > 0.0 )
-      {
-        dLogHalfTrans_dNormalJump += m_dPerm_dDispJump[er][esr][ei][0][0][0] / perm;
-      }
-      stack.dLogHalfTrans_dNormalJump[j] = dLogHalfTrans_dNormalJump;
-    }
-
+    Base::computeTransmissibilityAndApertureDerivatives( iconn, stack );
 
     localIndex k[2];
     localIndex connectionIndex = 0;
@@ -258,12 +192,7 @@ public:
 
         // dFlux/dNormalJump_j for every element j of the stencil (at a junction, also those this connection does not link)
         real64 dFlux_dAper[maxNumElems]{};
-        for( localIndex j = 0; j < stack.numFluxElems; ++j )
-        {
-          dFlux_dAper[j] = m_dt * dFlux_dTrans * stack.dTrans_dLogHalfTrans[connectionIndex][j] * stack.dLogHalfTrans_dNormalJump[j];
-          stack.dFlux_dAperture[k[0]][j] += dFlux_dAper[j];
-          stack.dFlux_dAperture[k[1]][j] -= dFlux_dAper[j];
-        }
+        Base::accumulateFluxApertureDerivative( stack, k, connectionIndex, dFlux_dTrans, stack.dFlux_dAperture, dFlux_dAper );
 
         // per-connection quantities (incl. this connection's aperture derivative of the flux, before it is
         // accumulated over the connections of the stencil), e.g. for the thermal terms at fracture junctions
@@ -293,26 +222,15 @@ public:
 
       localIndex const row = LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
 
-      m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,
-                                                               stack.localColIndices.data(),
-                                                               stack.dFlux_dAperture[i].dataIfContiguous(),
-                                                               stack.stencilSize );
+      m_dR_dAper.template addToRowBinarySearch< parallelDeviceAtomic >( row,
+                                                                        stack.localColIndices.data(),
+                                                                        stack.dFlux_dAperture[i].dataIfContiguous(),
+                                                                        stack.stencilSize );
       // call the lambda to assemble additional terms, such as thermal terms
       kernelOp( i, localRow );
     } );
   }
 
-private:
-
-  CRSMatrixView< real64, localIndex const > m_dR_dAper;
-
-  ElementViewConst< arrayView4d< real64 const > > const m_dPerm_dDispJump;
-
-protected:
-
-  /// Views on the hydraulic aperture and its derivative wrt the normal jump
-  ElementViewConst< arrayView1d< real64 const > > const m_hydraulicAperture;
-  ElementViewConst< arrayView1d< real64 const > > const m_dHydraulicAperture_dNormalJump;
 };
 
 
