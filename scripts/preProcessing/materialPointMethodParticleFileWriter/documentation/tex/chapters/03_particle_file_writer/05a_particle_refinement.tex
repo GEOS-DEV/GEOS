@@ -1,0 +1,91 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Initial particle refinement and native geometry}
+\label{sec:pfw-refinement}
+\index{particle refinement}
+\index{surfaceRefinementLevel}
+\index{surfaceRefinementMethod}
+\index{particleReferenceGeometry}
+\index{particleDomainOutput}
+
+PFW refinement changes the particles written before a GEOS run. Runtime splitting changes particle topology during a run and is controlled separately in Section~\ref{subsec:robust-particle-splitting}. Neither operation refines the background grid. Particle-file regeneration is required after changing any initialization option below.
+
+\subsection{Option reference}
+The values in Table~\ref{tab:pfw-refinement-options} are PFW defaults, not solver-wrapper defaults. Keys are case-sensitive; the surface-method value is normalized to lowercase.
+{\small
+\begin{longtable}{@{}p{0.32\linewidth}p{0.18\linewidth}p{0.41\linewidth}@{}}
+\caption{PFW particle initialization and refinement controls.}\label{tab:pfw-refinement-options}\\
+\toprule
+Key & Default & Meaning\\
+\midrule
+\endfirsthead
+\toprule Key & Default & Meaning\\ \midrule
+\endhead
+\bottomrule
+\endfoot
+\path{ppc} & 2 & Base particle count per grid cell per direction; overridden by explicit \texttt{ppcx}, \texttt{ppcy}, \texttt{ppcz}.\\
+\path{ppcx}, \path{ppcy}, \path{ppcz} & \texttt{None} & Directional base counts; unset values inherit \texttt{ppc}.\\
+\path{particleRefinement} & \texttt{None} & Material-indexed factors; unset means one for every material. A scalar applies to all materials. Use positive integers.\\
+\mpmcode{surfaceRefinementLevel} & 1 & Positive integer factor per active direction in surface/interface candidates; not a recursive depth.\\
+\mpmcode{surfaceRefinementMethod} & \texttt{cartesian} & Midpoint subdivision, or \texttt{simplex} local plane cuts. Alias: \texttt{simplex-conforming}.\\
+\mpmcode{surfaceRefinementFallback} & \texttt{cartesian} & On an invalid local cut, midpoint-sample the whole subdomain; \texttt{error} stops instead.\\
+\mpmcode{surfaceRefinementPlaneTolerance} & 0.05 & Side-label/plane consistency tolerance, normalized by child diagonal; valid range $0\leq t<0.5$.\\
+\mpmcode{particleReferenceGeometry} & \texttt{equivalentBox} & No extra geometry state, or \texttt{fromRefinement} to retain native cut geometry in the particle file.\\
+\mpmcode{particleDomainOutput} & \texttt{native} & With geometry metadata, emit this \texttt{ParticleRegion} output policy: \texttt{native} or \texttt{equivalentBox}.\\
+\end{longtable}}
+
+\mpmcode{particleRefinement} is indexed by material, not by geometry-object order or contact group. It applies in the bulk as well as near boundaries. For surface candidates, the maximum material factor in the immediate neighborhood supplies a common partition on both sides, multiplied by \mpmcode{surfaceRefinementLevel}. This can refine a lower-factor material next to a higher-factor material. Plane strain subdivides x/y and preserves the existing z thickness.
+
+The two-pass surface algorithm is enabled when the level exceeds 1, or when the method is \texttt{simplex} even at level 1. With the default \texttt{cartesian}, level 1 retains the ordinary material-refinement path. Increasing the surface level by $q$ can produce up to $q^d$ Cartesian subdomains per selected parent before any simplex decomposition; it is not a promise of a fixed total particle-count multiplier.
+
+\begin{lstlisting}[language=Python,caption={Cartesian refinement of two materials.}]
+# Requires an existing complete input with two materials.
+pfw["ppc"] = 2
+pfw["particleRefinement"] = [1, 2]  # indexed by material ID
+pfw["surfaceRefinementLevel"] = 3
+pfw["surfaceRefinementMethod"] = "cartesian"
+\end{lstlisting}
+
+\subsection{Candidate detection and local cuts}
+The first pass samples the coarse particle lattice and its immediate 8-neighbor (2D) or 26-neighbor (3D) band. Occupancy, material/contact labels, and surface flags identify free-surface and interface candidates, including empty-center parents adjacent to occupied cells. A three-slice cache bounds coarse occupancy storage in x. Features without any sampled occupancy, label change, or nearby surface flag can remain undetected.
+
+Cartesian refinement samples subdomain midpoints. Simplex refinement fits one local surface plane and partitions each accepted subdomain into complementary material-side pieces, using area/volume and centroid integration. A triangle in plane strain retains the original z thickness; 3D pieces are tetrahedra. Actual simplex-cut particles require \texttt{particleType=1} (\mpmcode{SinglePointBSpline}) on the geometry objects. Cartesian refinement remains the choice for other supported particle types; adding native output geometry does not implement CPTI or simplex-based CPDI quadrature.
+
+Missing or invalid surface data, unsupported multiple-region configurations, inconsistent side labels, invalid partitions, or centroids outside their assigned actual region trigger fallback for the \emph{whole subdomain}. The default samples it with ordinary Cartesian midpoints. Strict \texttt{error} mode stops. The plane tolerance is a consistency control, not a certified geometric-error bound.
+
+\begin{lstlisting}[language=Python,caption={Local simplex cuts with equivalent-box mechanical domains.}]
+# Geometry objects that produce cuts must use particleType=1.
+pfw["surfaceRefinementLevel"] = 4
+pfw["surfaceRefinementMethod"] = "simplex"
+pfw["surfaceRefinementFallback"] = "cartesian"  # or "error"
+pfw["surfaceRefinementPlaneTolerance"] = 0.05
+pfw["particleReferenceGeometry"] = "equivalentBox"  # default
+\end{lstlisting}
+
+The accepted pieces conserve the volume of the adopted local cut geometry. This does not imply that their total volume or mass matches an older staircase initialization: recovered caps and removed overfill can change both at fixed physical density. Adjacent subdomains choose planes independently, so the surface need not be globally continuous. There is no cell-filling density correction.
+
+\subsection{Retaining native wedge and tetrahedral geometry}
+With the default \texttt{equivalentBox} initialization, the centroid and volume of each piece are represented by the existing mechanical R-vectors. Enable native metadata to retain the actual cut shape for Silo/VTK output:
+\begin{lstlisting}[language=Python,caption={Native geometry with runtime splitting disabled.}]
+pfw["surfaceRefinementMethod"] = "simplex"
+pfw["surfaceRefinementLevel"] = 4
+pfw["particleReferenceGeometry"] = "fromRefinement"
+pfw["particleDomainOutput"] = "native"
+
+pfw["subdivideParticles"] = 0
+pfw["oversizedParticleTreatment"] = "none"
+pfw["resetDefGradForOversizedParticles"] = 0
+\end{lstlisting}
+Uncut and fallback pieces remain boxes. Native metadata adds ten columns: \mpmcode{ParticleReferenceGeometry} and the nine \texttt{GeometryRVector} components. All ten are required together. Tags 0, 1, and 2 mean box, triangular wedge, and tetrahedron. The reader checks finite data, supported type/dimension, positive initial orientation, and agreement with initial mechanical volume to relative tolerance $10^{-9}$. It does not repair invalid geometry by changing density or mass. An old equivalent-box file cannot uniquely recover discarded simplex shapes.
+
+The legacy R-vectors remain authoritative for mechanics. Native simplex generators move with the deformation gradient and are rebased during numerical reference resets to preserve current vertices; native shapes may therefore remain distorted while mechanical domains are regularized. Current native geometry is not constrained to equal the mechanical volume after every later reference change. Optional state is included in migration/restart wrappers; full GEOS MPI and restart execution still requires integration verification.
+
+\texttt{particleDomainOutput="equivalentBox"} changes the displayed domains while retaining the metadata and its restrictions. A native simplex selected for runtime splitting raises an error because native simplex subdivision is not implemented. To split its equivalent mechanical box at runtime, regenerate the file with \texttt{particleReferenceGeometry="equivalentBox"}. Changing only the output policy does not enable this.
+
+\subsection{Rank slicing, diagnostics, and verification}
+Each non-Flux writer rank owns a half-open interval of coarse x rows and queries one read-only halo row on each side. Only owned parents emit particles; children retain parent ownership. Ranks with no owned rows still participate in metadata and diagnostic collectives. The serial-only Flux generation path is unchanged.
+
+A \texttt{make\_objects(rankxmin, rankxmax)} factory must return complete objects whose bounding boxes intersect the supplied bounds, with consistent priority ordering and global material IDs on all ranks. It must not clip the objects to those bounds. Geometry and property functions must be deterministic in global coordinates. With periodic x, the factory receives the full x interval because one interval cannot express a disjoint opposite-edge halo.
+
+PFW writes \path{mpmParticleFile_<case>_refinement.json}, recording candidates, recovered empty parents, simplex and fallback counts, geometry queries, total volume, and peak slice-cache size. Counts are summed across ranks; cache peaks are maxima. Halo queries can increase with rank count while particle records remain unchanged.
+
+The repository includes geometry/ownership unit tests, a complete writer regression, and standalone C++ geometry tests. The writer regression can use real MPI or explicitly selected file-backed emulation; emulation verifies independent-process writer logic, not MPI transport or cluster performance. See \path{SURFACE_REFINEMENT.md} and \path{NATIVE_REFERENCE_GEOMETRY.md} for commands and remaining full-solver integration checks.

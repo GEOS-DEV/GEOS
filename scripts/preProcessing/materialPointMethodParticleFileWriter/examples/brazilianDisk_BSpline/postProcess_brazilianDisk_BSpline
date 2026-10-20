@@ -276,6 +276,9 @@ plot_reactions() {
 
 run_one_visit_render() {
   local visit_exe="$1" state_label="$2" variable="$3" range_mode="$4"
+  local mesh_variable="${5:-CellRegion1}" strict_variable="${6:-0}"
+  local strict_args=()
+  [ "$strict_variable" -eq 1 ] && strict_args+=(--strict-variable)
   log "rendering $state_label state with variable $variable"
   (
     cd "$RUN_DIR"
@@ -285,10 +288,11 @@ run_one_visit_render() {
       --case-name "$CASE_NAME" \
       --states "$state_label" \
       --view xy \
-      --mesh CellRegion1 \
+      --mesh "$mesh_variable" \
       --colortable hot_desaturated \
       --range-mode "$range_mode" \
       --variable "$variable" \
+      "${strict_args[@]}" \
       --focus 0.0 0.5 0.0 \
       --parallel-scale 0.905083 \
       --near -1.81017 \
@@ -308,6 +312,9 @@ run_visit_renderer() {
   run_one_visit_render "$visit_exe" "initial" "StrengthScale" "auto"
   one_status=$?
   [ "$one_status" -ne 0 ] && { warn "initial StrengthScale render exited with status $one_status"; status=$one_status; }
+  run_one_visit_render "$visit_exe" "initial" "particleReferenceGeometry" "auto" "ParticleRegion1_ParticleDomains" 1
+  one_status=$?
+  [ "$one_status" -ne 0 ] && { warn "initial native-particle render exited with status $one_status"; status=$one_status; }
   run_one_visit_render "$visit_exe" "final" "Damage" "unit"
   one_status=$?
   [ "$one_status" -ne 0 ] && { warn "final Damage render exited with status $one_status"; status=$one_status; }

@@ -1,0 +1,13 @@
+# LaTeX build intermediates; retain the PDF and generated source tables.
+/geos_mpm_manual.aux
+/geos_mpm_manual.idx
+/geos_mpm_manual.ilg
+/geos_mpm_manual.ind
+/geos_mpm_manual.log
+/geos_mpm_manual.toc
+/geos_mpm_manual.out
+/geos_mpm_manual.fls
+/geos_mpm_manual.fdb_latexmk
+/geos_mpm_manual.synctex.gz
+/geos_mpm_manual_normalized.pdf
+__pycache__/

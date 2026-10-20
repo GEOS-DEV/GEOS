@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # ---- GEOS-MPM example input metadata ----
 # Purpose: Brazilian disk compression using the single-point B-spline particle type.
-# Solver/PFW features: Strength-scale initialization, quartz damage, moving y boundaries, and reaction history.
+# Solver/PFW features: Strength-scale initialization, quartz damage, moving y boundaries,
+# simplex surface refinement, native particle-domain visualization, and reaction history.
 # Workflow note: keep this file as a copyable problem definition.  Run directories,
 # Slurm submission, rerun cleanup, and suite reporting belong in runProblem or
 # examples/mpm_example_runner.py, not in the pfw dictionary below.
@@ -190,6 +191,20 @@ pfw["particleFileFields"] = [
     "SurfaceFlag",
     "RVector",
 ]
+
+# Refine the disk boundary with a simplex-conforming particle band.  The bulk
+# retains the coarse B-spline particles, while candidate domains near the curved
+# surface are subdivided four times per active direction and clipped against a
+# local surface plane.  Because this is a plane-strain problem, native simplex
+# particles are triangular wedges; the same settings produce tetrahedra in 3D.
+pfw["surfaceRefinementMethod"] = "simplex"
+pfw["surfaceRefinementLevel"] = 4
+
+# Preserve the refined simplex geometry in the particle file and use it for
+# Silo/VTK particle-domain output.  This affects visualization geometry only;
+# SinglePointBSpline mechanics continue to use the equivalent-box R-vectors.
+pfw["particleReferenceGeometry"] = "fromRefinement"
+pfw["particleDomainOutput"] = "native"
 
 # -----------------------------------------------------------------------------
 # Boundary conditions and loading
