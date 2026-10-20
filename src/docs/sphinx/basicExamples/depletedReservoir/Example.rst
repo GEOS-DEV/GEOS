@@ -419,7 +419,7 @@ The wells do not follow the target rates of the schedule for most of the simulat
 
 These histories show that the response of the field is controlled by the pressure limits, and that the capacity of the closed reservoir to accept fluid is the limiting factor. The producer exhausts the pressure available for production within two years. The injectors reach their pressure limit almost immediately, because the volume of the reservoir is limited and no fluid can leave it, so every volume injected increases the pressure. The stages of the schedule remain the periods during which the wells are open, but the volumes of fluid produced and injected are smaller than the targets of the input suggest.
 
-**Pressure*
+**Pressure**
 
 The pressure maps give the absolute pressure at the key times. The initial map is a hydrostatic distribution: the pressure increases with depth, with a gradient that changes at the gas-water contact because the gas is lighter than the water. In absolute values, the largest part of the color range is due to this vertical gradient, and the changes caused by the operations are only a fraction of it.
 
