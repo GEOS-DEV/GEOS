@@ -303,7 +303,7 @@ To illustrate this feature, we can re-run the previous analysis with viscosity i
 
 .. code-block:: bash
 
-  mpirun -np 36 geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -p mu 0.005 -x 6 -y 2 -z 3 -o hf_results_higher_mu
+  mpirun -np 36 geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -p mu_init 0.005 -x 6 -y 2 -z 3 -o hf_results_higher_mu
 
 
 ------------------------------------------------------------------

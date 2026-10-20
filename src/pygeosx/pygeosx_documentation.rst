@@ -47,7 +47,8 @@ The following script runs a GEOS input file from Python, with the same command-l
       pressure = problem.get_wrapper("domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region1/elementSubRegions/cb1/pressure").value()
       # ... inspect or modify the data here
 
-  pygeosx.finalize()
+  # No explicit finalization is needed: GEOS and MPI are finalized
+  # automatically when the Python interpreter exits.
 
 The ``run`` function returns control to Python each time a ``Python`` output (see :ref:`OutputTasks`) is triggered by an event.
 More complete examples are given in the :ref:`AdvancedExamples` (pygeosx examples).
@@ -76,9 +77,11 @@ Module Functions
 
   Apply the initial conditions.
 
-.. py:function:: pygeosx.finalize()
+.. py:function:: pygeosx._finalize()
 
   Finalize GEOS. After this no calls into pygeosx or to MPI are allowed.
+  This function is registered with the ``atexit`` module when ``pygeosx`` is imported,
+  so it runs automatically when the interpreter exits and does not need to be called explicitly.
 
 .. py:function:: pygeosx.run()
 

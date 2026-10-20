@@ -588,6 +588,10 @@ fi
 # In case we have more powerful nodes, consider removing `--oversubscribe` and use `--use-hwthread-cpus` instead.
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
+#
+# ENABLE_WARNINGS_AS_ERRORS is forced ON for every CI build. The GEOS default is OFF for
+# Debug builds (a convenience for developers), but CI must catch new warnings in all
+# configurations, including the Debug jobs.
 GEOS_BUILD_DIR=/tmp/geos-build
 phase_start "Configure"
 or_die python3 scripts/config-build.py \
@@ -597,6 +601,7 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOS_DIR} \
                ${BUILD_GENERATOR} \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
+               -DENABLE_WARNINGS_AS_ERRORS=ON \
                -DGEOS_INSTALL_SCHEMA=${GEOS_INSTALL_SCHEMA} \
                -DENABLE_HYPRE=${ENABLE_HYPRE} \
                -DENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE} \
