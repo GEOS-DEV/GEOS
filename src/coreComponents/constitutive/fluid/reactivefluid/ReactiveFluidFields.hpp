@@ -73,7 +73,7 @@ DECLARE_FIELD( dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentra
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Deivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration" );
+               "Derivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration" );
 
 DECLARE_FIELD( dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
                "dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations",
@@ -81,7 +81,7 @@ DECLARE_FIELD( dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesCon
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Deivatives of primarySpeciesMobileAggregateConcentration w.r.t log primary species concentration" );
+               "Derivatives of primarySpeciesMobileAggregateConcentration w.r.t log primary species concentration" );
 
 DECLARE_FIELD( secondarySpeciesConcentration,
                "secondarySpeciesConcentration",
@@ -113,7 +113,7 @@ DECLARE_FIELD( dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Deivatives of aggregate concentration rates w.r.t log primary species concentration" );
+               "Derivatives of aggregate concentration rates w.r.t log primary species concentration" );
 }
 
 }
