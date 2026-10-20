@@ -560,7 +560,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     arrayView2d< real64 > const iterativePenalty_n =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() );
     arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-    arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 > const dispJump_n = subRegion.getField< contact::dispJump_n >();
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
     arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
 
@@ -568,7 +568,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     {
       LvArray::tensorOps::copy< 3 >( traction_n[kfe], traction[kfe] );
       LvArray::tensorOps::copy< 5 >( iterativePenalty_n[kfe], iterativePenalty[kfe] );
-      LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
+      LvArray::tensorOps::copy< 3 >( dispJump_n[kfe], dispJump[kfe] );
       oldFractureState[kfe] = fractureState[kfe];
     } );
   } );
@@ -615,7 +615,7 @@ void SolidMechanicsAugmentedLagrangianContact::resetStateToBeginningOfStep( Doma
     arrayView2d< real64 > const dispJumpUpdPenalty =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpUpdPenaltyString() );
     arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
-    arrayView2d< real64 const > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 const > dispJump_n = subRegion.getField< contact::dispJump_n >();
     arrayView2d< real64 > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
     arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
     arrayView1d< integer const > const oldFractureState = subRegion.getField< contact::oldFractureState >();
@@ -624,7 +624,7 @@ void SolidMechanicsAugmentedLagrangianContact::resetStateToBeginningOfStep( Doma
     {
       LvArray::tensorOps::copy< 3 >( traction[kfe], traction_n[kfe] );
       LvArray::tensorOps::copy< 5 >( iterativePenalty[kfe], iterativePenalty_n[kfe] );
-      LvArray::tensorOps::copy< 3 >( dispJump[kfe], oldDispJump[kfe] );
+      LvArray::tensorOps::copy< 3 >( dispJump[kfe], dispJump_n[kfe] );
       LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
       LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[kfe], 0.0 );
       fractureState[kfe] = oldFractureState[kfe];
