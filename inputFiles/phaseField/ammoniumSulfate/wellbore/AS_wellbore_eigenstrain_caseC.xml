@@ -25,16 +25,16 @@
   </FieldSpecifications>
 
   <Events
-    maxTime="30.0">
+    maxTime="40.0">
     <PeriodicEvent
       name="solverApplications0"
-      endTime="13.0"
+      endTime="15.0"
       maxEventDt="0.1"
       target="/Solvers/pfSolve"/>
 
     <PeriodicEvent
       name="solverApplications1"
-      beginTime="13.0"
+      beginTime="15.0"
       endTime="25.0"
       maxEventDt="0.005"
       target="/Solvers/pfSolve"/>

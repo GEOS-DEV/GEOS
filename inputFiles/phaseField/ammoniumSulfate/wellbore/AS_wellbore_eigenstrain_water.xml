@@ -21,7 +21,7 @@
   </FieldSpecifications>
 
   <Events
-    maxTime="30.0">
+    maxTime="40.0">
     <PeriodicEvent
       name="solverApplications0"
       endTime="13.0"

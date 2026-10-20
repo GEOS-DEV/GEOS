@@ -230,7 +230,7 @@
       name="rockPerm"
       bulkPermeability="5.0e-18"
       damageDependenceConstant="8.0"
-      cloggingExponent="10"
+      cloggingExponent="20"
       minCloggingMultiplier="1e-6"/>
 
     <!-- ================= BOREHOLE (soft "void") =================
@@ -446,12 +446,12 @@
          The borehole injection stays cell-based by necessity: a face Dirichlet cannot set
          composition - inflow always upwinds the interior cell concentration - so the injected AS
          composition can only be imposed on the meshed Source cells. -->
-    <!-- <FieldSpecification
+    <FieldSpecification
       name="outerPressure"
       setNames="{ xneg, xpos, yneg, ypos }"
       objectPath="faceManager"
       fieldName="pressure"
-      scale="0.0"/> -->
+      scale="0.0"/>
 
     <!-- Mass injection; a negative scale is injection. SourceFlux feeds the total mass row only,
          so the injected composition comes entirely from the species Dirichlet and AS enters the
