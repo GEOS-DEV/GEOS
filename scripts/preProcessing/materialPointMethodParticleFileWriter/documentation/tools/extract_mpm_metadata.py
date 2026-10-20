@@ -5,12 +5,13 @@ The output JSON is an intermediate generated artifact consumed by
 tools/render_generated_tex.py.  This script does not write any human-maintained
 LaTeX source.
 """
-import argparse, re, json, pathlib, ast
+import argparse, re, json, pathlib, ast, hashlib
 from collections import defaultdict, Counter
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--repo", type=pathlib.Path, required=True, help="path to the GEOS checkout root")
 parser.add_argument("--out", type=pathlib.Path, default=pathlib.Path("generated/data/geos_mpm_extracted.json"), help="metadata JSON output path")
+parser.add_argument("--write-schema-docs", action="store_true", help="refresh MPM wrapper reference RST files")
 args = parser.parse_args()
 repo = args.repo.resolve()
 
@@ -40,6 +41,21 @@ def view_key_map(text):
 
 def extract_register_wrappers(path, header_paths=[]):
     text=read(path)
+    # Resolve simple constructor defaults without importing or running GEOS.
+    ctor_text=text[:text.find('registerWrapper')]
+    ctor_defaults=dict(re.findall(r'\b(m_\w+)\s*\(\s*([^()]*)\s*\)\s*[,\n]', ctor_text))
+    # Recover nested initializer expressions such as numeric_limits::max().
+    for match in re.finditer(r'\b(m_\w+)\s*\(', ctor_text):
+        start=match.end(); end=start; depth=1
+        while end < len(ctor_text) and depth:
+            if ctor_text[end]=='(':depth+=1
+            elif ctor_text[end]==')':depth-=1
+            end+=1
+        if depth==0:ctor_defaults[match[1]]=ctor_text[start:end-1].strip()
+    member_types={}
+    for header in header_paths:
+        member_types.update({name:typ.strip() for typ,name in re.findall(
+            r'^\s*([\w:]+(?:\s*<[^;]+?>)?)\s+(m_\w+)\s*;', read(header), re.M)})
     maps={}
     for h in header_paths:
         maps.update(view_key_map(read(h)))
@@ -112,7 +128,23 @@ def extract_register_wrappers(path, header_paths=[]):
                         if par2==0: break
                 k+=1
             desc=clean_cpp_string_arg(stmt[op+1:k])
-        rows.append({'name':name,'flag':flag,'default':default,'restart':restart,'description':desc,'source':str(path),'line':line_no(text,idx)})
+        default_expression=default
+        if default in ctor_defaults:
+            default=ctor_defaults[default].strip() or '{}'
+        enum_match=re.fullmatch(r'mpm::(\w+)::(\w+)', default)
+        if enum_match:
+            enum_text=read(pathlib.Path('src/coreComponents/physicsSolvers/solidMechanics/MPMSolverEnums.hpp'))
+            body=re.search(r'enum\s+(?:class|struct)\s+'+enum_match[1]+r'[^\{]*\{(.*?)\};',enum_text,re.S)
+            strings=re.search(r'ENUM_STRINGS\(\s*mpm::'+enum_match[1]+r'\s*,(.*?)\);',enum_text,re.S)
+            if body and strings:
+                symbols=[v.strip().split('=')[0].strip() for v in re.sub(r'//[^\n]*','',body[1]).split(',') if v.strip()]
+                labels=re.findall(r'"([^"]+)"',strings[1])
+                if enum_match[2] in symbols and len(labels)==len(symbols):default=labels[symbols.index(enum_match[2])]
+        member=re.search(r'registerWrapper\s*\([^,]+,\s*&\s*(m_\w+)',stmt,re.S)
+        typ=member_types.get(member[1], '') if member else ''
+        if typ.startswith('mpm::'):typ='string (enum)'
+        rows.append({'name':name,'flag':flag,'default':default,'default_expression':default_expression,
+                     'type':typ,'restart':restart,'description':desc,'source':str(path),'line':line_no(text,idx)})
     return rows
 
 # Solver wrappers
@@ -144,21 +176,27 @@ def extract_enum_strings(path, enum_qual):
     return re.findall(r'"([^"]+)"', m.group(1))
 particle_types=extract_enum_strings(pathlib.Path('src/coreComponents/mesh/ParticleType.hpp'), 'ParticleType')
 particle_columns=extract_enum_strings(pathlib.Path('src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp'), 'ParticleMeshGenerator::ParticleColumnHeaders')
-# defaults for columns from source, manually parse switch cases somewhat
-# Use hard-coded defaults based on observed switch cases
-col_defaults={c:'required' for c in particle_columns}
-for c in ['StrengthScale','MaterialDirectionXX','MaterialDirectionYY','MaterialDirectionZZ']:
-    col_defaults[c]='1.0 if omitted'
-for c in ['Temperature']:
-    col_defaults[c]='300.0 if omitted'
-for c in ['ParticleType']:
-    col_defaults[c]='2.0 (CPDI) if omitted'
-for c in ['CZTag','MaterialType','ContactGroup','Damage','Porosity','VelocityX','VelocityY','VelocityZ','MaterialDirectionXY','MaterialDirectionXZ','MaterialDirectionYX','MaterialDirectionYZ','MaterialDirectionZX','MaterialDirectionZY','SurfaceNormalX','SurfaceNormalY','SurfaceNormalZ','SurfacePositionX','SurfacePositionY','SurfacePositionZ','SurfaceTractionX','SurfaceTractionY','SurfaceTractionZ','TemperatureRate']:
-    if c in col_defaults: col_defaults[c]='0.0 if omitted'
-particle_columns_data=[{'name':c,'default':col_defaults[c]} for c in particle_columns]
+# Particle header names, not positional indices, select columns. Parse the
+# actual default switch, including fields previously omitted by the hardcoded list.
+reader_text=read(pathlib.Path('src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp'))
+switch=reader_text[reader_text.index('switch( static_cast< ParticleColumnHeaders >( c ) )'):]
+switch=switch[:switch.index('default:')]
+col_defaults={}
+for group in switch.split('break;'):
+    value=re.search(r'defaultValue\s*=\s*([^;]+);',group)
+    if value:
+        for name in re.findall(r'case ParticleColumnHeaders::(\w+):',group):col_defaults[name]=value[1].strip()
+particle_columns_data=[]
+for index,name in enumerate(particle_columns):
+    native=name=='ParticleReferenceGeometry' or name.startswith('GeometryRVector')
+    particle_columns_data.append({'index':index,'name':name,
+        'default':'group absent: no native state' if native else col_defaults.get(name,'no default'),
+        'required':not native and name not in col_defaults,'required_when':'all 10 together' if native else ''})
 
-# Solver enum options from SolidMechanicsMPM.hpp
-htext=read(pathlib.Path('src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp'))
+# Solver enum options live primarily in MPMSolverEnums.hpp. Preserve serialized
+# XML spellings, which need not match C++ enum names.
+htext='\n'.join(read(pathlib.Path('src/coreComponents/physicsSolvers/solidMechanics')/name)
+                for name in ['MPMSolverEnums.hpp','SolidMechanicsMPM.hpp'])
 enums=[]
 for m in re.finditer(r'enum\s+(?:class|struct)\s+([A-Za-z0-9_]+)[^{]*\{(.*?)\};', htext, flags=re.S):
     name=m.group(1)
@@ -169,7 +207,12 @@ for m in re.finditer(r'enum\s+(?:class|struct)\s+([A-Za-z0-9_]+)[^{]*\{(.*?)\};'
         if not line: continue
         line=line.split('=')[0].strip()
         if re.match(r'[A-Za-z_]', line): vals.append(line)
-    enums.append({'name':name,'values':vals})
+    strings=re.search(r'ENUM_STRINGS\(\s*mpm::'+name+r'\s*,(.*?)\);',htext,re.S)
+    labels=re.findall(r'"([^"]+)"',strings[1]) if strings else []
+    enums.append({'name':name,'values':labels or vals,'cpp_values':vals})
+
+particle_region_wrappers=extract_register_wrappers(pathlib.Path('src/coreComponents/mesh/ParticleRegion.cpp'),
+    [pathlib.Path('src/coreComponents/mesh/ParticleRegion.hpp')])
 
 # PFW parameters table: extract dict literal region approximately and ast parse
 pfw_text=read(pathlib.Path('scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py'))
@@ -266,18 +309,27 @@ for name in sorted(selected):
     else:
         material_docs.append({'name':name,'preset_count':model_counts.get(name,0),'attributes':[],'attribute_count':0,'source':''})
 
-# Schema docs for ParticleMesh, ParticleRegion, SolidMechanics_MPM parse
-schema_tables={}
-for name in ['SolidMechanics_MPM','ParticleMesh','ParticleRegion','MPMEvents']:
-    f=schema_docs/f'{name}.rst'
-    if f.exists():
-        rows=[]
-        for line in f.read_text(errors='ignore').splitlines():
-            if not line.strip() or set(line.strip())<=set('= '): continue
-            parts=re.split(r'\s{2,}', line.strip(), maxsplit=3)
-            if len(parts)>=3 and parts[0]!='Name':
-                rows.append({'name':parts[0], 'type':parts[1], 'default':parts[2], 'description':parts[3] if len(parts)>3 else ''})
-        schema_tables[name]=rows
+# Do not reuse cached MPM schema tables as current defaults. These references
+# are derived from the same wrapper registrations used in the manual.
+def write_wrapper_rst(name, rows):
+    lines=[".. Generated from current source wrappers by extract_mpm_metadata.py.",
+           ".. Full inherited XML schema generation requires a GEOS build.", "",
+           "Current directly registered input attributes are listed below. Defaults",
+           "are resolved from source where possible; remaining C++ expressions are",
+           "shown verbatim. Inherited attributes are not repeated.", "",
+           ".. list-table:: "+name+" source wrapper reference",
+           "   :header-rows: 1", "   :widths: 24 16 18 42", "",
+           "   * - Attribute", "     - Input / type", "     - Default", "     - Description"]
+    for row in sorted(rows,key=lambda r:r["name"]):
+        if row["flag"]=="FALSE":continue
+        lines += ["   * - "+row["name"],
+                  "     - "+(row["flag"]+" / "+row["type"]).strip(" /"),
+                  "     - "+(row["default"] or ("required" if row["flag"]=="REQUIRED" else "not explicitly set")),
+                  "     - "+row["description"].replace("\n"," ")]
+    (schema_docs/(name+".rst")).write_text("\n".join(line.rstrip() for line in lines)+"\n")
+if args.write_schema_docs:
+    write_wrapper_rst("SolidMechanics_MPM", solver_wrappers)
+    write_wrapper_rst("ParticleRegion", particle_region_wrappers)
 
 # Examples/suite cases
 suite_root=repo/'scripts/preProcessing/materialPointMethodParticleFileWriter'
@@ -317,11 +369,11 @@ post_scripts=sorted(set(post_scripts))
 # Source inventory
 source_inventory=[
     {'component':'MPM solver','path':'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.[ch]pp'},
-    {'component':'MPM kernels','path':'src/coreComponents/physicsSolvers/solidMechanics/kernels/ExplicitMPM.hpp'},
+    {'component':'MPM native geometry','path':'src/coreComponents/mesh/ParticleReferenceGeometry.hpp'},
     {'component':'MPM solver fields','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverFields.hpp'},
     {'component':'MPM events','path':'src/coreComponents/events/mpmEvents/*'},
     {'component':'Particle mesh and regions','path':'src/coreComponents/mesh/Particle*.{hpp,cpp}, src/coreComponents/mesh/particleGenerators/*'},
-    {'component':'Schema-generated docs','path':'src/coreComponents/schema/docs/SolidMechanics_MPM.rst and related MPM docs'},
+    {'component':'Solver enums','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverEnums.hpp'},
     {'component':'ParticleFileWriter','path':'scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py'},
     {'component':'PFW geometry objects','path':'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_geometryObjects.py'},
     {'component':'PFW material library','path':'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_materials.py'},
@@ -339,6 +391,7 @@ data={
  'particle_types':particle_types,
  'particle_columns':particle_columns_data,
  'solver_enums':enums,
+ 'particle_region_wrappers':particle_region_wrappers,
  'pfw_params':params,
  'pfw_silo_common':silo_common,
  'pfw_silo_all':silo_all,
@@ -347,11 +400,21 @@ data={
  'geometry_utilities':utility_classes,
  'material_docs':material_docs,
  'material_preset_counts':dict(model_counts),
- 'schema_tables':schema_tables,
  'suite_cases':suite_cases,
  'post_scripts':post_scripts,
  'source_inventory':source_inventory,
 }
+fingerprint_paths=[
+ 'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp',
+ 'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverEnums.hpp',
+ 'src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp',
+ 'src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp',
+ 'src/coreComponents/mesh/ParticleRegion.cpp',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_surface_refinement.py',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_check.py',
+]
+data['source_sha256']={p:hashlib.sha256((repo/p).read_bytes()).hexdigest() for p in fingerprint_paths}
 path=args.out
 path.parent.mkdir(parents=True, exist_ok=True)
 path.write_text(json.dumps(data,indent=2), encoding='utf-8')

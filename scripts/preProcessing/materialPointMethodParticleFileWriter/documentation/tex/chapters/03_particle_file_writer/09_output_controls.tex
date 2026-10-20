@@ -12,9 +12,9 @@
 \index{PFW parameter!plotGridFields@\texttt{plotGridFields}}
 \index{PFW parameter!plottableFields@\texttt{plottableFields}}
 \index{PFW parameter!gridFieldNames@\texttt{gridFieldNames}}
-\index{PFW parameter!siloGridFieldNames@\texttt{siloGridFieldNames}}
+\index{PFW parameter!siloGridFieldNames@\mpmcode{siloGridFieldNames}}
 \index{PFW parameter!siloGridFields@\texttt{siloGridFields}}
-\index{PFW parameter!plotUnscaledParticles@\texttt{plotUnscaledParticles}}
+\index{PFW parameter!plotUnscaledParticles@\mpmcode{plotUnscaledParticles}}
 
 GEOS-MPM plot output is selected in PFW with \texttt{pfw["outputType"]}.  The two supported output blocks are \texttt{"vtk"}, which is the ParaView-oriented path, and \texttt{"silo"}, which is the VisIt-oriented path.  Both options use the same GEOS event schedule: PFW writes a \texttt{PeriodicEvent} named \texttt{outputs} with \texttt{timeFrequency=pfw["plotInterval"]}, targeting either \texttt{/Outputs/vtkOutput} or \texttt{/Outputs/siloOutput}.  Restart output is independent of the plotting format and is scheduled with \texttt{pfw["restartInterval"]}.  In practice, every production \path{pfw_input.py} should set both intervals explicitly, because they control file count, post-processing cost, and restart cadence.
 
@@ -47,15 +47,15 @@ Table~\ref{tab:pfw-output-controls} summarizes the PFW keys most commonly used t
 \texttt{plotInterval} & positive time & Time frequency for plot-file writes.  This controls the \texttt{outputs} event.\\
 \texttt{restartInterval} & positive time & Time frequency for restart writes.  This is independent of VTK/Silo selection.\\
 \texttt{plotGridFields} & \texttt{0}, \texttt{1} & Solver flag that enables background-grid wrappers for plot output, primarily for VTK workflows.  The solver default is off.\\
-\texttt{plottableFields} & GEOS name array & Optional solver-side field filter.  Use it to reduce VTK file sizes by retaining only selected particle and, when \texttt{plotGridFields=1}, grid wrappers.\\
+\texttt{plottableFields} & GEOS name array & Optional solver-side field filter.  Use it to reduce VTK file sizes by retaining only selected particle and, when \mpmcode{plotGridFields=1}, grid wrappers.\\
 \texttt{gridFieldNames} & list or GEOS name array & Silo-only alias for requested background-grid fields on the \texttt{Silo} output block.\\
-\texttt{siloGridFieldNames} & list or GEOS name array & Equivalent Silo-only alias for \texttt{gridFieldNames}.\\
+\mpmcode{siloGridFieldNames} & list or GEOS name array & Equivalent Silo-only alias for \texttt{gridFieldNames}.\\
 \texttt{siloGridFields} & \texttt{False}, \texttt{True}, \texttt{"common"}, \texttt{"all"}, list & Convenience Silo-only control.  \texttt{True} and \texttt{"common"} request the standard debug set; \texttt{"all"} requests every grid field known to PFW and should be used sparingly.\\
-\texttt{plotUnscaledParticles} & \texttt{0}, \texttt{1} & Plot CPDI/domain-scaled particles without drawing the scaled particle domain.  This is useful when scaled domains obscure particle-center fields.\\
+\mpmcode{plotUnscaledParticles} & \texttt{0}, \texttt{1} & Plot CPDI/domain-scaled particles without drawing the scaled particle domain.  This is useful when scaled domains obscure particle-center fields.\\
 \end{longtable}
 }
 
-The solver also registers \texttt{plottableFields} directly.  Current PFW versions pass unknown \texttt{pfw} keys through to the generated solver XML after printing a warning, so \texttt{pfw["plottableFields"]} can be used even if it is not present in the built-in PFW parameter table.  Inspect the generated XML when using this pass-through mechanism.
+The solver registers \texttt{plottableFields}, and PFW includes it in its recognized parameter table. Set \texttt{pfw["plottableFields"]} to select the corresponding solver fields; unknown PFW keys are rejected.
 
 \subsection{VTK output for ParaView}
 \label{sec:pfw-vtk-output}
@@ -69,9 +69,9 @@ When \texttt{pfw["outputType"] = "vtk"}, PFW emits a GEOS block of the form
   format="ascii"/>
 \end{lstlisting}
 
-The corresponding output event targets \texttt{/Outputs/vtkOutput}.  The VTK path is generally the most convenient choice for ParaView-oriented inspection of particle fields, material-state variables, and optional background-grid fields.  By default, the MPM solver does not plot background-grid wrappers.  Set \texttt{pfw["plotGridFields"] = 1} to plot grid quantities such as \texttt{gridMass}, \texttt{gridVelocity}, \texttt{gridInternalForce}, \texttt{gridContactForce}, and contact-surface reconstruction fields.  Since grid fields are defined on the background mesh and often include one or more velocity-field dimensions, enabling them can substantially increase file size.
+The corresponding output event targets \texttt{/Outputs/vtkOutput}.  The VTK path is generally the most convenient choice for ParaView-oriented inspection of particle fields, material-state variables, and optional background-grid fields.  By default, the MPM solver does not plot background-grid wrappers.  Set \texttt{pfw["plotGridFields"] = 1} to plot grid quantities such as \texttt{gridMass}, \texttt{gridVelocity}, \mpmcode{gridInternalForce}, \mpmcode{gridContactForce}, and contact-surface reconstruction fields.  Since grid fields are defined on the background mesh and often include one or more velocity-field dimensions, enabling them can substantially increase file size.
 
-Use \texttt{plottableFields} to control VTK file size.  If this array is omitted, the solver uses the default plot levels registered by each wrapper.  If it is supplied, wrappers not listed are set to \texttt{NOPLOT}; when grid output is desired, include both \texttt{plotGridFields=1} and the grid wrapper names in \texttt{plottableFields}.
+Use \texttt{plottableFields} to control VTK file size.  If this array is omitted, the solver uses the default plot levels registered by each wrapper.  If it is supplied, wrappers not listed are set to \texttt{NOPLOT}; when grid output is desired, include both \mpmcode{plotGridFields=1} and the grid wrapper names in \texttt{plottableFields}.
 
 \subsection{Silo output for VisIt}
 \label{sec:pfw-silo-output}
@@ -91,7 +91,7 @@ When \texttt{pfw["outputType"] = "silo"}, PFW emits a GEOS block of the form
   writeFEMFaces="0"/>
 \end{lstlisting}
 
-If Silo grid fields are requested, PFW adds a \texttt{gridFieldNames} attribute to this block.  The accepted PFW inputs include a Python list, a GEOS-style braced string, a comma-separated string, \texttt{True}, \texttt{"common"}, and \texttt{"all"}.  The \texttt{"common"} preset expands to \texttt{gridMass}, \texttt{gridVelocity}, \texttt{gridInternalForce}, and \texttt{gridDamageGradient}.  The \texttt{"all"} preset expands to the complete PFW-known list in Appendix~\ref{app:pfw}; it is intended for focused debugging because it can produce very large plot files.
+If Silo grid fields are requested, PFW adds a \texttt{gridFieldNames} attribute to this block.  The accepted PFW inputs include a Python list, a GEOS-style braced string, a comma-separated string, \texttt{True}, \texttt{"common"}, and \texttt{"all"}.  The \texttt{"common"} preset expands to \texttt{gridMass}, \texttt{gridVelocity}, \mpmcode{gridInternalForce}, and \mpmcode{gridDamageGradient}.  The \texttt{"all"} preset expands to the complete PFW-known list in Appendix~\ref{app:pfw}; it is intended for focused debugging because it can produce very large plot files.
 
 The Silo block sets \texttt{parallelThreads} automatically from the run configuration when not specified.  PFW does not expose the low-level Silo mesh toggles as first-class user controls; by default, the generated Silo block writes the cell-element mesh and does not write face, edge, or FEM-face meshes.
 
@@ -211,3 +211,9 @@ Use this only for short debugging runs or single-output snapshots, because it re
 \label{sec:pfw-output-guidance}
 
 For routine V\&V or parameter studies, prefer particle-only VTK or Silo output plus the CSV diagnostics from Section~\ref{sec:pfw-diagnostics}.  Increase the plot cadence only for short windows of interest, because plot-file writes can dominate wall time and storage.  For contact and boundary-condition debugging, enable grid diagnostics for a small number of output frames and include only the grid fields needed to answer the question.  For CPDI/domain-scaling visualization, \texttt{pfw["plotUnscaledParticles"] = 1} can make particle-center fields easier to interpret when scaled domains overlap visually.
+
+\subsection{Native refined-particle geometry}
+\index{particleDomainOutput}
+With \texttt{particleReferenceGeometry="fromRefinement"}, PFW writes the optional ten-column geometry group and emits \mpmcode{particleDomainOutput} on each \texttt{ParticleRegion}. The default \texttt{"native"} displays cut plane-strain triangles as wedges and 3D cuts as tetrahedra in both Silo and VTK. Each particle remains one zone with one value for each particle field. Uncut pieces remain boxes, and vertices are not shared across particles.
+
+Select \texttt{particleDomainOutput="equivalentBox"} to display the legacy mechanical domains while retaining native metadata. This output switch does not change mechanics or remove the runtime-splitting guard on native simplices. To generate files without native state, rerun PFW with \texttt{particleReferenceGeometry="equivalentBox"}. See Section~\ref{sec:pfw-refinement} for initialization and Section~\ref{subsec:robust-particle-splitting} for runtime restrictions.

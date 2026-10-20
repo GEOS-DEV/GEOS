@@ -22,6 +22,8 @@
 #define GEOS_MESH_PARTICLEREGION_HPP_
 
 #include "ParticleRegionBase.hpp"
+#include <array>
+#include <vector>
 
 namespace geos
 {
@@ -111,6 +113,19 @@ public:
    */
   array2d< real64 > getParticleCorners() const;
 
+  struct ParticleDomainMesh
+  {
+    std::vector< std::array< real64, 3 > > points;
+    std::vector< localIndex > offsets; // nParticles+1; disconnected vertices
+    std::vector< integer > shape;
+    std::vector< int > ownerRank;
+  };
+
+  /// A separate API: numberOfVerticesPerParticle is an interpolation capacity.
+  bool usesNativeParticleGeometry() const;
+  ParticleDomainMesh getParticleDomainMesh() const;
+
+
   /**
    * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -126,6 +141,9 @@ private:
 
   // Cell block names
   string_array m_particleBlockNames;
+
+  /// native uses optional simplex geometry; equivalentBox forces legacy output.
+  string m_particleDomainOutput;
 
 };
 

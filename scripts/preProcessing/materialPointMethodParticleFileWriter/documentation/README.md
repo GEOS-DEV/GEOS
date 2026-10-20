@@ -41,15 +41,28 @@ generated LaTeX snippets.  To re-extract metadata from the current checkout, run
 ./build_manual.sh --refresh-data
 ```
 
-With `--refresh-data`, the script determines the repository root from Git when
+With `--refresh-data`, extraction also updates the direct-wrapper RST
+references for SolidMechanics_MPM and ParticleRegion. The script determines the repository root from Git when
 possible, otherwise from the current source-tree layout.  When the documentation
 directory is outside the checkout, set:
 
 ```bash
-GEOS_REPO_ROOT=/path/to/geos ./build_manual.sh
+GEOS_REPO_ROOT=/path/to/geos ./build_manual.sh --refresh-data
 ```
 
 For compatibility with older workflows, `python3 make_manual.py` now refreshes
 only the generated LaTeX snippets.  Use `python3 make_manual.py --refresh-data`
 to refresh the intermediate metadata JSON as well.  It no longer rewrites the
 manual driver or narrative files.
+
+## Current source audit
+
+See [AUDIT.md](AUDIT.md) for the source scope, corrected behavior, and validation
+limits. Initial particle refinement and native geometry are covered in the PFW
+chapter; runtime splitting is covered in robustness controls. Generated metadata
+records source SHA-256 fingerprints. Re-extract it after source changes.
+
+The manual's solver and event references come from current wrapper registrations
+and serialized enum names. Cached schema RST files are not used as a second
+solver-default authority. A full generated XML schema still requires a GEOS build.
+Build intermediates are ignored; keep the regenerated PDF and generated sources.

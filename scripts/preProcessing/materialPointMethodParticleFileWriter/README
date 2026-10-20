@@ -239,3 +239,58 @@ Example: a disk of points on an x-normal surface to monitor velocity:
 The generated solver attributes are `tracerHistory`, `tracerCoordinates`,
 `tracerVariables`, `tracerWriteInterval` or `tracerCycleInterval`, and
 `tracerOutputPrefix`.  Use a time interval or a cycle interval, not both.
+
+***Two-pass surface refinement***
+
+Set surfaceRefinementLevel > 1 to refine the band identified from ordinary
+coarse-center surface flags, occupied/empty adjacency, and region changes:
+
+  pfw["surfaceRefinementMethod"] = "cartesian"  # default
+  pfw["surfaceRefinementLevel"] = 4
+
+Empty-center coarse domains adjacent to particles are included. For local
+plane-cut triangle/tetrahedron centroid/volume initialization with single-point
+B-spline particles, use surfaceRefinementMethod="simplex". The existing geometry
+objects are unchanged. Both options use rank-owned coarse domains and read-only
+coarse-slice halos. See SURFACE_REFINEMENT.md for the algorithm, file-format
+compatibility, MPI factory requirements, fallback behavior, and tests.
+
+Material refinement is set with pfw["particleRefinement"], either one positive
+integer or a list indexed by material ID. The default is one per material.
+The surface level multiplies this factor in candidate domains; it does not
+change grid resolution. Simplex mode is active even at level 1.
+
+Optional native wedge/tetrahedron output:
+  pfw["particleReferenceGeometry"] = "fromRefinement"
+  pfw["particleDomainOutput"] = "native"
+
+The default particleReferenceGeometry="equivalentBox" keeps the legacy file
+columns. Native metadata requires the patched reader; it does not change
+SinglePointBSpline mechanics. See NATIVE_REFERENCE_GEOMETRY.md.
+
+***Runtime splitting is independent of PFW refinement***
+
+subdivideParticles=-1 is conditional (VP-Hencky scaling of linear CPDI);
+0 disables that general policy, and 1 enables it explicitly.
+oversizedParticleTreatment="split" is an independent policy, even with
+subdivideParticles=0. It requires a positive
+defGradResetMaxParticleDomainToGridCellRatio. Its optional rank-count threshold
+switches oversized handling to reset above the threshold, but is not a hard cap.
+
+To disable both splitting policies and legacy oversized reset:
+  pfw["subdivideParticles"] = 0
+  pfw["oversizedParticleTreatment"] = "none"
+  pfw["resetDefGradForOversizedParticles"] = 0
+
+applyVelocityGradientWhenSplittingParticles defaults to 1 in GEOS; set it to 0
+to copy parent velocity to children. The default affine correction conserves
+linear momentum but can add kinetic energy at splitting.
+
+Native wedge/tet particles cannot currently be split during a GEOS run.
+Equivalent-box output alone does not remove this restriction; regenerate the
+file with particleReferenceGeometry="equivalentBox" for runtime box splitting.
+
+The current manual, including PFW defaults and complete splitting behavior, is
+documentation/geos_mpm_manual.pdf. Rebuild with:
+  bash documentation/build_manual.sh --refresh-data
+See documentation/AUDIT.md for the source audit and validation scope.

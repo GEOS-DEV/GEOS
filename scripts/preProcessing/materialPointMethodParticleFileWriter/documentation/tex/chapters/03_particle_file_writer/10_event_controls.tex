@@ -3,8 +3,8 @@
 \label{sec:pfw-event-controls}
 \index{PFW!event controls}
 \index{events!PFW input}
-\providecommand{\eventidx}[1]{\index{MPMEvents!#1@\texttt{#1}}}
-\providecommand{\eventattridx}[1]{\index{MPMEvents attribute!#1@\texttt{#1}}}
+\providecommand{\eventidx}[1]{\index{MPMEvents!#1@\mpmcode{#1}}}
+\providecommand{\eventattridx}[1]{\index{MPMEvents attribute!#1@\mpmcode{#1}}}
 \pfwidx{useEvents}\pfwidx{mpmEventsString}
 \eventattridx{startTime}\eventattridx{endTime}
 
@@ -23,7 +23,7 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-Events are evaluated by the solver event manager near the beginning of a time step, before the particle-to-grid transfer sequence, except for the late \texttt{TransformParticles} pass described in Section~\ref{subsec:event-transform-particles}.  Multiple event nodes may be placed in one string.  Event order in the input should follow the intended physical sequence, especially when two events share the same activation time and modify related state.
+Events are evaluated by the solver event manager near the beginning of a time step, before the particle-to-grid transfer sequence, except for the late \mpmcode{TransformParticles} pass described in Section~\ref{subsec:event-transform-particles}.  Multiple event nodes may be placed in one string.  Event order in the input should follow the intended physical sequence, especially when two events share the same activation time and modify related state.
 
 \subsection{Examples by event type}
 \label{sec:pfw-event-examples-by-type}
@@ -60,10 +60,10 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{BoreholePressure}}
+\subsubsection{\mpmcode{BoreholePressure}}
 \eventidx{BoreholePressure}\eventattridx{boreholeRadius}\eventattridx{startPressure}\eventattridx{endPressure}\eventattridx{interpType}
 
-\texttt{BoreholePressure} writes a pressure-like background stress in a circular borehole region aligned with the \(z\) axis.  The pressure is ramped between the start and end values using \texttt{interpType}: \texttt{0} for linear, \texttt{1} for cosine, and \texttt{2} for smoothstep interpolation.
+\mpmcode{BoreholePressure} writes a pressure-like background stress in a circular borehole region aligned with the \(z\) axis.  The pressure is ramped between the start and end values using \texttt{interpType}: \texttt{0} for linear, \texttt{1} for cosine, and \texttt{2} for smoothstep interpolation.
 
 \begin{lstlisting}[language=Python,caption={Borehole-pressure event.}]
 pfw["useEvents"] = 1
@@ -78,31 +78,30 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{CohesiveZone}}
-\eventidx{CohesiveZone}\eventattridx{regionNames}\eventattridx{constitutiveModels}\eventattridx{czTags}\eventattridx{czVolumeNormalization}\eventattridx{computeNormalsAndPositions}\eventattridx{normalsAndPositionsMethod}\eventattridx{czSurfaceDisplacementUpdate}
-
-\texttt{CohesiveZone} creates cohesive-zone regions at run time and associates each region with a cohesive constitutive model and a cohesive-zone tag.  New inputs should use explicit arrays for \texttt{regionNames}, \texttt{constitutiveModels}, and \texttt{czTags}; the arrays must have identical length.  The surface-normal and surface-position options are described in Sections~\ref{sec:cohesive-zone-implementation} and~\ref{sec:contact-surface-detection-spacing}.
-
-\begin{lstlisting}[language=Python,caption={Cohesive-zone insertion event.}]
+\subsubsection{\mpmcode{ReferenceCohesiveZones}}
+\eventidx{ReferenceCohesiveZones}\eventattridx{regionNames}\eventattridx{czSurfaceDisplacementUpdate}
+Define cohesive regions before enabling them through an event. Material names refer to cohesive constitutive cards in \mpmcode{materialPropertyString}; tags match particle \texttt{CZTag} values. The event's displacement-update default is \texttt{Nodal}.
+\begin{lstlisting}[language=Python,caption={Register and enable a cohesive region.}]
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion name="czInterface"
+  constitutiveModel="czLaw" tag="1" czVolumeNormalization="1"/>
+"""
 pfw["useEvents"] = 1
 pfw["mpmEventsString"] = """
-<CohesiveZone
-  startTime="0.0"
-  endTime="1.0"
+<ReferenceCohesiveZones name="referenceInterface"
+  startTime="0.0" endTime="1.0"
   regionNames="{czInterface}"
-  constitutiveModels="{czLaw}"
-  czTags="{1}"
-  czVolumeNormalization="1"
   computeNormalsAndPositions="1"
   normalsAndPositionsMethod="LogisticRegression"
-  czSurfaceDisplacementUpdate="TypeB"/>
+  czSurfaceDisplacementUpdate="Nodal"/>
 """
 \end{lstlisting}
+The event enables and initializes existing regions and later disables them. It does not create or delete regions. Region-level \mpmcode{czVolumeNormalization} is the effective setting; the same-named event attribute is currently registered but not forwarded. See Section~\ref{sec:event-cohesivezone}.
 
-\subsubsection{\texttt{ConfiningPressure}}
-\eventidx{ConfiningPressure}\eventattridx{confiningPressureBoxMin}\eventattridx{confiningPressureBoxMax}
+\subsubsection{\mpmcode{ConfiningPressure}}
+\eventidx{ConfiningPressure}\eventattridx{confiningPressureBoxMin}\eventattridx{confiningPressureBoxMax}\eventattridx{confiningPressureSphereRadius}
 
-\texttt{ConfiningPressure} applies a virtual confining pressure over a rectangular box.  It is commonly paired with \texttt{InitializeStress} so that particles begin with a compatible hydrostatic stress and the boundary/background pressure is then held or ramped over a short start-up interval.
+\mpmcode{ConfiningPressure} applies a virtual confining pressure outside a rectangular box, or outside an origin-centered sphere when \mpmcode{confiningPressureSphereRadius} is positive.  It is commonly paired with \mpmcode{InitializeStress} so that particles begin with a compatible hydrostatic stress and the boundary/background pressure is then held or ramped over a short start-up interval.
 
 \begin{lstlisting}[language=Python,caption={Confining-pressure event.}]
 pfw["useEvents"] = 1
@@ -117,6 +116,22 @@ pfw["mpmEventsString"] = """
   endTime="1.0e-3"
   confiningPressureBoxMin="{-0.02, -0.02, -0.001}"
   confiningPressureBoxMax="{ 0.02,  0.02,  0.001}"
+  startPressure="10.0e6"
+  endPressure="10.0e6"
+  interpType="1"/>
+"""
+\end{lstlisting}
+
+For an origin-centered spherical pressure transition, replace the two box
+corners with \mpmcode{confiningPressureSphereRadius}.  Positive sphere radius
+takes precedence over the box test when both are present.
+
+\begin{lstlisting}[language=Python,caption={Spherical confining-pressure event.}]
+pfw["mpmEventsString"] = """
+<ConfiningPressure
+  startTime="0.0"
+  endTime="1.0e-3"
+  confiningPressureSphereRadius="0.47"
   startPressure="10.0e6"
   endPressure="10.0e6"
   interpType="1"/>
@@ -139,10 +154,10 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{DeformationUpdate}}
+\subsubsection{\mpmcode{DeformationUpdate}}
 \eventidx{DeformationUpdate}\eventattridx{prescribedFTable}\eventattridx{stressControl}\index{F-table!event controls}\index{stress control!event controls}
 
-\texttt{DeformationUpdate} switches prescribed-deformation and stress-control modes during a run.  Use it when one stage of a simulation is driven by an \(F\)-table or boundary \(F\)-table and a later stage should change to a stress-control mode, or vice versa.  The actual deformation table and stress-control gains are solver/boundary inputs described in Section~\ref{sec:pfw-boundary-controls}; the event changes which mode is active.
+\mpmcode{DeformationUpdate} switches prescribed-deformation and stress-control modes during a run.  Use it when one stage of a simulation is driven by an \(F\)-table or boundary \(F\)-table and a later stage should change to a stress-control mode, or vice versa.  The actual deformation table and stress-control gains are solver/boundary inputs described in Section~\ref{sec:pfw-boundary-controls}; the event changes which mode is active.
 
 \begin{lstlisting}[language=Python,caption={Deformation-control update event.}]
 pfw["useEvents"] = 1
@@ -163,7 +178,7 @@ pfw["mpmEventsString"] = """
 \subsubsection{\texttt{RigidBodyMPM}}
 \eventidx{RigidBodyMPM}\eventattridx{maxJammingStress}\eventattridx{maxContactPenetration}
 
-\texttt{RigidBodyMPM} treats each \texttt{particleColor} as one rigid body while retaining the ordinary MPM grid contact and moving-boundary machinery.  \texttt{particleColor} is independent of \texttt{ContactGroup}: many colors may share one catch-all contact group, and the number of global colors does not determine grid-field storage.  \texttt{maxGridFields} limits only the local number of color slots at one node; with \texttt{maxGridFields=2}, the deterministic first color uses one pure field and all additional local colors use the weighted overflow field.  The optional \texttt{maxJammingStress} stop uses the opposed-face reaction stress
+\texttt{RigidBodyMPM} treats each \texttt{particleColor} as one rigid body while retaining the ordinary MPM grid contact and moving-boundary machinery.  \texttt{particleColor} is independent of \texttt{ContactGroup}: many colors may share one catch-all contact group, and the number of global colors does not determine grid-field storage.  \texttt{maxGridFields} limits only the local number of color slots at one node; with \texttt{maxGridFields=2}, the deterministic first color uses one pure field and all additional local colors use the weighted overflow field.  The optional \mpmcode{maxJammingStress} stop uses the opposed-face reaction stress
 \[
 \sigma_{\mathrm{jam}}=
 \max_d\left[
@@ -174,7 +189,7 @@ pfw["mpmEventsString"] = """
 \]
 where $A_d$ is the current end-of-step area of either face normal to direction $d$.  Currently compressing directions are used when the background-grid deformation rate is nonzero; all active directions are checked at a table plateau.
 
-The optional \texttt{maxContactPenetration} input is dimensionless.  The solver compares it with
+The optional \mpmcode{maxContactPenetration} input is dimensionless.  The solver compares it with
 \[
 \frac{\delta_{\max}}{\ell_h},
 \qquad
@@ -186,7 +201,7 @@ The optional \texttt{maxContactPenetration} input is dimensionless.  The solver 
 \]
 where $\delta_{\max}$ includes material--material and material--moving-wall penetration.  The rigid event ends after the normalized limit is exceeded on two consecutive steps.  The grid-cell diagonal is also the default scale used to initialize \texttt{neighborRadius}, but the penetration limit follows the current moving-grid cell dimensions.
 
-A continuum loading event can depend on the rigid event.  Its \texttt{delay} and scheduled start are then relative to the actual rigid-event completion time.  The \texttt{DeformationUpdate} table time columns are event-local and are shifted to that scheduled start when the event triggers, so the continuum compaction duration can be written directly as the final table time and does not require an absolute simulation start time.
+A continuum loading event can depend on the rigid event.  Its \texttt{delay} and scheduled start are then relative to the actual rigid-event completion time.  The \mpmcode{DeformationUpdate} table time columns are event-local and are shifted to that scheduled start when the event triggers, so the continuum compaction duration can be written directly as the final table time and does not require an absolute simulation start time.
 
 \begin{lstlisting}[language=Python,caption={Rigid packing followed by an event-relative continuum F-table compression.}]
 continuum_compaction_time = 2.0e-4
@@ -218,7 +233,7 @@ pfw["mpmEventsString"] = f"""
 """
 \end{lstlisting}
 
-For a stress-target continuation, use the same dependency, set the desired \texttt{stressControl} entries, and provide a \texttt{stressTable} whose first-column times run from zero to \texttt{continuum\_compaction\_time}.  Both deformation and stress tables are shifted to the scheduled \texttt{DeformationUpdate} start time when the event triggers.
+For a stress-target continuation, use the same dependency, set the desired \texttt{stressControl} entries, and provide a \texttt{stressTable} whose first-column times run from zero to \texttt{continuum\_compaction\_time}.  Both deformation and stress tables are shifted to the scheduled \mpmcode{DeformationUpdate} start time when the event triggers.
 
 \begin{lstlisting}[language=Python,caption={Rigid packing followed by an event-relative continuum stress target.}]
 continuum_compaction_time = 2.0e-4
@@ -240,10 +255,10 @@ pfw["mpmEventsString"] += f"""
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{FrictionCoefficientSwap}}
+\subsubsection{\mpmcode{FrictionCoefficientSwap}}
 \eventidx{FrictionCoefficientSwap}\eventattridx{frictionCoefficient}\eventattridx{frictionCoefficientTable}
 
-\texttt{FrictionCoefficientSwap} changes the scalar friction coefficient and/or the group-pair friction table for later contact calculations.  Use a scalar coefficient for a uniform Coulomb coefficient and a table when different contact-group pairs should have different coefficients.  See Section~\ref{subsec:contact-friction-coefficients} for the group-pair lookup convention.
+\mpmcode{FrictionCoefficientSwap} changes the scalar friction coefficient and/or the group-pair friction table for later contact calculations.  Use a scalar coefficient for a uniform Coulomb coefficient and a table when different contact-group pairs should have different coefficients.  See Section~\ref{subsec:contact-friction-coefficients} for the group-pair lookup convention.
 
 \begin{lstlisting}[language=Python,caption={Friction-coefficient swap event.}]
 pfw["useEvents"] = 1
@@ -272,10 +287,10 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{InitializeStress}}
+\subsubsection{\mpmcode{InitializeStress}}
 \eventidx{InitializeStress}\eventattridx{pressure}
 
-\texttt{InitializeStress} initializes the stress state of a particle region to a hydrostatic pressure.  This is typically used in geomechanics, periodic-cell preparation, and pre-stressed packing examples before the main load path begins.
+\mpmcode{InitializeStress} initializes the stress state of a particle region to a hydrostatic pressure.  This is typically used in geomechanics, periodic-cell preparation, and pre-stressed packing examples before the main load path begins.
 
 \begin{lstlisting}[language=Python,caption={Hydrostatic stress initialization event.}]
 pfw["useEvents"] = 1
@@ -288,10 +303,10 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{InsertPeriodicContactSurfaces}}
+\subsubsection{\mpmcode{InsertPeriodicContactSurfaces}}
 \eventidx{InsertPeriodicContactSurfaces}\index{periodic contact surfaces}
 
-\texttt{InsertPeriodicContactSurfaces} inserts contact-capable surfaces on periodic boundaries.  It is useful after a densification or healing stage when the subsequent loading branch should treat lateral periodic interfaces as contact surfaces rather than purely topological periodic copies.
+\mpmcode{InsertPeriodicContactSurfaces} inserts contact-capable surfaces on periodic boundaries.  It is useful after a densification or healing stage when the subsequent loading branch should treat lateral periodic interfaces as contact surfaces rather than purely topological periodic copies.
 
 \begin{lstlisting}[language=Python,caption={Periodic-contact-surface insertion event.}]
 pfw["useEvents"] = 1
@@ -352,10 +367,10 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{ResetDeformationGradient}}
+\subsubsection{\mpmcode{ResetDeformationGradient}}
 \eventidx{ResetDeformationGradient}\index{deformation-gradient reset!event controls}
 
-\texttt{ResetDeformationGradient} requests one solver cleanup pass in which the deformation gradient of scaled surface particles is reset as described in Section~\ref{sec:robustness-controls}.  It is useful after geometry or contact-surface operations that should restart the local finite-domain particle shape from a well-conditioned state.
+\mpmcode{ResetDeformationGradient} requests one solver cleanup pass in which the deformation gradient of scaled surface particles is reset as described in Section~\ref{sec:robustness-controls}.  It is useful after geometry or contact-surface operations that should restart the local finite-domain particle shape from a well-conditioned state.
 
 \begin{lstlisting}[language=Python,caption={Reset-deformation-gradient event.}]
 pfw["useEvents"] = 1
@@ -365,10 +380,10 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{TemperatureProfile}}
+\subsubsection{\mpmcode{TemperatureProfile}}
 \eventidx{TemperatureProfile}\index{temperature table!event controls}
 
-\texttt{TemperatureProfile} copies its event-local temperature-table value to active particles and cohesive-zone points during the active event window.  The event owns the time window, interpolation type, and temperature table; there is no solver-level \texttt{temperatureTable} control.
+\mpmcode{TemperatureProfile} copies its event-local temperature-table value to active particles and cohesive-zone points during the active event window.  The event owns the time window, interpolation type, and temperature table; there is no solver-level \mpmcode{temperatureTable} control.
 
 \begin{lstlisting}[language=Python,caption={Temperature-profile event.}]
 pfw["useEvents"] = 1
@@ -384,7 +399,7 @@ pfw["mpmEventsString"] = """
 \subsubsection{\texttt{TemperatureRamp}}
 \eventidx{TemperatureRamp}\eventattridx{startTemperature}\eventattridx{endTemperature}
 
-\texttt{TemperatureRamp} is registered as an event input class and takes a start temperature, end temperature, and interpolation type.  In the reviewed solver snapshot, the event is not dispatched by the active event loop, so it should be treated as a reserved/future event until a regression test demonstrates run-time execution.  Use \texttt{TemperatureProfile} for current temperature-table-driven particle temperatures.
+\texttt{TemperatureRamp} is registered as an event input class and takes a start temperature, end temperature, and interpolation type.  In the reviewed solver snapshot, the event is not dispatched by the active event loop, so it should be treated as a reserved/future event until a regression test demonstrates run-time execution.  Use \mpmcode{TemperatureProfile} for current temperature-table-driven particle temperatures.
 
 \begin{lstlisting}[language=Python,caption={Registered but currently not dispatched temperature-ramp event.}]
 pfw["useEvents"] = 1
@@ -398,10 +413,10 @@ pfw["mpmEventsString"] = """
 """
 \end{lstlisting}
 
-\subsubsection{\texttt{TransformParticles}}
+\subsubsection{\mpmcode{TransformParticles}}
 \eventidx{TransformParticles}\index{particle transformation!event controls}
 
-\texttt{TransformParticles} is handled by a later event pass after the deformation-gradient update.  It is used by cohesive-zone and finite-domain particle workflows that need to transform stored particle geometry after an initial configuration has been established.
+\mpmcode{TransformParticles} is handled by a later event pass after the deformation-gradient update.  It is used by cohesive-zone and finite-domain particle workflows that need to transform stored particle geometry after an initial configuration has been established.
 
 \begin{lstlisting}[language=Python,caption={Transform-particles event.}]
 pfw["useEvents"] = 1
@@ -463,7 +478,7 @@ pfw["mpmEventsString"] = f"""
 """
 \end{lstlisting}
 
-In this sketch the first \texttt{DeformationUpdate} leaves all three directions prescribed by the deformation table.  The second update keeps the axial deformation history prescribed but turns on stress control in the two lateral directions, producing a uniaxial-stress tensile branch when the boundary/F-table and stress-control parameters are chosen consistently.  For polymer workflows, replace \texttt{Heal} with \texttt{PolymerHeal}; for crystal workflows, replace it with \texttt{CrystalHeal} and supply the desired integer \texttt{healType}.
+In this sketch the first \mpmcode{DeformationUpdate} leaves all three directions prescribed by the deformation table.  The second update keeps the axial deformation history prescribed but turns on stress control in the two lateral directions, producing a uniaxial-stress tensile branch when the boundary/F-table and stress-control parameters are chosen consistently.  For polymer workflows, replace \texttt{Heal} with \texttt{PolymerHeal}; for crystal workflows, replace it with \texttt{CrystalHeal} and supply the desired integer \texttt{healType}.
 
 \subsection{Event-control checklist}
 \label{sec:pfw-event-control-checklist}
@@ -475,7 +490,7 @@ Before running a staged event input, check the generated XML and verify the foll
 \item The string contains event child nodes only.  PFW writes the surrounding \texttt{<MPMEvents>} block.
 \item New inputs use \texttt{startTime} and \texttt{endTime}; legacy \texttt{time}/\texttt{interval} snippets have been replaced.
 \item Region names such as \texttt{ParticleRegion1}, \texttt{all}, or a custom region name match the generated \texttt{ParticleRegion} names.
-\item Cohesive-zone event arrays \texttt{regionNames}, \texttt{constitutiveModels}, and \texttt{czTags} have the same length, and the named cohesive constitutive models are present in the constitutive block.
+\item Every \mpmcode{ReferenceCohesiveZones} event names preregistered cohesive regions, whose constitutive models exist and whose tags match the intended particles.
 \item Deformation and stress-control events are consistent with the boundary, \(D\)-table, or \(F\)-table inputs in Section~\ref{sec:pfw-boundary-controls}.
 \item Events that modify contact behavior are paired with plot or CSV diagnostics from Sections~\ref{sec:pfw-diagnostics} and~\ref{sec:pfw-output-controls} for at least one short verification run.
 \end{itemize}

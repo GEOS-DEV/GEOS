@@ -69,6 +69,15 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleSurfaceTraction = particleBlock.getParticleSurfaceTraction();
   m_particleCZTag = particleBlock.getParticleCZTag();
 
+  if( particleBlock.hasWrapper( particleGeometry::shapeKey() ) )
+  {
+    enableParticleReferenceGeometry();
+    getReference< array1d< integer > >( particleGeometry::shapeKey() ) =
+      particleBlock.getReference< array1d< integer > >( particleGeometry::shapeKey() );
+    getReference< array3d< real64 > >( particleGeometry::vectorsKey() ) =
+      particleBlock.getReference< array3d< real64 > >( particleGeometry::vectorsKey() );
+  }
+
   // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
   // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
   // Be careful when refactoring.

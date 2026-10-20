@@ -14,7 +14,7 @@ Boundary-condition arrays use the face order
 \begin{equation}
   \{x^-,x^+,y^-,y^+,z^-,z^+\}.
 \end{equation}
-The primary PFW key is \texttt{boundaryConditionTypes}.  Its values are the integer enum values used by the solver: \texttt{0} for \texttt{Outflow}, \texttt{1} for \texttt{Symmetry}, \texttt{2} for \texttt{Moving}, and \texttt{3} for \texttt{Contact}.  For example, a two-dimensional compression-style input often uses moving boundaries in the loading direction, outflow or free sides in the lateral direction, and symmetry through the suppressed $z$ direction:
+The primary PFW key is \mpmcode{boundaryConditionTypes}.  Its values are the integer enum values used by the solver: \texttt{0} for \texttt{Outflow}, \texttt{1} for \texttt{Symmetry}, \texttt{2} for \texttt{Moving}, and \texttt{3} for \texttt{Contact}.  For example, a two-dimensional compression-style input often uses moving boundaries in the loading direction, outflow or free sides in the lateral direction, and symmetry through the suppressed $z$ direction:
 \begin{lstlisting}[language=Python,caption={PFW boundary face order and type selection.}]
 # Face order: x-, x+, y-, y+, z-, z+
 pfw["boundaryConditionTypes"] = [0, 0, 2, 2, 1, 1]
@@ -25,7 +25,7 @@ If this key is omitted, the solver initializes all six faces to \texttt{Outflow}
 \index{bcTable}
 \index{prescribedBcTable}
 
-To switch boundary types during a run, enable \texttt{prescribedBcTable} and provide \texttt{bcTable}.  Each row contains a time followed by six boundary-type integers in the same face order.  The solver uses zero-order hold selection at approximately the time-step midpoint, not interpolation.
+To switch boundary types during a run, enable \mpmcode{prescribedBcTable} and provide \texttt{bcTable}.  Each row contains a time followed by six boundary-type integers in the same face order.  The solver uses zero-order hold selection at approximately the time-step midpoint, not interpolation.
 \begin{lstlisting}[language=Python,caption={PFW boundary-condition table.}]
 pfw["prescribedBcTable"] = 1
 pfw["bcTable"] = [
@@ -50,13 +50,13 @@ pfw["fTable"] = [
   [1.0e-3, 1.00, 0.90, 1.00],
 ]
 \end{lstlisting}
-PFW normalizes legacy integer interpolation values \texttt{0}, \texttt{1}, and \texttt{2} to \texttt{Linear}, \texttt{Cosine}, and \texttt{Smoothstep}.  The solver evaluates the table at the actual end-of-step time.  On a \texttt{prescribedBoundaryFTable} step, wall velocity uses the endpoint rate $\dot F_i/F_i$, while grid coordinates and extents use the finite ratio $F_i(t^{n+1})/F_i(t^n)$.  Therefore the resized grid follows the specified table independently of the time-step size, up to floating-point roundoff.  A face marked \texttt{Moving} is only an active velocity boundary when prescribed boundary deformation or stress control is active.
+PFW normalizes legacy integer interpolation values \texttt{0}, \texttt{1}, and \texttt{2} to \texttt{Linear}, \texttt{Cosine}, and \texttt{Smoothstep}.  The solver evaluates the table at the actual end-of-step time.  On a \mpmcode{prescribedBoundaryFTable} step, wall velocity uses the endpoint rate $\dot F_i/F_i$, while grid coordinates and extents use the finite ratio $F_i(t^{n+1})/F_i(t^n)$.  Therefore the resized grid follows the specified table independently of the time-step size, up to floating-point roundoff.  A face marked \texttt{Moving} is only an active velocity boundary when prescribed boundary deformation or stress control is active.
 
 \subsection{Periodic homogeneous deformation}
 \index{prescribedFTable}
 \index{periodic boundaries!PFW}
 
-Use \texttt{prescribedFTable = 1} for a superposed homogeneous velocity-gradient update in periodic directions.  Periodicity itself is controlled by the background-grid key \texttt{periodic}, not by \texttt{boundaryConditionTypes}.  A periodic homogeneous compression example has the form
+Use \texttt{prescribedFTable = 1} for a superposed homogeneous velocity-gradient update in periodic directions.  Periodicity itself is controlled by the background-grid key \texttt{periodic}, not by \mpmcode{boundaryConditionTypes}.  A periodic homogeneous compression example has the form
 \begin{lstlisting}[language=Python,caption={Periodic F-table control.}]
 pfw["periodic"] = [True, True, True]
 pfw["prescribedFTable"] = 1
@@ -66,7 +66,7 @@ pfw["fTable"] = [
   [5.0e-4, 0.9, 0.9, 0.9],
 ]
 \end{lstlisting}
-This is distinct from \texttt{prescribedBoundaryFTable}: the periodic path modifies particle velocity gradients and wraps particles through the periodic spatial partition, while the boundary path imposes velocities on selected physical grid faces.
+This is distinct from \mpmcode{prescribedBoundaryFTable}: the periodic path modifies particle velocity gradients and wraps particles through the periodic spatial partition, while the boundary path imposes velocities on selected physical grid faces.
 
 \subsection{Prescribed tangential velocities on moving faces}
 \index{prescribedBoundaryTransverseVelocities}
@@ -82,13 +82,13 @@ pfw["prescribedBoundaryTransverseVelocities"] = [
   [0.0, 0.0], [0.0, 0.0],
 ]
 \end{lstlisting}
-This feature is used for shear, peel, and tool-like moving-boundary setups where the normal motion comes from \texttt{fTable} or stress control but a tangential sliding speed must also be prescribed.  In the current PFW script, \texttt{prescribedBoundaryTransverseVelocities} has a standard default, while \texttt{enablePrescribedBoundaryTransverseVelocities} is passed through to the solver as an XML attribute when the user supplies it.
+This feature is used for shear, peel, and tool-like moving-boundary setups where the normal motion comes from \texttt{fTable} or stress control but a tangential sliding speed must also be prescribed.  In the current PFW script, \mpmcode{prescribedBoundaryTransverseVelocities} has a standard default, while \mpmcode{enablePrescribedBoundaryTransverseVelocities} is passed through to the solver as an XML attribute when the user supplies it.
 
 \subsection{Boundary contact-wall controls}
 \index{boundaryFaceFrictionCoefficients}
 \index{boundaryFaceCoefficientsOfRestitution}
 
-Boundary contact walls are selected with boundary type \texttt{3}.  Optional per-face friction coefficients are supplied with \texttt{boundaryFaceFrictionCoefficients}.  The solver also registers \texttt{boundaryFaceCoefficientsOfRestitution}, but the reviewed active code path does not use this coefficient in the normal wall update.
+Boundary contact walls are selected with boundary type \texttt{3}.  Optional per-face friction coefficients are supplied with \mpmcode{boundaryFaceFrictionCoefficients}.  The solver also registers \mpmcode{boundaryFaceCoefficientsOfRestitution}, but the reviewed active code path does not use this coefficient in the normal wall update.
 \begin{lstlisting}[language=Python,caption={Contact-wall boundary setup.}]
 pfw["boundaryConditionTypes"] = [3, 3, 3, 3, 1, 1]
 pfw["boundaryFaceFrictionCoefficients"] = [0.0, 0.0, 0.2, 0.2, 0.0, 0.0]
@@ -101,7 +101,7 @@ Contact-wall calculations can use particle-mapped surface positions when they ar
 \index{stressControl}
 \index{stressTable}
 
-Stress control is configured with a three-entry \texttt{stressControl} flag, a \texttt{stressTable}, an interpolation type, and PID-like gains.  The table columns are time followed by target normal stresses in the grid-aligned directions.  Stress control generates \texttt{domainL}; moving faces then impose the associated boundary velocities when the moving-face branch is active, which in the reviewed code means \texttt{prescribedBoundaryFTable} is active or at least one \texttt{stressControl} entry equals one.
+Stress control is configured with a three-entry \texttt{stressControl} flag, a \texttt{stressTable}, an interpolation type, and PID-like gains.  The table columns are time followed by target normal stresses in the grid-aligned directions.  Stress control generates \texttt{domainL}; moving faces then impose the associated boundary velocities when the moving-face branch is active, which in the reviewed code means \mpmcode{prescribedBoundaryFTable} is active or at least one \texttt{stressControl} entry equals one.
 \begin{lstlisting}[language=Python,caption={Stress-control input pattern.}]
 pfw["boundaryConditionTypes"] = [2, 2, 2, 2, 2, 2]
 pfw["prescribedBoundaryFTable"] = 1

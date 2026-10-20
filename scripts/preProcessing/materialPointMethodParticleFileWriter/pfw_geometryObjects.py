@@ -125,7 +125,6 @@ class SurfaceFlag(IntEnum):
   Surface = 2
   Cohesive = 3
   DamagedCohesive = 4
-  WeakDiscontinuity = 5
 
 _defaultSurfaceFlag = int(SurfaceFlag.Surface) # Basic surface flag
 _defaultSurfaceNormal = np.array([0.0, 0.0, 0.0]) # 0 vector turns off surface normal use in solver (defaults to implicit surface normals)

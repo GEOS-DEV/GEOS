@@ -4,7 +4,7 @@
 \index{Geometry objects}
 \index{ParticleFileWriter!geometry objects}
 
-PFW geometry objects are the particle-creation layer between a user-defined model and the plain-text particle file.  During particle generation, PFW loops over the candidate particle centers implied by the background grid and particle-density controls.  Each candidate point is tested against an ordered list of geometry objects.  The first object that accepts the point supplies the particle type, material index, contact group, initial velocity, and any optional fields requested in \texttt{particleFileFields}.  Objects can therefore create solid regions, leave voids, tag surface particles, assign different materials or contact groups, paint damage or porosity, prescribe material directions, and provide exact surface normals or surface positions for contact and cohesive-zone calculations.
+PFW geometry objects are the particle-creation layer between a user-defined model and the plain-text particle file.  During particle generation, PFW loops over the candidate particle centers implied by the background grid and particle-density controls.  Each candidate point is tested against an ordered list of geometry objects.  The first object that accepts the point supplies the particle type, material index, contact group, initial velocity, and any optional fields requested in \mpmcode{particleFileFields}.  Objects can therefore create solid regions, leave voids, tag surface particles, assign different materials or contact groups, paint damage or porosity, prescribe material directions, and provide exact surface normals or surface positions for contact and cohesive-zone calculations.
 
 \subsection{Creating objects and assembling the object list}
 \index{objects@\texttt{objects}}
@@ -45,13 +45,13 @@ The rank-sliced form is particularly useful for granular beds, voxel-derived obj
 \index{geometry objects!sorting}
 \index{parallel PFW!object sorting}
 
-The \texttt{sortObjects} control is a second acceleration mechanism.  If \texttt{sortObjects=True}, PFW filters the object list at each candidate $x$-slice by evaluating
+The \texttt{sortObjects} control is a second acceleration mechanism.  If \mpmcode{sortObjects=True}, PFW filters the object list at each candidate $x$-slice by evaluating
 \begin{equation}
   x_{\min}^{(a)} \le x \le x_{\max}^{(a)},
 \end{equation}
 where \(x\) is the candidate particle center and \(x_{\min}^{(a)}\), \(x_{\max}^{(a)}\) are returned by object \(a\)'s \texttt{xMin()} and \texttt{xMax()} methods.  Only the filtered slice list is then searched for that $x$ coordinate.  The original order of the retained objects is preserved, so first-match priority is unchanged.
 
-This option is intended for many-object geometries with compact bounding boxes, such as packed granular beds or collections of inclusions.  It is not enabled by default because some objects are unbounded, use infinite default bounds, or have only approximate \texttt{xMin}/\texttt{xMax} implementations.  Such objects remain correct when \texttt{sortObjects=False}; they simply do not benefit from $x$-slice filtering.  The two acceleration mechanisms are complementary: \texttt{make\_objects(rankxmin, rankxmax)} reduces object construction, while \texttt{sortObjects} reduces per-point object testing after the list has been constructed.
+This option is intended for many-object geometries with compact bounding boxes, such as packed granular beds or collections of inclusions.  It is not enabled by default because some objects are unbounded, use infinite default bounds, or have only approximate \texttt{xMin}/\texttt{xMax} implementations.  Such objects remain correct when \mpmcode{sortObjects=False}; they simply do not benefit from $x$-slice filtering.  The two acceleration mechanisms are complementary: \texttt{make\_objects(rankxmin, rankxmax)} reduces object construction, while \texttt{sortObjects} reduces per-point object testing after the list has been constructed.
 
 \subsection{Geometry-object interface and particle fields}
 \index{geometry objects!interface}
@@ -110,7 +110,7 @@ The distinction between object geometry and object metadata is important.  The i
 
 \paragraph{\texttt{sphere}.}\index{geometry objects!sphere}Creates a sphere from center and radius, returning surface flags and surface-normal/position data near the spherical boundary.  In two-dimensional or plane-strain examples it is commonly used as a disk-like cross-section when the through-thickness grid has one active layer.
 
-\paragraph{\texttt{sphericalInclusion}.}\index{geometry objects!sphericalInclusion}Creates a spherical inclusion-like region but suppresses ordinary surface flagging.  This is useful when the inclusion should assign material or group data without creating a separate contact surface at the inclusion boundary.
+\paragraph{\mpmcode{sphericalInclusion}.}\index{geometry objects!sphericalInclusion}Creates a spherical inclusion-like region but suppresses ordinary surface flagging.  This is useful when the inclusion should assign material or group data without creating a separate contact surface at the inclusion boundary.
 
 \paragraph{\texttt{shell}.}\index{geometry objects!shell}Creates a spherical shell between inner and outer radii.  It marks particles lying between the two spherical surfaces and provides inward/outward surface data near the shell boundaries.
 
@@ -156,23 +156,23 @@ The distinction between object geometry and object metadata is important.  The i
 
 \paragraph{\texttt{poissonDiskFoam}.}\index{geometry objects!poissonDiskFoam}Creates a grid-aligned foam block with pores sampled by a Poisson-disk-style algorithm.  It supports two-dimensional and three-dimensional modes, periodic sampling options, minimum-ligament constraints, and explicit surface-normal/position information.
 
-\paragraph{\texttt{packedSphericalBed}.}\index{geometry objects!packedSphericalBed}Represents a packed bed of spherical grains inside a box.  The object stores grain centers, radii, material indices, contact groups, and particle types, and uses a cell-list search to answer point queries efficiently.  It can generate random sequential-addition-style packings or consume precomputed grain data provided through the input script.
+\paragraph{\mpmcode{packedSphericalBed}.}\index{geometry objects!packedSphericalBed}Represents a packed bed of spherical grains inside a box.  The object stores grain centers, radii, material indices, contact groups, and particle types, and uses a cell-list search to answer point queries efficiently.  It can generate random sequential-addition-style packings or consume precomputed grain data provided through the input script.
 
 \paragraph{\texttt{twoMaterialBox}.}\index{geometry objects!twoMaterialBox}Creates a box in which accepted particles randomly select between two material indices.  This is a simple stochastic mixture helper rather than a resolved microstructure generator.
 
 \paragraph{\texttt{twoFieldBox}.}\index{geometry objects!twoFieldBox}Creates a box intended for two-contact-field or two-group testing.  It is a legacy/test helper for random or mixed contact group assignments; users should verify the current constructor before relying on it in production inputs.
 
-\paragraph{\texttt{polygonInclusions}.}\index{geometry objects!polygonInclusions}Assigns particles to polygonal inclusions embedded in a surrounding fill group.  Polygons should be provided with counter-clockwise point ordering.  The object is useful for two-dimensional composite or mesoscale inclusion studies.
+\paragraph{\mpmcode{polygonInclusions}.}\index{geometry objects!polygonInclusions}Assigns particles to polygonal inclusions embedded in a surrounding fill group.  Polygons should be provided with counter-clockwise point ordering.  The object is useful for two-dimensional composite or mesoscale inclusion studies.
 
 \subsection{Cohesive-zone and prill objects}
 \index{geometry objects!cohesive zones}
 \index{geometry objects!prills}
 
-\paragraph{\texttt{czSphericalPrill}.}\index{geometry objects!czSphericalPrill}Creates a spherical prill containing Voronoi-like crystals separated by cohesive-zone surfaces.  It can assign contact groups, crystal material directions, surface positions, and cohesive tags needed by the cohesive-zone workflow.
+\paragraph{\mpmcode{czSphericalPrill}.}\index{geometry objects!czSphericalPrill}Creates a spherical prill containing Voronoi-like crystals separated by cohesive-zone surfaces.  It can assign contact groups, crystal material directions, surface positions, and cohesive tags needed by the cohesive-zone workflow.
 
-\paragraph{\texttt{explicitBinderSphericalPrill}.}\index{geometry objects!explicitBinderSphericalPrill}Creates a two-dimensional spherical prill with explicit grain and binder regions.  It assigns grain and binder material indices separately and is used when binder ligaments should be represented by particles rather than only by cohesive interfaces.
+\paragraph{\mpmcode{explicitBinderSphericalPrill}.}\index{geometry objects!explicitBinderSphericalPrill}Creates a two-dimensional spherical prill with explicit grain and binder regions.  It assigns grain and binder material indices separately and is used when binder ligaments should be represented by particles rather than only by cohesive interfaces.
 
-\paragraph{\texttt{czCylindricalPrill}.}\index{geometry objects!czCylindricalPrill}Creates a cylindrical prill with Voronoi-like internal crystals and cohesive-zone surfaces.  It is appropriate for cylindrical or disk-like prill geometries where cohesive interfaces are inserted between neighboring grains.
+\paragraph{\mpmcode{czCylindricalPrill}.}\index{geometry objects!czCylindricalPrill}Creates a cylindrical prill with Voronoi-like internal crystals and cohesive-zone surfaces.  It is appropriate for cylindrical or disk-like prill geometries where cohesive interfaces are inserted between neighboring grains.
 
 \paragraph{\texttt{czPrill}.}\index{geometry objects!czPrill}Creates a box-shaped prill with internal Voronoi crystals, cohesive-zone tags, and configurable bonded/neat surface fractions.  It is a general prill mesostructure object for cohesive fracture and contact studies.
 
@@ -218,12 +218,12 @@ The Boolean objects combine two existing geometry objects while preserving the P
 
 Wrappers take a sub-object and override or augment one part of its response.  They are the preferred way to add field data without reimplementing an inside/outside test.  All wrappers forward unmodified queries to the wrapped object unless they specifically override that field.
 
-\paragraph{Basic field wrappers.}The wrappers \texttt{materialDirectionWrapper}, \texttt{surfaceFlagWrapper}, \texttt{czTagWrapper}, \texttt{surfaceNormalWrapper}, \texttt{surfacePositionWrapper}, \texttt{shrinkageFlagWrapper}, \texttt{strengthScaleWrapper}, \texttt{damageWrapper}, \texttt{porosityWrapper}, and \texttt{temperatureWrapper} assign a corresponding constant or callable value to particles accepted by the wrapped object.
+\paragraph{Basic field wrappers.}The wrappers \mpmcode{materialDirectionWrapper}, \mpmcode{surfaceFlagWrapper}, \texttt{czTagWrapper}, \mpmcode{surfaceNormalWrapper}, \mpmcode{surfacePositionWrapper}, \mpmcode{shrinkageFlagWrapper}, \mpmcode{strengthScaleWrapper}, \texttt{damageWrapper}, \texttt{porosityWrapper}, and \mpmcode{temperatureWrapper} assign a corresponding constant or callable value to particles accepted by the wrapped object.
 
-\paragraph{Deletion and masking wrappers.}\texttt{functionalDeletionWrapper} calls a user-supplied deletion function and rejects points that should be removed.  \texttt{pointwisePorosityWrapper} randomly suppresses a fraction of points to represent unresolved porosity, but does not construct deterministic pore surfaces or surface flags.
+\paragraph{Deletion and masking wrappers.}\mpmcode{functionalDeletionWrapper} calls a user-supplied deletion function and rejects points that should be removed.  \mpmcode{pointwisePorosityWrapper} randomly suppresses a fraction of points to represent unresolved porosity, but does not construct deterministic pore surfaces or surface flags.
 
-\paragraph{Voronoi, Weibull, and material-direction wrappers.}\texttt{voronoiWrapperWithLayeredStrengthScale}, \texttt{layeredVoronoiWeibullWrapper}, \texttt{voronoiWeibullBoxWrapper}, \texttt{voronoiMatDirBoxWrapper}, \texttt{sizeEffectVoronoiWeibullBoxWrapper}, and \texttt{layeredStrengthScaleBoxWrapper} assign spatially varying material directions, strength scales, flaws, or layered Weibull fields.  These wrappers are used for heterogeneous strength distributions, grain-level anisotropy, and size-effect studies.
+\paragraph{Voronoi, Weibull, and material-direction wrappers.}\mpmcode{voronoiWrapperWithLayeredStrengthScale}, \mpmcode{layeredVoronoiWeibullWrapper}, \mpmcode{voronoiWeibullBoxWrapper}, \mpmcode{voronoiMatDirBoxWrapper}, \mpmcode{sizeEffectVoronoiWeibullBoxWrapper}, and \mpmcode{layeredStrengthScaleBoxWrapper} assign spatially varying material directions, strength scales, flaws, or layered Weibull fields.  These wrappers are used for heterogeneous strength distributions, grain-level anisotropy, and size-effect studies.
 
-\paragraph{Box-local and crack-like wrappers.}\texttt{surfaceFlagBoxWrapper} and \texttt{damageBoxWrapper} override surface flag or damage only inside a specified box.  \texttt{pennyShapedCrackWrapper} paints a penny-shaped damaged region defined by two points and a radius, making it useful for seeded-crack or pre-damage studies.
+\paragraph{Box-local and crack-like wrappers.}\mpmcode{surfaceFlagBoxWrapper} and \mpmcode{damageBoxWrapper} override surface flag or damage only inside a specified box.  \mpmcode{pennyShapedCrackWrapper} paints a penny-shaped damaged region defined by two points and a radius, making it useful for seeded-crack or pre-damage studies.
 
 \paragraph{Coordinate-transform wrapper.}\texttt{transform} maps query points through a user-supplied transform before delegating to the sub-object, and transforms returned normals or vectors as needed.  It allows an analytic or imported object to be translated, rotated, or otherwise mapped without creating a new object class.

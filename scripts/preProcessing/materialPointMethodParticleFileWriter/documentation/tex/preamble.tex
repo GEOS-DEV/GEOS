@@ -68,3 +68,19 @@
 \cfoot{\thepage}
 \titleformat{\chapter}[display]{\bfseries\Huge}{\chaptername\ \thechapter}{0.5ex}{\titlerule\vspace{1ex}}
 \newcommand{\generatedwarning}{\par\smallskip\noindent\fbox{\begin{minipage}{0.95\linewidth}\small This section is generated from the source archive. Regenerate it when the code, schema, or ParticleFileWriter changes.\end{minipage}}\par\smallskip}
+
+% Break long source identifiers at CamelCase boundaries in prose and indices.
+\ExplSyntaxOn
+\DeclareRobustCommand{\mpmcode}[1]{
+  \ifmmode\text{\mpmcode{#1}}\else
+  \group_begin:
+  \ttfamily
+  \tl_set:Nn \l_tmpa_tl {#1}
+  \regex_replace_all:nnN {([a-z0-9])([A-Z])} {\1\c{allowbreak}\2} \l_tmpa_tl
+  \tl_use:N \l_tmpa_tl
+  \group_end:
+  \fi
+}
+\ExplSyntaxOff
+\pdfstringdefDisableCommands{\def\mpmcode#1{#1}}
+\AtBeginEnvironment{theindex}{\footnotesize}

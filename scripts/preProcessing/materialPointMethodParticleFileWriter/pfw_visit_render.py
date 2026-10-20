@@ -63,7 +63,7 @@ def parse_args(argv):
     parser.add_argument("--vector-count", type=int, default=500, help="Target vector glyph count when supported by VisIt")
     parser.add_argument("--vector-stride", type=int, default=1, help="Stride for vector glyphs when stride mode is enabled")
     parser.add_argument("--no-annotations", action="store_true")
-    parser.add_argument("--time-slider", dest="time_slider", action="store_true", default=True, help="Add VisIt TimeSlider annotation")
+    parser.add_argument("--time-slider", dest="time_slider", action="store_true", default=False, help="Add VisIt TimeSlider annotation")
     parser.add_argument("--no-time-slider", dest="time_slider", action="store_false", help="Disable TimeSlider annotation")
     parser.add_argument("--list-databases", action="store_true", help="Print database candidates before opening one")
     parser.add_argument("--dry-run", action="store_true", help="Discover databases/variables without saving windows")
@@ -357,6 +357,12 @@ def _define_tensor_expression(name, expression):
     return name
 
 
+def _define_vector_expression(name, expression):
+    print("Defining vector expression {0} = {1}".format(name, expression))
+    call_visit("DefineVectorExpression", name, expression)
+    return name
+
+
 def _unique_keep_order(values):
     out = []
     seen = set()
@@ -383,8 +389,32 @@ def _array_decompose_candidate(path, index):
     return "array_decompose({0},{1})".format(_quote_visit_var(path), int(index))
 
 
-def _stress_base_candidates(all_names):
+def _tensor_component_candidate(path, row, col):
+    return "{0}[{1}][{2}]".format(_quote_visit_var(path), int(row), int(col))
+
+
+def _particle_region_meshes(meshes, all_names):
+    """Return ParticleRegion*_ParticleDomains meshes in deterministic order."""
+    candidates = []
+    for name in list(meshes or []) + list(all_names or []):
+        match = re.search(r"(ParticleRegion[0-9]+)_ParticleDomains", str(name))
+        if not match:
+            continue
+        mesh = match.group(1) + "_ParticleDomains"
+        if mesh not in candidates:
+            candidates.append(mesh)
+    return sorted(candidates, key=natural_key)
+
+
+def _particle_region_name(mesh):
+    match = re.search(r"(ParticleRegion[0-9]+)_ParticleDomains", str(mesh))
+    return match.group(1) if match else None
+
+
+def _stress_base_candidates(all_names, particle_meshes=None):
     candidates = [
+        "{0}_ParticleFields/particleStress".format(mesh) for mesh in particle_meshes or []
+    ] + [
         "ParticleRegion1_ParticleDomains_ParticleFields/particleStress",
         "particleStress",
     ]
@@ -395,10 +425,10 @@ def _stress_base_candidates(all_names):
     return _unique_keep_order(candidates)
 
 
-def _stress_leaf_candidates(all_names, label, legacy_index):
+def _stress_leaf_candidates(all_names, label, legacy_index, particle_meshes=None):
     labels = [label, label.lower(), label.upper(), str(legacy_index)]
     candidates = []
-    for base in _stress_base_candidates(all_names):
+    for base in _stress_base_candidates(all_names, particle_meshes=particle_meshes):
         for leaf in labels:
             candidates.append("{0}/{1}".format(base, leaf))
         candidates.append("{0}_{1}".format(base, legacy_index))
@@ -412,20 +442,20 @@ def _stress_leaf_candidates(all_names, label, legacy_index):
     return _unique_keep_order(candidates)
 
 
-def _stress_component_expression_candidates(all_names, label, legacy_index):
+def _stress_component_expression_candidates(all_names, label, legacy_index, particle_meshes=None):
     expressions = []
 
     # Preferred path: decompose the native GEOS Voigt stress array.  This creates
     # true scalar component expressions without adding any solver-side scalar
     # fields.
-    for base in _stress_base_candidates(all_names):
+    for base in _stress_base_candidates(all_names, particle_meshes=particle_meshes):
         expressions.append(_array_decompose_candidate(base, legacy_index))
 
     # Fallback path for VisIt/Silo outputs that only expose component leaves.
     # The vector-index form handles component leaves that appear in scalar menus
     # but evaluate as vector variables.  The direct form remains useful for older
     # outputs where the leaves are genuine scalars.
-    for leaf in _stress_leaf_candidates(all_names, label, legacy_index):
+    for leaf in _stress_leaf_candidates(all_names, label, legacy_index, particle_meshes=particle_meshes):
         expressions.append(_indexed_candidate(leaf, 0))
         expressions.append(_array_decompose_candidate(leaf, 0))
         expressions.append(_quoted_candidate(leaf))
@@ -433,16 +463,160 @@ def _stress_component_expression_candidates(all_names, label, legacy_index):
     return _unique_keep_order(expressions)
 
 
-def _define_stress_component_expression(name, all_names, label, legacy_index):
+def _define_particle_region_stress_component_candidates(name, particle_meshes, label, legacy_index):
     names = []
-    for i, expression in enumerate(_stress_component_expression_candidates(all_names, label, legacy_index)):
+    for mesh in particle_meshes or []:
+        region = _particle_region_name(mesh)
+        if not region:
+            continue
+        base = "{0}_ParticleFields/particleStress".format(mesh)
+        for leaf in (label, label.lower(), str(legacy_index)):
+            names.append("{0}/{1}".format(base, leaf))
+        expr_name = "{0}_{1}".format(name, region)
+        expression = _array_decompose_candidate(base, legacy_index)
+        _define_scalar_expression(expr_name, expression)
+        names.append(expr_name)
+    return _unique_keep_order(names)
+
+
+_DEFORMATION_GRADIENT_COMPONENTS = {
+    "xx": (0, 0, 0),
+    "xy": (0, 1, 1),
+    "xz": (0, 2, 2),
+    "yx": (1, 0, 3),
+    "yy": (1, 1, 4),
+    "yz": (1, 2, 5),
+    "zx": (2, 0, 6),
+    "zy": (2, 1, 7),
+    "zz": (2, 2, 8),
+}
+
+
+def _deformation_gradient_base_candidates(all_names, particle_meshes=None):
+    candidates = [
+        "{0}_ParticleFields/particleDeformationGradient".format(mesh)
+        for mesh in particle_meshes or []
+    ] + [
+        "ParticleRegion1_ParticleDomains_ParticleFields/particleDeformationGradient",
+        "particleDeformationGradient",
+    ]
+    for name in all_names:
+        cname = _compact_name(name)
+        if cname.endswith("particledeformationgradient") or cname == "particledeformationgradient":
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _deformation_gradient_leaf_candidates(all_names, label, row, col, legacy_index, particle_meshes=None):
+    labels = [label, label.lower(), label.upper(), "{0}{1}".format(row, col), "{0}_{1}".format(row, col), str(legacy_index)]
+    candidates = []
+    for base in _deformation_gradient_base_candidates(all_names, particle_meshes=particle_meshes):
+        for leaf in labels:
+            candidates.append("{0}/{1}".format(base, leaf))
+        candidates.append("{0}_{1}".format(base, legacy_index))
+    for name in all_names:
+        cname = _compact_name(name)
+        if "deformationgradient" not in cname:
+            continue
+        if any(cname.endswith(_compact_name(suffix)) for suffix in labels):
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _define_particle_region_deformation_gradient_component_candidates(name, particle_meshes, label, row, col, legacy_index):
+    names = []
+    for mesh in particle_meshes or []:
+        region = _particle_region_name(mesh)
+        if not region:
+            continue
+        base = "{0}_ParticleFields/particleDeformationGradient".format(mesh)
+        expr_name = "{0}_{1}".format(name, region)
+        _define_scalar_expression(expr_name, _tensor_component_candidate(base, row, col))
+        names.append(expr_name)
+        for leaf in (label, label.lower(), "{0}{1}".format(row, col), "{0}_{1}".format(row, col), str(legacy_index)):
+            names.append("{0}/{1}".format(base, leaf))
+    return _unique_keep_order(names)
+
+
+def _derive_particle_deformation_gradient_component(all_names, requested, particle_meshes=None):
+    key = _compact_name(requested or "")
+    for label, (row, col, legacy_index) in _DEFORMATION_GRADIENT_COMPONENTS.items():
+        aliases = (
+            "particledeformationgradient{0}".format(label),
+            "deformationgradient{0}".format(label),
+            "particlef{0}".format(label),
+            "f{0}".format(label),
+            "particledeformationgradient{0}{1}".format(row, col),
+            "deformationgradient{0}{1}".format(row, col),
+            "particlef{0}{1}".format(row, col),
+            "f{0}{1}".format(row, col),
+        )
+        if key not in aliases:
+            continue
+        output_name = "particleDeformationGradient{0}".format(label.upper())
+        region_names = _define_particle_region_deformation_gradient_component_candidates(
+            output_name, particle_meshes, label.upper(), row, col, legacy_index
+        )
+        expressions = []
+        for base in _deformation_gradient_base_candidates(all_names, particle_meshes=particle_meshes):
+            expressions.append(_tensor_component_candidate(base, row, col))
+            expressions.append(_array_decompose_candidate(base, legacy_index))
+        for leaf in _deformation_gradient_leaf_candidates(all_names, label.upper(), row, col, legacy_index, particle_meshes=particle_meshes):
+            expressions.append(_indexed_candidate(leaf, 0))
+            expressions.append(_array_decompose_candidate(leaf, 0))
+            expressions.append(_quoted_candidate(leaf))
+        fallback_names = []
+        for i, expression in enumerate(_unique_keep_order(expressions)):
+            expr_name = output_name if i == 0 else "{0}_candidate{1}".format(output_name, i)
+            _define_scalar_expression(expr_name, expression)
+            fallback_names.append(expr_name)
+        return _unique_keep_order(region_names + fallback_names)
+    return None
+
+
+def _particle_mesh_coord_expression(mesh, component):
+    return "coord({0})[{1}]".format(_quote_visit_var(mesh), int(component))
+
+
+def _define_particle_region_polar_stress_candidates(name, particle_meshes, radial=True):
+    names = []
+    for mesh in particle_meshes or []:
+        region = _particle_region_name(mesh)
+        if not region:
+            continue
+        x = _particle_mesh_coord_expression(mesh, 0)
+        y = _particle_mesh_coord_expression(mesh, 1)
+        r2 = "(({x})*({x})+({y})*({y})+1.0e-300)".format(x=x, y=y)
+        base = "{0}_ParticleFields/particleStress".format(mesh)
+        sxx = _array_decompose_candidate(base, 0)
+        syy = _array_decompose_candidate(base, 1)
+        sxy = _array_decompose_candidate(base, 5)
+        if radial:
+            numerator = (
+                "(({x})*({x})*({sxx})+({y})*({y})*({syy})"
+                "+2.0*({x})*({y})*({sxy}))"
+            ).format(x=x, y=y, sxx=sxx, syy=syy, sxy=sxy)
+        else:
+            numerator = (
+                "(({y})*({y})*({sxx})+({x})*({x})*({syy})"
+                "-2.0*({x})*({y})*({sxy}))"
+            ).format(x=x, y=y, sxx=sxx, syy=syy, sxy=sxy)
+        expr_name = "{0}_{1}".format(name, region)
+        _define_scalar_expression(expr_name, "({0})/({1})".format(numerator, r2))
+        names.append(expr_name)
+    return _unique_keep_order(names)
+
+
+def _define_stress_component_expression(name, all_names, label, legacy_index, particle_meshes=None):
+    names = []
+    for i, expression in enumerate(_stress_component_expression_candidates(all_names, label, legacy_index, particle_meshes=particle_meshes)):
         expr_name = name if i == 0 else "{0}_candidate{1}".format(name, i)
         _define_scalar_expression(expr_name, expression)
         names.append(expr_name)
     return names
 
 
-def _define_particle_stress_tensor_candidates(all_names):
+def _define_particle_stress_tensor_candidates(all_names, particle_meshes=None):
     component_info = (
         ("XX", 0, "particleStressXX"),
         ("YY", 1, "particleStressYY"),
@@ -453,7 +627,7 @@ def _define_particle_stress_tensor_candidates(all_names):
     )
     component_candidates = {}
     for label, index, base_name in component_info:
-        component_candidates[label] = _define_stress_component_expression(base_name, all_names, label, index)
+        component_candidates[label] = _define_stress_component_expression(base_name, all_names, label, index, particle_meshes=particle_meshes)
 
     tensor_names = []
     max_candidates = max(len(v) for v in component_candidates.values())
@@ -480,7 +654,7 @@ def _define_particle_stress_tensor_candidates(all_names):
     return tensor_names
 
 
-def _derive_particle_stress_component(all_names, requested):
+def _derive_particle_stress_component(all_names, requested, particle_meshes=None):
     key = _compact_name(requested or "")
     component_map = {
         "particlestressxx": ("XX", 0),
@@ -505,8 +679,48 @@ def _derive_particle_stress_component(all_names, requested):
     for compact, value in component_map.items():
         if key == compact or compact in key:
             label, index = value
-            return _define_stress_component_expression("particleStress{0}".format(label), all_names, label, index)
+            base_name = "particleStress{0}".format(label)
+            region_names = _define_particle_region_stress_component_candidates(base_name, particle_meshes, label, index)
+            fallback_names = _define_stress_component_expression(base_name, all_names, label, index, particle_meshes=particle_meshes)
+            return _unique_keep_order(region_names + fallback_names)
     return None
+
+
+def _define_particle_long_diagonal_stress_candidates(all_names, particle_meshes=None):
+    component_info = (
+        ("XX", 0, "particleStressXX"),
+        ("YY", 1, "particleStressYY"),
+        ("ZZ", 2, "particleStressZZ"),
+        ("YZ", 3, "particleStressYZ"),
+        ("XZ", 4, "particleStressXZ"),
+        ("XY", 5, "particleStressXY"),
+    )
+    component_candidates = {}
+    for label, index, base_name in component_info:
+        region_names = _define_particle_region_stress_component_candidates(base_name, particle_meshes, label, index)
+        fallback_names = _define_stress_component_expression(base_name, all_names, label, index, particle_meshes=particle_meshes)
+        component_candidates[label] = _unique_keep_order(region_names + fallback_names)
+    if not all(component_candidates.values()):
+        return None
+
+    names = []
+    max_candidates = max(len(v) for v in component_candidates.values())
+    for i in range(max_candidates):
+        def pick(label):
+            candidates = component_candidates[label]
+            return candidates[min(i, len(candidates) - 1)]
+
+        name = "particleStressLongDiagonal" if i == 0 else "particleStressLongDiagonal_candidate{0}".format(i)
+        expression = "(({sxx})+({syy})+({szz})+2.0*(({sxy})+({sxz})+({syz})))/3.0".format(
+            sxx=pick("XX"),
+            syy=pick("YY"),
+            szz=pick("ZZ"),
+            syz=pick("YZ"),
+            sxz=pick("XZ"),
+            sxy=pick("XY"),
+        )
+        names.append(_define_scalar_expression(name, expression))
+    return names
 
 
 def _derive_pressure(scalars):
@@ -534,8 +748,8 @@ def _derive_pressure(scalars):
     return _define_scalar_expression("pressure", expression)
 
 
-def _derive_particle_von_mises_stress(all_names):
-    tensor_names = _define_particle_stress_tensor_candidates(all_names)
+def _derive_particle_von_mises_stress(all_names, particle_meshes=None):
+    tensor_names = _define_particle_stress_tensor_candidates(all_names, particle_meshes=particle_meshes)
     if not tensor_names:
         print("Could not derive particleVonMisesStress; no particleStress array/component candidates found")
         return None
@@ -546,23 +760,82 @@ def _derive_particle_von_mises_stress(all_names):
     return vm_names
 
 
-def _derive_plastic_strain_magnitude(scalars):
-    components = []
-    # Support grouped particlePlasticStrain/xx-style component expressions and
-    # legacy particlePlasticStrain_0...5 or material-specific plasticStrain_0_0...0_5 fields.
-    for i, label in enumerate(("xx", "yy", "zz", "yz", "xz", "xy")):
-        comp = _find_best_scalar(
-            scalars,
-            suffixes=_component_suffix_candidates("PlasticStrain", label, i),
-            contains=("plasticStrain",),
-        )
-        if comp:
-            components.append(comp)
-    if not components:
-        print("Could not derive plasticStrainMagnitude; no plastic-strain components found")
+def _plastic_strain_base_candidates(all_names, particle_meshes=None):
+    candidates = [
+        "{0}_ParticleFields/particlePlasticStrain".format(mesh) for mesh in particle_meshes or []
+    ] + [
+        "ParticleRegion1_ParticleDomains_ParticleFields/particlePlasticStrain",
+        "particlePlasticStrain",
+    ]
+    for name in all_names:
+        cname = _compact_name(name)
+        if cname.endswith("particleplasticstrain") or cname == "particleplasticstrain":
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _plastic_strain_leaf_candidates(all_names, label, legacy_index, particle_meshes=None):
+    labels = [label, label.lower(), label.upper(), str(legacy_index)]
+    candidates = []
+    for base in _plastic_strain_base_candidates(all_names, particle_meshes=particle_meshes):
+        for leaf in labels:
+            candidates.append("{0}/{1}".format(base, leaf))
+        candidates.append("{0}_{1}".format(base, legacy_index))
+    suffixes = _component_suffix_candidates("PlasticStrain", label.lower(), legacy_index)
+    for name in all_names:
+        cname = _compact_name(name)
+        if "plasticstrain" not in cname:
+            continue
+        if any(cname.endswith(_compact_name(suffix)) for suffix in suffixes):
+            candidates.append(name)
+    return _unique_keep_order(candidates)
+
+
+def _plastic_strain_component_expression_candidates(all_names, label, legacy_index, particle_meshes=None):
+    expressions = []
+    for base in _plastic_strain_base_candidates(all_names, particle_meshes=particle_meshes):
+        expressions.append(_array_decompose_candidate(base, legacy_index))
+    for leaf in _plastic_strain_leaf_candidates(all_names, label, legacy_index, particle_meshes=particle_meshes):
+        expressions.append(_indexed_candidate(leaf, 0))
+        expressions.append(_array_decompose_candidate(leaf, 0))
+        expressions.append(_quoted_candidate(leaf))
+    return _unique_keep_order(expressions)
+
+
+def _voigt_magnitude_expression(component_expressions):
+    weighted_terms = []
+    for index, component in enumerate(component_expressions):
+        weight = 2.0 if index >= 3 else 1.0
+        weighted_terms.append("{0}*({1})*({1})".format(weight, component))
+    return "sqrt(" + " + ".join(weighted_terms) + ")"
+
+
+def _derive_plastic_strain_magnitude(all_names, particle_meshes=None):
+    component_info = (
+        ("XX", 0),
+        ("YY", 1),
+        ("ZZ", 2),
+        ("YZ", 3),
+        ("XZ", 4),
+        ("XY", 5),
+    )
+    component_candidates = [
+        _plastic_strain_component_expression_candidates(all_names, label, index, particle_meshes=particle_meshes)
+        for label, index in component_info
+    ]
+    if not all(component_candidates):
+        print("Could not derive plasticStrainMagnitude; no complete particlePlasticStrain candidate set found")
         return None
-    expression = _visit_square_sum_expression(components)
-    return _define_scalar_expression("plasticStrainMagnitude", expression)
+    names = []
+    max_candidates = max(len(candidates) for candidates in component_candidates)
+    for i in range(max_candidates):
+        components = [
+            candidates[min(i, len(candidates) - 1)]
+            for candidates in component_candidates
+        ]
+        name = "plasticStrainMagnitude" if i == 0 else "plasticStrainMagnitude_candidate{0}".format(i)
+        names.append(_define_scalar_expression(name, _voigt_magnitude_expression(components)))
+    return names
 
 
 def _find_best_mesh(meshes, contains=()):
@@ -681,26 +954,60 @@ def _derive_particle_displacement_magnitude(scalars, meshes):
     return _define_scalar_expression("particleDisplacementMagnitude", expression)
 
 
+def _define_particle_region_displacement_component_candidates(name, particle_meshes, component):
+    names = []
+    for mesh in particle_meshes or []:
+        region = _particle_region_name(mesh)
+        if not region:
+            continue
+        reference_position = "{0}_ParticleFields/particleReferencePosition".format(mesh)
+        expression = "coord({0})[{1}] - {2}".format(
+            _quote_visit_var(mesh),
+            int(component),
+            _indexed_candidate(reference_position, component),
+        )
+        expr_name = "{0}_{1}".format(name, region)
+        _define_scalar_expression(expr_name, expression)
+        names.append(expr_name)
+    return _unique_keep_order(names)
+
+
 def prepare_derived_requested_variable(scalars, requested, meshes=None, arrays=None, tensors=None, vectors=None):
     meshes = meshes or []
     arrays = arrays or []
     tensors = tensors or []
     vectors = vectors or []
     all_names = _unique_keep_order(list(scalars or []) + list(vectors or []) + list(arrays or []) + list(tensors or []))
+    particle_meshes = _particle_region_meshes(meshes, all_names)
     key = _compact_name(requested or "")
-    stress_component = _derive_particle_stress_component(all_names, requested)
+    stress_component = _derive_particle_stress_component(all_names, requested, particle_meshes=particle_meshes)
     if stress_component:
         return stress_component
+    if key in ("particlestresslongdiagonal", "stresslongdiagonal", "sigmalongdiagonal", "sigmaaa", "stressaa", "particlestressaa"):
+        return _define_particle_long_diagonal_stress_candidates(all_names, particle_meshes=particle_meshes)
+    deformation_gradient_component = _derive_particle_deformation_gradient_component(all_names, requested, particle_meshes=particle_meshes)
+    if deformation_gradient_component:
+        return deformation_gradient_component
     if key in ("pressure", "meanstress", "hydrostaticpressure"):
         return _derive_pressure(scalars)
+    if key in ("sigmann", "particlesigmann", "stressnn", "particlestressnn", "sigmarr", "stressrr"):
+        return _define_particle_region_polar_stress_candidates("sigma_nn", particle_meshes, radial=True)
+    if key in ("sigmatt", "particlesigmatt", "stresstt", "particlestresstt", "hoopstress", "sigmahoop"):
+        return _define_particle_region_polar_stress_candidates("sigma_tt", particle_meshes, radial=False)
     if key in ("particlevonmisesstress", "vonmisesstress", "vonmises", "equivalentstress", "misesstress"):
-        return _derive_particle_von_mises_stress(all_names)
+        return _derive_particle_von_mises_stress(all_names, particle_meshes=particle_meshes)
     if key in ("plasticstrainmagnitude", "plasticstrain", "plasticmagnitude", "equivalentplasticstrain"):
-        return _derive_plastic_strain_magnitude(scalars)
+        return _derive_plastic_strain_magnitude(all_names, particle_meshes=particle_meshes)
     if key in ("griddisplacementmagnitude", "griddisplacement", "backgrounddisplacement"):
         return _derive_grid_displacement_magnitude(scalars)
     if key in ("particledisplacementmagnitude", "particledisplacement", "displacementmagnitude"):
         return _derive_particle_displacement_magnitude(scalars, meshes)
+    if key in ("particledisplacementx", "particlexdisplacement", "xparticledisplacement"):
+        return _define_particle_region_displacement_component_candidates("particleDisplacementX", particle_meshes, 0)
+    if key in ("particledisplacementy", "particleydisplacement", "yparticledisplacement"):
+        return _define_particle_region_displacement_component_candidates("particleDisplacementY", particle_meshes, 1)
+    if key in ("particledisplacementz", "particlezdisplacement", "zparticledisplacement"):
+        return _define_particle_region_displacement_component_candidates("particleDisplacementZ", particle_meshes, 2)
     if key in ("particlevelocityx", "particlexvelocity", "xparticlevelocity", "particlevx"):
         return _derive_velocity_component(scalars, "particleVelocity", "particleVelocityX", 0)
     if key in ("particlevelocityy", "particleyvelocity", "yparticlevelocity", "particlevy"):
@@ -773,7 +1080,7 @@ def ordered_scalar_candidates(scalars, requested):
     return candidates
 
 
-def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", color_min=None, color_max=None):
+def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", color_min=None, color_max=None, legend_flag=True):
     try:
         PseudocolorAttributes = globals()["PseudocolorAttributes"]
         SetPlotOptions = globals()["SetPlotOptions"]
@@ -793,7 +1100,7 @@ def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", colo
         if hasattr(attrs, "pointSizeVarEnabled"):
             attrs.pointSizeVarEnabled = 0
         if hasattr(attrs, "legendFlag"):
-            attrs.legendFlag = 1
+            attrs.legendFlag = 1 if legend_flag else 0
         mode = str(range_mode).lower()
         if color_min is not None and color_max is not None:
             mode = "explicit"
@@ -816,10 +1123,32 @@ def configure_pseudocolor(point_size_pixels, colortable, range_mode="unit", colo
         print("Could not configure Pseudocolor attributes: {0}".format(exc))
 
 
-def try_add_pseudocolor(variable, point_size_pixels, colortable, range_mode="unit", color_min=None, color_max=None):
+def try_add_pseudocolor(
+    variable,
+    point_size_pixels,
+    colortable,
+    range_mode="unit",
+    color_min=None,
+    color_max=None,
+    plot_index=None,
+    clear_on_failure=True,
+    legend_flag=True,
+):
     try:
         call_visit("AddPlot", "Pseudocolor", variable)
-        configure_pseudocolor(point_size_pixels, colortable, range_mode, color_min=color_min, color_max=color_max)
+        if plot_index is not None:
+            try:
+                call_visit("SetActivePlots", int(plot_index))
+            except Exception:
+                pass
+        configure_pseudocolor(
+            point_size_pixels,
+            colortable,
+            range_mode,
+            color_min=color_min,
+            color_max=color_max,
+            legend_flag=legend_flag,
+        )
         # VisIt often accepts an expression at AddPlot time and only discovers
         # rank/type errors when the engine draws the plot.  Validate each
         # candidate immediately so strict render requests can fall through to
@@ -831,11 +1160,43 @@ def try_add_pseudocolor(variable, point_size_pixels, colortable, range_mode="uni
         return True
     except Exception as exc:
         print("Could not add Pseudocolor plot for {0}: {1}".format(variable, exc))
-        try:
-            call_visit("DeleteAllPlots")
-        except Exception:
-            pass
+        if clear_on_failure:
+            try:
+                call_visit("DeleteAllPlots")
+            except Exception:
+                pass
+        else:
+            try:
+                if plot_index is not None:
+                    call_visit("SetActivePlots", int(plot_index))
+                call_visit("DeleteActivePlots")
+            except Exception:
+                pass
         return False
+
+
+def particle_region_for_variable(name):
+    text = str(name)
+    match = re.search(r"^particleStress[A-Z]+_(ParticleRegion[0-9]+)$", text)
+    if match:
+        return match.group(1)
+    match = re.search(r"^particleDeformationGradient[A-Z]+_(ParticleRegion[0-9]+)$", text)
+    if match:
+        return match.group(1)
+    match = re.search(r"^particleDisplacement[A-Z]+_(ParticleRegion[0-9]+)$", text)
+    if match:
+        return match.group(1)
+    match = re.search(r"^sigma_(?:nn|tt)_(ParticleRegion[0-9]+)$", text)
+    if match:
+        return match.group(1)
+    match = re.search(r"(ParticleRegion[0-9]+)_ParticleDomains_ParticleFields/particleStress(?:/|$)", text)
+    if match:
+        return match.group(1)
+    return None
+
+
+def is_particle_region_expression(name):
+    return particle_region_for_variable(name) is not None
 
 
 def choose_mesh(meshes, requested):
@@ -898,6 +1259,16 @@ def _known_vector_paths(requested):
             "ParticleRegion1_ParticleDomains_ParticleFields/particleSurfaceNormal",
             "particleSurfaceNormal",
         ]
+    if key in ("gridexplicitsurfacenormal", "explicitsurfacenormal"):
+        return [
+            "CellRegion1_NodalFields/gridExplicitSurfaceNormal",
+            "gridExplicitSurfaceNormal",
+        ]
+    if key in ("gridprincipalexplicitsurfacenormal", "principalexplicitsurfacenormal"):
+        return [
+            "CellRegion1_NodalFields/gridPrincipalExplicitSurfaceNormal",
+            "gridPrincipalExplicitSurfaceNormal",
+        ]
     if key in ("particlesurfaceposition", "surfaceposition", "surfacePosition"):
         return [
             "ParticleRegion1_ParticleDomains_ParticleFields/particleSurfacePosition",
@@ -911,7 +1282,37 @@ def _known_vector_paths(requested):
     return [str(requested)] if requested else []
 
 
-def choose_vector(vectors, requested):
+def _vector_expression_name(requested):
+    return re.sub(r"[^A-Za-z0-9_]+", "_", str(requested)).strip("_") or "derivedVector"
+
+
+def _derive_vector_from_scalar_components(scalars, requested):
+    key = _compact_name(requested or "")
+    vector_stems = {
+        "particlesurfacenormal": ("particleSurfaceNormal", None),
+        "surfacenormal": ("particleSurfaceNormal", None),
+        "gridexplicitsurfacenormal": ("gridExplicitSurfaceNormal", None),
+        "explicitsurfacenormal": ("gridExplicitSurfaceNormal", None),
+        "gridprincipalexplicitsurfacenormal": ("gridPrincipalExplicitSurfaceNormal", None),
+        "principalexplicitsurfacenormal": ("gridPrincipalExplicitSurfaceNormal", None),
+        "gridvelocity": ("gridVelocity", 0),
+    }
+    spec = vector_stems.get(key)
+    if spec is None:
+        return None
+    stem, field_index = spec
+    components = []
+    for component in range(3):
+        scalar_component = _component_scalar(scalars, stem, component, field_index=field_index)
+        if not scalar_component:
+            print("Could not derive vector {0}; missing component {1}".format(requested, component))
+            return None
+        components.append(_quote_visit_var(scalar_component))
+    expression = "{{{0},{1},{2}}}".format(*components)
+    return _define_vector_expression(_vector_expression_name(requested), expression)
+
+
+def choose_vector(vectors, requested, scalars=None):
     requested = str(requested or "").strip()
     if not requested:
         return None
@@ -924,6 +1325,9 @@ def choose_vector(vectors, requested):
     found = _find_best_vector(vectors, contains=(requested,))
     if found and found not in candidates:
         candidates.append(found)
+    derived = _derive_vector_from_scalar_components(scalars or [], requested)
+    if derived and derived not in candidates:
+        candidates.append(derived)
     for candidate in _known_vector_paths(requested):
         if candidate not in candidates:
             candidates.append(candidate)
@@ -964,8 +1368,8 @@ def configure_vector(scale, vector_count, stride):
         print("Could not configure Vector attributes: {0}".format(exc))
 
 
-def try_add_vector(vector_variable, vectors, scale, vector_count, stride):
-    resolved = choose_vector(vectors, vector_variable)
+def try_add_vector(vector_variable, vectors, scale, vector_count, stride, scalars=None):
+    resolved = choose_vector(vectors, vector_variable, scalars=scalars)
     if not resolved:
         print("Could not resolve requested vector overlay: {0}".format(vector_variable))
         return False
@@ -1168,11 +1572,11 @@ def configure_annotations(enabled):
         return
     annot = AnnotationAttributes()
     try:
-        annot.axes3D.visible = 1 if enabled else 0
+        annot.axes3D.visible = 0
     except Exception:
         pass
     try:
-        annot.axes2D.visible = 1 if enabled else 0
+        annot.axes2D.visible = 0
     except Exception:
         pass
     for attr, value in (
@@ -1328,29 +1732,66 @@ def main(argv=None):
             candidates.append(args.variable)
     print("Scalar candidate order: {0}".format(candidates[:12]))
 
-    plotted_variable = None
-    for variable in candidates:
-        if try_add_pseudocolor(
-            variable,
-            args.point_size_pixels,
-            args.colortable,
-            args.range_mode,
-            color_min=args.color_min,
-            color_max=args.color_max,
-        ):
-            plotted_variable = variable
-            break
-    if plotted_variable is None:
+    plotted_variables = []
+    overlay_candidates = [candidate for candidate in candidates if is_particle_region_expression(candidate)]
+    if len(overlay_candidates) > 1:
+        print("Overlaying particle-region variables: {0}".format(overlay_candidates))
+        candidates_by_region = []
+        for variable in overlay_candidates:
+            region = particle_region_for_variable(variable)
+            if not region:
+                continue
+            for existing_region, variables in candidates_by_region:
+                if existing_region == region:
+                    variables.append(variable)
+                    break
+            else:
+                candidates_by_region.append((region, [variable]))
+        if len(candidates_by_region) > 1:
+            for _region, region_candidates in candidates_by_region:
+                for variable in region_candidates:
+                    if try_add_pseudocolor(
+                        variable,
+                        args.point_size_pixels,
+                        args.colortable,
+                        args.range_mode,
+                        color_min=args.color_min,
+                        color_max=args.color_max,
+                        plot_index=len(plotted_variables),
+                        clear_on_failure=False,
+                        legend_flag=(len(plotted_variables) == 0),
+                    ):
+                        plotted_variables.append(variable)
+                        break
+
+    if not plotted_variables:
+        try:
+            call_visit("DeleteAllPlots")
+        except Exception:
+            pass
+        for variable in candidates:
+            if try_add_pseudocolor(
+                variable,
+                args.point_size_pixels,
+                args.colortable,
+                args.range_mode,
+                color_min=args.color_min,
+                color_max=args.color_max,
+            ):
+                plotted_variables.append(variable)
+                break
+    if not plotted_variables:
         if args.strict_variable:
             raise RuntimeError("Could not create a pseudocolor plot for requested variable {0}".format(args.variable))
         raise RuntimeError("Could not create a pseudocolor plot for any scalar variable candidate")
+    plotted_variable = "+".join(plotted_variables)
 
     mesh_variable = choose_mesh(meshes, args.mesh)
     if mesh_variable:
         try_add_mesh(mesh_variable)
 
     for vector_variable in args.vector_variable:
-        try_add_vector(vector_variable, vectors, args.vector_scale, args.vector_count, args.vector_stride)
+        try_add_vector(vector_variable, vectors, args.vector_scale, args.vector_count, args.vector_stride, scalars=scalars)
 
     call_visit("DrawPlots")
 
@@ -1387,7 +1828,7 @@ def main(argv=None):
     states = resolve_states(args.states, n_states)
     print("Rendering states: {0}; variable={1}".format(states, plotted_variable))
 
-    safe_variable = basename_of_variable(plotted_variable)
+    safe_variable = basename_of_variable(args.variable if len(plotted_variables) > 1 and args.variable else plotted_variable)
     for label, state in states:
         try:
             call_visit("SetTimeSliderState", state)

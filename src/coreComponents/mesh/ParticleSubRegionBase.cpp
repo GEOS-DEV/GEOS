@@ -127,6 +127,31 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
 ParticleSubRegionBase::~ParticleSubRegionBase()
 {}
 
+void ParticleSubRegionBase::enableParticleReferenceGeometry()
+{
+  if( hasParticleReferenceGeometry() ) return;
+  registerWrapper< array1d< integer > >( particleGeometry::shapeKey() ).
+    setSizedFromParent( 1 ).setPlotLevel( PlotLevel::LEVEL_1 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).reference().resize( size() );
+  registerWrapper< array3d< real64 > >( particleGeometry::vectorsKey() ).
+    setSizedFromParent( 1 ).setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).reference().resize( size(), 3, 3 );
+}
+
+ParticleSubRegionBase::ReferenceGeometryView ParticleSubRegionBase::referenceGeometryViewOnHost()
+{
+  ReferenceGeometryView result;
+  if( hasParticleReferenceGeometry() )
+  {
+    getWrapperBase( particleGeometry::shapeKey() ).move( LvArray::MemorySpace::host, false );
+    getWrapperBase( particleGeometry::vectorsKey() ).move( LvArray::MemorySpace::host, true );
+    result.shape = getReference< array1d< integer > >( particleGeometry::shapeKey() ).toViewConst();
+    result.vectors = getReference< array3d< real64 > >( particleGeometry::vectorsKey() ).toView();
+  }
+  return result;
+}
+
+
 unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
                                                   arrayView1d< localIndex > const & localIndices,
                                                   bool doPack ) const

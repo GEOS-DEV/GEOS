@@ -37,11 +37,11 @@ for active particle p:
   store stress[p] and state[p]
 \end{lstlisting}
 
-\subsubsection{\texttt{ElasticIsotropic}}
+\subsubsection{\mpmcode{ElasticIsotropic}}
 \label{subsubsec:elastic-isotropic-model}
 \index{constitutiveModels!ElasticIsotropic}
 
-\texttt{ElasticIsotropic} is the baseline small-strain isotropic elastic material.  It is useful for mapping tests, wave-speed verification, contact/boundary tests, and reference calculations when the material deformation is small enough that a corotational elastic increment is adequate.  The model is the standard Hooke law form documented in continuum mechanics texts such as Malvern~\cite{malvern1969}.
+\mpmcode{ElasticIsotropic} is the baseline small-strain isotropic elastic material.  It is useful for mapping tests, wave-speed verification, contact/boundary tests, and reference calculations when the material deformation is small enough that a corotational elastic increment is adequate.  The model is the standard Hooke law form documented in continuum mechanics texts such as Malvern~\cite{malvern1969}.
 
 With bulk modulus \(K\), shear modulus \(G\), and strain increment \(\Delta\boldsymbol{\epsilon}\), the update is
 \begin{equation}
@@ -118,12 +118,12 @@ stress = lambda * log(J) / J * I + G / J * (B - I)
 waveSpeed = sqrt((K + 4*G/3) / density)
 \end{lstlisting}
 
-\subsubsection{\texttt{ElasticTransverseIsotropic}}
+\subsubsection{\mpmcode{ElasticTransverseIsotropic}}
 \label{subsubsec:elastic-transverse-isotropic-model}
 \index{constitutiveModels!ElasticTransverseIsotropic}
 \index{MaterialDirection}
 
-\texttt{ElasticTransverseIsotropic} is the baseline anisotropic elastic solid model.  It represents a material with one preferred axis, such as a fiber direction, bedding normal, crystal axis, or platelet normal.  PFW can assign the particle material basis using \texttt{MaterialDirection}, as described in Section~\ref{sec:pfw-materials}.  The theory follows standard transversely isotropic elasticity~\cite{lekhnitskii1963}.
+\mpmcode{ElasticTransverseIsotropic} is the baseline anisotropic elastic solid model.  It represents a material with one preferred axis, such as a fiber direction, bedding normal, crystal axis, or platelet normal.  PFW can assign the particle material basis using \mpmcode{MaterialDirection}, as described in Section~\ref{sec:pfw-materials}.  The theory follows standard transversely isotropic elasticity~\cite{lekhnitskii1963}.
 
 In the local material frame, the Voigt stiffness is
 \begin{equation}
@@ -196,12 +196,12 @@ else:
   update plasticStrain from elastic/plastic strain split
 \end{lstlisting}
 
-\subsubsection{\texttt{PerfectlyPlastic}}
+\subsubsection{\mpmcode{PerfectlyPlastic}}
 \label{subsubsec:perfectly-plastic-model}
 \index{constitutiveModels!PerfectlyPlastic}
 \index{perfect plasticity}
 
-\texttt{PerfectlyPlastic} is a simpler elastic-perfectly-plastic isotropic model.  It uses the same pressure-independent invariant check as a von Mises material, but does not include hardening.  The elastic predictor is the \texttt{ElasticIsotropic} update.  If the trial stress lies outside the yield surface, the pressure is retained and the deviatoric stress is recomposed with \(q=Y\)~\cite{simo1998inelasticity}.
+\mpmcode{PerfectlyPlastic} is a simpler elastic-perfectly-plastic isotropic model.  It uses the same pressure-independent invariant check as a von Mises material, but does not include hardening.  The elastic predictor is the \mpmcode{ElasticIsotropic} update.  If the trial stress lies outside the yield surface, the pressure is retained and the deviatoric stress is recomposed with \(q=Y\)~\cite{simo1998inelasticity}.
 
 \begin{equation}
   \boldsymbol{\sigma}^{\mathrm{tr}}
@@ -225,12 +225,12 @@ else:
   stress = recomposeStress(p_trial, yieldStress, s_trial)
 \end{lstlisting}
 
-\subsubsection{\texttt{StrainHardeningPolymer}}
+\subsubsection{\mpmcode{StrainHardeningPolymer}}
 \label{subsubsec:strain-hardening-polymer-model}
 \index{constitutiveModels!StrainHardeningPolymer}
 \index{temperature!polymer model}
 
-\texttt{StrainHardeningPolymer} is a corotational polymer plasticity model for pressure-independent flow with temperature-dependent elastic properties, shear softening, stretch hardening, and stretch-based failure.  The model is related to the large-deformation glassy-polymer framework of Boyce, Parks, and Argon and to the stretch-hardening ideas of Arruda and Boyce~\cite{boyce1988polymer,arruda1993boyce}.  In the current implementation, the elastic predictor is small-strain/corotational, while the stretch-hardening driver is obtained from the right-stretch information associated with the deformation gradient.
+\mpmcode{StrainHardeningPolymer} is a corotational polymer plasticity model for pressure-independent flow with temperature-dependent elastic properties, shear softening, stretch hardening, and stretch-based failure.  The model is related to the large-deformation glassy-polymer framework of Boyce, Parks, and Argon and to the stretch-hardening ideas of Arruda and Boyce~\cite{boyce1988polymer,arruda1993boyce}.  In the current implementation, the elastic predictor is small-strain/corotational, while the stretch-hardening driver is obtained from the right-stretch information associated with the deformation gradient.
 
 The elastic trial stress is
 \begin{equation}
@@ -270,16 +270,16 @@ store stress, plasticStrain, yieldStrength, damage
 \end{lstlisting}
 
 
-\subsubsection{\texttt{SurfaceInformedPolymer}}
+\subsubsection{\mpmcode{SurfaceInformedPolymer}}
 \label{subsubsec:surface-informed-polymer-model}
 \index{constitutiveModels!SurfaceInformedPolymer}
 \index{polymer model!surface-informed}
 \index{crystallinity!polymer model}
 \index{pressure strengthening!polymer model}
 
-\texttt{SurfaceInformedPolymer} is a finite-deformation polymer plasticity model intended to retain the useful shear-softening and chain-stretch-hardening structure of \texttt{StrainHardeningPolymer}, while using a clearer reference-temperature parameterization, an explicit crystallinity input, and a bounded pressure-sensitive flow correction.  It is suitable for thermoplastic or elastomeric polymer layers when the important response is a combination of rate-independent deviatoric flow, softening after yield, chain stretch hardening, and finite-extensibility failure.  It is not a substitute for a calibrated high-pressure equation of state; the pressure cap described below is an extrapolation guardrail for the shear-strength part of the model.
+\mpmcode{SurfaceInformedPolymer} is a finite-deformation polymer plasticity model intended to retain the useful shear-softening and chain-stretch-hardening structure of \mpmcode{StrainHardeningPolymer}, while using a clearer reference-temperature parameterization, an explicit crystallinity input, and a bounded pressure-sensitive flow correction.  It is suitable for thermoplastic or elastomeric polymer layers when the important response is a combination of rate-independent deviatoric flow, softening after yield, chain stretch hardening, and finite-extensibility failure.  It is not a substitute for a calibrated high-pressure equation of state; the pressure cap described below is an extrapolation guardrail for the shear-strength part of the model.
 
-The reference state is defined at \texttt{referenceTemperature} or, equivalently for many polymer fits, \texttt{glassTransitionTemperature}.  A scalar thermal scale \(S_T(T)\) is normalized so that
+The reference state is defined at \mpmcode{referenceTemperature} or, equivalently for many polymer fits, \mpmcode{glassTransitionTemperature}.  A scalar thermal scale \(S_T(T)\) is normalized so that
 \begin{equation}
   S_T(T_{ref})=1 .
 \end{equation}
@@ -339,11 +339,11 @@ with
   \eta(T)=\eta_0\exp\left[-\frac{1}{2}\left(\frac{T-T_g}{w_{\eta}}\right)^2\right].
   \label{eq:surface-polymer-pressure-asymmetry}
 \end{equation}
-The optional input \texttt{compressivePressureStrengtheningCap} limits only the pressure contribution to shear strength,
+The optional input \mpmcode{compressivePressureStrengtheningCap} limits only the pressure contribution to shear strength,
 \begin{equation}
   p_{eff}=\max\left(p_t,-p_c\right),
   \qquad
-  p_c=\texttt{compressivePressureStrengtheningCap}.
+  p_c=\mpmcode{compressivePressureStrengtheningCap}.
   \label{eq:surface-polymer-pressure-cap}
 \end{equation}
 Negative cap values disable the cap.  The volumetric stress itself is not clipped by this control; only the pressure-strengthening term in the yield function is limited.  This distinction is important for high-pressure robustness: the material can still carry compressive mean stress, but low-pressure pressure-sensitivity parameters cannot create unbounded shear strength at extreme pressure.
@@ -353,7 +353,7 @@ The finite-extensibility failure criterion remains independent of pressure,
   \lambda_{chain}\ge \lambda_{max}\quad\Rightarrow\quad D=1.
   \label{eq:surface-polymer-maximum-stretch-failure}
 \end{equation}
-Pressure may suppress opening or cavitation-like damage in a separate damage model, but it should not suppress maximum chain-stretch failure.  The implementation leaves \texttt{equivalentPlasticStrain} at plot level as a constitutive history variable, and the verification also requests the primitive particle fields \texttt{particleStress}, \texttt{particleDamage}, and \texttt{particlePlasticStrain}.  Generic visualizations may use the stored equivalent history when available or construct an equivalent-plastic-strain expression from the plastic-strain tensor components.
+Pressure may suppress opening or cavitation-like damage in a separate damage model, but it should not suppress maximum chain-stretch failure.  The implementation leaves \mpmcode{equivalentPlasticStrain} at plot level as a constitutive history variable, and the verification also requests the primitive particle fields \texttt{particleStress}, \texttt{particleDamage}, and \mpmcode{particlePlasticStrain}.  Generic visualizations may use the stored equivalent history when available or construct an equivalent-plastic-strain expression from the plastic-strain tensor components.
 
 \begin{lstlisting}[caption={SurfaceInformedPolymer update structure.},label={alg:surface-informed-polymer-update},basicstyle=\ttfamily\small]
 compute F, J, lambda_max_p=max_i(lambda_i), and lambda_chain=max(lambda_max_p, J^(-1/3)*lambda_max_p)
@@ -386,7 +386,7 @@ store stress, plasticStrain, kappa, damage
 The model is a hybrid elastic-plastic/damage law.  The volumetric response is hyperelastic in the Jacobian, while the deviatoric response is limited by a damage-dependent pressure-dependent strength surface.  The implementation is related to the continuum-damage regularization framework described by Homel, Crook, and Appleton for under-resolved brittle crack tips and to earlier MPM-DFG mesoscale brittle-material calculations, including the concrete mesoscale work of Homel, Iyer, Semnani, and Herbold~\cite{homelCrookAppleton2026sizeeffects,homel2022uhpc,homel2016dfg}.  The model is deliberately simple compared with full cap/plasticity or micromechanics models: it uses a small number of strength parameters and relies on DFG contact, rather than continuum porosity growth, to represent the kinematics of opened or sliding fractures.
 
 \paragraph{Primary input parameters and state.}
-The required strength parameters are the unconfined tensile strength \(Y_t\), the unconfined compressive strength \(Y_c\), and the maximum high-pressure shear strength \(Y_{\max}\).  The optional residual friction slope \(\mu\) is controlled by \texttt{damagedMaterialFrictionSlope}; the optional third-invariant correction is enabled by \texttt{thirdInvariantDependence}.  Damage is stored as the scalar particle state \(D\in[0,1]\).  The model also owns or reads \texttt{jacobian}, \texttt{lengthScale}, \texttt{strengthScale}, \texttt{porosity}, \texttt{referencePorosity}, \texttt{plasticStrain}, \texttt{distanceToCrackTip}, \texttt{surfaceFlag}, \texttt{crackTipStressConcentration}, and accumulated work diagnostics.  The most important user-visible controls are summarized in Table~\ref{tab:ceramic-damage-controls}.
+The required strength parameters are the unconfined tensile strength \(Y_t\), the unconfined compressive strength \(Y_c\), and the maximum high-pressure shear strength \(Y_{\max}\).  The optional residual friction slope \(\mu\) is controlled by \mpmcode{damagedMaterialFrictionSlope}; the optional third-invariant correction is enabled by \mpmcode{thirdInvariantDependence}.  Damage is stored as the scalar particle state \(D\in[0,1]\).  The model also owns or reads \texttt{jacobian}, \texttt{lengthScale}, \texttt{strengthScale}, \texttt{porosity}, \mpmcode{referencePorosity}, \texttt{plasticStrain}, \mpmcode{distanceToCrackTip}, \texttt{surfaceFlag}, \mpmcode{crackTipStressConcentration}, and accumulated work diagnostics.  The most important user-visible controls are summarized in Table~\ref{tab:ceramic-damage-controls}.
 
 \begingroup\scriptsize
 \setlength{\tabcolsep}{2.5pt}
@@ -401,15 +401,15 @@ The required strength parameters are the unconfined tensile strength \(Y_t\), th
 \midrule
 \endhead
 \texttt{tensileStrength} & input & Unconfined tensile strength scale \(Y_t\).\\
-\texttt{compressiveStrength} & input & Unconfined compressive strength scale \(Y_c\); must exceed \(Y_t\).\\
+\mpmcode{compressiveStrength} & input & Unconfined compressive strength scale \(Y_c\); must exceed \(Y_t\).\\
 \texttt{maximumStrength} & input & High-pressure limiting shear strength \(Y_{\max}\); must exceed \(Y_c\).\\
-\texttt{damagedMaterialFrictionSlope} & input & Residual damaged-material friction slope \(\mu\).  The brittle-ductile transition pressure is approximately \(p_2=Y_{\max}/\mu\).\\
-\texttt{thirdInvariantDependence} & input & Enables Lode-angle scaling so the low-pressure surface approaches a maximum-principal-stress-like tensile criterion while the high-pressure response approaches a shear criterion.\\
-\texttt{crackSpeed} & input & Time-to-failure regularization speed used when \texttt{enableEnergyFailureCriterion=0}.\\
-\texttt{enableEnergyFailureCriterion} & input & Enables fracture-energy regularization using \texttt{fractureEnergyReleaseRate}/\texttt{lengthScale}.\\
-\texttt{fractureEnergyReleaseRate} & input & Mode-I-style fracture energy per created area used by the energy regularization.\\
-\texttt{enableCrackTipStressConcentration} & input & Enables the DFG-based crack-tip stress correction described in Section~\ref{subsubsec:crack-tip-stress-concentration}.\\
-\texttt{fractureToughness} & input & Toughness used to compute the fracture-process-zone radius for crack-tip scaling.\\
+\mpmcode{damagedMaterialFrictionSlope} & input & Residual damaged-material friction slope \(\mu\).  The brittle-ductile transition pressure is approximately \(p_2=Y_{\max}/\mu\).\\
+\mpmcode{thirdInvariantDependence} & input & Enables Lode-angle scaling so the low-pressure surface approaches a maximum-principal-stress-like tensile criterion while the high-pressure response approaches a shear criterion.\\
+\texttt{crackSpeed} & input & Time-to-failure regularization speed used when \mpmcode{enableEnergyFailureCriterion=0}.\\
+\mpmcode{enableEnergyFailureCriterion} & input & Enables fracture-energy regularization using \mpmcode{fractureEnergyReleaseRate}/\texttt{lengthScale}.\\
+\mpmcode{fractureEnergyReleaseRate} & input & Mode-I-style fracture energy per created area used by the energy regularization.\\
+\mpmcode{enableCrackTipStressConcentration} & input & Enables the DFG-based crack-tip stress correction described in Section~\ref{subsubsec:crack-tip-stress-concentration}.\\
+\mpmcode{fractureToughness} & input & Toughness used to compute the fracture-process-zone radius for crack-tip scaling.\\
 \texttt{strengthScale} & particle field & Multiplies \(Y_t\) and \(Y_c\); see the Weibull and spatial-strength discussion in Section~\ref{subsubsec:strength-scale-weibull}.\\
 \texttt{porosity} & particle field & Reduces \(Y_t\) and \(Y_c\) as a local strength factor in the current implementation; it is not the primary mechanism for fracture dilation.\\
 \texttt{surfaceFlag} & particle field & Set by the model when the kinematic regularization has dissipated the target energy; DFG can then treat the particle as part of an inserted surface.\\
@@ -464,7 +464,7 @@ The yield function is evaluated in terms of the von Mises equivalent shear measu
   f = q - \frac{1}{\xi_{\mathrm{tip}}}\,\Gamma^{-1}(J_2,J_3,\partial Y_0/\partial p)\,Y_0(p,D),
   \label{eq:ceramic-yield-function}
 \end{equation}
-where \(\xi_{\mathrm{tip}}\ge1\) is the crack-tip stress-concentration factor and \(\Gamma^{-1}=1\) when \texttt{thirdInvariantDependence=0}.  The meridional strength \(Y_0(p,D)\) has three pressure ranges,
+where \(\xi_{\mathrm{tip}}\ge1\) is the crack-tip stress-concentration factor and \(\Gamma^{-1}=1\) when \mpmcode{thirdInvariantDependence=0}.  The meridional strength \(Y_0(p,D)\) has three pressure ranges,
 \begin{equation}
   Y_0(p,D)=
   \begin{cases}
@@ -503,7 +503,7 @@ The elastic strain energy stored at the returned state is evaluated as
 which is used by the energy-regularized damage path.  The stored \texttt{plasticStrain} is a diagnostic/history measure computed from the difference between the elastic strain increment implied by the stress change and the total strain increment; it should not be interpreted as a fully associative plastic-flow solution.
 
 \paragraph{Damage regularization options.}
-Two damage-progression paths are implemented.  The older time-to-failure path is selected when \texttt{enableEnergyFailureCriterion=0}.  If the trial state yields below the brittle-ductile transition pressure \(p_2\), damage increases according to
+Two damage-progression paths are implemented.  The older time-to-failure path is selected when \mpmcode{enableEnergyFailureCriterion=0}.  If the trial state yields below the brittle-ductile transition pressure \(p_2\), damage increases according to
 \begin{equation}
   D^{n+1}=\min\left(1,D^n+\frac{\Delta t}{t_f}\right),
   \qquad
@@ -512,7 +512,7 @@ Two damage-progression paths are implemented.  The older time-to-failure path is
 \end{equation}
 where \(\ell_{\mathrm{ch}}=\texttt{lengthScale}\) and \(c_f=\texttt{crackSpeed}\).  This is computationally inexpensive and useful for simple damage growth studies, but the fracture energy is controlled only indirectly by \(c_f\), \(\ell_{\mathrm{ch}}\), and the stress history.
 
-The energy-regularized path is selected when \texttt{enableEnergyFailureCriterion=1}.  In that branch the model tracks accumulated stress work \(W\) and compares the dissipated work \(W-W_e\) to the regularized fracture-energy density \(G_f/\ell_{\mathrm{ch}}\):
+The energy-regularized path is selected when \mpmcode{enableEnergyFailureCriterion=1}.  In that branch the model tracks accumulated stress work \(W\) and compares the dissipated work \(W-W_e\) to the regularized fracture-energy density \(G_f/\ell_{\mathrm{ch}}\):
 \begin{equation}
   D^{n+1}\approx
   \operatorname{clip}\left(\frac{W^{n+1}-W_e^{n+1}}{G_f/\ell_{\mathrm{ch}}},D^n,1\right).
@@ -523,7 +523,7 @@ If the strain energy at failure is small enough for a gradual softening process,
 \paragraph{Strength scale and crack-tip scaling.}
 The \texttt{strengthScale} field is applied directly to \(Y_t\) and \(Y_c\), so Weibull or spatial heterogeneity assigned by PFW affects both tensile and compressive branches while leaving \(Y_{\max}\) as the limiting ductile strength.  This is the model-specific interpretation of the shared strength-scale field described in Section~\ref{subsubsec:strength-scale-weibull}.  In DFG fracture calculations, \texttt{strengthScale} is commonly assigned by Voronoi/Weibull wrappers so that the initial critical flaws occupy clusters of particles rather than isolated particles.
 
-When crack-tip scaling is enabled, the solver supplies \texttt{distanceToCrackTip} from the neighbor-list DFG crack-tip diagnostic.  The model computes a fracture-process-zone radius from the nominal intact strength,
+When crack-tip scaling is enabled, the solver supplies \mpmcode{distanceToCrackTip} from the neighbor-list DFG crack-tip diagnostic.  The model computes a fracture-process-zone radius from the nominal intact strength,
 \begin{equation}
   r_p = \frac{K_{Ic}^{2}}{2\pi Y_{\text{intact}}^{2}},
   \qquad
@@ -617,7 +617,7 @@ stress = recompose(principalStress, eigenvectors)
 \index{graphite!basal planes}
 \index{graphite!point-slope strength}
 
-\texttt{Graphite} is an anisotropic damage/plasticity model for graphite-like layered solids.  The model assumes that the material has a preferred graphitic or basal-plane normal, stored as the first row of the particle \texttt{MaterialDirection} tensor.  The weak planes themselves are normal to this vector.  The constitutive update therefore treats the particle material direction as a plane normal, not as an ordinary fiber tangent.  This distinction matters in large deformation: ordinary line directions are pushed forward with \(\mathbf F\), while plane normals are pushed forward with the deformation-gradient cofactor \(\mathbf F^{c}=J\mathbf F^{-T}\).  The MPM kinematic update uses this cofactor path for non-fiber material directions, normalizes the transported rows, and then passes the updated material basis to the constitutive model.  This is the appropriate graphitic update because the orientation of a basal plane is controlled by the transformed plane normal rather than by the stretch of an in-plane material line; see also the material-direction assignment discussion in Section~\ref{subsec:pfw-material-directions}.  The need to distinguish material rotations, basis transformations, and evolving anisotropy is the same tensor-transformation issue emphasized by Brannon's rotation and frame-change treatment~\cite{brannon2017rotation}.
+\texttt{Graphite} is an anisotropic damage/plasticity model for graphite-like layered solids.  The model assumes that the material has a preferred graphitic or basal-plane normal, stored as the first row of the particle \mpmcode{MaterialDirection} tensor.  The weak planes themselves are normal to this vector.  The constitutive update therefore treats the particle material direction as a plane normal, not as an ordinary fiber tangent.  This distinction matters in large deformation: ordinary line directions are pushed forward with \(\mathbf F\), while plane normals are pushed forward with the deformation-gradient cofactor \(\mathbf F^{c}=J\mathbf F^{-T}\).  The MPM kinematic update uses this cofactor path for non-fiber material directions, normalizes the transported rows, and then passes the updated material basis to the constitutive model.  This is the appropriate graphitic update because the orientation of a basal plane is controlled by the transformed plane normal rather than by the stretch of an in-plane material line; see also the material-direction assignment discussion in Section~\ref{subsec:pfw-material-directions}.  The need to distinguish material rotations, basis transformations, and evolving anisotropy is the same tensor-transformation issue emphasized by Brannon's rotation and frame-change treatment~\cite{brannon2017rotation}.
 
 \begin{figure}[htbp]
   \centering
@@ -645,7 +645,7 @@ where \(\mathbf P\) projects onto the basal plane.  In the current implementatio
   \mathbf F^{c}=J\mathbf F^{-T},
   \label{eq:graphite-material-direction-update}
 \end{equation}
-then transposes and normalizes the rows to recover the particle \texttt{MaterialDirection}.  Inside the constitutive update, the beginning-of-step rotation is removed before evaluating the transversely isotropic elastic and inelastic laws, so the mode decomposition is performed in a corotational material frame.  This path is consistent with the general rule that anisotropic constitutive models must evolve their material directions under superposed rigid motion and finite distortion, rather than treating a fixed laboratory axis as a material property~\cite{brannon2017rotation}.
+then transposes and normalizes the rows to recover the particle \mpmcode{MaterialDirection}.  Inside the constitutive update, the beginning-of-step rotation is removed before evaluating the transversely isotropic elastic and inelastic laws, so the mode decomposition is performed in a corotational material frame.  This path is consistent with the general rule that anisotropic constitutive models must evolve their material directions under superposed rigid motion and finite distortion, rather than treating a fixed laboratory axis as a material property~\cite{brannon2017rotation}.
 
 \paragraph{Elastic trial stress.}
 The reviewed code path is a finite-deformation MPM update followed by a corotational transversely isotropic elastic predictor.  The implementation is compatible with the hyperelastic transversely isotropic interpretation of the model, but the update evaluated here is algorithmically a pressure-dependent rate-form trial stress expressed in the evolving material frame.  The pressure-dependent moduli are computed from the beginning-of-step pressure \(p^n=-\operatorname{tr}\boldsymbol{\sigma}^n/3\) and the beginning-of-step plane-normal stress \(\sigma_n^n=\mathbf a\cdot\boldsymbol{\sigma}^n\mathbf a\).  Define the non-negative arguments
@@ -673,7 +673,7 @@ Then
   \nu_p = \min(0.4999,\nu_p^0).
   \label{eq:graphite-pressure-dependent-moduli}
 \end{align}
-Here \(z\) denotes the preferred-axis direction and \(p\) denotes the transverse plane.  The optional pressure scales \(P_z\), \(P_p\), and \(P_g\) are supplied by \texttt{defaultYoungModulusAxialPressureScale}, \texttt{defaultYoungModulusTransversePressureScale}, and \texttt{defaultShearModulusAxialTransversePressureScale}.  When a pressure scale is omitted, its default is effectively infinite and \(f(\xi;P)\to\xi\), recovering the linear pressure dependence.  Finite positive scales give monotone pressure stiffening with decreasing tangent modulus increment at high pressure.  The implementation also locally limits the pressure-dependent TI moduli if needed so the stiffness remains positive definite at the current pressure state.  The implementation also forms effective isotropic moduli for wave-speed and stress-control purposes,
+Here \(z\) denotes the preferred-axis direction and \(p\) denotes the transverse plane.  The optional pressure scales \(P_z\), \(P_p\), and \(P_g\) are supplied by \mpmcode{defaultYoungModulusAxialPressureScale}, \mpmcode{defaultYoungModulusTransversePressureScale}, and \mpmcode{defaultShearModulusAxialTransversePressureScale}.  When a pressure scale is omitted, its default is effectively infinite and \(f(\xi;P)\to\xi\), recovering the linear pressure dependence.  Finite positive scales give monotone pressure stiffening with decreasing tangent modulus increment at high pressure.  The implementation also locally limits the pressure-dependent TI moduli if needed so the stiffness remains positive definite at the current pressure state.  The implementation also forms effective isotropic moduli for wave-speed and stress-control purposes,
 \begin{equation}
   K_{\mathrm{eff}} =
   -\frac{E_pE_z}{2E_z(\nu_p+\nu_{zp}-1)+E_p(2\nu_{zp}-1)},
@@ -766,7 +766,7 @@ where \(\mathbf a\) is the basal-plane normal and \(\mathbf b,\mathbf c\) span t
   q_{\mathrm{c}} = \sqrt{\frac{3}{2}}\,\|\boldsymbol{\sigma}_5\|.
   \label{eq:graphite-mode-invariants}
 \end{equation}
-These are the internal stress measures corresponding to signed normal distortion, in-plane shear, and coupled shear on the graphitic weak planes in Fig.~\ref{fig:graphite-deformation-modes}.  Plane-normal tensile opening is handled by the pre-plastic brittle candidate described below when \texttt{basalPlaneFractureEnergyReleaseRate} is finite; its peak strength is then implied by the positive signed-distortion branch.  If the basal fracture energy is disabled, the legacy plane-normal tensile cap based on \texttt{failureStrength} is retained for backward compatibility.
+These are the internal stress measures corresponding to signed normal distortion, in-plane shear, and coupled shear on the graphitic weak planes in Fig.~\ref{fig:graphite-deformation-modes}.  Plane-normal tensile opening is handled by the pre-plastic brittle candidate described below when \mpmcode{basalPlaneFractureEnergyReleaseRate} is finite; its peak strength is then implied by the positive signed-distortion branch.  If the basal fracture energy is disabled, the legacy plane-normal tensile cap based on \texttt{failureStrength} is retained for backward compatibility.
 
 \paragraph{Pressure-dependent point-slope strengths.}
 Each active strength branch \(m\in\{d-,d+,\mathrm{ip},\mathrm{c}\}\) has a pressure-dependent strength curve controlled by \texttt{*ResponseX2}, \texttt{*ResponseY1}, \texttt{*ResponseY2}, and \texttt{*ResponseM1}.  The existing \texttt{distortionShearResponse*} inputs define the \(I_d^-\) branch.  The optional \texttt{positiveDistortionShearResponse*} inputs define the \(I_d^+\) branch and default to the corresponding \texttt{distortionShearResponse*} values when omitted, so old input files recover the previous unsigned distortion response.  With \(x_1=0\), \(x_2>0\), \(Y_1\ge 0\), \(Y_2>Y_1\), and low-pressure tangent slope \(M_1\), the code uses a point-slope form
@@ -800,14 +800,14 @@ Damage, strength scaling, and hardening modify the raw input strengths before Eq
   H_m(\chi)=1+(C_m-1)S(\chi).
   \label{eq:graphite-hardening-multiplier}
 \end{equation}
-Here \(C_m\) is one of \texttt{distortionStrainHardeningC0}, \texttt{inPlaneStrainHardeningC0}, or \texttt{coupledStrainHardeningC0}; both signed distortion branches use the distortion hardening multiplier.  The intact low-pressure ordinate and tangent slope are scaled by \(s_pH_m\), but the high-pressure plateau is not strength-scale multiplied:
+Here \(C_m\) is one of \mpmcode{distortionStrainHardeningC0}, \mpmcode{inPlaneStrainHardeningC0}, or \mpmcode{coupledStrainHardeningC0}; both signed distortion branches use the distortion hardening multiplier.  The intact low-pressure ordinate and tangent slope are scaled by \(s_pH_m\), but the high-pressure plateau is not strength-scale multiplied:
 \begin{equation}
   Y_{1,\mathrm{intact}} = \min\left(s_pH_mY_1^0,(1-\epsilon)Y_2^0\right),
   \qquad
   Y_{2,\mathrm{intact}} = Y_2^0.
   \label{eq:graphite-strengthscale-damage}
 \end{equation}
-The intact slope is raised as needed to satisfy the convexity condition in Eq.~\eqref{eq:graphite-point-slope-convexity}.  The fully comminuted powder branch has zero cohesion, uses \texttt{damagedMaterialFrictionalSlope} subject to the same slope limits, and retains the same unscaled branch-specific \(Y_2^0\) plateau.  The active strength is a smooth blend of the intact and powder branches using the internal damage variable for that mode.  This makes \texttt{strengthScale} a flaw-controlled low-pressure multiplier while preserving a common pressure-dominated high-confinement strength for intact and comminuted material.  Fracture energies may be scaled separately through \(G_f^{\mathrm{eff}}=G_f\,s_p^{\eta_G}\), where \(\eta_G=\texttt{fractureEnergyStrengthScaleExponent}\).
+The intact slope is raised as needed to satisfy the convexity condition in Eq.~\eqref{eq:graphite-point-slope-convexity}.  The fully comminuted powder branch has zero cohesion, uses \mpmcode{damagedMaterialFrictionalSlope} subject to the same slope limits, and retains the same unscaled branch-specific \(Y_2^0\) plateau.  The active strength is a smooth blend of the intact and powder branches using the internal damage variable for that mode.  This makes \texttt{strengthScale} a flaw-controlled low-pressure multiplier while preserving a common pressure-dominated high-confinement strength for intact and comminuted material.  Fracture energies may be scaled separately through \(G_f^{\mathrm{eff}}=G_f\,s_p^{\eta_G}\), where \(\eta_G=\mpmcode{fractureEnergyStrengthScaleExponent}\).
 
 
 \paragraph{Pre-plastic brittle tensile fracture.}
@@ -818,7 +818,7 @@ Finite fracture energies activate a brittle tensile return before the pressure-d
   G_t^{\mathrm{eff}} = G_t s_p^{\eta_G},
   \label{eq:graphite-effective-fracture-energy}
 \end{equation}
-for finite input values, where \(G_b=\texttt{basalPlaneFractureEnergyReleaseRate}\), \(G_t=\texttt{totalFractureEnergyReleaseRate}\), \(s_p=\texttt{strengthScale}\), and \(\eta_G=\texttt{fractureEnergyStrengthScaleExponent}\).  A \texttt{DBL\_MAX} fracture-energy input disables the corresponding energy-regularized candidate.
+for finite input values. Here $G_b$ is \mpmcode{basalPlaneFractureEnergyReleaseRate}, $G_t$ is \mpmcode{totalFractureEnergyReleaseRate}, $s_p$ is \texttt{strengthScale}, and $\eta_G$ is \mpmcode{fractureEnergyStrengthScaleExponent}.  A \texttt{DBL\_MAX} fracture-energy input disables the corresponding energy-regularized candidate.
 
 The basal normal-opening candidate uses
 \begin{equation}
@@ -829,7 +829,7 @@ The basal normal-opening candidate uses
   T_b=Y_{d+}\!\left(p=-\frac{T_b}{3};D=0,s_p,\chi\right),
   \label{eq:graphite-basal-tensile-strength}
 \end{equation}
-where \(Y_{d+}\) is the positive signed-distortion strength from Eq.~\eqref{eq:graphite-strengthscale-damage} evaluated on the uniaxial plane-normal tensile path and with zero damage.  The scalar equation for \(T_b\) is solved internally, so basal normal-opening strength follows the existing positive-distortion yield surface instead of being prescribed by \texttt{failureStrength}.  The maximum-principal candidate is active only when \texttt{maximumPrincipalStressDamage=1} and \(G_t^{\mathrm{eff}}\) is finite:
+where \(Y_{d+}\) is the positive signed-distortion strength from Eq.~\eqref{eq:graphite-strengthscale-damage} evaluated on the uniaxial plane-normal tensile path and with zero damage.  The scalar equation for \(T_b\) is solved internally, so basal normal-opening strength follows the existing positive-distortion yield surface instead of being prescribed by \texttt{failureStrength}.  The maximum-principal candidate is active only when \mpmcode{maximumPrincipalStressDamage=1} and \(G_t^{\mathrm{eff}}\) is finite:
 \begin{equation}
   \mathbf n_p=\hbox{eigenvector associated with }\sigma_{\max}^{\mathrm{tr}},
   \qquad
@@ -840,7 +840,7 @@ where \(Y_{d+}\) is the positive signed-distortion strength from Eq.~\eqref{eq:g
 \end{equation}
 where \(\sigma_f=\texttt{failureStrength}\).  Thus \texttt{failureStrength} is the arbitrary-direction maximum-principal tensile strength; basal normal-opening can be weaker or stronger depending on where the uniaxial plane-normal path intersects the positive-distortion surface.
 
-When the crack-tip stress concentration option is active, the same factor \(C_{\mathrm{tip}}=\texttt{crackTipStressConcentration}\) reduces the effective tensile cap for either active brittle candidate,
+When the crack-tip stress concentration option is active, the same factor $C_{\mathrm{tip}}$, set by \mpmcode{crackTipStressConcentration}, reduces the effective tensile cap for either active brittle candidate,
 \begin{equation}
   \bar T_i = \frac{T_i}{C_{\mathrm{tip}}},
   \qquad i\in\{b,p\}.
@@ -855,7 +855,7 @@ Let \(\mathbf N_i=\mathbf n_i\otimes\mathbf n_i\), let \(\mathbb S_{\mathrm{TI}}
   \ell=\texttt{lengthScale}.
   \label{eq:graphite-brittle-compliance}
 \end{equation}
-The current damage entering the cap is \(D_b=\max(\texttt{basalPlaneDamage},\texttt{comminutionDamage})\) for the basal candidate and \(D_p=\max(\texttt{damage},\texttt{basalPlaneDamage},\texttt{comminutionDamage})\) for the principal candidate.  With \(H(D)=\texttt{smoothStep}(D,0,1)\), the active tensile cap is
+The current damage entering the cap is \(D_b=\max(\mpmcode{basalPlaneDamage},\mpmcode{comminutionDamage})\) for the basal candidate and \(D_p=\max(\texttt{damage},\mpmcode{basalPlaneDamage},\mpmcode{comminutionDamage})\) for the principal candidate.  With \(H(D)=\texttt{smoothStep}(D,0,1)\), the active tensile cap is
 \begin{equation}
   \sigma_{c,i}(D_i)=\bar T_i\left[1-H(D_i)\right].
   \label{eq:graphite-brittle-cap}
@@ -893,7 +893,7 @@ The default \texttt{DBL\_MAX} value makes this limiter inactive.  After damage i
   \mathbf n_i\otimes\mathbf n_i.
   \label{eq:graphite-brittle-stress-return}
 \end{equation}
-A basal return updates \texttt{basalPlaneDamage} and the host-visible \texttt{damage}; a maximum-principal return updates the host-visible \texttt{damage} without treating the crack as a basal-plane shear/opening damage state.  The elastic strain associated with this brittle stress drop is subtracted from the later plastic-strain increment, so pre-plastic fracture dissipation is not counted again as plastic work.
+A basal return updates \mpmcode{basalPlaneDamage} and the host-visible \texttt{damage}; a maximum-principal return updates the host-visible \texttt{damage} without treating the crack as a basal-plane shear/opening damage state.  The elastic strain associated with this brittle stress drop is subtracted from the later plastic-strain increment, so pre-plastic fracture dissipation is not counted again as plastic work.
 
 \paragraph{Mode return and reconstruction.}
 After any pre-plastic brittle tensile return, the remaining stress is decomposed into the TI modal pieces and corrected by a single quadratic strength index,
@@ -934,9 +934,9 @@ The relaxation/hardening coordinate is then advanced approximately as
   \chi^{n+1}=\min\left(1,\chi^n+\frac{\|\Delta\boldsymbol{\epsilon}^p\|}{\epsilon^p_{\max}}\right),
   \label{eq:graphite-relaxation-update}
 \end{equation}
-where \(\epsilon^p_{\max}=\texttt{maximumPlasticStrain}\).  This history variable is the argument in Eq.~\eqref{eq:graphite-hardening-multiplier}.
+where \(\epsilon^p_{\max}=\mpmcode{maximumPlasticStrain}\).  This history variable is the argument in Eq.~\eqref{eq:graphite-hardening-multiplier}.
 
-Damage can evolve through the pre-plastic brittle tensile return in Eqs.~\eqref{eq:graphite-brittle-damage-update}--\eqref{eq:graphite-brittle-stress-return} and through plastic work accumulated after the modal return.  The brittle branch uses \texttt{totalFractureEnergyReleaseRate} for maximum-principal tensile failure and \texttt{basalPlaneFractureEnergyReleaseRate} for basal normal opening; \texttt{damageEvolutionExponent} does not control this branch.  The finite \texttt{crackSpeed} value, when supplied, only caps the computed damage increment by Eq.~\eqref{eq:graphite-crackspeed-limiter}.  If both fracture energies are disabled and \texttt{maximumPrincipalStressDamage=0}, the legacy plastic rate-damage response is retained for backward compatibility.
+Damage can evolve through the pre-plastic brittle tensile return in Eqs.~\eqref{eq:graphite-brittle-damage-update}--\eqref{eq:graphite-brittle-stress-return} and through plastic work accumulated after the modal return.  The brittle branch uses \mpmcode{totalFractureEnergyReleaseRate} for maximum-principal tensile failure and \mpmcode{basalPlaneFractureEnergyReleaseRate} for basal normal opening; \mpmcode{damageEvolutionExponent} does not control this branch.  The finite \texttt{crackSpeed} value, when supplied, only caps the computed damage increment by Eq.~\eqref{eq:graphite-crackspeed-limiter}.  If both fracture energies are disabled and \mpmcode{maximumPrincipalStressDamage=0}, the legacy plastic rate-damage response is retained for backward compatibility.
 
 The work-based paths accumulate basal-plane plastic work and non-basal plastic work after any brittle stress drop has been removed from the plastic strain increment.  The basal work combines legacy Mode-I basal-plane plastic opening work, when the basal brittle return is disabled, and basal-plane shear work.  The total work path excludes the basal plane-normal and basal shear parts.  These work measures are regularized by fracture energy per unit characteristic length,
 \begin{equation}
@@ -947,10 +947,10 @@ The work-based paths accumulate basal-plane plastic work and non-basal plastic w
      \left[\min\left(1,\frac{W_t}{G_t^{\mathrm{eff}}/\ell}\right)\right]^{n_D},
   \label{eq:graphite-work-damage}
 \end{equation}
-where \(n_D=\texttt{damageEvolutionExponent}\).  The basal work updates \texttt{basalPlaneDamage}; the non-basal work updates \texttt{comminutionDamage}.  For each computed work-damage target, a finite \texttt{crackSpeed} also imposes the limiter in Eq.~\eqref{eq:graphite-crackspeed-limiter}; with the default \texttt{DBL\_MAX} value, the limiter is inactive.  The host-visible \texttt{damage} field is always updated to the maximum of its previous value, \texttt{basalPlaneDamage}, and \texttt{comminutionDamage}.
+where \(n_D=\mpmcode{damageEvolutionExponent}\).  The basal work updates \mpmcode{basalPlaneDamage}; the non-basal work updates \mpmcode{comminutionDamage}.  For each computed work-damage target, a finite \texttt{crackSpeed} also imposes the limiter in Eq.~\eqref{eq:graphite-crackspeed-limiter}; with the default \texttt{DBL\_MAX} value, the limiter is inactive.  The host-visible \texttt{damage} field is always updated to the maximum of its previous value, \mpmcode{basalPlaneDamage}, and \mpmcode{comminutionDamage}.
 
 \paragraph{Thermal effects.}
-Thermal effects in the current model enter through anisotropic thermal expansion in Eq.~\eqref{eq:graphite-trial-stress} and through any temperature-dependent parameter paths exposed by the material model.  In the current solver workflow, \texttt{temperature} and \texttt{temperatureRate} are normally imposed by global events, such as a \texttt{TemperatureProfile} or \texttt{TemperatureRamp}, to represent a prescribed transient thermal response.  The graphite constitutive update consumes \texttt{temperatureRate} to subtract \(\boldsymbol{\alpha}\dot T\) from the mechanical rate of deformation.  Local temperature fields could instead be supplied in the future by a coupled heat-transfer solver, because temperature is already a particle field shared by PFW initialization, events, output, and constitutive models as described in Section~\ref{subsubsec:constitutive-temperature}.
+Thermal effects in the current model enter through anisotropic thermal expansion in Eq.~\eqref{eq:graphite-trial-stress} and through any temperature-dependent parameter paths exposed by the material model.  In the current solver workflow, \texttt{temperature} and \texttt{temperatureRate} are normally imposed by global events, such as a \mpmcode{TemperatureProfile} or \texttt{TemperatureRamp}, to represent a prescribed transient thermal response.  The graphite constitutive update consumes \texttt{temperatureRate} to subtract \(\boldsymbol{\alpha}\dot T\) from the mechanical rate of deformation.  Local temperature fields could instead be supplied in the future by a coupled heat-transfer solver, because temperature is already a particle field shared by PFW initialization, events, output, and constitutive models as described in Section~\ref{subsubsec:constitutive-temperature}.
 
 \paragraph{Update algorithm.}
 \begin{lstlisting}[caption={Graphite constitutive update structure.},label={alg:graphite-update},basicstyle=\ttfamily\small]
@@ -1004,18 +1004,18 @@ The model is useful when the important physics are anisotropic graphitic weak pl
 \textbf{Input group} & \textbf{Purpose}\\
 \midrule
 \endhead
-\texttt{defaultYoungModulusAxial}\newline \texttt{defaultYoungModulusTransverse}\newline \texttt{defaultShearModulusAxialTransverse} & Baseline transversely isotropic elastic moduli along the basal-plane normal, in the basal plane, and in mixed axial-transverse shear.\\
-\texttt{defaultPoissonRatioAxialTransverse}\newline \texttt{defaultPoissonRatioTransverse} & Poisson couplings for the TI elastic law.\\
+\mpmcode{defaultYoungModulusAxial}\newline \mpmcode{defaultYoungModulusTransverse}\newline \mpmcode{defaultShearModulusAxialTransverse} & Baseline transversely isotropic elastic moduli along the basal-plane normal, in the basal plane, and in mixed axial-transverse shear.\\
+\mpmcode{defaultPoissonRatioAxialTransverse}\newline \mpmcode{defaultPoissonRatioTransverse} & Poisson couplings for the TI elastic law.\\
 \texttt{*PressureDerivative}\newline \texttt{*PressureScale} & Optional pressure slopes and saturation scales for \(E_z\), \(E_p\), and \(G_{zp}\).  Omitted pressure scales recover the linear pressure dependence.\\
-\texttt{failureStrength}\newline \texttt{maximumPrincipalStressDamage}\newline \texttt{enableCrackTipStressConcentration} & Maximum-principal tensile strength, flag for the energy-regularized principal brittle candidate, and crack-tip modifier coupling.  Basal normal-opening strength is derived from the positive signed-distortion yield branch when basal fracture energy is finite.\\
+\texttt{failureStrength}\newline \mpmcode{maximumPrincipalStressDamage}\newline \mpmcode{enableCrackTipStressConcentration} & Maximum-principal tensile strength, flag for the energy-regularized principal brittle candidate, and crack-tip modifier coupling.  Basal normal-opening strength is derived from the positive signed-distortion yield branch when basal fracture energy is finite.\\
 \texttt{distortionShearResponse*} & Point-slope parameters for the negative signed-distortion branch \(I_d^-\).\\
 \texttt{positiveDistortionShearResponse*} & Optional point-slope parameters for the positive signed-distortion branch \(I_d^+\); omitted values default to \texttt{distortionShearResponse*}.\\
 \texttt{inPlaneShearResponse*} & Point-slope parameters for basal-plane in-plane shear.\\
 \texttt{coupledShearResponse*} & Point-slope parameters for coupled shear/slip involving the weak plane normal.\\
-\texttt{distortionStrainHardeningC0}\newline \texttt{inPlaneStrainHardeningC0}\newline \texttt{coupledStrainHardeningC0}\newline \texttt{maximumPlasticStrain} & Plastic-strain hardening controls through the relaxation coordinate.\\
-\texttt{basalPlaneFractureEnergyReleaseRate}\newline \texttt{totalFractureEnergyReleaseRate}\newline \texttt{scaleFractureEnergyReleaseRate}\newline \texttt{crackSpeed} & Fracture-energy regularization and optional damage-rate cap.  Finite basal energy enables the basal normal-opening brittle return; finite total energy regularizes non-basal plastic work and the maximum-principal brittle return.  \texttt{crackSpeed=DBL\_MAX} disables the cap.\\
+\mpmcode{distortionStrainHardeningC0}\newline \mpmcode{inPlaneStrainHardeningC0}\newline \mpmcode{coupledStrainHardeningC0}\newline \mpmcode{maximumPlasticStrain} & Plastic-strain hardening controls through the relaxation coordinate.\\
+\mpmcode{basalPlaneFractureEnergyReleaseRate}\newline \mpmcode{totalFractureEnergyReleaseRate}\newline \mpmcode{scaleFractureEnergyReleaseRate}\newline \texttt{crackSpeed} & Fracture-energy regularization and optional damage-rate cap.  Finite basal energy enables the basal normal-opening brittle return; finite total energy regularizes non-basal plastic work and the maximum-principal brittle return.  \texttt{crackSpeed=DBL\_MAX} disables the cap.\\
 \texttt{alphaL}\newline \texttt{alphaT}\newline \texttt{temperature}\newline \texttt{temperatureRate} & Anisotropic thermal expansion path.\\
-\texttt{materialDirection} & Particle material basis; the first row is the graphitic plane normal used by the constitutive model.\\
+\mpmcode{materialDirection} & Particle material basis; the first row is the graphitic plane normal used by the constitutive model.\\
 \bottomrule
 \end{longtable}
 \endgroup
@@ -1042,7 +1042,7 @@ The implementation stores Cauchy stress in the usual GEOS tensor convention and 
   J_2 = \frac{1}{2}\operatorname{dev}\boldsymbol{\sigma}:\operatorname{dev}\boldsymbol{\sigma}.
   \label{eq:geomechanics-invariants}
 \end{equation}
-Compressive pressure is therefore positive when \(I_1<0\).  Many calibration plots use the compression-positive invariant \(\bar I_1=-I_1=3p\).  The historical Arenisca notation also allows an isotropic backstress \(\zeta\) so that the yield surface is evaluated in shifted stress space, \(I_1^s=I_1-\zeta\), or \(\bar I_1^s=-(I_1-\zeta)\).  In the reviewed GEOS-MPM implementation the fluid/backstress evolution path is disabled by input validation; \texttt{fluidBulkModulus} and \texttt{fluidInitialPressure} must be zero.  The code still retains the shifted-space structure so the formulation can be extended consistently later.
+Compressive pressure is therefore positive when \(I_1<0\).  Many calibration plots use the compression-positive invariant \(\bar I_1=-I_1=3p\).  The historical Arenisca notation also allows an isotropic backstress \(\zeta\) so that the yield surface is evaluated in shifted stress space, \(I_1^s=I_1-\zeta\), or \(\bar I_1^s=-(I_1-\zeta)\).  In the reviewed GEOS-MPM implementation the fluid/backstress evolution path is disabled by input validation; \mpmcode{fluidBulkModulus} and \mpmcode{fluidInitialPressure} must be zero.  The code still retains the shifted-space structure so the formulation can be extended consistently later.
 
 \paragraph{Yield surface and cap.}
 The strength surface is the product of a shear-limit function \(F_f\) and a cap function \(F_c\).  In compression-positive notation,
@@ -1152,7 +1152,7 @@ The equivalent plastic shear strain is computed from the plastic-strain deviator
   H = K_h\left(1-\exp[-n_h\,\bar\epsilon_p]\right),
   \label{eq:geomechanics-hardening}
 \end{equation}
-where \(K_h=\texttt{strainHardeningK}\) and \(n_h=\texttt{strainHardeningN}\).  The coherence \(c=1-D\) softens the surface through \(c^\psi\), where \(\psi=\texttt{fractureSofteningExponent}\).  In implementation form,
+where \(K_h=\mpmcode{strainHardeningK}\) and \(n_h=\mpmcode{strainHardeningN}\).  The coherence \(c=1-D\) softens the surface through \(c^\psi\), where \(\psi=\mpmcode{fractureSofteningExponent}\).  In implementation form,
 \begin{align}
   \texttt{STREN}_h &= b_{\mathrm{buckling}}\left(\texttt{stren}+H\,\texttt{dstrendh}\right),\\
   \texttt{FSLOPE}_h &= c^\psi\,\texttt{fSlope}\left(1+H\,\texttt{dfslopedh}\right)
@@ -1163,13 +1163,13 @@ where \(K_h=\texttt{strainHardeningK}\) and \(n_h=\texttt{strainHardeningN}\).  
 \end{align}
 where \(s_p\) is the particle \texttt{strengthScale}.  In this model, \texttt{strengthScale} is applied to the tensile-vertex/\texttt{peakI1} branch and to the fracture-stress threshold; it should not be assumed to scale every coefficient identically.  See Section~\ref{subsubsec:strength-scale-weibull} for the shared Weibull-strength discussion.
 
-Damage is optional and active only when \texttt{fractureEnergyReleaseRate} is positive.  The model stores damage as \(D=1-c\).  Depending on \texttt{damageEvolutionCriterion}, damage increments are driven by dilatational plastic work or by a combined dilatational/shear plastic-work measure below a brittle--ductile transition pressure.  In schematic form,
+Damage is optional and active only when \mpmcode{fractureEnergyReleaseRate} is positive.  The model stores damage as \(D=1-c\).  Depending on \mpmcode{damageEvolutionCriterion}, damage increments are driven by dilatational plastic work or by a combined dilatational/shear plastic-work measure below a brittle--ductile transition pressure.  In schematic form,
 \begin{equation}
   \Delta D = \frac{\Delta W_p\,\ell_{ch}}{G_f}, \qquad
   c^{n+1}=\max(0,c^n-\Delta D),
   \label{eq:geomechanics-damage}
 \end{equation}
-where \(G_f=\texttt{fractureEnergyReleaseRate}\) and \(\ell_{ch}\) is the particle length scale.  The damage threshold uses \texttt{fractureStress*strengthScale}; this is another model-specific use of \texttt{strengthScale}.  The \texttt{damageEvolutionCriterion=2} branch estimates the brittle--ductile transition from the apex of the current surface, while \texttt{damageEvolutionCriterion=1} uses the user-provided \texttt{brittleDuctileTransition}.
+where \(G_f=\mpmcode{fractureEnergyReleaseRate}\) and \(\ell_{ch}\) is the particle length scale.  The damage threshold uses \texttt{fractureStress*strengthScale}; this is another model-specific use of \texttt{strengthScale}.  The \mpmcode{damageEvolutionCriterion=2} branch estimates the brittle--ductile transition from the apex of the current surface, while \mpmcode{damageEvolutionCriterion=1} uses the user-provided \mpmcode{brittleDuctileTransition}.
 
 \paragraph{Optional creep relaxation.}
 When \texttt{enableCreep=1}, creep is applied once over the full explicit time increment before the plastic substep retry loop.  The code uses an Arrhenius-like temperature multiplier
@@ -1177,7 +1177,7 @@ When \texttt{enableCreep=1}, creep is applied once over the full explicit time i
   A_T = \exp\left[-\frac{Q}{R}\left(\frac{1}{T}-\frac{1}{T_0}\right)\right],
   \label{eq:geomechanics-temperature-creep}
 \end{equation}
-where \(Q=\texttt{Q}\), \(T_0=\texttt{initialTemperature}\), and \(R\) is the gas constant.  Deviatoric creep uses an equilibrium plastic shear strain and relaxes the deviatoric stress toward it:
+where \(Q=\texttt{Q}\), \(T_0=\mpmcode{initialTemperature}\), and \(R\) is the gas constant.  Deviatoric creep uses an equilibrium plastic shear strain and relaxes the deviatoric stress toward it:
 \begin{align}
   \gamma_{eq} &= C_0\,\tau^{C_1},\\
   \Delta\gamma_c &= \Delta t\,A_T C_2\max(\gamma_{eq}-\gamma_p,0),
@@ -1196,12 +1196,12 @@ Volumetric creep uses the current unloaded porosity \(\phi_p\), an equilibrium p
 where \(\langle x\rangle=\max(x,0)\).  The creep-updated porosity is converted back to an equivalent volumetric plastic strain and used to relax the beginning-of-step pressure.  As in the Ghareb-chalk implementation, the creep relaxation is intended to represent slow mechanisms in an explicit-dynamics calculation only when creep time scales are separated from elastic-wave and plastic-return time scales~\cite{malenda2025ghareb}.
 
 \paragraph{Optional compaction/buckling multiplier.}
-For porous or architected solids, \texttt{enableBuckling} applies a prescribed strength multiplier before the cap/plastic update.  With \texttt{enableBuckling=1}, the strain measure is volumetric, based on \(J=\det\mathbf{F}\).  With \texttt{enableBuckling=2}, the strain measure is directional, based on the stretch along \texttt{MaterialDirection}.  The multiplier has the form
+For porous or architected solids, \texttt{enableBuckling} applies a prescribed strength multiplier before the cap/plastic update.  With \mpmcode{enableBuckling=1}, the strain measure is volumetric, based on \(J=\det\mathbf{F}\).  With \mpmcode{enableBuckling=2}, the strain measure is directional, based on the stretch along \mpmcode{MaterialDirection}.  The multiplier has the form
 \begin{equation}
   b_{\mathrm{buckling}} = 1-A_b\sin^2\left[-\left\lceil\frac{\ell_{ch}}{L_b}\right\rceil\pi\hat\epsilon\right],
   \label{eq:geomechanics-buckling}
 \end{equation}
-where \(A_b=\texttt{bucklingAmplitude}\), \(L_b=\texttt{bucklingLength}\), and \(\hat\epsilon\) is a normalized compaction strain.  This is an empirical multiplier, not a resolved structural-buckling analysis.
+where \(A_b=\mpmcode{bucklingAmplitude}\), \(L_b=\texttt{bucklingLength}\), and \(\hat\epsilon\) is a normalized compaction strain.  This is an empirical multiplier, not a resolved structural-buckling analysis.
 
 \paragraph{Numerical update algorithm.}
 The GEOS-MPM call path is corotational.  The velocity gradient is unrotated into the beginning-of-step frame, symmetrized to form the strain-rate tensor, and the old plastic strain is also unrotated.  The model then performs the update in that frame and rotates the plastic strain back at the end of the step.
@@ -1246,7 +1246,7 @@ so the return direction can represent reduced or enhanced dilatation without con
 Each trial \(\eta\) updates \(X\), coherence, and the shifted-stress state, recomputes the return, and checks that the computed volumetric plastic strain matches the assumed value.  This decoupling is the main numerical reason the model can combine nonlinear elasticity, cap hardening, softening, and nonassociativity while retaining a robust update path.
 
 \paragraph{Input parameterization.}
-Table~\ref{tab:geomechanics-parameters} summarizes the major input groups.  The recommended calibration workflow is to fit \texttt{b0--b4} and \texttt{p0,p1,p3} from hydrostatic loading/unloading, fit \texttt{g0--g3}, \texttt{peakI1}, \texttt{fSlope}, \texttt{stren}, and \texttt{ySlope} from triaxial compression/extension data, then fit \texttt{strainHardeningK}, \texttt{strainHardeningN}, damage, and creep parameters from post-yield, dilation, compaction, and creep histories.
+Table~\ref{tab:geomechanics-parameters} summarizes the major input groups.  The recommended calibration workflow is to fit \texttt{b0--b4} and \texttt{p0,p1,p3} from hydrostatic loading/unloading, fit \texttt{g0--g3}, \texttt{peakI1}, \texttt{fSlope}, \texttt{stren}, and \texttt{ySlope} from triaxial compression/extension data, then fit \mpmcode{strainHardeningK}, \mpmcode{strainHardeningN}, damage, and creep parameters from post-yield, dilation, compaction, and creep histories.
 
 \begin{longtable}{@{}p{0.22\linewidth}p{0.28\linewidth}p{0.42\linewidth}@{}}
 \caption{Main \texttt{Geomechanics} input groups.  See the generated schema appendix for the exact XML registration status and defaults.\label{tab:geomechanics-parameters}}\\
@@ -1261,17 +1261,17 @@ Table~\ref{tab:geomechanics-parameters} summarizes the major input groups.  The 
 Elasticity & \texttt{b0,b1,b2,b3,b4}, \texttt{g0,g1,g2,g3,g4} & Nonlinear tangent bulk modulus, pressure-dependent Poisson ratio, shear modulus, and conservative wave-speed estimate.  \texttt{g4} is registered but not active in the reviewed update path.\\
 Cap/crush curve & \texttt{p0,p1,p2,p3,p4}, \texttt{cr} & Hydrostatic compaction curve, initial porosity relation, cap position, and cap branch point.  \texttt{p2} and \texttt{p4} are registered but currently unused.\\
 Shear limit & \texttt{peakI1}, \texttt{fSlope}, \texttt{fSlopeFailed}, \texttt{stren}, \texttt{ySlope}, \texttt{beta} & Drucker--Prager/Kayenta-style shear surface, residual frictional slope, tensile vertex, and transformed-space nonassociativity.\\
-Hardening & \texttt{strainHardeningK}, \texttt{strainHardeningN}, \texttt{dstrendh}, \texttt{dfslopedh}, \texttt{dpeakI1dh}, \texttt{dcrdh} & Exponential shear hardening and model-specific changes to strength, slope, tensile vertex, and cap branch.\\
-Damage & \texttt{fractureEnergyReleaseRate}, \texttt{fractureSofteningExponent}, \texttt{fractureStress}, \texttt{brittleDuctileTransition}, \texttt{damageEvolutionCriterion} & Optional work-regularized reduction of coherence, with either user-specified or internally estimated brittle--ductile transition.\\
-Creep and temperature & \texttt{enableCreep}, \texttt{creepC0}, \texttt{creepC1}, \texttt{creepC2}, \texttt{creepA}, \texttt{creepB}, \texttt{creepC}, \texttt{creepD}, \texttt{creepE}, \texttt{creepF}, \texttt{creepG}, \texttt{initialTemperature}, \texttt{Q} & Optional volumetric and deviatoric creep relaxation and temperature-scaled rates.\\
-Buckling multiplier & \texttt{enableBuckling}, \texttt{bucklingLength}, \texttt{bucklingAmplitude}, \texttt{MaterialDirection} & Optional empirical compaction multiplier using volumetric or directional strain.\\
-Numerical controls & \texttt{plasticStrainTolerance}, \texttt{stressReturnTolerance}, \texttt{maxAllowedSubcycles}, \texttt{failedStepResponse}, \texttt{disableInelasticity} & Return tolerances, subcycling limits, failure response, and elastic-only test mode.  Failed convergence exposes \texttt{constitutiveUpdateFlag=-1} to the solver robustness/deletion path.\\
-Currently disabled fluid path & \texttt{fluidBulkModulus}, \texttt{fluidInitialPressure} & Must be zero in the reviewed implementation.  The code retains placeholders for a future persistent pore-pressure/backstress state.\\
+Hardening & \mpmcode{strainHardeningK}, \mpmcode{strainHardeningN}, \texttt{dstrendh}, \texttt{dfslopedh}, \texttt{dpeakI1dh}, \texttt{dcrdh} & Exponential shear hardening and model-specific changes to strength, slope, tensile vertex, and cap branch.\\
+Damage & \mpmcode{fractureEnergyReleaseRate}, \mpmcode{fractureSofteningExponent}, \texttt{fractureStress}, \mpmcode{brittleDuctileTransition}, \mpmcode{damageEvolutionCriterion} & Optional work-regularized reduction of coherence, with either user-specified or internally estimated brittle--ductile transition.\\
+Creep and temperature & \texttt{enableCreep}, \texttt{creepC0}, \texttt{creepC1}, \texttt{creepC2}, \texttt{creepA}, \texttt{creepB}, \texttt{creepC}, \texttt{creepD}, \texttt{creepE}, \texttt{creepF}, \texttt{creepG}, \mpmcode{initialTemperature}, \texttt{Q} & Optional volumetric and deviatoric creep relaxation and temperature-scaled rates.\\
+Buckling multiplier & \texttt{enableBuckling}, \texttt{bucklingLength}, \mpmcode{bucklingAmplitude}, \mpmcode{MaterialDirection} & Optional empirical compaction multiplier using volumetric or directional strain.\\
+Numerical controls & \mpmcode{plasticStrainTolerance}, \mpmcode{stressReturnTolerance}, \mpmcode{maxAllowedSubcycles}, \mpmcode{failedStepResponse}, \mpmcode{disableInelasticity} & Return tolerances, subcycling limits, failure response, and elastic-only test mode.  Failed convergence exposes \texttt{constitutiveUpdateFlag=-1} to the solver robustness/deletion path.\\
+Currently disabled fluid path & \mpmcode{fluidBulkModulus}, \mpmcode{fluidInitialPressure} & Must be zero in the reviewed implementation.  The code retains placeholders for a future persistent pore-pressure/backstress state.\\
 \bottomrule
 \end{longtable}
 
 \paragraph{Implementation notes.}
-The model writes \texttt{bulkModulus}, \texttt{shearModulus}, \texttt{porosity}, \texttt{damage}, \texttt{temperature}, and \texttt{constitutiveUpdateFlag} fields.  The stored \texttt{porosity} is an evolving continuum porosity inferred from volumetric plastic strain, not merely a visualization flag.  The stored \texttt{constitutiveUpdateFlag} is zero for normal updates, may be one when the model needed additional subcycling, and is set to \(-1\) when the update fails and the solver should treat the particle through the robustness/deletion logic in Section~\ref{sec:robustness-controls}.  The implementation is presently a dry porous solid model with optional empirical creep; coupled heat transfer, active fluid pressure, and fully coupled pore-pressure/backstress evolution are future extensions rather than active input options.
+The model writes \texttt{bulkModulus}, \texttt{shearModulus}, \texttt{porosity}, \texttt{damage}, \texttt{temperature}, and \mpmcode{constitutiveUpdateFlag} fields.  The stored \texttt{porosity} is an evolving continuum porosity inferred from volumetric plastic strain, not merely a visualization flag.  The stored \mpmcode{constitutiveUpdateFlag} is zero for normal updates, may be one when the model needed additional subcycling, and is set to \(-1\) when the update fails and the solver should treat the particle through the robustness/deletion logic in Section~\ref{sec:robustness-controls}.  The implementation is presently a dry porous solid model with optional empirical creep; coupled heat transfer, active fluid pressure, and fully coupled pore-pressure/backstress evolution are future extensions rather than active input options.
 
 
 \subsection{Fluid models}
@@ -1313,7 +1313,7 @@ The gas model has special handling in the robustness/deformation-gradient-reset 
 \index{constitutiveModels!Liquid}
 \index{liquid model}
 
-\texttt{Liquid} is the implemented weakly compressible Newtonian liquid model in \texttt{constitutive/liquid/Liquid.cpp}.  It provides the ordinary volumetric and viscous Cauchy stress used by liquid particles in the MPM stress update.  It does not store plastic history, damage history, or a persistent deviatoric elastic deformation; the pressure is recomputed from the current Jacobian and the viscous stress is recomputed from the current rate of deformation each constitutive update.
+\texttt{Liquid} is the implemented weakly compressible Newtonian liquid model in \path{constitutive/liquid/Liquid.cpp}.  It provides the ordinary volumetric and viscous Cauchy stress used by liquid particles in the MPM stress update.  It does not store plastic history, damage history, or a persistent deviatoric elastic deformation; the pressure is recomputed from the current Jacobian and the viscous stress is recomputed from the current rate of deformation each constitutive update.
 
 The volumetric response follows the quadratic compression energy used by the MPM liquid formulation,
 \begin{equation}
@@ -1346,7 +1346,7 @@ waveSpeed = sqrt(bulkModulus / density)
 
 The particle-to-constitutive dependency update supplies the current \texttt{jacobian} and \texttt{density} fields to the model before the stress update.  The explicit time-step estimate then uses the acoustic wave speed shown in Listing~\ref{alg:liquid-update}.  Increasing \(K_l\) makes the material less compressible but also increases the wave speed and can reduce the stable explicit time step; increasing \(\mu_l\) increases rate-dependent damping without introducing a solid-like shear modulus.
 
-The solver treats \texttt{Liquid} as a fluid material in the deformation-gradient cleanup path, together with \texttt{Gas}.  After output and robustness checks, the particle deformation gradient may be reset to a rotation times a spherical stretch with the same determinant.  This keeps the volumetric state used by Eq.~\eqref{eq:liquid-pressure-from-energy} while removing distortional deformation history that the liquid model does not use.  Capillary forces remain separate: enabling a \texttt{Liquid} material alone does not add surface tension; users must also enable the solver surface-tension controls and provide \texttt{surfaceTensionPairs} when capillary forces are desired.
+The solver treats \texttt{Liquid} as a fluid material in the deformation-gradient cleanup path, together with \texttt{Gas}.  After output and robustness checks, the particle deformation gradient may be reset to a rotation times a spherical stretch with the same determinant.  This keeps the volumetric state used by Eq.~\eqref{eq:liquid-pressure-from-energy} while removing distortional deformation history that the liquid model does not use.  Capillary forces remain separate: enabling a \texttt{Liquid} material alone does not add surface tension; users must also enable the solver surface-tension controls and provide \mpmcode{surfaceTensionPairs} when capillary forces are desired.
 
 \subsection{Shared constitutive modifiers and particle state}
 \label{subsec:constitutive-modifiers}
@@ -1360,7 +1360,7 @@ Several particle fields are not full constitutive models, but they modify how on
 \index{Weibull statistics}
 \index{constitutive modifiers!strengthScale}
 
-The particle field \texttt{strengthScale} is a multiplicative scalar that can be assigned by PFW geometry wrappers such as \texttt{strengthScaleWrapper} and by Voronoi/layered Weibull wrappers.  Models that expose a \texttt{strengthScale} wrapper then read the value during the constitutive update.  In brittle materials this field is often used to represent flaw-controlled size effects or mesoscopic heterogeneity.
+The particle field \texttt{strengthScale} is a multiplicative scalar that can be assigned by PFW geometry wrappers such as \mpmcode{strengthScaleWrapper} and by Voronoi/layered Weibull wrappers.  Models that expose a \texttt{strengthScale} wrapper then read the value during the constitutive update.  In brittle materials this field is often used to represent flaw-controlled size effects or mesoscopic heterogeneity.
 
 A common theoretical basis is Weibull weakest-link scaling~\cite{weibull1951}.  For a reference volume \(V_0\), reference strength \(\sigma_0\), and Weibull modulus \(m\), the failure probability of a uniformly stressed volume \(V\) is often written
 \begin{equation}
@@ -1380,7 +1380,7 @@ A stochastic PFW wrapper may instead sample a flaw population and assign a parti
 \index{distanceToCrackTip}
 \index{constitutive modifiers!crack-tip correction}
 
-The crack-tip correction is a solver/constitutive coupling used by damage models that need an unresolved stress-concentration estimate near a DFG fracture tip, motivated by the Griffith-Irwin crack-tip picture~\cite{griffith1921,irwin1957}.  The solver first uses the neighbor-list damage field to compute a nonlocal damage gradient and a local Hessian-like diagnostic.  Particles that satisfy the tip-detection threshold receive a positive \texttt{distanceToCrackTip}; other particles receive zero.  Models such as \texttt{CeramicDamage} and \texttt{Graphite} can then compute and store a plotted \texttt{crackTipStressConcentration} factor.
+The crack-tip correction is a solver/constitutive coupling used by damage models that need an unresolved stress-concentration estimate near a DFG fracture tip, motivated by the Griffith-Irwin crack-tip picture~\cite{griffith1921,irwin1957}.  The solver first uses the neighbor-list damage field to compute a nonlocal damage gradient and a local Hessian-like diagnostic.  Particles that satisfy the tip-detection threshold receive a positive \mpmcode{distanceToCrackTip}; other particles receive zero.  Models such as \texttt{CeramicDamage} and \texttt{Graphite} can then compute and store a plotted \mpmcode{crackTipStressConcentration} factor.
 
 The current correction has the form
 \begin{equation}
@@ -1395,7 +1395,7 @@ where \(d_{\mathrm{tip}}\) is the inverse-kernel estimate of the unresolved dist
 \index{porosity}
 \index{constitutive modifiers!porosity}
 
-\texttt{porosity} is a particle field that may be initialized by PFW, painted by wrappers such as \texttt{porosityWrapper} or \texttt{pointwisePorosityWrapper}, read by a constitutive model, and in some models updated as part of the material response.  In the reviewed code path, porous/damage models use porosity differently.  For example, \texttt{Geomechanics} carries porosity as an evolving material variable, while \texttt{CeramicDamage} uses porosity in strength scaling.  Solver events and future coupled solvers may also modify porosity, for example to represent healing, compaction, reaction, or pore closure.
+\texttt{porosity} is a particle field that may be initialized by PFW, painted by wrappers such as \texttt{porosityWrapper} or \mpmcode{pointwisePorosityWrapper}, read by a constitutive model, and in some models updated as part of the material response.  In the reviewed code path, porous/damage models use porosity differently.  For example, \texttt{Geomechanics} carries porosity as an evolving material variable, while \texttt{CeramicDamage} uses porosity in strength scaling.  Solver events and future coupled solvers may also modify porosity, for example to represent healing, compaction, reaction, or pore closure.
 
 Because porosity can be both an input descriptor and a constitutive state variable, users should distinguish the initial particle field from any model-updated value written after the first constitutive step.  Future coupled heat/fluid/chemistry or poromechanics updates should document ownership rules: whether the solver, a flow model, or the solid constitutive model is the authoritative updater for \texttt{porosity} at a given step.
 
@@ -1406,7 +1406,7 @@ Because porosity can be both an input descriptor and a constitutive state variab
 \index{TemperatureProfile event}
 \index{TemperatureRamp event}
 
-\texttt{temperature} and \texttt{temperatureRate} are particle fields shared by the solver, events, and thermally sensitive constitutive models.  PFW can initialize temperature through geometry wrappers, while events such as \texttt{TemperatureProfile} can prescribe domain-wide histories from an event-local table.  The reviewed code also records internal energy and includes constitutive hooks for temperature-dependent parameters.  Models such as \texttt{StrainHardeningPolymer}, \texttt{Graphite}, and \texttt{Geomechanics} read temperature-dependent terms; other models may ignore temperature unless later extended.
+\texttt{temperature} and \texttt{temperatureRate} are particle fields shared by the solver, events, and thermally sensitive constitutive models.  PFW can initialize temperature through geometry wrappers, while events such as \mpmcode{TemperatureProfile} can prescribe domain-wide histories from an event-local table.  The reviewed code also records internal energy and includes constitutive hooks for temperature-dependent parameters.  Models such as \mpmcode{StrainHardeningPolymer}, \texttt{Graphite}, and \texttt{Geomechanics} read temperature-dependent terms; other models may ignore temperature unless later extended.
 
 In a purely mechanical run, temperature may be prescribed externally or inferred internally by a constitutive model from plastic work, strain energy, or an equation of state.  In future coupled runs, a heat-transfer solver could become the authoritative updater.  Until those ownership rules are formalized for a given application, input files should make clear whether temperature is a fixed initial condition, an event-prescribed history, a material-model output, or a field reserved for later coupling.
 
@@ -1471,13 +1471,13 @@ The material-point constitutive driver is an optional, isolated path for running
 The driver constructs the selected GEOS constitutive model from XML, initializes a single material point, applies a prescribed strain/stress path, writes a CSV history, and leaves the grid, particle-to-grid transfer, contact, boundary-condition, and repartitioning machinery untouched.  This separation is deliberate: failures or experimental controls in the material-point tool should not alter ordinary MPM simulations.
 
 \paragraph{Build and executable discovery.}
-The compiled executable is named \texttt{geos\_mpm\_material\_point\_driver}.  It is controlled by the CMake cache option \texttt{GEOS\_ENABLE\_MPM\_MATERIAL\_POINT\_DRIVER}, which is off by default.  With the LLNL helper script, request it explicitly with
+The compiled executable is named \path{geos_mpm_material_point_driver}.  It is controlled by the CMake cache option \texttt{GEOS\_ENABLE\_MPM\_MATERIAL\_POINT\_DRIVER}, which is off by default.  With the LLNL helper script, request it explicitly with
 \begin{lstlisting}[language=bash,caption={Building the optional material-point executable.},label={lst:material-point-build},basicstyle=\ttfamily\small]
 ./setupMPM --dane --enable-material-point-driver
 # or
 ./setupMPM --tuolumne --enable-material-point-driver
 \end{lstlisting}
-A direct CMake configuration can instead pass \texttt{-DGEOS\_ENABLE\_MPM\_MATERIAL\_POINT\_DRIVER=ON}.  Once a build directory has been configured with the driver enabled, \texttt{setupMPM --rebuild} also rebuilds the driver target.  The PFW Python layer looks first at \texttt{GEOS\_MPM\_MATERIAL\_POINT\_DRIVER}; if that environment variable is not set, it reads the active \texttt{userDefs\_<user>.py} file and uses \texttt{geos\_mpm\_material\_point\_driver} next to the configured \texttt{geosx} executable.
+A direct CMake configuration can instead pass \texttt{-DGEOS\_ENABLE\_MPM\_MATERIAL\_POINT\_DRIVER=ON}.  Once a build directory has been configured with the driver enabled, \texttt{setupMPM --rebuild} also rebuilds the driver target.  The PFW Python layer looks first at \texttt{GEOS\_MPM\_MATERIAL\_POINT\_DRIVER}; if that environment variable is not set, it reads the active \texttt{userDefs\_<user>.py} file and uses \path{geos_mpm_material_point_driver} next to the configured \texttt{geosx} executable.
 
 \paragraph{Python front end and sidecar files.}
 The user-facing Python package is under
@@ -1525,7 +1525,7 @@ Each component has one of the modes listed in Table~\ref{tab:material-point-cont
 \bottomrule
 \end{longtable}
 
-For stress-controlled components, the driver restores the beginning-of-step material state before each residual evaluation, evaluates trial strain increments, and commits only the accepted update.  The compiled driver supports several stress-control algorithms: finite-difference Newton, regularized Newton, scalar bracketing for one controlled component, multi-component pattern search, and a bounded servo or barostat-style correction.  The \texttt{stressControlFailurePolicy} can be \texttt{error}, \texttt{stop}, or \texttt{continue}.  The \texttt{continue} mode is useful for parameter sweeps because it writes completed rows and marks nonconverged rows instead of aborting the entire sweep.
+For stress-controlled components, the driver restores the beginning-of-step material state before each residual evaluation, evaluates trial strain increments, and commits only the accepted update.  The compiled driver supports several stress-control algorithms: finite-difference Newton, regularized Newton, scalar bracketing for one controlled component, multi-component pattern search, and a bounded servo or barostat-style correction.  The \mpmcode{stressControlFailurePolicy} can be \texttt{error}, \texttt{stop}, or \texttt{continue}.  The \texttt{continue} mode is useful for parameter sweeps because it writes completed rows and marks nonconverged rows instead of aborting the entire sweep.
 
 Stress-controlled components can also be bounded by accumulated strain.  The bounds apply only to components whose mode is \texttt{stress}; prescribed strain and rate controls are not clipped.  Bounds may be specified as a component map or as six Voigt-ordered values:
 \begin{lstlisting}[language=Python,caption={Stress-control strain bounds in a Python case.},label={lst:material-point-strain-bounds},basicstyle=\ttfamily\small]
@@ -1559,7 +1559,7 @@ The energy integrator can be disabled, delegated to a material-owned field, or d
 \begin{equation}
   \dot e = \frac{\boldsymbol{\sigma}:\mathbf{D}}{\rho},
 \end{equation}
-with trapezoidal integration over the accepted step.  The \texttt{retentionFactor} controls how much of this mechanical work is retained in \texttt{specificInternalEnergy}; the full mechanical work remains available as \texttt{accumulatedStressPower}.  Temperature can be prescribed, kept isothermal, advanced from a heat capacity in adiabatic-style tests, or read back from a material-owned state when such a coupling exists.
+with trapezoidal integration over the accepted step.  The \texttt{retentionFactor} controls how much of this mechanical work is retained in \mpmcode{specificInternalEnergy}; the full mechanical work remains available as \mpmcode{accumulatedStressPower}.  Temperature can be prescribed, kept isothermal, advanced from a heat capacity in adiabatic-style tests, or read back from a material-owned state when such a coupling exists.
 
 \paragraph{Diagnostics and output.}
 The main output CSV contains one row per step, including time, convergence status, stress, accumulated strain, deformation gradient, velocity gradient, material frame, density, Jacobian, energy terms, and any recognized model state fields such as plastic strain, plastic work, damage, effective moduli, and temperature.  Stress-control diagnostics can be enabled with a solver block such as

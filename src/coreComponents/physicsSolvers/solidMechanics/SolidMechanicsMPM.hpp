@@ -145,16 +145,6 @@ public:
     static constexpr char const * gridRigidBodyFieldKeyString() { return "gridRigidBodyFieldKey"; }
     static constexpr char const * gridRigidBodyFieldColorString() { return "gridRigidBodyFieldColor"; }
     static constexpr char const * gridRigidBodyFieldContactGroupString() { return "gridRigidBodyFieldContactGroup"; }
-    static constexpr char const * gridWeakInterfaceTraceActiveString() { return "gridWeakInterfaceTraceActive"; }
-    static constexpr char const * gridWeakInterfaceTraceContactSuppressedString() { return "gridWeakInterfaceTraceContactSuppressed"; }
-    static constexpr char const * gridWeakInterfaceTraceAnchorWeightString() { return "gridWeakInterfaceTraceAnchorWeight"; }
-    static constexpr char const * gridWeakInterfaceTraceForceString() { return "gridWeakInterfaceTraceForce"; }
-    static constexpr char const * gridWeakInterfaceTracePointString() { return "gridWeakInterfaceTracePoint"; }
-    static constexpr char const * gridWeakInterfaceTraceSupportWeightString() { return "gridWeakInterfaceTraceSupportWeight"; }
-    static constexpr char const * gridWeakInterfaceTraceSkipReasonString() { return "gridWeakInterfaceTraceSkipReason"; }
-    static constexpr char const * gridWeakInterfaceTraceSurfaceJumpString() { return "gridWeakInterfaceTraceSurfaceJump"; }
-    static constexpr char const * gridWeakInterfaceTraceVelocityJumpString() { return "gridWeakInterfaceTraceVelocityJump"; }
-    static constexpr char const * gridWeakInterfaceTraceVelocityJumpPostString() { return "gridWeakInterfaceTraceVelocityJumpPost"; }
     static constexpr char const * gridInterfaceMechanismString() { return "gridInterfaceMechanism"; }
     static constexpr char const * gridInterfaceNormalForceString() { return "gridInterfaceNormalForce"; }
     static constexpr char const * gridInterfaceTangentialForceString() { return "gridInterfaceTangentialForce"; }
@@ -534,21 +524,6 @@ public:
                              ParticleManager & particleManager,
                              NodeManager & nodeManager );
 
-  void enforceWeakInterfaceTraceProjection( real64 const dt,
-                                            DomainPartition & domain,
-                                            NodeManager & nodeManager,
-                                            MeshLevel & mesh );
-
-  void zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager );
-
-  void computeWeakInterfaceTraceProjectionForces( real64 const dt,
-                                                  NodeManager & nodeManager );
-
-  void applyWeakInterfaceTraceProjectionForces( real64 const dt,
-                                                NodeManager & nodeManager );
-
-  void computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager );
-
   void updateInterfaceMechanismDiagnostics( NodeManager & nodeManager );
 
   /**
@@ -821,8 +796,7 @@ public:
   {
     return surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
            surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
-           surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
-           surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+           surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
   }
 
   void updateDeformationGradient( real64 dt,
@@ -1347,6 +1321,7 @@ protected:
   int m_computeSPHJacobian;
   array1d< real64 > m_confiningPressureBoxMax;
   array1d< real64 > m_confiningPressureBoxMin;
+  real64 m_confiningPressureSphereRadius;
   array1d< real64 > m_confiningStress;
   mpm::ContactGapCorrectionOption m_contactGapCorrection;
   real64 m_contactNormalExponent;
@@ -1380,7 +1355,6 @@ protected:
   int m_enableBoreholePressure;
   int m_enableConfiningPressure;
   int m_enableContact;
-  int m_enableWeakInterfaceTraceProjection;
   array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
   int m_enableSurfaceTension;
   int m_eventReporting;
@@ -1582,13 +1556,6 @@ protected:
   int m_useNodePosForArea;
   int m_useReferenceVectorsForParticleUpdate;
   int m_useSurfacePositionForContact;
-  real64 m_weakInterfaceTraceGapStabilization;
-  real64 m_weakInterfaceTraceMaxGapCorrectionVelocity;
-  real64 m_weakInterfaceTraceMinWeight;
-  array2d< int > m_weakInterfaceTracePairs;
-  int m_weakInterfaceTraceProjectionIterations;
-  real64 m_weakInterfaceTraceProjectionScale;
-  int m_weakInterfaceTraceSuppressNodalContact;
   int m_writeParticleData;
   array1d< real64 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
   array1d< real64 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes

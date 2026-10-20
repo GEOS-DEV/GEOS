@@ -32,7 +32,7 @@ mkdir -p generated/data generated/tex
 if [[ "${REFRESH_DATA}" -eq 1 || ! -f generated/data/geos_mpm_extracted.json ]]; then
   REPO_ROOT="$(determine_repo_root)"
   python3 tools/extract_mpm_metadata.py \
-    --repo "${REPO_ROOT}" \
+    --repo "${REPO_ROOT}" --write-schema-docs \
     --out generated/data/geos_mpm_extracted.json
 fi
 python3 tools/render_generated_tex.py \
@@ -43,6 +43,8 @@ rm -f geos_mpm_manual.aux geos_mpm_manual.toc geos_mpm_manual.out \
       geos_mpm_manual.idx geos_mpm_manual.ind geos_mpm_manual.ilg \
       geos_mpm_manual.log geos_mpm_manual.pdf geos_mpm_manual_normalized.pdf
 
+pdflatex -interaction=nonstopmode -halt-on-error geos_mpm_manual.tex
+# Stabilize page numbers before generating the index.
 pdflatex -interaction=nonstopmode -halt-on-error geos_mpm_manual.tex
 makeindex geos_mpm_manual.idx
 pdflatex -interaction=nonstopmode -halt-on-error geos_mpm_manual.tex

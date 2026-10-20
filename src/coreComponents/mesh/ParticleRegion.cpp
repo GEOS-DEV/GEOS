@@ -21,6 +21,8 @@
 #include "common/TimingMacros.hpp"
 #include "LvArray/src/SparsityPattern.hpp"
 #include "common/MpiWrapper.hpp"
+#include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
+#include <cmath>
 
 namespace geos
 {
@@ -31,6 +33,9 @@ ParticleRegion::ParticleRegion( string const & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::sourceParticleBlockNamesString(), &m_particleBlockNames ).
     setInputFlag( InputFlags::OPTIONAL );
+  registerWrapper( "particleDomainOutput", &m_particleDomainOutput ).
+    setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( "native" ).
+    setDescription( "native: use optional simplex reference geometry; equivalentBox: legacy particle domains" );
 }
 
 ParticleRegion::~ParticleRegion()
@@ -38,6 +43,8 @@ ParticleRegion::~ParticleRegion()
 
 void ParticleRegion::generateMesh( Group & particleBlocks )
 {
+  GEOS_ERROR_IF( m_particleDomainOutput != "native" && m_particleDomainOutput != "equivalentBox",
+                 "particleDomainOutput must be native or equivalentBox" );
   Group & particleSubRegions = this->getGroup( viewKeyStruct::particleSubRegions() );
 
   for( string const & particleBlockName : this->m_particleBlockNames )
@@ -108,6 +115,77 @@ array2d< real64 > ParticleRegion::getParticleCorners() const
     }
   } );
   return coords;
+}
+
+bool ParticleRegion::usesNativeParticleGeometry() const
+{
+  if( m_particleDomainOutput == "equivalentBox" ) return false;
+  bool enabled = false;
+  forParticleSubRegions( [&]( auto const & subRegion )
+  { enabled = enabled || subRegion.hasParticleReferenceGeometry(); } );
+  return enabled;
+}
+
+ParticleRegion::ParticleDomainMesh ParticleRegion::getParticleDomainMesh() const
+{
+  ParticleDomainMesh mesh;
+  mesh.offsets.push_back( 0 );
+  forParticleSubRegions( [&]( auto const & subRegion )
+  {
+    // Output is host-side. This is synchronization, not a mechanical mutation.
+    // WrapperBase::move updates the allocation's memory residency and timestamp.
+    auto & hostSubRegion = const_cast< ParticleSubRegion & >( subRegion );
+    auto move = [&]( char const * key )
+    { hostSubRegion.getWrapperBase( key ).move( LvArray::MemorySpace::host, false ); };
+    move( ParticleSubRegion::viewKeyStruct::particleCenterString() );
+    move( ParticleSubRegion::viewKeyStruct::particleRankString() );
+    move( ParticleSubRegion::viewKeyStruct::particleVolumeString() );
+    move( ParticleSubRegion::viewKeyStruct::particleRVectorsString() );
+    bool const enabled = subRegion.hasParticleReferenceGeometry();
+    bool const hasF = subRegion.hasWrapper( fields::mpm::particleDeformationGradient::key() );
+    if( enabled ) { move( particleGeometry::shapeKey() ); move( particleGeometry::vectorsKey() ); }
+    if( hasF ) move( fields::mpm::particleDeformationGradient::key() );
+    auto const center = subRegion.getParticleCenter();
+    auto const rank = subRegion.getParticleRank();
+    auto const volume = subRegion.getParticleVolume();
+    auto const r = subRegion.getParticleRVectors();
+    for( localIndex p=0; p<subRegion.size(); ++p )
+    {
+      integer shape = 0;
+      if( enabled )
+      {
+        auto const & referenceShape = subRegion.template getReference< array1d< integer > >( particleGeometry::shapeKey() );
+        shape = referenceShape[p];
+      }
+      GEOS_ERROR_IF( particleGeometry::vertexCount( shape ) == 0, "Invalid particle reference geometry in output" );
+      real64 g[3][3] = {};
+      if( shape == 0 )
+      {
+        // Box particles continue to expose the actual legacy numerical domain.
+        if( subRegion.hasRVectors() )
+          for( int a=0; a<3; ++a ) for( int j=0; j<3; ++j ) g[a][j] = r[p][a][j];
+        else for( int a=0; a<3; ++a ) g[a][a] = 0.5*std::cbrt( volume[p] );
+      }
+      else
+      {
+        auto const & reference = subRegion.template getReference< array3d< real64 > >( particleGeometry::vectorsKey() );
+        if( hasF )
+        {
+          auto const deformationGradient = subRegion.template getField< fields::mpm::particleDeformationGradient >();
+          particleGeometry::deform( reference[p], deformationGradient[p], g );
+        }
+        else for( int a=0; a<3; ++a ) for( int j=0; j<3; ++j ) g[a][j] = reference[p][a][j];
+      }
+      real64 v[8][3] = {};
+      particleGeometry::vertices( shape, center[p], g, v );
+      for( int k=0; k<particleGeometry::vertexCount( shape ); ++k )
+        mesh.points.push_back( {{ v[k][0], v[k][1], v[k][2] }} );
+      mesh.shape.push_back( shape );
+      mesh.ownerRank.push_back( rank[p] );
+      mesh.offsets.push_back( static_cast< localIndex >( mesh.points.size() ) );
+    }
+  } );
+  return mesh;
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleRegion, string const &, Group * const )

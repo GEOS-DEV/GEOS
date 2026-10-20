@@ -83,7 +83,9 @@ When using manual continuation, keep the mesh partitioning controls consistent w
 \index{PFW check script}
 \index{PFW example!automatic restart}
 
-The PFW automatic-restart path is a scheduler wrapper around the same GEOS restart files.  A submitted job writes periodic restarts.  When \texttt{pfw["autoRestart"] = True} and \texttt{pfw["mSubmitJobs"] = True}, PFW submits a second Slurm job that runs \texttt{pfw\_check.py} after the GEOS job finishes.  The check script scans the Slurm output.  If it sees \texttt{Job complete}, it stops.  If it sees \texttt{Job exited early}, \texttt{TIME LIMIT}, or \texttt{NODE FAILURE}, it finds the most recent \texttt{*\_restart\_*} directory, submits a restart job with \texttt{-r}, and schedules another check job.
+The PFW automatic-restart path is a scheduler wrapper around GEOS restart files. When \mpmcode{autoRestart=True} and \mpmcode{mSubmitJobs=True}, PFW submits a Slurm check job after the solver job. The checker stops on \texttt{Job complete}. For recognized early termination, time-limit, or node-failure messages, it searches for a restart directory with a matching \texttt{.root} file, submits a continuation with \texttt{-r}, and schedules another check.
+
+Selection searches cycle-number widths from 16 down to 6 digits, stopping at the first width with valid pairs. Within that width, the newest root-file modification time wins. Orphan directories and root files are excluded. This is a filename/existence check, not validation of checkpoint contents. If no pair exists, the checker reports the problem and does not submit a continuation.
 
 \begin{lstlisting}[language=Python,caption={Automatic Slurm restart workflow.}]
 pfw["mSubmitJobs"] = True
@@ -127,7 +129,7 @@ The wall-clock halt does not itself force a new restart file at the instant the 
 \item the checkpoint frequency does not dominate the total run time or overwhelm the file system.
 \end{enumerate}
 
-For very long campaigns, a robust pattern is to set \texttt{restartInterval} to a small fraction of the simulated time expected in one batch allocation and set \texttt{lastRestartBufferInSeconds} to a conservative I/O buffer.  If a checkpoint must be taken at a precise physical time, use \texttt{restartInterval} or a segmented run plan so that the desired time is an integer multiple of the restart cadence; the current PFW path does not provide a separate wall-clock-triggered restart writer.
+For very long campaigns, a robust pattern is to set \texttt{restartInterval} to a small fraction of the simulated time expected in one batch allocation and set \mpmcode{lastRestartBufferInSeconds} to a conservative I/O buffer.  If a checkpoint must be taken at a precise physical time, use \texttt{restartInterval} or a segmented run plan so that the desired time is an integer multiple of the restart cadence; the current PFW path does not provide a separate wall-clock-triggered restart writer.
 
 \subsection{Restart-control checklist}
 \label{sec:pfw-restart-checklist}

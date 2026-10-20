@@ -5,7 +5,9 @@
 \index{ParticleFileWriter!parameters}
 \index{Silo grid fields}
 
-{\renewcommand{\arraystretch}{1.15}
+A default of \texttt{None} on an emitted solver parameter omits the attribute so GEOS supplies its own default. A \texttt{no} in the last column means that the key controls preprocessing, another XML group, or job generation; it does not mean the option is ignored. Unknown keys are rejected.
+
+{\renewcommand{\arraystretch}{1.15}\setlength{\tabcolsep}{3pt}
 \scriptsize
 \begin{longtable}{@{}p{0.40\linewidth}p{0.32\linewidth}p{0.18\linewidth}@{}}
 \caption{ParticleFileWriter parameter keys and defaults from particleFileWriter.py.}\label{tab:pfw-params}\\
@@ -25,6 +27,8 @@
 {\ttfamily allow\allowbreak{}Non\allowbreak{}Converged\allowbreak{}Linear\allowbreak{}Solver\allowbreak{}Solution} & {\ttfamily None} & yes\\
 {\ttfamily area\allowbreak{}Integration\allowbreak{}Method} & {\ttfamily None} & yes\\
 {\ttfamily auto\allowbreak{}Restart} & {\ttfamily False} & no\\
+{\ttfamily apply\allowbreak{}Velocity\allowbreak{}Gradient\allowbreak{}When\allowbreak{}Splitting\allowbreak{}Particles} & {\ttfamily None} & yes\\
+{\ttfamily batch\allowbreak{}Size} & {\ttfamily None} & yes\\
 {\ttfamily bc\allowbreak{}Table} & {\ttfamily None} & yes\\
 {\ttfamily bin\allowbreak{}Size\allowbreak{}Multiplier} & {\ttfamily None} & yes\\
 {\ttfamily body\allowbreak{}Force} & {\ttfamily None} & yes\\
@@ -64,15 +68,8 @@
 {\ttfamily enable\allowbreak{}Prescribed\allowbreak{}Boundary\allowbreak{}Transverse\allowbreak{}Velocities} & {\ttfamily None} & yes\\
 {\ttfamily enable\allowbreak{}Surface\allowbreak{}Tension} & {\ttfamily None} & yes\\
 {\ttfamily event\allowbreak{}Reporting} & {\ttfamily None} & yes\\
+{\ttfamily grid\allowbreak{}To\allowbreak{}Particle\allowbreak{}Mapping} & {\ttfamily None} & yes\\
 {\ttfamily rigid\allowbreak{}Body\allowbreak{}Max\allowbreak{}Grid\allowbreak{}Fields} & {\ttfamily None} & yes\\
-{\ttfamily enable\allowbreak{}Weak\allowbreak{}Interface\allowbreak{}Trace\allowbreak{}Projection} & {\ttfamily None} & yes\\
-{\ttfamily weak\allowbreak{}Interface\allowbreak{}Trace\allowbreak{}Projection\allowbreak{}Iterations} & {\ttfamily None} & yes\\
-{\ttfamily weak\allowbreak{}Interface\allowbreak{}Trace\allowbreak{}Projection\allowbreak{}Scale} & {\ttfamily None} & yes\\
-{\ttfamily weak\allowbreak{}Interface\allowbreak{}Trace\allowbreak{}Gap\allowbreak{}Stabilization} & {\ttfamily None} & yes\\
-{\ttfamily weak\allowbreak{}Interface\allowbreak{}Trace\allowbreak{}Max\allowbreak{}Gap\allowbreak{}Correction\allowbreak{}Velocity} & {\ttfamily None} & yes\\
-{\ttfamily weak\allowbreak{}Interface\allowbreak{}Trace\allowbreak{}Min\allowbreak{}Weight} & {\ttfamily None} & yes\\
-{\ttfamily weak\allowbreak{}Interface\allowbreak{}Trace\allowbreak{}Suppress\allowbreak{}Nodal\allowbreak{}Contact} & {\ttfamily None} & yes\\
-{\ttfamily weak\allowbreak{}Interface\allowbreak{}Trace\allowbreak{}Pairs} & {\ttfamily None} & yes\\
 {\ttfamily end\allowbreak{}Time} & {\ttfamily 1.\allowbreak{}0} & no\\
 {\ttfamily exact\allowbreak{}JIntegration} & {\ttfamily None} & yes\\
 {\ttfamily explicit\allowbreak{}Surface\allowbreak{}Normal\allowbreak{}Influence} & {\ttfamily None} & yes\\
@@ -130,6 +127,12 @@
 {\ttfamily particle\allowbreak{}Data\allowbreak{}Write\allowbreak{}Interval} & {\ttfamily None} & yes\\
 {\ttfamily particle\allowbreak{}File\allowbreak{}Fields} & {\ttfamily []} & no\\
 {\ttfamily particle\allowbreak{}Refinement} & {\ttfamily None} & no\\
+{\ttfamily surface\allowbreak{}Refinement\allowbreak{}Level} & {\ttfamily 1} & no\\
+{\ttfamily particle\allowbreak{}Reference\allowbreak{}Geometry} & {\ttfamily 'equivalent\allowbreak{}Box'} & no\\
+{\ttfamily particle\allowbreak{}Domain\allowbreak{}Output} & {\ttfamily 'native'} & no\\
+{\ttfamily surface\allowbreak{}Refinement\allowbreak{}Method} & {\ttfamily 'cartesian'} & no\\
+{\ttfamily surface\allowbreak{}Refinement\allowbreak{}Fallback} & {\ttfamily 'cartesian'} & no\\
+{\ttfamily surface\allowbreak{}Refinement\allowbreak{}Plane\allowbreak{}Tolerance} & {\ttfamily 0.\allowbreak{}05} & no\\
 {\ttfamily periodic} & {\ttfamily [False,\allowbreak{} False,\allowbreak{} False]} & no\\
 {\ttfamily plane\allowbreak{}Strain} & {\ttfamily 0} & yes\\
 {\ttfamily plot\allowbreak{}Grid\allowbreak{}Fields} & {\ttfamily None} & yes\\
@@ -247,4 +250,4 @@
 \section{Silo grid field presets}
 \paragraph{Common preset.} gridMass, gridVelocity, gridInternalForce, gridDamageGradient.
 
-\paragraph{All preset.} gridCohesiveNode, gridSurfaceMass, gridSurfaceFieldMass, gridExplicitSurfaceNormal, gridPrincipalExplicitSurfaceNormal, gridCohesiveFieldFlag, gridMaxMappedParticleID, gridCohesiveArea, gridCohesiveForce, gridReferenceSurfacePosition, gridReferenceMaterialVolume, gridReferenceAreaVector, gridDisplacement, gridCenterOfVolume, gridParticleMappedSurfaceNormal, gridMass, gridActive, gridMaterialVolume, gridUncontactedVelocity, gridVelocity, gridDVelocity, gridMomentum, gridAcceleration, gridExternalForce, gridSurfaceTensionForce, gridInternalForce, gridContactForce, gridWeakInterfaceTraceActive, gridWeakInterfaceTraceContactSuppressed, gridWeakInterfaceTraceAnchorWeight, gridWeakInterfaceTraceForce, gridWeakInterfaceTracePoint, gridWeakInterfaceTraceSupportWeight, gridWeakInterfaceTraceSkipReason, gridWeakInterfaceTraceSurfaceJump, gridWeakInterfaceTraceVelocityJump, gridWeakInterfaceTraceVelocityJumpPost, gridInterfaceMechanism, gridInterfaceNormalForce, gridInterfaceTangentialForce, gridInterfaceNormalVelocityJump, gridInterfaceTangentialVelocityJump, gridInterfaceNormalDisplacementJump, gridInterfaceTangentialDisplacementJump, gridDamage, gridDamageGradient, gridMaxDamage, gridMappingNormalTensor.
+\paragraph{All preset.} gridCohesiveNode, gridSurfaceMass, gridSurfaceFieldMass, gridExplicitSurfaceNormal, gridPrincipalExplicitSurfaceNormal, gridCohesiveFieldFlag, gridMaxMappedParticleID, gridCohesiveArea, gridCohesiveForce, gridReferenceSurfacePosition, gridReferenceMaterialVolume, gridReferenceAreaVector, gridDisplacement, gridCenterOfVolume, gridParticleMappedSurfaceNormal, gridMass, gridActive, gridMaterialVolume, gridUncontactedVelocity, gridVelocity, gridDVelocity, gridMomentum, gridAcceleration, gridExternalForce, gridSurfaceTensionForce, gridInternalForce, gridContactForce, gridInterfaceMechanism, gridInterfaceNormalForce, gridInterfaceTangentialForce, gridInterfaceNormalVelocityJump, gridInterfaceTangentialVelocityJump, gridInterfaceNormalDisplacementJump, gridInterfaceTangentialDisplacementJump, gridDamage, gridDamageGradient, gridMaxDamage, gridMappingNormalTensor.

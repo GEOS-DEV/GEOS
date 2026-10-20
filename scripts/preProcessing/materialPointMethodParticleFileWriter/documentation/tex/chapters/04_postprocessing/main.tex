@@ -17,6 +17,16 @@ visit -nowin -cli -s pfw_visit_render.py \
   --view xy
 \end{lstlisting}
 
+
+The renderer supports \texttt{--strict-variable} to fail when the requested scalar cannot be plotted, instead of substituting an unrelated field. Repeat \texttt{--vector-variable} for multiple overlays. Missing vector overlays are reported separately; the strict scalar switch does not make them mandatory. Scalar-component vectors and particle-region expressions are resolved per region where possible, so multiple material regions can share a rendered view.
+\begin{lstlisting}[language=bash,caption={Explicit field selection and vector overlays.}]
+visit -nowin -cli -s pfw_visit_render.py \
+  --run-dir /path/to/completed/run \
+  --variable Damage --strict-variable \
+  --vector-variable Velocity --vector-variable SurfaceNormal --view xy
+\end{lstlisting}
+The suite rendering path prefers the source-tree renderer and falls back to the run-directory copy if that source file is absent. It prefers frames timestamped during the render attempt; after a successful invocation with no fresh frames, it can return existing matching frames. A successful report is therefore not proof that every displayed frame is new. Check rendering logs and the selected output files; actual VisIt execution requires a VisIt installation and was not part of the standalone patch checks.
+
 \section{ParaView}
 \index{ParaView}
 VTK output is the ParaView pathway.  Configure and build GEOS with VTK output enabled, then set \texttt{pfw["outputType"] = "vtk"}.  ParaView can load the generated VTK file sequence for particle and mesh variables.  Use VTK output for ParaView-oriented exploration; use Silo output for workflows that require the current VisIt scripts or Silo-native grouped vector variables.
@@ -32,6 +42,6 @@ Reaction, box-average, profile, and tracer histories are intentionally simple CS
 
 The reaction file \path{reactionHistory.csv} has the header \texttt{time, F00, F11, F22, length\_x, length\_y, length\_z, Rx-, Rx+, Ry-, Ry+, Rz-, Rz+, L00, L11, L22}.  The reaction columns are integrated face forces in the solver force units.  To compare to a measured or analytical stress, divide the appropriate reaction by the actual material area of the loaded boundary.  The PFW controls that enable this file and select the velocity-correction or internal-force reaction measure are described in Section~\ref{subsec:pfw-reaction-history}.
 
-The box-average file \path{boxAverageHistory.csv} reports volume- or mass-weighted aggregate quantities over the selected averaging box.  Profile files use the pattern \path{profile_<direction>_<variable>.csv}.  Tracer files use the configured \texttt{tracerOutputPrefix} and write \texttt{t,x,y,z} followed by the requested particle fields for the selected particle ID.
+The box-average file \path{boxAverageHistory.csv} reports volume- or mass-weighted aggregate quantities over the selected averaging box.  Profile files use the pattern \path{profile_<direction>_<variable>.csv}.  Tracer files use the configured \mpmcode{tracerOutputPrefix} and write \texttt{t,x,y,z} followed by the requested particle fields for the selected particle ID.
 
 When \texttt{logMomentum} is enabled on \texttt{SolidMechanics\_MPM}, the solver writes \path{mpm_momentumHistory.csv}.  The normal solver path writes one rank-zero row per explicit step: \texttt{End explicit step}, after particle update and cleanup.  The row includes particle momentum and mass, inactive and delete-flagged particle totals, nodal \texttt{gridMomentum}, mass-weighted \texttt{gridVelocity}, \texttt{gridDVelocity}, \texttt{gridVPlus}, active/small-mass internal, external, surface-tension, and contact force sums, nodal mass partitions, and active-mask consistency counts.  Verification scripts should select \texttt{stage == End explicit step} for production particle-momentum and force-balance metrics.  Additional non-production stage rows are reserved for temporary targeted debugging, require explicit code-side calls to \texttt{logMomentumSum}, and require \texttt{logMomentum >= 2}.

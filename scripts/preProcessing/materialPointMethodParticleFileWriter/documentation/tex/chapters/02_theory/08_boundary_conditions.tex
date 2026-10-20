@@ -6,7 +6,7 @@
 \index{stress control}
 \index{reactionHistory}
 
-This section describes what the MPM solver does internally when boundary and domain-control options are active.  It deliberately separates the numerical implementation from the user-facing input syntax.  The user-facing \texttt{pfw\_input} controls, including examples of \texttt{boundaryConditionTypes}, \texttt{fTable}, \texttt{bcTable}, transverse boundary velocities, stress control, and periodic flags, are summarized in Section~\ref{sec:pfw-boundary-controls}.  The code path described here is the one reached during Step~14 of the explicit solver update, after particle-to-grid projection, MPI synchronization, grid trial dynamics, and optional material-field contact; see Section~\ref{subsec:solver-step-14}.
+This section describes what the MPM solver does internally when boundary and domain-control options are active.  It deliberately separates the numerical implementation from the user-facing input syntax.  The user-facing \texttt{pfw\_input} controls, including examples of \mpmcode{boundaryConditionTypes}, \texttt{fTable}, \texttt{bcTable}, transverse boundary velocities, stress control, and periodic flags, are summarized in Section~\ref{sec:pfw-boundary-controls}.  The code path described here is the one reached during Step~14 of the explicit solver update, after particle-to-grid projection, MPI synchronization, grid trial dynamics, and optional material-field contact; see Section~\ref{subsec:solver-step-14}.
 
 \subsection{Face convention and nodal data used by the boundary update}
 \label{subsec:bc-face-convention}
@@ -49,7 +49,7 @@ The runtime boundary-type array is \texttt{m\_boundaryConditionTypes}.  If the i
 
 \begin{table}[htbp]
 \centering
-\caption{MPM boundary-condition type enumeration used by \texttt{SolidMechanicsMPM}.}
+\caption{MPM boundary-condition type enumeration used by \mpmcode{SolidMechanicsMPM}.}
 \label{tab:bc-types}
 \begin{tabularx}{\linewidth}{@{}c l X@{}}
 \toprule
@@ -63,12 +63,12 @@ Integer & Name & Internal interpretation \\
 \end{tabularx}
 \end{table}
 
-If \texttt{prescribedBcTable} is enabled, Step~4 of the explicit update calls \texttt{boundaryConditionUpdate} before particle-grid maps are assembled.  The table is a zero-order-hold schedule rather than an interpolated quantity.  For a time step beginning at $t^n$ with size $\Delta t$, the selected row is the last row whose time satisfies
+If \mpmcode{prescribedBcTable} is enabled, Step~4 of the explicit update calls \mpmcode{boundaryConditionUpdate} before particle-grid maps are assembled.  The table is a zero-order-hold schedule rather than an interpolated quantity.  For a time step beginning at $t^n$ with size $\Delta t$, the selected row is the last row whose time satisfies
 \begin{equation}
   t_{\mathrm{row}} < t^n+\frac{\Delta t}{2}.
   \label{eq:bc-table-selection}
 \end{equation}
-The six boundary-type entries in that row then replace \texttt{m\_boundaryConditionTypes}.  After this update, \texttt{updateContactFlagsFromBoundaryConditions} sets \texttt{m\_hasContact} if either multiple velocity fields are present or at least one face is marked \texttt{Contact}.  This flag controls whether contact/surface fields are synchronized and whether contact-specific work is performed later in the step.
+The six boundary-type entries in that row then replace \texttt{m\_boundaryConditionTypes}.  After this update, \mpmcode{updateContactFlagsFromBoundaryConditions} sets \texttt{m\_hasContact} if either multiple velocity fields are present or at least one face is marked \texttt{Contact}.  This flag controls whether contact/surface fields are synchronized and whether contact-specific work is performed later in the step.
 
 \begin{lstlisting}[caption={Boundary-type update and contact flag refresh.}]
 if prescribedBcTable == 1:
@@ -83,7 +83,7 @@ hasContact = (numVelocityFields > 1) or any(boundaryConditionTypes == Contact)
 \label{subsec:bc-outflow}
 \index{boundary conditions!Outflow}
 
-An \texttt{Outflow} face is the least intrusive boundary option.  In \texttt{applyEssentialBCs}, the face is skipped:
+An \texttt{Outflow} face is the least intrusive boundary option.  In \mpmcode{applyEssentialBCs}, the face is skipped:
 \begin{equation}
   \mathbf{v}_{I\alpha}^{\mathrm{after}}=\mathbf{v}_{I\alpha}^{\mathrm{before}},
   \qquad
@@ -147,14 +147,14 @@ for field alpha:
 \index{prescribedBoundaryFTable}
 \index{prescribedFTable}
 
-The F-table machinery produces a diagonal macroscopic deformation history and its associated diagonal velocity-gradient components.  The table has one time column and three deformation columns.  At the end of the step, $t^{n+1}=t^n+\Delta t$, \texttt{interpolateTable} selects the interval containing the actual evaluation time $t^{n+1}$ and returns $F_i(t^{n+1})$ and $\dot F_i(t^{n+1})$.  This endpoint selection avoids extrapolating from the interval containing the time-step midpoint when a step crosses a table knot.  At an internal knot the derivative is taken from the interval on the left; before the first time and after the final time the value is clamped and the rate is zero.  For directions not completely overridden by stress control, the code sets
+The F-table machinery produces a diagonal macroscopic deformation history and its associated diagonal velocity-gradient components.  The table has one time column and three deformation columns.  At the end of the step, $t^{n+1}=t^n+\Delta t$, \mpmcode{interpolateTable} selects the interval containing the actual evaluation time $t^{n+1}$ and returns $F_i(t^{n+1})$ and $\dot F_i(t^{n+1})$.  This endpoint selection avoids extrapolating from the interval containing the time-step midpoint when a step crosses a table knot.  At an internal knot the derivative is taken from the interval on the left; before the first time and after the final time the value is clamped and the rate is zero.  For directions not completely overridden by stress control, the code sets
 \begin{equation}
   \bar L_i(t^{n+1}) = \frac{\dot F_i(t^{n+1})}{F_i(t^{n+1})},
   \qquad
   \bar F_i(t^{n+1}) = F_i(t^{n+1}).
   \label{eq:bc-ftable-l}
 \end{equation}
-For \texttt{prescribedBoundaryFTable}, the solver separately forms the finite grid map
+For \mpmcode{prescribedBoundaryFTable}, the solver separately forms the finite grid map
 \begin{equation}
   \lambda_i^{n\rightarrow n+1}
   = \frac{\bar F_i(t^{n+1})}{\bar F_i(t^n)}.
@@ -181,21 +181,21 @@ and \texttt{Smoothstep} uses the quintic polynomial
 \end{equation}
 Values before the first table time are clamped to the first row, and values after the final table time are clamped to the last row.
 
-The two F-table flags route this macroscopic kinematics into different parts of the MPM update.  With \texttt{prescribedBoundaryFTable}, the diagonal endpoint velocity-gradient components become boundary velocities on \texttt{Moving} faces during \texttt{applyEssentialBCs}, while Eq.~\eqref{eq:bc-ftable-incremental-stretch} updates wall positions, grid nodes, partition/domain extents, reaction-history dimensions, and rigid-body jamming areas.  With \texttt{prescribedFTable}, the rate components are superposed on particle velocity gradients and positions only in directions marked periodic by the spatial partition.  The latter path is intended for triply periodic or partially periodic homogeneous-deformation calculations and retains its existing rate-based update.
+The two F-table flags route this macroscopic kinematics into different parts of the MPM update.  With \mpmcode{prescribedBoundaryFTable}, the diagonal endpoint velocity-gradient components become boundary velocities on \texttt{Moving} faces during \mpmcode{applyEssentialBCs}, while Eq.~\eqref{eq:bc-ftable-incremental-stretch} updates wall positions, grid nodes, partition/domain extents, reaction-history dimensions, and rigid-body jamming areas.  With \mpmcode{prescribedFTable}, the rate components are superposed on particle velocity gradients and positions only in directions marked periodic by the spatial partition.  The latter path is intended for triply periodic or partially periodic homogeneous-deformation calculations and retains its existing rate-based update.
 
 \subsection{Moving faces}
 \label{subsec:bc-moving}
 \index{boundary conditions!Moving}
 \index{prescribedBoundaryTransverseVelocities}
 
-A \texttt{Moving} face is an essential velocity boundary driven by the current domain velocity-gradient state.  In the reviewed implementation, the velocity constraint is applied only if either \texttt{prescribedBoundaryFTable} is active or at least one \texttt{stressControl} entry equals one.  This guard is important: marking a face as \texttt{Moving} without an active prescribed boundary deformation, or with only the limiting \texttt{stressControl} mode two active, does not by itself prescribe a nonzero velocity in \texttt{applyEssentialBCs}.
+A \texttt{Moving} face is an essential velocity boundary driven by the current domain velocity-gradient state.  In the reviewed implementation, the velocity constraint is applied only if either \mpmcode{prescribedBoundaryFTable} is active or at least one \texttt{stressControl} entry equals one.  This guard is important: marking a face as \texttt{Moving} without an active prescribed boundary deformation, or with only the limiting \texttt{stressControl} mode two active, does not by itself prescribe a nonzero velocity in \mpmcode{applyEssentialBCs}.
 
 For a moving face $f$ normal to direction $d$, the code forms an end-of-step grid coordinate
 \begin{equation}
   X_{I,d}^{n+1,*}=\lambda_d^{n\rightarrow n+1}X_{I,d}^{n}.
   \label{eq:bc-moving-exact-position}
 \end{equation}
-For \texttt{prescribedBoundaryFTable}, this is the exact tabulated position because $\lambda_d^{n\rightarrow n+1}=\bar F_d^{n+1}/\bar F_d^n$.  For stress-control-only and periodic-deformation paths, the stored factor retains the existing $1+\bar L_d\Delta t$ form.  The normal velocity is
+For \mpmcode{prescribedBoundaryFTable}, this is the exact tabulated position because $\lambda_d^{n\rightarrow n+1}=\bar F_d^{n+1}/\bar F_d^n$.  For stress-control-only and periodic-deformation paths, the stored factor retains the existing $1+\bar L_d\Delta t$ form.  The normal velocity is
 \begin{equation}
   v_{I\alpha,d}^{\mathrm{bc}} = \bar L_d(t^{n+1}) X_{I,d}^{n+1,*},
   \qquad I\in\mathcal{B}_f.
@@ -218,7 +218,7 @@ Tangential motion is optional.  If \texttt{enablePrescribedBoundaryTransverseVel
   v_{I\alpha,d_2}\leftarrow v_{f,d_2}^{\mathrm{presc}},
   \label{eq:bc-moving-transverse}
 \end{equation}
-with matching updates to \texttt{gridDVelocity} and \texttt{gridAcceleration}.  If transverse velocities are not enabled, the tangential components are left free on the boundary nodes.
+with matching updates to \texttt{gridDVelocity} and \mpmcode{gridAcceleration}.  If transverse velocities are not enabled, the tangential components are left free on the boundary nodes.
 
 The buffer-node extension is centered on the prescribed boundary value.  For the constrained normal component,
 \begin{equation}
@@ -264,7 +264,7 @@ for buffer node G:
 \index{boundary conditions!Contact}
 \index{boundary friction}
 
-A face marked \texttt{Contact} is handled in the same \texttt{Moving}/\texttt{Contact} branch, but with wall-contact detection replacing unconditional prescribed motion.  The branch is always entered for a contact face, even if no F-table or stress-control flag is active.  For each boundary node and velocity field, the code first estimates a scalar surface position in the face-normal direction.  If a particle-mapped surface position is available at the node, it uses \texttt{gridSurfacePosition}; otherwise it falls back to \texttt{gridCenterOfVolume}.  The predicted wall velocity is
+A face marked \texttt{Contact} is handled in the same \texttt{Moving}/\texttt{Contact} branch, but with wall-contact detection replacing unconditional prescribed motion.  The branch is always entered for a contact face, even if no F-table or stress-control flag is active.  For each boundary node and velocity field, the code first estimates a scalar surface position in the face-normal direction.  If a particle-mapped surface position is available at the node, it uses \mpmcode{gridSurfacePosition}; otherwise it falls back to \mpmcode{gridCenterOfVolume}.  The predicted wall velocity is
 \begin{equation}
   v_{I,d}^{\mathrm{wall}} = \bar L_d(t^{n+1})\lambda_d^{n\rightarrow n+1}X_{I,d}^{n},
   \label{eq:bc-wall-normal-target}
@@ -276,9 +276,9 @@ and the relative normal velocity is $v_{I\alpha,d}^{\mathrm{rel}}=v_{I\alpha,d}-
   s^{n+1,*}=\alpha_f\left(x^{\mathrm{surf}}_{I\alpha,d}+\Delta t\,v_{I\alpha,d}^{\mathrm{rel}}\right).
 \end{equation}
 The normal constraint activates when the surface intersects the wall, $\max(s^n,s^{n+1,*})>0$, and the material moves into it, $\alpha_f v_{I\alpha,d}^{\mathrm{rel}}>0$; the rigid-body penetration penalty can also activate an intersecting wall.  When contact is inactive, the face does not overwrite the normal velocity.  When it is active, the normal boundary target is $v_{I\alpha,d}^{\mathrm{bc}}=v_{I,d}^{\mathrm{wall}}$.
-followed by the same normal velocity-increment, acceleration-correction, reaction-accumulation, and buffer-reflection operations used by a moving face.  The registered \texttt{boundaryFaceCoefficientsOfRestitution} array is initialized and checked, but the active code path in the reviewed source does not use it in the normal target; a restitution-based line is present only as commented legacy code.  Thus boundary contact should currently be interpreted as a sticking/non-penetration style normal constraint with optional tangential friction, not as a coefficient-of-restitution bounce law.
+followed by the same normal velocity-increment, acceleration-correction, reaction-accumulation, and buffer-reflection operations used by a moving face.  The registered \mpmcode{boundaryFaceCoefficientsOfRestitution} array is initialized and checked, but the active code path in the reviewed source does not use it in the normal target; a restitution-based line is present only as commented legacy code.  Thus boundary contact should currently be interpreted as a sticking/non-penetration style normal constraint with optional tangential friction, not as a coefficient-of-restitution bounce law.
 
-Tangential friction is controlled by \texttt{boundaryFaceFrictionCoefficients}.  Let
+Tangential friction is controlled by \mpmcode{boundaryFaceFrictionCoefficients}.  Let
 \begin{equation}
   \mathbf{v}_t = v_{I\alpha,d_1}\mathbf{e}_{d_1}+v_{I\alpha,d_2}\mathbf{e}_{d_2},
   \qquad
@@ -323,7 +323,7 @@ for field alpha and boundary node I:
 \index{stress control!internal algorithm}
 \index{stressTable}
 
-Stress control does not impose tractions directly on grid faces.  Instead, it computes a diagonal domain velocity gradient, stores it in \texttt{domainL}, and then lets the moving-boundary machinery impose the associated affine boundary velocities.  The target stress is obtained from \texttt{stressTable} using the same interpolation framework as the F-table.  The current stress is computed by \texttt{computeBoxMetrics} from particle stresses and material volume in the solver's averaging box.  In compact notation,
+Stress control does not impose tractions directly on grid faces.  Instead, it computes a diagonal domain velocity gradient, stores it in \texttt{domainL}, and then lets the moving-boundary machinery impose the associated affine boundary velocities.  The target stress is obtained from \texttt{stressTable} using the same interpolation framework as the F-table.  The current stress is computed by \mpmcode{computeBoxMetrics} from particle stresses and material volume in the solver's averaging box.  In compact notation,
 \begin{equation}
   e_i = \sigma_i^{\mathrm{target}}-\sigma_i^{\mathrm{current}}.
   \label{eq:bc-stress-control-error}
@@ -361,7 +361,7 @@ For \texttt{stressControl[i] == 1}, the clipped value replaces \texttt{domainL[i
 \begin{equation}
   \bar F_i^{n+1}=\bar F_i^n+\bar L_i\bar F_i^n\Delta t.
 \end{equation}
-Moving faces normal to controlled directions then use Eq.~\eqref{eq:bc-moving-normal-velocity} when the moving-face branch is active; in practice, stress-controlled boundary-motion cases should use \texttt{stressControl[i] == 1} for controlled directions and commonly retain \texttt{prescribedBoundaryFTable} with a neutral F-table for robust activation.  In a stress-controlled direction, the explicit update above gives $\bar F_i^{n+1}/\bar F_i^n=1+\bar L_i\Delta t$, so the finite-ratio geometry path reproduces the previous controller motion while table-controlled directions obtain the exact prescribed ratio.  In this sense, stress control is internally a feedback generator for prescribed kinematics rather than a separate traction-boundary algorithm.
+Moving faces normal to controlled directions then use Eq.~\eqref{eq:bc-moving-normal-velocity} when the moving-face branch is active; in practice, stress-controlled boundary-motion cases should use \texttt{stressControl[i] == 1} for controlled directions and commonly retain \mpmcode{prescribedBoundaryFTable} with a neutral F-table for robust activation.  In a stress-controlled direction, the explicit update above gives $\bar F_i^{n+1}/\bar F_i^n=1+\bar L_i\Delta t$, so the finite-ratio geometry path reproduces the previous controller motion while table-controlled directions obtain the exact prescribed ratio.  In this sense, stress control is internally a feedback generator for prescribed kinematics rather than a separate traction-boundary algorithm.
 
 \begin{lstlisting}[caption={Stress-control path to boundary motion.}]
 interpolateStressTable(time_n, dt) -> domainStress
@@ -421,16 +421,16 @@ of the form
 where $C_{AA}^{+}$ denotes the damped small-system solve, not a raw inverse.
 The first term provides feed-forward coupling from prescribed F-table
 directions, and the second term removes filtered stress error over the strain
-interval \texttt{stressControlResponseStrain}.  The reference rate
+interval \mpmcode{stressControlResponseStrain}.  The reference rate
 $L_{\mathrm{ref}}$ is the maximum of the prescribed/inactive normal rates, the
-previous controlled rates, and \texttt{stressControlMinStrainRate}.  Thus the
+previous controlled rates, and \mpmcode{stressControlMinStrainRate}.  Thus the
 controller bandwidth follows the macroscopic deformation path rather than the
 explicit timestep or an assumed wave speed.
 
 The raw stress is low-pass filtered over a strain interval,
 \begin{equation}
   \alpha = \min\left(1,
-    \frac{L_{\mathrm{ref}}\Delta t}{\texttt{stressControlFilterStrain}}
+    \frac{L_{\mathrm{ref}}\Delta t}{\mpmcode{stressControlFilterStrain}}
   \right),
   \qquad
   \sigma_i^{\mathrm{filtered}} \leftarrow
@@ -440,7 +440,7 @@ The raw stress is low-pass filtered over a strain interval,
 \end{equation}
 The largest normalized raw-minus-filtered stress difference over active
 components defines a wave or inertia indicator.  If it exceeds
-\texttt{stressControlWaveWarnRatio}, the controller prints a warning, slows the
+\mpmcode{stressControlWaveWarnRatio}, the controller prints a warning, slows the
 feedback response, and freezes tangent adaptation while the condition persists.
 This diagnostic is designed to detect cases where prescribed F-table loading is
 generating stress waves that dominate the measured box stress.
@@ -458,52 +458,52 @@ compressive and the measured filtered pressure is too small.  In this state,
   \right),
   \label{eq:bc-adaptive-seek-seek-law}
 \end{equation}
-where $L_{\mathrm{seek}}$ is limited by \texttt{stressControlSeekRateRatio} and
-\texttt{stressControlMaxSeekRateRatio}.  Seek mode re-engages active control
-after a pressure fraction \texttt{stressControlJammingPressureRatio} appears and
-the wave indicator is below \texttt{stressControlWaveCutbackRatio}.  The return
-to active control is blended over \texttt{stressControlReengageRampStrain}.  If
-\texttt{stressControlMaxSeekStrain} is exceeded in a direction, that direction is
+where $L_{\mathrm{seek}}$ is limited by \mpmcode{stressControlSeekRateRatio} and
+\mpmcode{stressControlMaxSeekRateRatio}.  Seek mode re-engages active control
+after a pressure fraction \mpmcode{stressControlJammingPressureRatio} appears and
+the wave indicator is below \mpmcode{stressControlWaveCutbackRatio}.  The return
+to active control is blended over \mpmcode{stressControlReengageRampStrain}.  If
+\mpmcode{stressControlMaxSeekStrain} is exceeded in a direction, that direction is
 marked unreachable and its controlled rate is held at zero.
 
 \begin{table}[h]
 \centering
 \caption{Main adaptive-seek stress-control parameters.}
 \label{tab:bc-adaptive-seek-parameters}
-\begin{tabular}{lll}
+\begin{tabularx}{\linewidth}{@{}p{0.43\linewidth}p{0.11\linewidth}X@{}}
 \toprule
 Parameter & Default & Purpose \\
 \midrule
-\texttt{stressControlAdaptiveSeek} & 0 & Enable adaptive-seek control. \\
-\texttt{stressControlResponseStrain} & $10^{-2}$ & Strain interval for stress-error correction. \\
-\texttt{stressControlFilterStrain} & $10^{-3}$ & Strain interval for stress filtering. \\
-\texttt{stressControlAdaptStrainWindow} & $5\times10^{-4}$ & Strain window for tangent updates. \\
-\texttt{stressControlAdaptGain} & $5\times10^{-2}$ & Rank-one tangent update gain. \\
-\texttt{stressControlMaxRateRatio} & 5 & Total active rate cap relative to reference rate. \\
-\texttt{stressControlMaxFeedbackRateRatio} & 2 & Feedback-only rate cap. \\
-\texttt{stressControlSeekRateRatio} & 0.5 & Bounded seek rate ratio. \\
-\texttt{stressControlMaxSeekRateRatio} & 2 & Maximum seek rate ratio. \\
-\texttt{stressControlMinStrainRate} & $10^{-30}$ & Minimum reference rate. \\
-\texttt{stressControlMaxSeekStrain} & $5\times10^{-2}$ & Seek strain before declaring unreachable. \\
-\texttt{stressControlMaxSeekStrainIncrement} & $10^{-4}$ & Per-step strain increment cap. \\
-\texttt{stressControlJammingPressureRatio} & $2\times10^{-2}$ & Pressure fraction for load-path appearance. \\
-\texttt{stressControlReengageRampStrain} & $5\times10^{-3}$ & Seek-to-active blending strain. \\
-\texttt{stressControlWaveWarnRatio} & $5\times10^{-2}$ & Raw-filtered stress warning ratio. \\
-\texttt{stressControlWaveCutbackRatio} & $10^{-1}$ & Re-engagement/adaptation cutback ratio. \\
-\texttt{stressControlStressFloor} & 0 & Explicit stress floor; target-based if zero. \\
-\texttt{stressControlTangentFloorRatio} & $10^{-3}$ & Lower tangent bound ratio. \\
-\texttt{stressControlTangentCeilingRatio} & $10^{2}$ & Upper tangent bound ratio. \\
-\texttt{stressControlMaxCouplingRatio} & 10 & Off-diagonal tangent cap. \\
-\texttt{stressControlSolverDampingRatio} & $5\times10^{-2}$ & Damped-solve regularization. \\
+\mpmcode{stressControlAdaptiveSeek} & 0 & Enable adaptive-seek control. \\
+\mpmcode{stressControlResponseStrain} & $10^{-2}$ & Strain interval for stress-error correction. \\
+\mpmcode{stressControlFilterStrain} & $10^{-3}$ & Strain interval for stress filtering. \\
+\mpmcode{stressControlAdaptStrainWindow} & $5\times10^{-4}$ & Strain window for tangent updates. \\
+\mpmcode{stressControlAdaptGain} & $5\times10^{-2}$ & Rank-one tangent update gain. \\
+\mpmcode{stressControlMaxRateRatio} & 5 & Total active rate cap relative to reference rate. \\
+\mpmcode{stressControlMaxFeedbackRateRatio} & 2 & Feedback-only rate cap. \\
+\mpmcode{stressControlSeekRateRatio} & 0.5 & Bounded seek rate ratio. \\
+\mpmcode{stressControlMaxSeekRateRatio} & 2 & Maximum seek rate ratio. \\
+\mpmcode{stressControlMinStrainRate} & $10^{-30}$ & Minimum reference rate. \\
+\mpmcode{stressControlMaxSeekStrain} & $5\times10^{-2}$ & Seek strain before declaring unreachable. \\
+\mpmcode{stressControlMaxSeekStrainIncrement} & $10^{-4}$ & Per-step strain increment cap. \\
+\mpmcode{stressControlJammingPressureRatio} & $2\times10^{-2}$ & Pressure fraction for load-path appearance. \\
+\mpmcode{stressControlReengageRampStrain} & $5\times10^{-3}$ & Seek-to-active blending strain. \\
+\mpmcode{stressControlWaveWarnRatio} & $5\times10^{-2}$ & Raw-filtered stress warning ratio. \\
+\mpmcode{stressControlWaveCutbackRatio} & $10^{-1}$ & Re-engagement/adaptation cutback ratio. \\
+\mpmcode{stressControlStressFloor} & 0 & Explicit stress floor; target-based if zero. \\
+\mpmcode{stressControlTangentFloorRatio} & $10^{-3}$ & Lower tangent bound ratio. \\
+\mpmcode{stressControlTangentCeilingRatio} & $10^{2}$ & Upper tangent bound ratio. \\
+\mpmcode{stressControlMaxCouplingRatio} & 10 & Off-diagonal tangent cap. \\
+\mpmcode{stressControlSolverDampingRatio} & $5\times10^{-2}$ & Damped-solve regularization. \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 For prescribed-F quasi-static tests, the default strain scales are suitable
 starting values.  For multiple controlled directions, use a smaller tangent
 adaptation gain, for example \texttt{stressControlAdaptGain = 1.0e-2}.  For
 zero-stress targets, such as uniaxial-stress tension, specify a nonzero
-\texttt{stressControlStressFloor} based on the material stress scale or measured
+\mpmcode{stressControlStressFloor} based on the material stress scale or measured
 stress noise.
 
 \paragraph{Anisotropic plane-strain compression.}
@@ -592,9 +592,9 @@ pfw["stressControlMaxSeekStrain"] = 0.0
 
 Persistent wave warnings indicate that the controlled stress is dominated by
 transient stress waves rather than a quasi-static mean.  Increase
-\texttt{stressControlResponseStrain} and \texttt{stressControlFilterStrain},
+\mpmcode{stressControlResponseStrain} and \mpmcode{stressControlFilterStrain},
 reduce rate caps, or slow the F-table ramp.  If seek mode exceeds
-\texttt{stressControlMaxSeekStrain}, the requested compressive target is not
+\mpmcode{stressControlMaxSeekStrain}, the requested compressive target is not
 reachable within the allowed closure; for granular compaction increase the
 volume-fraction-based allowance only if it is physically justified.
 
@@ -607,18 +607,18 @@ When a moving or contact boundary changes a normal nodal velocity, the solver ca
   R_f^{\mathrm{local}} \mathrel{+}= m_{I\alpha}\frac{v_{I\alpha,d}^{\mathrm{bc}}-v_{I\alpha,d}^{\mathrm{old}}}{\Delta t}.
   \label{eq:bc-reaction-momentum}
 \end{equation}
-If \texttt{useInternalForceAsFaceReaction} is enabled, the contribution is instead based on the internal force component,
+If \mpmcode{useInternalForceAsFaceReaction} is enabled, the contribution is instead based on the internal force component,
 \begin{equation}
   R_f^{\mathrm{local}} \mathrel{-}= f_{I\alpha,d}^{\mathrm{int}}.
   \label{eq:bc-reaction-internal-force}
 \end{equation}
-The six local face sums are reduced across MPI ranks with a sum reduction and stored in \texttt{m\_globalFaceReactions}.  If \texttt{reactionHistory} is enabled and the write schedule is satisfied, the solver appends a row to \path{reactionHistory.csv} containing time, domain deformation components, end-of-step box lengths, the six face reactions, and the current diagonal \texttt{domainL} values.  For \texttt{prescribedBoundaryFTable}, the reported lengths use the same exact finite ratios as the grid resize, so the reported $\bar F$ and domain dimensions remain mutually consistent.  This output is therefore a diagnostic of the constraints actually applied by \texttt{applyEssentialBCs}; it is not produced for pure outflow or inactive moving faces that do not change normal nodal velocities.
+The six local face sums are reduced across MPI ranks with a sum reduction and stored in \texttt{m\_globalFaceReactions}.  If \texttt{reactionHistory} is enabled and the write schedule is satisfied, the solver appends a row to \path{reactionHistory.csv} containing time, domain deformation components, end-of-step box lengths, the six face reactions, and the current diagonal \texttt{domainL} values.  For \mpmcode{prescribedBoundaryFTable}, the reported lengths use the same exact finite ratios as the grid resize, so the reported $\bar F$ and domain dimensions remain mutually consistent.  This output is therefore a diagnostic of the constraints actually applied by \mpmcode{applyEssentialBCs}; it is not produced for pure outflow or inactive moving faces that do not change normal nodal velocities.
 
 \subsection{FMPM-specific boundary consistency}
 \label{subsec:bc-fmpm-internals}
 \index{FMPM!boundary conditions}
 
-The FMPM update stores an uncontacted grid velocity seed before material-contact corrections.  After \texttt{applyEssentialBCs} has imposed symmetry or moving constraints on \texttt{gridVelocity}, the solver copies only the constrained boundary components back into \texttt{gridUncontactedVelocity}.  Unconstrained tangential components are deliberately left material-contact-free so that the filtered contact update can use them as an uncorrected seed.
+The FMPM update stores an uncontacted grid velocity seed before material-contact corrections.  After \mpmcode{applyEssentialBCs} has imposed symmetry or moving constraints on \texttt{gridVelocity}, the solver copies only the constrained boundary components back into \mpmcode{gridUncontactedVelocity}.  Unconstrained tangential components are deliberately left material-contact-free so that the filtered contact update can use them as an uncorrected seed.
 
 Higher-order FMPM velocity increments use a homogeneous version of the boundary constraints.  On boundary nodes, constrained components of the increment are set to zero.  On buffer nodes, the normal increment is reflected oddly,
 \begin{equation}
@@ -630,10 +630,10 @@ and transverse increments are either reflected oddly when transverse velocities 
 \label{subsec:bc-periodic-internals}
 \index{periodic boundaries}
 
-Periodic boundaries are not represented by \texttt{boundaryConditionTypes}.  They are stored in the spatial partition and affect grid and particle topology.  During initialization, the solver shifts periodic ghost-node coordinates on end partitions by one global domain extent so that distance-based operations see the closest periodic image.  During the topology-preparation step, inactive ghost particle centers are wrapped across periodic boundaries for neighbor operations.  During repartitioning and cleanup, active particle centers are wrapped back into the global domain by a modulo operation,
+Periodic boundaries are not represented by \mpmcode{boundaryConditionTypes}.  They are stored in the spatial partition and affect grid and particle topology.  During initialization, the solver shifts periodic ghost-node coordinates on end partitions by one global domain extent so that distance-based operations see the closest periodic image.  During the topology-preparation step, inactive ghost particle centers are wrapped across periodic boundaries for neighbor operations.  During repartitioning and cleanup, active particle centers are wrapped back into the global domain by a modulo operation,
 \begin{equation}
   x_{p,i}\leftarrow \operatorname{mod}(x_{p,i}-X_i^{\min},L_i)+X_i^{\min}
   \qquad\text{for periodic direction } i.
   \label{eq:bc-periodic-wrap}
 \end{equation}
-Out-of-range deletion checks are skipped in periodic directions.  If \texttt{prescribedFTable} is active, the superposed velocity-gradient update is applied to particles only in periodic directions, which is the internal distinction between domain-periodic homogeneous deformation and boundary-driven deformation on moving faces.
+Out-of-range deletion checks are skipped in periodic directions.  If \mpmcode{prescribedFTable} is active, the superposed velocity-gradient update is applied to particles only in periodic directions, which is the internal distinction between domain-periodic homogeneous deformation and boundary-driven deformation on moving faces.

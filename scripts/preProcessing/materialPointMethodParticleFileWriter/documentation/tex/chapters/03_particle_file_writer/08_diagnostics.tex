@@ -3,7 +3,7 @@
 \label{sec:pfw-diagnostics}
 \index{diagnostics}
 
-PFW exposes several lightweight CSV diagnostics that are separate from plot-file output.  They are commonly used for verification plots, automated suite checks, and rapid inspection of a run before opening Silo or VTK files.  Each diagnostic has an enable flag and its own write schedule.  Time-based schedules use a write interval in simulation time, while cycle-based schedules, when available, use an integer cycle interval.  For GEOS string-array inputs such as \texttt{profileVariables} and \texttt{tracerVariables}, either pass the GEOS brace syntax directly or use the tracer helpers in \path{pfw_tracerPoints.py}.
+PFW exposes several lightweight CSV diagnostics that are separate from plot-file output.  They are commonly used for verification plots, automated suite checks, and rapid inspection of a run before opening Silo or VTK files.  Each diagnostic has an enable flag and its own write schedule.  Time-based schedules use a write interval in simulation time, while cycle-based schedules, when available, use an integer cycle interval.  For GEOS string-array inputs such as \mpmcode{profileVariables} and \texttt{tracerVariables}, either pass the GEOS brace syntax directly or use the tracer helpers in \path{pfw_tracerPoints.py}.
 
 \begin{table}[htbp]
 \centering
@@ -12,10 +12,10 @@ PFW exposes several lightweight CSV diagnostics that are separate from plot-file
 \toprule
 Diagnostic & Principal PFW controls \\
 \midrule
-Reaction history & \texttt{reactionHistory}, \texttt{reactionWriteInterval}, \texttt{useInternalForceAsFaceReaction} \\
-Box averages & \texttt{boxAverageHistory}, \texttt{boxAverageWriteInterval}, \texttt{boxAverageMin}, \texttt{boxAverageMax}, \texttt{boxAverageResizeWithDomain} \\
-Profiles & \texttt{profileHistory}, \texttt{profileDirection}, \texttt{profileVariables}, \texttt{profileNumSlices}, \texttt{profileWriteInterval}, \texttt{profileCycleInterval} \\
-Tracers & \texttt{tracerHistory}, \texttt{tracerCoordinates}, \texttt{tracerVariables}, \texttt{tracerWriteInterval}, \texttt{tracerCycleInterval}, \texttt{tracerOutputPrefix} \\
+Reaction history & \texttt{reactionHistory}, \mpmcode{reactionWriteInterval}, \mpmcode{useInternalForceAsFaceReaction} \\
+Box averages & \mpmcode{boxAverageHistory}, \mpmcode{boxAverageWriteInterval}, \texttt{boxAverageMin}, \texttt{boxAverageMax}, \mpmcode{boxAverageResizeWithDomain} \\
+Profiles & \texttt{profileHistory}, \mpmcode{profileDirection}, \mpmcode{profileVariables}, \mpmcode{profileNumSlices}, \mpmcode{profileWriteInterval}, \mpmcode{profileCycleInterval} \\
+Tracers & \texttt{tracerHistory}, \mpmcode{tracerCoordinates}, \texttt{tracerVariables}, \mpmcode{tracerWriteInterval}, \mpmcode{tracerCycleInterval}, \mpmcode{tracerOutputPrefix} \\
 \bottomrule
 \end{tabularx}
 \caption{PFW diagnostic controls summarized in Section~\ref{sec:pfw-diagnostics}.}
@@ -27,7 +27,7 @@ Tracers & \texttt{tracerHistory}, \texttt{tracerCoordinates}, \texttt{tracerVari
 \index{reactionHistory}
 \pfwidx{reactionHistory}\pfwidx{reactionWriteInterval}\pfwidx{useInternalForceAsFaceReaction}
 
-Boundary reactions are enabled with \texttt{reactionHistory}.  The write cadence is controlled by \texttt{reactionWriteInterval}; if this interval is zero or omitted, the solver can write every step.  The output is \path{reactionHistory.csv}.  Section~\ref{subsec:bc-reactions-internals} describes the internal accumulation algorithm, and Section~\ref{sec:csv-histories} summarizes the reaction file layout and post-processing conventions.
+Boundary reactions are enabled with \texttt{reactionHistory}.  The write cadence is controlled by \mpmcode{reactionWriteInterval}; if this interval is zero or omitted, the solver can write every step.  The output is \path{reactionHistory.csv}.  Section~\ref{subsec:bc-reactions-internals} describes the internal accumulation algorithm, and Section~\ref{sec:csv-histories} summarizes the reaction file layout and post-processing conventions.
 
 \begin{lstlisting}[language=Python,caption={Reaction-history controls using the default velocity-correction measure.}]
 pfw["reactionHistory"] = 1
@@ -37,7 +37,7 @@ pfw["reactionWriteInterval"] = stopTime / 1000.0
 pfw["useInternalForceAsFaceReaction"] = 0
 \end{lstlisting}
 
-The default reaction measure is the momentum correction required to enforce the normal velocity on a moving or contact boundary.  At a fixed-velocity boundary, the particle-to-grid velocity mapping can place a nonzero normal velocity on boundary nodes before the essential boundary condition is applied.  The subsequent correction may be tiny in displacement but large when divided by a very small time step, which can create narrow spikes in a reaction-stress plot.  When these spikes obscure the trend of interest, \texttt{useInternalForceAsFaceReaction=1} uses the internal-force component at the boundary node instead of the velocity-correction impulse.  The spelling matches the current GEOS solver attribute.
+The default reaction measure is the momentum correction required to enforce the normal velocity on a moving or contact boundary.  At a fixed-velocity boundary, the particle-to-grid velocity mapping can place a nonzero normal velocity on boundary nodes before the essential boundary condition is applied.  The subsequent correction may be tiny in displacement but large when divided by a very small time step, which can create narrow spikes in a reaction-stress plot.  When these spikes obscure the trend of interest, \mpmcode{useInternalForceAsFaceReaction=1} uses the internal-force component at the boundary node instead of the velocity-correction impulse.  The spelling matches the current GEOS solver attribute.
 
 \begin{lstlisting}[language=Python,caption={Reaction-history controls using the boundary internal-force component.}]
 pfw["reactionHistory"] = 1
@@ -60,7 +60,7 @@ where \(A_{\mathrm{material}}\) should match the specimen area used in the exper
 \index{boxAverageHistory}
 \pfwidx{boxAverageHistory}\pfwidx{boxAverageWriteInterval}\pfwidx{boxAverageMin}\pfwidx{boxAverageMax}\pfwidx{boxAverageResizeWithDomain}
 
-Setting \texttt{boxAverageHistory} writes \path{boxAverageHistory.csv}.  The output contains averages of stress, density, damage, internal energy, kinetic energy, strain, material volume, temperature, and the diagonal domain-deformation components.  If \texttt{boxAverageMin} and \texttt{boxAverageMax} are omitted, the solver initializes the averaging box from the full computational domain.  This full-domain default is the common choice for homogeneous verification problems, triaxial tests, and bulk compression runs.
+Setting \mpmcode{boxAverageHistory} writes \path{boxAverageHistory.csv}.  The output contains averages of stress, density, damage, internal energy, kinetic energy, strain, material volume, temperature, and the diagonal domain-deformation components.  If \texttt{boxAverageMin} and \texttt{boxAverageMax} are omitted, the solver initializes the averaging box from the full computational domain.  This full-domain default is the common choice for homogeneous verification problems, triaxial tests, and bulk compression runs.
 
 \begin{lstlisting}[language=Python,caption={Full-domain box-average history.}]
 pfw["boxAverageHistory"] = 1
@@ -82,16 +82,16 @@ pfw["boxAverageMax"] = [ 0.25 * Lx,  0.25 * Ly, pfw["zmax"]]
 pfw["boxAverageResizeWithDomain"] = 0
 \end{lstlisting}
 
-When a moving grid, D-table style domain update, or F-table boundary condition changes the domain length, the volume used in volume-normalized quantities changes as well.  If the diagnostic should follow a deforming specimen or the full current domain, set \texttt{boxAverageResizeWithDomain=1} so the box limits scale with the diagonal domain stretch.  If the diagnostic should remain a fixed Eulerian measurement window, keep \texttt{boxAverageResizeWithDomain=0} and provide explicit limits.  In either case, interpret density, stress, and energy histories with the selected averaging volume in mind.
+When a moving grid, D-table style domain update, or F-table boundary condition changes the domain length, the volume used in volume-normalized quantities changes as well.  If the diagnostic should follow a deforming specimen or the full current domain, set \mpmcode{boxAverageResizeWithDomain=1} so the box limits scale with the diagonal domain stretch.  If the diagnostic should remain a fixed Eulerian measurement window, keep \mpmcode{boxAverageResizeWithDomain=0} and provide explicit limits.  In either case, interpret density, stress, and energy histories with the selected averaging volume in mind.
 
 \subsection{Profiles}
 \label{subsec:pfw-profiles}
 \index{profile output}
 \pfwidx{profileHistory}\pfwidx{profileDirection}\pfwidx{profileVariables}\pfwidx{profileNumSlices}\pfwidx{profileWriteInterval}\pfwidx{profileCycleInterval}
 
-Profile outputs reduce particle data into one-dimensional spatial bins and write one CSV file per requested variable.  Files are named \path{profile_<direction>_<variable>.csv}.  The direction can be \texttt{x}, \texttt{y}, or \texttt{z}.  Supported variables include \texttt{density}, \texttt{damage}, \texttt{temperature}, \texttt{internalEnergy}, \texttt{kineticEnergy}, \texttt{velocityX}, \texttt{velocityY}, \texttt{velocityZ}, \texttt{volumeFraction}, \texttt{plasticStrainMagnitude}, the six stress components, and the six plastic-strain components.
+Profile outputs reduce particle data into one-dimensional spatial bins and write one CSV file per requested variable.  Files are named \path{profile_<direction>_<variable>.csv}.  The direction can be \texttt{x}, \texttt{y}, or \texttt{z}.  Supported variables include \texttt{density}, \texttt{damage}, \texttt{temperature}, \texttt{internalEnergy}, \texttt{kineticEnergy}, \texttt{velocityX}, \texttt{velocityY}, \texttt{velocityZ}, \texttt{volumeFraction}, \mpmcode{plasticStrainMagnitude}, the six stress components, and the six plastic-strain components.
 
-The following example requests two x-profiles.  With \texttt{profileNumSlices=0}, the solver uses the background-grid resolution in the profile direction.  The write interval is time-based.
+The following example requests two x-profiles.  With \mpmcode{profileNumSlices=0}, the solver uses the background-grid resolution in the profile direction.  The write interval is time-based.
 
 \begin{lstlisting}[language=Python,caption={X-profiles of density and axial stress using grid-cell spacing.}]
 pfw["profileHistory"] = 1
@@ -116,14 +116,14 @@ pfw["profileWriteInterval"] = 0.0
 pfw["profileCycleInterval"] = 100
 \end{lstlisting}
 
-Use either \texttt{profileWriteInterval} or \texttt{profileCycleInterval} for a given run.  Keeping the inactive interval at zero makes the intended scheduling mode explicit in the generated XML.
+Use either \mpmcode{profileWriteInterval} or \mpmcode{profileCycleInterval} for a given run.  Keeping the inactive interval at zero makes the intended scheduling mode explicit in the generated XML.
 
 \subsection{Tracers}
 \label{subsec:pfw-tracers}
 \index{tracers}
 \pfwidx{tracerHistory}\pfwidx{tracerCoordinates}\pfwidx{tracerVariables}\pfwidx{tracerWriteInterval}\pfwidx{tracerCycleInterval}\pfwidx{tracerOutputPrefix}
 
-Tracer histories select the nearest active particle to each requested coordinate during initialization, store that particle ID, and then follow the same particle through time.  Each tracer file is named from \texttt{tracerOutputPrefix}; rows contain \texttt{t,x,y,z} followed by the requested particle variables.  The helper module \path{pfw_tracerPoints.py} is recommended because it formats \texttt{tracerCoordinates} and \texttt{tracerVariables} using the GEOS array syntax expected by the XML parser.
+Tracer histories select the nearest active particle to each requested coordinate during initialization, store that particle ID, and then follow the same particle through time.  Each tracer file is named from \mpmcode{tracerOutputPrefix}; rows contain \texttt{t,x,y,z} followed by the requested particle variables.  The helper module \path{pfw_tracerPoints.py} is recommended because it formats \mpmcode{tracerCoordinates} and \texttt{tracerVariables} using the GEOS array syntax expected by the XML parser.
 
 A single point at the center of the two-disk collision domain is useful for checking symmetry and the time at which the two disks first interact.
 

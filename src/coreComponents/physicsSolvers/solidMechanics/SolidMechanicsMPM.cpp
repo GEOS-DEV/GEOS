@@ -1681,6 +1681,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_computeSPHJacobian( 0 ),
   m_confiningPressureBoxMax(),
   m_confiningPressureBoxMin(),
+  m_confiningPressureSphereRadius( 0.0 ),
   m_confiningStress(),
   m_contactGapCorrection( mpm::ContactGapCorrectionOption::Implicit ),
   m_contactNormalExponent( 1.0 ),
@@ -1713,7 +1714,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_enableBoreholePressure( 0 ),
   m_enableConfiningPressure( 0 ),
   m_enableContact( 1 ),
-  m_enableWeakInterfaceTraceProjection( 0 ),
   m_enablePrescribedBoundaryTransverseVelocities(),
   m_enableSurfaceTension( 0 ),
   m_eventReporting( 0 ),
@@ -1903,13 +1903,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_useNodePosForArea( 0 ),
   m_useReferenceVectorsForParticleUpdate( 0 ),
   m_useSurfacePositionForContact( 0 ),
-  m_weakInterfaceTraceGapStabilization( 0.0 ),
-  m_weakInterfaceTraceMaxGapCorrectionVelocity( 0.0 ),
-  m_weakInterfaceTraceMinWeight( 1.0e-12 ),
-  m_weakInterfaceTracePairs(),
-  m_weakInterfaceTraceProjectionIterations( 1 ),
-  m_weakInterfaceTraceProjectionScale( 1.0 ),
-  m_weakInterfaceTraceSuppressNodalContact( 1 ),
   m_writeParticleData( 0 ),
   m_xGlobalMax(),
   m_xGlobalMin(),
@@ -2033,6 +2026,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "xyz coordinate of confining pressure box min corner" );
+
+  registerWrapper( "confiningPressureSphereRadius", &m_confiningPressureSphereRadius ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Origin-centered spherical confining pressure radius; positive values select spherical confining pressure instead of the box test." );
 
   registerWrapper( "confiningStress", &m_confiningStress ).
     setInputFlag( InputFlags::FALSE ).
@@ -2194,12 +2192,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to enable contact between velocity fields" );
-
-  registerWrapper( "enableWeakInterfaceTraceProjection", &m_enableWeakInterfaceTraceProjection ).
-    setApplyDefaultValue( m_enableWeakInterfaceTraceProjection ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Enable prescribed-surface weak-interface trace projection between selected contact groups." );
 
   registerWrapper( "enablePrescribedBoundaryTransverseVelocities", &m_enablePrescribedBoundaryTransverseVelocities ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3116,47 +3108,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for to use particle mapped surface positions in contact calculations" );
 
-  registerWrapper( "weakInterfaceTraceGapStabilization", &m_weakInterfaceTraceGapStabilization ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_weakInterfaceTraceGapStabilization ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Optional beta stabilization on the prescribed weak-interface trace gap." );
-
-  registerWrapper( "weakInterfaceTraceMaxGapCorrectionVelocity", &m_weakInterfaceTraceMaxGapCorrectionVelocity ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_weakInterfaceTraceMaxGapCorrectionVelocity ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Maximum magnitude of the weak-interface trace accumulated-gap correction velocity. A zero value disables the cap." );
-
-  registerWrapper( "weakInterfaceTraceMinWeight", &m_weakInterfaceTraceMinWeight ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_weakInterfaceTraceMinWeight ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Minimum active trace support weight required on each side of a weak-interface trace projection." );
-
-  registerWrapper( "weakInterfaceTracePairs", &m_weakInterfaceTracePairs ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Optional contact-group pairs for weak-interface trace projection. Empty means all group pairs." );
-
-  registerWrapper( "weakInterfaceTraceProjectionIterations", &m_weakInterfaceTraceProjectionIterations ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_weakInterfaceTraceProjectionIterations ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Number of local Jacobi iterations for the weak-interface trace projection. Values greater than one reduce slip without using a full one-shot projection." );
-
-  registerWrapper( "weakInterfaceTraceProjectionScale", &m_weakInterfaceTraceProjectionScale ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_weakInterfaceTraceProjectionScale ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Under-relaxation scale alpha for each weak-interface trace projection impulse." );
-
-  registerWrapper( "weakInterfaceTraceSuppressNodalContact", &m_weakInterfaceTraceSuppressNodalContact ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_weakInterfaceTraceSuppressNodalContact ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Skip ordinary nodal contact for contact-group pairs handled by weak-interface trace projection." );
-
   registerWrapper( viewKeyStruct::timeIntegrationOptionString(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_timeIntegrationOption ).
@@ -3387,24 +3338,6 @@ void SolidMechanicsMPM::postInputInitialization()
 
   // Set number of active dimensions based on m_planeStrain
   m_numDims = m_planeStrain ? 2 : 3;
-
-  if( m_enableWeakInterfaceTraceProjection == 1 )
-  {
-    GEOS_ERROR_IF( m_weakInterfaceTraceProjectionIterations < 1,
-                   "weakInterfaceTraceProjectionIterations must be at least one." );
-    GEOS_ERROR_IF( m_weakInterfaceTraceProjectionScale < 0.0,
-                   "weakInterfaceTraceProjectionScale must be non-negative." );
-    GEOS_ERROR_IF( m_weakInterfaceTraceMinWeight <= 0.0,
-                   "weakInterfaceTraceMinWeight must be positive." );
-    GEOS_ERROR_IF( m_weakInterfaceTraceGapStabilization < 0.0,
-                   "weakInterfaceTraceGapStabilization must be non-negative." );
-    GEOS_ERROR_IF( m_weakInterfaceTraceMaxGapCorrectionVelocity < 0.0,
-                   "weakInterfaceTraceMaxGapCorrectionVelocity must be non-negative." );
-    GEOS_ERROR_IF( m_weakInterfaceTracePairs.size( 0 ) > 0 && m_weakInterfaceTracePairs.size( 1 ) != 2,
-                   "weakInterfaceTracePairs must have two columns: groupA, groupB." );
-    GEOS_ERROR_IF( m_updateMethod == mpm::UpdateMethodOption::FMPM && m_updateOrder > 1,
-                   "Weak-interface trace projection is currently supported for FLIP/PIC/XPIC and first-order FMPM only." );
-  }
 
   // Initialize boundary condition types if they're not specified by the user
   if( m_boundaryConditionTypes.size() == 0 )
@@ -4165,60 +4098,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "Contact-group id associated with each rigid-body nodal field; -2 denotes mixed overflow." );
 
-      nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Flag for grid fields involved in a prescribed weak-interface trace projection." );
-
-      nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Flag for field pairs for which ordinary nodal contact was suppressed by weak-interface trace handling." );
-
-      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Trace shape-function weight of the anchor node at the reconstructed trace point." );
-
-      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Weak-interface trace-projection force on each node and velocity field." );
-
-      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Diagnostic trace point relative to each anchor node for prescribed weak-interface trace projection." );
-
-      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Renormalization support weight used for the prescribed weak-interface trace projection." );
-
-      nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Diagnostic weak-interface trace candidate status: 0 none, 1 ghost, 2 pair-not-selected, 3 inactive-fields, 4 insufficient-surface-mass, 5 trace-point-outside-grid, 6 anchor-weight-too-small, 7 support-A-too-small, 8 support-B-too-small, 9 invalid-effective-mass, 10 active." );
-
-      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Diagnostic difference between side-A and side-B mapped surface-position vectors at a trace anchor." );
-
-      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Diagnostic pre-projection trace velocity jump for prescribed weak-interface trace projection." );
-
-      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Diagnostic post-projection trace velocity jump recomputed after applying weak-interface trace forces." );
-
       nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "Dominant nodal interface mechanism: 0 none, 1 cohesive zone, 2 ordinary contact, 3 weak-trace anchor, 4 weak-trace support, 5 contact suppressed without active trace." );
+        setDescription( "Dominant nodal interface mechanism: 0 none, 1 cohesive zone, 2 ordinary contact." );
 
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridInterfaceNormalForceString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -4900,16 +4783,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array2d< globalIndex > >( viewKeyStruct::gridRigidBodyFieldKeyString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() ).resize( numNodes, m_numVelocityFields, 3 );
-  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() ).resize( numNodes, m_numVelocityFields, 3 );
-  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() ).resize( numNodes, m_numVelocityFields, 3 );
-  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() ).resize( numNodes, m_numVelocityFields, 3 );
-  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridInterfaceNormalForceString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridInterfaceTangentialForceString() ).resize( numNodes, m_numVelocityFields );
@@ -5169,20 +5042,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   updateGridDynamicsAndContactForExplicitStep( dt,
                                                particleManager,
                                                nodeManager );
-
-  if( m_rigidBodyMode == 0 && m_enableWeakInterfaceTraceProjection == 1 )
-  {
-    /*
-     * Weak-interface trace projection assumes the continuum
-     * contactGroup x DFG-field layout.  RigidBodyMPM replaces that layout with
-     * first-in ParticleColor fields, so keep the DFG-specific projection out of
-     * the rigid event.
-     */
-    enforceWeakInterfaceTraceProjection( dt,
-                                         domain,
-                                         nodeManager,
-                                         mesh );
-  }
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -9689,8 +9548,7 @@ void SolidMechanicsMPM::mapSurfaceNormalsAndPositionsToParticles( ParticleManage
         bool const shouldComputeSurfaceGeometry =
           particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
           particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
-          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
-          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
 
         if( shouldComputeSurfaceGeometry )
         {
@@ -10043,6 +9901,16 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
   RAJA::ReduceMin< parallelDeviceReduce, real64 > minMassLocal( LvArray::NumericLimits< real64 >::max );
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    if( subRegion.hasParticleReferenceGeometry() )
+    {
+      auto const geometry = subRegion.referenceGeometryViewOnHost();
+      for( localIndex p=0; p<subRegion.size(); ++p )
+      {
+        GEOS_ERROR_IF( ( geometry.shape[p] == 1 && m_planeStrain != 1 ) ||
+                       ( geometry.shape[p] == 2 && m_planeStrain == 1 ),
+                       "TriangleWedge reference geometry requires plane strain; Tetrahedron requires 3D" );
+      }
+    }
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
     arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
@@ -10332,12 +10200,7 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   nodeManager.getWrapper< array2d< globalIndex > >( viewKeyStruct::gridRigidBodyFieldKeyString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() ).setDimLabels( 1, fieldLabels );
-  nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() ).setDimLabels( 1, fieldLabels );
-  nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() ).setDimLabels( 1, fieldLabels );
-  nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).setDimLabels( 1, fieldLabels );
-  nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() ).setDimLabels( 1, fieldLabels );
-  nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() ).setDimLabels( 1, axesLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() ).setDimLabels( 1, axesLabels );
 
@@ -10356,11 +10219,6 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
                                       viewKeyStruct::gridExternalForceString(), // 3
                                       viewKeyStruct::gridSurfaceTensionForceString(), // 3
                                       viewKeyStruct::gridContactForceString(), // 3
-                                      viewKeyStruct::gridWeakInterfaceTraceForceString(), // 3
-                                      viewKeyStruct::gridWeakInterfaceTracePointString(), // 3
-                                      viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString(), // 3
-                                      viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString(), // 3
-                                      viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString(), // 3
                                       viewKeyStruct::gridSurfaceNormalString(), // 3
                                       viewKeyStruct::gridCenterOfMassString(), // 3
                                       viewKeyStruct::gridCenterOfVolumeString(), // 3
@@ -10436,16 +10294,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       viewKeyStruct::gridCohesiveAreaString(),
       viewKeyStruct::gridCohesiveForceString(),
       viewKeyStruct::gridContactForceString(),
-      viewKeyStruct::gridWeakInterfaceTraceActiveString(),
-      viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString(),
-      viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString(),
-      viewKeyStruct::gridWeakInterfaceTraceForceString(),
-      viewKeyStruct::gridWeakInterfaceTracePointString(),
-      viewKeyStruct::gridWeakInterfaceTraceSupportWeightString(),
-      viewKeyStruct::gridWeakInterfaceTraceSkipReasonString(),
-      viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString(),
-      viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString(),
-      viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString(),
       viewKeyStruct::gridInterfaceMechanismString(),
       viewKeyStruct::gridInterfaceNormalForceString(),
       viewKeyStruct::gridInterfaceTangentialForceString(),
@@ -10582,45 +10430,15 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
     nodeManager.getReference< array3d< real64 > >(
       viewKeyStruct::gridContactForceString() );
 
-  arrayView2d< int > const gridWeakInterfaceTraceActive =
-    nodeManager.getReference< array2d< int > >(
-      viewKeyStruct::gridWeakInterfaceTraceActiveString() );
 
-  arrayView2d< int > const gridWeakInterfaceTraceContactSuppressed =
-    nodeManager.getReference< array2d< int > >(
-      viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() );
 
-  arrayView2d< int > const gridWeakInterfaceTraceSkipReason =
-    nodeManager.getReference< array2d< int > >(
-      viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() );
 
-  arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight =
-    nodeManager.getReference< array2d< real64 > >(
-      viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() );
 
-  arrayView2d< real64 > const gridWeakInterfaceTraceSupportWeight =
-    nodeManager.getReference< array2d< real64 > >(
-      viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() );
 
-  arrayView3d< real64 > const gridWeakInterfaceTraceForce =
-    nodeManager.getReference< array3d< real64 > >(
-      viewKeyStruct::gridWeakInterfaceTraceForceString() );
 
-  arrayView3d< real64 > const gridWeakInterfaceTracePoint =
-    nodeManager.getReference< array3d< real64 > >(
-      viewKeyStruct::gridWeakInterfaceTracePointString() );
 
-  arrayView3d< real64 > const gridWeakInterfaceTraceSurfaceJump =
-    nodeManager.getReference< array3d< real64 > >(
-      viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() );
 
-  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJump =
-    nodeManager.getReference< array3d< real64 > >(
-      viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() );
 
-  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJumpPost =
-    nodeManager.getReference< array3d< real64 > >(
-      viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
 
   arrayView2d< int > const gridInterfaceMechanism =
     nodeManager.getReference< array2d< int > >(
@@ -10748,11 +10566,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridSurfaceNormalWeightNormalization[g][fieldIndex] = 0.0;
       gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
       gridSurfaceArea[g][fieldIndex] = 0.0;
-      gridWeakInterfaceTraceActive[g][fieldIndex] = 0;
-      gridWeakInterfaceTraceContactSuppressed[g][fieldIndex] = 0;
-      gridWeakInterfaceTraceSkipReason[g][fieldIndex] = 0;
-      gridWeakInterfaceTraceAnchorWeight[g][fieldIndex] = 0.0;
-      gridWeakInterfaceTraceSupportWeight[g][fieldIndex] = 0.0;
       gridInterfaceMechanism[g][fieldIndex] = 0;
       gridInterfaceNormalForce[g][fieldIndex] = 0.0;
       gridInterfaceTangentialForce[g][fieldIndex] = 0.0;
@@ -10787,11 +10600,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
         gridExternalForce[g][fieldIndex][i] = 0.0;
         gridSurfaceTensionForce[g][fieldIndex][i] = 0.0;
         gridContactForce[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTraceForce[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTracePoint[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTraceSurfaceJump[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTraceVelocityJump[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTraceVelocityJumpPost[g][fieldIndex][i] = 0.0;
         gridCohesiveArea[g][fieldIndex][i] = 0.0;
         gridCohesiveForce[g][fieldIndex][i] = 0.0;
 
@@ -10901,6 +10709,7 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
         particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
       }
 
+      auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
       for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
       {
         localIndex const p = activeParticleIndices[pp];
@@ -10929,6 +10738,9 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
           particleReferenceTemperature[p] = state.temperature;
         }
 
+        // Thermodynamic initialization changes the reference, not the input shape.
+        real64 const newGeometryF[3][3] = { {scale[0],0,0}, {0,scale[1],0}, {0,0,scale[2]} };
+        referenceGeometry.rebase( p, particleDeformationGradient[p], newGeometryF );
         for( integer i = 0; i < 3; ++i )
         {
           for( integer j = 0; j < 3; ++j )
@@ -11300,6 +11112,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       m_confiningPressureBoxMin = confiningPressure.getConfiningPressureBoxMin();
       m_confiningPressureBoxMax = confiningPressure.getConfiningPressureBoxMax();
+      m_confiningPressureSphereRadius = confiningPressure.getConfiningPressureSphereRadius();
 
       real64 startPressure = confiningPressure.getStartPressure();
       real64 endPressure = confiningPressure.getEndPressure();
@@ -11470,8 +11283,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         {
           localIndex const p = activeParticleIndices[pp];
           if( particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Cohesive ) &&
-              particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) &&
-              particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity ) )
+              particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) )
           {
             particleSurfaceFlag[p] = mpm::toInteger( mpm::SurfaceFlag::Interior );
           }
@@ -11543,6 +11355,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
             if( ( constitutiveModel.getCatalogName() == "StrainHardeningPolymer" || constitutiveModel.getCatalogName() == "SurfaceInformedPolymer" ) )
             {
+              auto const referenceGeometry = targetSubRegion.referenceGeometryViewOnHost();
               // Particle fields
               arrayView1d< real64 > const particleDamage = targetSubRegion.getParticleDamage();
               arrayView1d< real64 > const particleReferenceVolume = targetSubRegion.getField< fields::mpm::particleReferenceVolume >();
@@ -11564,6 +11377,8 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                 {
                   particleDamage[p] = 0.0; // Reset damage
 
+                  real64 const identity[3][3] = { {1,0,0}, {0,1,0}, {0,0,1} };
+                  referenceGeometry.rebase( p, particleDeformationGradient[p], identity );
                   // Tensor equation: particleDeformationGradient[p] = 0.0 component-wise.
                   LvArray::tensorOps::fill< 3, 3 >( particleDeformationGradient[p], 0.0 );
                   particleDeformationGradient[p][0][0] = 1.0;
@@ -11665,6 +11480,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
               arrayView2d< real64 > const particleStress = targetSubRegion.getField< fields::mpm::particleStress >();
               arrayView3d< real64 > const particleDeformationGradient = targetSubRegion.getField< fields::mpm::particleDeformationGradient >();
               arrayView3d< real64 > const particleRVectors = targetSubRegion.getParticleRVectors();
+              auto const referenceGeometry = targetSubRegion.referenceGeometryViewOnHost();
 
               // CC: TODO Need to add this for Mike
               // arrayView1d< real64 const > const particleReferencePorosity = targetSubRegion.getField<
@@ -11725,6 +11541,10 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                       J,
                       1.0 / static_cast< real64 >( activeDimensions ) );
 
+                    real64 newGeometryF[3][3];
+                    for( int i=0; i<3; ++i ) for( int j=0; j<3; ++j )
+                      newGeometryF[i][j] = particleDeformationGradient[p][i][j] / ( i < activeDimensions ? scaling : 1.0 );
+                    referenceGeometry.rebase( p, particleDeformationGradient[p], newGeometryF );
                     // Remove only the active-dimensional volumetric stretch;
                     // leave F33=1 for plane strain.
                     for( int i = 0; i < activeDimensions; ++i )
@@ -12556,6 +12376,7 @@ bool SolidMechanicsMPM::subdivideParticles(
       particleSubdivideFlag[p] = 0;
     } );
 
+    auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
@@ -12719,6 +12540,8 @@ bool SolidMechanicsMPM::subdivideParticles(
         }
       }
 
+      GEOS_ERROR_IF( subdivisionMask != 0 && referenceGeometry.isSimplex( p ),
+                     "Runtime subdivision of native simplex geometry is not implemented; use PFW refinement" );
       particleSubdivideFlag[p] = subdivisionMask;
       int const numberOfDirections =
         countSubdivisionDirections( subdivisionMask, numDims );
@@ -13046,8 +12869,7 @@ bool SolidMechanicsMPM::subdivideParticles(
       }
 
       bool const hasCenterRelativeSurfacePosition =
-        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
-        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity );
+        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface );
       if( hasCenterRelativeSurfacePosition )
       {
         LvArray::tensorOps::subtract< 3 >(
@@ -17133,9 +16955,7 @@ bool SolidMechanicsMPM::markSurfaceAsDamage( integer const & surfaceFlag )
 {
   // Should we really just check if surface flag does not equal interior?
   // Only flags that represent opened/contact/damage surfaces should drive
-  // DFG/contact-style damage partitioning.  WeakDiscontinuity is intentionally
-  // omitted: it carries prescribed trace geometry for bonded weak-interface
-  // projection, but it is not a free/contact/damaged surface.
+  // DFG/contact-style damage partitioning.
   return surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::FullyDamaged ) || 
          surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Surface ) || 
          surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) || 
@@ -17331,8 +17151,7 @@ void SolidMechanicsMPM::updateSurfaceFlagOverload( ParticleManager & particleMan
       localIndex const p = activeParticleIndices[pp];
       if( particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Surface ) &&
           particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::Cohesive ) &&
-          particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) &&
-          particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity ) )
+          particleSurfaceFlag[p] != mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) )
       {
         if( particleDamage[p] > 0.0 ) // Activate damage field if any particles in domain have damage.
         {
@@ -17870,8 +17689,7 @@ void SolidMechanicsMPM::computeParticleSurfaceNormalsAndPositions( ParticleManag
           particleContributionToGrid = shapeFunctionGradientValue[i] * particleVolume[p];
           if( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) || 
               particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) || 
-              particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
-              particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity ) )
+              particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) )
           {
             // Also maps explicit particle surface normals. The user influence is dimensionless and
             // has already been scaled by the inverse active grid-cell diagonal.
@@ -21127,13 +20945,39 @@ void SolidMechanicsMPM::updateGridBackgroundStress( NodeManager & nodeManager )
   if( m_enableConfiningPressure == 1 )
   {
     real64 confiningStress[6] = { };
+    real64 const confiningPressureSphereRadius = m_confiningPressureSphereRadius;
+    real64 const confiningPressureSphereRadiusSqr =
+      confiningPressureSphereRadius * confiningPressureSphereRadius;
+    int const numDims = m_numDims;
     // Here we support only a confining pressure:  TODO: add support for a general background confining stress.
     // Tensor equation: confiningStress = m_confiningStress.
     LvArray::tensorOps::copy< 6 >( confiningStress, m_confiningStress );
     forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
     {
-      if ( ( gridPosition[g][0] < m_confiningPressureBoxMin[0] ) || ( gridPosition[g][1] < m_confiningPressureBoxMin[1] ) || ( gridPosition[g][2] < m_confiningPressureBoxMin[2] ) ||
-      ( gridPosition[g][0] > m_confiningPressureBoxMax[0] ) || ( gridPosition[g][1] > m_confiningPressureBoxMax[1] ) || ( gridPosition[g][2] > m_confiningPressureBoxMax[2] ) )
+      bool applyConfiningStress = false;
+      if( confiningPressureSphereRadius > 0.0 )
+      {
+        real64 radiusSqr =
+          LvArray::math::square( gridPosition[g][0] ) +
+          LvArray::math::square( gridPosition[g][1] );
+        if( numDims > 2 )
+        {
+          radiusSqr += LvArray::math::square( gridPosition[g][2] );
+        }
+        applyConfiningStress = radiusSqr > confiningPressureSphereRadiusSqr;
+      }
+      else
+      {
+        applyConfiningStress =
+          ( gridPosition[g][0] < m_confiningPressureBoxMin[0] ) ||
+          ( gridPosition[g][1] < m_confiningPressureBoxMin[1] ) ||
+          ( gridPosition[g][2] < m_confiningPressureBoxMin[2] ) ||
+          ( gridPosition[g][0] > m_confiningPressureBoxMax[0] ) ||
+          ( gridPosition[g][1] > m_confiningPressureBoxMax[1] ) ||
+          ( gridPosition[g][2] > m_confiningPressureBoxMax[2] );
+      }
+
+      if( applyConfiningStress )
       {
         // Tensor equation: gridBackgroundStress[g] = confiningStress.
         LvArray::tensorOps::copy< 6 >( gridBackgroundStress[g], confiningStress );
@@ -21614,8 +21458,7 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
       bool const hasExplicitSurfaceNormal =
         pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
         pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
-        pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ||
-        pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::WeakDiscontinuity ); // DamagedCohesive may not have an explicit surface normal if it was disabled
+        pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ); // DamagedCohesive may not have an explicit surface normal if it was disabled
 
       if( rigidBodyMode == 1 &&
           !SolidMechanicsMPM::isRigidBodySurfaceFlag( pSurfaceFlag ) )
@@ -22708,575 +22551,6 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
 }
 
 
-/**
- * @brief Applies the prescribed-surface weak-interface trace projection.
- *
- * This first implementation is intentionally narrow: it uses existing contact-group
- * fields and the already-mapped gridSurfacePosition/gridSurfaceFieldMass data to
- * define a trace point for each active nodal field pair.  The trace support uses
- * the trilinear background grid basis evaluated at that point, which is sufficient
- * for the current prescribed-surface, multi-group workflow and keeps the change
- * independent of cohesive-zone state.
- */
-void SolidMechanicsMPM::enforceWeakInterfaceTraceProjection( real64 const dt,
-                                                             DomainPartition & domain,
-                                                             NodeManager & nodeManager,
-                                                             MeshLevel & mesh )
-{
-  GEOS_MARK_FUNCTION;
-
-  for( int iter = 0; iter < m_weakInterfaceTraceProjectionIterations; ++iter )
-  {
-    zeroWeakInterfaceTraceProjectionFields( nodeManager );
-
-    computeWeakInterfaceTraceProjectionForces( dt,
-                                               nodeManager );
-
-    syncGridFields( { viewKeyStruct::gridWeakInterfaceTraceForceString() },
-                    domain,
-                    nodeManager,
-                    mesh,
-                    MPI_SUM );
-
-    applyWeakInterfaceTraceProjectionForces( dt,
-                                             nodeManager );
-
-    computeWeakInterfaceTraceProjectionPostVelocityJump( nodeManager );
-  }
-
-  updateInterfaceMechanismDiagnostics( nodeManager );
-}
-
-void SolidMechanicsMPM::zeroWeakInterfaceTraceProjectionFields( NodeManager & nodeManager )
-{
-  GEOS_MARK_FUNCTION;
-
-  localIndex const numVelocityFields = m_numVelocityFields;
-  arrayView2d< int > const gridWeakInterfaceTraceActive =
-    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
-  arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight =
-    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() );
-  arrayView3d< real64 > const gridWeakInterfaceTraceForce =
-    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() );
-  arrayView3d< real64 > const gridWeakInterfaceTracePoint =
-    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() );
-  arrayView2d< real64 > const gridWeakInterfaceTraceSupportWeight =
-    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() );
-  arrayView2d< int > const gridWeakInterfaceTraceSkipReason =
-    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() );
-  arrayView3d< real64 > const gridWeakInterfaceTraceSurfaceJump =
-    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() );
-  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJump =
-    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() );
-  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJumpPost =
-    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
-
-  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
-  {
-    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
-    {
-      gridWeakInterfaceTraceActive[g][fieldIndex] = 0;
-      gridWeakInterfaceTraceSkipReason[g][fieldIndex] = 0;
-      gridWeakInterfaceTraceAnchorWeight[g][fieldIndex] = 0.0;
-      gridWeakInterfaceTraceSupportWeight[g][fieldIndex] = 0.0;
-      for( int i = 0; i < 3; ++i )
-      {
-        gridWeakInterfaceTraceForce[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTracePoint[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTraceSurfaceJump[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTraceVelocityJump[g][fieldIndex][i] = 0.0;
-        gridWeakInterfaceTraceVelocityJumpPost[g][fieldIndex][i] = 0.0;
-      }
-    }
-  } );
-}
-
-void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionForces( real64 const dt,
-                                                                   NodeManager & nodeManager )
-{
-  GEOS_MARK_FUNCTION;
-
-#ifdef GEOS_USE_DEVICE
-  m_weakInterfaceTracePairs.move( parallelDeviceMemorySpace, true );
-#endif
-
-  integer const numDims = m_numDims;
-  int const planeStrain = m_planeStrain;
-  int const numContactGroups = m_numContactGroups;
-  integer const numVelocityFields = m_numVelocityFields;
-  int const numWeakInterfaceTracePairs = m_weakInterfaceTracePairs.size( 0 );
-  real64 const smallMass = m_smallMass;
-  real64 const minTraceWeight = m_weakInterfaceTraceMinWeight;
-  real64 const projectionScale = m_weakInterfaceTraceProjectionScale;
-  real64 const gapStabilization = m_weakInterfaceTraceGapStabilization;
-  real64 const maxGapCorrectionVelocity = m_weakInterfaceTraceMaxGapCorrectionVelocity;
-
-  real64 hEl[3] = {};
-  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
-  real64 xLocalMin[3] = {};
-  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
-  integer nEl[3] = {};
-  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
-
-  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
-  arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
-  arrayView2d< int const > const weakInterfaceTracePairs = m_weakInterfaceTracePairs;
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
-  arrayView2d< real64 const > const gridActive = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
-  arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-  arrayView2d< real64 const > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
-  arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
-  GEOS_UNUSED_VAR( gridMaterialVolume );
-  arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
-  arrayView3d< real64 const > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
-  arrayView2d< int > const gridWeakInterfaceTraceActive = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
-  arrayView2d< int > const gridWeakInterfaceTraceSkipReason = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceSkipReasonString() );
-  arrayView2d< real64 > const gridWeakInterfaceTraceAnchorWeight = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceAnchorWeightString() );
-  arrayView3d< real64 > const gridWeakInterfaceTraceForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() );
-  arrayView3d< real64 > const gridWeakInterfaceTracePoint = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() );
-  arrayView2d< real64 > const gridWeakInterfaceTraceSupportWeight = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSupportWeightString() );
-  arrayView3d< real64 > const gridWeakInterfaceTraceSurfaceJump = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() );
-  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJump = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpString() );
-
-  int constexpr traceSkipNone = 0;
-  int constexpr traceSkipGhostNode = 1;
-  int constexpr traceSkipPairNotSelected = 2;
-  int constexpr traceSkipInactiveFields = 3;
-  int constexpr traceSkipInsufficientSurfaceMass = 4;
-  int constexpr traceSkipTracePointOutsideGrid = 5;
-  int constexpr traceSkipAnchorWeightTooSmall = 6;
-  int constexpr traceSkipSupportWeightATooSmall = 7;
-  int constexpr traceSkipSupportWeightBTooSmall = 8;
-  int constexpr traceSkipInvalidEffectiveMass = 9;
-  int constexpr traceSkipActive = 10;
-  GEOS_UNUSED_VAR( traceSkipNone );
-
-  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
-  {
-    if( gridGhostRank[g] >= 0 )
-    {
-      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
-      {
-        gridWeakInterfaceTraceSkipReason[g][fieldIndex] = traceSkipGhostNode;
-      }
-      return;
-    }
-
-    for( localIndex A = 0; A < numVelocityFields - 1; ++A )
-    {
-      for( localIndex B = A + 1; B < numVelocityFields; ++B )
-      {
-        bool weakTracePair = true;
-        if( numWeakInterfaceTracePairs > 0 )
-        {
-          weakTracePair = false;
-          int const groupA = numContactGroups > 0 ? A % numContactGroups : A;
-          int const groupB = numContactGroups > 0 ? B % numContactGroups : B;
-          for( int pairIndex = 0; pairIndex < numWeakInterfaceTracePairs; ++pairIndex )
-          {
-            int const p0 = weakInterfaceTracePairs[pairIndex][0];
-            int const p1 = weakInterfaceTracePairs[pairIndex][1];
-            if( ( groupA == p0 && groupB == p1 ) ||
-                ( groupA == p1 && groupB == p0 ) )
-            {
-              weakTracePair = true;
-            }
-          }
-        }
-        if( !weakTracePair )
-        {
-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipPairNotSelected;
-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipPairNotSelected;
-          continue;
-        }
-
-        if( gridActive[g][A] <= 0.5 || gridActive[g][B] <= 0.5 )
-        {
-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInactiveFields;
-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInactiveFields;
-          continue;
-        }
-
-        real64 const spmA = gridSurfaceFieldMass[g][A];
-        real64 const spmB = gridSurfaceFieldMass[g][B];
-        real64 const spmAB = spmA + spmB;
-        if( spmA <= smallMass || spmB <= smallMass || spmAB <= smallMass )
-        {
-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInsufficientSurfaceMass;
-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInsufficientSurfaceMass;
-          continue;
-        }
-
-        real64 sGamma[3] = {};
-        real64 jump[3] = {};
-        real64 xGamma[3] = {};
-        for( int i = 0; i < 3; ++i )
-        {
-          sGamma[i] = ( spmA * gridSurfacePosition[g][A][i] +
-                        spmB * gridSurfacePosition[g][B][i] ) / spmAB;
-          jump[i] = gridSurfacePosition[g][A][i] - gridSurfacePosition[g][B][i];
-          xGamma[i] = gridPosition[g][i] + sGamma[i];
-          gridWeakInterfaceTracePoint[g][A][i] = sGamma[i];
-          gridWeakInterfaceTracePoint[g][B][i] = sGamma[i];
-          gridWeakInterfaceTraceSurfaceJump[g][A][i] = jump[i];
-          gridWeakInterfaceTraceSurfaceJump[g][B][i] = -jump[i];
-        }
-
-        int baseIJK[3] = {};
-        bool inGrid = true;
-        for( int d = 0; d < 3; ++d )
-        {
-          baseIJK[d] = LvArray::math::floor( ( xGamma[d] - xLocalMin[d] ) / hEl[d] );
-          if( baseIJK[d] < 0 || baseIJK[d] >= nEl[d] )
-          {
-            inGrid = false;
-          }
-        }
-        if( planeStrain == 1 )
-        {
-          baseIJK[2] = LvArray::math::max( 0, LvArray::math::min( baseIJK[2], static_cast< int >( nEl[2] - 1 ) ) );
-          inGrid = inGrid && nEl[2] > 0;
-        }
-        if( !inGrid )
-        {
-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipTracePointOutsideGrid;
-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipTracePointOutsideGrid;
-          continue;
-        }
-
-        localIndex traceNodes[8] = {};
-        real64 traceWeights[8] = {};
-        localIndex corner = ijkMap[baseIJK[0]][baseIJK[1]][baseIJK[2]];
-        real64 const xRel = ( xGamma[0] - gridPosition[corner][0] ) / hEl[0];
-        real64 const yRel = ( xGamma[1] - gridPosition[corner][1] ) / hEl[1];
-        real64 const zRel = ( xGamma[2] - gridPosition[corner][2] ) / hEl[2];
-        int node = 0;
-        for( int ii = 0; ii < 2; ++ii )
-        {
-          real64 const wx = ii * xRel + ( 1 - ii ) * ( 1.0 - xRel );
-          for( int jj = 0; jj < 2; ++jj )
-          {
-            real64 const wy = jj * yRel + ( 1 - jj ) * ( 1.0 - yRel );
-            for( int kk = 0; kk < 2; ++kk )
-            {
-              real64 const wz = kk * zRel + ( 1 - kk ) * ( 1.0 - zRel );
-              traceNodes[node] = ijkMap[baseIJK[0] + ii][baseIJK[1] + jj][baseIJK[2] + kk];
-              traceWeights[node] = wx * wy * wz;
-              ++node;
-            }
-          }
-        }
-
-        real64 anchorWeight = 0.0;
-        for( int q = 0; q < 8; ++q )
-        {
-          if( traceNodes[q] == g )
-          {
-            anchorWeight += traceWeights[q];
-          }
-        }
-        if( anchorWeight <= minTraceWeight )
-        {
-          gridWeakInterfaceTraceAnchorWeight[g][A] = anchorWeight;
-          gridWeakInterfaceTraceAnchorWeight[g][B] = anchorWeight;
-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipAnchorWeightTooSmall;
-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipAnchorWeightTooSmall;
-          continue;
-        }
-
-        real64 weightA = 0.0;
-        real64 weightB = 0.0;
-        for( int q = 0; q < 8; ++q )
-        {
-          localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
-          {
-            weightA += N;
-          }
-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
-          {
-            weightB += N;
-          }
-        }
-        if( weightA <= minTraceWeight || weightB <= minTraceWeight )
-        {
-          gridWeakInterfaceTraceSupportWeight[g][A] = weightA;
-          gridWeakInterfaceTraceSupportWeight[g][B] = weightB;
-          int const skipReason = weightA <= minTraceWeight ? traceSkipSupportWeightATooSmall : traceSkipSupportWeightBTooSmall;
-          gridWeakInterfaceTraceSkipReason[g][A] = skipReason;
-          gridWeakInterfaceTraceSkipReason[g][B] = skipReason;
-          continue;
-        }
-        gridWeakInterfaceTraceAnchorWeight[g][A] = anchorWeight;
-        gridWeakInterfaceTraceAnchorWeight[g][B] = anchorWeight;
-        gridWeakInterfaceTraceSupportWeight[g][A] = weightA;
-        gridWeakInterfaceTraceSupportWeight[g][B] = weightB;
-
-        real64 vA[3] = {};
-        real64 vB[3] = {};
-        real64 inverseEffectiveMass = 0.0;
-        for( int q = 0; q < 8; ++q )
-        {
-          localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
-          {
-            real64 const NA = N / weightA;
-            inverseEffectiveMass += NA * NA / gridMass[I][A];
-            for( int i = 0; i < numDims; ++i )
-            {
-              vA[i] += NA * gridVelocity[I][A][i];
-            }
-          }
-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
-          {
-            real64 const NB = N / weightB;
-            inverseEffectiveMass += NB * NB / gridMass[I][B];
-            for( int i = 0; i < numDims; ++i )
-            {
-              vB[i] += NB * gridVelocity[I][B][i];
-            }
-          }
-        }
-        if( inverseEffectiveMass <= 0.0 )
-        {
-          gridWeakInterfaceTraceSkipReason[g][A] = traceSkipInvalidEffectiveMass;
-          gridWeakInterfaceTraceSkipReason[g][B] = traceSkipInvalidEffectiveMass;
-          continue;
-        }
-
-        real64 residual[3] = {};
-        real64 impulse[3] = {};
-        real64 gapCorrection[3] = {};
-        for( int i = 0; i < numDims; ++i )
-        {
-          gapCorrection[i] = gapStabilization * jump[i] / dt;
-        }
-        real64 const gapCorrectionNorm = LvArray::tensorOps::l2Norm< 3 >( gapCorrection );
-        if( maxGapCorrectionVelocity > 0.0 && gapCorrectionNorm > maxGapCorrectionVelocity )
-        {
-          LvArray::tensorOps::scale< 3 >( gapCorrection, maxGapCorrectionVelocity / gapCorrectionNorm );
-        }
-        for( int i = 0; i < numDims; ++i )
-        {
-          residual[i] = vA[i] - vB[i] + gapCorrection[i];
-          impulse[i] = -projectionScale * anchorWeight * residual[i] / inverseEffectiveMass;
-          gridWeakInterfaceTraceVelocityJump[g][A][i] = residual[i];
-          gridWeakInterfaceTraceVelocityJump[g][B][i] = -residual[i];
-        }
-        gridWeakInterfaceTraceActive[g][A] = 1;
-        gridWeakInterfaceTraceActive[g][B] = 1;
-        gridWeakInterfaceTraceSkipReason[g][A] = traceSkipActive;
-        gridWeakInterfaceTraceSkipReason[g][B] = traceSkipActive;
-
-        for( int q = 0; q < 8; ++q )
-        {
-          localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
-          {
-            real64 const NA = N / weightA;
-            for( int i = 0; i < numDims; ++i )
-            {
-              RAJA::atomicAdd( parallelDeviceAtomic{},
-                               &gridWeakInterfaceTraceForce[I][A][i],
-                               NA * impulse[i] / dt );
-            }
-          }
-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
-          {
-            real64 const NB = N / weightB;
-            for( int i = 0; i < numDims; ++i )
-            {
-              RAJA::atomicAdd( parallelDeviceAtomic{},
-                               &gridWeakInterfaceTraceForce[I][B][i],
-                               -NB * impulse[i] / dt );
-            }
-          }
-        }
-      }
-    }
-  } );
-}
-
-
-void SolidMechanicsMPM::computeWeakInterfaceTraceProjectionPostVelocityJump( NodeManager & nodeManager )
-{
-  GEOS_MARK_FUNCTION;
-
-  int const numDims = m_numDims;
-  int const planeStrain = m_planeStrain;
-  int const numVelocityFields = m_numVelocityFields;
-  real64 const smallMass = m_smallMass;
-  real64 const minTraceWeight = m_weakInterfaceTraceMinWeight;
-
-  real64 hEl[3] = {};
-  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
-  real64 xLocalMin[3] = {};
-  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
-  integer nEl[3] = {};
-  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
-
-  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
-  arrayView2d< real64 const > const gridActive = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
-  arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-  arrayView3d< real64 const > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
-  arrayView2d< int const > const gridWeakInterfaceTraceActive = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
-  arrayView3d< real64 const > const gridWeakInterfaceTracePoint = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTracePointString() );
-  arrayView3d< real64 > const gridWeakInterfaceTraceVelocityJumpPost = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
-
-  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
-  {
-    for( localIndex A = 0; A < numVelocityFields - 1; ++A )
-    {
-      for( localIndex B = A + 1; B < numVelocityFields; ++B )
-      {
-        if( gridWeakInterfaceTraceActive[g][A] == 0 || gridWeakInterfaceTraceActive[g][B] == 0 )
-        {
-          continue;
-        }
-
-        real64 xGamma[3] = {};
-        for( int i = 0; i < 3; ++i )
-        {
-          xGamma[i] = gridPosition[g][i] + gridWeakInterfaceTracePoint[g][A][i];
-        }
-
-        int baseIJK[3] = {};
-        bool inGrid = true;
-        for( int d = 0; d < 3; ++d )
-        {
-          baseIJK[d] = LvArray::math::floor( ( xGamma[d] - xLocalMin[d] ) / hEl[d] );
-          if( baseIJK[d] < 0 || baseIJK[d] >= nEl[d] )
-          {
-            inGrid = false;
-          }
-        }
-        if( planeStrain == 1 )
-        {
-          baseIJK[2] = LvArray::math::max( 0, LvArray::math::min( baseIJK[2], static_cast< int >( nEl[2] - 1 ) ) );
-          inGrid = inGrid && nEl[2] > 0;
-        }
-        if( !inGrid )
-        {
-          continue;
-        }
-
-        localIndex traceNodes[8] = {};
-        real64 traceWeights[8] = {};
-        localIndex const corner = ijkMap[baseIJK[0]][baseIJK[1]][baseIJK[2]];
-        real64 const xRel = ( xGamma[0] - gridPosition[corner][0] ) / hEl[0];
-        real64 const yRel = ( xGamma[1] - gridPosition[corner][1] ) / hEl[1];
-        real64 const zRel = ( xGamma[2] - gridPosition[corner][2] ) / hEl[2];
-        int node = 0;
-        for( int ii = 0; ii < 2; ++ii )
-        {
-          real64 const wx = ii * xRel + ( 1 - ii ) * ( 1.0 - xRel );
-          for( int jj = 0; jj < 2; ++jj )
-          {
-            real64 const wy = jj * yRel + ( 1 - jj ) * ( 1.0 - yRel );
-            for( int kk = 0; kk < 2; ++kk )
-            {
-              real64 const wz = kk * zRel + ( 1 - kk ) * ( 1.0 - zRel );
-              traceNodes[node] = ijkMap[baseIJK[0] + ii][baseIJK[1] + jj][baseIJK[2] + kk];
-              traceWeights[node] = wx * wy * wz;
-              ++node;
-            }
-          }
-        }
-
-        real64 weightA = 0.0;
-        real64 weightB = 0.0;
-        for( int q = 0; q < 8; ++q )
-        {
-          localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
-          {
-            weightA += N;
-          }
-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
-          {
-            weightB += N;
-          }
-        }
-        if( weightA <= minTraceWeight || weightB <= minTraceWeight )
-        {
-          continue;
-        }
-
-        real64 vA[3] = {};
-        real64 vB[3] = {};
-        for( int q = 0; q < 8; ++q )
-        {
-          localIndex const I = traceNodes[q];
-          real64 const N = traceWeights[q];
-          if( gridActive[I][A] > 0.5 && gridMass[I][A] > smallMass )
-          {
-            real64 const NA = N / weightA;
-            for( int i = 0; i < numDims; ++i )
-            {
-              vA[i] += NA * gridVelocity[I][A][i];
-            }
-          }
-          if( gridActive[I][B] > 0.5 && gridMass[I][B] > smallMass )
-          {
-            real64 const NB = N / weightB;
-            for( int i = 0; i < numDims; ++i )
-            {
-              vB[i] += NB * gridVelocity[I][B][i];
-            }
-          }
-        }
-
-        for( int i = 0; i < numDims; ++i )
-        {
-          real64 const residual = vA[i] - vB[i];
-          gridWeakInterfaceTraceVelocityJumpPost[g][A][i] = residual;
-          gridWeakInterfaceTraceVelocityJumpPost[g][B][i] = -residual;
-        }
-      }
-    }
-  } );
-}
-
-void SolidMechanicsMPM::applyWeakInterfaceTraceProjectionForces( real64 const dt,
-                                                                 NodeManager & nodeManager )
-{
-  GEOS_MARK_FUNCTION;
-
-  localIndex const numDims = m_numDims;
-  localIndex const numVelocityFields = m_numVelocityFields;
-
-  arrayView2d< real64 const > const gridActive = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
-  arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-  arrayView3d< real64 > const gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
-  arrayView3d< real64 > const gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDVelocityString() );
-  arrayView3d< real64 > const gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
-  arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
-  arrayView3d< real64 const > const gridWeakInterfaceTraceForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() );
-
-  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
-  {
-    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
-    {
-      for( int i = 0; i < numDims; ++i )
-      {
-        real64 const weakForce = gridWeakInterfaceTraceForce[g][fieldIndex][i];
-        gridMomentum[g][fieldIndex][i] += weakForce * dt;
-        if( gridActive[g][fieldIndex] > 0.5 )
-        {
-          gridAcceleration[g][fieldIndex][i] += weakForce / gridMass[g][fieldIndex];
-          gridDVelocity[g][fieldIndex][i] += weakForce / gridMass[g][fieldIndex] * dt;
-          gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i] / gridMass[g][fieldIndex];
-        }
-      }
-    }
-  } );
-}
-
 void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
@@ -23303,16 +22577,6 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView3d< real64 const > const gridVelocity =
     nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
-  arrayView2d< int const > const gridWeakInterfaceTraceActive =
-    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceActiveString() );
-  arrayView2d< int const > const gridWeakInterfaceTraceContactSuppressed =
-    nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() );
-  arrayView3d< real64 const > const gridWeakInterfaceTraceForce =
-    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceForceString() );
-  arrayView3d< real64 const > const gridWeakInterfaceTraceSurfaceJump =
-    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceSurfaceJumpString() );
-  arrayView3d< real64 const > const gridWeakInterfaceTraceVelocityJumpPost =
-    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridWeakInterfaceTraceVelocityJumpPostString() );
 
   arrayView2d< int > const gridInterfaceMechanism =
     nodeManager.getReference< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() );
@@ -23343,9 +22607,6 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         bool const activeA = gridActive[g][A] > 0.5;
         bool const activeB = gridActive[g][B] > 0.5;
 
-        real64 const weakForceMagA2 = LvArray::tensorOps::l2NormSquared< 3 >( gridWeakInterfaceTraceForce[g][A] );
-        real64 const weakForceMagB2 = LvArray::tensorOps::l2NormSquared< 3 >( gridWeakInterfaceTraceForce[g][B] );
-        real64 const weakForceMag2 = weakForceMagA2 + weakForceMagB2;
         real64 const cohesiveForceMagA2 = LvArray::tensorOps::l2NormSquared< 3 >( gridCohesiveForce[g][A] );
         real64 const cohesiveForceMagB2 = LvArray::tensorOps::l2NormSquared< 3 >( gridCohesiveForce[g][B] );
         real64 const cohesiveForceMag2 = cohesiveForceMagA2 + cohesiveForceMagB2;
@@ -23353,12 +22614,6 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         real64 const contactForceMagB2 = LvArray::tensorOps::l2NormSquared< 3 >( gridContactForce[g][B] );
         real64 const contactForceMag2 = contactForceMagA2 + contactForceMagB2;
 
-        bool const weakAnchor =
-          activeA && activeB &&
-          gridWeakInterfaceTraceActive[g][A] != 0 &&
-          gridWeakInterfaceTraceActive[g][B] != 0;
-        bool const weakSupport =
-          !weakAnchor && weakForceMag2 > smallValue;
         bool const cohesive =
           activeA && activeB &&
           gridCohesiveNode[g] != 0 &&
@@ -23367,32 +22622,14 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         bool const contact =
           activeA && activeB &&
           contactForceMag2 > smallValue;
-        bool const suppressedInactive =
-          activeA && activeB &&
-          gridWeakInterfaceTraceContactSuppressed[g][A] != 0 &&
-          gridWeakInterfaceTraceContactSuppressed[g][B] != 0 &&
-          !weakAnchor && !weakSupport;
-
         int mechanism = 0;
-        if( weakAnchor )
-        {
-          mechanism = 3;
-        }
-        else if( weakSupport )
-        {
-          mechanism = 4;
-        }
-        else if( cohesive )
+        if( cohesive )
         {
           mechanism = 1;
         }
         else if( contact )
         {
           mechanism = 2;
-        }
-        else if( suppressedInactive )
-        {
-          mechanism = 5;
         }
 
         if( mechanism == 0 )
@@ -23402,15 +22639,10 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
 
         bool updateA = false;
         bool updateB = false;
-        if( mechanism == 3 || mechanism == 1 || mechanism == 5 )
+        if( mechanism == 1 )
         {
           updateA = true;
           updateB = true;
-        }
-        else if( mechanism == 4 )
-        {
-          updateA = weakForceMagA2 > smallValue;
-          updateB = weakForceMagB2 > smallValue;
         }
         else if( mechanism == 2 )
         {
@@ -23423,11 +22655,9 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         }
 
         int const mechanismPriority =
-          mechanism == 3 ? 5 :
-          mechanism == 4 ? 4 :
           mechanism == 1 ? 3 :
           mechanism == 2 ? 2 :
-          mechanism == 5 ? 1 : 0;
+          0;
 
         real64 nA[3] = {};
         LvArray::tensorOps::copy< 3 >( nA, gridSurfaceNormal[g][A] );
@@ -23447,11 +22677,6 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
           LvArray::tensorOps::scaledCopy< 3 >( nA, gridCohesiveArea[g][B], -1.0 );
           normalNorm = LvArray::tensorOps::l2Norm< 3 >( nA );
         }
-        if( normalNorm <= 1.0e-20 )
-        {
-          LvArray::tensorOps::copy< 3 >( nA, gridWeakInterfaceTraceSurfaceJump[g][A] );
-          normalNorm = LvArray::tensorOps::l2Norm< 3 >( nA );
-        }
         bool const haveNormal = normalNorm > 1.0e-20;
         if( haveNormal )
         {
@@ -23460,12 +22685,7 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
 
         real64 forceA[3] = {};
         real64 forceB[3] = {};
-        if( mechanism == 3 || mechanism == 4 )
-        {
-          LvArray::tensorOps::copy< 3 >( forceA, gridWeakInterfaceTraceForce[g][A] );
-          LvArray::tensorOps::copy< 3 >( forceB, gridWeakInterfaceTraceForce[g][B] );
-        }
-        else if( mechanism == 1 )
+        if( mechanism == 1 )
         {
           LvArray::tensorOps::copy< 3 >( forceA, gridCohesiveForce[g][A] );
           LvArray::tensorOps::copy< 3 >( forceB, gridCohesiveForce[g][B] );
@@ -23477,25 +22697,14 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         }
 
         real64 velocityJump[3] = {};
-        if( mechanism == 3 )
+        if( activeA && activeB )
         {
-          LvArray::tensorOps::copy< 3 >( velocityJump, gridWeakInterfaceTraceVelocityJumpPost[g][A] );
-        }
-        else
-        {
-          if( activeA && activeB )
-          {
-            LvArray::tensorOps::copy< 3 >( velocityJump, gridVelocity[g][A] );
-            LvArray::tensorOps::subtract< 3 >( velocityJump, gridVelocity[g][B] );
-          }
+          LvArray::tensorOps::copy< 3 >( velocityJump, gridVelocity[g][A] );
+          LvArray::tensorOps::subtract< 3 >( velocityJump, gridVelocity[g][B] );
         }
 
         real64 displacementJump[3] = {};
-        if( mechanism == 3 )
-        {
-          LvArray::tensorOps::copy< 3 >( displacementJump, gridWeakInterfaceTraceSurfaceJump[g][A] );
-        }
-        else if( mechanism == 1 && activeA && activeB )
+        if( mechanism == 1 && activeA && activeB )
         {
           LvArray::tensorOps::copy< 3 >( displacementJump, gridDisplacement[g][A] );
           LvArray::tensorOps::subtract< 3 >( displacementJump, gridDisplacement[g][B] );
@@ -23523,11 +22732,9 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
           LvArray::math::max( 0.0, LvArray::tensorOps::l2NormSquared< 3 >( displacementJump ) - displacementNormal * displacementNormal ) );
 
         int const currentPriorityA =
-          gridInterfaceMechanism[g][A] == 3 ? 5 :
-          gridInterfaceMechanism[g][A] == 4 ? 4 :
           gridInterfaceMechanism[g][A] == 1 ? 3 :
           gridInterfaceMechanism[g][A] == 2 ? 2 :
-          gridInterfaceMechanism[g][A] == 5 ? 1 : 0;
+          0;
         if( updateA && mechanismPriority >= currentPriorityA )
         {
           gridInterfaceMechanism[g][A] = mechanism;
@@ -23540,11 +22747,9 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
         }
 
         int const currentPriorityB =
-          gridInterfaceMechanism[g][B] == 3 ? 5 :
-          gridInterfaceMechanism[g][B] == 4 ? 4 :
           gridInterfaceMechanism[g][B] == 1 ? 3 :
           gridInterfaceMechanism[g][B] == 2 ? 2 :
-          gridInterfaceMechanism[g][B] == 5 ? 1 : 0;
+          0;
         if( updateB && mechanismPriority >= currentPriorityB )
         {
           gridInterfaceMechanism[g][B] = mechanism;
@@ -23677,10 +22882,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                               ParticleManager & particleManager,
                                               NodeManager & nodeManager )
 {
-#ifdef GEOS_USE_DEVICE
-  m_weakInterfaceTracePairs.move( parallelDeviceMemorySpace, true );
-#endif
-
   real64 hEl[3] = {};
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
@@ -23695,9 +22896,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   real64 const LRtolerance = m_LRtolerance;
   int const preventCZInterpenetration = m_preventCZInterpenetration;
   int const useSurfacePositionForContact = m_useSurfacePositionForContact;
-  int const enableWeakInterfaceTraceProjection = m_enableWeakInterfaceTraceProjection;
-  int const weakInterfaceTraceSuppressNodalContact = m_weakInterfaceTraceSuppressNodalContact;
-  int const numWeakInterfaceTracePairs = m_weakInterfaceTracePairs.size( 0 );
 
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
@@ -23731,7 +22929,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
     }
   }
   arrayView2d< real64 const > const frictionCoefficientTable = frictionCoefficientTableCopy;
-  arrayView2d< int const > const weakInterfaceTracePairs = m_weakInterfaceTracePairs;
 
   // Grid fields
   arrayView2d< int const > const gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
@@ -23748,7 +22945,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   arrayView3d< real64 const > const gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
   arrayView3d< real64 const > const gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() );
   arrayView3d< real64 > const gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
-  arrayView2d< int > const gridWeakInterfaceTraceContactSuppressed = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridWeakInterfaceTraceContactSuppressedString() );
   arrayView3d< real64 const > const gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
   arrayView3d< real64 const > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
@@ -23834,30 +23030,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                * conservative largest tabulated friction coefficient. */
               frictionCoefficient = maxFrictionCoefficient;
             }
-          }
-
-          bool weakTracePair = rigidBodyMode == 0 && enableWeakInterfaceTraceProjection == 1;
-          if( weakTracePair && numWeakInterfaceTracePairs > 0 )
-          {
-            weakTracePair = false;
-            int const groupA = numContactGroups > 0 ? A % numContactGroups : A;
-            int const groupB = numContactGroups > 0 ? B % numContactGroups : B;
-            for( int pairIndex = 0; pairIndex < numWeakInterfaceTracePairs; ++pairIndex )
-            {
-              int const p0 = weakInterfaceTracePairs[pairIndex][0];
-              int const p1 = weakInterfaceTracePairs[pairIndex][1];
-              if( ( groupA == p0 && groupB == p1 ) ||
-                  ( groupA == p1 && groupB == p0 ) )
-              {
-                weakTracePair = true;
-              }
-            }
-          }
-          if( weakTracePair && weakInterfaceTraceSuppressNodalContact == 1 )
-          {
-            gridWeakInterfaceTraceContactSuppressed[g][A] = 1;
-            gridWeakInterfaceTraceContactSuppressed[g][B] = 1;
-            continue;
           }
 
           // Evaluate the separability criterion for the contact pair.
@@ -30296,11 +29468,9 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
         particleRotation[p]
       );
          
-      bool const converged = LvArray::tensorOps::polarDecomposition< 3 >( particleRotation[p], newDeformationGradient );
-      if( !converged )
-      {
-        // TODO Mark particle as bad and report error outside kernel
-      }
+      LvArray::tensorOps::polarDecomposition< 3 >(
+        particleRotation[p],
+        newDeformationGradient );
 
       // Existing restartable particle volume is the authoritative volumetric
       // state; no new old-L or log-J field is required.
@@ -32177,6 +31347,9 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       return;
     }
 
+    // Preserve native vertices while the numerical reference is reset.
+    auto const referenceGeometry = subRegion.referenceGeometryViewOnHost();
+
     arrayView1d< int > particleDomainScaledFlag;
     if( cpdiDomainScaling == 1 )
     {
@@ -32539,6 +31712,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
         }
       }
 
+      referenceGeometry.rebase( p, oldDeformationGradient, newDeformationGradient );
       LvArray::tensorOps::copy< 3, 3 >(
         particleDeformationGradient[p],
         newDeformationGradient );

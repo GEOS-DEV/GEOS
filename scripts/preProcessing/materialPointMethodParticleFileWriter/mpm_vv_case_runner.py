@@ -101,25 +101,32 @@ def clean_case(run_dir: Path, output_dir: Path, force: bool):
                 child.unlink(missing_ok=True)
 
 
+def copy_file_portable(src: Path, dst: Path):
+    """Copy without shutil's sendfile fast path, which can fail on Lustre."""
+    with src.open("rb") as fsrc, dst.open("wb") as fdst:
+        shutil.copyfileobj(fsrc, fdst, length=16 * 1024 * 1024)
+    shutil.copystat(src, dst)
+
+
 def copy_files(pfw_root: Path, source_dir: Path, input_file: str, run_dir: Path):
     patterns = ["particleFileWriter.py", "pfw_*.py", "mpm_vv_*.py"]
     for pattern in patterns:
         for src in sorted(pfw_root.glob(pattern)):
             if src.is_file():
-                shutil.copy2(src, run_dir / src.name)
+                copy_file_portable(src, run_dir / src.name)
     for src in sorted(source_dir.glob("*.py")):
         if src.is_file():
-            shutil.copy2(src, run_dir / src.name)
-    shutil.copy2(source_dir / input_file, run_dir / input_file)
+            copy_file_portable(src, run_dir / src.name)
+    copy_file_portable(source_dir / input_file, run_dir / input_file)
     for pattern in ["*.csv", "*.txt", "*.dat", "*.png", "*.stl", "*.STL", "*.tex"]:
         for src in sorted(source_dir.glob(pattern)):
             if src.is_file():
-                shutil.copy2(src, run_dir / src.name)
+                copy_file_portable(src, run_dir / src.name)
     copied_userdefs = []
     for src in sorted(pfw_root.glob("userDefs_*.py")):
         if src.is_file():
             dst = run_dir / src.name
-            shutil.copy2(src, dst)
+            copy_file_portable(src, dst)
             copied_userdefs.append(dst)
     if copied_userdefs:
         preferred = copied_userdefs[0]
@@ -127,7 +134,7 @@ def copy_files(pfw_root: Path, source_dir: Path, input_file: str, run_dir: Path)
             if name:
                 alias = run_dir / f"userDefs_{name}.py"
                 if not alias.exists():
-                    shutil.copy2(preferred, alias)
+                    copy_file_portable(preferred, alias)
 
 
 def append_overrides(path: Path, case: str, bank: str, walltime: str | None, submit: bool, ats_fast: bool = False):

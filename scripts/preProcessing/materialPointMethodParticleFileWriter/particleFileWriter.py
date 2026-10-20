@@ -31,6 +31,9 @@ import platform
 import argparse
 import re
 import builtins
+import json
+from collections import Counter
+from pfw_surface_refinement import GeometryQueries, TwoPassRefiner, object_slice_bounds
 
 parser = argparse.ArgumentParser(description='Particle File Writer for GEOS-MPM')
 parser.add_argument('input_file', help="PFW input file", type=str)
@@ -78,16 +81,6 @@ _PFW_SILO_ALL_GRID_FIELDS = [
   "gridSurfaceTensionForce",
   "gridInternalForce",
   "gridContactForce",
-  "gridWeakInterfaceTraceActive",
-  "gridWeakInterfaceTraceContactSuppressed",
-  "gridWeakInterfaceTraceAnchorWeight",
-  "gridWeakInterfaceTraceForce",
-  "gridWeakInterfaceTracePoint",
-  "gridWeakInterfaceTraceSupportWeight",
-  "gridWeakInterfaceTraceSkipReason",
-  "gridWeakInterfaceTraceSurfaceJump",
-  "gridWeakInterfaceTraceVelocityJump",
-  "gridWeakInterfaceTraceVelocityJumpPost",
   "gridInterfaceMechanism",
   "gridInterfaceNormalForce",
   "gridInterfaceTangentialForce",
@@ -742,6 +735,7 @@ parameters = {
                'allowNonConvergedLinearSolverSolution': ( None, True ),  # MPM: accept failed linear solve solution instead of cutting dt.
                'areaIntegrationMethod': ( None, True ),  # MPM: method for nodal area integration.
                'autoRestart': ( False, False ),  # PFW: generate auto-restart job logic.
+               'applyVelocityGradientWhenSplittingParticles': ( None, True ),  # MPM: affine child-velocity correction during runtime splitting; solver default 1.
                'batchSize': ( None, True ), # Controls the constitutive update batch size running on device
                'bcTable': ( None, True ),  # MPM: time-dependent boundary-condition type table.
                'binSizeMultiplier': ( None, True ),  # MPM: neighbor/bin size multiplier.
@@ -784,14 +778,6 @@ parameters = {
                'eventReporting': (None, True), # MPM: enable event information reporting.
                'gridToParticleMapping': (None, True), # Determines shape function computations at runtime.
                'rigidBodyMaxGridFields': ( None, True ),  # MPM: reserve nodal velocity fields for rigid-body color partitioning.
-               'enableWeakInterfaceTraceProjection': ( None, True ),  # MPM: enable prescribed-surface weak-interface trace projection.
-               'weakInterfaceTraceProjectionIterations': ( None, True ),  # MPM: local Jacobi iterations for weak-interface trace projection.
-               'weakInterfaceTraceProjectionScale': ( None, True ),  # MPM: under-relaxation scale for weak-interface trace projection.
-               'weakInterfaceTraceGapStabilization': ( None, True ),  # MPM: optional trace gap-stabilization coefficient.
-               'weakInterfaceTraceMaxGapCorrectionVelocity': ( None, True ),  # MPM: cap for trace accumulated-gap correction velocity.
-               'weakInterfaceTraceMinWeight': ( None, True ),  # MPM: minimum active trace interpolation weight.
-               'weakInterfaceTraceSuppressNodalContact': ( None, True ),  # MPM: suppress nodal contact for trace-projected group pairs.
-               'weakInterfaceTracePairs': ( None, True ),  # MPM: contact-group pairs handled by weak-interface trace projection.
                'endTime': ( 1.0, False ),  # PFW: simulation end time for generated event.
                'exactJIntegration': ( None, True ),  # MPM: enforce exact J integration for F updates.
                'explicitSurfaceNormalInfluence': ( None, True ),  # MPM: dimensionless weight of explicit vs implicit surface normals; solver scales by inverse grid-cell diagonal.
@@ -848,7 +834,13 @@ parameters = {
                'parallelThreads': ( None, False ),  # PFW: writer-side parallel particle generation threads.
                'particleDataWriteInterval': ( None, True ),  # MPM: particle-data write interval.
                'particleFileFields': ( [], False ),  # PFW: particle columns to write.
-               'particleRefinement': ( None, False ),  # PFW: particle refinement settings.
+               'particleRefinement': ( None, False ),  # PFW: material-wise particle refinement settings.
+               'surfaceRefinementLevel': ( 1, False ),  # PFW: per-direction subdivision in the two-pass surface band.
+               'particleReferenceGeometry': ( 'equivalentBox', False ),  # Optional fromRefinement metadata; no mechanics change.
+               'particleDomainOutput': ( 'native', False ),  # ParticleRegion output: native or equivalentBox.
+               'surfaceRefinementMethod': ( 'cartesian', False ),  # PFW: cartesian or simplex (single-point B-splines).
+               'surfaceRefinementFallback': ( 'cartesian', False ),  # PFW: cartesian or error for unresolved local simplex cuts.
+               'surfaceRefinementPlaneTolerance': ( 0.05, False ),  # PFW: allowed corner/plane disagreement divided by child diagonal.
                'periodic': ( [ False, False, False ], False ),  # PFW: periodicity in x/y/z.
                'planeStrain': ( 0, True ),  # MPM: run in plane-strain mode.
                'plotGridFields': ( None, True ),  # MPM: write grid fields to plot output.
@@ -1057,6 +1049,14 @@ mpmSolverParameterString = ''.join(parameterStrings)
 cohesiveZoneRegionString = ""
 
 # Remove fields form particleFileOrder the user does not wish to write to particle field (particleFieldOrder preseveres the correct header order for values written to the particle file)
+particleReferenceGeometry = str(particleReferenceGeometry)
+if particleReferenceGeometry not in ('equivalentBox', 'fromRefinement'):
+  raise ValueError("particleReferenceGeometry must be 'equivalentBox' or 'fromRefinement'")
+nativeReferenceGeometry = particleReferenceGeometry == 'fromRefinement'
+if particleDomainOutput not in ('native', 'equivalentBox'):
+  raise ValueError("particleDomainOutput must be 'native' or 'equivalentBox'")
+if nativeReferenceGeometry:
+  from pfw_reference_geometry import COLUMN_NAMES, encode_reference_geometry, geometry_columns
 particleFileFields.extend([ 'RVector' ]) # MaterialType, velocity, contact group, and surface flags should all default to 0 if unspecified in GEOS initialization
 particleFileFields = set(particleFileFields)
 particleFieldOrder = [ f for f in particleFieldOrder if f in particleFileFields ]
@@ -1073,6 +1073,17 @@ NK = nK   # total grid cells in the z-direction (counting ghosts)
 ppcx = ppcx if ppcx != None else ppc
 ppcy = ppcy if ppcy != None else ppc
 ppcz = ppcz if ppcz != None else ppc
+
+# Validate these before make_objects: a sliced factory must receive the same
+# integer-row bounds used for particle ownership, plus a read-only coarse halo.
+surfaceRefinementLevel = 1 if surfaceRefinementLevel is None else surfaceRefinementLevel
+if float(surfaceRefinementLevel) != int(surfaceRefinementLevel) or int(surfaceRefinementLevel) < 1:
+  raise ValueError("pfw['surfaceRefinementLevel'] must be a positive integer")
+surfaceRefinementLevel = int(surfaceRefinementLevel)
+surfaceRefinementMethod = str(surfaceRefinementMethod).lower().replace('-conforming', '')
+if surfaceRefinementMethod not in ('cartesian', 'simplex'):
+  raise ValueError("surfaceRefinementMethod must be 'cartesian' or 'simplex'")
+surfaceRefinementEnabled = surfaceRefinementLevel > 1 or surfaceRefinementMethod == 'simplex'
 
 # list of geometry creation objects
 # if objects == None:
@@ -1100,8 +1111,10 @@ elif ( hasattr(job, 'make_objects') ):
   else:
     # This will be used to make objects only be created if their bounding box contains the current
     # ranks slice.
-    rankxmin = xmin + (rank/num_ranks)*(xmax-xmin)
-    rankxmax = xmin + ( (rank+1)/num_ranks)*(xmax-xmin)
+    coarseRows = int(ppcx * (NI if periodic[0] else NI - 2))
+    rankxmin, rankxmax = object_slice_bounds(
+      xmin, xmax, coarseRows, rank, num_ranks,
+      halo=surfaceRefinementEnabled, periodic=bool(periodic[0]))
     objects = job.make_objects(rankxmin,rankxmax)
 else:
   # Throw error if no objects defined.  you can still specify objects=[] to run with no objects.
@@ -1163,6 +1176,11 @@ for obj in objects:
   subregions = obj.getSubregions()
   subregions_all.extend(subregions)
 
+# A rank-local object factory may not contain every material/type.  XML written
+# by rank 0 must nevertheless describe particles produced by all ranks.
+if not flux:
+  subregions_all = [entry for entries in comm.allgather(subregions_all) for entry in entries]
+subregions_all = sorted(set(tuple(entry) for entry in subregions_all))
 print("subregions_all:", subregions_all)
 
 particleTypesPerMat = [set() for m in materials]
@@ -1285,357 +1303,456 @@ if generateParticleFile:
   if not flux:
     comm.Barrier()
 
-  max_num_particles = ni*nj*nk
-  
-  n_p = 0
-  for i in range(1+math.ceil(ni*rank/num_ranks), math.ceil(ni*(rank+1)/num_ranks)+1):
-    print('creating files, row',i,'/',ni,', estimated time remaining = ',(ni-i)/i*(time.time()-timer),'s')
-    x = xmin + (i - 0.5)*dx
+  def _particle_refinement_for_mat(mat):
+    if mat < 0:
+      return 1
+    try:
+      refinement = int(particleRefinement[mat])
+    except TypeError:
+      refinement = int(particleRefinement)
+    except IndexError as exc:
+      raise ValueError("particleRefinement does not define material index " + str(mat)) from exc
+    if refinement < 1:
+      raise ValueError("particleRefinement values must be at least 1")
+    return refinement
 
-    if(sortObjects):
-      sliceObjects = [ob for ob in objects if (ob.xMin() <= x and ob.xMax() >= x)]
+  def _evaluate_particle_data(object, pt, voxelFlag, surfaceOverride=None):
+    # Surface refinement may revisit this query at child particle centers. Keep
+    # every surface-dependent field relative to the point that will be written.
+    data = { "object": object, "surfaceFlag": voxelFlag }
+
+    if hasattr(object, 'getParticleType'):
+      data["particleType"] = object.getParticleType( pt )
     else:
-      sliceObjects = objects
+      data["particleType"] = object.particleType( object, pt ) if callable( object.particleType ) else object.particleType
 
-    for j in range(1,nj+1):
+    if "Velocity" in particleFileFields:
+      if hasattr(object, 'getVelocity'):
+        data["velocity"] = object.getVelocity( pt )
+      else:
+        data["velocity"] = object.vel( object, pt ) if callable( object.vel ) else object.vel
+
+    if "Damage" in particleFileFields:
+      if hasattr(object, 'getDamage' ):
+        damage = object.getDamage( pt )
+      else:
+        damage = object.damage(object, pt ) if callable( object.damage ) else object.damage
+
+      if(useSinusoidalDamageField):
+        damage = 0.5*( np.sin( 2.0*np.pi*(pt[0]-xmin)/(xmax-xmin) )*np.sin(  3.0*np.pi*(pt[1]-ymin)/(ymax-ymin) ) + 1 )
+
+      if(wavyCrack):
+        h = 2*dy
+        val = 0.25 * (ymax - ymin) * np.cos(2.0*3.1415926535*(pt[0]-xmin)/(xmax-xmin)) + ymin + 0.5 * (ymax - ymin)
+        if( val - h < pt[1] and pt[1] < val + h ):
+          damage = 1
+        else:
+          damage = 0
+      data["damage"] = damage
+
+    if "Porosity" in particleFileFields:
+      if hasattr(object, 'getPorosity' ):
+        data["porosity"] = object.getPorosity( pt )
+      else:
+        data["porosity"] = object.porosity(object, pt ) if callable( object.porosity ) else object.porosity
+
+    if "Temperature" in particleFileFields:
+      if hasattr(object, 'getTemperature' ):
+        data["temperature"] = object.getTemperature( pt )
+      else:
+        data["temperature"] = object.temperature(object, pt ) if callable( object.temperature ) else object.temperature
+
+    data["surfacePosition"] = np.array([0.0, 0.0, 0.0])
+    if "SurfacePosition" in particleFileFields and data["surfaceFlag"] != 0 and surfaceOverride is None:
+      data["surfacePosition"] = object.getSurfacePosition( pt )
+
+    data["surfaceNormal"] = np.array([0.0, 0.0, 0.0])
+    if "SurfaceNormal" in particleFileFields and data["surfaceFlag"] != 0 and surfaceOverride is None:
+      data["surfaceNormal"] = np.array(object.getSurfaceNormal( pt ))
+      if (np.linalg.norm(data["surfaceNormal"]) < 0.0001 ):
+        print("Near zero surface normal specfied for surface flagged particle.")
+
+    if surfaceOverride is not None and data["surfaceFlag"] != 0:
+      # The child uses the adopted local cutting plane.  Its offset must be
+      # recomputed from its own centroid, not copied from the coarse marker.
+      data["surfaceNormal"], data["surfacePosition"] = surfaceOverride
+
+    data["surfaceTraction"] = np.array([0.0,0.0,0.0])
+    if "SurfaceTraction" in particleFileFields and data["surfaceFlag"] != 0:
+      if hasattr(object, 'getSurfaceTraction'):
+        data["surfaceTraction"] = object.getSurfaceTraction( pt )
+      else:
+        data["surfaceTraction"] = object.surfaceTraction(object, pt) if callable(object.surfaceTraction) else object.surfaceTraction
+
+    if "MaterialType" in particleFileFields:
+      if hasattr(object, 'getMat'):
+        data["mat"] = _validate_particle_int_value("MaterialType", object, object.getMat( pt ), pt)
+      else:
+        data["mat"] = _validate_particle_int_value("MaterialType", object, object.mat(object, pt) if callable(object.mat) else object.mat, pt)
+    else:
+      data["mat"] = 0
+
+    if "ContactGroup" in particleFileFields:
+      if hasattr(object,'getGroup'):
+          data["group"] = object.getGroup( pt )
+      else:
+          if hasattr(object, 'group'):
+            data["group"] = object.group
+          else:
+            data["group"] = 0
+
+    if "ParticleColor" in particleFileFields:
+      if hasattr(object, 'getParticleColor'):
+        data["particleColor"] = _validate_particle_int_value("ParticleColor", object, object.getParticleColor( pt ), pt)
+      elif hasattr(object, 'getColor'):
+        data["particleColor"] = _validate_particle_int_value("ParticleColor", object, object.getColor( pt ), pt)
+      elif hasattr(object, 'particleColor'):
+        particleColorValue = object.particleColor( pt ) if callable(object.particleColor) else object.particleColor
+        data["particleColor"] = _validate_particle_int_value("ParticleColor", object, particleColorValue, pt)
+      elif hasattr(object, 'color'):
+        particleColorValue = object.color( pt ) if callable(object.color) else object.color
+        data["particleColor"] = _validate_particle_int_value("ParticleColor", object, particleColorValue, pt)
+      else:
+        data["particleColor"] = 0
+
+    if "MaterialDirection" in particleFileFields:
+      if hasattr( object, 'getMatDir' ):
+        data["matDir"] = object.getMatDir( pt )
+      else:
+        if hasattr( object, 'matDir' ):
+          data["matDir"] = object.matDir( object, pt ) if callable( object.matDir ) else object.matDir
+        else:
+          data["matDir"] = np.array([[1.0, 0.0, 0.0],[0.0, 1.0, 0.0],[0.0, 0.0, 1.0]])
+
+    if "StrengthScale" in particleFileFields:
+      if hasattr(object,'getStrengthScale'):
+          data["strengthScale"] = object.getStrengthScale( pt )
+      else:
+          if hasattr(object, 'strengthScale'):
+            data["strengthScale"] = object.strengthScale( object, pt ) if callable(object.strengthScale) else object.strengthScale
+          else:
+            data["strengthScale"] = 1.0
+
+    if "CZTag" in particleFileFields:
+      if hasattr(object,'getCZTag'):
+          data["czTag"] = object.getCZTag( pt )
+      else:
+          if hasattr(object, 'czTag'):
+            data["czTag"] = object.czTag( object, pt ) if callable(object.czTag) else object.czTag
+          else:
+            data["czTag"] = 0
+
+    if "ShrinkageFlag" in particleFileFields:
+      data["shrinkageFlag"] = object.flag if hasattr( object, 'flag') else 0
+
+    _validate_particle_value("ParticleType", object, data["particleType"], pt)
+    if "Velocity" in particleFileFields:
+      _validate_particle_value("Velocity", object, data["velocity"], pt)
+    if "Damage" in particleFileFields:
+      _validate_particle_value("Damage", object, data["damage"], pt)
+    if "Porosity" in particleFileFields:
+      _validate_particle_value("Porosity", object, data["porosity"], pt)
+    if "Temperature" in particleFileFields:
+      _validate_particle_value("Temperature", object, data["temperature"], pt)
+    if "SurfaceFlag" in particleFileFields:
+      _validate_particle_value("SurfaceFlag", object, data["surfaceFlag"], pt)
+    if "SurfacePosition" in particleFileFields:
+      _validate_particle_value("SurfacePosition", object, data["surfacePosition"], pt)
+    if "SurfaceNormal" in particleFileFields:
+      _validate_particle_value("SurfaceNormal", object, data["surfaceNormal"], pt)
+    if "SurfaceTraction" in particleFileFields:
+      _validate_particle_value("SurfaceTraction", object, data["surfaceTraction"], pt)
+    if "MaterialType" in particleFileFields:
+      _validate_particle_value("MaterialType", object, data["mat"], pt)
+    if "ContactGroup" in particleFileFields:
+      _validate_particle_value("ContactGroup", object, data["group"], pt)
+    if "ParticleColor" in particleFileFields:
+      _validate_particle_value("ParticleColor", object, data["particleColor"], pt)
+    if "MaterialDirection" in particleFileFields:
+      _validate_particle_value("MaterialDirection", object, data["matDir"], pt)
+    if "StrengthScale" in particleFileFields:
+      _validate_particle_value("StrengthScale", object, data["strengthScale"], pt)
+    if "CZTag" in particleFileFields:
+      _validate_particle_value("CZTag", object, data["czTag"], pt)
+    if "ShrinkageFlag" in particleFileFields:
+      _validate_particle_value("ShrinkageFlag", object, data["shrinkageFlag"], pt)
+
+    return data
+
+  def _query_particle_data(pt, queryObjects):
+    for object in queryObjects:
+      voxelFlag = object.isInterior( pt, surfaceDepth )
+      if( voxelFlag >= 0 ):
+        return _evaluate_particle_data(object, pt, voxelFlag)
+    return None
+
+  def _particle_file_line(particleNumber, particlePosition, data, dxr, dyr, dzr, geometryVertices=None):
+    object = data["object"]
+    pString = str(particleNumber) + delim \
+              + str(particlePosition[0]) + delim \
+              + str(particlePosition[1]) + delim \
+              + str(particlePosition[2]) + delim \
+              + str(data["particleType"])
+
+    if "Velocity" in particleFileFields:
+      velocity = data["velocity"]
+      velocityValues = [velocity[0], velocity[1], 0.0 if planeStrain == 1 else velocity[2]]
+      _validate_particle_value("Velocity", object, velocityValues, particlePosition)
+      pString = pString + delim + str(velocityValues[0]) + delim \
+                                + str(velocityValues[1]) + delim \
+                                + str(velocityValues[2])
+
+    if "MaterialType" in particleFileFields:
+      pString = pString + delim + str(data["mat"])
+
+    if "ContactGroup" in particleFileFields:
+      pString = pString + delim + str(data["group"])
+
+    if "ParticleColor" in particleFileFields:
+      pString = pString + delim + str(data["particleColor"])
+
+    if "SurfaceFlag" in particleFileFields:
+      pString = pString + delim + str(data["surfaceFlag"])
+
+    if "Damage" in particleFileFields:
+      pString = pString + delim + str(data["damage"])
+
+    if "Porosity" in particleFileFields:
+      pString = pString + delim + str(data["porosity"])
+
+    if "Temperature" in particleFileFields:
+      pString = pString + delim + str(data["temperature"])
+
+    if "StrengthScale" in particleFileFields:
+      pString = pString + delim + str(data["strengthScale"])
+
+    if "CZTag" in particleFileFields:
+      pString = pString + delim + str(data["czTag"])
+
+    if "RVector" in particleFileFields:
+      rVectorValues = [dxr*0.5, 0, 0,
+                       0, dyr*0.5, 0,
+                       0, 0, dzr*0.5]
+      _validate_particle_value("RVector", object, rVectorValues, particlePosition)
+      pString = pString + delim + str(rVectorValues[0]) + delim \
+                                + str(rVectorValues[1]) + delim \
+                                + str(rVectorValues[2]) + delim \
+                                + str(rVectorValues[3]) + delim \
+                                + str(rVectorValues[4]) + delim \
+                                + str(rVectorValues[5]) + delim \
+                                + str(rVectorValues[6]) + delim \
+                                + str(rVectorValues[7]) + delim \
+                                + str(rVectorValues[8])
+
+    if "MaterialDirection" in particleFileFields:
+      matDir = data["matDir"]
+      if (np.array(matDir).size == 9):
+        pString = pString + delim + str(matDir[0][0]) + delim \
+                                  + str(matDir[0][1]) + delim \
+                                  + str(matDir[0][2]) + delim \
+                                  + str(matDir[1][0]) + delim \
+                                  + str(matDir[1][1]) + delim \
+                                  + str(matDir[1][2]) + delim \
+                                  + str(matDir[2][0]) + delim \
+                                  + str(matDir[2][1]) + delim \
+                                  + str(matDir[2][2])
+      elif (np.array(matDir).size == 3):
+        pString = pString + delim + str(matDir[0]) + delim \
+                                  + str(matDir[1]) + delim \
+                                  + str(matDir[2]) + delim + "0" + delim + "1" + delim + "0" + delim + "0" + delim + "0" + delim + "1"
+      else:
+        print("matDir isn't the size 3 or 3x3", matDir, object, object.name)
+
+    if "SurfaceNormal" in particleFileFields:
+      surfaceNormal = data["surfaceNormal"]
+      if ( planeStrain == 1 and surfaceNormal[2] != 0.0 ):
+        norm = float( np.sqrt( surfaceNormal[0]*surfaceNormal[0] + surfaceNormal[1]*surfaceNormal[1] ) )
+        surfaceNormalValues = [surfaceNormal[0]/norm, surfaceNormal[1]/norm, 0.0]
+      else:
+        surfaceNormalValues = [surfaceNormal[0], surfaceNormal[1], surfaceNormal[2]]
+      _validate_particle_value("SurfaceNormal", object, surfaceNormalValues, particlePosition)
+      pString = pString + delim + str(surfaceNormalValues[0]) + delim \
+                                + str(surfaceNormalValues[1]) + delim \
+                                + str(surfaceNormalValues[2])
+
+    if "SurfacePosition" in particleFileFields:
+      surfacePosition = data["surfacePosition"]
+      surfacePositionValues = [surfacePosition[0], surfacePosition[1], 0.0 if planeStrain == 1 else surfacePosition[2]]
+      _validate_particle_value("SurfacePosition", object, surfacePositionValues, particlePosition)
+      pString = pString + delim + str(surfacePositionValues[0]) + delim \
+                                + str(surfacePositionValues[1]) + delim \
+                                + str(surfacePositionValues[2])
+
+    if "SurfaceTraction" in particleFileFields:
+      surfaceTraction = data["surfaceTraction"]
+      surfaceTractionValues = [surfaceTraction[0], surfaceTraction[1], 0.0 if planeStrain == 1 else surfaceTraction[2]]
+      _validate_particle_value("SurfaceTraction", object, surfaceTractionValues, particlePosition)
+      pString = pString + delim + str(surfaceTractionValues[0]) + delim \
+                                + str(surfaceTractionValues[1]) + delim \
+                                + str(surfaceTractionValues[2])
+
+    if "ShrinkageFlag" in particleFileFields:
+      pString = pString + delim + str(data["shrinkageFlag"])
+
+    if nativeReferenceGeometry:
+      geometry = encode_reference_geometry(particlePosition, (dxr, dyr, dzr),
+                                           geometryVertices, plane_strain=planeStrain == 1)
+      pString += delim + geometry_columns(geometry, delim)
+    return pString +'\n'
+
+  refinementReport = None
+  if surfaceRefinementEnabled:
+    # Logical pass 1: ordinary coarse-center occupancy and surface flags.
+    # Logical pass 2: replace only the selected band, including empty centers.
+    # The helper pipelines these passes through three x slices.  Each rank
+    # requeries its read-only halo and emits only its owned coarse domains.
+    queries = GeometryQueries(objects, surfaceDepth, planeStrain == 1, sortObjects)
+
+    def _capture_coarse_record(sample):
+      # This is the ordinary first-pass particle record.  Keeping only its text
+      # avoids reevaluating bulk geometry/state in pass 2.  Selected parents'
+      # records are discarded and replaced, not added to their children.
+      obj = objects[sample.object_index]
+      data = _evaluate_particle_data(obj, sample.point, sample.surface_flag)
+      if sample.surface_flag and {'SurfaceNormal', 'SurfacePosition'} <= particleFileFields:
+        normal = np.array(data['surfaceNormal'], dtype=float).copy()
+        offset = np.array(data['surfacePosition'], dtype=float).copy()
+        if planeStrain == 1:
+          normal[2] = 0.0
+          offset[2] = 0.0
+        length = np.linalg.norm(normal)
+        sample.surface_checked = True
+        if np.isfinite(length) and length > 1.0e-14 and np.all(np.isfinite(offset)):
+          sample.surface = (normal / length, sample.point + offset)
+        queries.stats['surface_queries'] += 1
+      return _particle_file_line(0, sample.point, data, dx, dy, dz).split(delim, 1)[1]
+
+    n_p = 0
+    try:
+      refiner = TwoPassRefiner(
+        queries, [xmin, ymin, zmin], [ni, nj, nk], [dx, dy, dz], periodic,
+        rank=rank, size=num_ranks, plane_strain=(planeStrain == 1),
+        method=surfaceRefinementMethod, level=surfaceRefinementLevel,
+        material_refinement=_particle_refinement_for_mat,
+        fallback=surfaceRefinementFallback, plane_tolerance=surfaceRefinementPlaneTolerance,
+        capture_coarse_record=_capture_coarse_record)
+      for piece in refiner.particles():
+        if piece.coarse_record is not None:
+          n_p += 1
+          particleVolume += piece.volume
+          particleFile.write(str(n_p) + delim + piece.coarse_record)
+          continue
+        obj = objects[piece.sample.object_index]
+        # Restore any geometry-object membership cache before evaluating state.
+        # The coarse pass has already staged parent state.  Replacement state
+        # is evaluated at emitted children, never at trial simplex centroids or
+        # halo points.  For rank-count invariance, getters must be deterministic
+        # functions of position, not process-order-dependent random draws.
+        obj.isInterior(piece.point, surfaceDepth)
+        queries.stats["isInterior_calls"] += 1
+        override = None
+        flag = piece.sample.surface_flag
+        if piece.vertices is not None:
+          flag = piece.surface_flag
+          distance = float(np.dot(piece.normal, piece.point - piece.surface_point))
+          override = (piece.normal, -distance * piece.normal)
+        data = _evaluate_particle_data(obj, piece.point, flag, surfaceOverride=override)
+        if piece.vertices is not None and data["particleType"] != 1:
+          raise ValueError("Simplex refinement requires particleType=1 (SinglePointBSpline) "
+                           "at cut domains; use cartesian refinement for CPDI/CPTI particles")
+        if "MaterialType" in particleFileFields and data["mat"] != piece.sample.material:
+          raise ValueError("Geometry getMat changed between classification and particle output")
+        if "ContactGroup" in particleFileFields and data["group"] != piece.sample.group:
+          raise ValueError("Geometry getGroup changed between classification and particle output")
+        _validate_particle_value("Position", obj, piece.point, piece.point)
+        _validate_particle_value("ParticleType", obj, data["particleType"], piece.point)
+        n_p += 1
+        particleVolume += piece.volume
+        # Keep legacy equivalent-box R-vectors unchanged. Optional native
+        # reference geometry is appended from the already constructed simplex.
+        particleFile.write(_particle_file_line(n_p, piece.point, data, *piece.widths,
+                                               geometryVertices=piece.vertices))
+      refinementReport = refiner.report()
+    except Exception as exc:
+      particleFile.close()
+      _abort_particle_generation("Two-pass surface refinement failed on rank " + str(rank) + ": " + str(exc))
+  else:
+    # Preserve the original no-surface-refinement path and its output ordering.
+    max_num_particles = ni*nj*nk
+
+    n_p = 0
+    for i in range(1+math.ceil(ni*rank/num_ranks), math.ceil(ni*(rank+1)/num_ranks)+1):
+      print('creating files, row',i,'/',ni,', estimated time remaining = ',(ni-i)/i*(time.time()-timer),'s')
+      x = xmin + (i - 0.5)*dx
+
+      if(sortObjects):
+        sliceObjects = [ob for ob in objects if (ob.xMin() <= x and ob.xMax() >= x)]
+      else:
+        sliceObjects = objects
+
+      for j in range(1,nj+1):
         y = ymin + (j - 0.5)*dy
         for k in range(1,nk+1):
           z = zmin + (k - 0.5)*dz
+          pt = np.array([x,y,z])
+          parentData = _query_particle_data(pt, sliceObjects)
+          if parentData is None:
+            continue
 
-          match = False
-          ob = 0
+          baseRefinement = _particle_refinement_for_mat(parentData["mat"])
+          isSurfaceParent = parentData["surfaceFlag"] != 0
+          localRefinement = baseRefinement * (surfaceRefinementLevel if isSurfaceParent else 1)
+          dxr = dx/localRefinement
+          dyr = dy/localRefinement
+          dzr = dz if planeStrain == 1 else dz/localRefinement
+          queryObjects = objects if isSurfaceParent and surfaceRefinementLevel > 1 else sliceObjects
 
-          while (ob < len(sliceObjects) and match == False):
-            object = sliceObjects[ob]
-            ob = ob+1
-            pt = np.array([x,y,z])
-            voxelFlag = object.isInterior( pt, surfaceDepth ) # Voxel flags greater than or equal to 0 denote interior regions of object
-            if( voxelFlag >= 0 ):
-              match = True
+          for ri in range(localRefinement):
+            for rj in range(localRefinement):
+              for rk in range( ( 1 if planeStrain == 1 else localRefinement ) ):
+                xr = x - 0.5*dx + (ri + 0.5)*dxr
+                yr = y - 0.5*dy + (rj + 0.5)*dyr
+                zr = z - 0.5*dz + (rk + 0.5)*dzr
+                particlePosition = [xr, yr, zr]
+                childData = parentData
+                if isSurfaceParent and surfaceRefinementLevel > 1:
+                  childData = _query_particle_data(np.array(particlePosition), queryObjects)
+                  if childData is None:
+                    continue
 
-              # Get the particle type, default is CPDI
-              if hasattr(object, 'getParticleType'):
-                particleType = object.getParticleType( pt )
-              else:
-                particleType = object.particleType( object, pt ) if callable( object.particleType ) else object.particleType
-
-              # set the particle damage to be the object damage unless
-              # overwritten by surface flags.
-              if "Velocity" in particleFileFields:
-                if hasattr(object, 'getVelocity'):
-                  velocity = object.getVelocity( pt )
-                else:
-                  velocity = object.vel( object, pt ) if callable( object.vel ) else object.vel
-
-              if "Damage" in particleFileFields:
-                # set the particle damage to be the object damage unless
-                # overwritten by surface flags.
-                if hasattr(object, 'getDamage' ): # some internal function defines spatially varing initial damage
-                  damage = object.getDamage( pt )
-                else: # damage is constant for the object:
-                  damage = object.damage(object, pt ) if callable( object.damage ) else object.damage
-
-                # force damage to be a scalar value.
-                if(useSinusoidalDamageField):
-                  damage = 0.5*( np.sin( 2.0*np.pi*(x-xmin)/(xmax-xmin) )*np.sin(  3.0*np.pi*(y-ymin)/(ymax-ymin) ) + 1 )
-
-                if(wavyCrack):
-                  h = 2*dy
-                  val = 0.25 * (ymax - ymin) * np.cos(2.0*3.1415926535*(x-xmin)/(xmax-xmin)) + ymin + 0.5 * (ymax - ymin)
-                  if( val - h < y and y < val + h ):
-                    damage = 1
-                  else:
-                    damage = 0
-
-              if "Porosity" in particleFileFields:
-                if hasattr(object, 'getPorosity' ):
-                  porosity = object.getPorosity( pt )
-                else: # damage is constant for the object:
-                  porosity = object.porosity(object, pt ) if callable( object.porosity ) else object.porosity
-
-              if "Temperature" in particleFileFields:
-                if hasattr(object, 'getTemperature' ):
-                  temperature = object.getTemperature( pt )
-                else: # temperature is constant for the object:
-                  temperature = object.temperature(object, pt ) if callable( object.temperature ) else object.temperature
-
-              # Particle Surface Flags:
-              #  enum struct SurfaceFlag : integer
-              #  {
-              #    0: Interior,
-              #    1: FullyDamaged,
-              #    2: Surface,
-              #    3: Cohesive   
-              #    4: Damaged Cohesive 
-              #  };
-
-              surfaceFlag = voxelFlag
-
-              surfacePosition = np.array([0.0, 0.0, 0.0])
-              if "SurfacePosition" in particleFileFields and surfaceFlag != 0:
-                 surfacePosition = object.getSurfacePosition( pt )
-                
-              surfaceNormal = np.array([0.0, 0.0, 0.0])
-              if "SurfaceNormal" in particleFileFields and surfaceFlag != 0:
-                surfaceNormal = np.array(object.getSurfaceNormal( pt ))
-                
-                if (np.linalg.norm(surfaceNormal) < 0.0001 ):
-                  print("Near zero surface normal specfied for surface flagged particle.")
-
-              surfaceTraction = np.array([0.0,0.0,0.0])  
-              if "SurfaceTraction" in particleFileFields and surfaceFlag != 0:
-                if hasattr(object, 'getSurfaceTraction'):
-                  surfaceTraction = object.getSurfaceTraction( pt )
-                else:
-                  surfaceTraction = object.surfaceTraction(object, pt) if callable(object.surfaceTraction) else object.surfaceTraction
-
-              if "MaterialType" in particleFileFields:
-                if hasattr(object, 'getMat'):
-                  mat = _validate_particle_int_value("MaterialType", object, object.getMat( pt ), pt)
-                else:
-                  mat = _validate_particle_int_value("MaterialType", object, object.mat(object, pt) if callable(object.mat) else object.mat, pt)
-
-              if "ContactGroup" in particleFileFields:
-                if hasattr(object,'getGroup'):
-                    group = object.getGroup( pt )
-                else:
-                    if hasattr(object, 'group'):
-                      group = object.group
-                    else:
-                      group = 0
-
-              if "ParticleColor" in particleFileFields:
-                if hasattr(object, 'getParticleColor'):
-                  particleColor = _validate_particle_int_value("ParticleColor", object, object.getParticleColor( pt ), pt)
-                elif hasattr(object, 'getColor'):
-                  particleColor = _validate_particle_int_value("ParticleColor", object, object.getColor( pt ), pt)
-                elif hasattr(object, 'particleColor'):
-                  particleColorValue = object.particleColor( pt ) if callable(object.particleColor) else object.particleColor
-                  particleColor = _validate_particle_int_value("ParticleColor", object, particleColorValue, pt)
-                elif hasattr(object, 'color'):
-                  particleColorValue = object.color( pt ) if callable(object.color) else object.color
-                  particleColor = _validate_particle_int_value("ParticleColor", object, particleColorValue, pt)
-                else:
-                  particleColor = 0
-
-              if "MaterialDirection" in particleFileFields:
-                # material direction, These will be read from object, will default to [1,0,0] if not 
-                # specified.
-                if hasattr( object, 'getMatDir' ):
-                  matDir = object.getMatDir( pt )
-                else:
-                  if hasattr( object, 'matDir' ):
-                    matDir = object.matDir( object, matDir ) if callable( object.matDir ) else object.matDir
-                  else:
-                    matDir = np.array([[1.0, 0.0, 0.0],[0.0, 1.0, 0.0],[0.0, 0.0, 1.0]])
-  
-              if "StrengthScale" in particleFileFields:
-                # object may have some constant or spatially varying strength scale.
-                # which is used by some material properties to modify strength.
-                # this is an alternative to using internal weibull scaling, but may
-                # be useful for defining other spatial distributions or object
-                # specific weak layers, etc. defaults to 1 if not specified.   
-                if hasattr(object,'getStrengthScale'):
-                    strengthScale = object.getStrengthScale( pt )
-                else:
-                    if hasattr(object, 'strengthScale'):
-                      strengthScale = object.strengthScale( object, pt ) if callable(object.strengthScale) else object.strengthScale
-                    else:
-                      strengthScale = 1.0
-              
-              czTag = 0
-              if "CZTag" in particleFileFields:
-                if hasattr(object,'getCZTag'):
-                    czTag = object.getCZTag( pt )
-                else:
-                    if hasattr(object, 'getCZTag'):
-                      czTag = object.getCZTag( object, pt ) if callable(object.getCZTag) else object.getCZTag
-                    else:
-                      czTag = 0
-
-              # Validate fields before using them to refine or write particles.
-              # This catches None, NaN, and +/-Inf values with object and field context.
-              _validate_particle_value("ParticleType", object, particleType, pt)
-
-              if "Velocity" in particleFileFields:
-                _validate_particle_value("Velocity", object, velocity, pt)
-
-              if "Damage" in particleFileFields:
-                _validate_particle_value("Damage", object, damage, pt)
-
-              if "Porosity" in particleFileFields:
-                _validate_particle_value("Porosity", object, porosity, pt)
-
-              if "Temperature" in particleFileFields:
-                _validate_particle_value("Temperature", object, temperature, pt)
-
-              if "SurfaceFlag" in particleFileFields:
-                _validate_particle_value("SurfaceFlag", object, surfaceFlag, pt)
-
-              if "SurfacePosition" in particleFileFields:
-                _validate_particle_value("SurfacePosition", object, surfacePosition, pt)
-
-              if "SurfaceNormal" in particleFileFields:
-                _validate_particle_value("SurfaceNormal", object, surfaceNormal, pt)
-
-              if "SurfaceTraction" in particleFileFields:
-                _validate_particle_value("SurfaceTraction", object, surfaceTraction, pt)
-
-              if "MaterialType" in particleFileFields:
-                _validate_particle_value("MaterialType", object, mat, pt)
-              else:
-                mat = 0
-
-              if "ContactGroup" in particleFileFields:
-                _validate_particle_value("ContactGroup", object, group, pt)
-
-              if "ParticleColor" in particleFileFields:
-                _validate_particle_value("ParticleColor", object, particleColor, pt)
-
-              if "MaterialDirection" in particleFileFields:
-                _validate_particle_value("MaterialDirection", object, matDir, pt)
-
-              if "StrengthScale" in particleFileFields:
-                _validate_particle_value("StrengthScale", object, strengthScale, pt)
-
-              if "CZTag" in particleFileFields:
-                _validate_particle_value("CZTag", object, czTag, pt)
-
-              if "ShrinkageFlag" in particleFileFields and hasattr( object, 'flag'):
-                _validate_particle_value("ShrinkageFlag", object, object.flag, pt)
-
-              # particleTypesPerMat[mat].add( particleType )
-              dxr = dx/particleRefinement[mat]
-              dyr = dy/particleRefinement[mat]
-              dzr = dz if planeStrain == 1 else dz/particleRefinement[mat]
-              
-              for ri in range(particleRefinement[mat]):
-                for rj in range(particleRefinement[mat]):
-                  for rk in range( ( 1 if planeStrain == 1 else particleRefinement[mat] ) ):
-                    xr = x - 0.5*dx + (ri + 0.5)*dxr
-                    yr = y - 0.5*dy + (rj + 0.5)*dyr
-                    zr = z - 0.5*dz + (rk + 0.5)*dzr
-                    
-                    # only create particle if mat>=0, that way we can specify mat=-1 to generate a 
-                    # defect or void.
-                    if(mat>=0):
-                      particlePosition = [xr, yr, zr]
-                      _validate_particle_value("Position", object, particlePosition, particlePosition)
-                      _validate_particle_value("ParticleType", object, particleType, particlePosition)
-
-                      n_p = n_p + 1
-
-                      particleVolume += dxr*dyr*dzr
-
-                      pString = str(n_p) + delim \
-                                + str(xr) + delim \
-                                + str(yr) + delim \
-                                + str(zr) + delim \
-                                + str(particleType)
-
-                      if "Velocity" in particleFileFields:
-                        velocityValues = [velocity[0], velocity[1], 0.0 if planeStrain == 1 else velocity[2]]
-                        _validate_particle_value("Velocity", object, velocityValues, particlePosition)
-                        pString = pString + delim + str(velocityValues[0]) + delim \
-                                                  + str(velocityValues[1]) + delim \
-                                                  + str(velocityValues[2])
-
-                      if "MaterialType" in particleFileFields:
-                        pString = pString + delim + str(mat)
-                        
-                      if "ContactGroup" in particleFileFields:
-                        pString = pString + delim + str(group)
-
-                      if "ParticleColor" in particleFileFields:
-                        pString = pString + delim + str(particleColor)
-
-                      if "SurfaceFlag" in particleFileFields:
-                        pString = pString + delim + str(surfaceFlag)
-
-                      if "Damage" in particleFileFields:
-                        pString = pString + delim + str(damage)
-
-                      if "Porosity" in particleFileFields:
-                        pString = pString + delim + str(porosity)
-
-                      if "Temperature" in particleFileFields:
-                        pString = pString + delim + str(temperature)
-
-                      if "StrengthScale" in particleFileFields:
-                        pString = pString + delim + str(strengthScale)
-
-                      if "CZTag" in particleFileFields:
-                        pString = pString + delim + str(czTag)
-
-                      if "RVector" in particleFileFields:
-                        rVectorValues = [dxr*0.5, 0, 0,
-                                         0, dyr*0.5, 0,
-                                         0, 0, dzr*0.5]
-                        _validate_particle_value("RVector", object, rVectorValues, particlePosition)
-                        pString = pString + delim + str(rVectorValues[0]) + delim \
-                                                  + str(rVectorValues[1]) + delim \
-                                                  + str(rVectorValues[2]) + delim \
-                                                  + str(rVectorValues[3]) + delim \
-                                                  + str(rVectorValues[4]) + delim \
-                                                  + str(rVectorValues[5]) + delim \
-                                                  + str(rVectorValues[6]) + delim \
-                                                  + str(rVectorValues[7]) + delim \
-                                                  + str(rVectorValues[8])
-
-                      if "MaterialDirection" in particleFileFields:
-                        if (np.array(matDir).size == 9):
-                          pString = pString + delim + str(matDir[0][0]) + delim \
-                                                    + str(matDir[0][1]) + delim \
-                                                    + str(matDir[0][2]) + delim \
-                                                    + str(matDir[1][0]) + delim \
-                                                    + str(matDir[1][1]) + delim \
-                                                    + str(matDir[1][2]) + delim \
-                                                    + str(matDir[2][0]) + delim \
-                                                    + str(matDir[2][1]) + delim \
-                                                    + str(matDir[2][2])
-                        elif (np.array(matDir).size == 3):  # fill the 2nd and 3rd row with nonsense since unspecified.  BEWARE!!!
-                          pString = pString + delim + str(matDir[0]) + delim \
-                                                    + str(matDir[1]) + delim \
-                                                    + str(matDir[2]) + delim + "0" + delim + "1" + delim + "0" + delim + "0" + delim + "0" + delim + "1"
-                        else:
-                          print("matDir isn't the size 3 or 3x3", matDir, object, object.name)
-
-                      if "SurfaceNormal" in particleFileFields:
-                        if ( planeStrain == 1 and surfaceNormal[2] != 0.0 ):
-                          # enforce plane strain and renormalize:
-                          norm = float( np.sqrt( surfaceNormal[0]*surfaceNormal[0] + surfaceNormal[1]*surfaceNormal[1] ) )
-                          surfaceNormalValues = [surfaceNormal[0]/norm, surfaceNormal[1]/norm, 0.0]
-                        else:
-                          # assume normal is already a unit vector:
-                          surfaceNormalValues = [surfaceNormal[0], surfaceNormal[1], surfaceNormal[2]]
-                        _validate_particle_value("SurfaceNormal", object, surfaceNormalValues, particlePosition)
-                        pString = pString + delim + str(surfaceNormalValues[0]) + delim \
-                                          + str(surfaceNormalValues[1]) + delim \
-                                          + str(surfaceNormalValues[2]) 
-                      
-                      if "SurfacePosition" in particleFileFields:
-                        surfacePositionValues = [surfacePosition[0], surfacePosition[1], 0.0 if planeStrain == 1 else surfacePosition[2]]
-                        _validate_particle_value("SurfacePosition", object, surfacePositionValues, particlePosition)
-                        pString = pString + delim + str(surfacePositionValues[0]) + delim \
-                                                  + str(surfacePositionValues[1]) + delim \
-                                                  + str(surfacePositionValues[2])
-
-                      if "SurfaceTraction" in particleFileFields:
-                        surfaceTractionValues = [surfaceTraction[0], surfaceTraction[1], 0.0 if planeStrain == 1 else surfaceTraction[2]]
-                        _validate_particle_value("SurfaceTraction", object, surfaceTractionValues, particlePosition)
-                        pString = pString + delim + str(surfaceTractionValues[0]) + delim \
-                                                  + str(surfaceTractionValues[1]) + delim \
-                                                  + str(surfaceTractionValues[2])
-
-                      if "ShrinkageFlag" in particleFileFields:
-                        shrinkageFlag = object.flag if hasattr( object, 'flag') else 0
-                        _validate_particle_value("ShrinkageFlag", object, shrinkageFlag, particlePosition)
-                        pString = pString + delim + str(shrinkageFlag)
-
-                      pString = pString +'\n'
-                      particleFile.write(pString)
+                if childData["mat"] < 0:
+                  continue
+                _validate_particle_value("Position", childData["object"], particlePosition, particlePosition)
+                _validate_particle_value("ParticleType", childData["object"], childData["particleType"], particlePosition)
+                n_p = n_p + 1
+                particleVolume += dxr*dyr*dzr
+                particleFile.write(_particle_file_line(n_p, particlePosition, childData, dxr, dyr, dzr))
 
   particleFile.close()
+
+  # Counts/volumes must include all rank-owned rows, not only rank 0's slice.
+  # Only small diagnostics are communicated; no particles or geometry objects.
+  if not flux:
+    particleVolume = comm.allreduce(particleVolume, op=MPI.SUM)
+    rankReports = comm.gather(refinementReport, root=0)
+  else:
+    rankReports = [refinementReport]
+  if rank == 0 and surfaceRefinementEnabled:
+    combined = Counter()
+    for report in rankReports:
+      for key, value in report.items():
+        if key.startswith('peak_'):
+          combined[key] = max(combined[key], value)
+        else:
+          combined[key] += value
+    summary = dict(combined)
+    summary.update(method=surfaceRefinementMethod, level=surfaceRefinementLevel,
+                   pfw_ranks=num_ranks, particle_volume=particleVolume,
+                   peak_values_are_per_rank=True)
+    with open(particleFileName + '_refinement.json', 'w') as reportFile:
+      json.dump(summary, reportFile, indent=2, sort_keys=True)
+      reportFile.write('\n')
+    print('Two-pass surface refinement:', summary)
 
   # Wait for all mpi processes to finish generating particles
   if flux:
@@ -1669,6 +1786,8 @@ if generateParticleFile:
 
         columnNames = columnNames + delim + fieldString
 
+      if nativeReferenceGeometry:
+        columnNames += delim + delim.join(COLUMN_NAMES)
       columnNames = columnNames + "\n"
       outfile.write(columnNames)
 
@@ -1801,12 +1920,14 @@ if rank == 0:
     if i < numMats-1:
       particleBlockString+=", "
       targetRegionsString+=", "
+    geometryOutputAttribute = (f'\n        particleDomainOutput="{particleDomainOutput}"'
+                               if nativeReferenceGeometry else "")
     particleRegionString+=f"""
     <ParticleRegion
         name="ParticleRegion{i+1}"
         meshBody="particles"
         particleBlocks="{{ {regionBlocksStr} }}"
-        materialList="{{ {matsOrig[i]} }}"/>"""
+        materialList="{{ {matsOrig[i]} }}"{geometryOutputAttribute}/>"""
 
 
   # Format explicit solver child XML blocks after defaults have been resolved.

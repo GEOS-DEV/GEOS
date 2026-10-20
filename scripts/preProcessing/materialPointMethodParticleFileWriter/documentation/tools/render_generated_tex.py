@@ -61,6 +61,7 @@ def path(s: Any) -> str:
     """Typeset a path-like string with discretionary breaks."""
     raw = ascii_clean(s)
     out = tex(raw)
+    out = re.sub(r"([a-z0-9])([A-Z])", r"\1\\allowbreak{}\2", out)
     for token in ["/", r"\_", ".", "-"]:
         out = out.replace(token, token + r"\allowbreak{}")
     return r"{\ttfamily\footnotesize " + out + "}"
@@ -85,7 +86,7 @@ def longtable(
         widths = [f"p{{{0.95 / n:.2f}\\linewidth}}" for _ in range(n)]
     spec = "@{}" + "".join(widths) + "@{}"
     lines: list[str] = []
-    lines.append(r"{\renewcommand{\arraystretch}{1.15}")
+    lines.append(r"{\renewcommand{\arraystretch}{1.15}\setlength{\tabcolsep}{3pt}")
     lines.append(size)
     lines.append(r"\begin{longtable}{" + spec + "}")
     if caption:
@@ -163,7 +164,7 @@ def render(data: dict[str, Any], out_dir: Path) -> None:
     safe_write(
         out_dir,
         "source_counts_table.tex",
-        bullet_table([(k, str(v)) for k, v in source_counts.items()], "Code-derived content counts in this starter manual.", "tab:source-counts"),
+        bullet_table([(k, str(v)) for k, v in source_counts.items()], "Code-derived content counts in the current source.", "tab:source-counts"),
     )
 
     # Source inventory table.
@@ -192,27 +193,26 @@ def render(data: dict[str, Any], out_dir: Path) -> None:
     enum_rows = []
     for e in data.get("solver_enums", []):
         enum_rows.append([code(e.get("name", "")), tex(", ".join(e.get("values", [])))])
-    enum_table = longtable(["Enumeration", "Values"], enum_rows, [r"p{0.43\linewidth}", r"p{0.50\linewidth}"], "Solver enumerations discovered in SolidMechanicsMPM.hpp.", "tab:solver-enums", size=r"\scriptsize")
+    enum_table = longtable(["Enumeration", "Values"], enum_rows, [r"p{0.43\linewidth}", r"p{0.50\linewidth}"], "Enums from MPMSolverEnums.hpp and SolidMechanicsMPM.hpp; XML spellings where registered.", "tab:solver-enums", size=r"\scriptsize")
 
     internal_names = ", ".join(r.get("name", "") for r in internal_wrappers)
     internal_para = ""
     if internal_names:
-        internal_para = r"\paragraph{Internal/non-input wrappers.} The following registered wrappers were marked with \texttt{InputFlags::FALSE} in the reviewed source and are therefore treated as internal state rather than direct input controls: " + tex(internal_names) + ".\n"
+        internal_para = r"\paragraph{Internal/non-input wrappers.} The following registered wrappers were marked with \mpmcode{InputFlags::FALSE} in the reviewed source and are therefore treated as internal state rather than direct input controls: " + ", ".join(code(r.get("name", "")) for r in internal_wrappers) + ".\n"
 
-    schema_parts = []
-    for schema_name, rows in data.get("schema_tables", {}).items():
-        schema_rows = []
-        for r in rows:
-            schema_rows.append([code(r.get("name", "")), code(r.get("type", "")), format_default(r.get("default", "")), tex(r.get("description", ""))])
-        schema_parts.append(longtable(["Name", "Type", "Default", "Description"], schema_rows, [r"p{0.20\linewidth}", r"p{0.16\linewidth}", r"p{0.16\linewidth}", r"p{0.41\linewidth}"], f"Schema documentation table for {schema_name}.", f"tab:schema-{schema_name.replace('_', '-')}", size=r"\scriptsize"))
+    region_rows = [[code(r["name"]), code(r["flag"]), format_default(r["default"]), tex(r["description"])]
+                   for r in data.get("particle_region_wrappers", []) if r["flag"] != "FALSE"]
+    region_table = longtable(["Attribute", "Input", "Default", "Description"], region_rows,
+                             [r"p{0.24\linewidth}",r"p{0.10\linewidth}",r"p{0.22\linewidth}",r"p{0.37\linewidth}"],
+                             "Direct ParticleRegion input wrappers.", "tab:particle-region-wrappers")
 
     safe_write(out_dir, "solver_attributes.tex", rf"""
-\chapter{{Generated solver and schema reference}}
+\chapter{{Generated solver and region reference}}
 \label{{app:solver-attributes}}
 \index{{SolidMechanics MPM!attributes}}
 \index{{schema-generated documentation}}
 
-This appendix is generated from solver wrapper registrations and schema-generated RST files.  It should be regenerated whenever input wrappers, defaults, or schema documentation change.
+This appendix is generated from current wrapper registrations and constructor defaults. Serialized XML enum strings are shown when registered; otherwise enum entries are C++ identifiers. Some defaults depend on initialization or validation, as described in the narrative. An unresolved C++ expression is shown explicitly, rather than replaced by a guessed value. Inherited group attributes are outside this direct-wrapper inventory. Generate a full XML schema with a complete GEOS build when required.
 
 {enum_table}
 
@@ -220,10 +220,9 @@ This appendix is generated from solver wrapper registrations and schema-generate
 
 {internal_para}
 
-\section{{Schema-generated reference tables}}
-The following tables reproduce the existing schema-generated documentation snippets found for MPM-specific schema groups.
-
-{''.join(schema_parts)}
+\section{{Particle region output controls}}
+{region_table}
+The native geometry output policy belongs on each particle region, not on the solver. Cached schema RST files are not used as an alternate source for defaults.
 """)
 
     # Events appendix.
@@ -271,6 +270,8 @@ The following tables reproduce the existing schema-generated documentation snipp
 \index{{ParticleFileWriter!parameters}}
 \index{{Silo grid fields}}
 
+A default of \texttt{{None}} on an emitted solver parameter omits the attribute so GEOS supplies its own default. A \texttt{{no}} in the last column means that the key controls preprocessing, another XML group, or job generation; it does not mean the option is ignored. Unknown keys are rejected.
+
 {pfw_table}
 
 \section{{Silo grid field presets}}
@@ -282,8 +283,8 @@ The following tables reproduce the existing schema-generated documentation snipp
     # Particle file format appendix.
     particle_rows = []
     for r in data.get("particle_columns", []):
-        particle_rows.append([str(r.get("index", "")), code(r.get("name", "")), format_default(r.get("default", "")), tex("yes" if r.get("required") else "no")])
-    particle_table = longtable(["Column", "Name", "Default", "Required if absent"], particle_rows, [r"p{0.10\linewidth}", r"p{0.39\linewidth}", r"p{0.28\linewidth}", r"p{0.15\linewidth}"], "Particle file field ordering and defaults from ParticleMeshGenerator.", "tab:particle-fields", size=r"\scriptsize")
+        particle_rows.append([str(r.get("index", "")), code(r.get("name", "")), format_default(r.get("default", "")), tex(r.get("required_when") or ("yes" if r.get("required") else "no"))])
+    particle_table = longtable(["Enum index", "Header name", "Default if absent", "Required"], particle_rows, [r"p{0.10\linewidth}", r"p{0.39\linewidth}", r"p{0.28\linewidth}", r"p{0.15\linewidth}"], "Particle header names and missing-field behavior from ParticleMeshGenerator.", "tab:particle-fields", size=r"\scriptsize")
     ptype_rows = [[str(i), code(v)] for i, v in enumerate(data.get("particle_types", []))]
     ptype_table = longtable(["Enum value", "Particle type"], ptype_rows, [r"p{0.20\linewidth}", r"p{0.70\linewidth}"], "Particle type enum values in the current source.", "tab:particle-types", size=r"\small")
     safe_write(out_dir, "particle_format.tex", rf"""
@@ -291,6 +292,8 @@ The following tables reproduce the existing schema-generated documentation snipp
 \label{{app:particle-format}}
 \index{{particle file format}}
 \index{{ParticleMesh}}
+
+Header names map columns; the enum index below is not a required physical column position. Native geometry is an optional group: all ten geometry columns must appear together, and a partial group is rejected. Omitting the complete group allocates no native geometry state.
 
 {ptype_table}
 
@@ -335,7 +338,7 @@ The following tables reproduce the existing schema-generated documentation snipp
     suite_rows = []
     for suite_name in ["examples", "verification", "validation"]:
         for r in data.get("suite_cases", {}).get(suite_name, []):
-            suite_rows.append([tex(suite_name), tex(r.get("family", "")), code(r.get("case", "")), tiny_path(r.get("path", ""))])
+            suite_rows.append([tex(suite_name), code(r.get("family", "")), code(r.get("case", "")), tiny_path(r.get("path", ""))])
     suite_table = longtable(["Suite", "Family", "Case", "Input path"], suite_rows, [r"p{0.12\linewidth}", r"p{0.20\linewidth}", r"p{0.25\linewidth}", r"p{0.36\linewidth}"], "Discovered ParticleFileWriter suite input cases. Leading comment-block descriptions are kept in the linked suite reports.", "tab:suite-cases", size=r"\scriptsize")
     safe_write(out_dir, "suites.tex", rf"""
 \chapter{{Generated suite case catalogue}}

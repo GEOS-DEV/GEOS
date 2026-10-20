@@ -228,7 +228,7 @@ def run_folder(
         root = pfw_root(source_dir)
     else:
         print("Root provided")
-        root = pfw_dir
+        root = Path(pfw_dir)
     runner = root / "mpm_vv_case_runner.py"
     output_dir = source_dir / "output" / args.case_id
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -246,11 +246,11 @@ def run_folder(
     workers = max(1, min(int(args.jobs or 1), len(selected)))
     print(f"[{args.case_id}] dispatching {len(selected)} variant(s) with {workers} worker(s)", flush=True)
     if workers == 1:
-        subcases = [dispatch_variant(args, source_dir, pfw_dir, runner, input_file, variant) for variant in selected]
+        subcases = [dispatch_variant(args, source_dir, root, runner, input_file, variant) for variant in selected]
     else:
         subcases = []
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            future_to_variant = {pool.submit(dispatch_variant, args, source_dir, pfw_dir, runner, input_file, variant): variant for variant in selected}
+            future_to_variant = {pool.submit(dispatch_variant, args, source_dir, root, runner, input_file, variant): variant for variant in selected}
             for future in as_completed(future_to_variant):
                 subcases.append(future.result())
         subcases.sort(key=lambda rec: [v["name"] for v in selected].index(rec["name"]))

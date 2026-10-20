@@ -128,3 +128,23 @@ Frames are written to `<run-dir>/visit_frames`.  If the requested variable is no
 - Replaced old geometry keyword `v=` with the current `vel=` keyword in pfw inputs.
 - Fixed three syntax-level input issues that blocked compile preflight.
 - Fixed a `particleFileWriter.py` typo where NumPy array normalization called `_normalize_ndarray` instead of `normalize_ndarray`.
+
+## Selective MPM update: portable runs and restart selection
+
+Prepared run folders include the refinement, simplex-clipping, and native-geometry
+writer helpers along with the common PFW files. Suite dispatch carries the
+discovered PFW source root into case preparation, including string-valued roots.
+Keep these helper copies together when moving a prepared case.
+
+Automatic continuation selects restart directory/.root pairs. It searches cycle
+widths from 16 down to 6 digits and, within the first populated width, selects the
+newest root-file modification time. Orphans are ignored, and absence of a pair
+stops continuation. Existence of a pair does not validate checkpoint contents.
+
+For rendering, the general suite helper prefers the source-tree renderer, then a
+run-directory copy. It prefers newly timestamped frames after a successful render,
+but can return existing matching frames when none are new. Use render logs to
+distinguish new output from reused frames. The scalar --strict-variable flag and
+repeatable --vector-variable overlays are documented in the manual.
+
+See documentation/AUDIT.md for current behavior and validation scope.

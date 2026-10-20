@@ -28,17 +28,23 @@ ConfiningPressureMPMEvent::ConfiningPressureMPMEvent( const string & name,
   MPMEventBase( name, parent ),
   m_confiningPressureBoxMin(  ),
   m_confiningPressureBoxMax(  ),
+  m_confiningPressureSphereRadius( 0.0 ),
   m_startPressure( 0.0 ),
   m_endPressure( 0.0 ),
   m_interpType( 1 )
 {
   registerWrapper( viewKeyStruct::confiningPressureBoxMinString(), &m_confiningPressureBoxMin ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Min corner of box defining confining pressure region" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Min corner of box defining confining pressure region. Required unless confiningPressureSphereRadius is positive." );
 
   registerWrapper( viewKeyStruct::confiningPressureBoxMaxString(), &m_confiningPressureBoxMax ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Max corner of box defining confining pressure region" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Max corner of box defining confining pressure region. Required unless confiningPressureSphereRadius is positive." );
+
+  registerWrapper( viewKeyStruct::confiningPressureSphereRadiusString(), &m_confiningPressureSphereRadius ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_confiningPressureSphereRadius ).
+    setDescription( "Optional origin-centered spherical confining pressure region radius. If positive, nodes outside this radius receive the confining background stress instead of using the box test." );
 
   registerWrapper( viewKeyStruct::startPressureString(), &m_startPressure ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -61,14 +67,29 @@ void ConfiningPressureMPMEvent::postInputInitialization()
 {
   MPMEventBase::postInputInitialization();
 
-  GEOS_ERROR_IF( m_confiningPressureBoxMin.size() != 3, "confiningPressureBoxMin must be of length 3. " );
-  GEOS_ERROR_IF( m_confiningPressureBoxMax.size() != 3, "confiningPressureBoxMax must be of length 3. " );
+  GEOS_ERROR_IF( m_confiningPressureSphereRadius < 0.0,
+                 "confiningPressureSphereRadius must be non-negative." );
+
+  bool const useSphere = m_confiningPressureSphereRadius > 0.0;
+  bool const hasBoxMin = m_confiningPressureBoxMin.size() > 0;
+  bool const hasBoxMax = m_confiningPressureBoxMax.size() > 0;
+  GEOS_ERROR_IF( !useSphere && !( hasBoxMin && hasBoxMax ),
+                 "ConfiningPressure requires either a positive confiningPressureSphereRadius or both confiningPressureBoxMin and confiningPressureBoxMax." );
+  GEOS_ERROR_IF( hasBoxMin && m_confiningPressureBoxMin.size() != 3,
+                 "confiningPressureBoxMin must be of length 3." );
+  GEOS_ERROR_IF( hasBoxMax && m_confiningPressureBoxMax.size() != 3,
+                 "confiningPressureBoxMax must be of length 3." );
+  GEOS_ERROR_IF( !useSphere && m_confiningPressureBoxMin.size() != 3,
+                 "confiningPressureBoxMin must be of length 3 when confiningPressureSphereRadius is not positive." );
+  GEOS_ERROR_IF( !useSphere && m_confiningPressureBoxMax.size() != 3,
+                 "confiningPressureBoxMax must be of length 3 when confiningPressureSphereRadius is not positive." );
 
   GEOS_LOG_RANK_0( "ConfiningPressureEvent: " <<
                    "Start time=" << m_startTime << ", " <<
                    "Time interval=" << getTimeInterval() << ", " <<
                    "confiningPressureBoxMin=" << m_confiningPressureBoxMin << ", " <<
                    "confiningPressureBoxMax=" << m_confiningPressureBoxMax << ", " <<
+                   "confiningPressureSphereRadius=" << m_confiningPressureSphereRadius << ", " <<
                    "startPressure=" << m_startPressure << ", " <<
                    "endPressure=" << m_endPressure << ", " <<
                    "interpType=" << m_interpType );

@@ -28,7 +28,7 @@ namespace geos
 /**
  * @class ConfiningPressureMPMEvent
  *
- * This class implements a virtual fluid boundary condition for a region in the X-Y plane defined by a borehole radius.
+ * This class implements a virtual fluid confining-pressure boundary condition.
  */
 class ConfiningPressureMPMEvent : public MPMEventBase
 {
@@ -53,6 +53,7 @@ public:
   {
     static constexpr char const * confiningPressureBoxMinString() { return "confiningPressureBoxMin"; }
     static constexpr char const * confiningPressureBoxMaxString() { return "confiningPressureBoxMax"; }
+    static constexpr char const * confiningPressureSphereRadiusString() { return "confiningPressureSphereRadius"; }
     static constexpr char const * startPressureString() { return "startPressure"; }
     static constexpr char const * endPressureString() { return "endPressure"; }
     static constexpr char const * interpTypeString() { return "interpType"; }
@@ -61,6 +62,7 @@ public:
 
   array1d< real64 > getConfiningPressureBoxMin() const { return m_confiningPressureBoxMin; }
   array1d< real64 > getConfiningPressureBoxMax() const { return m_confiningPressureBoxMax; }
+  real64 getConfiningPressureSphereRadius() const { return m_confiningPressureSphereRadius; }
   real64 getStartPressure() const { return m_startPressure; }
   real64 getEndPressure() const { return m_endPressure; }
   int getInterpType() const { return m_interpType; }
@@ -71,6 +73,7 @@ protected:
   // Event variables
   array1d< real64 > m_confiningPressureBoxMin;
   array1d< real64 > m_confiningPressureBoxMax;
+  real64 m_confiningPressureSphereRadius;
   real64 m_startPressure;
   real64 m_endPressure;
   int m_interpType;

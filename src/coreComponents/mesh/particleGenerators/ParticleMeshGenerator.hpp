@@ -91,6 +91,16 @@ public:
     SurfaceTractionX,
     SurfaceTractionY,
     SurfaceTractionZ,
+    ParticleReferenceGeometry,
+    GeometryRVectorXX,
+    GeometryRVectorXY,
+    GeometryRVectorXZ,
+    GeometryRVectorYX,
+    GeometryRVectorYY,
+    GeometryRVectorYZ,
+    GeometryRVectorZX,
+    GeometryRVectorZY,
+    GeometryRVectorZZ,
     Count
   };
 
@@ -195,7 +205,17 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
               "SurfacePositionZ",
               "SurfaceTractionX",
               "SurfaceTractionY",
-              "SurfaceTractionZ" );
+              "SurfaceTractionZ",
+              "ParticleReferenceGeometry",
+              "GeometryRVectorXX",
+              "GeometryRVectorXY",
+              "GeometryRVectorXZ",
+              "GeometryRVectorYX",
+              "GeometryRVectorYY",
+              "GeometryRVectorYZ",
+              "GeometryRVectorZX",
+              "GeometryRVectorZY",
+              "GeometryRVectorZZ" );
 
 } /* namespace geos */
 

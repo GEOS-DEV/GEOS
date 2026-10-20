@@ -21,6 +21,7 @@
 #define GEOS_MESH_PARTICLESUBREGIONBASE_HPP_
 
 #include "mesh/ParticleType.hpp"
+#include "mesh/ParticleReferenceGeometry.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
@@ -63,6 +64,37 @@ public:
    * @brief Destructor.
    */
   ~ParticleSubRegionBase();
+
+  /** Register on ALL ranks when the input schema contains native geometry,
+   * including ranks with no local particles. Registered, parent-sized arrays
+   * participate in the normal particle packing, erasure, and restart paths.
+   */
+  void enableParticleReferenceGeometry();
+  bool hasParticleReferenceGeometry() const
+  { return hasWrapper( particleGeometry::shapeKey() ); }
+
+  struct ReferenceGeometryView
+  {
+    arrayView1d< integer const > shape;
+    arrayView3d< real64 > vectors;
+    GEOS_HOST_DEVICE bool isSimplex( localIndex const p ) const
+    { return shape.size() != 0 && shape[p] != 0; }
+
+    template< class OLD_F, class NEW_F >
+    GEOS_HOST_DEVICE void rebase( localIndex const p, OLD_F const & oldF, NEW_F const & newF ) const
+    {
+      if( isSimplex( p ) )
+      {
+        bool const valid = particleGeometry::rebase( oldF, newF, vectors[p] );
+        GEOS_ERROR_IF( !valid, "Cannot preserve native particle geometry through a singular/nonfinite F reset" );
+      }
+    }
+  };
+
+  /// For the existing serial reset paths. Explicitly synchronizes ONLY this
+  /// optional state; the caller retains responsibility for its existing F data.
+  ReferenceGeometryView referenceGeometryViewOnHost();
+
 
   ///@}
 
