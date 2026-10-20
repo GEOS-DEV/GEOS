@@ -140,6 +140,10 @@ public:
     /// d(ln t_j)/d(normalJump_j) for every element j of the stencil: permeability part plus stencil-weight part
     /// (the stencil weight is linear in the hydraulic aperture)
     real64 dLogHalfTrans_dNormalJump[maxNumElems]{};
+
+    /// d(ln hydraulicAperture_j)/d(normalJump_j) for every element j of the stencil (stencil-weight part of
+    /// dLogHalfTrans_dNormalJump), kept separately for the derived kernels (e.g. thermal conduction)
+    real64 dLogAperture_dNormalJump[maxNumElems]{};
   };
 
   /**
@@ -198,16 +202,16 @@ public:
       localIndex const esr = m_sesri[iconn][j];
       localIndex const ei  = m_sei[iconn][j];
 
-      real64 dLogHalfTrans_dNormalJump = 0.0;
+      real64 const hydraulicAperture = m_hydraulicAperture[er][esr][ei];
+      stack.dLogAperture_dNormalJump[j] = ( hydraulicAperture > 0.0 )
+        ? m_dHydraulicAperture_dNormalJump[er][esr][ei] / hydraulicAperture
+        : 0.0;
+
+      real64 dLogHalfTrans_dNormalJump = stack.dLogAperture_dNormalJump[j];
       real64 const perm = m_permeability[er][esr][ei][0][0];
       if( perm > 0.0 )
       {
         dLogHalfTrans_dNormalJump += m_dPerm_dDispJump[er][esr][ei][0][0][0] / perm;
-      }
-      real64 const hydraulicAperture = m_hydraulicAperture[er][esr][ei];
-      if( hydraulicAperture > 0.0 )
-      {
-        dLogHalfTrans_dNormalJump += m_dHydraulicAperture_dNormalJump[er][esr][ei] / hydraulicAperture;
       }
       stack.dLogHalfTrans_dNormalJump[j] = dLogHalfTrans_dNormalJump;
     }

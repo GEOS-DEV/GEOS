@@ -93,8 +93,6 @@ public:
 
   /// Hydraulic aperture and its derivative wrt the normal jump, held by the mass-flux base kernel
   using FractureApertureAccessors = typename Base::FractureApertureAccessors;
-  using Base::m_hydraulicAperture;
-  using Base::m_dHydraulicAperture_dNormalJump;
 
 
   ThermalConformingFracturesConnectorBasedAssemblyKernel( globalIndex const rankOffset,
@@ -160,6 +158,7 @@ public:
     using SinglePhaseFVMBase::StackVariables::localFlux;
     using SinglePhaseFVMBase::StackVariables::localFluxJacobian;
     using Base::StackVariables::dFlux_dAperture;
+    using Base::StackVariables::dLogAperture_dNormalJump;
 
     // Thermal transmissibility (no derivative wrt conductivity: conductivity is treated explicitly)
 
@@ -170,9 +169,6 @@ public:
     /// linear in the hydraulic aperture, multiplying by d(ln hydraulicAperture_j)/d(normalJump_j) gives the aperture
     /// derivative. At a fracture junction it also involves the elements the connection does not link.
     real64 dThermalTrans_dLogHalfTrans[maxNumConns][maxNumElems]{};
-
-    /// d(ln hydraulicAperture_j)/d(normalJump_j) for every element j of the stencil
-    real64 dLogAperture_dNormalJump[maxNumElems]{};
 
     // The energy flux and its p/T derivatives are per connection (local to computeFlux), so that
     // stencils with more than two elements (fracture junctions) are handled correctly.
@@ -202,14 +198,6 @@ public:
                                                       m_thermalConductivity,
                                                       stack.thermalTransmissibility,
                                                       stack.dThermalTrans_dLogHalfTrans );
-
-    for( localIndex j = 0; j < stack.numFluxElems; ++j )
-    {
-      real64 const hydraulicAperture = m_hydraulicAperture[m_seri[iconn][j]][m_sesri[iconn][j]][m_sei[iconn][j]];
-      stack.dLogAperture_dNormalJump[j] = ( hydraulicAperture > 0.0 )
-        ? m_dHydraulicAperture_dNormalJump[m_seri[iconn][j]][m_sesri[iconn][j]][m_sei[iconn][j]] / hydraulicAperture
-        : 0.0;
-    }
 
     // The base computeFlux computes the mass flux and its derivatives connection by connection, and calls the
     // lambda below for each connection (pair k[0], k[1] of the stencil), with the quantities of that connection
