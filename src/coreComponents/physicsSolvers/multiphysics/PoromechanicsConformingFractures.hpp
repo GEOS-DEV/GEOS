@@ -484,9 +484,20 @@ public:
     // rewind the flow and mechanics (incl. contact) states
     Base::resetStateToBeginningOfStep( domain );
 
-    // the hydraulic aperture, fracture permeability, stencil weights and fracture mass (and energy)
-    // still hold the values of the failed attempt: recompute them from the restored displacement jump
-    updateState( domain );
+    // The sequential loop also resets at dtAttempt == 0, before anything was solved: the state is then
+    // still consistent with the beginning of step and the (heavy) update can be skipped.
+    // The fully implicit loop only resets after a failure (cut or Newton failure), so always update.
+    NonlinearSolverParameters const & solverParams = this->getNonlinearSolverParameters();
+    bool const isFreshSequentialAttempt =
+      solverParams.couplingType() == NonlinearSolverParameters::CouplingType::Sequential &&
+      solverParams.m_numTimeStepAttempts == 0;
+
+    if( !isFreshSequentialAttempt )
+    {
+      // the hydraulic aperture, fracture permeability, stencil weights and fracture mass (and energy)
+      // still hold the values of the failed attempt: recompute them from the restored displacement jump
+      updateState( domain );
+    }
   }
 
 protected:
