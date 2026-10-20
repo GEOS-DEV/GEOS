@@ -193,17 +193,13 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
-    m_stencilWrapper.computeWeights( iconn,
-                                     m_permeability,
-                                     m_dPerm_dPres,
-                                     stack.transmissibility,
-                                     stack.dTrans_dPres );
-
-    // Aperture derivative of the transmissibilities, wrt the half-transmissibility of every element of the stencil
-    real64 transmissibility[maxNumConns][2]{};
+    // Transmissibilities, their pressure derivatives and their aperture derivatives (wrt the half-transmissibility
+    // of every element of the stencil), in a single stencil traversal
     m_stencilWrapper.computeWeightsAndLogDerivatives( iconn,
                                                       m_permeability,
-                                                      transmissibility,
+                                                      m_dPerm_dPres,
+                                                      stack.transmissibility,
+                                                      stack.dTrans_dPres,
                                                       stack.dTrans_dLogHalfTrans );
 
     // t_j = weight_j(hydraulicAperture_j) * perm_j(hydraulicAperture_j), the weight being linear in the hydraulic aperture

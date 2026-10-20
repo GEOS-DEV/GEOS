@@ -127,6 +127,25 @@ public:
                                         real64 ( &dWeight_dLogTrans )[maxNumConnections][maxNumPointsInFlux] ) const;
 
   /**
+   * @brief Compute weights, their derivatives w.r.t. to one variable and, for each connection, the derivative of its
+   *        weight w.r.t. the logarithm of every half-transmissibility of the stencil, in a single stencil traversal.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable of the two points of the connection
+   *             (same as computeWeights)
+   * @param[out] dWeight_dLogTrans t_j * d(value)/d(t_j) for every point j of the stencil (see above)
+   */
+  GEOS_HOST_DEVICE
+  void computeWeightsAndLogDerivatives( localIndex iconn,
+                                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                                        real64 ( &weight )[maxNumConnections][2],
+                                        real64 ( &dWeight_dVar )[maxNumConnections][2],
+                                        real64 ( &dWeight_dLogTrans )[maxNumConnections][maxNumPointsInFlux] ) const;
+
+  /**
    * @brief Compute weights and derivatives w.r.t to one variable without coefficient
    * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
    * here, conductivity is a part of operator and connot be used directly as a coefficient
@@ -418,6 +437,81 @@ SurfaceElementStencilWrapper::
 
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;
+
+      // t_j * dH/dt_j = H * ( delta_{j,k0} + delta_{j,k1} - t_j / S ), with H = t0 * t1 / S and S = sum_j t_j
+      // t_j * dA/dt_j = 0.25 * t_j * ( delta_{j,k0} + delta_{j,k1} ), with A = 0.25 * ( t0 + t1 )
+      for( localIndex j=0; j<numPoints; ++j )
+      {
+        real64 const isEnd = ( j == k[0] || j == k[1] ) ? 1.0 : 0.0;
+        real64 const tHarmonic = sumOfTrans > 0.0 ? harmonicWeight * ( isEnd - t[j] / sumOfTrans ) : 0.0;
+        real64 const tArithmetic = 0.25 * t[j] * isEnd;
+        dWeight_dLogTrans[connectionIndex][j] = m_meanPermCoefficient * tHarmonic + (1 - m_meanPermCoefficient) * tArithmetic;
+      }
+
+      connectionIndex++;
+    }
+  }
+}
+
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::
+  computeWeightsAndLogDerivatives( localIndex iconn,
+                                   CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                   CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                                   real64 ( & weight )[maxNumConnections][2],
+                                   real64 ( & dWeight_dVar )[maxNumConnections][2],
+                                   real64 ( & dWeight_dLogTrans )[maxNumConnections][maxNumPointsInFlux] ) const
+{
+  localIndex const numPoints = numPointsInFlux( iconn );
+
+  real64 t[maxNumPointsInFlux]{};
+  real64 dt[maxNumPointsInFlux]{};
+  real64 sumOfTrans = 0.0;
+  for( localIndex k=0; k<numPoints; ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
+
+    t[k] = coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
+    dt[k] = dCoeff_dVar[er][esr][ei][0][0] * m_weights[iconn][k];
+    sumOfTrans += t[k];
+  }
+
+  localIndex k[2];
+  localIndex connectionIndex = 0;
+  for( k[0]=0; k[0]<numPoints; ++k[0] )
+  {
+    for( k[1]=k[0]+1; k[1]<numPoints; ++k[1] )
+    {
+      real64 const t0 = t[k[0]];
+      real64 const t1 = t[k[1]];
+      real64 const dt0 = dt[k[0]];
+      real64 const dt1 = dt[k[1]];
+
+      real64 const harmonicWeight   = sumOfTrans > 0.0 ? t0*t1 / sumOfTrans : 0.0;
+      real64 const arithmeticWeight = 0.25 * (t0+t1);
+
+      real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+
+      weight[connectionIndex][0] = value;
+      weight[connectionIndex][1] = -value;
+
+      // derivatives w.r.t. the variable of the two points of the connection, as in computeWeights
+      real64 dHarmonic[2]{};
+      if( sumOfTrans > 0.0 )
+      {
+        dHarmonic[0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+        dHarmonic[1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      }
+
+      real64 dArithmetic[2];
+      dArithmetic[0] = 0.25 * dt0;
+      dArithmetic[1] = 0.25 * dt1;
+
+      dWeight_dVar[connectionIndex][0] = m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0];
+      dWeight_dVar[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
 
       // t_j * dH/dt_j = H * ( delta_{j,k0} + delta_{j,k1} - t_j / S ), with H = t0 * t1 / S and S = sum_j t_j
       // t_j * dA/dt_j = 0.25 * t_j * ( delta_{j,k0} + delta_{j,k1} ), with A = 0.25 * ( t0 + t1 )
