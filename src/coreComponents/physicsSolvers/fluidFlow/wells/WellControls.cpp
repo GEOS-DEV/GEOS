@@ -260,7 +260,7 @@ void WellControls::validateWellConstraints( real64 const & GEOS_UNUSED_PARAM( ti
     if( useSegmentValues && firstNoRefRegionMsg )
     {
       GEOS_WARNING( WellControls::viewKeyStruct::referenceReservoirRegionString() <<
-                    " not set: well constraint fluid property calculations will use top segement pressure and temp ",
+                    " not set: well constraint fluid property calculations will use the top segment pressure and temperature",
                     getDataContext() );
       firstNoRefRegionMsg = false;
     }
