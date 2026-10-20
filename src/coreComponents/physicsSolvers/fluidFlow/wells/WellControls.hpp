@@ -150,7 +150,7 @@ public:
 
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) = 0;
+                                        WellElementSubRegion const & subRegion );
 
   virtual bool isCompositional() const = 0;
   /**

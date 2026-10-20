@@ -408,26 +408,11 @@ void CompositionalMultiphaseWell::validateFluidModel(
   }
 }
 
-
 void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
-                                                           real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                           real64 const & dt,
                                                            WellElementSubRegion const & subRegion )
 {
-  GEOS_UNUSED_VAR( time_n );
-
-  if( !useSurfaceConditions() )
-  {
-    bool const useSegmentValues = referenceReservoirRegion().empty();
-
-    static bool firstNoRefRegionMsg = true;
-    if( useSegmentValues && firstNoRefRegionMsg )
-    {
-      GEOS_WARNING( WellControls::viewKeyStruct::referenceReservoirRegionString() <<
-                    " not set: well constraint fluid property calculations will use top segement pressure and temp ",
-                    getDataContext() );
-      firstNoRefRegionMsg = false;
-    }
-  }
+  WellControls::validateWellConstraints( time_n, dt, subRegion );
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );

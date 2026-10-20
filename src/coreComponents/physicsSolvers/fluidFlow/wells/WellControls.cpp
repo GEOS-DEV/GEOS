@@ -248,6 +248,25 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
   }
 }
 
+void WellControls::validateWellConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                            WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ))
+{
+  if( !useSurfaceConditions() )
+  {
+    bool const useSegmentValues = referenceReservoirRegion().empty();
+
+    static bool firstNoRefRegionMsg = true;
+    if( useSegmentValues && firstNoRefRegionMsg )
+    {
+      GEOS_WARNING( WellControls::viewKeyStruct::referenceReservoirRegionString() <<
+                    " not set: well constraint fluid property calculations will use top segement pressure and temp ",
+                    getDataContext() );
+      firstNoRefRegionMsg = false;
+    }
+  }
+}
+
 void WellControls::updateNumDofPerElement()
 {
   localIndex const numFlowComponents = numFluidComponents();
