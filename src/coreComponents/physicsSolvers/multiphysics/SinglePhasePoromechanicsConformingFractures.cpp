@@ -68,7 +68,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
 
   // The mass-balance block of getDerivativeFluxResidual_dNormalJump() below is one row per
   // fracture element. When m_isThermal, a second (advective + conductive) block for the energy
-  // balance is appended after it - see getDerivativeFluxResidual_dApertureEnergyOffset().
+  // balance is appended after it - see getDerivativeFluxResidual_dNormalJumpEnergyOffset().
 
   using namespace contact;
 
@@ -93,6 +93,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
   arrayView1d< globalIndex const > const &
   dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
+  // energy-balance row (temperature DOF) of a fracture element, w.r.t. its mass-balance row (pressure DOF)
+  integer const temperatureOffset = this->temperatureDofOffset();
 
   // Get the coordinates for all nodes
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
@@ -177,10 +179,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
             {
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
                                                         + LvArray::integerConversion< globalIndex >( i );
-              real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
+              real64 const dNormalJump_dU = -pow( -1, kf ) * Nbar[i];
               //reminder: the volume of the fault element is the area of the fracture times the hydraulic aperture,
               // so dVol_dNormalJump is nodalArea * dHydraulicAperture_dNormalJump
-              dVol_dU( kf*3*numNodesPerFace + 3*a+i ) = nodalArea[a] * dHydraulicAperture_dNormalJump[kfe] * dAper_dU;
+              dVol_dU( kf*3*numNodesPerFace + 3*a+i ) = nodalArea[a] * dHydraulicAperture_dNormalJump[kfe] * dNormalJump_dU;
               dRdU( kf*3*numNodesPerFace + 3*a+i ) = massPerVolume[kfe] * dVol_dU( kf*3*numNodesPerFace + 3*a+i );
             }
           }
@@ -205,7 +207,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
             dRdU( j ) = energyPerVolume[kfe] * dVol_dU( j );
           }
 
-          localIndex const localRowEnergy = localRow + 1;
+          localIndex const localRowEnergy = localRow + temperatureOffset;
 
           if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
           {
@@ -252,8 +254,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
             {
               nodeDOF[ kf*3*numNodesPerFace2 + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
                                                          + LvArray::integerConversion< globalIndex >( i );
-              real64 const dAper_dU = -pow( -1, kf ) * Nbar2[i] * ( nodalArea[a] / area[kfe2] );
-              dRdU( kf*3*numNodesPerFace2 + 3*a+i ) = dR_dNormalJump * dAper_dU;
+              real64 const dNormalJump_dU = -pow( -1, kf ) * Nbar2[i] * ( nodalArea[a] / area[kfe2] );
+              dRdU( kf*3*numNodesPerFace2 + 3*a+i ) = dR_dNormalJump * dNormalJump_dU;
             }
           }
         }
@@ -286,7 +288,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
       // Energy-balance flux derivative (advective and conductive contributions)
       if( this->m_isThermal )
       {
-        localIndex const energyOffset = this->getDerivativeFluxResidual_dApertureEnergyOffset();
+        localIndex const energyOffset = this->getDerivativeFluxResidual_dNormalJumpEnergyOffset();
         if( energyOffset >= 0 )
         {
           localIndex const energyRow = energyOffset + kfe;
@@ -294,8 +296,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
           arraySlice1d< localIndex const > const & energyColumns = dFluxResidual_dNormalJump.getColumns( energyRow );
           arraySlice1d< real64 const > const & energyValues = dFluxResidual_dNormalJump.getEntries( energyRow );
 
-          // temperature/energy dof, packed right after pressure
-          localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( presDofNumber[kfe] + 1 - rankOffset );
+          localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( presDofNumber[kfe] + temperatureOffset - rankOffset );
 
           for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
           {

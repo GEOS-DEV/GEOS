@@ -41,7 +41,7 @@ public:
   using Base::m_solution;
   using Base::m_maxFaceNodes;
 
-  using Base::m_derivativeFluxResidual_dAperture;
+  using Base::m_derivativeFluxResidual_dNormalJump;
 
   /// True when the flow solver carries well degrees of freedom.
   static constexpr bool hasWells = std::is_same_v< FLOW_SOLVER, SinglePhaseReservoirAndWells<> >;

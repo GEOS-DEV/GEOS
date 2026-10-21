@@ -290,10 +290,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
             {
               nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
                                                         + LvArray::integerConversion< globalIndex >( i );
-              real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
+              real64 const dNormalJump_dU = -pow( -1, kf ) * Nbar[i];
               for( integer ic = 0; ic < numComp; ic++ )
               {
-                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dVolume_dNormalJump * dAper_dU * compDens[kfe][ic]; // assuming poro=1
+                dRdU[ ic ][ kf*3*numNodesPerFace + 3*a + i ] = dVolume_dNormalJump * dNormalJump_dU * compDens[kfe][ic]; // assuming poro=1
               }
             }
           }
@@ -355,8 +355,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
               {
                 nodeDOF[ kf*3*numNodesPerFace2 + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
                                                            + LvArray::integerConversion< globalIndex >( i );
-                real64 const dAper_dU = -pow( -1, kf ) * Nbar2[i] * ( nodalArea[a] / area[kfe2] );
-                dRdU[ ic ][ kf*3*numNodesPerFace2 + 3*a + i ] = dR_dNormalJump * dAper_dU;
+                real64 const dNormalJump_dU = -pow( -1, kf ) * Nbar2[i] * ( nodalArea[a] / area[kfe2] );
+                dRdU[ ic ][ kf*3*numNodesPerFace2 + 3*a + i ] = dR_dNormalJump * dNormalJump_dU;
               }
             }
           }

@@ -295,23 +295,23 @@ using AssembleForceResidualDerivativeWrtPressureFactory =
 
 
 /**
- * @brief Kernel to compute d(aperture)/du and d(aperture)/db for each fracture element.
+ * @brief Kernel to compute d(normalJump)/du and d(normalJump)/db for each fracture element.
  *
  * This kernel computes the derivative of aperture with respect to displacement and bubble DOFs
  * using the properly computed Atu/Atb matrices. The results are stored for later use in
  * flux derivative computation.
  *
- * d(aperture)/du = (1/area) * unitNormal^T * Atu
- * d(aperture)/db = (1/area) * unitNormal^T * Atb
+ * d(normalJump)/du = (1/area) * unitNormal^T * Atu
+ * d(normalJump)/db = (1/area) * unitNormal^T * Atb
  *
  * The Atu/Atb matrices encode the sign convention directly: face 0 gets -N*detJ
  * and face 1 gets +N*detJ. This means (1/area) * Atu^T * unitNormal already gives
- * the correct dAperture/dU matching the LM convention (negative for face 0 nodes,
+ * the correct dNormalJump/dU matching the LM convention (negative for face 0 nodes,
  * positive for face 1 nodes).
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ComputeApertureDerivatives :
+class ComputeNormalJumpDerivatives :
   public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
                                                                                FE_TYPE >
 {
@@ -344,7 +344,7 @@ public:
   /**
    * @brief Constructor
    */
-  ComputeApertureDerivatives( NodeManager const & nodeManager,
+  ComputeNormalJumpDerivatives( NodeManager const & nodeManager,
                               EdgeManager const & edgeManager,
                               FaceManager const & faceManager,
                               localIndex const targetRegionIndex,
@@ -358,8 +358,8 @@ public:
                               arrayView1d< real64 > const inputRhs,
                               real64 const inputDt,
                               arrayView1d< localIndex const > const & faceElementList,
-                              arrayView2d< real64 > const & dAperturedU,
-                              arrayView2d< real64 > const & dAperturedB ):
+                              arrayView2d< real64 > const & dNormalJump_dU,
+                              arrayView2d< real64 > const & dNormalJump_dB ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -375,8 +375,8 @@ public:
           inputDt,
           faceElementList ),
     m_area( elementSubRegion.getElementArea().toViewConst() ),
-    m_dAperturedU( dAperturedU ),
-    m_dAperturedB( dAperturedB )
+    m_dNormalJump_dU( dNormalJump_dU ),
+    m_dNormalJump_dB( dNormalJump_dB )
   {}
 
   /**
@@ -390,18 +390,18 @@ public:
     StackVariables():
       Base::StackVariables(),
                                        unitNormal{},
-                                       localDAperturedU{},
-                                       localDAperturedB{}
+                                       localDNormalJump_dU{},
+                                       localDNormalJump_dB{}
     {}
 
     /// Unit normal from rotation matrix
     real64 unitNormal[3];
 
-    /// Local d(aperture)/dU
-    real64 localDAperturedU[numUdofs];
+    /// Local d(normalJump)/dU
+    real64 localDNormalJump_dU[numUdofs];
 
-    /// Local d(aperture)/dB
-    real64 localDAperturedB[numBdofs];
+    /// Local d(normalJump)/dB
+    real64 localDNormalJump_dB[numBdofs];
   };
 
   template< typename POLICY,
@@ -442,7 +442,7 @@ public:
   }
 
   /**
-   * @brief Complete - compute and store d(aperture)/dU and d(aperture)/dB
+   * @brief Complete - compute and store d(normalJump)/dU and d(normalJump)/dB
    */
   GEOS_HOST_DEVICE
   inline
@@ -451,24 +451,24 @@ public:
   {
     real64 const invArea = 1.0 / m_area[k];
 
-    // Compute d(aperture)/dU = (1/area) * unitNormal^T * Atu
-    // This gives: dAperturedU[j] = (1/area) * sum_i(unitNormal[i] * Atu[i][j])
+    // Compute d(normalJump)/dU = (1/area) * unitNormal^T * Atu
+    // This gives: dNormalJump_dU[j] = (1/area) * sum_i(unitNormal[i] * Atu[i][j])
     // Use Ri_eq_AjiBj for transpose: R[i] = sum_j(A[j][i] * B[j])
-    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( stack.localDAperturedU, stack.localAtu, stack.unitNormal );
-    LvArray::tensorOps::scale< numUdofs >( stack.localDAperturedU, invArea );
+    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( stack.localDNormalJump_dU, stack.localAtu, stack.unitNormal );
+    LvArray::tensorOps::scale< numUdofs >( stack.localDNormalJump_dU, invArea );
 
-    // Compute d(aperture)/dB = (1/area) * unitNormal^T * Atb
-    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( stack.localDAperturedB, stack.localAtb, stack.unitNormal );
-    LvArray::tensorOps::scale< numBdofs >( stack.localDAperturedB, invArea );
+    // Compute d(normalJump)/dB = (1/area) * unitNormal^T * Atb
+    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( stack.localDNormalJump_dB, stack.localAtb, stack.unitNormal );
+    LvArray::tensorOps::scale< numBdofs >( stack.localDNormalJump_dB, invArea );
 
     // Store the results
     for( localIndex i = 0; i < numUdofs; ++i )
     {
-      m_dAperturedU( k, i ) = stack.localDAperturedU[i];
+      m_dNormalJump_dU( k, i ) = stack.localDNormalJump_dU[i];
     }
     for( localIndex i = 0; i < numBdofs; ++i )
     {
-      m_dAperturedB( k, i ) = stack.localDAperturedB[i];
+      m_dNormalJump_dB( k, i ) = stack.localDNormalJump_dB[i];
     }
 
     return 0.0;
@@ -479,16 +479,16 @@ protected:
   /// Element area
   arrayView1d< real64 const > const m_area;
 
-  /// Storage for d(aperture)/dU
-  arrayView2d< real64 > const m_dAperturedU;
+  /// Storage for d(normalJump)/dU
+  arrayView2d< real64 > const m_dNormalJump_dU;
 
-  /// Storage for d(aperture)/dB
-  arrayView2d< real64 > const m_dAperturedB;
+  /// Storage for d(normalJump)/dB
+  arrayView2d< real64 > const m_dNormalJump_dB;
 };
 
-/// Factory for ComputeApertureDerivatives kernel
-using ComputeApertureDerivativesFactory =
-  finiteElement::InterfaceKernelFactory< ComputeApertureDerivatives,
+/// Factory for ComputeNormalJumpDerivatives kernel
+using ComputeNormalJumpDerivativesFactory =
+  finiteElement::InterfaceKernelFactory< ComputeNormalJumpDerivatives,
                                          arrayView1d< globalIndex const > const,
                                          arrayView1d< globalIndex const > const,
                                          globalIndex const,
@@ -549,6 +549,10 @@ public:
 
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+  /// Offset of the temperature DOF (and energy-balance row) from the pressure DOF (and mass-balance row)
+  /// of a cell: single-phase flow packs the temperature right after the pressure (thermal only)
+  static constexpr integer temperatureDofOffset = 1;
 
   using Base::m_elemsToNodes;
   using Base::m_finiteElementSpace;
@@ -751,7 +755,7 @@ public:
     }
 
     stack.pColIndex = m_pDofNumber[k];
-    stack.tColIndex = m_pDofNumber[k] + 1;
+    stack.tColIndex = m_pDofNumber[k] + temperatureDofOffset;
     stack.pRowIndex = m_pDofNumber[k] - m_dofRankOffset;
     stack.pLocal[0] = m_pressure( k );
   }
@@ -942,7 +946,7 @@ public:
                                                           numFlowCols );
 
       // ---- A_Tb^Omega : energy row + storage residual, temperature packed right after pressure ----
-      localIndex const tRow = pRow + 1;
+      localIndex const tRow = pRow + temperatureDofOffset;
       if( m_isThermal && tRow < m_matrix.numRows() )
       {
         real64 const uf = m_fluidInternalEnergy( k, 0 );

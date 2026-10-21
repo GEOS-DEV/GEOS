@@ -65,6 +65,13 @@ public:
   using SinglePhaseFVMBase = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using SinglePhaseFVMBase::numDof;
   using SinglePhaseFVMBase::numEqn;
+
+  /// Index, among the flow DOFs of an element, of the temperature (packed right after the pressure)
+  static constexpr integer temperatureDofIndex = numDof - 1;
+
+  /// Index, among the flow equations of an element, of the energy balance (packed right after the mass balance)
+  static constexpr integer energyEqnIndex = numEqn - 1;
+
   using SinglePhaseFVMBase::maxNumElems;
   using SinglePhaseFVMBase::maxNumConns;
   using SinglePhaseFVMBase::maxStencilSize;
@@ -272,7 +279,7 @@ public:
       // add dMassFlux_dT to localFluxJacobian
       for( integer ke = 0; ke < 2; ++ke )
       {
-        localIndex const localDofIndexTemp = k[ke] * numDof + numDof - 1;
+        localIndex const localDofIndexTemp = k[ke] * numDof + temperatureDofIndex;
         stack.localFluxJacobian[k[0]*numEqn][localDofIndexTemp] += m_dt * dMassFlux_dT[ke];
         stack.localFluxJacobian[k[1]*numEqn][localDofIndexTemp] -= m_dt * dMassFlux_dT[ke];
       }
@@ -296,17 +303,17 @@ public:
       }
 
       // ***** Assemble the energy flux of this connection and its derivatives *****
-      stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * energyFlux;
-      stack.localFlux[k[1]*numEqn + numEqn - 1] -= m_dt * energyFlux;
+      stack.localFlux[k[0]*numEqn + energyEqnIndex] += m_dt * energyFlux;
+      stack.localFlux[k[1]*numEqn + energyEqnIndex] -= m_dt * energyFlux;
 
       for( integer ke = 0; ke < 2; ++ke )
       {
         integer const localDofIndexPres = k[ke] * numDof;
-        stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexPres] += m_dt * dEnergyFlux_dP[ke];
-        stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexPres] -= m_dt * dEnergyFlux_dP[ke];
-        integer const localDofIndexTemp = localDofIndexPres + 1;
-        stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexTemp] += m_dt * dEnergyFlux_dT[ke];
-        stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexTemp] -= m_dt * dEnergyFlux_dT[ke];
+        stack.localFluxJacobian[k[0]*numEqn + energyEqnIndex][localDofIndexPres] += m_dt * dEnergyFlux_dP[ke];
+        stack.localFluxJacobian[k[1]*numEqn + energyEqnIndex][localDofIndexPres] -= m_dt * dEnergyFlux_dP[ke];
+        integer const localDofIndexTemp = k[ke] * numDof + temperatureDofIndex;
+        stack.localFluxJacobian[k[0]*numEqn + energyEqnIndex][localDofIndexTemp] += m_dt * dEnergyFlux_dT[ke];
+        stack.localFluxJacobian[k[1]*numEqn + energyEqnIndex][localDofIndexTemp] -= m_dt * dEnergyFlux_dT[ke];
       }
     } );
   }
@@ -326,11 +333,11 @@ public:
                                         localIndex const localRow )
     {
       // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &SinglePhaseFVMAbstractBase::m_localRhs[localRow + numEqn-1], stack.localFlux[i * numEqn + numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &SinglePhaseFVMAbstractBase::m_localRhs[localRow + energyEqnIndex], stack.localFlux[i * numEqn + energyEqnIndex] );
 
-      SinglePhaseFVMAbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn-1,
+      SinglePhaseFVMAbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + energyEqnIndex,
                                                                                                       stack.dofColIndices.data(),
-                                                                                                      stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
+                                                                                                      stack.localFluxJacobian[i * numEqn + energyEqnIndex].dataIfContiguous(),
                                                                                                       stack.stencilSize * numDof );
 
       // dEnergyFlux/dAperture (advective + conductive) -> energy-balance block of dR_dAper, appended after

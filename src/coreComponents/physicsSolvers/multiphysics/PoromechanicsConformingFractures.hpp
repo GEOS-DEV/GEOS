@@ -143,7 +143,7 @@ public:
       addMatrixTemperaturePressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
     }
 
-    setUpDflux_dApertureMatrix( domain );
+    setUpDerivativeFluxResidual_dNormalJump( domain );
   }
 
   //Stabilization specific
@@ -260,8 +260,7 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    integer const numComp = this->flowSolver()->numFluidComponents();
-    bool const isThermal = this->m_isThermal;
+    integer const numCoupledFlowDofs = numCoupledFlowDofsPerElem();
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & regionNames )
@@ -288,14 +287,14 @@ public:
           localIndex const k = bubbleElems[kk];
           localIndex const faceIndex = elemsToFaces[kk][0];
 
-          // (bubble_row, pressure_col): 1 pressure column for each of the 3 bubble DOFs
+          // (bubble_row, flow_col): the flow DOFs of the matrix cell (pressure, then temperature when thermal)
+          // for each of the 3 bubble DOFs (A_bp, A_bT)
           for( localIndex i = 0; i < 3; ++i )
           {
             globalIndex const rowNumber = bubbleDofNumber[faceIndex] + i - rankOffset;
             if( rowNumber >= 0 && rowNumber < rowLengths.size() )
             {
-              // One pressure DOF from matrix cell, plus its temperature DOF when thermal
-              rowLengths[rowNumber] += numComp + ( isThermal ? 1 : 0 );
+              rowLengths[rowNumber] += numCoupledFlowDofs;
             }
           }
 
@@ -304,7 +303,7 @@ public:
           globalIndex const pRow = pressureDofNumber[k] - rankOffset;
           if( pRow >= 0 && pRow < rowLengths.size() )
           {
-            for( integer ic = 0; ic < numComp + ( isThermal ? 1 : 0 ); ++ic )
+            for( integer ic = 0; ic < numCoupledFlowDofs; ++ic )
               rowLengths[pRow + ic] += 3; // Three bubble DOFs
           }
         } );
@@ -318,8 +317,7 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    integer const numComp = this->flowSolver()->numFluidComponents();
-    bool const isThermal = this->m_isThermal;
+    integer const numCoupledFlowDofs = numCoupledFlowDofsPerElem();
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
@@ -349,16 +347,14 @@ public:
           localIndex const faceIndex = elemsToFaces[kk][0];
           globalIndex const pressureColIndex = pressureDofNumber[k];
 
-          // (bubble_row, pressure_col) : A_bp
+          // (bubble_row, flow_col) : A_bp, plus A_bT when thermal
           for( localIndex i = 0; i < 3; ++i )
           {
             globalIndex const rowIndex = bubbleDofNumber[faceIndex] + i - rankOffset;
             if( rowIndex >= 0 && rowIndex < pattern.numRows() )
             {
-              for( integer ic = 0; ic < numComp; ++ic )
+              for( integer ic = 0; ic < numCoupledFlowDofs; ++ic )
                 pattern.insertNonZero( rowIndex, pressureColIndex + ic );
-              if( isThermal )
-                pattern.insertNonZero( rowIndex, pressureColIndex + numComp ); // appending temperature DOF
             }
           }
 
@@ -368,7 +364,7 @@ public:
           {
             for( localIndex i = 0; i < 3; ++i )
             {
-              for( integer ic = 0; ic < numComp + ( isThermal ? 1 : 0 ); ++ic )
+              for( integer ic = 0; ic < numCoupledFlowDofs; ++ic )
                 pattern.insertNonZero( pRow + ic, bubbleDofNumber[faceIndex] + i );
             }
           }
@@ -394,12 +390,12 @@ public:
     // Newton assembly and make the host copy explicit before the host-side
     // coupling kernels consume it.
 
-    if( !m_derivativeFluxResidual_dAperture )
+    if( !m_derivativeFluxResidual_dNormalJump )
     {
-      setUpDflux_dApertureMatrix( domain );
+      setUpDerivativeFluxResidual_dNormalJump( domain );
     }
-    m_derivativeFluxResidual_dAperture->move( parallelDeviceMemorySpace, false );
-    m_derivativeFluxResidual_dAperture->zero();
+    m_derivativeFluxResidual_dNormalJump->move( parallelDeviceMemorySpace, false );
+    m_derivativeFluxResidual_dNormalJump->zero();
 
     assembleElementBasedContributions( time_n,
                                        dt,
@@ -416,11 +412,11 @@ public:
                                                     localMatrix,
                                                     localRhs,
                                                     getDerivativeFluxResidual_dNormalJump(),
-                                                    m_derivativeFluxResidual_dApertureEnergyOffset );
+                                                    m_derivativeFluxResidual_dNormalJumpEnergyOffset );
 
-    m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );
+    m_derivativeFluxResidual_dNormalJump->move( hostMemorySpace, false );
 
-    // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
+    // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dNormalJump is filled.
     assembleCouplingTerms( time_n,
                            dt,
                            domain,
@@ -514,9 +510,7 @@ protected:
     GEOS_MARK_FUNCTION;
 
 
-    integer const numComp = this->flowSolver()->numFluidComponents();
-    // When thermal, the flow field packs an extra temperature DOF right after the numComp mass
-    integer const numRowsPerElem = numComp + ( this->m_isThermal ? 1 : 0 );
+    integer const numRowsPerElem = numCoupledFlowDofsPerElem();
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                         MeshLevel const & mesh,
@@ -632,11 +626,10 @@ protected:
   }
 
   /**
-   * @brief Set up the Dflux_dApertureMatrix object
-   *
-   * @param domain
-   * @param dofManager
-   * @param localMatrix
+   * @brief Add the nonzeros induced by the flux-normal jump coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
    */
   void addTransmissibilityCouplingPattern( DomainPartition const & domain,
                                            DofManager const & dofManager,
@@ -698,14 +691,14 @@ protected:
     arrayView1d< globalIndex const > const &
     flowDofNumber = fractureSubRegion.getReference< globalIndex_array >( dofManager.getKey( this->getFlowDofKey()) );
 
-    //debug
-    // ArrayOfArraysView< localIndex const > const elemsToNodes = fractureSubRegion.nodeList().toViewConst();
-
     globalIndex const rankOffset = dofManager.rankOffset();
+
+    // the mass rows and, when thermal, the energy row couple to the same displacements
+    integer const numRowsPerElem = numCoupledFlowDofsPerElem();
 
     fvDiscretization.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
-      forAll< serialPolicy >( stencil.size(), [=, this] ( localIndex const iconn )
+      forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
       {
         localIndex const numFluxElems = stencil.stencilSize( iconn );
         typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
@@ -738,10 +731,6 @@ protected:
                   for( localIndex i = 0; i < 3; ++i )
                   {
                     globalIndex const colIndex = coupledDisplacementDofNumber[dofIndirectionCb( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
-                    // See addTransmissibilityCouplingNNZ's numRowsPerElem: when thermal, also
-                    // reserve the temperature row (right after the numComp mass rows) for the
-                    // same displacement/bubble coupling as the mass rows.
-                    integer const numRowsPerElem = this->flowSolver()->numFluidComponents() + ( this->m_isThermal ? 1 : 0 );
                     for( integer ic = 0; ic < numRowsPerElem; ic++ )
                     {
                       pattern.insertNonZero( rowIndex + ic, colIndex );
@@ -759,11 +748,10 @@ protected:
 
 
   /**
-   * @brief Set up the Dflux_dApertureMatrix object
-   *
-   * @param domain
+   * @brief Set up the matrix of the derivatives of the flux residual w.r.t. the normal jump
+   * @param domain the physical domain object
    */
-  void setUpDflux_dApertureMatrix( DomainPartition & domain )
+  void setUpDerivativeFluxResidual_dNormalJump( DomainPartition & domain )
   {
     integer const numComp = this->flowSolver()->numFluidComponents();
 
@@ -818,7 +806,7 @@ protected:
       // has no dConductivity/dDispJump constitutive derivative). One column per fracture element.
       localIndex const numElems = fractureSubRegion.size();
       localIndex const numMassRows = numElems * numComp;
-      m_derivativeFluxResidual_dApertureEnergyOffset = this->m_isThermal ? numMassRows : -1;
+      m_derivativeFluxResidual_dNormalJumpEnergyOffset = this->m_isThermal ? numMassRows : -1;
       localIndex const numRows = numMassRows + ( this->m_isThermal ? numElems : 0 );
 
       array1d< localIndex > rowCapacities( numRows );
@@ -844,12 +832,12 @@ protected:
         }
       } );
 
-      std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = getRefDerivativeFluxResidual_dAperture();
-      derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numElems );
-      derivativeFluxResidual_dAperture->setName( this->getName() + "/derivativeFluxResidual_dAperture" );
+      std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dNormalJump = getRefDerivativeFluxResidual_dNormalJump();
+      derivativeFluxResidual_dNormalJump = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numElems );
+      derivativeFluxResidual_dNormalJump->setName( this->getName() + "/derivativeFluxResidual_dNormalJump" );
       if( numRows > 0 )
       {
-        derivativeFluxResidual_dAperture->resizeFromRowCapacities< parallelHostPolicy >( numRows,
+        derivativeFluxResidual_dNormalJump->resizeFromRowCapacities< parallelHostPolicy >( numRows,
                                                                                          numElems,
                                                                                          rowCapacities.data() );
       }
@@ -866,11 +854,11 @@ protected:
             {
               for( integer ic = 0; ic < numComp; ++ic )
               {
-                derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0] * numComp + ic, sei[iconn][k1], 0.0 );
+                derivativeFluxResidual_dNormalJump->insertNonZero( sei[iconn][k0] * numComp + ic, sei[iconn][k1], 0.0 );
               }
               if( this->m_isThermal )
               {
-                derivativeFluxResidual_dAperture->insertNonZero( numMassRows + sei[iconn][k0], sei[iconn][k1], 0.0 );
+                derivativeFluxResidual_dNormalJump->insertNonZero( numMassRows + sei[iconn][k0], sei[iconn][k1], 0.0 );
               }
             }
           }
@@ -917,7 +905,7 @@ protected:
                                       arrayView1d< real64 > const & localRhs ) override
   {
     GEOS_UNUSED_VAR( time_n, dt );
-    // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
+    // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dNormalJump is filled.
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & regionNames )
@@ -1047,28 +1035,46 @@ protected:
     } );
   }
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dNormalJump()
   {
-    return m_derivativeFluxResidual_dAperture;
+    return m_derivativeFluxResidual_dNormalJump;
   }
 
   CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
   {
-    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
+    return m_derivativeFluxResidual_dNormalJump->toViewConstSizes();
   }
 
   CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
   {
-    return m_derivativeFluxResidual_dAperture->toViewConst();
+    return m_derivativeFluxResidual_dNormalJump->toViewConst();
   }
 
   /**
    * @brief First row of the energy-balance block appended after all mass-balance rows in
    * getDerivativeFluxResidual_dNormalJump(), or -1 when the flow solver is not thermal.
    */
-  localIndex getDerivativeFluxResidual_dApertureEnergyOffset() const
+  localIndex getDerivativeFluxResidual_dNormalJumpEnergyOffset() const
   {
-    return m_derivativeFluxResidual_dApertureEnergyOffset;
+    return m_derivativeFluxResidual_dNormalJumpEnergyOffset;
+  }
+
+  /**
+   * @brief Offset of the temperature DOF, and of the energy-balance row, from the first flow DOF of an element.
+   * The temperature is packed right after the numFluidComponents() mass DOFs (thermal is single-phase only).
+   */
+  integer temperatureDofOffset() const
+  {
+    return this->flowSolver()->numFluidComponents();
+  }
+
+  /**
+   * @brief Number of flow DOFs (and rows) of an element coupled to the displacements: the
+   * numFluidComponents() mass ones, then the temperature (energy-balance) one when thermal.
+   */
+  integer numCoupledFlowDofsPerElem() const
+  {
+    return this->flowSolver()->numFluidComponents() + ( this->m_isThermal ? 1 : 0 );
   }
 
   struct viewKeyStruct : public Base::viewKeyStruct
@@ -1076,9 +1082,9 @@ protected:
 
   static const localIndex m_maxFaceNodes = 11; // Maximum number of nodes on a contact face
 
-  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
-  /// First row of the energy-balance block in m_derivativeFluxResidual_dAperture (-1 if not thermal)
-  localIndex m_derivativeFluxResidual_dApertureEnergyOffset = -1;
+  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dNormalJump;
+  /// First row of the energy-balance block in m_derivativeFluxResidual_dNormalJump (-1 if not thermal)
+  localIndex m_derivativeFluxResidual_dNormalJumpEnergyOffset = -1;
 
   /// True when the bulk poromechanics kernel has reset the porosity and no enrichment (face bubble)
   /// increment has been added to it since: such an increment is added on top of the stored porosity,

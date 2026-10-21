@@ -140,8 +140,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
   // The mass-balance block of getDerivativeFluxResidual_dNormalJump() below is one row per
   // fracture element, as always. When m_isThermal, a second (advective + conductive) block for the
-  // energy balance is appended after it - see setUpDflux_dApertureMatrix and
-  // getDerivativeFluxResidual_dApertureEnergyOffset(), scattered further down (Part 3).
+  // energy balance is appended after it - see setUpDerivativeFluxResidual_dNormalJump and
+  // getDerivativeFluxResidual_dNormalJumpEnergyOffset(), scattered further down (Part 3).
   using namespace contact;
 
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -164,6 +164,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   arrayView1d< globalIndex const > const &
   bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
+  // energy-balance row (temperature DOF) of a fracture element, w.r.t. its mass-balance row (pressure DOF)
+  integer const temperatureOffset = this->temperatureDofOffset();
 
   string const & fractureRegionName = this->solidMechanicsSolver()->getUniqueFractureRegionName();
 
@@ -178,22 +180,22 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
   localIndex const numElems = subRegion.size();
 
-  array2d< real64 > dAperturedU( numElems, maxNumUdofs );
-  array2d< real64 > dAperturedB( numElems, numBdofs );
-  dAperturedU.zero();
-  dAperturedB.zero();
-  dAperturedU.move( parallelDeviceMemorySpace, true );
-  dAperturedB.move( parallelDeviceMemorySpace, true );
-  arrayView2d< real64 > const dAperturedUView = dAperturedU.toView();
-  arrayView2d< real64 > const dAperturedBView = dAperturedB.toView();
+  array2d< real64 > dNormalJump_dU( numElems, maxNumUdofs );
+  array2d< real64 > dNormalJump_dB( numElems, numBdofs );
+  dNormalJump_dU.zero();
+  dNormalJump_dB.zero();
+  dNormalJump_dU.move( parallelDeviceMemorySpace, true );
+  dNormalJump_dB.move( parallelDeviceMemorySpace, true );
+  arrayView2d< real64 > const dNormalJump_dUView = dNormalJump_dU.toView();
+  arrayView2d< real64 > const dNormalJump_dBView = dNormalJump_dB.toView();
 
-  // Launch the ComputeApertureDerivatives kernel to fill dAperturedU and dAperturedB
+  // Launch the ComputeNormalJumpDerivatives kernel to fill dNormalJump_dU and dNormalJump_dB
   this->solidMechanicsSolver()->forFiniteElementOnFractureSubRegions( meshName,
-                                                                      [&, dAperturedUView, dAperturedBView] ( string const &,
+                                                                      [&, dNormalJump_dUView, dNormalJump_dBView] ( string const &,
                                                                                                               finiteElement::FiniteElementBase const & subRegionFE,
                                                                                                               arrayView1d< localIndex const > const & faceElementList )
   {
-    poromechanicsALMKernels::ComputeApertureDerivativesFactory
+    poromechanicsALMKernels::ComputeNormalJumpDerivativesFactory
     kernelFactory( dispDofNumber,
                    bubbleDofNumber,
                    dofManager.rankOffset(),
@@ -201,8 +203,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
                    localRhs,
                    0.0,  // dt not used
                    faceElementList,
-                   dAperturedUView,
-                   dAperturedBView );
+                   dNormalJump_dUView,
+                   dNormalJump_dBView );
 
     real64 maxResidual = finiteElement::
                            interfaceBasedKernelApplication
@@ -218,24 +220,23 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   } );
 
   // Move data to host for serial assembly
-  dAperturedU.move( hostMemorySpace );
-  dAperturedB.move( hostMemorySpace );
+  dNormalJump_dU.move( hostMemorySpace );
+  dNormalJump_dB.move( hostMemorySpace );
 
   // Now assemble using the pre-computed derivatives
   arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
 
   arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
-  // Get element area for proper scaling
-  // Note: dAperturedU/dB are computed as (1/area) * unitNormal^T * Atu/Atb, i.e. d(normalJump)/du
+  // dNormalJump_dU/dB = (1/area) * unitNormal^T * Atu/Atb are the derivatives of the (element-averaged) normal jump.
   // For accumulation: vol = hydraulicAperture * area, so
-  //   dR_accum/du = (mass/vol) * area * dHydraulicAperture_dNormalJump * dAperturedU
-  // For flux: dR_flux/du = dR/dNormalJump * dAperturedU (dR_dAper already carries dHydraulicAperture_dNormalJump)
+  //   dR_accum/du = (mass/vol) * dVol/dNormalJump * dNormalJump_dU, with dVol/dNormalJump = area * dHydraulicAperture_dNormalJump
+  // For flux: dR_flux/du = dR/dNormalJump * dNormalJump_dU (dR_dNormalJump already carries dHydraulicAperture_dNormalJump)
   arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
   arrayView1d< real64 const > const dHydraulicAperture_dNormalJump = subRegion.getField< flow::dHydraulicAperture_dNormalJump >();
 
   // mass (and energy) depend on the displacement through the volume, by chain rule
-  // dR/dU = (R/vol) * dVol/dNormalJump * dAperturedU
+  // dR/dU = (R/vol) * dVol/dNormalJump * dNormalJump_dU
   array1d< real64 > massPerVolume( numElems );
   array1d< real64 > energyPerVolume( numElems );
   {
@@ -288,14 +289,12 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       }
     }
 
-    // Accumulation derivative w.r.t. nodal displacement
-    // dR_accum/du = (mass/vol) * area * dHydraulicAperture_dNormalJump * dAperturedU
-    // (dAperturedU already has 1/area factor, so multiply by area to cancel it)
+    // Accumulation derivative w.r.t. nodal displacement: dR_accum/du = (mass/vol) * dVol/dNormalJump * dNormalJump_dU
     if( hasAccumulationCoupling )
     {
       for( localIndex j = 0; j < numUdofs; ++j )
       {
-        dRdU( j ) = massPerVolume[kfe] * dAperturedU( kfe, j ) * dVol_dNormalJump;
+        dRdU( j ) = massPerVolume[kfe] * dNormalJump_dU( kfe, j ) * dVol_dNormalJump;
       }
 
       localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -313,10 +312,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       {
         for( localIndex j = 0; j < numUdofs; ++j )
         {
-          dRdU( j ) = energyPerVolume[kfe] * dAperturedU( kfe, j ) * dVol_dNormalJump;
+          dRdU( j ) = energyPerVolume[kfe] * dNormalJump_dU( kfe, j ) * dVol_dNormalJump;
         }
 
-        localIndex const localRowEnergy = localRow + 1;
+        localIndex const localRowEnergy = localRow + temperatureOffset;
 
         if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
         {
@@ -335,7 +334,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
     for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
     {
-      real64 const dR_dAper = values[kfe1];
+      real64 const dR_dNormalJump = values[kfe1];
       localIndex const kfe2 = columns[kfe1];
 
       localIndex const kf0_2 = elemsToFaces[kfe2][0];
@@ -356,11 +355,11 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         }
       }
 
-      // dR_flux/du = dR_flux/dAper * dAper/du (pre-computed for element kfe2)
+      // dR_flux/du = dR_flux/dNormalJump * dNormalJump/du (pre-computed for element kfe2)
       stackArray1d< real64, maxNumUdofs > dRdU2( maxNumUdofs );
       for( localIndex j = 0; j < numUdofs2; ++j )
       {
-        dRdU2( j ) = dR_dAper * dAperturedU( kfe2, j );
+        dRdU2( j ) = dR_dNormalJump * dNormalJump_dU( kfe2, j );
       }
 
       localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -387,15 +386,13 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       }
     }
 
-    // Accumulation derivative w.r.t. bubble displacement
-    // dR_accum/db = (mass/vol) * area * dHydraulicAperture_dNormalJump * dAperturedB
-    // (dAperturedB already has 1/area factor, so multiply by area to cancel it)
+    // Accumulation derivative w.r.t. bubble displacement: dR_accum/db = (mass/vol) * dVol/dNormalJump * dNormalJump_dB
     if( hasAccumulationCoupling )
     {
       real64 dRdB[numBdofs];
       for( localIndex j = 0; j < numBdofs; ++j )
       {
-        dRdB[j] = massPerVolume[kfe] * dAperturedB( kfe, j ) * dVol_dNormalJump;
+        dRdB[j] = massPerVolume[kfe] * dNormalJump_dB( kfe, j ) * dVol_dNormalJump;
       }
 
       localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -413,10 +410,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       {
         for( localIndex j = 0; j < numBdofs; ++j )
         {
-          dRdB[j] = energyPerVolume[kfe] * dAperturedB( kfe, j ) * dVol_dNormalJump;
+          dRdB[j] = energyPerVolume[kfe] * dNormalJump_dB( kfe, j ) * dVol_dNormalJump;
         }
 
-        localIndex const localRowEnergy = localRow + 1;
+        localIndex const localRowEnergy = localRow + temperatureOffset;
 
         if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
         {
@@ -431,7 +428,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     // Flux derivative w.r.t. bubble displacement
     for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
     {
-      real64 const dR_dAper = values[kfe1];
+      real64 const dR_dNormalJump = values[kfe1];
       localIndex const kfe2 = columns[kfe1];
 
       // Get DOF indices for bubble of element kfe2
@@ -445,11 +442,11 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         }
       }
 
-      // dR_flux/db = dR_flux/dAper * dAper/db (pre-computed for element kfe2)
+      // dR_flux/db = dR_flux/dNormalJump * dNormalJump/db (pre-computed for element kfe2)
       real64 dRdB2[numBdofs];
       for( localIndex j = 0; j < numBdofs; ++j )
       {
-        dRdB2[j] = dR_dAper * dAperturedB( kfe2, j );
+        dRdB2[j] = dR_dNormalJump * dNormalJump_dB( kfe2, j );
       }
 
       localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -466,11 +463,11 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
     // ==== Part 3: Energy-balance flux derivative (advective and conductive contributions) ====
     if( this->m_isThermal )
     {
-      localIndex const energyOffset = this->getDerivativeFluxResidual_dApertureEnergyOffset();
+      localIndex const energyOffset = this->getDerivativeFluxResidual_dNormalJumpEnergyOffset();
       if( energyOffset >= 0 )
       {
         globalIndex elemDOFEnergy[1];
-        elemDOFEnergy[0] = presDofNumber[kfe] + 1; // temperature/energy dof, packed right after pressure
+        elemDOFEnergy[0] = presDofNumber[kfe] + temperatureOffset;
         localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( elemDOFEnergy[0] - rankOffset );
 
         localIndex const numEnergyColumns = dFluxResidual_dNormalJump.numNonZeros( energyOffset + kfe );
@@ -480,9 +477,9 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         // Nodal (Apu-energy) contribution
         for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
         {
-          real64 const dREnergy_dAper = energyValues[kfe1];
+          real64 const dREnergy_dNormalJump = energyValues[kfe1];
           localIndex const kfe2 = energyColumns[kfe1];
-          // No fractureState gating: dREnergy_dAper already vanishes where the hydraulic aperture does not follow the jump
+          // No fractureState gating: dREnergy_dNormalJump already vanishes where the hydraulic aperture does not follow the jump
           // (e.g. closed Barton-Bandis), and is the exact derivative where it does (e.g. HydraulicApertureTable slope at gN < 0)
           localIndex const kf0_2 = elemsToFaces[kfe2][0];
           localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
@@ -504,7 +501,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
           stackArray1d< real64, maxNumUdofs > dRdUEnergy( maxNumUdofs );
           for( localIndex j = 0; j < numUdofs2; ++j )
           {
-            dRdUEnergy( j ) = dREnergy_dAper * dAperturedU( kfe2, j );
+            dRdUEnergy( j ) = dREnergy_dNormalJump * dNormalJump_dU( kfe2, j );
           }
 
           if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
@@ -519,7 +516,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         // Bubble (Apb-energy) contribution
         for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
         {
-          real64 const dREnergy_dAper = energyValues[kfe1];
+          real64 const dREnergy_dNormalJump = energyValues[kfe1];
           localIndex const kfe2 = energyColumns[kfe1];
 
           globalIndex bubbleDOF2Energy[numBdofs];
@@ -535,7 +532,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
           real64 dRdBEnergy[numBdofs];
           for( localIndex j = 0; j < numBdofs; ++j )
           {
-            dRdBEnergy[j] = dREnergy_dAper * dAperturedB( kfe2, j );
+            dRdBEnergy[j] = dREnergy_dNormalJump * dNormalJump_dB( kfe2, j );
           }
 
           if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
