@@ -441,6 +441,29 @@ public:
 
   }
 
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override
+  {
+    GEOS_MARK_FUNCTION;
+
+    Base::implicitStepSetup( time_n, dt, domain );
+
+    // The flow step setup refreshes the fracture permeability with dHa/dgN = 1
+    // (CompressibleSolid::updateStateFromPressureAndAperture), which would enter the first Jacobian of the step:
+    // recompute it with the hydraulic aperture law
+    if( !this->m_performStressInitialization )
+    {
+      // remove the contribution of the hydraulic aperture from the stencil weights
+      this->flowSolver()->prepareStencilWeights( domain );
+
+      updateHydraulicApertureAndFracturePermeability( domain );
+
+      // update the stencil weights using the updated hydraulic aperture
+      this->flowSolver()->updateStencilWeights( domain );
+    }
+  }
+
   virtual void updateState( DomainPartition & domain ) override
   {
     GEOS_MARK_FUNCTION;
