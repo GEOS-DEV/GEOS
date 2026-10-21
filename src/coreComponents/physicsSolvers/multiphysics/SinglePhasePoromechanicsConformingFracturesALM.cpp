@@ -139,9 +139,9 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   GEOS_UNUSED_VAR( regionNames );
 
   // The mass-balance block of getDerivativeFluxResidual_dNormalJump() below is one row per
-  // fracture element, as always. When m_isThermal, a second (advective + conductive) block for the
-  // energy balance is appended after it - see setUpDerivativeFluxResidual_dNormalJump and
-  // getDerivativeFluxResidual_dNormalJumpEnergyOffset(), scattered further down (Part 3).
+  // fracture element. When m_isThermal, a second (advective + conductive) block for the energy
+  // balance is appended after it - see setUpDerivativeFluxResidual_dNormalJump and
+  // getDerivativeFluxResidual_dNormalJumpEnergyOffset().
   using namespace contact;
 
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -230,319 +230,92 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
 
   // dNormalJump_dU/dB = (1/area) * unitNormal^T * Atu/Atb are the derivatives of the (element-averaged) normal jump.
   // For accumulation: vol = hydraulicAperture * area, so
-  //   dR_accum/du = (mass/vol) * dVol/dNormalJump * dNormalJump_dU, with dVol/dNormalJump = area * dHydraulicAperture_dNormalJump
+  //   dR_accum/du = (R/vol) * dVol/dNormalJump * dNormalJump_dU, with dVol/dNormalJump = area * dHydraulicAperture_dNormalJump
   // For flux: dR_flux/du = dR/dNormalJump * dNormalJump_dU (dR_dNormalJump already carries dHydraulicAperture_dNormalJump)
   arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
   arrayView1d< real64 const > const dHydraulicAperture_dNormalJump = subRegion.getField< flow::dHydraulicAperture_dNormalJump >();
 
-  // mass (and energy) depend on the displacement through the volume, by chain rule
-  // dR/dU = (R/vol) * dVol/dNormalJump * dNormalJump_dU
   array1d< real64 > massPerVolume( numElems );
   array1d< real64 > energyPerVolume( numElems );
-  {
-    arrayView1d< real64 const > const mass = subRegion.getField< flow::mass >();
-    arrayView1d< real64 const > const deltaVolume = subRegion.getField< flow::deltaVolume >();
-    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    for( localIndex kfe = 0; kfe < numElems; ++kfe )
-    {
-      real64 const vol = volume[kfe] + deltaVolume[kfe];
-      massPerVolume[kfe] = vol > 0.0 ? mass[kfe] / vol : 0.0;
-    }
-    if( this->m_isThermal )
-    {
-      arrayView1d< real64 const > const energy = subRegion.getField< flow::energy >();
-      for( localIndex kfe = 0; kfe < numElems; ++kfe )
-      {
-        real64 const vol = volume[kfe] + deltaVolume[kfe];
-        energyPerVolume[kfe] = vol > 0.0 ? energy[kfe] / vol : 0.0;
-      }
-    }
-  }
+  this->computeAccumulationPerVolume( subRegion, massPerVolume.toView(), energyPerVolume.toView() );
 
-  forAll< serialPolicy >( numElems, [&]( localIndex const kfe )
+  localIndex const energyOffset = this->getDerivativeFluxResidual_dNormalJumpEnergyOffset();
+  GEOS_ERROR_IF( this->m_isThermal && energyOffset < 0,
+                 GEOS_FMT( "{}: the energy-balance block of dR/dNormalJump was not built", this->getName() ) );
+
+  // Adds dR_dNormalJump * [ dNormalJump_dU( kfe ), dNormalJump_dB( kfe ) ] to localRow, on the nodal and the bubble
+  // displacement columns of fracture element kfe (both faces)
+  auto addNormalJumpDerivative = [&]( localIndex const localRow,
+                                      localIndex const kfe,
+                                      real64 const dR_dNormalJump )
   {
-    localIndex const kf0 = elemsToFaces[kfe][0];
-    localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+    localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
     localIndex const numUdofs = 2 * 3 * numNodesPerFace;
 
-    globalIndex nodeDOF[maxNumUdofs];
-    globalIndex elemDOF[1];
-    elemDOF[0] = presDofNumber[kfe];
-
-    stackArray1d< real64, maxNumUdofs > dRdU( maxNumUdofs );
-
-    // dVol/dNormalJump: zero when the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis)
-    real64 const dVol_dNormalJump = area[kfe] * dHydraulicAperture_dNormalJump[kfe];
-    bool const hasAccumulationCoupling = !isZero( dVol_dNormalJump );
-
-    // ==== Part 1: Apu - Nodal displacement contribution ====
-    // Get DOF indices for displacement
-    for( localIndex kf = 0; kf < 2; ++kf )
-    {
-      for( localIndex a = 0; a < numNodesPerFace; ++a )
-      {
-        for( localIndex i = 0; i < 3; ++i )
-        {
-          nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
-                                                          + LvArray::integerConversion< globalIndex >( i );
-        }
-      }
-    }
-
-    // Accumulation derivative w.r.t. nodal displacement: dR_accum/du = (mass/vol) * dVol/dNormalJump * dNormalJump_dU
-    if( hasAccumulationCoupling )
-    {
-      for( localIndex j = 0; j < numUdofs; ++j )
-      {
-        dRdU( j ) = massPerVolume[kfe] * dNormalJump_dU( kfe, j ) * dVol_dNormalJump;
-      }
-
-      localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
-
-      if( localRow >= 0 && localRow < localMatrix.numRows() )
-      {
-        localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                  nodeDOF,
-                                                                  dRdU.data(),
-                                                                  numUdofs );
-      }
-
-      // Energy accumulation derivative, on the temperature/energy row packed right after pressure
-      if( this->m_isThermal )
-      {
-        for( localIndex j = 0; j < numUdofs; ++j )
-        {
-          dRdU( j ) = energyPerVolume[kfe] * dNormalJump_dU( kfe, j ) * dVol_dNormalJump;
-        }
-
-        localIndex const localRowEnergy = localRow + temperatureOffset;
-
-        if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
-        {
-          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
-                                                                    nodeDOF,
-                                                                    dRdU.data(),
-                                                                    numUdofs );
-        }
-      }
-    }
-
-    // Flux derivative w.r.t. nodal displacement
-    localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
-    arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
-    arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
-
-    for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
-    {
-      real64 const dR_dNormalJump = values[kfe1];
-      localIndex const kfe2 = columns[kfe1];
-
-      localIndex const kf0_2 = elemsToFaces[kfe2][0];
-      localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
-      localIndex const numUdofs2 = 2 * 3 * numNodesPerFace2;
-
-      // Get DOF indices for element kfe2
-      globalIndex nodeDOF2[maxNumUdofs];
-      for( localIndex kf = 0; kf < 2; ++kf )
-      {
-        for( localIndex a = 0; a < numNodesPerFace2; ++a )
-        {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            nodeDOF2[kf * 3 * numNodesPerFace2 + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                              + LvArray::integerConversion< globalIndex >( i );
-          }
-        }
-      }
-
-      // dR_flux/du = dR_flux/dNormalJump * dNormalJump/du (pre-computed for element kfe2)
-      stackArray1d< real64, maxNumUdofs > dRdU2( maxNumUdofs );
-      for( localIndex j = 0; j < numUdofs2; ++j )
-      {
-        dRdU2( j ) = dR_dNormalJump * dNormalJump_dU( kfe2, j );
-      }
-
-      localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
-
-      if( localRow >= 0 && localRow < localMatrix.numRows() )
-      {
-        localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                  nodeDOF2,
-                                                                  dRdU2.data(),
-                                                                  numUdofs2 );
-      }
-    }
-
-    // ==== Part 2: Apb - Bubble displacement contribution ====
-    globalIndex bubbleDOF[numBdofs];
-
-    // Get DOF indices for bubble
+    globalIndex nodeDofs[maxNumUdofs];
+    real64 dRdU[maxNumUdofs];
+    globalIndex bubbleDofs[numBdofs];
+    real64 dRdB[numBdofs];
     for( localIndex kf = 0; kf < 2; ++kf )
     {
       localIndex const faceIndex = elemsToFaces[kfe][kf];
       for( localIndex i = 0; i < 3; ++i )
       {
-        bubbleDOF[kf * 3 + i] = bubbleDofNumber[faceIndex] + LvArray::integerConversion< globalIndex >( i );
+        for( localIndex a = 0; a < numNodesPerFace; ++a )
+        {
+          localIndex const j = kf * 3 * numNodesPerFace + 3 * a + i;
+          nodeDofs[j] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+          dRdU[j] = dR_dNormalJump * dNormalJump_dU( kfe, j );
+        }
+        bubbleDofs[kf * 3 + i] = bubbleDofNumber[faceIndex] + LvArray::integerConversion< globalIndex >( i );
+        dRdB[kf * 3 + i] = dR_dNormalJump * dNormalJump_dB( kfe, kf * 3 + i );
       }
     }
 
-    // Accumulation derivative w.r.t. bubble displacement: dR_accum/db = (mass/vol) * dVol/dNormalJump * dNormalJump_dB
-    if( hasAccumulationCoupling )
+    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow, nodeDofs, dRdU, numUdofs );
+    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow, bubbleDofs, dRdB, numBdofs );
+  };
+
+  forAll< serialPolicy >( numElems, [&]( localIndex const kfe )
+  {
+    // No accumulation coupling when the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis).
+    // Same test as the Lagrange-multiplier solver, on dHydraulicAperture_dNormalJump alone (not scaled by the area)
+    bool const hasAccumulationCoupling = !isZero( dHydraulicAperture_dNormalJump[kfe] );
+    // vol = hydraulicAperture * area
+    real64 const dVol_dNormalJump = area[kfe] * dHydraulicAperture_dNormalJump[kfe];
+
+    // The mass-balance row then, when thermal, the energy-balance row (temperature DOF): each has its own
+    // accumulation per unit volume and its own row in dR/dNormalJump
+    integer const numRows = this->m_isThermal ? 2 : 1;
+    for( integer ir = 0; ir < numRows; ++ir )
     {
-      real64 dRdB[numBdofs];
-      for( localIndex j = 0; j < numBdofs; ++j )
+      bool const isEnergyRow = ( ir == 1 );
+
+      localIndex const localRow =
+        LvArray::integerConversion< localIndex >( presDofNumber[kfe] + ( isEnergyRow ? temperatureOffset : 0 ) - rankOffset );
+      if( localRow < 0 || localRow >= localMatrix.numRows() )
       {
-        dRdB[j] = massPerVolume[kfe] * dNormalJump_dB( kfe, j ) * dVol_dNormalJump;
+        continue;
       }
 
-      localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
-
-      if( localRow >= 0 && localRow < localMatrix.numRows() )
+      // Accumulation: dR_accum/du = (R/vol) * dVol/dNormalJump * dNormalJump_dU, same for the bubble DOFs
+      if( hasAccumulationCoupling )
       {
-        localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                  bubbleDOF,
-                                                                  dRdB,
-                                                                  numBdofs );
+        real64 const accumulationPerVolume = isEnergyRow ? energyPerVolume[kfe] : massPerVolume[kfe];
+        addNormalJumpDerivative( localRow, kfe, accumulationPerVolume * dVol_dNormalJump );
       }
 
-      // Energy accumulation derivative, on the temperature/energy row packed right after pressure
-      if( this->m_isThermal )
+      // Flux (mass, or advective + conductive energy): dR_flux/du = dR_flux/dNormalJump( kfe2 ) * dNormalJump_dU( kfe2 )
+      // for every element kfe2 of the stencils of kfe. No fractureState gating: dR_flux/dNormalJump already vanishes
+      // where the hydraulic aperture does not follow the jump (e.g. closed Barton-Bandis), and is the exact derivative
+      // where it does (e.g. HydraulicApertureTable slope at gN < 0)
+      localIndex const fluxRow = isEnergyRow ? energyOffset + kfe : kfe;
+      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( fluxRow );
+      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( fluxRow );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( fluxRow );
+      for( localIndex icol = 0; icol < numColumns; ++icol )
       {
-        for( localIndex j = 0; j < numBdofs; ++j )
-        {
-          dRdB[j] = energyPerVolume[kfe] * dNormalJump_dB( kfe, j ) * dVol_dNormalJump;
-        }
-
-        localIndex const localRowEnergy = localRow + temperatureOffset;
-
-        if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
-        {
-          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
-                                                                    bubbleDOF,
-                                                                    dRdB,
-                                                                    numBdofs );
-        }
-      }
-    }
-
-    // Flux derivative w.r.t. bubble displacement
-    for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
-    {
-      real64 const dR_dNormalJump = values[kfe1];
-      localIndex const kfe2 = columns[kfe1];
-
-      // Get DOF indices for bubble of element kfe2
-      globalIndex bubbleDOF2[numBdofs];
-      for( localIndex kf = 0; kf < 2; ++kf )
-      {
-        localIndex const faceIndex = elemsToFaces[kfe2][kf];
-        for( localIndex i = 0; i < 3; ++i )
-        {
-          bubbleDOF2[kf * 3 + i] = bubbleDofNumber[faceIndex] + LvArray::integerConversion< globalIndex >( i );
-        }
-      }
-
-      // dR_flux/db = dR_flux/dNormalJump * dNormalJump/db (pre-computed for element kfe2)
-      real64 dRdB2[numBdofs];
-      for( localIndex j = 0; j < numBdofs; ++j )
-      {
-        dRdB2[j] = dR_dNormalJump * dNormalJump_dB( kfe2, j );
-      }
-
-      localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
-
-      if( localRow >= 0 && localRow < localMatrix.numRows() )
-      {
-        localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                  bubbleDOF2,
-                                                                  dRdB2,
-                                                                  numBdofs );
-      }
-    }
-
-    // ==== Part 3: Energy-balance flux derivative (advective and conductive contributions) ====
-    if( this->m_isThermal )
-    {
-      localIndex const energyOffset = this->getDerivativeFluxResidual_dNormalJumpEnergyOffset();
-      if( energyOffset >= 0 )
-      {
-        globalIndex elemDOFEnergy[1];
-        elemDOFEnergy[0] = presDofNumber[kfe] + temperatureOffset;
-        localIndex const localRowEnergy = LvArray::integerConversion< localIndex >( elemDOFEnergy[0] - rankOffset );
-
-        localIndex const numEnergyColumns = dFluxResidual_dNormalJump.numNonZeros( energyOffset + kfe );
-        arraySlice1d< localIndex const > const & energyColumns = dFluxResidual_dNormalJump.getColumns( energyOffset + kfe );
-        arraySlice1d< real64 const > const & energyValues = dFluxResidual_dNormalJump.getEntries( energyOffset + kfe );
-
-        // Nodal (Apu-energy) contribution
-        for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
-        {
-          real64 const dREnergy_dNormalJump = energyValues[kfe1];
-          localIndex const kfe2 = energyColumns[kfe1];
-          // No fractureState gating: dREnergy_dNormalJump already vanishes where the hydraulic aperture does not follow the jump
-          // (e.g. closed Barton-Bandis), and is the exact derivative where it does (e.g. HydraulicApertureTable slope at gN < 0)
-          localIndex const kf0_2 = elemsToFaces[kfe2][0];
-          localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
-          localIndex const numUdofs2 = 2 * 3 * numNodesPerFace2;
-
-          globalIndex nodeDOF2Energy[maxNumUdofs];
-          for( localIndex kf = 0; kf < 2; ++kf )
-          {
-            for( localIndex a = 0; a < numNodesPerFace2; ++a )
-            {
-              for( localIndex i = 0; i < 3; ++i )
-              {
-                nodeDOF2Energy[kf * 3 * numNodesPerFace2 + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                                        + LvArray::integerConversion< globalIndex >( i );
-              }
-            }
-          }
-
-          stackArray1d< real64, maxNumUdofs > dRdUEnergy( maxNumUdofs );
-          for( localIndex j = 0; j < numUdofs2; ++j )
-          {
-            dRdUEnergy( j ) = dREnergy_dNormalJump * dNormalJump_dU( kfe2, j );
-          }
-
-          if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
-          {
-            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
-                                                                      nodeDOF2Energy,
-                                                                      dRdUEnergy.data(),
-                                                                      numUdofs2 );
-          }
-        }
-
-        // Bubble (Apb-energy) contribution
-        for( localIndex kfe1 = 0; kfe1 < numEnergyColumns; ++kfe1 )
-        {
-          real64 const dREnergy_dNormalJump = energyValues[kfe1];
-          localIndex const kfe2 = energyColumns[kfe1];
-
-          globalIndex bubbleDOF2Energy[numBdofs];
-          for( localIndex kf = 0; kf < 2; ++kf )
-          {
-            localIndex const faceIndex = elemsToFaces[kfe2][kf];
-            for( localIndex i = 0; i < 3; ++i )
-            {
-              bubbleDOF2Energy[kf * 3 + i] = bubbleDofNumber[faceIndex] + LvArray::integerConversion< globalIndex >( i );
-            }
-          }
-
-          real64 dRdBEnergy[numBdofs];
-          for( localIndex j = 0; j < numBdofs; ++j )
-          {
-            dRdBEnergy[j] = dREnergy_dNormalJump * dNormalJump_dB( kfe2, j );
-          }
-
-          if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
-          {
-            localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
-                                                                      bubbleDOF2Energy,
-                                                                      dRdBEnergy,
-                                                                      numBdofs );
-          }
-        }
+        addNormalJumpDerivative( localRow, columns[icol], values[icol] );
       }
     }
   } );

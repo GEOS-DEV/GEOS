@@ -29,6 +29,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
@@ -969,6 +970,37 @@ protected:
     }
 
     Base::mapSolutionBetweenSolvers( domain, solverType );
+  }
+
+  /**
+   * @brief Compute the fluid mass and, when thermal, the energy per unit volume of every fracture element (single phase).
+   *        Both accumulation terms depend on the displacements through the element volume only (porosity does not
+   *        depend on it), so these are their derivatives w.r.t. the volume.
+   * @param subRegion the fracture subregion
+   * @param massPerVolume the mass per unit volume of each element (zero for a zero-volume element)
+   * @param energyPerVolume the energy per unit volume of each element (left untouched when not thermal)
+   */
+  void computeAccumulationPerVolume( FaceElementSubRegion const & subRegion,
+                                     arrayView1d< real64 > const & massPerVolume,
+                                     arrayView1d< real64 > const & energyPerVolume ) const
+  {
+    arrayView1d< real64 const > const mass = subRegion.getField< fields::flow::mass >();
+    arrayView1d< real64 const > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
+    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+    for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
+    {
+      real64 const vol = volume[kfe] + deltaVolume[kfe];
+      massPerVolume[kfe] = vol > 0.0 ? mass[kfe] / vol : 0.0;
+    }
+    if( this->m_isThermal )
+    {
+      arrayView1d< real64 const > const energy = subRegion.getField< fields::flow::energy >();
+      for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
+      {
+        real64 const vol = volume[kfe] + deltaVolume[kfe];
+        energyPerVolume[kfe] = vol > 0.0 ? energy[kfe] / vol : 0.0;
+      }
+    }
   }
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )

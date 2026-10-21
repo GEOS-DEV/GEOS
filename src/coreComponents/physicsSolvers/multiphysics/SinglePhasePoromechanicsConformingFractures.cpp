@@ -115,25 +115,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
     // depend on the displacement through the volume, so we need mass/vol and energy/vol for each element
     array1d< real64 > massPerVolume( subRegion.size() );
     array1d< real64 > energyPerVolume( subRegion.size() );
-    {
-      arrayView1d< real64 const > const mass = subRegion.getField< flow::mass >();
-      arrayView1d< real64 const > const deltaVolume = subRegion.getField< flow::deltaVolume >();
-      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-      for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
-      {
-        real64 const vol = volume[kfe] + deltaVolume[kfe];
-        massPerVolume[kfe] = vol > 0.0 ? mass[kfe] / vol : 0.0;
-      }
-      if( this->m_isThermal )
-      {
-        arrayView1d< real64 const > const energy = subRegion.getField< flow::energy >();
-        for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
-        {
-          real64 const vol = volume[kfe] + deltaVolume[kfe];
-          energyPerVolume[kfe] = vol > 0.0 ? energy[kfe] / vol : 0.0;
-        }
-      }
-    }
+    this->computeAccumulationPerVolume( subRegion, massPerVolume.toView(), energyPerVolume.toView() );
 
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
     {
