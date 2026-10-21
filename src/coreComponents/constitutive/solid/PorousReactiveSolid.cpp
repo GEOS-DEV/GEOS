@@ -98,6 +98,7 @@ typedef PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeabilit
 
 // Damage solid + damage permeability + damage diffusion
 typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion > PorousReactiveDamageDamagePermeabilityDamageDiffusion;
+typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability, DamageDiffusion > PorousReactiveDamageSpectralDamagePermeabilityDamageDiffusion;
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstant, string const &, Group * const )
@@ -109,6 +110,7 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeability
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeabilityDamageDiffusion, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralDamagePermeabilityDamageDiffusion, string const &, Group * const )
 
 
 }

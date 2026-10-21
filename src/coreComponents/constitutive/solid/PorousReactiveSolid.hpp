@@ -333,7 +333,16 @@ private:
     real64 bulkModulus = 0.0;
     if constexpr ( std::is_same_v< DiscretizationOps, SolidModelDiscretizationOpsFullyAnisotropic > )
     {
-      bulkModulus = m_solidUpdate.getBulkModulus( k );
+      // Volumetric part of the (degraded) tangent at this quadrature point, K = 1/9 sum_{i,j<3} C_ij.
+      // For an isotropically degraded tangent g(d) C this is g(d_q) K, as in the isotropic branch.
+      for( int i = 0; i < 3; ++i )
+      {
+        for( int j = 0; j < 3; ++j )
+        {
+          bulkModulus += stiffness.m_c[i][j];
+        }
+      }
+      bulkModulus /= 9.0;
     }
     else
     {
