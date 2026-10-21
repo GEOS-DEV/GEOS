@@ -937,6 +937,14 @@ public:
   string getDiscretizationName() const {return m_discretizationName;}
 
   /**
+   * @brief Whether numerical-method setup must initialize cell finite elements
+   *        and precompute their shape-function gradients for this solver.
+   * @return True for solvers using cell finite-element integration; false when
+   *         interpolation is evaluated independently of cell quadrature.
+   */
+  virtual bool requiresCellShapeFunctionGradients() const { return true; }
+
+  /**
    * @brief function to set the value of m_assemblyCallback
    * @param func the function to set m_assemblyCallback to
    * @param funcType the type of the function

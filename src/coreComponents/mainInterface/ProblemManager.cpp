@@ -985,6 +985,21 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                        setRestartFlags( RestartFlags::NO_WRITE ).reference();
                 subRegion.excludeWrappersFromPacking( { discretizationName } );
 
+                // MPM owns its particle-to-grid interpolation. Retain the FE
+                // wrapper and quadrature count for background-grid bookkeeping,
+                // but do not initialize unused cell integration data. In native
+                // 2D the factory returns a face FE, which cannot enter the 3D
+                // cell-gradient dispatch below.
+                if( !solver->requiresCellShapeFunctionGradients() )
+                {
+                  localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                              meshLevel.getName(),
+                                                                                              regionName,
+                                                                                              subRegion.getName() ) ];
+                  numQuadraturePointsInList = std::max( numQuadraturePointsInList, fe.getNumQuadraturePoints() );
+                  return;
+                }
+
                 finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
                                                                                          [&] ( auto & finiteElement )
                 {

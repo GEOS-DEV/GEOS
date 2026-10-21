@@ -81,6 +81,12 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  /**
+   * @brief MPM evaluates grid interpolation at particles and particle-domain
+   *        vertices; it does not use cell-quadrature shape-function gradients.
+   */
+  bool requiresCellShapeFunctionGradients() const override { return false; }
+
   virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;

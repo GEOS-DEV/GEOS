@@ -2399,6 +2399,9 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
 #flux: -q {mPartition} # queue to use
 #flux: -l # Add task rank prefixes to each line of output.
 
+# Propagate launch/GEOS failures to the scheduler; print completion only on success.
+set -euo pipefail
+
 export MPICH_GPU_SUPPORT_ENABLED=1
 export HSA_XNACK=1
 
@@ -2432,6 +2435,9 @@ echo "flux run command has completed, good bye."
 #SBATCH -A {mBank}
 #SBATCH --export=NONE
 #SBATCH -p {mPartition}
+
+# Propagate launch/GEOS failures to the scheduler; print completion only on success.
+set -euo pipefail
 
 echo "Launching srun command..."
 export OMP_NUM_THREADS=1
