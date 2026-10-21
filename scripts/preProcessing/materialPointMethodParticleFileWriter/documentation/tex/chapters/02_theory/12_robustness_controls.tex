@@ -183,8 +183,8 @@ subdivision; value 1 explicitly enables it. The automatic policy does not
 select point/B-spline tets or wedges, even in a mixed run containing CPDI boxes.
 Explicit native subdivision uses maximum current vertex-to-vertex distance,
 with threshold $0.99998\min_i h_i$ in the active dimensions. This native test
-is independent of either box VP-Hencky option. Plane strain uses x/y distances
-and never subdivides wedge thickness.
+is independent of either box VP-Hencky option. Native plane strain uses XY distances and quad/triangle geometry, with no
+through-thickness generators.
 
 The separate \mpmcode{oversizedParticleTreatment="split"} selects oversized
 boxes, tets, and wedges even when \mpmcode{subdivideParticles=0}. Its diameter
@@ -266,7 +266,7 @@ Cohesive and damaged-cohesive particles, and any particle with nonzero
 anchors, interface forces, and history require a separate CZ splitting method.
 Geometry type and interpolation type are preserved: boxes remain boxes, tets
 remain tets, and CPTI children retain CPTI interpolation. Warped CPDI2,
-native 2D grids, and axisymmetry remain separate work.
+plane stress, and axisymmetry remain separate work.
 
 \begin{lstlisting}[language=Python,caption={Native surface geometry with runtime size control.}]
 pfw['particleGeometry'] = 'fromRefinement'
@@ -278,7 +278,7 @@ pfw['defGradResetMaxParticleDomainToGridCellRatio'] = 0.75
 pfw['oversizedParticleResetRankParticleCountThreshold'] = -1
 pfw['geometryReset'] = 'FOnly'
 \end{lstlisting}
-PFW simplex generation still requires object \texttt{particleType=1}
-(SinglePointBSpline). Runtime splitting introduces no particle-file columns or
+PFW simplex generation accepts point types 0/1 or CPTI type 3; use
+\texttt{simplexParticleType=3} for CPDI bulk with CPTI surface simplices. Runtime splitting introduces no particle-file columns or
 new XML controls. See \path{PARTICLE_SPLITTING.md} for standalone tests and the
 full-build, MPI, restart, and GPU integration checks.

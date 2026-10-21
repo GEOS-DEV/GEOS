@@ -25,7 +25,7 @@ nu = 0.27    # in plane poisson's ratio
 
 # Domain ---------------------------------------------------------------------------------
 
-pfw["planeStrain"] = 1
+pfw["formulation"] = "PlaneStrain"
 
 refine = 4
 cpp = 10 # cells per partition in each direction
@@ -35,11 +35,10 @@ pfw["zpar"] = 1
 
 pfw["nI"] = pfw["xpar"]*cpp  # grid cells in the x-direction
 pfw["nJ"] = pfw["ypar"]*cpp  # grid cells in the y-direction
-pfw["nK"] = 3          # grid cells in the z-direction
 
 domainWidth = 1.0
 domainHeight = domainWidth
-domainLength = domainHeight*(pfw["nK"]-2)/(pfw["nJ"]-2)  # m, to get cubic cells
+domainLength = domainHeight*(3-2)/(pfw["nJ"]-2)  # m, to get cubic cells
 
 # Define all the geometric objects -------------------------------------------------------
 
@@ -47,8 +46,8 @@ pfw["xmin"] = -0.5*domainWidth   # m
 pfw["xmax"] = 0.5*domainWidth   # m
 pfw["ymin"] = 0.0   # m
 pfw["ymax"] = domainHeight  # m
-pfw["zmin"] = -0.5*domainLength # mm
-pfw["zmax"] = 0.5*domainLength # mm
+# Physical out-of-plane measure; independent of object end caps and z cells.
+pfw["planeStrainThickness"] = domainLength
 
 pfw["outputType"] = "silo"
 
@@ -90,7 +89,7 @@ pfw["fTable"] = [[0,            1.0,  1.0,    1.0],
 
 # Define all the geometric objects -------------------------------------------------------
 
-disk = geom.cylinder('disk',[0.0,domainHeight/2,pfw["zmin"]],[0.0,domainHeight/2,pfw["zmax"]],0.5*domainHeight,vel=[0.,0.,0.],mat=0,group=0)
+disk = geom.disk('disk', [0.0, domainHeight / 2], 0.5 * domainHeight, vel=[0.0, 0.0, 0.0], mat=0, group=0)
 pfw["objects"] = [disk]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------

@@ -176,12 +176,14 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   requireColumn( ParticleColumnHeaders::ID );
   requireColumn( ParticleColumnHeaders::PositionX );
   requireColumn( ParticleColumnHeaders::PositionY );
-  requireColumn( ParticleColumnHeaders::PositionZ );
+  int const dimensions = partition.spatialDimension();
+  if( dimensions == 3 ) requireColumn( ParticleColumnHeaders::PositionZ );
   // Schema 2 is mandatory. PFW owns compatibility with old Python inputs.
   requireColumn(ParticleColumnHeaders::GeometryVersion);
-  for(int h=static_cast<int>(ParticleColumnHeaders::GeometryShape);
-      h<=static_cast<int>(ParticleColumnHeaders::GeometryZZ);++h)
-    requireColumn(static_cast<ParticleColumnHeaders>(h));
+  requireColumn(ParticleColumnHeaders::GeometryShape);
+  requireColumn(ParticleColumnHeaders::ParticleVolume);
+  for(int a=0; a<dimensions; ++a) for(int i=0; i<dimensions; ++i)
+    requireColumn(static_cast<ParticleColumnHeaders>(static_cast<int>(ParticleColumnHeaders::GeometryXX)+3*a+i));
 
   // Read in particle data
   int lineNumber = 1; // Since column header takes one line
@@ -209,7 +211,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     // If particle is inside partition add to particleData otherwise ignore and continue parsing file
     bool inPartition = partition.isCoordInPartition( lineData[ columnHeaderMap.at( static_cast< int >( ParticleColumnHeaders::PositionX ) ) ], 0 ) &&
                        partition.isCoordInPartition( lineData[ columnHeaderMap.at( static_cast< int >( ParticleColumnHeaders::PositionY ) ) ], 1 ) &&
-                       partition.isCoordInPartition( lineData[ columnHeaderMap.at( static_cast< int >( ParticleColumnHeaders::PositionZ ) ) ], 2 );
+                       ( dimensions == 2 || partition.isCoordInPartition( lineData[ columnHeaderMap.at( static_cast< int >( ParticleColumnHeaders::PositionZ ) ) ], 2 ) );
     if( !inPartition )
     {
       continue;
@@ -242,6 +244,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleColumnHeaders::ParticleType:
           defaultValue = 2.0;
           break;
+        case ParticleColumnHeaders::PositionZ:
         case ParticleColumnHeaders::CZTag:
         case ParticleColumnHeaders::SurfaceFlag:
         case ParticleColumnHeaders::MaterialType:
@@ -335,7 +338,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array1d< real64 > particleTemperatureRate( npInBlock );
     array1d< real64 > particleVolume( npInBlock );
     array1d< real64 > particleStrengthScale( npInBlock );
-    array3d< real64 > particleGeometryCurrent( npInBlock, 3, 3 ); // Full edge generators, stored by rows.
+    array3d< real64 > particleGeometryCurrent( npInBlock, dimensions, dimensions ); // Full edge generators, stored by rows.
     array2d< real64 > particleSurfaceNormal( npInBlock, 3 );
     array2d< real64 > particleSurfacePosition( npInBlock, 3 );
     array2d< real64 > particleSurfaceTraction( npInBlock, 3 );
@@ -391,18 +394,27 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       // Material shape is independent of interpolation. Store full edges once.
       particleVolume[i]=particleData[b][i][static_cast<int>(ParticleColumnHeaders::ParticleVolume)];
       real64 const tag=particleData[b][i][static_cast<int>(ParticleColumnHeaders::GeometryShape)];
-      for(int a=0;a<3;++a) for(int j=0;j<3;++j)
+      GEOS_ERROR_IF( !std::isfinite(tag) || tag < 0 || tag > 4 || tag > ::floor(tag), "Invalid GeometryShape" );
+      GEOS_ERROR_IF( particleGeometry::affine::dimension(static_cast<particleGeometry::Shape>(static_cast<int>(tag))) != dimensions,
+                    "Particle geometry dimension must match the native mesh" );
+      for(int a=0;a<dimensions;++a) for(int j=0;j<dimensions;++j)
         particleGeometryCurrent[i][a][j]=particleData[b][i][static_cast<int>(ParticleColumnHeaders::GeometryXX)+3*a+j];
-      auto const error=particleGeometry::affine::validateFileGeometry(tag,particleVolume[i],particleGeometryCurrent[i]);
+      auto const error=particleGeometry::affine::validateFileGeometry(tag,particleVolume[i],particleGeometryCurrent[i],partition.planeStrainThickness());
       GEOS_ERROR_IF(error!=particleGeometry::affine::InputError::None,
                     "Particle " << particleID[i] << ": " << particleGeometry::affine::inputErrorMessage(error));
       referenceGeometry[i]=static_cast<integer>(tag);
       ParticleType const type=particleBlock.getParticleType();
       GEOS_ERROR_IF(type==ParticleType::CPDI2, "CPDI2 mapping is not implemented");
-      GEOS_ERROR_IF(type==ParticleType::CPDI && referenceGeometry[i]!=0,
-                    "CPDI requires parallelepiped geometry");
-      GEOS_ERROR_IF(type==ParticleType::CPTI && referenceGeometry[i]!=2,
-                    "CPTI requires tetrahedron geometry (GeometryShape=2)");
+      GEOS_ERROR_IF(type==ParticleType::CPDI && referenceGeometry[i]!=(dimensions==2 ? 3 : 0),
+                    "CPDI requires quad geometry in 2D or hex geometry in 3D");
+      GEOS_ERROR_IF(type==ParticleType::CPTI && referenceGeometry[i]!=(dimensions==2 ? 4 : 2),
+                    "CPTI requires triangle geometry in 2D or tetrahedron geometry in 3D");
+
+      if( dimensions == 2 )
+      {
+        GEOS_ERROR_IF( std::abs(particleCenter[i][2]) > 1.0e-12 || std::abs(particleVelocity[i][2]) > 1.0e-12,
+                      "Native 2D particle positions and velocities must have zero z components" );
+      }
 
       // Material Direction
       // For convenient indexing we store the transpose of the particle material directions so the X axis is easy accessed from [0]

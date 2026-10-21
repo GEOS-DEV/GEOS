@@ -50,7 +50,7 @@ The first two are ordinary particle-file columns when \texttt{MaterialType} and 
 0 & \texttt{SinglePoint}\\
 1 & \mpmcode{SinglePointBSpline}\\
 2 & \texttt{CPDI} (current PFW default)\\
-3 & \texttt{CPTI}: 3D native tetrahedra\\
+3 & \texttt{CPTI}: native 2D triangles / 3D tetrahedra\\
 4 & \texttt{CPDI2} placeholder\\
 \bottomrule
 \end{tabular}
@@ -66,7 +66,7 @@ The \texttt{particleType} value selects the mapping and domain representation de
 import pfw_geometryObjects as geom
 
 # Particle type integers: 0 SinglePoint, 1 SinglePointBSpline,
-# 2 CPDI boxes, 3 CPTI tets (3D), 4 CPDI2 (unsupported).
+# 2 CPDI boxes, 3 CPTI triangles/tets, 4 CPDI2 (unsupported).
 matrix = geom.box("matrix",
                   x0=[-1.0,-1.0,-1.0], x1=[1.0,1.0,1.0],
                   mat=0, group=0, particleType=2)

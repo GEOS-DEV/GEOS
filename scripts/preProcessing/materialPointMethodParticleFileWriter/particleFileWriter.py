@@ -917,7 +917,9 @@ parameters = {
                'surfaceRefinementFallback': ( 'cartesian', False ),  # PFW: cartesian or error for unresolved local simplex cuts.
                'surfaceRefinementPlaneTolerance': ( 0.05, False ),  # PFW: allowed corner/plane disagreement divided by child diagonal.
                'periodic': ( [ False, False, False ], False ),  # PFW: periodicity in x/y/z.
-               'planeStrain': ( 0, True ),  # MPM: run in plane-strain mode.
+               'planeStrain': ( 0, False ),  # PFW compatibility alias for formulation='PlaneStrain'.
+               'formulation': ( 'Cartesian3D', True ),  # MPM: native Cartesian3D or PlaneStrain.
+               'planeStrainThickness': ( None, False ),  # Domain scalar: physical volume = XY area times thickness.
                'plotGridFields': ( None, True ),  # MPM: write grid fields to plot output.
                'plotInterval': ( None, False ),  # PFW: output event interval.
                'plottableFields': ( None, True ),  # MPM: explicit particle-field output list.
@@ -1064,6 +1066,38 @@ pfw = job.pfw if hasattr(job, 'pfw') else {}
 if not isinstance(pfw, dict):
   raise TypeError('The input file must define pfw as a dictionary')
 
+# Normalize legacy PFW inputs before creating any solver XML attributes.
+# Geometry queries retain the old midplane for existing 3D object definitions;
+# the serialized particles and native mesh use canonical z=0.
+pfw = dict(pfw)
+legacyPlaneStrain = bool(pfw.get('planeStrain', 0))
+formulationInput = pfw.get('formulation', 'PlaneStrain' if legacyPlaneStrain else 'Cartesian3D')
+if formulationInput not in ('Cartesian3D', 'PlaneStrain'):
+  raise ValueError("formulation must be Cartesian3D or PlaneStrain")
+if 'planeStrain' in pfw and legacyPlaneStrain != (formulationInput == 'PlaneStrain'):
+  raise ValueError("planeStrain and formulation disagree")
+pfw['formulation'] = formulationInput
+pfw['planeStrain'] = int(formulationInput == 'PlaneStrain')
+if pfw['planeStrain']:
+  defaultThickness = (float(pfw.get('zmax', 0.5))-float(pfw.get('zmin', -0.5))) if legacyPlaneStrain else 1.0
+  thickness = float(pfw.get('planeStrainThickness', defaultThickness))
+  if not np.isfinite(thickness) or thickness <= 0:
+    raise ValueError("planeStrainThickness must be finite and positive")
+  pfw['planeStrainThickness'] = thickness
+  if pfw.get('zpar', 1) != 1:
+    raise ValueError("Native 2D requires zpar=1")
+  if len(pfw.get('periodic', [0,0,0])) == 2:
+    pfw['periodic'] = list(pfw['periodic']) + [0]
+  if pfw.get('periodic', [0,0,0])[2]:
+    if legacyPlaneStrain:
+      # Old planeStrain inputs suppressed this inactive flag at XML emission.
+      pfw['periodic'] = list(pfw['periodic'])
+      pfw['periodic'][2] = False
+    else:
+      raise ValueError("Native 2D cannot be periodic in z")
+else:
+  pfw['planeStrainThickness'] = 1.0
+
 unknownPfwKeys = sorted(key for key in pfw if key not in parameters)
 if unknownPfwKeys:
   raise KeyError(
@@ -1143,7 +1177,8 @@ cohesiveZoneRegionString = ""
 # Geometry normalization is the only compatibility boundary. Old pfw_input
 # dictionaries remain accepted; every generated file uses canonical schema 2.
 # RVector in particleFileFields requests geometry and is replaced automatically.
-from pfw_reference_geometry import box_tetrahedra, COLUMN_NAMES, encode_geometry, geometry_columns
+from pfw_reference_geometry import (box_tetrahedra, box_triangles, COLUMN_NAMES,
+                                    COLUMN_NAMES_2D, encode_geometry, geometry_columns)
 if geometryReset not in ('FOnly', 'FAndGeometry'):
   raise ValueError("geometryReset must be FOnly or FAndGeometry")
 if particleGeometryFormat not in ('legacy', 'unified'):
@@ -1206,8 +1241,8 @@ if simplexParticleType is not None:
   simplexParticleType = int(simplexParticleType)
   if surfaceRefinementMethod != 'simplex':
     raise ValueError("simplexParticleType requires surfaceRefinementMethod='simplex'")
-  if simplexParticleType == 3 and (planeStrain or not nativeReferenceGeometry):
-    raise ValueError("CPTI requires planeStrain=0 and particleGeometry='fromRefinement'")
+  if simplexParticleType == 3 and (not nativeReferenceGeometry):
+    raise ValueError("CPTI requires particleGeometry='fromRefinement'")
 
 
 # Geometry input has three forms: an explicit objects list, make_objects(),
@@ -1236,6 +1271,11 @@ else:
   # but this will error if no objects or make objects function exists in input file.
   print( "You don't have any objects" )
   
+if planeStrain:
+  from pfw_geometryObjects import prepare_plane_strain_objects, bind_plane_strain_thickness
+  prepare_plane_strain_objects(objects)
+  bind_plane_strain_thickness(objects, planeStrainThickness)
+
 # Compute resources for the subsequent GEOS job, independently of the number
 # of ranks currently running PFW. Partition counts determine mCores; machine
 # placement determines mNodes. Debug mode selects the debug queue and caps
@@ -1315,8 +1355,8 @@ if simplexParticleType is not None:
   subregions_all = sorted(set(subregions_all +
     [(material, simplexParticleType) for material, _ in subregions_all]))
 for material, particle_type in subregions_all:
-  if particle_type == 3 and (planeStrain or not nativeReferenceGeometry):
-    raise ValueError("CPTI requires planeStrain=0 and particleGeometry='fromRefinement'")
+  if particle_type == 3 and (not nativeReferenceGeometry):
+    raise ValueError("CPTI requires particleGeometry='fromRefinement'")
   if particle_type not in (0, 1, 2, 3):
     raise ValueError("Supported particle types are 0, 1, 2, and 3; CPDI2 is not implemented")
 print("subregions_all:", subregions_all)
@@ -1336,28 +1376,7 @@ if rank == 0:
 particleRefinement = particleRefinement if particleRefinement != None else [ 1 for i in range(numMats) ]  # Create list of size materials all ones
 
 
-# Validate the existing thin-3D plane-strain layout before generation:
-# three total z cells (one physical cell plus two outside layers), and one
-# GEOS partition in z. Native 2D mesh topology is not implemented here.
-
-
-if rank == 0:
-  no_errors = True
-
-  if ( planeStrain == 1 and NK != 3):
-    print('nK should = 3 for plane Strain!!')
-    no_errors = False
-
-  if ( planeStrain == 1 and zpar != 1):
-    print('zpar should = 1 for plane Strain!!')
-    no_errors = False
-
-  if not no_errors:
-    if not flux:
-      comm.Abort()
-    else:
-      sys.exit()
-
+# Native 2D has no z cell count. Legacy nK is accepted and ignored.
 
 # ============================================================================
 # 09. GRID EXTENTS, COARSE PARTICLE LATTICE, AND RANK OUTPUT SETUP
@@ -1374,12 +1393,12 @@ particleFileName = 'mpmParticleFile_'+inputFile.replace('pfw_input_',"")
 # interior discretizatiom
 nI = NI if periodic[0] else NI-2   # interior grid cells in the x-direction
 nJ = NJ if periodic[1] else NJ-2   # interior grid cells in the y-direction
-nK = NK-2 if planeStrain == 1 or not periodic[2] else NK   # interior grid cells in the z-direction
+nK = 1 if planeStrain else (NK-2 if not periodic[2] else NK)   # interior grid cells in the z-direction
 
 # grid cell spacing
 dX = (xmax - xmin)/nI
 dY = (ymax - ymin)/nJ
-dZ = (zmax - zmin)/nK
+dZ = planeStrainThickness if planeStrain else (zmax - zmin)/nK
 
 # total domain dimensions (counting ghosts)
 XMIN = xmin if periodic[0] else xmin - dX 
@@ -1388,6 +1407,12 @@ YMIN = ymin if periodic[1] else ymin - dY
 YMAX = ymax if periodic[1] else ymax + dY
 ZMIN = zmin - dZ if planeStrain == 1 or not periodic[2] else zmin
 ZMAX = zmax + dZ if planeStrain == 1 or not periodic[2] else zmax
+
+if planeStrain:
+  queryMidplane = 0.5*(zmin+zmax)
+  zmin = queryMidplane - 0.5*planeStrainThickness
+  zmax = queryMidplane + 0.5*planeStrainThickness
+  ZMIN = ZMAX = 0.0
 
 # particles in each direction
 ni = ppcx*nI
@@ -1401,7 +1426,7 @@ dz = dZ if planeStrain == 1 else dZ/ppcz
 
 # Sum particle volume to compute volume fraction.
 particleVolume = 0.
-domainVolume = ( pfw["xmax"] - pfw["xmin"] )*( pfw["ymax"] - pfw["ymin"] )*( pfw["zmax"] - pfw["zmin"] ) 
+domainVolume = (xmax-xmin)*(ymax-ymin)*(planeStrainThickness if planeStrain else zmax-zmin)
 
 # Continuation runs reuse the existing checkpoint and particle file. Otherwise,
 # each PFW rank opens its own temporary particle file without a header; rank 0
@@ -1417,8 +1442,8 @@ if generateParticleFile:
   particleFile = open(rank_particleFileName, 'w')
 
   # surfaceDepth is the coarse geometry-query distance used to identify the
-  # initial surface band. In plane strain there is one particle layer spanning
-  # the physical z thickness; refinement only subdivides x and y.
+  # initial surface band. Native plane strain uses only XY distances; physical
+  # thickness does not change occupancy flags or the surface refinement band.
   if planeStrain == 1:
     surfaceDepth = 1.2*np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy) #np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy)
   else:
@@ -1669,7 +1694,7 @@ if generateParticleFile:
     pString = str(particleNumber) + delim \
               + str(particlePosition[0]) + delim \
               + str(particlePosition[1]) + delim \
-              + str(particlePosition[2]) + delim \
+              + str(0.0 if planeStrain else particlePosition[2]) + delim \
               + str(data["particleType"])
 
     if "Velocity" in particleFileFields:
@@ -1733,7 +1758,7 @@ if generateParticleFile:
       surfaceNormal = data["surfaceNormal"]
       if ( planeStrain == 1 and surfaceNormal[2] != 0.0 ):
         norm = float( np.sqrt( surfaceNormal[0]*surfaceNormal[0] + surfaceNormal[1]*surfaceNormal[1] ) )
-        surfaceNormalValues = [surfaceNormal[0]/norm, surfaceNormal[1]/norm, 0.0]
+        surfaceNormalValues = [surfaceNormal[0]/norm, surfaceNormal[1]/norm, 0.0] if norm > 0 else [0.0, 0.0, 0.0]
       else:
         surfaceNormalValues = [surfaceNormal[0], surfaceNormal[1], surfaceNormal[2]]
       _validate_particle_value("SurfaceNormal", object, surfaceNormalValues, particlePosition)
@@ -1765,11 +1790,11 @@ if generateParticleFile:
     geometry = encode_geometry(particlePosition, (dxr, dyr, dzr),
                                geometryVertices if nativeReferenceGeometry else None,
                                plane_strain=planeStrain == 1)
-    if data['particleType'] == 3 and geometry[0] != 2:
-      raise ValueError("CPTI requires tetrahedron geometry")
-    if data['particleType'] == 2 and geometry[0] != 0:
+    if data['particleType'] == 3 and geometry[0] != (4 if planeStrain else 2):
+      raise ValueError("CPTI requires triangle geometry in 2D or tetrahedron geometry in 3D")
+    if data['particleType'] == 2 and geometry[0] != (3 if planeStrain else 0):
       raise ValueError("CPDI requires box geometry; set simplexParticleType=3 for CPTI cut tets")
-    pString += delim + geometry_columns(geometry, dxr*dyr*dzr, delim)
+    pString += delim + geometry_columns(geometry, dxr*dyr*dzr, delim, thickness=planeStrainThickness)
     return pString +'\n'
 
   def _particle_records(point, data, widths, vertices=None):
@@ -1786,7 +1811,7 @@ if generateParticleFile:
       yield point, data, widths, vertices
       return
     obj = data['object']
-    for center, child_widths, tet in box_tetrahedra(point, widths):
+    for center, child_widths, tet in (box_triangles if planeStrain else box_tetrahedra)(point, widths):
       obj.isInterior(center, surfaceDepth)  # Refresh compound-object caches.
       child = _evaluate_particle_data(obj, center, data['surfaceFlag'])
       if child['particleType'] != 3:
@@ -1795,7 +1820,7 @@ if generateParticleFile:
         if field in data and child[field] != data[field]:
           raise ValueError("Material/contact ownership changed inside a Cartesian CPTI piece")
       if 'surfaceTraction' in child:
-        child['surfaceTraction'] = np.asarray(child['surfaceTraction']) / 6.0
+        child['surfaceTraction'] = np.asarray(child['surfaceTraction']) / (2.0 if planeStrain else 6.0)
       yield center, child, child_widths, tet
 
   # ============================================================================
@@ -1887,7 +1912,7 @@ if generateParticleFile:
           n_p += 1
           particleVolume += piece.volume
           particleFile.write(str(n_p) + delim + piece.coarse_record)
-          layoutStatistics.record(piece.sample.coarse_particle_type, 0, piece.volume)
+          layoutStatistics.record(piece.sample.coarse_particle_type, 3 if planeStrain else 0, piece.volume)
           continue
         obj = objects[piece.sample.object_index]
         # Restore any geometry-object membership cache before evaluating state.
@@ -1908,7 +1933,7 @@ if generateParticleFile:
           override = (piece.normal, -distance * piece.normal)
         data = _evaluate_particle_data(obj, piece.point, flag, surfaceOverride=override)
         # Override only emitted cut simplices, keeping each object's bulk type.
-        # CPTI requires native 3D tetrahedra; point methods retain their existing
+        # CPTI requires native triangles/tetrahedra; point methods retain their existing
         # geometry choice. Cartesian fallback keeps the object's bulk type.
         if piece.vertices is not None:
           if simplexParticleType is not None:
@@ -1925,7 +1950,7 @@ if generateParticleFile:
           n_p += 1
           particleVolume += float(np.prod(widths))
           particleFile.write(_particle_file_line(n_p, center, record, *widths, geometryVertices=vertices))
-          shape = (1 if planeStrain else 2) if nativeReferenceGeometry and vertices is not None else 0
+          shape = (4 if planeStrain else 2) if nativeReferenceGeometry and vertices is not None else (3 if planeStrain else 0)
           layoutStatistics.record(record['particleType'], shape, float(np.prod(widths)))
       refinementReport = refiner.report()
       # The geometric refiner counts pieces before a CPTI box becomes six tets.
@@ -2069,7 +2094,7 @@ if generateParticleFile:
 
         columnNames = columnNames + delim + fieldString
 
-      columnNames += delim + delim.join(COLUMN_NAMES)
+      columnNames += delim + delim.join(COLUMN_NAMES_2D if planeStrain else COLUMN_NAMES)
       columnNames = columnNames + "\n"
       outfile.write(columnNames)
 
@@ -2242,7 +2267,11 @@ if rank == 0:
   #   Events            Solver execution, plot/restart schedules, runtime halt.
   #   NumericalMethods  The existing first-order finite-element discretization.
   #   Outputs           The selected plot backend and restart writer.
-  # Plane strain still uses the thin 3D mesh assembled in section 09.
+  # Ambient dimension and physical thickness are separate. There are no z
+  # coordinates, cells or ghost layers in native 2D XML.
+  meshZAttributes = '' if planeStrain else f'zCoords="{{ {ZMIN}, {ZMAX} }}"\n      nz="{{ {NK} }}"'
+  meshDimensionAttributes = f'spatialDimension="2" planeStrainThickness="{planeStrainThickness}"' if planeStrain else 'spatialDimension="3"'
+  meshElementType = 'C2D4' if planeStrain else 'C3D8'
   geosInputFileString = f"""<?xml version="1.0" ?>
 <!-- 
 srun -n {mCores:d} {geosPath} -i {geosInputFileName}
@@ -2252,13 +2281,13 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
   <Mesh>
     <InternalMesh
       name="backgroundGrid"
-      elementTypes="{{ C3D8 }}"
+      elementTypes="{{ {meshElementType} }}"
+      {meshDimensionAttributes}
       xCoords="{{ {XMIN}, {XMAX} }}"
       yCoords="{{ {YMIN}, {YMAX} }}"
-      zCoords="{{ {ZMIN}, {ZMAX} }}"
       nx="{{ {NI} }}"
       ny="{{ {NJ} }}"
-      nz="{{ {NK} }}"
+      {meshZAttributes}
       periodic="{{ {int(periodic[0])}, {int(periodic[1])}, {int(False if planeStrain == 1 else periodic[2])} }}"
       cellBlockNames="{{ cb1 }}"/>
       

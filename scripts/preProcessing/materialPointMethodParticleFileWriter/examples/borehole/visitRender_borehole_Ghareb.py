@@ -545,6 +545,18 @@ def configure_view(case_key):
         call_visit("ResetView")
     except Exception:
         pass
+    try:
+        call_visit("Query", "SpatialExtents")
+        extent = call_visit("GetQueryOutputValue")
+        if len(extent) == 4:
+            view = call_visit("GetView2D")
+            dx, dy = extent[1]-extent[0], extent[3]-extent[2]
+            view.windowCoords = (extent[0]-0.02*dx, extent[1]+0.02*dx,
+                                 extent[2]-0.02*dy, extent[3]+0.02*dy)
+            call_visit("SetView2D", view)
+            return
+    except Exception:
+        pass
     View3DAttributes = globals().get("View3DAttributes")
     if View3DAttributes is None:
         return

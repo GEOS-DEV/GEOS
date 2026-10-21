@@ -165,6 +165,7 @@ protected:
 
   /// Mesh number of dimension
   int m_dim;
+  real64 m_planeStrainThickness = 1.0;
 
   /// Minimum extent of mesh dimensions
   real64 m_min[3];
@@ -201,7 +202,7 @@ private:
   array1d< integer > m_lastElemIndexForBlock[3];
 
   /// Array of number of elements per direction
-  globalIndex m_numElemsTotal[3];
+  globalIndex m_numElemsTotal[3] = {};
 
   /// String array listing the element type present
   string_array m_elementType;
@@ -311,7 +312,8 @@ private:
       xPosIndex = endingIndex;
     }
 
-    for( int i=0; i<3; ++i )
+    X[2] = 0;
+    for( int i=0; i<m_dim; ++i )
     {
       if( m_setCoords[i].size()>0 )
       {
@@ -380,7 +382,8 @@ private:
   template< typename OUT_VECTOR >
   inline void getElemCenterPosition( int const k[3], OUT_VECTOR && X )
   {
-    for( int i=0; i<3; ++i )
+    X[2] = 0;
+    for( int i=0; i<m_dim; ++i )
     {
       X[i] = m_min[i] + (m_max[i]-m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
     }

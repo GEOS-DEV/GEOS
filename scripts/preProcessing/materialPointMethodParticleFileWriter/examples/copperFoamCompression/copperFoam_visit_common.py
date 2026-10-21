@@ -490,6 +490,17 @@ def view_axes(view_name):
 
 
 def fit_view(view_name, extents, width, height, padding):
+    # Native quad/triangle objects occupy XY and use VisIt's 2D camera.
+    if extents is not None and (len(extents) == 4 or (view_name == "xy" and abs(extents[5]-extents[4]) < 1e-30)):
+        view = call_visit("GetView2D")
+        cx, cy = 0.5*(extents[0]+extents[1]), 0.5*(extents[2]+extents[3])
+        aspect = float(width)/height
+        sy = max(extents[3]-extents[2], (extents[1]-extents[0])/aspect)*padding
+        sx = sy*aspect
+        view.windowCoords = (cx-0.5*sx, cx+0.5*sx, cy-0.5*sy, cy+0.5*sy)
+        call_visit("SetView2D", view)
+        return
+
     if view_name == "auto" or extents is None:
         return
     axes = view_axes(view_name)

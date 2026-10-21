@@ -858,7 +858,7 @@ void SolidMechanicsMPM::computeRigidBodyColorFieldMappings( DomainPartition & do
       arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
       arrayView1d< integer const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
       arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-      int const mappedNodeCount = subRegion.mappedNodeCapacity();
+      int const mappedNodeCount = subRegion.mappedNodeCapacity(m_numDims);
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
       for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
@@ -927,7 +927,7 @@ void SolidMechanicsMPM::computeRigidBodyColorFieldMappings( DomainPartition & do
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[overflowSubRegionIndex];
     arrayView1d< integer const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
     arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-    int const mappedNodeCount = subRegion.mappedNodeCapacity();
+    int const mappedNodeCount = subRegion.mappedNodeCapacity(m_numDims);
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
@@ -1034,7 +1034,7 @@ void SolidMechanicsMPM::computeRigidBodyColorFieldMappings( DomainPartition & do
     arrayView2d< localIndex const > const effectiveMappedNodes = m_effectiveMappedNodes[assignmentSubRegionIndex];
     arrayView1d< integer const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
     arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-    int const mappedNodeCount = subRegion.mappedNodeCapacity();
+    int const mappedNodeCount = subRegion.mappedNodeCapacity(m_numDims);
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
@@ -1626,7 +1626,7 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
       rotateVector2D( particleSurfacePosition[p] );
       // Rotate current material geometry for every interpolation type.
       {
-        for( int a = 0; a < 3; ++a )
+        for( int a = 0; a < m_numDims; ++a )
         {
           rotateVector2D( particleGeometryCurrent[p][a] );
         }

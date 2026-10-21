@@ -6,6 +6,12 @@
 
 PFW geometry objects are the particle-creation layer between a user-defined model and the plain-text particle file.  During particle generation, PFW loops over the candidate particle centers implied by the background grid and particle-density controls.  Each candidate point is tested against an ordered list of geometry objects.  The first object that accepts the point supplies the particle type, material index, contact group, initial velocity, and any optional fields requested in \mpmcode{particleFileFields}.  Objects can therefore create solid regions, leave voids, tag surface particles, assign different materials or contact groups, paint damage or porosity, prescribe material directions, and provide exact surface normals or surface positions for contact and cohesive-zone calculations.
 
+Native plane strain uses disk/annulus, rectangle, polygon, foam(dim=2) and
+packedSphericalBed(dim=2) objects without artificial z end caps. Supported
+legacy box/cylinder extrusions are prepared automatically; general 3D
+cross-sections retain their existing semantics. Section~\ref{sec:native-true-2d}
+and \path{PFW_2D_OBJECTS.md} describe the audit, constructors, flags and limits.
+
 \subsection{Creating objects and assembling the object list}
 \index{objects@\texttt{objects}}
 \index{make\_objects@\texttt{make\_objects}}

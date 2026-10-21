@@ -73,7 +73,7 @@ rigid_penetration_penalty_beta = 0.02
 # Domain, MPI partitioning, rectangular cells, and square particles
 # =============================================================================
 
-pfw["planeStrain"] = 1
+pfw["formulation"] = "PlaneStrain"
 pfw["xmin"] = -0.5
 pfw["xmax"] =  0.5
 pfw["ymin"] = -0.35
@@ -91,7 +91,6 @@ pfw["zpar"] = 1
 #   DY = 0.70/28 = 1.5*DX.
 pfw["nI"] = 60
 pfw["nJ"] = 30
-pfw["nK"] = 3
 
 # PFW calls these ppcx/ppcy (particles per cell per direction). With
 # ppcx=2, ppcy=3 and DY=1.5*DX, the particle spacing is identical in x and y.
@@ -109,10 +108,11 @@ particle_dy = dy_grid / pfw["ppcy"]
 assert math.isclose(dy_grid, 1.5 * dx_grid, rel_tol=0.0, abs_tol=1.0e-14)
 assert math.isclose(particle_dx, particle_dy, rel_tol=0.0, abs_tol=1.0e-14)
 
-# One physical plane-strain z cell, with a thickness equal to DX.
+# Physical thickness retains the old value; it creates no z cells.
+# Set it independently of grid spacing for a fixed specimen thickness.
 thickness = dx_grid
-pfw["zmin"] = -0.5 * thickness
-pfw["zmax"] =  0.5 * thickness
+# Physical out-of-plane measure; independent of object end caps and z cells.
+pfw["planeStrainThickness"] = thickness
 pfw["outputType"] = "silo"
 
 # =============================================================================
@@ -194,28 +194,6 @@ def color_object(obj, color):
     return obj
 
 
-def use_plane_strain_disk_normals(obj, center, radius):
-    """Override through-thickness cylinder normals with exact 2D disk normals."""
-    cx, cy = center
-    r0 = float(radius)
-
-    def _normal(pt):
-        vec = np.array([float(pt[0]) - cx, float(pt[1]) - cy, 0.0])
-        mag = np.linalg.norm(vec[:2])
-        if mag <= 0.0:
-            return np.array([1.0, 0.0, 0.0])
-        return vec / mag
-
-    def _surface_position(pt):
-        n = _normal(pt)
-        radial_distance = np.linalg.norm([float(pt[0]) - cx, float(pt[1]) - cy])
-        return (r0 - radial_distance) * n
-
-    obj.getSurfaceNormal = _normal
-    obj.getSurfacePosition = _surface_position
-    return obj
-
-
 def rectangle_vertices(center, width, height, angle_degrees=0.0):
     cx, cy = center
     hw = 0.5 * width
@@ -228,14 +206,9 @@ def rectangle_vertices(center, width, height, angle_degrees=0.0):
 
 objects = []
 
-objects.append(color_object(use_plane_strain_disk_normals(geom.cylinder(
-    "disk_color_0",
-    [-0.28, -0.20, pfw["zmin"]],
-    [-0.28, -0.20, pfw["zmax"]],
-    0.105,
-    vel=[0.0, 0.0, 0.0], mat=COPPER, group=CONTACT_GROUP,
-    particleType=SINGLE_POINT_BSPLINE,
-    flaggedSurfaces=[False, False, True, False]), (-0.28, -0.20), 0.105), 0))
+objects.append(color_object(geom.disk(
+    'disk_color_0', [-0.28, -0.2], 0.105, vel=[0.0, 0.0, 0.0], mat=COPPER, group=CONTACT_GROUP, particleType=SINGLE_POINT_BSPLINE,
+    flaggedSurfaces=[True, False]), 0))
 
 objects.append(color_object(geom.polygon(
     "block_color_1",
@@ -243,18 +216,12 @@ objects.append(color_object(geom.polygon(
     vel=[0.0, 0.0, 0.0], mat=COPPER, group=CONTACT_GROUP,
     particleType=SINGLE_POINT_BSPLINE), 1))
 
-# Color 2 straddles x=+/-0.5. The two image cylinders are one rigid body because
+# Color 2 straddles x=+/-0.5. The two image disks are one rigid body because
 # they share ParticleColor=2; their exact normals use their respective image centers.
 for image_name, image_center_x in (("right", 0.47), ("left_image", -0.53)):
-    objects.append(color_object(use_plane_strain_disk_normals(geom.cylinder(
-        f"disk_color_2_{image_name}",
-        [image_center_x, -0.18, pfw["zmin"]],
-        [image_center_x, -0.18, pfw["zmax"]],
-        0.075,
-        vel=[0.0, 0.0, 0.0], mat=COPPER, group=CONTACT_GROUP,
-        particleType=SINGLE_POINT_BSPLINE,
-        flaggedSurfaces=[False, False, True, False]),
-        (image_center_x, -0.18), 0.075), 2))
+    objects.append(color_object(geom.disk(
+    f'disk_color_2_{image_name}', [image_center_x, -0.18], 0.075, vel=[0.0, 0.0, 0.0], mat=COPPER, group=CONTACT_GROUP, particleType=SINGLE_POINT_BSPLINE,
+    flaggedSurfaces=[True, False]), 2))
 
 objects.append(color_object(geom.polygon(
     "block_color_3",
@@ -262,14 +229,9 @@ objects.append(color_object(geom.polygon(
     vel=[0.0, 0.0, 0.0], mat=COPPER, group=CONTACT_GROUP,
     particleType=SINGLE_POINT_BSPLINE), 3))
 
-objects.append(color_object(use_plane_strain_disk_normals(geom.cylinder(
-    "disk_color_4",
-    [0.03, 0.12, pfw["zmin"]],
-    [0.03, 0.12, pfw["zmax"]],
-    0.115,
-    vel=[0.0, 0.0, 0.0], mat=COPPER, group=CONTACT_GROUP,
-    particleType=SINGLE_POINT_BSPLINE,
-    flaggedSurfaces=[False, False, True, False]), (0.03, 0.12), 0.115), 4))
+objects.append(color_object(geom.disk(
+    'disk_color_4', [0.03, 0.12], 0.115, vel=[0.0, 0.0, 0.0], mat=COPPER, group=CONTACT_GROUP, particleType=SINGLE_POINT_BSPLINE,
+    flaggedSurfaces=[True, False]), 4))
 
 objects.append(color_object(geom.polygon(
     "block_color_5",
@@ -283,10 +245,10 @@ pfw["objects"] = objects
 # Boundary conditions and staged loading
 # =============================================================================
 
-# Boundary order is x-, x+, y-, y+, z-, z+. The x pair is periodic, so no
+# Boundary order is x-, x+, y-, y+. The x pair is periodic, so no
 # physical x-face BC is applied. Opposing y Contact walls move with the F-table;
-# z is symmetry for plane strain.
-pfw["boundaryConditionTypes"] = [0, 0, 3, 3, 1, 1]
+# the native mesh has no z faces.
+pfw["boundaryConditionTypes"] = [0, 0, 3, 3]
 pfw["prescribedBoundaryFTable"] = 1
 pfw["prescribedFTable"] = 0
 pfw["fTableInterpType"] = "Cosine"

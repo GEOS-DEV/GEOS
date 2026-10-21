@@ -95,14 +95,14 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, 3, partition.getPartitions().data(), partition.getPeriodic().data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOS, partition.spatialDimension(), partition.getPartitions().data(), partition.getPeriodic().data(), reorder, &cartcomm );
       GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
 
-    MpiWrapper::cartCoords( cartcomm, rank, partition.m_nsdof, partition.getCoords().data() );
+    MpiWrapper::cartCoords( cartcomm, rank, partition.spatialDimension(), partition.getCoords().data() );
 
-    int ncoords[3];
+    int ncoords[3] = {};
     addNeighbors( 0, cartcomm, ncoords );
 
     MpiWrapper::commFree( cartcomm );
@@ -288,10 +288,10 @@ void DomainPartition::addNeighbors( const unsigned int idim,
 {
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >( getGroup( groupKeys.partitionManager ) ); // partition1);
 
-  if( idim == partition.m_nsdof )
+  if( idim == static_cast< unsigned int >( partition.spatialDimension() ) )
   {
     bool me = true;
-    for( int i = 0; i < partition.m_nsdof; i++ )
+    for( int i = 0; i < partition.spatialDimension(); i++ )
     {
       if( ncoords[i] != partition.getCoords()( i ))
       {

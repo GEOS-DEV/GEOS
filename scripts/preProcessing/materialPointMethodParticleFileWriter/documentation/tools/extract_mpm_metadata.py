@@ -192,7 +192,7 @@ for index,name in enumerate(particle_columns):
     particle_columns_data.append({'index':index,'name':name,
         'default':'required schema 2' if geometry else col_defaults.get(name,'no default'),
         'required':geometry or name not in col_defaults,
-        'required_when':''})
+        'required_when':'3D only' if name in ('PositionZ','GeometryXZ','GeometryYZ','GeometryZX','GeometryZY','GeometryZZ') else ''})
 
 # Solver enum options live primarily in MPMSolverEnums.hpp. Preserve serialized
 # XML spellings, which need not match C++ enum names.
@@ -370,6 +370,8 @@ post_scripts=sorted(set(post_scripts))
 # Source inventory
 source_inventory=[
     {'component':'MPM solver','path':'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.[ch]pp'},
+    {'component':'Dimension-specialized MPM mapping','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMMappingKernels.hpp'},
+    {'component':'Native interface measures','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMGeometryMeasures.hpp'},
     {'component':'MPM unified geometry','path':'src/coreComponents/mesh/ParticleGeometry.hpp'},
     {'component':'MPM particle subdivision','path':'src/coreComponents/mesh/ParticleSubdivision.hpp'},
     {'component':'MPM solver fields','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverFields.hpp'},
@@ -408,6 +410,15 @@ data={
  'source_inventory':source_inventory,
 }
 fingerprint_paths=[
+ 'src/coreComponents/physicsSolvers/solidMechanics/MPMMappingKernels.hpp',
+ 'src/coreComponents/physicsSolvers/solidMechanics/MPMGeometryMeasures.hpp',
+ 'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPMRigidBody.cpp',
+ 'src/coreComponents/mesh/generators/InternalMeshGenerator.cpp',
+ 'src/coreComponents/mesh/mpiCommunications/SpatialPartition.cpp',
+ 'src/coreComponents/fileIO/silo/SiloFile.cpp',
+ 'src/coreComponents/fileIO/vtk/VTKPolyDataWriterInterface.cpp',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_geometryObjects.py',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_visit_render.py',
  'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp',
  'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp',
  'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverEnums.hpp',

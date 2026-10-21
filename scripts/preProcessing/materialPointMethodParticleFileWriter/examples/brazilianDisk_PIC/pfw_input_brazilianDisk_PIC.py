@@ -86,22 +86,18 @@ pfw["ypar"] = refine
 pfw["zpar"] = 1
 
 # The domain is 1.5 times wider than tall, so use 1.5*cpp cells per partition in
-# x and cpp cells per partition in y. nK must be 3 for planeStrain=1; PFW checks
-# this and aborts if plane-strain inputs use a different nK.
+# x and cpp cells per partition in y. Native XY has no z cells.
 pfw["nI"] = round(pfw["xpar"] * cpp * 1.5)
 pfw["nJ"] = pfw["ypar"] * cpp
-pfw["nK"] = 3
 
-# ppc is particles per cell per active direction. In plane strain PFW creates a
-# single layer of particles through thickness, but ppc still controls in-plane
-# particle density.
+# ppc is particles per cell per active direction on the native XY grid.
 
 domainHeight = 1.0
 domainWidth = 1.5 * domainHeight
 
-# Choose the z thickness so the generated background cells are approximately
-# cubic before the plane-strain reduction is applied.
-domainLength = domainHeight * pfw["nK"] / pfw["nJ"]
+# Example physical thickness, retaining the previous numerical value.
+# Set this to the represented specimen thickness independently of grid spacing.
+domainLength = domainHeight * 3 / pfw["nJ"]
 
 # DX is used below as the characteristic length for the Weibull flaw spacing.
 DX = domainWidth / pfw["nI"]
@@ -111,8 +107,8 @@ pfw["xmin"] = -0.5 * domainWidth
 pfw["xmax"] = 0.5 * domainWidth
 pfw["ymin"] = 0.0
 pfw["ymax"] = domainHeight
-pfw["zmin"] = -0.5 * domainLength
-pfw["zmax"] = 0.5 * domainLength
+# Physical out-of-plane measure; independent of object end caps and z cells.
+pfw["planeStrainThickness"] = domainLength
 
 # -----------------------------------------------------------------------------
 # Batch settings used by particleFileWriter.py
@@ -152,8 +148,8 @@ pfw["initialDt"] = 1e-16
 pfw["cpdiDomainScaling"] = 1
 pfw["damageFieldPartitioning"] = 1
 
-# Plane strain uses one active particle layer through thickness. PFW requires
-pfw["planeStrain"] = 1
+# Select the native XY mesh and plane-strain constitutive kinematics.
+pfw["formulation"] = "PlaneStrain"
 
 # Update method comparison knob. The four Brazilian disk examples differ only in
 # this method name. updateOrder=2 is used for FMPM/XPIC-style second-order
@@ -188,7 +184,6 @@ pfw["particleFileFields"] = [
     "ContactGroup",
     "StrengthScale",
     "SurfaceFlag",
-    "RVector",
 ]
 
 # -----------------------------------------------------------------------------
@@ -198,11 +193,11 @@ pfw["particleFileFields"] = [
 # constant throughout the run.
 pfw["prescribedBcTable"] = 0
 
-# Boundary-condition order is x-, x+, y-, y+, z-, z+. Integer options in the MPM
+# Boundary-condition order is x-, x+, y-, y+. Integer options in the MPM
 # solver are Outflow=0, Symmetry=1, Moving=2, Contact=3. The x faces are also
 # periodic, so the x entries are effectively bypassed. The y faces move according
-# to the F-table below. The z faces are symmetry planes for plane strain.
-pfw["boundaryConditionTypes"] = [0, 0, 2, 2, 1, 1]
+# to the F-table below. There are no z faces in the native mesh.
+pfw["boundaryConditionTypes"] = [0, 0, 2, 2]
 pfw["periodic"] = [True, False, False]
 
 # prescribedBoundaryFTable enables boundary-driven deformation for faces with
@@ -219,50 +214,34 @@ pfw["fTable"] = [
 # -----------------------------------------------------------------------------
 # Geometry and particle attributes
 # -----------------------------------------------------------------------------
-# A cylinder with its axis through z is a 2D disk in plane strain. x1/x2 are the
-# lower/upper axis endpoints, r is the disk radius, vel is the initial particle
+# A native disk needs an XY center and radius, with no artificial end caps.
+# r is the disk radius, vel is the initial particle
 # velocity, mat=0 selects quartz from pfw["materials"], and group=0 assigns all
 # disk particles to the same contact/material-point group.
-disk1 = geom.cylinder(
-    "disk1",
-    [0.0, domainHeight / 2.0, pfw["zmin"]],
-    [0.0, domainHeight / 2.0, pfw["zmax"]],
-    domainHeight / 2.0,
-    vel = [1.0, 0.0, 0.0],
-    mat = 0,
-    group = 0,
-)
+disk1 = geom.disk('disk1', [0.0, domainHeight / 2.0], domainHeight / 2.0, vel=[1.0, 0.0, 0.0], mat=0, group=0)
 
 # Wrap the disk with a Voronoi-Weibull strength-scale field. The wrapper samples
 # Voronoi cells over a padded box, clips/assigns the cell information to the disk,
 # and computes a strength scale using the material Weibull reference volume and
 # modulus. flawSize controls the typical Voronoi spacing; vMin prevents very small
-# cells from producing extreme strength scales. dim=3 is used because the
-# cylinder and particle positions are three-component quantities even though the
-# mechanical response is plane strain.
+# cells from producing extreme strength scales. dim=2 uses XY Voronoi cells;
+# the writer multiplies cell areas by the domain thickness before applying
+# the physical minimum-volume clamp and Weibull law.
 weibullFlawSize = 6.0 * DX
 
 weibullSample = geom.voronoiWeibullBoxWrapper(
-    "weibullSubstrate",
-    subObject = disk1,
-    x0 = np.array([
-        pfw["xmin"] - weibullFlawSize,
-        pfw["ymin"] - weibullFlawSize,
-        pfw["zmin"] - weibullFlawSize,
-    ]),
-    x1 = np.array([
-        pfw["xmax"] + weibullFlawSize,
-        pfw["ymax"] + weibullFlawSize,
-        pfw["zmax"] + weibullFlawSize,
-    ]),
-    flawSize = weibullFlawSize,
-    weibullVolume = quartz["weibullReferenceVolume"],
-    weibullModulus = quartz["weibullModulus"],
-    weibullSeed = 1,
-    vMin = DX**3,
-    vpts = None,
-    dim = 3,
-    randomMatDir = False,
+    'weibullSubstrate',
+    subObject=disk1,
+    x0=np.array([pfw['xmin'] - weibullFlawSize, pfw['ymin'] - weibullFlawSize]),
+    x1=np.array([pfw['xmax'] + weibullFlawSize, pfw['ymax'] + weibullFlawSize]),
+    flawSize=weibullFlawSize,
+    weibullVolume=quartz['weibullReferenceVolume'],
+    weibullModulus=quartz['weibullModulus'],
+    weibullSeed=1,
+    vMin=DX ** 2 * pfw['planeStrainThickness'],
+    vpts=None,
+    dim=2,
+    randomMatDir=False,
 )
 
 # PFW loops over pfw["objects"] to decide which candidate particles are inside

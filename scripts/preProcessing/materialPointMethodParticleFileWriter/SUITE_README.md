@@ -148,3 +148,11 @@ distinguish new output from reused frames. The scalar --strict-variable flag and
 repeatable --vector-variable overlays are documented in the manual.
 
 See documentation/AUDIT.md for current behavior and validation scope.
+
+## Native plane strain
+
+Use `formulation='PlaneStrain'` and one `planeStrainThickness` for a native XY
+mesh and quad/triangle particles. Old Python `planeStrain=1` inputs remain
+accepted. See [TRUE_2D_PLAN.md](TRUE_2D_PLAN.md) for the source/input contract,
+[PFW_2D_OBJECTS.md](PFW_2D_OBJECTS.md) for the example-object audit, and
+`examples/true2D/pfw_input_true_2d.py` for a complete mixed CPDI/CPTI example.

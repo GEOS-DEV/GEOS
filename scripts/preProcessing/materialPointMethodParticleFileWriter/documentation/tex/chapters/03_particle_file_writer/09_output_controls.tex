@@ -214,10 +214,14 @@ For routine V\&V or parameter studies, prefer particle-only VTK or Silo output p
 
 \subsection{Native refined-particle geometry}
 \index{particleDomainOutput}
-With \texttt{particleGeometry="fromRefinement"}, cut plane-strain triangles
-appear as wedges and 3D cuts as tetrahedra in both Silo and VTK. Uncut pieces
-remain boxes; each particle is one disconnected zone with one value per field.
+With \texttt{particleGeometry="fromRefinement"}, native plane strain writes
+quad/triangle cells and 3D cuts write tetrahedra in both Silo and VTK. Uncut
+pieces retain parallelogram/box geometry unless all-CPTI tessellation is selected; each particle is one disconnected zone with one value per field.
 Both output backends reconstruct current unscaled material geometry from G.
 There is no separate equivalent-box display switch. Old Python inputs using
 \texttt{particleDomainOutput} are accepted but are not emitted to XML.
 See Section~\ref{sec:unified-particle-geometry} for the geometry contract.
+
+Native XY Silo output reports spatial dimension 2; VTK retains z=0 coordinates
+and native quad/triangle cell types. The VisIt scripts use View2D when native
+metadata or XY extents identify the dataset. See Section~\ref{sec:native-true-2d}.

@@ -19,15 +19,17 @@ int main( int argc, char ** argv )
 {
   // Also accept real PFW records on stdin. The Python regression drives this
   // path to check the actual C++ reader codec, rather than a Python replica.
-  if( argc == 2 && std::string(argv[1]) == "--decode" )
+  if( (argc == 2 || argc == 3) && std::string(argv[1]) == "--decode" )
   {
+    double const thickness = argc == 3 ? std::stod(argv[2]) : 1.0;
     double shape, volume;
     while( std::cin >> shape >> volume )
     {
-      double g[3][3];
-      for( auto & row : g ) for( double & v : row ) std::cin >> v;
+      double g[3][3] = {};
+      int const dim = shape >= 3 ? 2 : 3;
+      for( int a=0; a<dim; ++a ) for( int i=0; i<dim; ++i ) std::cin >> g[a][i];
       assert(std::cin);
-      if(validateFileGeometry(shape,volume,g)!=InputError::None) return 2;
+      if(validateFileGeometry(shape,volume,g,thickness)!=InputError::None) return 2;
       std::cout << "valid\n";
     }
     return 0;
@@ -169,7 +171,9 @@ int main( int argc, char ** argv )
   assert(validateFileGeometry(1,12,g)==InputError::None);
   assert(validateFileGeometry(2,4,g)==InputError::None);
   assert(validateFileGeometry(2.5,4,g)==InputError::Shape);
-  assert(validateFileGeometry(3,4,g)==InputError::Shape);
+  assert(validateFileGeometry(5,4,g)==InputError::Shape);
+  assert(validateFileGeometry(3,0.6,g,0.1)==InputError::None);
+  assert(validateFileGeometry(4,0.3,g,0.1)==InputError::None);
   assert(validateFileGeometry(2,0,g)==InputError::Volume);
   assert(validateFileGeometry(2,5,g)==InputError::Measure);
   g[0][2]=0.1;

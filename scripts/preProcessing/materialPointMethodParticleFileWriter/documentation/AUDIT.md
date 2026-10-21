@@ -1,3 +1,28 @@
+# Native Cartesian 2D update (2026-10-21)
+
+The true-2D patch adds native XY mesh/partition topology, compact 2x2 G/G0,
+dimension-specialized mapping/update paths in the shared timestep, triangle CPTI,
+native splitting, physical domain thickness, quad/triangle Silo/VTK output and
+VisIt View2D selection. PFW now has native disk/annulus and rectangle objects,
+legacy extrusion preparation, thickness-aware 2D Weibull fields and 11 migrated
+plane-strain examples. General 3D section objects retain their existing behavior.
+
+Updated theory, grid, geometry, mapping/type, refinement, reset, CZ and output
+documentation; added TRUE_2D_PLAN.md and PFW_2D_OBJECTS.md and a complete native
+mixed example. The generated particle-column table distinguishes four active
+2D generators from nine 3D entries. Source fingerprints include the new kernels,
+mesh/partition, rigid-body, output, object and VisIt code. Restart geometry version
+is 3; particle-file version remains 2. Old PFW Python inputs are supported, old
+GEOS XML/particle/checkpoint compatibility is not a target.
+
+Standalone checks use production code with CPU adapters and explicitly emulated
+writer collectives. Full GEOS compilation/mechanics, actual MPI/restart/GPU and
+actual Silo/VTK/VisIt readback remain target integration checks. The following
+entries describe historical patch states; their future-2D statements are
+superseded by this update.
+
+---
+
 # Hex-bulk/tet-surface workflow update (2026-10-21)
 
 The CPTI update already supports mixed CPDI hexes/CPTI tets. The incremental

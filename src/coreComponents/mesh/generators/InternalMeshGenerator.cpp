@@ -43,6 +43,14 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   m_setCoords{},
   m_periodic( 3 )
 {
+  registerWrapper( "planeStrainThickness", &m_planeStrainThickness ).
+    setApplyDefaultValue( 1.0 ).setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Positive physical thickness for native 2D mass, Weibull volume and fracture area; no z mesh is generated." );
+
+  registerWrapper( "spatialDimension", &m_dim ).
+    setApplyDefaultValue( 3 ).setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Ambient mesh dimension: 2 generates a native XY mesh; 3 generates a volume mesh." );
+
   registerWrapper( viewKeyStruct::xCoordsString(), &(m_vertices[0]) ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
@@ -54,7 +62,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "y-coordinates of each mesh block vertex" );
 
   registerWrapper( viewKeyStruct::zCoordsString(), &(m_vertices[2]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "z-coordinates of each mesh block vertex" );
 
@@ -69,7 +77,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "Number of elements in the y-direction within each mesh block" );
 
   registerWrapper( viewKeyStruct::zElemsString(), &(m_nElems[2]) ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Number of elements in the z-direction within each mesh block" );
 
@@ -141,7 +149,27 @@ static int getNumElemPerBox( ElementType const elementType )
 
 void InternalMeshGenerator::postInputInitialization()
 {
-  m_dim = getElementDim( EnumStrings< ElementType >::fromString( m_elementType[0] ) );
+  GEOS_ERROR_IF( m_dim != 2 && m_dim != 3, "spatialDimension must be 2 or 3" );
+  GEOS_ERROR_IF( m_elementType.empty(), "InternalMesh requires elementTypes" );
+  for( string const & type : m_elementType )
+  {
+    GEOS_ERROR_IF( getElementDim( EnumStrings< ElementType >::fromString( type ) ) != m_dim,
+                   "InternalMesh element dimension must match spatialDimension" );
+  }
+  if( m_dim == 2 )
+  {
+    GEOS_ERROR_IF( !m_vertices[2].empty() || !m_nElems[2].empty(),
+                   "Native 2D InternalMesh does not accept zCoords or nz" );
+    // Inactive-axis block sentinel for the common structured traversal.
+    m_vertices[2].resize( 2 ); m_vertices[2][0] = 0; m_vertices[2][1] = 0;
+    m_nElems[2].resize( 1 ); m_nElems[2][0] = 1;
+    m_numElemsTotal[2] = 0;
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_vertices[2].size() < 2 || m_nElems[2].empty(),
+                   "A 3D InternalMesh requires zCoords and nz" );
+  }
 
   // Should this have the size of the problem as enforced by m_dim?
   if( m_periodic.size() == 0 )
@@ -179,6 +207,8 @@ void InternalMeshGenerator::postInputInitialization()
       GEOS_ERROR( getDataContext() << ": element/bias mismatch.\n" << generalMeshErrorAdvice );
     }
   }
+
+  GEOS_ERROR_IF( m_dim == 2 && m_periodic[2] != 0, "Native 2D cannot be periodic in z" );
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
@@ -580,6 +610,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     m_max[1] = m_vertices[1].back();
     m_max[2] = m_vertices[2].back();
 
+    partition.setSpatialDimension( m_dim );
+    partition.setPlaneStrainThickness( m_planeStrainThickness );
     partition.setPeriodic( m_periodic );
     partition.setSizes( m_min, m_max );
   }
@@ -646,6 +678,11 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   // Get the first and last indices in this partition each direction
   integer firstElemIndexInPartition[3] = { -1, -1, -1 };
   integer lastElemIndexInPartition[3] = { -2, -2, -2 };
+  if( m_dim == 2 )
+  {
+    firstElemIndexInPartition[2] = 0;
+    lastElemIndexInPartition[2] = 0;
+  }
 
   for( int dim = 0; dim < m_dim; ++dim )
   {
@@ -706,7 +743,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     }
   }
 
-  // TODO This needs to be rewritten for dimensions lower than 3.
+  // The inactive-axis sentinel traverses each XY block exactly once.
   localIndex regionOffset = 0;
   for( integer kblock = 0; kblock < m_nElems[2].size(); ++kblock )
   {
@@ -808,11 +845,11 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           }
 
           // General nodesets
-          if( isEqual( X( localNodeIndex, 2 ), m_min[2], m_coordinatePrecision ) )
+          if( m_dim == 3 && isEqual( X( localNodeIndex, 2 ), m_min[2], m_coordinatePrecision ) )
           {
             znegNodes.insert( localNodeIndex );
           }
-          if( isEqual( X( localNodeIndex, 2 ), m_max[2], m_coordinatePrecision ) )
+          if( m_dim == 3 && isEqual( X( localNodeIndex, 2 ), m_max[2], m_coordinatePrecision ) )
           {
             zposNodes.insert( localNodeIndex );
           }
@@ -897,9 +934,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                 if( elementType == ElementType::Quadrilateral || elementType == ElementType::Triangle )
                 {
                   nodeOfBox[0] = firstNodeIndex;
-                  nodeOfBox[1] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex;
-                  nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + numNodesInDir[2] + firstNodeIndex;
-                  nodeOfBox[3] = numNodesInDir[2] + firstNodeIndex;
+                  nodeOfBox[1] = firstNodeIndex + 1;
+                  nodeOfBox[2] = firstNodeIndex + 1 + numNodesInDir[0];
+                  nodeOfBox[3] = firstNodeIndex + numNodesInDir[0];
                 }
                 else
                 {
@@ -1009,7 +1046,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of nodes = {}", getName(),
                              ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of elems = {}", getName(),
-                             m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
+                             m_numElemsTotal[0] * m_numElemsTotal[1] * ( m_dim == 3 ? m_numElemsTotal[2] : 1 ) ) );
 }
 
 void

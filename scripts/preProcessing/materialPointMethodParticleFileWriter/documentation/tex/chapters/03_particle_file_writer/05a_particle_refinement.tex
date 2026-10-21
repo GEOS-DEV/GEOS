@@ -33,7 +33,7 @@ Key & Default & Meaning\\
 \mpmcode{particleGeometry} & \texttt{box} & Use equivalent-volume boxes, or \texttt{fromRefinement} to retain cut shapes. The \texttt{hexTet} preset selects the latter.\\
 \end{longtable}}
 
-\mpmcode{particleRefinement} is indexed by material, not by geometry-object order or contact group. It applies in the bulk as well as near boundaries. For surface candidates, the maximum material factor in the immediate neighborhood supplies a common partition on both sides, multiplied by \mpmcode{surfaceRefinementLevel}. This can refine a lower-factor material next to a higher-factor material. Plane strain subdivides x/y and preserves the existing z thickness.
+\mpmcode{particleRefinement} is indexed by material, not by geometry-object order or contact group. It applies in the bulk as well as near boundaries. For surface candidates, the maximum material factor in the immediate neighborhood supplies a common partition on both sides, multiplied by \mpmcode{surfaceRefinementLevel}. This can refine a lower-factor material next to a higher-factor material. Native plane strain subdivides x/y; physical volume is area times the single domain thickness.
 
 The two-pass surface algorithm is enabled when the level exceeds 1, or when the method is \texttt{simplex} or \texttt{hexTet} even at level 1. With the default \texttt{cartesian}, level 1 retains the ordinary material-refinement path. Increasing the surface level by $q$ can produce up to $q^d$ Cartesian subdomains per selected parent before any simplex decomposition; it is not a promise of a fixed total particle-count multiplier.
 
@@ -48,7 +48,7 @@ pfw["surfaceRefinementMethod"] = "cartesian"
 \subsection{Candidate detection and local cuts}
 The first pass samples the coarse particle lattice and its immediate 8-neighbor (2D) or 26-neighbor (3D) band. Occupancy, material/contact labels, and surface flags identify free-surface and interface candidates, including empty-center parents adjacent to occupied cells. A three-slice cache bounds coarse occupancy storage in x. Features without any sampled occupancy, label change, or nearby surface flag can remain undetected.
 
-Cartesian refinement samples subdomain midpoints. Simplex refinement fits one local surface plane and partitions each accepted subdomain into complementary material-side pieces, using area/volume and centroid integration. A triangle in plane strain retains the original z thickness; 3D pieces are tetrahedra. Actual simplex-cut particles support point types 0/1 and 3D CPTI type 3. The optional \texttt{simplexParticleType=3} override selects CPTI only for cut tets, allowing CPDI boxes in the bulk. CPTI requires \texttt{particleGeometry=\textquotesingle fromRefinement\textquotesingle} and \texttt{planeStrain=0}.
+Cartesian refinement samples subdomain midpoints. Simplex refinement fits one local surface plane and partitions each accepted subdomain into complementary material-side pieces, using area/volume and centroid integration. Native plane strain produces triangles; 3D pieces are tetrahedra. Actual simplex-cut particles support point types 0/1 and CPTI type 3. The optional \texttt{simplexParticleType=3} override selects CPTI only for cut simplices, allowing CPDI parallelograms/boxes in the bulk. CPTI requires \texttt{particleGeometry=\textquotesingle fromRefinement\textquotesingle}.
 
 Missing or invalid surface data, unsupported multiple-region configurations, inconsistent side labels, invalid partitions, or centroids outside their assigned actual region trigger fallback for the \emph{whole subdomain}. The default samples it with ordinary Cartesian midpoints. Strict \texttt{error} mode stops. The plane tolerance is a consistency control, not a certified geometric-error bound.
 
@@ -63,7 +63,7 @@ pfw["particleGeometry"] = "box"  # default
 
 The accepted pieces conserve the volume of the adopted local cut geometry. This does not imply that their total volume or mass matches an older staircase initialization: recovered caps and removed overfill can change both at fixed physical density. Adjacent subdomains choose planes independently, so the surface need not be globally continuous. There is no cell-filling density correction.
 
-\subsection{Retaining native wedge and tetrahedral geometry}
+\subsection{Retaining native triangle and tetrahedral geometry}
 The default \texttt{particleGeometry="box"} represents every piece by an
 equivalent-volume box. To retain cut shapes:
 \begin{lstlisting}[language=Python]
@@ -79,9 +79,9 @@ generators and explicit physical volume. Current material geometry is convected
 independently of constitutive F resets, and Silo/VTK reconstruct that geometry.
 The old \texttt{particleReferenceGeometry} Python input is accepted as an alias.
 See Section~\ref{sec:unified-particle-geometry} for storage, validation, and reset
-semantics. Runtime splitting supports native tets/wedges, including CPTI tets.
-An object requesting CPTI tessellates every Cartesian piece into six tets, so
-its uncut/fallback pieces are tetrahedral too. The lattice ppc setting therefore
+semantics. Runtime splitting supports native triangles, tets and 3D wedges, including CPTI.
+An object requesting CPTI tessellates every Cartesian piece into two triangles
+in 2D or six tets in 3D, including its uncut/fallback pieces. The lattice ppc setting therefore
 counts seed boxes, not final CPTI particles.
 
 \subsection{Hex bulk with tetrahedral surface refinement}
@@ -104,7 +104,8 @@ preferred native-geometry key overrides it. Bulk object types 0/1 are also
 accepted for point interpolation; explicit cut types 0/1 are available for
 comparisons. Type-3 objects are rejected in this preset because they would
 convert every Cartesian piece to tets. Use the ordinary all-CPTI workflow for
-that purpose. There is no CPTI plane-strain specialization.
+that purpose. Native 2D uses the explicit simplex/native/cut-type combination for quad bulk
+and triangle surfaces. The named hexTet preset remains 3D only.
 
 Interior particles remain hexes. Within the candidate band, uncut subdomains
 remain smaller hexes and accepted cut pieces become native tets. At material

@@ -7,7 +7,7 @@
 \index{plane strain!PFW}
 \index{refinement!PFW}
 
-PFW writes a GEOS \texttt{InternalMesh} for the background grid.  The main controls are the physical domain bounds \texttt{xmin/xmax}, \texttt{ymin/ymax}, \texttt{zmin/zmax}; the total cell counts \texttt{nI/nJ/nK}; periodic flags \texttt{periodic}; partition counts \texttt{xpar/ypar/zpar}; and particle-density controls \texttt{ppc}, \texttt{ppcx}, \texttt{ppcy}, and \texttt{ppcz}.  The generated mesh uses uniform Cartesian cells and the \texttt{C3D8} element type, even for plane-strain cases, because the MPM solver and particle mesh operate on the GEOS three-dimensional mesh data structures.
+PFW writes a GEOS \texttt{InternalMesh} for the background grid.  The main controls are the physical domain bounds \texttt{xmin/xmax}, \texttt{ymin/ymax}, \texttt{zmin/zmax}; the total cell counts \texttt{nI/nJ/nK}; periodic flags \texttt{periodic}; partition counts \texttt{xpar/ypar/zpar}; and particle-density controls \texttt{ppc}, \texttt{ppcx}, \texttt{ppcy}, and \texttt{ppcz}.  The generated mesh uses uniform Cartesian cells: \texttt{C3D8} for Cartesian3D and native XY \texttt{C2D4} for PlaneStrain. Native 2D needs only x/y bounds and cell counts; z extents and z cells are absent.
 
 \subsection{Parallel grid-generation constraints}
 \index{particles per partition}
@@ -21,7 +21,7 @@ The practical challenge in parallel PFW generation is to keep each MPI partition
   N_x-2, & \text{non-periodic in }x,
   \end{cases}
 \end{equation}
-and analogously for \(y\) and \(z\), except that plane strain always uses the reduced through-thickness treatment described below.  The interior spacings are then
+and analogously for \(y\) and \(z\), with no z count or spacing in native plane strain.  The interior spacings are then
 \begin{equation}
   \Delta x = \frac{x_{\max}-x_{\min}}{n_x^{\mathrm{int}}}, \qquad
   \Delta y = \frac{y_{\max}-y_{\min}}{n_y^{\mathrm{int}}}, \qquad
@@ -42,7 +42,7 @@ Most suite and example inputs use a small set of derived variables rather than e
   \texttt{xpar} &= \max(N_x^{\mathrm{pbc}},\, \mathrm{round}(\texttt{refine}\,\texttt{xpar0})),\\
   \texttt{nI} &= \texttt{xpar}\,\texttt{cpp},
 \end{align}
-with analogous definitions in \(y\) and \(z\).  Here \(N_x^{\mathrm{pbc}}\) is usually 3 in a periodic direction and 1 otherwise, so that periodic directions have enough partitions for periodic neighbor communication and representative partitioning.  The particle density is then set with \texttt{ppc} or direction-specific values.  With \texttt{ppc=2}, a full three-dimensional cell initially contains \(2^3=8\) candidate particle points before geometry filtering, while a plane-strain cell contains one through-thickness layer and \(2^2=4\) in-plane candidate points.
+with analogous definitions in \(y\) and \(z\).  Here \(N_x^{\mathrm{pbc}}\) is usually 3 in a periodic direction and 1 otherwise, so that periodic directions have enough partitions for periodic neighbor communication and representative partitioning.  The particle density is then set with \texttt{ppc} or direction-specific values.  With \texttt{ppc=2}, a full three-dimensional cell initially contains \(2^3=8\) candidate particle points before geometry filtering, while a native plane-strain cell contains \(2^2=4\) XY candidate points.
 
 \begin{figure}[htbp]
   \centering
@@ -71,13 +71,31 @@ pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
 \subsection{Plane-strain meshes}
 \index{plane strain!mesh}
 
-Plane-strain cases are represented with a three-dimensional GEOS mesh but a reduced particle layer.  The current PFW checks
-\begin{equation}
-  \texttt{planeStrain}=1 \quad \Rightarrow \quad \texttt{zpar}=1, \qquad \texttt{nK}=3.
-\end{equation}
-PFW then treats the through-thickness direction as one active interior cell plus ghost padding, creates a single layer of particles through thickness, sets through-thickness particle velocities to zero, and passes \texttt{planeStrain} to the solver.  In-plane controls \texttt{ppcx} and \texttt{ppcy} still set the in-plane particle density; \texttt{ppcz} does not create multiple through-thickness layers in a plane-strain run.  The generated GEOS XML also disables periodicity in the suppressed \(z\) direction when \texttt{planeStrain}=1.
+Select \texttt{formulation='PlaneStrain'} and a finite positive
+\texttt{planeStrainThickness}. PFW writes a native XY mesh with
+\texttt{spatialDimension=2}, \texttt{elementTypes=C2D4}, and no z coordinates or
+cell counts. The domain scalar thickness $t$ supplies physical volumes $V=At$
+and interface areas $A_\Gamma=\ell t$. It does not create z nodes, ghost layers,
+or particle generators. In-plane CPDI scaling and splitting are independent of $t$.
 
-This representation keeps the same particle-file and mesh infrastructure as three-dimensional calculations while reducing the particle count and enforcing the intended kinematics.  Users should still choose a physical \(z\)-extent consistent with the constitutive model and any diagnostic interpretation of force, stress, or reaction quantities.
+Old Python inputs with \texttt{planeStrain=1} remain accepted. If no explicit
+thickness is given, the old z extent supplies $t$; a new native input defaults
+to $t=1$. Old \texttt{nK} and \texttt{ppcz} do not create layers. PFW requires
+\texttt{zpar=1} and suppresses z periodicity. Native inputs may supply two
+periodic flags and four boundary types. Constitutive tensors remain $3\times3$,
+with $F_{zz}=1$, $L_{zz}=0$, and the plane-strain stress $\sigma_{zz}$ retained.
+See Section~\ref{sec:native-true-2d} for the full contract.
+
+\begin{lstlisting}[language=Python,caption={Native XY plane strain.}]
+pfw['formulation'] = 'PlaneStrain'
+pfw['planeStrainThickness'] = 0.01
+pfw['xmin'], pfw['xmax'] = 0.0, 1.0
+pfw['ymin'], pfw['ymax'] = 0.0, 1.0
+pfw['nI'], pfw['nJ'] = 42, 42
+pfw['xpar'], pfw['ypar'] = 1, 1
+pfw['periodic'] = [False, False]
+# No z bounds or nK are needed.
+\end{lstlisting}
 
 \subsection{Refinement and cost scaling}
 \index{time step!refinement}

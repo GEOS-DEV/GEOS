@@ -34,7 +34,7 @@ pfw["xmax"] = 0.5*domainWidth # mm
 pfw["ymin"] = 0.0 # mm
 pfw["ymax"] = domainHeight # mm
 
-pfw["planeStrain"] = 1
+pfw["formulation"] = "PlaneStrain"
 
 cpp = 20 # cells per partition in each direction
 
@@ -45,12 +45,11 @@ pfw["zpar"] = 1
 
 pfw["nI"] = pfw["xpar"]*cpp  # grid cells in the x-direction
 pfw["nJ"] = pfw["ypar"]*cpp  # grid cells in the y-direction
-pfw["nK"] = 3          # grid cells in the z-direction
 
 domainLength = domainHeight/refine/cpp
 
-pfw["zmin"] = -0.5*domainLength # mm
-pfw["zmax"] = 0.5*domainLength # mm
+# Physical out-of-plane measure; independent of object end caps and z cells.
+pfw["planeStrainThickness"] = domainLength
 
 pfw["outputType"] = "silo"
 pfw["gridFieldNames"] = [
@@ -96,8 +95,8 @@ pfw["prescribedBoundaryFTable"] = 0
 # Define all the geometric objects -------------------------------------------------------
 r1 = 0.2*domainHeight
 r2 = r1
-disk1 = geom.cylinder('cyl1',[pfw["xmin"] + r1,pfw["ymin"]+r1,pfw["zmin"]-2*domainLength],[pfw["xmin"] + r1,pfw["ymin"]+r1,pfw["zmax"]+2*domainLength],r1,vel=[1.0,1.0,0.],mat=0,group=0)
-disk2 = geom.cylinder('cyl2',[pfw["xmax"] - r2,pfw["ymax"]-r2,pfw["zmin"]-2*domainLength],[pfw["xmax"] - r2,pfw["ymax"]-r2,pfw["zmax"]+2*domainLength],r2,vel=[-1.0,-1.0,0.],mat=0,group=0)
+disk1 = geom.disk('cyl1', [pfw['xmin'] + r1, pfw['ymin'] + r1], r1, vel=[1.0, 1.0, 0.0], mat=0, group=0)
+disk2 = geom.disk('cyl2', [pfw['xmax'] - r2, pfw['ymax'] - r2], r2, vel=[-1.0, -1.0, 0.0], mat=0, group=0)
 pfw["objects"] = [disk1,disk2]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------

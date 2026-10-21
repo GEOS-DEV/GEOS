@@ -31,28 +31,26 @@ boreholePressure = 0.0
 confiningPressure = 0.008
 
 # Mesh and partitioning.  cppx/cppy are kept low so the example suite runs
-# quickly; z has one partition and a small number of cells for plane strain.
+# quickly; the native XY mesh partitions only in x and y.
 refine = 3
 cppx = 24
 cppy = 24
-cppz = 3
 
-pfw["planeStrain"] = 1
+pfw["formulation"] = "PlaneStrain"
 pfw["xpar"] = refine
 pfw["ypar"] = refine
 pfw["zpar"] = 1
 pfw["nI"] = pfw["xpar"] * cppx
 pfw["nJ"] = pfw["ypar"] * cppy
-pfw["nK"] = pfw["zpar"] * cppz
 pfw["xmin"] = -0.5 * domainSize
 pfw["xmax"] = 0.5 * domainSize
 pfw["ymin"] = -0.5 * domainSize
 pfw["ymax"] = 0.5 * domainSize
 
-# Plane-strain depth is one grid-cell width.
+# Example physical thickness, preserving the previous value. No z grid is used.
 DZ = (pfw["xmax"] - pfw["xmin"]) / (pfw["nI"] - 2)
-pfw["zmin"] = -0.5 * DZ
-pfw["zmax"] = 0.5 * DZ
+# Physical out-of-plane measure; independent of object end caps and z cells.
+pfw["planeStrainThickness"] = DZ
 
 # Job/output controls.  The bank and GEOS executable are supplied by userDefs;
 # this input only specifies problem-specific non-default run behavior.
@@ -86,30 +84,11 @@ pfw["particleFileFields"] = [
 
 def make_objects():
     """Create the annular rock region and apply a Weibull strength field."""
-    annulus = geom.cylinder(
-        "ring",
-        x1 = [0.0, 0.0, pfw["zmin"] - 10.0],
-        x2 = [0.0, 0.0, pfw["zmax"] + 10.0],
-        ri = 0.5 * boreholeDiameter,
-        r = 0.95 * domainSize,
-        vel = np.array([0.0, 0.0, 0.0]),
-        mat = 0,
-        group = 0,
-    )
+    annulus = geom.disk('ring', [0.0, 0.0], 0.95 * domainSize, ri=0.5 * boreholeDiameter, vel=np.array([0.0, 0.0, 0.0]), mat=0, group=0)
 
     flawSize = 5.0 * DZ
     return [
-        geom.voronoiWeibullBoxWrapper(
-            "weibullring",
-            subObject = annulus,
-            x0 = [pfw["xmin"], pfw["ymin"], pfw["zmin"] - flawSize],
-            x1 = [pfw["xmax"], pfw["ymax"], pfw["zmax"] + flawSize],
-            flawSize = flawSize,
-            weibullVolume = 0.25 * np.pi * 25.12 * 25.12 * 56.6,
-            weibullModulus = 7.3,
-            weibullSeed = 1,
-            vMin = DZ**3,
-        )
+        geom.voronoiWeibullBoxWrapper('weibullring', subObject=annulus, x0=[pfw['xmin'], pfw['ymin']], x1=[pfw['xmax'], pfw['ymax']], flawSize=flawSize, weibullVolume=0.25 * np.pi * 25.12 * 25.12 * 56.6, weibullModulus=7.3, weibullSeed=1, vMin=DZ ** 2 * pfw['planeStrainThickness'], dim=2)
     ]
 
 pfw["objects"] = make_objects()

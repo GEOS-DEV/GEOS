@@ -293,7 +293,7 @@ A default of \texttt{{None}} on an emitted solver parameter omits the attribute 
 \index{{particle file format}}
 \index{{ParticleMesh}}
 
-Header names map columns; the enum index below is not a required physical column position. Every record requires the complete twelve-column geometry group: version 2, shape, physical volume and nine full-edge components. Old R-vector/native-reference/integration-width columns are not accepted. See Section~\ref{{sec:unified-particle-geometry}} for reset policies and the full contract.
+Header names map columns; the enum index below is not a required physical column position. Every record requires version 2, shape, physical volume and the active full-edge components: four (XX/XY/YX/YY) in native 2D, nine in 3D. Native 2D uses shape 3/4 and volume equal to area times domain thickness; PositionZ may be omitted and defaults to zero. Old R-vector/native-reference/integration-width columns are not accepted. See Section~\ref{{sec:unified-particle-geometry}} for reset policies and the full contract.
 
 {ptype_table}
 

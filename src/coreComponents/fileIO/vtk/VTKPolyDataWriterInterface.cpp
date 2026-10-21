@@ -153,7 +153,7 @@ static stdVector< int > getVtkConnectivity( ElementType const elementType, local
     case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
-    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };
+    case ElementType::Quadrilateral: return { 0, 1, 3, 2 };
     case ElementType::Polygon:       return { };  // TODO
     case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
@@ -614,7 +614,8 @@ getVtkCells( ParticleRegion const & region )
       vtkIdType vertices[8];
       for( int a=0; a<count; ++a ) vertices[a] = static_cast< vtkIdType >( mesh.offsets[p]+particleGeometry::vtkVertex( shape, a ) );
       cells->InsertNextCell( count, vertices );
-      types.push_back( shape == 0 ? VTK_HEXAHEDRON : ( shape == 1 ? VTK_WEDGE : VTK_TETRA ) );
+      types.push_back( shape == 3 ? VTK_QUAD : ( shape == 4 ? VTK_TRIANGLE :
+        ( shape == 0 ? VTK_HEXAHEDRON : ( shape == 1 ? VTK_WEDGE : VTK_TETRA ) ) ) );
     }
     return std::make_pair( types, cells );
 

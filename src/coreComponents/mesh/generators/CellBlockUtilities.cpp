@@ -261,6 +261,19 @@ localIndex getFaceNodes( ElementType const elementType,
 {
   switch( elementType )
   {
+    case ElementType::Quadrilateral:
+    case ElementType::Triangle:
+    {
+      int const count = elementType == ElementType::Quadrilateral ? 4 : 3;
+      GEOS_ERROR_IF( faceNumber < 0 || faceNumber >= count || faceNodes.size() < 2,
+                     "Invalid native 2D cell face" );
+      int const quadCycle[4] = { 0, 1, 3, 2 };
+      int const a = elementType == ElementType::Quadrilateral ? quadCycle[faceNumber] : faceNumber;
+      int const b = elementType == ElementType::Quadrilateral ? quadCycle[(faceNumber+1)%4] : (faceNumber+1)%3;
+      faceNodes[0] = elementToNodes[elemIdx][a];
+      faceNodes[1] = elementToNodes[elemIdx][b];
+      return 2;
+    }
     case ElementType::Hexahedron:
     {
       return getFaceNodesHex( faceNumber, elementToNodes[elemIdx], faceNodes );
@@ -377,7 +390,7 @@ createEdgesByLowestNode( localIndex const numNodes,
   {
     // loop over all the nodes in the face. there will be an edge for each node.
     localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIndex );
-    for( localIndex a = 0; a < numNodesInFace; ++a )
+    for( localIndex a = 0; a < ( numNodesInFace == 2 ? 1 : numNodesInFace ); ++a )
     {
       // count the edge for its lowest index node
       localIndex const node0 = faceToNodeMap( faceIndex, a );
@@ -394,7 +407,7 @@ createEdgesByLowestNode( localIndex const numNodes,
     localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIndex );
 
     // loop over all the nodes in the face. there will be an edge for each node.
-    for( localIndex a = 0; a < numNodesInFace; ++a )
+    for( localIndex a = 0; a < ( numNodesInFace == 2 ? 1 : numNodesInFace ); ++a )
     {
       // sort the nodes in order of index value.
       localIndex node0 = faceToNodeMap( faceIndex, a );
@@ -513,7 +526,7 @@ void resizeEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowes
                                            numEdgesPerFace = numEdgesPerFace.toView()] ( localIndex const faceIndex )
   {
     localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIndex );
-    numEdgesPerFace[ faceIndex ] = numNodesInFace + CellBlockManagerABC::edgeMapExtraSpacePerFace();
+    numEdgesPerFace[ faceIndex ] = ( numNodesInFace == 2 ? 1 : numNodesInFace ) + CellBlockManagerABC::edgeMapExtraSpacePerFace();
   } );
   faceToEdgeMap.resizeFromCapacities< parallelHostPolicy >( numFaces, numEdgesPerFace.data() );
   forAll< parallelHostPolicy >( numFaces, [numEdgesPerFace = numEdgesPerFace.toViewConst(),

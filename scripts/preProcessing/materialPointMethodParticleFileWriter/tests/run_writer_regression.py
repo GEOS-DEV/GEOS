@@ -21,17 +21,20 @@ import sys
 import numpy as np
 
 
-def inspect_particle_file(path):
+def inspect_particle_file(path, thickness=1.0):
     with path.open() as stream:
         names = stream.readline().split()
     data = np.loadtxt(path, skiprows=1, ndmin=2)
     assert np.all(np.isfinite(data)), 'Nonfinite particle data'
     assert np.all(data[:,names.index('GeometryVersion')]==2)
     shape = data[:, names.index('GeometryShape')].astype(int)
-    assert set(shape).issubset({0, 1, 2})
+    assert set(shape).issubset({0, 1, 2, 3, 4})
     volume = data[:, names.index('ParticleVolume')]
-    columns = [names.index('Geometry'+ij) for ij in ('XX','XY','XZ','YX','YY','YZ','ZX','ZY','ZZ')]
-    measure = np.linalg.det(data[:, columns].reshape(-1, 3, 3)) * np.choose(shape, [1, .5, 1/6])
+    dim=3 if 'GeometryZZ' in names else 2
+    components=('XX','XY','XZ','YX','YY','YZ','ZX','ZY','ZZ') if dim==3 else ('XX','XY','YX','YY')
+    columns=[names.index('Geometry'+ij) for ij in components]
+    measure=np.linalg.det(data[:,columns].reshape(-1,dim,dim))*np.choose(shape,[1,.5,1/6,1,.5])
+    if dim==2: measure*=thickness
     assert np.allclose(measure, volume, rtol=1e-9, atol=0)
     assert not any(name.startswith(('RVector','GeometryRVector','IntegrationWidth')) for name in names)
     assert np.all(volume > 0), 'Nonpositive particle volume'

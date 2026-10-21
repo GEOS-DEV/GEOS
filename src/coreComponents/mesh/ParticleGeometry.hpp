@@ -14,8 +14,8 @@ namespace geos
 namespace particleGeometry
 {
 
-// Geometry and interpolation are independent. The file schema is version 2. The 2D shapes are geometry-kernel support only;
-// they do not enable a native-2D mesh or axisymmetric mechanics. CPTI uses 3D tetrahedra.
+// Geometry and interpolation are independent. Schema 2 stores full generators:
+// two 2D rows for native quads/triangles, three 3D rows for volume particles.
 enum class Shape : integer
 {
   Parallelepiped = 0, TriangleWedge = 1, Tetrahedron = 2,
@@ -51,11 +51,14 @@ GEOS_HOST_DEVICE inline real64 determinant( MATRIX const & g )
 
 // Generators are rows in storage: G_current = G_reference F^T.
 // All generators in this interface are FULL edges, including box generators.
-template< class MATRIX, class FTYPE, class OUTPUT >
+template< int DIM = 3, class MATRIX, class FTYPE, class OUTPUT >
 GEOS_HOST_DEVICE inline void deform( MATRIX const & reference, FTYPE const & F, OUTPUT && current )
 {
-  for( int a=0; a<3; ++a ) for( int i=0; i<3; ++i )
-    current[a][i] = reference[a][0]*F[i][0] + reference[a][1]*F[i][1] + reference[a][2]*F[i][2];
+  for( int a=0; a<DIM; ++a ) for( int i=0; i<DIM; ++i )
+  {
+    current[a][i] = 0;
+    for( int j=0; j<DIM; ++j ) current[a][i] += reference[a][j]*F[i][j];
+  }
 }
 
 /** Stack-local affine geometry; never an additional per-particle field.
@@ -76,7 +79,7 @@ struct Domain
   {
     Domain result;
     result.shape = shape;
-    for( int a=0; a<3; ++a ) for( int i=0; i<3; ++i ) result.generators[a][i] = g[a][i];
+    for( int a=0; a<dimension(shape); ++a ) for( int i=0; i<dimension(shape); ++i ) result.generators[a][i] = g[a][i];
     return result;
   }
 
@@ -250,6 +253,49 @@ GEOS_HOST_DEVICE inline bool tetrahedronGradients( MATRIX const & g, real64 (&gr
   return true;
 }
 
+/** Native triangle barycentric gradients, normalized before inversion.
+ * Thickness belongs to physical volume and never enters these XY derivatives.
+ */
+template< class MATRIX >
+GEOS_HOST_DEVICE inline bool triangleGradients( MATRIX const & g, real64 (&gradient)[3][2] )
+{
+  real64 scale = 0;
+  for( int a=0; a<2; ++a ) for( int i=0; i<2; ++i )
+  {
+    real64 const value = ::fabs(g[a][i]);
+    if( !(value <= DBL_MAX) ) return false;
+    if( value > scale ) scale = value;
+  }
+  if( !(scale > 0) ) return false;
+  real64 const a=g[0][0]/scale, b=g[0][1]/scale, c=g[1][0]/scale, d=g[1][1]/scale;
+  real64 const det=a*d-b*c;
+  if( !(det > 0) ) return false;
+  gradient[1][0]=(d/det)/scale; gradient[1][1]=(-c/det)/scale;
+  gradient[2][0]=(-b/det)/scale; gradient[2][1]=(a/det)/scale;
+  for( int i=0; i<2; ++i )
+  {
+    gradient[0][i]=-gradient[1][i]-gradient[2][i];
+    for( int v=0; v<3; ++v ) if( !(::fabs(gradient[v][i]) <= DBL_MAX) ) return false;
+  }
+  return true;
+}
+
+/** Recover the embedded plane-strain F from two compact material domains.
+ * Reciprocal XY edges avoid a dimensionful singularity test against a padded
+ * unit z edge. Fzz is one; every out-of-plane shear component is zero.
+ */
+template<class REFERENCE, class CURRENT, class FTYPE>
+GEOS_HOST_DEVICE inline bool recoverDeformationGradient2D(REFERENCE const & g0, CURRENT const & g, FTYPE && f)
+{
+  real64 reciprocal[3][2];
+  if(!triangleGradients(g0,reciprocal)) return false;
+  for(int i=0;i<3;++i) for(int j=0;j<3;++j) f[i][j]=0;
+  f[2][2]=1;
+  for(int i=0;i<2;++i) for(int j=0;j<2;++j) for(int a=0;a<2;++a)
+    f[i][j]+=g[a][i]*reciprocal[a+1][j];
+  return true;
+}
+
 enum class InputError { None, Shape, Volume, Generators, Measure, Wedge };
 
 inline char const * inputErrorMessage( InputError const e )
@@ -257,7 +303,7 @@ inline char const * inputErrorMessage( InputError const e )
   switch( e )
   {
     case InputError::None: return "valid particle geometry";
-    case InputError::Shape: return "GeometryShape must be integer 0 (box), 1 (wedge), or 2 (tet)";
+    case InputError::Shape: return "GeometryShape must be 0 (hex), 1 (wedge), 2 (tet), 3 (quad), or 4 (triangle)";
     case InputError::Volume: return "ParticleVolume must be finite and positive";
     case InputError::Generators: return "geometry generators must be finite with positive orientation";
     case InputError::Measure: return "initial geometry measure must agree with ParticleVolume";
@@ -269,13 +315,14 @@ inline char const * inputErrorMessage( InputError const e )
 // One file contract: explicit physical volume and full generators. No inferred
 // box, overloaded volume column, or second geometry definition is accepted.
 template< class MATRIX >
-inline InputError validateFileGeometry( real64 shapeValue, real64 volume, MATRIX const & g )
+inline InputError validateFileGeometry( real64 shapeValue, real64 volume, MATRIX const & g, real64 const thickness = 1.0 )
 {
-  if( !std::isfinite(shapeValue) || shapeValue<0 || shapeValue>2 || shapeValue > ::floor(shapeValue) ) return InputError::Shape;
+  if( !std::isfinite(shapeValue) || shapeValue<0 || shapeValue>4 || shapeValue > ::floor(shapeValue) ) return InputError::Shape;
   if( !std::isfinite(volume) || volume<=0 ) return InputError::Volume;
   Shape shape=static_cast<Shape>(static_cast<integer>(shapeValue));
-  for(int a=0;a<3;++a) for(int i=0;i<3;++i) if(!std::isfinite(g[a][i])) return InputError::Generators;
+  for(int a=0;a<dimension(shape);++a) for(int i=0;i<dimension(shape);++i) if(!std::isfinite(g[a][i])) return InputError::Generators;
   real64 v=Domain::fromGenerators(shape,g).signedMeasure();
+  if(dimension(shape)==2) v *= thickness;
   if(!std::isfinite(v) || v<=0) return InputError::Generators;
   if(::fabs(v-volume)>1e-9*volume) return InputError::Measure;
   if(shape==Shape::TriangleWedge)
@@ -290,18 +337,18 @@ inline InputError validateFileGeometry( real64 shapeValue, real64 volume, MATRIX
 
 // Physical convection is independent of constitutive F resets. Use the same
 // physical increment as the constitutive update, with an alias-safe temporary.
-template< class MATRIX, class INCREMENT >
+template< int DIM = 3, class MATRIX, class INCREMENT >
 GEOS_HOST_DEVICE inline void advance( MATRIX && current, INCREMENT const & increment )
 {
-  real64 next[3][3]; deform(current,increment,next);
-  for(int a=0;a<3;++a) for(int i=0;i<3;++i) current[a][i]=next[a][i];
+  real64 next[DIM][DIM]; deform<DIM>(current,increment,next);
+  for(int a=0;a<DIM;++a) for(int i=0;i<DIM;++i) current[a][i]=next[a][i];
 }
 
-template< class REFERENCE, class CURRENT, class FTYPE >
+template< int DIM = 3, class REFERENCE, class CURRENT, class FTYPE >
 GEOS_HOST_DEVICE inline void reset( REFERENCE const & reference, CURRENT && current,
                                     FTYPE const & newF, bool const resetGeometry )
 {
-  if(resetGeometry) deform(reference,newF,current);
+  if(resetGeometry) deform<DIM>(reference,newF,current);
 }
 
 } // namespace affine

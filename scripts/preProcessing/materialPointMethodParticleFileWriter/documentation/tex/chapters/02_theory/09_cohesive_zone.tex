@@ -221,3 +221,11 @@ Model & Principal required inputs & Notes \\
 The event requires \texttt{regionNames} and \texttt{startTime}; region definitions supply the constitutive model and tag. Section~\ref{sec:event-cohesivezone} documents the event and the effective region-level normalization setting. In PFW, explicitly include \texttt{SurfaceFlag}, \texttt{CZTag}, \texttt{SurfaceNormal}, and \texttt{SurfacePosition} in \mpmcode{particleFileFields}. The default field list does not provide these automatically.
 
 The principal implementation limitations in the reviewed snapshot are: cohesive-zone enforcement assumes two velocity fields; initialization depends on consistent particle surface flags and CZ tags; misorientation-dependent bicrystal strengths require a valid misorientation state; and once cohesive damage reaches completion the interface is handed off to contact rather than continuing to carry cohesive traction.  These limitations should be reflected in verification tests for new cohesive-zone use cases.
+
+\paragraph{Native plane strain.}
+Type-B anchor rays intersect the actual quad or triangle in XY. Line-interface
+nodal measures integrate the bilinear basis along the segment and multiply by
+the domain thickness $t$. Thus geometric line length and physical interface
+area remain distinct. The native patch retains full constitutive tensors and
+does not introduce cohesive-particle subdivision; coupled CZ validation remains
+a target integration check (Section~\ref{sec:native-true-2d}).

@@ -31,6 +31,8 @@ set( solidMechanicsSolvers_sources )
 if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
   list( APPEND solidMechanicsSolvers_headers
         SolidMechanicsMPM.hpp
+        MPMMappingKernels.hpp
+        MPMGeometryMeasures.hpp
         MPMSolverFields.hpp
         kernels/ExplicitMPM.hpp )
 

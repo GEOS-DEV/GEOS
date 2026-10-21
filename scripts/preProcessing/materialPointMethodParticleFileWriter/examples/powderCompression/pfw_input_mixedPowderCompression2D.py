@@ -9,12 +9,12 @@
 
 """2D plane-strain copper foam reverse-ballistic compression.
 
-GEOS-MPM plane strain in this PFW branch uses the x-y plane and a single
-through-thickness z particle layer.  Therefore the 2D version maps the impact
+GEOS-MPM native plane strain uses an XY mesh with a scalar physical thickness.
+The 2D version maps the impact
 axis to y: material points start with velocity ``[0, -impactVelocity, 0]`` and
 impact the symmetry plane at ``y=0``.  The x faces are periodic, and the
 Poisson-disk pore field is periodic in x.  The circular pores are implicitly
-extruded through the plane-strain thickness.
+represented by native XY particles; thickness enters physical mass and volume.
 """
 
 #[pfw_dependency] pfw_materials.py
@@ -49,8 +49,7 @@ poreSeed = 20260521
 # negative y symmetry plane.
 impactVelocity = 0.25        # mm/us = 250 m/s
 
-# Resolution controls.  cpp, xpar, and ypar are scaled by refine.  PFW requires
-# zpar=1 and nK=3 for planeStrain=1, so through-thickness partitioning is fixed.
+# Resolution controls. cpp, xpar and ypar affect only the native XY grid.
 refine = 1
 
 stopTime = sampleX / impactVelocity
@@ -65,7 +64,7 @@ pfw["ymin"] = -0.5*sampleY
 pfw["ymax"] = 0.5*sampleY
 
 pfw["periodic"] = [False, True, False]
-pfw["planeStrain"] = 1
+pfw["formulation"] = "PlaneStrain"
 
 pfw["xpar"] = int(AR*3*refine)
 pfw["ypar"] = int(3*refine)
@@ -74,14 +73,13 @@ pfw["zpar"] = 1
 cpp = 24
 pfw["nI"] = pfw["xpar"] * cpp
 pfw["nJ"] = pfw["ypar"] * cpp
-pfw["nK"] = 3
 pfw["ppc"] = 2
 
-# Choose the z thickness so the single plane-strain interior cell is roughly the
-# same size as the in-plane cells.
+# Example physical thickness, retaining the previous numerical value.
+# This scalar creates no mesh cells and may be chosen independently of spacing.
 domainZ = (pfw["xmax"] - pfw["xmin"]) / ( pfw["nI"] - 2 )
-pfw["zmin"] = -0.5 * domainZ
-pfw["zmax"] =  0.5 * domainZ
+# Physical out-of-plane measure; independent of object end caps and z cells.
+pfw["planeStrainThickness"] = domainZ
 
 pfw["outputType"] = "silo"
 
@@ -192,5 +190,5 @@ pfw["objects"] = [bed]
 
 # Boundary-condition order is x-, x+, y-, y+, z-, z+.
 # x is periodic; y- is the impact symmetry plane; y+ is outflow/free; z faces are
-# symmetry planes for plane strain.
+# inactive in the native XY formulation.
 pfw["boundaryConditionTypes"] = [1, 0, 0, 0, 1, 1]

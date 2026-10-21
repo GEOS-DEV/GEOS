@@ -825,6 +825,7 @@ private:
 
 
   bool m_ghostFlags;
+  int m_spatialDimension = 3; // Native mesh dimension, including particle glyph meshes.
 };
 
 /**

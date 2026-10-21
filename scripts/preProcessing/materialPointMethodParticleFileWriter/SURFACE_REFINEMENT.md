@@ -127,17 +127,17 @@ sliver-volume threshold.
 
 The default `particleGeometry="box"` writes an equivalent-volume axis-aligned
 box at each simplex centroid. `particleGeometry="fromRefinement"` retains actual
-cut wedges/tets while uncut/fallback particles remain boxes. Both selections
-write schema 2: version, shape, explicit physical volume, and nine full-edge
+cut triangles/tets while uncut/fallback particles remain boxes. Both selections
+write schema 2: version, shape, explicit physical volume, and four (2D) or nine (3D) full-edge
 components. Output reconstructs the current material geometry; there is no
 independent equivalent-box display switch or second integration-width array.
 
-Actual simplex cuts support point types 0/1 and 3D CPTI type 3. For mixed
+Actual simplex cuts support point types 0/1 and CPTI type 3. For mixed
 CPDI boxes/CPTI tets, set `simplexParticleType=3`, `particleGeometry='fromRefinement'`,
 and object `particleType=2`. Only cut pieces receive the override; uncut/fallback
 pieces retain the object's type. An object with type 3 tessellates its Cartesian
-pieces into six tets each. CPTI requires `planeStrain=0`. Runtime splitting is
-supported for CPTI tets as well as point-interpolated tets/wedges. Old PFW Python inputs are normalized;
+pieces into two triangles in native 2D or six tets in 3D. Runtime splitting is
+supported for CPTI simplices as well as point-interpolated triangles/tets/wedges. Old PFW Python inputs are normalized;
 regenerate all GEOS particle/XML inputs. Old GEOS restarts are unsupported.
 See [UNIFIED_PARTICLE_GEOMETRY.md](UNIFIED_PARTICLE_GEOMETRY.md) for storage,
 reset policies, integration scaling and the precise scope.

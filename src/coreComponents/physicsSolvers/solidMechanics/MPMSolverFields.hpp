@@ -194,7 +194,7 @@ DECLARE_FIELD( particleGeometryReference,
                0.0,
                NOPLOT,
                WRITE_AND_READ,
-               "ParticleReferenceRVectors" );
+               "Reference full-edge particle geometry (DIM by DIM)" );
 
 DECLARE_FIELD( particleDeformationGradient,
                "particleDeformationGradient",

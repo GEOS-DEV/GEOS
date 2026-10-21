@@ -18,7 +18,7 @@ import re
 import sys
 from pathlib import Path
 
-MPM_CPDI_RENDERER_VERSION = 9
+MPM_CPDI_RENDERER_VERSION = 10
 
 
 def parse_args(argv):
@@ -1441,6 +1441,8 @@ def sanitized_extents(extents):
     if extents is None:
         return None
     vals = [float(v) for v in extents]
+    if len(vals)==4: vals.extend([0.0,0.0])
+    if len(vals)!=6: return None
     for i in (0, 2, 4):
         if vals[i + 1] < vals[i]:
             vals[i], vals[i + 1] = vals[i + 1], vals[i]
@@ -1477,6 +1479,32 @@ def view_axes(view):
     return None
 
 
+def native_xy_database(database):
+    """Use mesh metadata, not the number of stress/vector components."""
+    try:
+        md = call_visit("GetMetaData", database)
+        dimensions = [int(md.GetMeshes(i).spatialDimension) for i in range(md.GetNumMeshes())]
+        return bool(dimensions) and all(d == 2 for d in dimensions)
+    except Exception:
+        return False
+
+
+def configure_fitted_view2d(extents, width, height, padding):
+    extents = sanitized_extents(extents)
+    if extents is None:
+        call_visit("ResetView")
+        return
+    cx, cy = 0.5*(extents[0]+extents[1]), 0.5*(extents[2]+extents[3])
+    sx, sy = max(extents[1]-extents[0], 1e-30), max(extents[3]-extents[2], 1e-30)
+    aspect = float(width)/height
+    sy = max(sy, sx/aspect)*padding
+    sx = sy*aspect
+    view = call_visit("GetView2D")
+    view.windowCoords = (cx-0.5*sx, cx+0.5*sx, cy-0.5*sy, cy+0.5*sy)
+    view.viewportCoords = (0.1, 0.9, 0.1, 0.9)
+    call_visit("SetView2D", view)
+
+
 def get_view3d_object():
     try:
         return call_visit("GetView3D")
@@ -1492,7 +1520,12 @@ def get_view3d_object():
 
 
 def configure_fitted_view(view, extents, width, height, padding, perspective, focus_override=None,
-                          parallel_scale_override=None, near_override=None, far_override=None, view_angle=30.0):
+                          parallel_scale_override=None, near_override=None, far_override=None, view_angle=30.0, native_2d=False):
+    if native_2d:
+        if view not in ("xy", "auto"):
+            raise ValueError("Native XY particle objects require an xy view")
+        configure_fitted_view2d(extents, width, height, padding)
+        return
     if view == "auto":
         return
     axes = view_axes(view)
@@ -1686,6 +1719,9 @@ def main(argv=None):
     database = open_database_from_candidates(run_dir, args.database, args.list_databases)
 
     scalars, vectors, meshes, arrays, tensors = metadata_variable_names(database)
+    native_2d = native_xy_database(database)
+    if native_2d and args.view == "auto":
+        args.view = "xy"
     print("Scalar variables: {0}".format(scalars if scalars else "<none reported>"))
     print("Vector variables: {0}".format(vectors if vectors else "<none reported>"))
     print("Array variables: {0}".format(arrays if arrays else "<none reported>"))
@@ -1815,7 +1851,7 @@ def main(argv=None):
             parallel_scale_override=args.parallel_scale,
             near_override=args.near,
             far_override=args.far,
-            view_angle=args.view_angle,
+            view_angle=args.view_angle, native_2d=native_2d,
         )
 
     configure_annotations(not args.no_annotations)
@@ -1846,7 +1882,7 @@ def main(argv=None):
                 parallel_scale_override=args.parallel_scale,
                 near_override=args.near,
                 far_override=args.far,
-                view_angle=args.view_angle,
+                view_angle=args.view_angle, native_2d=native_2d,
             )
         filename = "{0}_{1}_{2}".format(case_name, label, safe_variable)
         save_window(output_dir, filename, args.width, args.height)

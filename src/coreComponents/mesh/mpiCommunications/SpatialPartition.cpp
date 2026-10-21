@@ -372,6 +372,14 @@ SpatialPartition::SpatialPartition( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Ghost position min." );
 
+  registerWrapper( "planeStrainThickness", &m_planeStrainThickness ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Domain-wide physical thickness for native 2D; retained on restart." );
+
+  registerWrapper( "spatialDimension", &m_spatialDimension ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Ambient dimension supplied by the mesh, retained on restart." );
+
   registerWrapper( viewKeyStruct::contactGhostMaxString(), &m_contactGhostMax ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Ghost position max." );
@@ -459,7 +467,7 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
   m_partitions( 1 ) = yPartitions;
   m_partitions( 2 ) = zPartitions;
   m_size = 1;
-  for( int i = 0; i < m_nsdof; i++ )
+  for( int i = 0; i < m_spatialDimension; i++ )
   {
     m_size *= m_partitions( i );
   }
@@ -519,10 +527,10 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
                                      MPI_Comm & cartcomm,
                                      int * ncoords )
 {
-  if( idim == m_nsdof )
+  if( idim == static_cast< unsigned int >( m_spatialDimension ) )
   {
     bool me = true;
-    for( int i = 0; i < m_nsdof; i++ )
+    for( int i = 0; i < m_spatialDimension; i++ )
     {
       if( ncoords[i] != this->m_coords( i ))
       {
@@ -563,6 +571,27 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
   }
 }
 
+void SpatialPartition::setPlaneStrainThickness( real64 const thickness )
+{
+  GEOS_ERROR_IF( !(thickness > 0.0) || !std::isfinite(thickness),
+                 "planeStrainThickness must be finite and positive" );
+  m_planeStrainThickness = thickness;
+}
+
+void SpatialPartition::setSpatialDimension( int const dimension )
+{
+  GEOS_ERROR_IF( dimension != 2 && dimension != 3, "Spatial dimension must be 2 or 3" );
+  GEOS_ERROR_IF( dimension == 2 && m_partitions[2] != 1,
+                 "Native 2D requires one (inactive) z partition" );
+  m_spatialDimension = dimension;
+  if( dimension == 2 )
+  {
+    m_coords[2] = 0;
+    m_periodic[2] = 0;
+    m_min[2] = m_max[2] = 0;
+  }
+}
+
 void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
                                  real64 const ( &max )[ 3 ] )
 {
@@ -577,7 +606,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
         "The number of cells in an axis cannot be lower that the partition count of this axis\n";
 
       int nbPartitions = 1;
-      for( int i = 0; i < m_nsdof; i++ )
+      for( int i = 0; i < m_spatialDimension; i++ )
       {
         nbPartitions *= this->m_partitions( i );
       }
@@ -588,14 +617,14 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, m_nsdof, m_partitions.data(), m_periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOS, m_spatialDimension, m_partitions.data(), m_periodic.data(), reorder, &cartcomm );
     }
     m_rank = MpiWrapper::commRank( cartcomm );
-    MpiWrapper::cartCoords( cartcomm, m_rank, m_nsdof, m_coords.data());
+    MpiWrapper::cartCoords( cartcomm, m_rank, m_spatialDimension, m_coords.data());
 
     //add neighbors
     {
-      int ncoords[m_nsdof];
+      int ncoords[3] = {};
       m_neighbors.clear();
       addNeighbors( 0, cartcomm, ncoords );
     }
@@ -613,7 +642,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
   LvArray::tensorOps::copy< 3 >( m_blockSize, m_gridSize );
 
   LvArray::tensorOps::copy< 3 >( m_min, min );
-  for( int i = 0; i < m_nsdof; ++i )
+  for( int i = 0; i < m_spatialDimension; ++i )
   {
     const int nloc = m_partitions( i ) - 1;
     const localIndex nlocl = static_cast< localIndex >(nloc);
@@ -659,7 +688,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
 void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
                                     real64 const dt )
 {
-  for( int i=0; i<3; i++ )
+  for( int i=0; i<m_spatialDimension; i++ )
   {
     real64 ratio = 1.0 + domainL[i] * dt;
     m_min[i] *= ratio;
@@ -677,6 +706,7 @@ void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
 bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir ) const
 {
   bool rval = true;
+  if( dir >= m_spatialDimension ) return true;
   const int i = dir;
   if( m_periodic( i ) )
   {
@@ -699,7 +729,7 @@ bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCente
                                                       const real64 & boundaryRadius ) const
 // test a point relative to a boundary box. If non-zero buffer specified, expand the box.
 {
-  for( int i = 0; i < m_nsdof; i++ )
+  for( int i = 0; i < m_spatialDimension; i++ )
   {
     // Is particle already in bounds of partition?
     if( !(m_partitions( i )==1 || ( elemCenter[i] >= (m_min[i] - boundaryRadius) && elemCenter[i] <= (m_max[i] + boundaryRadius) ) ) )
@@ -757,12 +787,12 @@ void SpatialPartition::setPeriodicDomainBoundaryObjects( MeshBody & grid,
   MPI_Comm cartcomm;
   {
     int reorder = 0;
-    MpiWrapper::cartCreate( MPI_COMM_GEOS, 3, m_partitions.data(), m_periodic.data(), reorder, &cartcomm );
+    MpiWrapper::cartCreate( MPI_COMM_GEOS, m_spatialDimension, m_partitions.data(), m_periodic.data(), reorder, &cartcomm );
     GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
   }
 
   // Check for periodic boundaries in each direction
-  for( unsigned int dimension =0; dimension < 3; dimension++ )
+  for( unsigned int dimension =0; dimension < static_cast< unsigned int >( m_spatialDimension ); dimension++ )
   {
     if( m_periodic[dimension] )
     {
@@ -1002,8 +1032,8 @@ void SpatialPartition::repartitionMasterParticles( DomainPartition & domain,
   forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
     {
       bool inPartition = true;
-      R1Tensor p_x;
-      for( int i=0; i<3; i++ )
+      R1Tensor p_x{};
+      for( int i=0; i<m_spatialDimension; i++ )
       {
         p_x[i] = particleCenter[pp][i];
         inPartition = inPartition && isCoordInPartition( p_x[i], i );
@@ -1040,7 +1070,7 @@ void SpatialPartition::repartitionMasterParticles( DomainPartition & domain,
     for( int pp=0; pp<particleCoordinatesReceivedFromNeighbors[n].toView().size(); pp++ )
     {
       bool inPartition = true;
-      for( int j=0; j<3; j++ )
+      for( int j=0; j<m_spatialDimension; j++ )
       {
         inPartition = inPartition && isCoordInPartition( particleCoordinatesReceivedFromNeighbors[n].toView()[pp][j], j );
       }
@@ -1212,8 +1242,8 @@ void SpatialPartition::repartitionMasterParticles( DomainPartition & domain,
 //     forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOS_HOST ( localIndex const p )
 //       {
 //         bool inPartition = true;
-//         R1Tensor p_x;
-//         for( int i=0; i<3; i++ )
+//         R1Tensor p_x{};
+//         for( int i=0; i<m_spatialDimension; i++ )
 //         {
 //           p_x[i] = particleCenter[p][i];
 //           inPartition = inPartition && isCoordInPartition( p_x[i], i );
@@ -1428,10 +1458,10 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
 
     appendNeighborOffset = [&]( int const idim )
     {
-      if( idim == m_nsdof )
+      if( idim == m_spatialDimension )
       {
         bool me = true;
-        for( int i = 0; i < m_nsdof; ++i )
+        for( int i = 0; i < m_spatialDimension; ++i )
         {
           if( ncoords[i] != this->m_coords( i ) )
           {
@@ -1543,7 +1573,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     [&]( R1Tensor const & mappedCenter,
          std::array< int, 3 > const & neighborOffset ) -> bool
   {
-    for( int d = 0; d < 3; ++d )
+    for( int d = 0; d < m_spatialDimension; ++d )
     {
       if( this->m_partitions[d] == 1 || neighborOffset[d] == 0 )
       {
@@ -1593,10 +1623,10 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
 
       bool inPartition = true;
 
-      R1Tensor rawCenter;
-      R1Tensor mappedCenter;
+      R1Tensor rawCenter{};
+      R1Tensor mappedCenter{};
 
-      for( int d = 0; d < 3; ++d )
+      for( int d = 0; d < m_spatialDimension; ++d )
       {
         rawCenter[d] = particleCenter[p][d];
         mappedCenter[d] = mapCoordinateForPartitionTests( rawCenter[d], d );

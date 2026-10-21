@@ -229,6 +229,24 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceIndex )
   {
+    // In a native XY mesh, a face is a line segment. Its measure is length;
+    // the MPM formulation applies physical thickness when forming forces.
+    if( m_toNodesRelation.sizeOfArray( faceIndex ) == 2 )
+    {
+      localIndex const a = m_toNodesRelation( faceIndex, 0 );
+      localIndex const b = m_toNodesRelation( faceIndex, 1 );
+      real64 const dx = X[b][0] - X[a][0];
+      real64 const dy = X[b][1] - X[a][1];
+      real64 const length = sqrt( dx*dx + dy*dy );
+      GEOS_ERROR_IF( length <= 0, "Degenerate native 2D mesh edge" );
+      m_faceArea[faceIndex] = length;
+      for( int d=0; d<3; ++d ) m_faceCenter[faceIndex][d] = 0.5*(X[a][d]+X[b][d]);
+      // sortFaceNodes puts the adjacent element on the right of the edge.
+      m_faceNormal[faceIndex][0] = -dy/length;
+      m_faceNormal[faceIndex][1] = dx/length;
+      m_faceNormal[faceIndex][2] = 0;
+      return;
+    }
     m_faceArea[ faceIndex ] = computationalGeometry::centroid_3DPolygon( m_toNodesRelation[ faceIndex ],
                                                                          X,
                                                                          m_faceCenter[ faceIndex ],

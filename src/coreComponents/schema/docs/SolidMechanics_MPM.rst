@@ -209,6 +209,10 @@ shown verbatim. Inherited attributes are not repeated.
      - OPTIONAL / int
      - 1
      - Flag particles for deletion if particle-grid mapping construction detects an out-of-bounds particle/stencil location; compact active-ordinal mapping rows before using them.
+   * - formulation
+     - OPTIONAL
+     - string("Cartesian3D"
+     - MPM formulation: Cartesian3D or PlaneStrain (native XY grid).
    * - frictionCoefficient
      - OPTIONAL / real64
      - -1.0
@@ -309,10 +313,6 @@ shown verbatim. Inherited attributes are not repeated.
      - OPTIONAL / real64
      - 0.0
      - Interval to write particle data to file
-   * - planeStrain
-     - OPTIONAL / int
-     - 0
-     - Flag for performing plane strain calculations
    * - plotGridFields
      - OPTIONAL / int
      - 0

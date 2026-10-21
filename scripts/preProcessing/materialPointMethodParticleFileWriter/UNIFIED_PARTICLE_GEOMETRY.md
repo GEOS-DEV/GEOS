@@ -11,9 +11,9 @@ remain accepted through normalization in PFW.
 
 | State | Storage in this patch | Purpose |
 |---|---|---|
-| `particleGeometryShape` | integer per particle | 0 box, 1 triangular wedge, 2 tetrahedron |
-| `particleGeometryReference` (G0) | 3 x 3 doubles | Full reference edge generators |
-| `particleGeometryCurrent` (G) | 3 x 3 doubles | Full current material edge generators |
+| `particleGeometryShape` | integer per particle | 0 box, 1 triangular wedge, 2 tetrahedron, 3 parallelogram, 4 triangle |
+| `particleGeometryReference` (G0) | DIM x DIM doubles | Full reference edge generators |
+| `particleGeometryCurrent` (G) | DIM x DIM doubles | Full current material edge generators |
 | Center, mass, physical volume, F | Existing solver fields | Geometry does not duplicate these |
 | Integration geometry, vertices, half edges | Stack temporaries | Reconstructed when needed |
 
@@ -25,15 +25,15 @@ equation is `G = F G0`. That equality is deliberately not assumed after FOnly.
 |---|---|---|---|
 | 3D box | g1, g2, g3 | c +/- g1/2 +/- g2/2 +/- g3/2 | det(G) |
 | 3D tet | v1-v0, v2-v0, v3-v0 | v0=c-(g1+g2+g3)/4; vi=v0+gi | det(G)/6 |
-| Thin-3D wedge | Two triangle edges, thickness vector g3 | triangle centroid offsets, then +/-g3/2 | det(G)/2 |
-| Planned 2D parallelogram | Two 2-component edges | c +/- g1/2 +/- g2/2 | det(G) |
-| Planned 2D triangle | Two 2-component edges | v0=c-(g1+g2)/3; vi=v0+gi | det(G)/2 |
+| 3D wedge | Two triangle edges, thickness vector g3 | triangle centroid offsets, then +/-g3/2 | det(G)/2 |
+| 2D parallelogram | Two 2-component edges | c +/- g1/2 +/- g2/2 | det(G) |
+| 2D triangle | Two 2-component edges | v0=c-(g1+g2)/3; vi=v0+gi | det(G)/2 |
 
 The matrices cost 144 bytes per 3D particle, plus the shape tag. Boxes already
 needed two 3x3 domain matrices, so their matrix count is unchanged. Native
 simplices previously also carried a 3x3 glyph-reference matrix: removing it
-saves 72 bytes per particle. Future native 2D storage will use two 2x2 matrices
-(64 bytes total); this patch's running solver remains 3D/thin-3D.
+saves 72 bytes per particle. Native 2D uses two 2x2 matrices (64 bytes total). Its physical initial volume
+is the geometric area times the domain planeStrainThickness; see TRUE_2D_PLAN.md.
 
 ## Physical update and reset
 
@@ -67,9 +67,9 @@ isotropic-polar reset; no box feasibility cap is imposed on a simplex.
 
 SinglePoint and SinglePointBSpline sample at the center while retaining the
 same material geometry for output, splitting and CZ anchors. CPDI requires a
-box. On every mapping call, construct a temporary full-edge integration matrix
+box in 3D or parallelogram in 2D. On every mapping call, construct a temporary full-edge integration matrix
 from G, apply the selected projection, and use local half edges `r=Ghat/2` in
-the existing eight-corner CPDI weights and gradient formula. Cached mapping,
+the four/eight-corner CPDI weights and gradient formula. Cached mapping,
 on-demand mapping, neighbor support and CPDI boundary checks use this same
 projection. Cached shape functions remain cached; Ghat is not a particle field.
 
@@ -82,7 +82,8 @@ volume. A projection failure retains its input and reports an invalid-domain
 diagnostic. The existing explicit surface-data disabling control remains a
 separate side effect. Output always reconstructs unscaled material geometry.
 
-CPTI is implemented for 3D tetrahedra (`particleType=3`, shape 2). Domain
+CPTI supports native 2D triangles (shape 4) and 3D tetrahedra (shape 2),
+both particleType=3. In 3D, domain
 weights are 1/4 and gradients are `b0=-G_column^-T [1,1,1]`,
 `bi=G_column^-T ei`. Mapping uses four corner stencils (32 raw entries) and
 the same temporary geometry for corners and gradients. CPTI scaling is uniform:
@@ -90,14 +91,14 @@ Homel selects diameter limit `0.99998*min(h)`, vpHencky selects
 `0.99999*neighborRadius`; neither applies the box VP-Hencky algorithm/cap.
 Scaling can reduce integration volume, but leaves all material state unchanged.
 See [CPTI.md](CPTI.md) for generation and runtime controls. Arbitrary warped
-CPDI2 cells, native 2D topology/triangle mapping, and axisymmetry remain future
-work. CPTI has no thin-3D plane-strain specialization.
+CPDI2 cells and axisymmetry remain future work. Native triangles use three
+corner stencils (12 raw entries), weights 1/3, and the 2D reciprocal edge basis.
 
 ## Splitting and cohesive zones
 
 Runtime splitting uses unscaled current G. Boxes retain the generator-mask
 split policy. Tets bisect their longest current edge; wedges bisect a triangle
-edge or, in 3D, their thickness. Plane strain preserves wedge thickness.
+edge or, in 3D, their thickness. Native 2D triangles bisect their longest XY edge; parallelograms split generators.
 Native children are reevaluated and the largest violating child is split until
 all meet the diameter limit or the pass reaches four leaves in plane strain /
 eight in 3D. A single tet bisection need not reduce maximum diameter. The log
@@ -128,7 +129,7 @@ selection. See `PARTICLE_SPLITTING.md` for controls and verification.
 
 CZ TypeA caches the supplied surface offset. TypeB now intersects the ray from
 the particle center along its current surface normal with the actual unscaled
-box, wedge or tet at CZ initialization. Both convect that cached anchor using
+box, wedge, tet, parallelogram or triangle at CZ initialization. Both convect that cached anchor using
 relative cohesive F; Nodal is unchanged. This changes TypeB's anchor selection
 for a deformed particle relative to the old reference-box ray. The anchor is a
 particle-boundary estimate, not explicit ownership of an interface facet.
@@ -145,11 +146,10 @@ pfw['surfaceRefinementLevel'] = 2
 pfw['geometryReset'] = 'FOnly'              # or FAndGeometry
 ```
 
-PFW simplex cuts still require object `particleType=1` (SinglePointBSpline).
-Uncut/fallback pieces remain boxes for point/CPDI objects, producing hex bulk plus surface tets in 3D
-and boxes plus wedges in the current plane-strain mode. GEOS also accepts point
-linear interpolation with supplied canonical simplex geometry; PFW's cut
-algorithm retains its B-spline restriction. CPDI with a simplex is rejected.
+PFW simplex cuts support point types 0/1 or CPTI type 3. Use simplexParticleType=3
+for CPDI bulk with CPTI cuts. Uncut/fallback pieces retain the object type and
+box geometry (parallelograms in 2D), except all-CPTI objects, which tessellate
+Cartesian pieces into two triangles or six tetrahedra. CPDI simplices are rejected.
 
 Old `particleReferenceGeometry='equivalentBox'|'fromRefinement'` maps to the new
 selection unless `particleGeometry` is explicitly supplied. Old
@@ -158,7 +158,7 @@ selection unless `particleGeometry` is explicitly supplied. Old
 Old `particleDomainOutput` and `plotUnscaledParticles` inputs are accepted by PFW;
 they are not emitted to XML. Output always shows actual material geometry.
 
-Required geometry columns, on every row and for every interpolation type:
+Required 3D geometry columns, on every row and for every interpolation type:
 
 ```text
 GeometryVersion GeometryShape ParticleVolume
@@ -167,13 +167,16 @@ GeometryYX GeometryYY GeometryYZ
 GeometryZX GeometryZY GeometryZZ
 ```
 
-Version is exactly 2. The reader also requires ID and PositionX/Y/Z, rejects
+Native 2D uses only GeometryXX, GeometryXY, GeometryYX and GeometryYY; its
+physical volume is area*t. Version is exactly 2. The reader requires ID and
+active Position components (PositionZ may be omitted in 2D), and rejects
 unknown/partial old geometry schemas, nonfinite or inverted generators, and
 initial measure/volume mismatch beyond relative tolerance 1e-9. Initial wedges
 must be xy triangles extruded in z. Both geometry matrices are restartable;
-restart version 2 is required. There is no old-restart conversion path.
+restart geometry version 3 is required. There is no old-restart conversion path.
 
-The XML addition is `geometryReset="FOnly"` on `SolidMechanics_MPM`. The old
+The reset selection is `geometryReset="FOnly"` on `SolidMechanics_MPM`.
+Native 2D additionally selects formulation="PlaneStrain" and a dimension-2 mesh. The old
 ParticleRegion output policy is removed. See the complete runnable input in
 `examples/unifiedGeometry/pfw_input_unified_geometry.py`.
 

@@ -31,6 +31,15 @@ void CellBlock::setElementType( ElementType elementType )
 
   switch( m_elementType )
   {
+    case ElementType::Quadrilateral:
+    case ElementType::Triangle:
+    {
+      m_numNodesPerElement = elementType == ElementType::Quadrilateral ? 4 : 3;
+      m_numEdgesPerElement = m_numNodesPerElement;
+      m_numFacesPerElement = m_numNodesPerElement;
+      m_maxNodesPerFace = 2;
+      break;
+    }
     case ElementType::Hexahedron:
     {
       m_numNodesPerElement = 8;

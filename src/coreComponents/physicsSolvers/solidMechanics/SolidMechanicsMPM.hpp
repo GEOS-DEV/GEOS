@@ -554,6 +554,7 @@ public:
                                            real64 const overlapThreshold2,
                                            real64 const maxParticleVelocitySquared,
                                            real64 const (&hEl) [3],
+                                           real64 const cellVolume,
                                            int const & planeStrain,
                                            real64 const & smallMass,
                                            int const & useSurfacePositionForContact,
@@ -593,6 +594,7 @@ public:
                                          real64 const overlapThreshold2,
                                          real64 const maxParticleVelocitySquared,
                                          real64 const (&hEl) [3],
+                                         real64 const cellVolume,
                                          int const & planeStrain,
                                          real64 const & smallMass,
                                          int const & useSurfacePositionForContact,
@@ -905,7 +907,9 @@ public:
   static GEOS_HOST_DEVICE GEOS_FORCE_INLINE
   real64 computeVolumeFromSurfacePosition( real64 const (&n)[3],
                                            real64 const offset,
-                                           real64 const (&hEl) [3] );
+                                           real64 const (&hEl) [3],
+                                           int const numDims,
+                                           real64 const cellVolume );
 
   static GEOS_HOST_DEVICE GEOS_FORCE_INLINE
   real64 computeMaximumSurfacePositionOffset( real64 ( &n )[3],
@@ -1066,82 +1070,26 @@ public:
                                           ParticleSubRegion & subRegion,
                                           arrayView1d< int const > const badMappingRows );
 
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  void invalidateShapeFunctionRow( localIndex const numberOfMappedNodesPerParticle,
-                                   arraySlice1d< int > const mappedNodes,
-                                   arraySlice1d< real64 > const shapeFunctionValues,
-                                   arraySlice2d< real64 > const shapeFunctionGradientValues );
-
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  int computeLocalCellIndexWithBoundaryTolerance( real64 const u,
-                                                  int const minCell,
-                                                  int const maxCell,
-                                                  real64 & cellCoordinate ) const;
-
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  bool computeSinglePointShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                         arraySlice1d< real64 const > const particlePosition,
-                                         arrayView3d< int const > const ijkMap,
-                                         real64 const (&xLocalMin)[3],
-                                         real64 const (&hEl)[3],
-                                         localIndex const (&nEl)[3],
-                                         arraySlice1d< int > const mappedNodes,
-                                         arraySlice1d< real64 > const shapeFunctionValues,
-                                         arraySlice2d< real64 > const shapeFunctionGradientValues );
-
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  bool computeSinglePointBSplineShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                                arraySlice1d< real64 const > const particlePosition,
-                                                arrayView3d< int const > const ijkMap,
-                                                real64 const (&xLocalMin)[3],
-                                                real64 const (&hEl)[3],
-                                                localIndex const (&nEl)[3],
-                                                arraySlice1d< int > const mappedNodes,
-                                                arraySlice1d< real64 > const shapeFunctionValues,
-                                                arraySlice2d< real64 > const shapeFunctionGradientValues );
-
-  /** CPTI uses the same implementation for cached views and on-demand arrays.
-   * Raw entries retain corner order; the normal effective-map pass coalesces
-   * duplicate grid nodes. Invalid geometry/stencils return an empty row.
-   */
-  template< class NODES, class VALUES, class GRADIENTS >
-  GEOS_HOST_DEVICE
-  bool computeCPTIShapeFunctions( arraySlice1d< real64 const > const particlePosition,
-                                  arraySlice2d< real64 const > const particleGeometryCurrent,
-                                  arrayView3d< int const > const ijkMap,
-                                  real64 const (&xLocalMin)[3],
-                                  real64 const (&hEl)[3],
-                                  localIndex const (&nEl)[3],
-                                  NODES const mappedNodes, VALUES const shapeFunctionValues,
-                                  GRADIENTS const shapeFunctionGradientValues ) const;
-
   // Shape-preserving, temporary CPTI projection; never apply box VP-Hencky
   // formulas or box feasibility bounds to a tetrahedron.
+  template< int DIM = 3 >
   GEOS_HOST_DEVICE int projectCPTIIntegrationGeometry(
     arraySlice2d< real64 const > const geometry, real64 (&projected)[3][3] ) const;
 
   // Return status bits: changed=1, relaxed integration measure=2, invalid=4.
   // No per-particle integration matrix is stored or checkpointed.
+  template< int DIM, class NODES, class VALUES, class GRADIENTS >
+  GEOS_HOST_DEVICE bool computeParticleMapping(
+    ParticleType const type, arraySlice1d<real64 const> const center,
+    arraySlice2d<real64 const> const geometry, arrayView3d<localIndex const> const map,
+    real64 const (&origin)[3], real64 const (&spacing)[3], localIndex const (&cells)[3],
+    NODES nodes, VALUES values, GRADIENTS gradients ) const;
+
+  template< int DIM = 3 >
   GEOS_HOST_DEVICE int projectIntegrationGeometry(
     arraySlice2d<real64 const> const geometry, real64 (&projected)[3][3]) const;
 
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  bool computeCPDIShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                  arraySlice1d< real64 const > const particlePosition,
-                                  arraySlice2d< real64 const > const particleGeometryCurrent,
-                                  arrayView3d< int const > const ijkMap,
-                                  real64 const (&xLocalMin)[3],
-                                  real64 const (&hEl)[3],
-                                  localIndex const (&nEl)[3],
-                                  arraySlice1d< int > const mappedNodes,
-                                  arraySlice1d< real64 > const shapeFunctionValues,
-                                  arraySlice2d< real64 > const shapeFunctionGradientValues );
-
+  template< int DIM >
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void mapNodesAndComputeShapeFunctionsForSingleParticle( arrayView3d< localIndex const > const ijkMap,
@@ -1155,68 +1103,6 @@ public:
                                          localIndex * const mappedNode,
                                          real64 * const shapeFunctionValues,
                                          real64 shapeFunctionGradientValues[][3] );
-
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  void computeSinglePointParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                                 arraySlice1d< real64 const > const particlePosition,
-                                                 arrayView3d< int const > const ijkMap,
-                                                 real64 const (&xLocalMin)[3],
-                                                 real64 const (&hEl)[3],
-                                                 localIndex const (&nEl)[3],
-                                                 localIndex * const mappedNodes,
-                                                 real64 * const shapeFunctionValues,
-                                                 real64 shapeFunctionGradientValues[][3] );
-
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  void computeSinglePointBSplineParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                                        arraySlice1d< real64 const > const particlePosition,
-                                                        arrayView3d< int const > const ijkMap,
-                                                        real64 const (&xLocalMin)[3],
-                                                        real64 const (&hEl)[3],
-                                                        localIndex const (&nEl)[3],
-                                                        localIndex * const mappedNodes,
-                                                        real64 * const shapeFunctionValues,
-                                                        real64 shapeFunctionGradientValues[][3] );
-
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  void computeCPDIParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                          arraySlice1d< real64 const > const particlePosition,
-                                          arraySlice2d< real64 const > const particleGeometryCurrent,
-                                          arrayView3d< int const > const ijkMap,
-                                          real64 const (&xLocalMin)[3],
-                                          real64 const (&hEl)[3],
-                                          localIndex const (&nEl)[3],
-                                          localIndex * const mappedNodes,
-                                          real64 * const shapeFunctionValues,
-                                          real64 shapeFunctionGradientValues[][3] );
-
-  #ifdef USEOLDSHAPEFUNCTIONFUNCTIONS
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  void computeSinglePointParticleShapeFunctionsSlower( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                                 arraySlice1d< real64 const > const particlePosition,
-                                                 arrayView3d< int const > const ijkMap,
-                                                 real64 const (&xLocalMin)[3],
-                                                 real64 const (&hEl)[3],
-                                                 localIndex * const mappedNodes,
-                                                 real64 * const shapeFunctionValues,
-                                                 real64 shapeFunctionGradientValues[][3] );
-
-  GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  void computeCPDIParticleShapeFunctionsSlower( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
-                                          arraySlice1d< real64 const > const particlePosition,
-                                          arraySlice2d< real64 const > const particleGeometryCurrent,
-                                          arrayView3d< int const > const ijkMap,
-                                          real64 const (&xLocalMin)[3],
-                                          real64 const (&hEl)[3],
-                                          localIndex * const mappedNodes,
-                                          real64 * const shapeFunctionValues,
-                                          real64 shapeFunctionGradientValues[][3] );
-  #endif
 
   /**
    * @brief Applies TransformParticles events that must run after deformation-gradient updates.
@@ -1444,6 +1330,14 @@ protected:
   real64 m_profileWriteInterval;
   array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
   int m_planeStrain;
+  string m_formulation = "Cartesian3D";
+  // Cached from the domain's partition; never an independent solver input.
+  real64 m_planeStrainThickness = 1.0;
+
+  /// Convert active grid/domain measure into physical volume explicitly.
+  template<class EXTENTS>
+  GEOS_HOST_DEVICE real64 physicalVolume( EXTENTS const & extent ) const
+  { return extent[0]*extent[1]*(m_numDims==2 ? m_planeStrainThickness : extent[2]); }
   int m_plotGridFields;
   string_array m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;

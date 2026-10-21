@@ -23,16 +23,18 @@ class ReferenceGeometryTests(unittest.TestCase):
             reconstructed = np.vstack([a, a+g])
             self.assertTrue(all(np.min(np.linalg.norm(reconstructed-x, axis=1)) < 1e-14 for x in v))
 
-    def test_wedge_centroid_and_thickness(self):
+    def test_triangle_centroid_and_physical_thickness(self):
         v = np.array([[0.,0,5],[2,0,5],[0,3,5]])
         tag, g = encode_geometry(v.mean(0), [1,3,0.7], v, plane_strain=True)
-        self.assertEqual(tag, 1)
-        self.assertAlmostEqual(np.linalg.det(g)/2, 2.1)
-        a = v.mean(0) - (g[0]+g[1])/3 - g[2]/2
-        bottom = np.array([a,a+g[0],a+g[1]])
-        wedge = np.vstack([bottom,bottom+g[2]])
-        np.testing.assert_allclose(wedge.mean(0), v.mean(0))
-        self.assertAlmostEqual(wedge[:,2].max()-wedge[:,2].min(),0.7)
+        self.assertEqual(tag, 4)
+        self.assertEqual(g.shape, (2,2))
+        self.assertAlmostEqual(np.linalg.det(g)/2, 3)
+        a = v.mean(0)[:2] - g.sum(0)/3
+        reconstructed = np.vstack([a, a+g])
+        np.testing.assert_allclose(reconstructed, v[:,:2])
+        row=np.array(geometry_columns((tag,g),2.1,thickness=.7).split(),float)
+        self.assertEqual(len(row),7)
+        self.assertAlmostEqual(row[2],2.1)
 
     def test_geometry_columns_round_trip(self):
         tag,g = encode_geometry([1,2,3],[0.11,0.22,0.33])

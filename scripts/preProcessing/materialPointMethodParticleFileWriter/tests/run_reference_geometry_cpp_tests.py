@@ -36,12 +36,18 @@ def main():
             for path in sorted(args.writer_results.glob('*_r1/mpmParticleFile_case')):
                 names=path.read_text().splitlines()[0].split()
                 data=np.loadtxt(path,skiprows=1,ndmin=2)
-                columns=['GeometryShape','ParticleVolume']+['Geometry'+ij for ij in
-                         ('XX','XY','XZ','YX','YY','YZ','ZX','ZY','ZZ')]
+                dimension=3 if 'GeometryZZ' in names else 2
+                components=('XX','XY','XZ','YX','YY','YZ','ZX','ZY','ZZ') if dimension==3 else ('XX','XY','YX','YY')
+                columns=['GeometryShape','ParticleVolume']+['Geometry'+ij for ij in components]
+                thickness=1.0
+                if dimension==2:
+                    import xml.etree.ElementTree as ET
+                    mesh=ET.parse(path.parent/'mpm_case.xml').find('.//InternalMesh')
+                    thickness=float(mesh.attrib['planeStrainThickness'])
                 rows=data[:,[names.index(c) for c in columns]]
                 import io
                 text=io.StringIO(); np.savetxt(text,rows,fmt='%.17g')
-                run=subprocess.run([str(executable),'--decode'],input=text.getvalue(),
+                run=subprocess.run([str(executable),'--decode',str(thickness)],input=text.getvalue(),
                                    text=True,capture_output=True,check=True)
                 assert len(run.stdout.splitlines())==len(rows)
                 count+=len(rows)

@@ -74,7 +74,7 @@ public:
     arrayView1d< integer const > shape;
     arrayView3d< real64 const > reference;
     arrayView3d< real64 > current;
-    GEOS_HOST_DEVICE bool isSimplex(localIndex p) const { return shape[p]!=0; }
+    GEOS_HOST_DEVICE bool isSimplex(localIndex p) const { return shape[p]!=0 && shape[p]!=3; }
     GEOS_HOST_DEVICE particleGeometry::Shape particleShape(localIndex p) const
     { return static_cast<particleGeometry::Shape>(shape[p]); }
     GEOS_HOST_DEVICE particleGeometry::affine::Domain currentDomain(localIndex p, int dimensions=3) const
@@ -90,7 +90,11 @@ public:
     { return particleGeometry::affine::Domain::fromGenerators(particleShape(p),reference[p]); }
     template<class FTYPE>
     GEOS_HOST_DEVICE void reset(localIndex p, FTYPE const & newF, bool resetGeometry) const
-    { particleGeometry::affine::reset(reference[p],current[p],newF,resetGeometry); }
+    {
+      if(particleGeometry::affine::dimension(particleShape(p))==2)
+        particleGeometry::affine::reset<2>(reference[p],current[p],newF,resetGeometry);
+      else particleGeometry::affine::reset<3>(reference[p],current[p],newF,resetGeometry);
+    }
   };
   GeometryView geometryViewOnHost();
   arrayView1d< integer const > getParticleGeometryShape() const
@@ -427,9 +431,7 @@ public:
       case ParticleType::SinglePoint: return 1 << gridDimension;
       case ParticleType::SinglePointBSpline: return 1 << ( 2*gridDimension );
       case ParticleType::CPDI: return 1 << ( 2*gridDimension );
-      case ParticleType::CPTI:
-        GEOS_ERROR_IF( gridDimension != 3, "CPTI currently requires a 3D grid" );
-        return 32; // Four tetrahedron vertices, eight linear grid nodes each.
+      case ParticleType::CPTI: return (gridDimension+1) * (1 << gridDimension);
       default: GEOS_ERROR( "Mapping capacity requested for an unimplemented particle type" ); return 0;
     }
   }

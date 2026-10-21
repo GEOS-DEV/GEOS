@@ -317,6 +317,24 @@ void CellElementSubRegion::
 
   switch( m_elementType )
   {
+    case ElementType::Quadrilateral:
+    case ElementType::Triangle:
+    {
+      real64 Xlocal[4][3] = {};
+      getElementCoordinatesaAndComputeElementCenter( Xlocal );
+      int const cycle[4] = { 0, 1, 3, 2 };
+      int const count = m_elementType == ElementType::Quadrilateral ? 4 : 3;
+      real64 twiceArea = 0;
+      for( int a=0; a<count; ++a )
+      {
+        int const i = count == 4 ? cycle[a] : a;
+        int const j = count == 4 ? cycle[(a+1)%count] : (a+1)%count;
+        twiceArea += (Xlocal[i][0]-Xlocal[0][0])*(Xlocal[j][1]-Xlocal[0][1])
+                   - (Xlocal[j][0]-Xlocal[0][0])*(Xlocal[i][1]-Xlocal[0][1]);
+      }
+      m_elementVolume[k] = 0.5*fabs( twiceArea );
+      break;
+    }
     case ElementType::Hexahedron:
     {
       real64 Xlocal[8][3];

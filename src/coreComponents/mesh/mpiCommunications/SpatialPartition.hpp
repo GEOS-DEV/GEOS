@@ -306,10 +306,18 @@ public:
     m_max[2] = bb[5];
   }
 
-  // dimensions into which the simulation is executed
+  /// Ambient dimension is supplied by the mesh before Cartesian MPI setup.
+  int spatialDimension() const { return m_spatialDimension; }
+  void setSpatialDimension( int dimension );
+
+  // Framework coordinate storage remains three-wide.
   static constexpr int m_nsdof = 3;
+  int m_spatialDimension = 3;
+  real64 planeStrainThickness() const { return m_planeStrainThickness; }
+  void setPlaneStrainThickness( real64 const thickness );
 
 private:
+  real64 m_planeStrainThickness = 1.0;
 
   /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).

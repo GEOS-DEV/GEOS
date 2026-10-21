@@ -21,6 +21,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
 
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "SiloFile.hpp"
 
 #include "codingUtilities/Utilities.hpp"
@@ -1222,7 +1223,7 @@ void SiloFile::writeMeshObject( string const & meshName,
     string zonelistName;
     zonelistName = meshName + "_zonelist";
 
-    DBPutUcdmesh( m_dbFilePtr, meshName.c_str(), 3, nullptr, (float * *) coords, nnodes, numTotZones,
+    DBPutUcdmesh( m_dbFilePtr, meshName.c_str(), m_spatialDimension, nullptr, (float * *) coords, nnodes, numTotZones,
                   zonelistName.c_str(), nullptr, datatype, optlist );
 
     DBClearOptlist( optlist );
@@ -1284,7 +1285,7 @@ void SiloFile::writeMeshObject( string const & meshName,
       DBAddOption( optlist, DBOPT_GHOST_ZONE_LABELS, const_cast< char * >( ghostZoneFlag ) );
     }
 
-    DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, 3, nodelist.data(), lnodelist, 0, 0,
+    DBPutZonelist2( m_dbFilePtr, zonelistName.c_str(), numTotZones, m_spatialDimension, nodelist.data(), lnodelist, 0, 0,
                     hi_offset, const_cast< int * >(shapetype), const_cast< int * >(shapesize2.data()),
                     const_cast< int * >(shapecnt), numShapes,
                     optlist );
@@ -2110,6 +2111,8 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
                                      bool const isRestart )
 {
 
+  auto const * spatialPartition = dynamic_cast<SpatialPartition const *>( &domain.getGroup(domain.groupKeys.partitionManager) );
+  m_spatialDimension = spatialPartition ? spatialPartition->spatialDimension() : 3;
   MeshLevel const & primaryMesh = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   // MPM inputs commonly have two mesh bodies:
@@ -2210,7 +2213,7 @@ static stdVector< int > getSiloNodeOrdering( ElementType const elementType )
     case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
-    case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
+    case ElementType::Quadrilateral: return { 0, 1, 3, 2 }; // GEOS tensor-product to cyclic order
     case ElementType::Polygon:       return { }; // TODO
     case ElementType::Tetrahedron:   return { 0, 1, 3, 2 };
     case ElementType::Pyramid:       return { 0, 2, 3, 1, 4 };
@@ -2504,7 +2507,8 @@ void SiloFile::writeParticleMeshObject( ParticleRegion const & particleRegion,
       if( p == 0 || shape != mesh.shape[p-1] )
       {
         counts.push_back( 0 ); sizes.push_back( count );
-        types.push_back( shape == 0 ? DB_ZONETYPE_HEX : ( shape == 1 ? DB_ZONETYPE_PRISM : DB_ZONETYPE_TET ) );
+        types.push_back( shape == 3 ? DB_ZONETYPE_QUAD : ( shape == 4 ? DB_ZONETYPE_TRIANGLE :
+          ( shape == 0 ? DB_ZONETYPE_HEX : ( shape == 1 ? DB_ZONETYPE_PRISM : DB_ZONETYPE_TET ) ) ) );
         connectivity.emplace_back();
       }
       ++counts.back();
@@ -3055,7 +3059,7 @@ void SiloFile::writePolygonMeshObject( const string & meshName,
     zonelistName = meshName + "_zonelist";
 
 
-    DBPutUcdmesh( m_dbFilePtr, meshName.c_str(), 3, nullptr, (float * *) coords, nnodes, numTotZones,
+    DBPutUcdmesh( m_dbFilePtr, meshName.c_str(), m_spatialDimension, nullptr, (float * *) coords, nnodes, numTotZones,
                   zonelistName.c_str(), nullptr, datatype, optlist );
 
     DBClearOptlist( optlist );

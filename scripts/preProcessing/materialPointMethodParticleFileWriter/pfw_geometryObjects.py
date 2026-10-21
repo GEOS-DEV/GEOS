@@ -4515,7 +4515,7 @@ class box(Geometry):
                  group=_defaultGroup,
                  particleType=_defaultParticleType,
                  dim=3, 
-                 flaggedSurfaces=[True, True, True, True, True, True]):
+                 flaggedSurfaces=None):
       super().__init__(name,
                        vel = vel,
                        mat = mat,
@@ -4524,6 +4524,8 @@ class box(Geometry):
       type_check_scalar(dim, "Dimension", int)
       type_check_array(x0, "x0", dim, floatType)
       type_check_array(x1, "x1", dim, floatType)
+      if flaggedSurfaces is None:
+        flaggedSurfaces = [True]*(2*dim)
       type_check_array(flaggedSurfaces, "Flagged surfacecs", 2*dim, bool)
 
       self.dim = dim
@@ -4549,6 +4551,8 @@ class box(Geometry):
       m = np.zeros((2*self.dim))
       m[np.logical_not(self.flaggedSurfaces)] = np.inf
       dx = np.hstack((self.xmin - x, self.xmax - x)) + m
+      if not np.any(self.flaggedSurfaces):
+        return np.zeros(3)
       minI = np.argmin(np.absolute(dx))
 
       d = minI % self.dim
@@ -4563,6 +4567,8 @@ class box(Geometry):
       m = np.zeros((2*self.dim))
       m[np.logical_not(self.flaggedSurfaces)] = np.inf
       dx = np.hstack((self.xmin - x, self.xmax - x)) + m
+      if not np.any(self.flaggedSurfaces):
+        return np.zeros(3)
       minI = np.argmin(np.absolute(dx))
 
       d = minI % self.dim
@@ -7150,6 +7156,60 @@ class stl(Geometry):
 STL = stl
 
 #############################################
+class disk(Geometry):
+  """Native XY disk or annulus; z and physical thickness never affect queries.
+
+  center needs two coordinates. ri=0 gives a solid disk; ri>0 gives an annulus.
+  flaggedSurfaces=[outer, inner] controls flags, normals AND surface positions.
+  Positions/normals keep three components for the shared PFW interface, with z=0.
+  """
+  def __init__(self, name, center, r, ri=0.0, vel=_defaultVelocity,
+               mat=_defaultMat, group=_defaultGroup, particleType=_defaultParticleType,
+               flaggedSurfaces=None):
+    super().__init__(name, vel=vel, mat=mat, group=group, particleType=particleType)
+    self.dim = 2
+    self.center = np.asarray(center, dtype=float)[:2]
+    self.r, self.ri = float(r), float(ri)
+    if self.center.shape != (2,) or not np.all(np.isfinite(self.center)):
+      raise ValueError('disk center requires two finite coordinates')
+    if not (np.isfinite(self.r) and np.isfinite(self.ri) and 0 <= self.ri < self.r):
+      raise ValueError('disk requires finite radii 0 <= ri < r')
+    self.flaggedSurfaces = np.asarray([True, True] if flaggedSurfaces is None else flaggedSurfaces, dtype=bool)
+    if self.flaggedSurfaces.shape != (2,):
+      raise ValueError('disk flaggedSurfaces must be [outer, inner]')
+    # Match the material basis of the legacy positive-z cylinder.
+    self.matDir = np.array([[0.,0.,1.],[1.,0.,0.],[0.,1.,0.]])
+
+  def _surface(self, pt):
+    offset = np.asarray(pt, dtype=float)[:2] - self.center
+    radius = float(np.linalg.norm(offset))
+    direction = np.array([1.,0.]) if radius == 0 else offset/radius
+    candidates = []
+    if self.flaggedSurfaces[0]: candidates.append((abs(self.r-radius), self.r, 1.0))
+    if self.ri > 0 and self.flaggedSurfaces[1]: candidates.append((abs(radius-self.ri), self.ri, -1.0))
+    if not candidates: return np.inf, np.zeros(3), np.zeros(3)
+    distance, boundary, sign = min(candidates)
+    normal, position = np.zeros(3), np.zeros(3)
+    normal[:2] = sign*direction
+    position[:2] = (boundary-radius)*direction
+    return distance, normal, position
+
+  def isInterior(self, pt, skinDepth):
+    radius = float(np.linalg.norm(np.asarray(pt)[:2]-self.center))
+    if radius >= self.r or (self.ri > 0 and radius <= self.ri): return -1
+    return _defaultSurfaceFlag if self._surface(pt)[0] <= skinDepth else 0
+
+  def getSurfaceNormal(self, pt): return self._surface(pt)[1]
+  def getSurfacePosition(self, pt): return self._surface(pt)[2]
+  def xMin(self): return self.center[0]-self.r
+  def xMax(self): return self.center[0]+self.r
+
+
+def rectangle(name, x0, x1, **kwargs):
+  """Native XY rectangle; flags are [x-, y-, x+, y+] as in box(dim=2)."""
+  return box(name, x0, x1, dim=2, **kwargs)
+
+
 class cylinder(Geometry):
   """
   Geometry object for creating a cylinder defined by two points and radius
@@ -7206,6 +7266,8 @@ class cylinder(Geometry):
     self.matDir = np.vstack((self.axis, m2, m3))
 
   def isInterior(self, pt, skinDepth):    
+    if '_planeStrainSection' in self.__dict__:
+      return self._planeStrainSection.isInterior(pt, skinDepth)
     x = np.asarray(pt)-self.x1
     z = np.dot(x, self.axis)  # z-coordinate of test point
     r = np.linalg.norm( x - z*self.axis )  # r coordinate of test point
@@ -7220,6 +7282,8 @@ class cylinder(Geometry):
     return -1
 
   def getSurfaceNormal(self,pt):
+    if '_planeStrainSection' in self.__dict__:
+      return self._planeStrainSection.getSurfaceNormal(pt)
     x = np.asarray(pt)-self.x1
     z = np.dot(x, self.axis)  # z-coordinate of test point
     xr = x - z*self.axis
@@ -7248,6 +7312,8 @@ class cylinder(Geometry):
       return -xr / r
 
   def getSurfacePosition(self,pt):
+    if '_planeStrainSection' in self.__dict__:
+      return self._planeStrainSection.getSurfacePosition(pt)
     x = np.asarray(pt)-self.x1
     z = np.dot(x,self.axis)  # z-coordinate of test point
     xr = x - z*self.axis
@@ -9465,6 +9531,9 @@ class voronoiWrapperWithLayeredStrengthScale(BaseWrapper):
       )))
       self.cellRadius[i] = max(self.cellRadius[i], 1e-12)
     
+    if self.dim == 2:
+      self.cellCentroid = np.pad(self.cellCentroid, ((0,0),(0,1)))
+
     self.nCentroidsInside = int(np.sum([subObject.isInterior(c, 0.0) >= 0
                                    for c in self.cellCentroid]))
 
@@ -9507,6 +9576,7 @@ class voronoiWrapperWithLayeredStrengthScale(BaseWrapper):
     rng = np.random.default_rng(self.seed)
 
     cellVolsFromSlices = []
+    nativeAreas, nativeDraws = [], []
     for i in range(self.npts): 
       m1 = np.asarray(self.cellMatDir[i], dtype=float)
 
@@ -9521,12 +9591,21 @@ class voronoiWrapperWithLayeredStrengthScale(BaseWrapper):
       nSlices_i = int(self.cellNumSlices[i]) 
       Rcell = float(self.cellRadius[i])
 
+      if self.dim == 2:
+        if abs(m1[2]) > 1e-12:
+          raise ValueError('Native 2D Weibull layer normals must lie in XY')
+        m2 = np.array([-m1[1], m1[0], 0.0])
+        m2 /= max(np.linalg.norm(m2), 1e-15)
+        m3 = np.array([0.0, 0.0, 1.0])
+
       # If cellRadius is 0 (edge/unbounded fallback), still define 1 slice value
       if Rcell <= 0.0:
         R = rng.uniform(1e-20, 1.0)
         s = ((self.weibullReferenceVolume / self.weibullMinVolume) *
              (np.log(R) / np.log(0.5))) ** (1.0 / self.weibullModulus)
         self.cellSliceStrengthScale[i] = np.array([s], dtype=float)
+        nativeAreas.append(np.array([0.0]))
+        nativeDraws.append(np.array([R]))
         continue
 
       slicez = np.linspace(-Rcell, Rcell, nSlices_i)
@@ -9536,28 +9615,27 @@ class voronoiWrapperWithLayeredStrengthScale(BaseWrapper):
 
  
       layerVolsList=[]
+      areas, draws = [], []
       for j in range(nSlices_i):        
         p0 = self.cellCentroid[i] + slicez[j] * m1 #get center origin of slice
 
         count = 0
         for r2 in points:
-          for r3 in points:
+          for r3 in ([0.0] if self.dim == 2 else points):
             pt = p0 + r2 * m2 + r3 * m3 #test point on the plane
             # if point is interior to subobject and is nearest to the voronoi cell i
             if (subObject.isInterior(pt, 0.0) >= 0) and (self._cellId(pt) == i):
               count += 1
         # below, we have a grid of nintegration points, hence squaring of nIntegration points 
         # the area of the slice is approximated as (2*Rcell)^2
-        layerVol = max(
-          self.weibullMinVolume,
-          self.weibullLayerThickness *
-          (count / float(self.nIntegrationPoints**2)) *
-          (2.0 * Rcell)**2
-        )
+        measure = self.weibullLayerThickness * (count / float(self.nIntegrationPoints**(self.dim-1))) * (2.0*Rcell)**(self.dim-1)
+        areas.append(measure)
+        layerVol = max(self.weibullMinVolume, measure)
         
         layerVolsList.append(layerVol)
 
         R = rng.uniform(1e-20, 1.0)
+        draws.append(R)
         s = ((self.weibullReferenceVolume / layerVol) *
              (np.log(R) / np.log(0.5))) ** (1.0 / self.weibullModulus)
 
@@ -9565,6 +9643,13 @@ class voronoiWrapperWithLayeredStrengthScale(BaseWrapper):
 
       cellVolsFromSlices.append(np.sum(layerVolsList))
       self.cellSliceStrengthScale[i] = sliceStrengthScale
+      nativeAreas.append(np.asarray(areas))
+      nativeDraws.append(np.asarray(draws))
+
+    if self.dim == 2:
+      self._nativeWeibull = (nativeAreas, nativeDraws, self.weibullReferenceVolume,
+                            self.weibullModulus, self.weibullMinVolume, 'cellSliceStrengthScale')
+
       
       
 
@@ -10044,6 +10129,7 @@ class layeredVoronoiWeibullWrapper(BaseWrapper):
       
       #compute centroid from the vertices
       c = self.voronoi_cell_centroid(verts)  # should return (2,) or (3,)
+      self.cellCentroid[i, :self.dim] = c[:self.dim]
   
       # get distances  of each centroid-vertex vector.
       # take the largest and assign to the cell 'radius'
@@ -10058,60 +10144,88 @@ class layeredVoronoiWeibullWrapper(BaseWrapper):
     self.nCentroidsInside = int(np.sum([subObject.isInterior( c , 0.0) >= 0
                                    for c in self.cellCentroid]))
                
-    # ---- global layering direction (fallback) ----
-    if matDirs is None:
-      if not self.randomMatDir:
-        matDirs = _defaultMatDir
-        rowVec = False
+    # Native XY frames accept a single basis, a direction, or per-cell bases.
+    # Keep the existing 3D path separate from the dimension-two normalization.
+    if self.dim == 2:
+      if self.randomMatDir:
+        rngDirections = np.random.default_rng(self.seed)
+        angles = rngDirections.uniform(0.0, 2.0*np.pi, self.npts)
+        frames = []
+        for angle in angles:
+          direction = np.array([np.cos(angle),np.sin(angle),0.0])
+          frames.append(np.vstack(generate_orthonormal_axes(direction)))
+        frames = np.asarray(frames)
       else:
-        # ---- per-cell material direction ----
-        cellMatDir = []
-        for i in range(self.npts):
-          d = random_direction(dim=self.dim)
-          if self.dim == 2:
-            d = np.append(d, 0.0)
-          d = np.asarray(d, dtype=float)
-          d /= max(np.linalg.norm(d), 1e-15)
-          cellMatDir.append(d)
-        self.cellMatDir = np.asarray(cellMatDir, dtype=float)
-        rowVec = True       
+        directions = np.asarray(np.eye(3) if matDirs is None else matDirs, dtype=float)
+        if directions.shape in ((2,), (3,)):
+          direction = np.r_[directions,0.0] if directions.size==2 else directions
+          frames = np.array([np.vstack(generate_orthonormal_axes(direction))])
+        elif directions.shape == (3,3):
+          frames = directions[np.newaxis,:,:]
+        elif directions.ndim==3 and directions.shape[1:]==(3,3):
+          frames = directions
+        elif directions.ndim==2 and directions.shape[1] in (2,3):
+          frames = np.array([np.vstack(generate_orthonormal_axes(np.r_[d,0.] if d.size==2 else d)) for d in directions])
+        else:
+          raise ValueError('2D Weibull matDirs requires a direction, a 3x3 frame, or one frame per cell')
+        if len(frames)==1: frames=np.repeat(frames,self.npts,axis=0)
+        if len(frames)!=self.npts: raise ValueError('Weibull material frame count must match cells')
+      self.cellMatDir = self.cellMatDirMat = frames
     else:
-      # First figure out shape of material directions
-      matDirs = np.asarray(matDirs)
-      shape = matDirs.shape
-      match len(shape):
-        case 1:
-          self.cellMatDir=matDirs.reshape(1, 3, 1)
-          rowVec = True
-        case 2:
-          self.cellMatDir=np.expand_dims(matDirs, axis=2)
-          rowVec = True
-        case 3:
-          self.cellMatDir = matDirs
+      # ---- global layering direction (fallback) ----
+      if matDirs is None:
+        if not self.randomMatDir:
+          matDirs = _defaultMatDir
           rowVec = False
-        case _:
-          raise "Unknown material direction shape" 
-
-      numMatDirs = self.cellMatDir.shape[0]
-      
-      # If only one material direction is specified treat as global, otherwise there should be the same number of material
-      # directions as voronoi cell centers
-      if numMatDirs == 1:
-        # If you don't want random per-cell directions, use globalMatDir for all cells
-        self.cellMatDir = np.tile(self.cellMatDir, (self.npts, 1))
+        else:
+          # ---- per-cell material direction ----
+          cellMatDir = []
+          for i in range(self.npts):
+            d = random_direction(dim=self.dim)
+            if self.dim == 2:
+              d = np.append(d, 0.0)
+            d = np.asarray(d, dtype=float)
+            d /= max(np.linalg.norm(d), 1e-15)
+            cellMatDir.append(d)
+          self.cellMatDir = np.asarray(cellMatDir, dtype=float)
+          rowVec = True
       else:
-        assert numMatDirs == self.npts, "When specifying more than one material direction, the number of directions must match the number of voronoi cells"
+        # First figure out shape of material directions
+        matDirs = np.asarray(matDirs)
+        shape = matDirs.shape
+        match len(shape):
+          case 1:
+            self.cellMatDir=matDirs.reshape(1, 3, 1)
+            rowVec = True
+          case 2:
+            self.cellMatDir=np.expand_dims(matDirs, axis=2)
+            rowVec = True
+          case 3:
+            self.cellMatDir = matDirs
+            rowVec = False
+          case _:
+            raise "Unknown material direction shape"
 
-    # Make matrices of material directions
-    if rowVec:
-      self.cellMatDirMat = []
-      for d in self.cellMatDir:
-        print(d)
-        u1, u2, u3 = generate_orthonormal_axes(d)
-        self.cellMatDirMat.append(np.vstack((u1, u2, u3)))
-      self.cellMatDirMat = np.asarray(self.cellMatDirMat, dtype=float)
-    else:
-      self.cellMatDirMat = self.cellMatDir
+        numMatDirs = self.cellMatDir.shape[0]
+      
+        # If only one material direction is specified treat as global, otherwise there should be the same number of material
+        # directions as voronoi cell centers
+        if numMatDirs == 1:
+          # If you don't want random per-cell directions, use globalMatDir for all cells
+          self.cellMatDir = np.tile(self.cellMatDir, (self.npts, 1))
+        else:
+          assert numMatDirs == self.npts, "When specifying more than one material direction, the number of directions must match the number of voronoi cells"
+
+      # Make matrices of material directions
+      if rowVec:
+        self.cellMatDirMat = []
+        for d in self.cellMatDir:
+          print(d)
+          u1, u2, u3 = generate_orthonormal_axes(d)
+          self.cellMatDirMat.append(np.vstack((u1, u2, u3)))
+        self.cellMatDirMat = np.asarray(self.cellMatDirMat, dtype=float)
+      else:
+        self.cellMatDirMat = self.cellMatDir
 
     # ---- number of slices per cell ----
     self.cellNumSlices = np.zeros(self.npts, dtype=int)
@@ -10126,6 +10240,7 @@ class layeredVoronoiWeibullWrapper(BaseWrapper):
     rng = np.random.default_rng(self.seed)
 
     cellVolsFromSlices = []
+    nativeAreas, nativeDraws = [], []
     for i in range(self.npts): 
       m1 = np.asarray(self.cellMatDir[i][0], dtype=float)
       m2 = np.asarray(self.cellMatDir[i][1], dtype=float)
@@ -10142,12 +10257,21 @@ class layeredVoronoiWeibullWrapper(BaseWrapper):
       nSlices_i = int(self.cellNumSlices[i]) 
       Rcell = float(self.cellRadius[i])
 
+      if self.dim == 2:
+        if abs(m1[2]) > 1e-12:
+          raise ValueError('Native 2D Weibull layer normals must lie in XY')
+        m2 = np.array([-m1[1], m1[0], 0.0])
+        m2 /= max(np.linalg.norm(m2), 1e-15)
+        m3 = np.array([0.0, 0.0, 1.0])
+
       # If cellRadius is 0 (edge/unbounded fallback), still define 1 slice value
       if Rcell <= 0.0:
         R = rng.uniform(1e-20, 1.0)
-        s = ((self.weibullReferenceVolume / self.weibullMinVolume) *
+        s = ((self.weibullReferenceVolume / self.minWeibullVolume) *
              (np.log(R) / np.log(0.5))) ** (1.0 / self.weibullModulus)
         self.cellSliceStrengthScale[i] = np.array([s], dtype=float)
+        nativeAreas.append(np.array([0.0]))
+        nativeDraws.append(np.array([R]))
         continue
 
       slicez = np.linspace(-Rcell, Rcell, nSlices_i)
@@ -10156,12 +10280,13 @@ class layeredVoronoiWeibullWrapper(BaseWrapper):
       sliceStrengthScale = np.zeros(nSlices_i, dtype=float) 
 
       layerVolsList=[]
+      areas, draws = [], []
       for j in range(nSlices_i):  
         p0 = self.cellCentroid[i] + slicez[j] * m1 #get center origin of slice
 
         count = 0
         for r2 in points:
-          for r3 in points:
+          for r3 in ([0.0] if self.dim == 2 else points):
             pt = p0 + r2 * m2 + r3 * m3 #test point on the plane
 
             # if point is interior to subobject and is nearest to the voronoi cell i
@@ -10169,23 +10294,28 @@ class layeredVoronoiWeibullWrapper(BaseWrapper):
               count += 1
         # below, we have a grid of nintegration points, hence squaring of nIntegration points 
         # the area of the slice is approximated as (2*Rcell)^2
-        layerVol = max(
-          self.minWeibullVolume,
-          self.weibullLayerThickness *
-          (count / float(self.nIntegrationPoints**2)) *
-          (2.0 * Rcell)**2
-        )
+        measure = self.weibullLayerThickness * (count / float(self.nIntegrationPoints**(self.dim-1))) * (2.0*Rcell)**(self.dim-1)
+        areas.append(measure)
+        layerVol = max(self.minWeibullVolume, measure)
         
         layerVolsList.append(layerVol)
 
         R = rng.uniform(1e-20, 1.0)
+        draws.append(R)
         s = ((self.weibullReferenceVolume / layerVol) *
              (np.log(R) / np.log(0.5))) ** (1.0 / self.weibullModulus)
 
         sliceStrengthScale[j] = s  
 
       cellVolsFromSlices.append(np.sum(layerVolsList))
-      self.cellSliceStrengthScale[i] = sliceStrengthScale      
+      self.cellSliceStrengthScale[i] = sliceStrengthScale
+      nativeAreas.append(np.asarray(areas))
+      nativeDraws.append(np.asarray(draws))
+
+    if self.dim == 2:
+      self._nativeWeibull = (nativeAreas, nativeDraws, self.weibullReferenceVolume,
+                            self.weibullModulus, self.minWeibullVolume, 'cellSliceStrengthScale')
+
 
     ## after all cells are processed:
     self.cellVolumeFromSlices = np.asarray(cellVolsFromSlices, dtype=float)
@@ -10299,6 +10429,7 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     self.dim = dim
     self.x0 = np.asarray(x0)
     self.x1 = np.asarray(x1)
+    queryZ = 0.5*(self.x0[2]+self.x1[2]) if self.x0.size>2 else 0.0
     self.dx = self.x1-self.x0
     self.x0 = self.x0[:self.dim]
     self.x1 = self.x1[:self.dim]
@@ -10320,6 +10451,8 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     v0 = np.prod(self.x1 - self.x0) / self.npts
     vor = self.voronoi
     vol = np.zeros(vor.npoints)
+    nativeAreas = np.zeros(vor.npoints)
+    nativeDraws = []
 
     for i, reg_num in enumerate(vor.point_region):
       indices = vor.regions[reg_num]
@@ -10333,21 +10466,27 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
         numVertices = len(indices)
         for v in vor.vertices[indices]:
           if (dim==2):
-            v = np.append(v, np.array([0.0])) # TODO There could be situation where the user unintentionaly sets the domain depth so that it does not straddle the origin
+            v = np.append(v, np.array([queryZ]))
           if subObject.isInterior(v,0.0) >= 0:
             numInteriorVertices += 1
 
         vol[i] = vol[i]*numInteriorVertices/numVertices*(1.0 if self.dim==2 else self.dx[self.dim-1])
 
+      nativeAreas[i] = vol[i]
       vol[i] = max(vol[i], vMin)
 
     # Compute strength scale for each cell
     cellStrengthScale = []
     for i in range(self.npts):
-      s = ((weibullVolume / vol[i]) * 
-          (np.log(self.rng.uniform(1e-20, 1.0)) / np.log(0.5))) ** (1.0 / weibullModulus)
+      draw = self.rng.uniform(1e-20, 1.0)
+      nativeDraws.append(draw)
+      s = ((weibullVolume / vol[i]) *
+          (np.log(draw) / np.log(0.5))) ** (1.0 / weibullModulus)
       cellStrengthScale.append(s)
     self.cellStrengthScale = np.array(cellStrengthScale)
+    if self.dim == 2:
+      self._nativeWeibull = (nativeAreas, np.asarray(nativeDraws), float(weibullVolume),
+                            float(weibullModulus), float(vMin), 'cellStrengthScale')
 
     # cells can have random orientation or can inheret from subObject
     cellMatDir=[]
@@ -10774,6 +10913,8 @@ class layeredStrengthScaleBoxWrapper(BaseWrapper):
     super().__init__(name,
                      subObject)
     
+    self.dim = dim
+    self._explicitDomainThickness = domainThickness
     x1 = np.asarray(x1) # bounding box corner
     x2 = np.asarray(x2) # bounding box corner
     self.x0 = 0.5*(x1+x2) # box center.
@@ -10791,10 +10932,10 @@ class layeredStrengthScaleBoxWrapper(BaseWrapper):
     # corner to corner vector for bounding box, used to define slices.
     h = np.linalg.norm(x2[:dim]-x1[:dim]) 
     
-    if ( dim == 2 and domainThickness is None):
-      print('ERROR you need to specify domain Thickness if dim=2')
-    else:
-      self.domainThickness = domainThickness
+    # Bind the one domain-wide thickness after object construction. A unit
+    # provisional value permits eager objects in old pfw_input modules.
+    domainThickness = 1.0 if domainThickness is None else float(domainThickness)
+    self.domainThickness = domainThickness
 
     # layerNormal is single direction used to define slices.  but material may have
     # multiple directions, matDirs that will be stored in the matDir variable 
@@ -10828,6 +10969,8 @@ class layeredStrengthScaleBoxWrapper(BaseWrapper):
         m2 = m2 / np.linalg.norm(m2)
       m3 = np.cross(m1,m2)
     elif (dim == 2 ):
+      if abs(m1[2]) > 1e-12:
+        raise ValueError("Native 2D Weibull layer normal must lie in XY")
       m1[2] = 0.0
       m3 = np.array([0.0,0.0,1.0])
       m2 = np.cross(m3,m1)
@@ -10839,6 +10982,7 @@ class layeredStrengthScaleBoxWrapper(BaseWrapper):
     
     # define the value of strength1 scale that will be assigned to each cell's particles.
     sliceStrengthScale=[]
+    nativeAreas, nativeDraws = [], []
     
     # test points in transverse plane.
     points = np.linspace( -0.5*h, 0.5*h, nIntegrationPoints)
@@ -10857,13 +11001,19 @@ class layeredStrengthScaleBoxWrapper(BaseWrapper):
         for r2 in points:
           if ( subObject.isInterior( p0 + r2*m2, 0.0 ) >= 0 ):           
             count += 1
-        vol = max( weibullMinVolume, weibullLayerThickness * (count / nIntegrationPoints ) * domainThickness * h )
+        area = weibullLayerThickness * (count / nIntegrationPoints) * h
+        nativeAreas.append(area)
+        vol = max(weibullMinVolume, area*domainThickness)
                 
       R = np.random.uniform()
+      nativeDraws.append(R)
       s = ( ( weibullReferenceVolume / vol )*( np.log( R ) / np.log(0.5) ) )**(1.0/weibullModulus)
       sliceStrengthScale.append(s)
       print("slice ",i," has vol = ",vol,"minVol = ",weibullMinVolume," and strengthScale = ",s)
     self.sliceStrengthScale = np.array(sliceStrengthScale)
+    if dim == 2:
+      self._nativeWeibull = (np.asarray(nativeAreas), np.asarray(nativeDraws), float(weibullReferenceVolume),
+                            float(weibullModulus), float(weibullMinVolume), 'sliceStrengthScale')
     
   def getStrengthScale(self, pt) -> float:
     # z-coordinate of test point relative to box-corner axis
@@ -12428,3 +12578,83 @@ class granularCompactVoronoiWrapper(BaseWrapper):
   def yMax(self): return self._bbox()[3]
   def zMin(self): return self._bbox()[4]
   def zMax(self): return self._bbox()[5]
+
+
+def bind_plane_strain_thickness(objects, thickness):
+  """Apply one physical thickness to built-in 2D Weibull fields and custom hooks.
+
+  Stored Weibull minima/reference measures are physical volumes. Recompute
+  from area and the SAME random draw, rather than rescaling an already-clamped
+  strength. User-provided StrengthScale values remain user-defined. A custom
+  wrapper may implement setPlaneStrainThickness(thickness) for its own model.
+  """
+  thickness = float(thickness)
+  if not np.isfinite(thickness) or thickness <= 0:
+    raise ValueError('planeStrainThickness must be finite and positive')
+  seen = set()
+  def visit(obj):
+    if obj is None or id(obj) in seen:
+      return
+    seen.add(id(obj))
+    if isinstance(obj, (list, tuple)):
+      for child in obj: visit(child)
+      return
+    # Inspect owned fields so wrapper attribute delegation cannot bind a child
+    # repeatedly or overwrite its arrays on the parent wrapper.
+    fields = vars(obj) if hasattr(obj, '__dict__') else {}
+    state = fields.get('_nativeWeibull')
+    if state is not None:
+      explicit = fields.get('_explicitDomainThickness')
+      if explicit is not None and not np.isclose(float(explicit), thickness, rtol=1e-12, atol=0):
+        raise ValueError('Weibull domainThickness disagrees with pfw planeStrainThickness')
+      areas, draws, reference, modulus, floor, target = state
+      if not modulus > 0 or not reference > 0 or floor < 0:
+        raise ValueError('Weibull modulus/reference volume must be positive and minimum volume nonnegative')
+      def strength(area, draw):
+        volume = np.maximum(np.asarray(area)*thickness, floor)
+        if np.any(volume <= 0):
+          raise ValueError('Zero Weibull sample volume; set a positive minimum physical volume')
+        return ((reference/volume)*(np.log(draw)/np.log(0.5)))**(1.0/modulus)
+      value = [strength(a,r) for a,r in zip(areas,draws)] if target == 'cellSliceStrengthScale' else strength(areas,draws)
+      setattr(obj, target, value)
+      obj.domainThickness = thickness
+    hook = getattr(type(obj), 'setPlaneStrainThickness', None)
+    if hook is not None:
+      hook(obj, thickness)
+    for name in ('subObject', 'subObjects', 'objects', 'object', 'objA', 'objB', 'subObjA', 'subObjB'):
+      if name in fields: visit(fields[name])
+  visit(objects)
+
+
+def prepare_plane_strain_objects(objects):
+  """Adapt simple legacy extrusions before particle/surface queries.
+
+  Axis-aligned boxes and straight z cylinders are native XY shapes in a
+  PlaneStrain run, irrespective of their artificial z end positions. A tilted
+  cylinder, oblique cap, sphere, STL or custom object retains its 3D section.
+  Do not flatten children of a transform that mixes XY and z. Native disk,
+  polygon, foam(dim=2) and packedSphericalBed(dim=2) already ignore z.
+  """
+  seen = set()
+  def visit(obj):
+    if obj is None or id(obj) in seen: return
+    seen.add(id(obj))
+    if isinstance(obj, (list, tuple)):
+      for child in obj: visit(child)
+      return
+    fields = vars(obj) if hasattr(obj, '__dict__') else {}
+    if type(obj) is transform:
+      matrix = obj.transform[:3,:3]
+      if np.any(np.abs(matrix[:2,2]) > 1e-12) or np.any(np.abs(matrix[2,:2]) > 1e-12):
+        return
+    if type(obj) is box and obj.dim == 3:
+      obj.dim = 2
+      obj.x0, obj.x1 = obj.x0[:2], obj.x1[:2]
+      obj.xmin, obj.xmax = obj.xmin[:2], obj.xmax[:2]
+      obj.flaggedSurfaces = obj.flaggedSurfaces[[0,1,3,4]]
+    if type(obj) is cylinder and np.linalg.norm(obj.axis[:2]) < 1e-12 and np.linalg.norm(obj.n2[:2]) < 1e-12:
+      obj._planeStrainSection = disk(obj.name, obj.x1[:2], obj.r, ri=obj.ri,
+        flaggedSurfaces=[obj.flaggedSurfaces[2],obj.flaggedSurfaces[3]])
+    for name in ('subObject', 'subObjects', 'objects', 'object', 'objA', 'objB', 'subObjA', 'subObjB'):
+      if name in fields: visit(fields[name])
+  visit(objects)
