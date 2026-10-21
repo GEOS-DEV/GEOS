@@ -159,6 +159,8 @@ public:
    * @param dR_dAperEnergyOffset first row of the energy-balance block appended after the
    *        mass-balance rows in @p dR_dAper, when the flow solver is thermal (ignored otherwise).
    *        Pass -1 when no energy block was built.
+   * @param dFractureMatrixFlux_dNormalJump derivative, for each fracture-matrix connection and equation, of the flux
+   *        of the cell row w.r.t. the normal jump of the fracture element (filled when not empty)
    */
   virtual void assembleHydrofracFluxTerms( real64 const time_n,
                                            real64 const dt,
@@ -167,9 +169,10 @@ public:
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs,
                                            CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                           localIndex const dR_dAperEnergyOffset = -1 )
+                                           localIndex const dR_dAperEnergyOffset = -1,
+                                           arrayView2d< real64 > const & dFractureMatrixFlux_dNormalJump = {} )
   {
-    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset );
+    GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset, dFractureMatrixFlux_dNormalJump );
     GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
   }
 

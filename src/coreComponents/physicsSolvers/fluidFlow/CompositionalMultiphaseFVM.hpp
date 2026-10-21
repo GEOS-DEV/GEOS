@@ -156,7 +156,8 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              localIndex const dR_dAperEnergyOffset = -1 ) override final;
+                              localIndex const dR_dAperEnergyOffset = -1,
+                              arrayView2d< real64 > const & dFractureMatrixFlux_dNormalJump = {} ) override final;
 
   virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;

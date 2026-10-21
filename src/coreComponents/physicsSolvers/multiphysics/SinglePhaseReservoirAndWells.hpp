@@ -93,8 +93,9 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              localIndex const dR_dAperEnergyOffset = -1 )
-  { flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset ); }
+                              localIndex const dR_dAperEnergyOffset = -1,
+                              arrayView2d< real64 > const & dFractureMatrixFlux_dNormalJump = {} )
+  { flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset, dFractureMatrixFlux_dNormalJump ); }
 
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,

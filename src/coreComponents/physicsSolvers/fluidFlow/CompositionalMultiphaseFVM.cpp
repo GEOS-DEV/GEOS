@@ -1496,7 +1496,8 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs,
                                                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                             localIndex const GEOS_UNUSED_PARAM ( dR_dAperEnergyOffset ))
+                                                             localIndex const GEOS_UNUSED_PARAM ( dR_dAperEnergyOffset ),
+                                                             arrayView2d< real64 > const & GEOS_UNUSED_PARAM ( dFractureMatrixFlux_dNormalJump ) )
 {
   GEOS_MARK_FUNCTION;
 

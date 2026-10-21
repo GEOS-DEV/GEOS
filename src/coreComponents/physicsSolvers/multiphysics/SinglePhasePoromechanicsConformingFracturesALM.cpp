@@ -319,6 +319,34 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       }
     }
   } );
+
+  // Fracture-matrix fluxes: their fracture-side half-transmissibility depends on the hydraulic aperture.
+  // The matrix cell row gets dFlux/dNormalJump, the fracture row its opposite (both w.r.t. the jump of the fracture element)
+  arrayView2d< real64 const > const dFractureMatrixFlux_dNormalJump = this->m_dFractureMatrixFlux_dNormalJump.toViewConst();
+  integer const numRows = this->numCoupledFlowDofsPerElem();
+  DomainPartition const & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+  this->forFractureMatrixConnections( domain, mesh, dofManager, [&]( localIndex const iconn,
+                                                                     globalIndex const cellDofNumber,
+                                                                     localIndex const kfe )
+  {
+    for( integer ir = 0; ir < numRows; ++ir )
+    {
+      real64 const dFlux_dNormalJump = dFractureMatrixFlux_dNormalJump( iconn, ir );
+      integer const rowOffset = ( ir == 0 ) ? 0 : temperatureOffset;
+
+      localIndex const cellRow = LvArray::integerConversion< localIndex >( cellDofNumber + rowOffset - rankOffset );
+      if( cellRow >= 0 && cellRow < localMatrix.numRows() )
+      {
+        addNormalJumpDerivative( cellRow, kfe, dFlux_dNormalJump );
+      }
+
+      localIndex const fractureRow = LvArray::integerConversion< localIndex >( presDofNumber[kfe] + rowOffset - rankOffset );
+      if( fractureRow >= 0 && fractureRow < localMatrix.numRows() )
+      {
+        addNormalJumpDerivative( fractureRow, kfe, -dFlux_dNormalJump );
+      }
+    }
+  } );
 }
 
 

@@ -45,6 +45,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/FractureMatrixFluxKernels.hpp"
 
 /**
  * @namespace the geos namespace that encapsulates the majority of the code
@@ -571,7 +572,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs,
                                                          CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                         localIndex const dR_dAperEnergyOffset )
+                                                         localIndex const dR_dAperEnergyOffset,
+                                                         arrayView2d< real64 > const & dFractureMatrixFlux_dNormalJump )
 {
   GEOS_MARK_FUNCTION;
 
@@ -581,6 +583,9 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
 
   string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
+  // read outside of the generic lambdas below: members are not reliably found from an if constexpr branch there
+  bool const isThermal = m_isThermal;
+  string const & solverName = this->getName();
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel const & mesh,
@@ -589,6 +594,44 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
     fluxApprox.forStencils< CellElementStencilTPFA, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      // Fracture-matrix connections: when requested, also compute the derivative of the fluxes w.r.t. the normal jump
+      // of the fracture element (the fracture-side half-transmissibility depends on the hydraulic aperture)
+      if constexpr ( std::is_same_v< std::decay_t< decltype( stencil ) >, FaceElementToCellStencil > )
+      {
+        if( dFractureMatrixFlux_dNormalJump.size() > 0 )
+        {
+          GEOS_ERROR_IF_NE_MSG( dFractureMatrixFlux_dNormalJump.size( 0 ), stencilWrapper.size(),
+                                GEOS_FMT( "{}: the fracture-matrix flux derivative array does not match the stencil", solverName ) );
+          if( isThermal )
+          {
+            fractureMatrixFluxKernels::
+              FractureMatrixFluxKernelFactory< true >::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                                  dofKey,
+                                                                                                  solverName,
+                                                                                                  mesh.getElemManager(),
+                                                                                                  stencilWrapper,
+                                                                                                  dt,
+                                                                                                  localMatrix.toViewConstSizes(),
+                                                                                                  localRhs.toView(),
+                                                                                                  dFractureMatrixFlux_dNormalJump );
+          }
+          else
+          {
+            fractureMatrixFluxKernels::
+              FractureMatrixFluxKernelFactory< false >::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                                                   dofKey,
+                                                                                                   solverName,
+                                                                                                   mesh.getElemManager(),
+                                                                                                   stencilWrapper,
+                                                                                                   dt,
+                                                                                                   localMatrix.toViewConstSizes(),
+                                                                                                   localRhs.toView(),
+                                                                                                   dFractureMatrixFlux_dNormalJump );
+          }
+          return;
+        }
+      }
 
       if( m_isThermal )
       {

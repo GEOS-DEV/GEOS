@@ -41,6 +41,7 @@ set( multiPhysicsSolvers_headers
     poromechanicsKernels/MultiphasePoromechanics.hpp
     poromechanicsKernels/MultiphasePoromechanics_impl.hpp
     poromechanicsKernels/ConformingFracturesFluxKernelBase.hpp
+    poromechanicsKernels/FractureMatrixFluxKernels.hpp
     poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
     poromechanicsKernels/PoromechanicsBase.hpp
     poromechanicsKernels/SinglePhasePoromechanics.hpp

@@ -117,6 +117,51 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
     array1d< real64 > energyPerVolume( subRegion.size() );
     this->computeAccumulationPerVolume( subRegion, massPerVolume.toView(), energyPerVolume.toView() );
 
+    // Derivative w.r.t. the nodal displacements of fracture element kfe2 of a residual term depending on its normal jump:
+    // dR/du = dR/dNormalJump * dNormalJump(kfe2)/du, with the geometry (node count, normal, nodal areas) of kfe2.
+    // Fills dofs/dRdU and returns the number of displacement dofs of kfe2.
+    auto computeNormalJumpDerivative = [&]( localIndex const kfe2,
+                                            real64 const dR_dNormalJump,
+                                            globalIndex ( & dofs )[2*3*m_maxFaceNodes],
+                                            real64 ( & dRdU )[2*3*m_maxFaceNodes] ) -> localIndex
+    {
+      localIndex const kf0_2 = elemsToFaces[kfe2][0], kf1_2 = elemsToFaces[kfe2][1];
+      localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
+
+      real64 Nbar2[3];
+      Nbar2[ 0 ] = faceNormal[kf0_2][0] - faceNormal[kf1_2][0];
+      Nbar2[ 1 ] = faceNormal[kf0_2][1] - faceNormal[kf1_2][1];
+      Nbar2[ 2 ] = faceNormal[kf0_2][2] - faceNormal[kf1_2][2];
+      LvArray::tensorOps::normalize< 3 >( Nbar2 );
+
+      for( localIndex kf=0; kf<2; ++kf )
+      {
+        //TODO: We should avoid allocating LvArrays inside kernel
+        stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
+        this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
+                                                            nodePosition,
+                                                            faceToNodeMap,
+                                                            faceToEdgeMap,
+                                                            edgeToNodeMap,
+                                                            faceCenters,
+                                                            faceNormal,
+                                                            faceAreas,
+                                                            nodalArea );
+
+        for( localIndex a=0; a<numNodesPerFace2; ++a )
+        {
+          for( localIndex i=0; i<3; ++i )
+          {
+            dofs[ kf*3*numNodesPerFace2 + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
+                                                    + LvArray::integerConversion< globalIndex >( i );
+            real64 const dNormalJump_dU = -pow( -1, kf ) * Nbar2[i] * ( nodalArea[a] / area[kfe2] );
+            dRdU[ kf*3*numNodesPerFace2 + 3*a+i ] = dR_dNormalJump * dNormalJump_dU;
+          }
+        }
+      }
+      return 2 * 3 * numNodesPerFace2;
+    };
+
     forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
@@ -201,48 +246,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
         }
       }
 
-      // Flux derivative w.r.t. the nodal displacements of each stencil neighbour kfe2:
-      // dR/du = dR/dNormalJump(kfe2) * dNormalJump(kfe2)/du, with the geometry (node count, normal,
-      // nodal areas) of kfe2. Fills nodeDOF/dRdU and returns the number of displacement dofs of kfe2.
-      auto computeFluxDerivative = [&]( localIndex const kfe2,
-                                        real64 const dR_dNormalJump ) -> localIndex
-      {
-        localIndex const kf0_2 = elemsToFaces[kfe2][0], kf1_2 = elemsToFaces[kfe2][1];
-        localIndex const numNodesPerFace2 = faceToNodeMap.sizeOfArray( kf0_2 );
-
-        real64 Nbar2[3];
-        Nbar2[ 0 ] = faceNormal[kf0_2][0] - faceNormal[kf1_2][0];
-        Nbar2[ 1 ] = faceNormal[kf0_2][1] - faceNormal[kf1_2][1];
-        Nbar2[ 2 ] = faceNormal[kf0_2][2] - faceNormal[kf1_2][2];
-        LvArray::tensorOps::normalize< 3 >( Nbar2 );
-
-        for( localIndex kf=0; kf<2; ++kf )
-        {
-          //TODO: We should avoid allocating LvArrays inside kernel
-          stackArray1d< real64, FaceManager::maxFaceNodes() > nodalArea;
-          this->solidMechanicsSolver()->computeFaceNodalArea( elemsToFaces[kfe2][kf],
-                                                              nodePosition,
-                                                              faceToNodeMap,
-                                                              faceToEdgeMap,
-                                                              edgeToNodeMap,
-                                                              faceCenters,
-                                                              faceNormal,
-                                                              faceAreas,
-                                                              nodalArea );
-
-          for( localIndex a=0; a<numNodesPerFace2; ++a )
-          {
-            for( localIndex i=0; i<3; ++i )
-            {
-              nodeDOF[ kf*3*numNodesPerFace2 + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                         + LvArray::integerConversion< globalIndex >( i );
-              real64 const dNormalJump_dU = -pow( -1, kf ) * Nbar2[i] * ( nodalArea[a] / area[kfe2] );
-              dRdU( kf*3*numNodesPerFace2 + 3*a+i ) = dR_dNormalJump * dNormalJump_dU;
-            }
-          }
-        }
-        return 2 * 3 * numNodesPerFace2;
-      };
+      // Flux derivatives w.r.t. the nodal displacements of each stencil neighbour kfe2
+      real64 dRdUFlux[2*3*m_maxFaceNodes];
 
       // Mass-balance flux derivative (dR_dNormalJump already vanishes where the hydraulic aperture does not follow the jump)
       {
@@ -255,13 +260,13 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
         {
           localIndex const kfe2 = columns[kfe1];
 
-          localIndex const numUdofs2 = computeFluxDerivative( kfe2, values[kfe1] );
+          localIndex const numUdofs2 = computeNormalJumpDerivative( kfe2, values[kfe1], nodeDOF, dRdUFlux );
 
           if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
             localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
                                                                       nodeDOF,
-                                                                      dRdU.data(),
+                                                                      dRdUFlux,
                                                                       numUdofs2 );
           }
         }
@@ -284,16 +289,48 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & GEOS_UNUSED_P
           {
             localIndex const kfe2 = energyColumns[kfe1];
 
-            localIndex const numUdofs2 = computeFluxDerivative( kfe2, energyValues[kfe1] );
+            localIndex const numUdofs2 = computeNormalJumpDerivative( kfe2, energyValues[kfe1], nodeDOF, dRdUFlux );
 
             if( localRowEnergy >= 0 && localRowEnergy < localMatrix.numRows() )
             {
               localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRowEnergy,
                                                                         nodeDOF,
-                                                                        dRdU.data(),
+                                                                        dRdUFlux,
                                                                         numUdofs2 );
             }
           }
+        }
+      }
+    } );
+
+    // Fracture-matrix fluxes: their fracture-side half-transmissibility depends on the hydraulic aperture.
+    // The matrix cell row gets dFlux/dNormalJump, the fracture row its opposite (both w.r.t. the jump of the fracture element)
+    arrayView2d< real64 const > const dFractureMatrixFlux_dNormalJump = this->m_dFractureMatrixFlux_dNormalJump.toViewConst();
+    integer const numRows = this->numCoupledFlowDofsPerElem();
+    DomainPartition const & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+    this->forFractureMatrixConnections( domain, mesh, dofManager, [&]( localIndex const iconn,
+                                                                       globalIndex const cellDofNumber,
+                                                                       localIndex const kfe )
+    {
+      globalIndex connectionDOF[2*3*m_maxFaceNodes];
+      real64 dRdUConnection[2*3*m_maxFaceNodes];
+      for( integer ir = 0; ir < numRows; ++ir )
+      {
+        real64 const dFlux_dNormalJump = dFractureMatrixFlux_dNormalJump( iconn, ir );
+        integer const rowOffset = ( ir == 0 ) ? 0 : temperatureOffset;
+
+        localIndex const cellRow = LvArray::integerConversion< localIndex >( cellDofNumber + rowOffset - rankOffset );
+        if( cellRow >= 0 && cellRow < localMatrix.numRows() )
+        {
+          localIndex const numUdofs = computeNormalJumpDerivative( kfe, dFlux_dNormalJump, connectionDOF, dRdUConnection );
+          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( cellRow, connectionDOF, dRdUConnection, numUdofs );
+        }
+
+        localIndex const fractureRow = LvArray::integerConversion< localIndex >( presDofNumber[kfe] + rowOffset - rankOffset );
+        if( fractureRow >= 0 && fractureRow < localMatrix.numRows() )
+        {
+          localIndex const numUdofs = computeNormalJumpDerivative( kfe, -dFlux_dNormalJump, connectionDOF, dRdUConnection );
+          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( fractureRow, connectionDOF, dRdUConnection, numUdofs );
         }
       }
     } );

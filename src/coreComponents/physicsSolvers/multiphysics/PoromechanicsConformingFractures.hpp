@@ -37,6 +37,7 @@
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
@@ -49,6 +50,10 @@ class PoromechanicsConformingFractures : public POROMECHANICS_BASE< FLOW_SOLVER,
 {
 public:
   using Base = POROMECHANICS_BASE< FLOW_SOLVER, CONTACT_SOLVER >;
+
+  /// True when the flow is single phase (with or without wells)
+  static constexpr bool isSinglePhaseFlow = std::is_base_of_v< SinglePhaseBase, FLOW_SOLVER > ||
+                                            std::is_same_v< FLOW_SOLVER, SinglePhaseReservoirAndWells<> >;
 
   PoromechanicsConformingFractures( const string & name,
                                     dataRepository::Group * const parent )
@@ -116,6 +121,7 @@ public:
     // Add the number of nonzeros induced by coupling
     //displacement (and opt. bubble) to flow coupling
     addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView());
+    addFractureMatrixCouplingNNZ( domain, dofManager, rowLengths.toView() );
     if constexpr (CONTACT_SOLVER::hasFaceBubbles) {
       // fracture pressure to bubble, and matrix cell flow to/from bubble couplings
       addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
@@ -138,6 +144,7 @@ public:
     // Add the nonzeros from coupling
     //displacement (and opt. bubble) to flow coupling
     addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
+    addFractureMatrixCouplingPattern( domain, dofManager, pattern.toView() );
     if constexpr (CONTACT_SOLVER::hasFaceBubbles) {
       addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
       addMatrixTemperaturePressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
@@ -395,6 +402,8 @@ public:
     }
     m_derivativeFluxResidual_dNormalJump->move( parallelDeviceMemorySpace, false );
     m_derivativeFluxResidual_dNormalJump->zero();
+    // every fracture-matrix connection overwrites its entries in the flux assembly
+    m_dFractureMatrixFlux_dNormalJump.move( parallelDeviceMemorySpace, true );
 
     assembleElementBasedContributions( time_n,
                                        dt,
@@ -411,9 +420,11 @@ public:
                                                     localMatrix,
                                                     localRhs,
                                                     getDerivativeFluxResidual_dNormalJump(),
-                                                    m_derivativeFluxResidual_dNormalJumpEnergyOffset );
+                                                    m_derivativeFluxResidual_dNormalJumpEnergyOffset,
+                                                    m_dFractureMatrixFlux_dNormalJump.toView() );
 
     m_derivativeFluxResidual_dNormalJump->move( hostMemorySpace, false );
+    m_dFractureMatrixFlux_dNormalJump.move( hostMemorySpace, false );
 
     // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dNormalJump is filled.
     assembleCouplingTerms( time_n,
@@ -451,7 +462,7 @@ public:
     // Refresh them with the volume just updated
     // Note that the order cannot simply be swapped:
     // the flow porosity/permeability update of the surface elements would then overwrite dPerm_dDispJump
-    if constexpr ( std::is_base_of_v< SinglePhaseBase, FLOW_SOLVER > || std::is_same_v< FLOW_SOLVER, SinglePhaseReservoirAndWells<> > )
+    if constexpr ( isSinglePhaseFlow )
     {
       this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
@@ -833,6 +844,18 @@ protected:
         }
       } );
 
+      // Fracture-matrix connections (single phase only): one row per connection, one column per coupled flow equation
+      if constexpr ( isSinglePhaseFlow )
+      {
+        localIndex numFractureMatrixConnections = 0;
+        fluxApprox.forStencils< FaceElementToCellStencil >( mesh, [&]( FaceElementToCellStencil const & stencil )
+        {
+          numFractureMatrixConnections += stencil.size();
+        } );
+        m_dFractureMatrixFlux_dNormalJump.resize( numFractureMatrixConnections, numCoupledFlowDofsPerElem() );
+        m_dFractureMatrixFlux_dNormalJump.setName( this->getName() + "/dFractureMatrixFlux_dNormalJump" );
+      }
+
       std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dNormalJump = getRefDerivativeFluxResidual_dNormalJump();
       derivativeFluxResidual_dNormalJump = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numElems );
       derivativeFluxResidual_dNormalJump->setName( this->getName() + "/derivativeFluxResidual_dNormalJump" );
@@ -1109,10 +1132,173 @@ protected:
     return this->flowSolver()->numFluidComponents() + ( this->m_isThermal ? 1 : 0 );
   }
 
+  /**
+   * @brief Loop over the fracture-matrix connections (FaceElementToCellStencil) of a mesh
+   * @tparam LAMBDA the type of the callback, called as lambda( iconn, cellDofNumber, kfe ) with the connection index,
+   *         the (global) first flow DOF number of the matrix cell and the index of the fracture element
+   * @param domain the physical domain object
+   * @param mesh the mesh level
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param lambda the callback
+   */
+  template< typename LAMBDA >
+  void forFractureMatrixConnections( DomainPartition const & domain,
+                                     MeshLevel const & mesh,
+                                     DofManager const & dofManager,
+                                     LAMBDA && lambda ) const
+  {
+    FluxApproximationBase const & fluxApprox =
+      domain.getNumericalMethodManager().getFiniteVolumeManager().getFluxApproximation( this->flowSolver()->getDiscretizationName() );
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const flowDofNumber =
+      mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofManager.getKey( this->getFlowDofKey() ) );
+
+    fluxApprox.forStencils< FaceElementToCellStencil >( mesh, [&]( FaceElementToCellStencil const & stencil )
+    {
+      typename FaceElementToCellStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+      typename FaceElementToCellStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+      typename FaceElementToCellStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      // the matrix cell is the first point of a connection, the fracture element the second
+      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
+      {
+        lambda( iconn, flowDofNumber[seri[iconn][0]][sesri[iconn][0]][sei[iconn][0]], sei[iconn][1] );
+      }
+    } );
+  }
+
+  /**
+   * @brief Add the nnz induced by the aperture dependence of the fracture-matrix fluxes: the flow rows of the matrix
+   *        cell couple to the nodal (and bubble) displacements of both faces of the fracture element. The flow rows of
+   *        the fracture element already hold these columns.
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLengths the nnz in each row
+   */
+  void addFractureMatrixCouplingNNZ( DomainPartition const & domain,
+                                     DofManager const & dofManager,
+                                     arrayView1d< localIndex > const & rowLengths ) const
+  {
+    GEOS_MARK_FUNCTION;
+
+    if constexpr ( isSinglePhaseFlow )
+    {
+      integer const numCoupledFlowDofs = numCoupledFlowDofsPerElem();
+      globalIndex const rankOffset = dofManager.rankOffset();
+
+      this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                          MeshLevel const & mesh,
+                                                                          string_array const & )
+      {
+        ArrayOfArraysView< localIndex const > const faceToNodeMap = mesh.getFaceManager().nodeList().toViewConst();
+        FaceElementSubRegion const & fractureSubRegion =
+          mesh.getElemManager().getRegion< SurfaceElementRegion >( this->solidMechanicsSolver()->getUniqueFractureRegionName() ).
+            template getUniqueSubRegion< FaceElementSubRegion >();
+        arrayView2d< localIndex const > const elemsToFaces = fractureSubRegion.faceList().toViewConst();
+
+        forFractureMatrixConnections( domain, mesh, dofManager, [&]( localIndex const,
+                                                                     globalIndex const cellDofNumber,
+                                                                     localIndex const kfe )
+        {
+          globalIndex const cellRow = cellDofNumber - rankOffset;
+          if( cellRow < 0 || cellRow >= rowLengths.size() )
+          {
+            return;
+          }
+          // nodal displacements of both faces, and their two bubbles
+          localIndex const numColumns = 2 * 3 * faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] )
+                                        + ( CONTACT_SOLVER::hasFaceBubbles ? 2 * 3 : 0 );
+          for( integer ic = 0; ic < numCoupledFlowDofs; ++ic )
+          {
+            rowLengths[cellRow + ic] += numColumns;
+          }
+        } );
+      } );
+    }
+  }
+
+  /**
+   * @brief Add the nonzeros induced by the aperture dependence of the fracture-matrix fluxes
+   *        (see addFractureMatrixCouplingNNZ)
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addFractureMatrixCouplingPattern( DomainPartition const & domain,
+                                         DofManager const & dofManager,
+                                         SparsityPatternView< globalIndex > const & pattern ) const
+  {
+    GEOS_MARK_FUNCTION;
+
+    if constexpr ( isSinglePhaseFlow )
+    {
+      integer const numCoupledFlowDofs = numCoupledFlowDofsPerElem();
+      globalIndex const rankOffset = dofManager.rankOffset();
+
+      this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                          MeshLevel const & mesh,
+                                                                          string_array const & )
+      {
+        FaceManager const & faceManager = mesh.getFaceManager();
+        ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+        arrayView1d< globalIndex const > const dispDofNumber =
+          mesh.getNodeManager().getReference< globalIndex_array >( dofManager.getKey( fields::solidMechanics::totalDisplacement::key() ) );
+        arrayView1d< globalIndex const > bubbleDofNumber;//lack constness because it is assigned in the if constexpr below
+        if constexpr ( CONTACT_SOLVER::hasFaceBubbles )
+        {
+          bubbleDofNumber = faceManager.getReference< globalIndex_array >( dofManager.getKey( fields::contact::totalBubbleDisplacement::key() ) );
+        }
+
+        FaceElementSubRegion const & fractureSubRegion =
+          mesh.getElemManager().getRegion< SurfaceElementRegion >( this->solidMechanicsSolver()->getUniqueFractureRegionName() ).
+            template getUniqueSubRegion< FaceElementSubRegion >();
+        arrayView2d< localIndex const > const elemsToFaces = fractureSubRegion.faceList().toViewConst();
+
+        forFractureMatrixConnections( domain, mesh, dofManager, [&]( localIndex const,
+                                                                     globalIndex const cellDofNumber,
+                                                                     localIndex const kfe )
+        {
+          globalIndex const cellRow = cellDofNumber - rankOffset;
+          if( cellRow < 0 || cellRow >= pattern.numRows() )
+          {
+            return;
+          }
+          for( localIndex kf = 0; kf < 2; ++kf )
+          {
+            localIndex const faceIndex = elemsToFaces[kfe][kf];
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              for( localIndex a = 0; a < faceToNodeMap.sizeOfArray( faceIndex ); ++a )
+              {
+                globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
+                for( integer ic = 0; ic < numCoupledFlowDofs; ++ic )
+                {
+                  pattern.insertNonZero( cellRow + ic, colIndex );
+                }
+              }
+              if constexpr ( CONTACT_SOLVER::hasFaceBubbles )
+              {
+                for( integer ic = 0; ic < numCoupledFlowDofs; ++ic )
+                {
+                  pattern.insertNonZero( cellRow + ic, bubbleDofNumber[faceIndex] + i );
+                }
+              }
+            }
+          }
+        } );
+      } );
+    }
+  }
+
   struct viewKeyStruct : public Base::viewKeyStruct
   {};
 
   static const localIndex m_maxFaceNodes = 11; // Maximum number of nodes on a contact face
+
+  /// Derivative, for each fracture-matrix connection (FaceElementToCellStencil) and coupled flow equation, of the flux
+  /// of the matrix cell row w.r.t. the normal jump of the fracture element (single phase only; the fracture row gets
+  /// its opposite). The fracture-side half-transmissibility of these connections depends on the hydraulic aperture.
+  array2d< real64 > m_dFractureMatrixFlux_dNormalJump;
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dNormalJump;
   /// First row of the energy-balance block in m_derivativeFluxResidual_dNormalJump (-1 if not thermal)
