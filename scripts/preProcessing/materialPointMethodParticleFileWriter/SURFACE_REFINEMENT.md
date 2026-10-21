@@ -115,8 +115,8 @@ components. Output reconstructs the current material geometry; there is no
 independent equivalent-box display switch or second integration-width array.
 
 Actual simplex cuts currently require `particleType=1` (SinglePointBSpline).
-Use Cartesian refinement for supported CPDI box particles. CPTI and runtime
-tet/wedge splitting remain unimplemented. Old PFW Python inputs are normalized;
+Use Cartesian refinement for supported CPDI box particles. Runtime tet/wedge
+splitting is supported with point interpolation; CPTI remains unimplemented. Old PFW Python inputs are normalized;
 regenerate all GEOS particle/XML inputs. Old GEOS restarts are unsupported.
 See [UNIFIED_PARTICLE_GEOMETRY.md](UNIFIED_PARTICLE_GEOMETRY.md) for storage,
 reset policies, integration scaling and the precise scope.

@@ -148,102 +148,137 @@ for active particle p:
     if not selected:
         continue
     J = particleVolume[p] / particleReferenceVolume[p]
-    if domainResetType == "isotropicPolar":
+    if domainResetType == "isotropicPolar" or geometryShape != box:
         Fnew = polar_rotation(Fold) @ isotropic_stretch(J)
     else:  # vpHencky
-        raw_domain = current_material_geometry / 2
+        raw_domain = current_material_geometry  # full generators
         target_measure = J * reference_domain_measure
         projected_domain = vp_hencky_project(raw_domain,
                                                target_measure,
                                                neighborRadius)
         Fnew = recover_F(reference_domain, projected_domain)
     rebase surface, material-direction, and cohesive reference data
-    regenerate current particle-domain vectors from Fnew
+    if geometryReset == "FAndGeometry": set G = G0 * transpose(Fnew)
+    otherwise preserve current material G
 resetDefGradForScaledSurfaceParticles = 0
 \end{lstlisting}
 
 \subsection{Particle splitting}
 \label{subsec:robust-particle-splitting}
-\index{subdivideParticles}
-\index{oversizedParticleTreatment}
+\index{subdivideParticles}\index{oversizedParticleTreatment}
 \index{oversizedParticleResetRankParticleCountThreshold@\mpmcode{oversizedParticleResetRankParticleCountThreshold}}
 \index{defGradResetMaxParticleDomainToGridCellRatio}
-\index{resetDefGradForOversizedParticles}
-\index{particleSubdivideFlag}
-\index{particleCopyFlag}
-\index{CPDI!particle splitting}
-\index{VP-Hencky feasibility}
+\index{particleSubdivideFlag}\index{particleCopyFlag}\index{CPDI!particle splitting}
 
-Particle splitting is a conservative topology change used when the requested particle-domain measure and the neighbor-radius diagonal constraint cannot both be satisfied.  It is called during topology preparation, after events and before particle maps, ghosts, and active-particle indices are refreshed.  The input is tri-state:
-\begin{description}
-  \item[\texttt{subdivideParticles=-1}] use the conditional default;
-  \item[\mpmcode{subdivideParticles=0}] disable the general VP-Hencky/legacy subdivision policy;
-  \item[\mpmcode{subdivideParticles=1}] enable that policy explicitly.
-\end{description}
-The constructor default is $-1$.  Automatic subdivision resolves to enabled only when \mpmcode{cpdiDomainScaling=1}, \texttt{cpdiDomainScalingType="vpHencky"}, and at least one linear \texttt{CPDI} particle subregion is present.  It remains disabled by default for single-point B-spline particles and for deformation-gradient reset alone.  Explicitly setting the value to 1 enables the VP-Hencky reset feasibility test for B-spline or other particle types that carry domain vectors.  In a mixed-particle simulation, the automatic policy acts only on the linear CPDI subregions that caused it to be enabled.
+Splitting partitions the current material geometry after the explicit step's
+kinematic and constitutive updates. It runs during end-of-step cleanup, before
+out-of-range deletion, repartitioning, and deformation-gradient reset. Output
+written earlier in that step precedes the split. The next step rebuilds mapping
+and neighbor caches for the new topology.
 
-Oversized-domain handling is selected separately with \mpmcode{oversizedParticleTreatment}: \texttt{"none"}, \texttt{"resetDeformationGradient"}, or \texttt{"split"}. A non-\texttt{"none"} value takes precedence over the legacy flag. With \texttt{"none"}, the legacy \mpmcode{resetDefGradForOversizedParticles=1} selects reset. Any active oversized policy requires a positive \mpmcode{defGradResetMaxParticleDomainToGridCellRatio}; its default $-1$ is not a usable active limit.
+\paragraph{Controls and selection.}
+The default \mpmcode{subdivideParticles=-1} enables automatic subdivision only
+for VP-Hencky scaling with linear CPDI particles. Value 0 disables general
+subdivision; value 1 explicitly enables it. The automatic policy does not
+select point/B-spline tets or wedges, even in a mixed run containing CPDI boxes.
+Explicit native subdivision uses maximum current vertex-to-vertex distance,
+with threshold $0.99998\min_i h_i$ in the active dimensions. This native test
+is independent of either box VP-Hencky option. Plane strain uses x/y distances
+and never subdivides wedge thickness.
 
-The \texttt{"split"} path operates even when \mpmcode{subdivideParticles=0}. It selects a particle when its full maximum corner-to-corner domain diagonal exceeds the configured ratio times the active grid-cell diagonal (x/y in plane strain, x/y/z in 3D). It applies the relevant VP-Hencky feasibility test and adds longest domain directions until the diagonal limit would be met, or all active directions have been bisected.
+The separate \mpmcode{oversizedParticleTreatment="split"} selects oversized
+boxes, tets, and wedges even when \mpmcode{subdivideParticles=0}. Its diameter
+limit is \mpmcode{defGradResetMaxParticleDomainToGridCellRatio} times the active
+grid-cell diagonal; the ratio must be positive. The optional
+\mpmcode{oversizedParticleResetRankParticleCountThreshold} compares the
+start-of-step rank-local active master-particle count with the configured limit.
+A strictly greater count routes this oversized policy to F reset. Equality
+still permits splitting; $-1$ disables this fallback. This is not a hard global
+particle cap and does not disable independently enabled general subdivision.
+With \mpmcode{geometryReset="FOnly"}, reset fallback does not reduce material
+geometry size.
 
-The optional \mpmcode{oversizedParticleResetRankParticleCountThreshold} compares a snapshot of the rank's active master-particle count across subregions at the start of the explicit step. The default $-1$ disables this fallback; other negative values are invalid. A count strictly greater than the threshold routes oversized handling to deformation-gradient reset; equality still permits splitting. The threshold is not a hard global particle cap, is not rechecked after each child is appended, and does not disable independent VP-Hencky/legacy splitting.
-
-For either VP-Hencky path, define
+Boxes retain the existing selection rules. VP-Hencky feasibility compares
+full-edge measure with
 \begin{equation}
-  M_{\max}=\left(\frac{0.99999\,\texttt{neighborRadius}}
-                            {2\sqrt{d}}\right)^d.
+ M_{\max}=\left(\frac{0.99999\,\texttt{neighborRadius}}{\sqrt d}\right)^d.
 \end{equation}
-The CPDI test uses the raw unscaled domain measure.  The reset test uses the independently integrated target $J_pM_p^0$ for particles selected for reset.  If the required measure $M_p$ exceeds $M_{\max}$, the solver selects the smallest number $k\le d$ such that
-\begin{equation}
-  \frac{M_p}{2^k}\le M_{\max},
-  \label{eq:split-feasibility-count}
-\end{equation}
-and splits along the $k$ longest current domain vectors.  A pass can bisect each active direction at most once; a domain with $M_p/M_{\max}>2^d$ is split again on a subsequent explicit step.  CPDI integration-domain scaling may temporarily relax its integration measure during this transition, while a VP-Hencky physical reset always preserves particle volume.
+The CPDI candidate uses current unscaled box measure; a box reset candidate
+uses its independently integrated target $J M_0$. Oversized handling substitutes
+its configured diameter in the bound. The selected longest generator directions
+are bisected, at most once each per pass. Explicit box subdivision with neither
+VP-Hencky path uses full generator length $0.99998\min_i h_i$. The box measure
+cap is never applied to a tet or wedge.
 
-If $k$ directions are selected, the parent particle is replaced by $2^k$ children: one child reuses the parent slot and $2^k-1$ particles are appended.  Mass, current volume, and reference volume are divided by $2^k$.  The selected current and reference half-edge vectors are halved, and current and reference centers are shifted by all sign combinations of the halved vectors:
+\paragraph{Shape-preserving child construction.}
+A box split along $k$ generators produces $2^k$ boxes. A tet split replaces one
+edge by its midpoint and produces two tets. A wedge split bisects its base
+triangle, or its thickness in 3D, and produces two wedges. Native refinement
+repeatedly bisects the largest violating leaf until the size criterion is met
+or the plan reaches four children in plane strain / eight in 3D. A first tet
+bisection may leave another maximum-length edge unchanged. The log reports
+parents whose children still exceed the size limit; later steps may refine them
+again. No child is assigned a duplicate of the parent's full geometry.
+
+For row-stored generators, each temporary child map $(A_c,q_c,w_c)$ gives
 \begin{align}
-  m_{p_i}&=\frac{m_p}{2^k},
-  &V_{p_i}&=\frac{V_p}{2^k},
-  &V^0_{p_i}&=\frac{V^0_p}{2^k},\\
-  \boldsymbol{x}_{p_i}
-    &=\boldsymbol{x}_p+
-      \sum_{a\in\mathcal{S}_p}s_{i,a}\boldsymbol{r}_{p_i,a},
-  &s_{i,a}&\in\{-1,+1\}.
+ G_c&=A_c G_p, &G_{0,c}&=A_c G_{0,p}, &\Delta x_c&=G_p^Tq_c,\\
+ m_c&=w_cm_p, &V_c&=w_cV_p, &V_{0,c}&=w_cV_{0,p}.
 \end{align}
-Except for the velocity correction below, remaining particle fields and constitutive history fields are copied from the parent through \mpmcode{particleCopyFlag}.  Since the reference and current vectors are bisected consistently, every child retains the parent's deformation gradient before any subsequent reset.  Surface-position fields are stored relative to the particle center; their current values are translated by the current child-center offsets and their constitutive-reference values by $F^{-1}$ times those offsets so that every child initially represents the same absolute surface point as the parent.
+The reference center shifts by $G_{0,p}^Tq_c$. Identical subdivision maps apply
+to both geometry frames even after FOnly, when $G\ne G_0F^T$. Leaf fractions
+can differ because different leaves undergo different numbers of bisections.
+They sum to one and their weighted offsets sum to zero. Physical volumes
+remain independent of geometric measure after an intentional geometry reset.
+One child retains the parent ID; additional IDs use the global maximum plus
+rank offsets. Plans are temporary and stored only for selected parents.
 
-Particles flagged \texttt{Cohesive} or \texttt{DamagedCohesive}, or with nonzero \mpmcode{particleCohesiveZoneFlag}, are not subdivided by this generic path.  Their cached reference-node maps, shape functions, cohesive reference geometry, and constitutive history cannot be conservatively partitioned by merely copying the parent state.  For such particles, CPDI scaling uses the exact feasible integration-measure cap when necessary, while an infeasible physical VP-Hencky reset preserves particle volume and reports that the equal-volume domain remains over the diagonal limit.
+\paragraph{State, surfaces, and energy.}
+Particle-sized wrappers and constitutive history are inherited. This includes
+\texttt{meltFlag} and imported fields whose names lack the \texttt{particle}
+prefix. Density, F, stress, temperature, and specific internal energy are
+intensive quantities and are copied. Object-manager maps are rebuilt from IDs.
+Current mapping/neighbor caches are discarded, and CPDI diagnostics are
+refreshed before reset selection.
 
-For explicit subdivision in configurations that select neither VP-Hencky path, the solver retains the historical length-based criterion, which bisects every active domain vector longer than $0.49999$ times the smallest active grid spacing.  This preserves backward compatibility for inputs that already set \mpmcode{subdivideParticles=1}.
-
-\begin{lstlisting}[language=Python,caption={VP-Hencky feasibility-driven particle splitting.}]
-Mmax = (0.99999 * neighborRadius / (2 * sqrt(active_dimensions)))**active_dimensions
-for particle p selected by an enabled VP-Hencky path:
-    Mrequired = raw_CPDI_measure_or_reset_target_measure(p)
-    if Mrequired <= Mmax:
-        continue
-    choose the fewest longest domain directions needed so Mrequired / 2**k <= Mmax
-    create 2**k children
-    divide mass, current volume, and reference volume by 2**k
-    halve current and reference domain vectors in the selected directions
-    shift current and reference centers to tile the parent domain
-    copy remaining particle and constitutive fields
-rebuild activeParticleIndices
-\end{lstlisting}
-
-Splitting conserves parent mass and volume but changes the particle quadrature and can increase particle count rapidly.  Production studies should report whether the conditional or explicit policy was used and monitor the emitted subdivision count.  A persistent need for repeated splitting may indicate that the neighbor radius, grid resolution, particle density, or physical volume expansion requires reconsideration.
-
-\paragraph{Child velocity and energy.}
-The default \path{applyVelocityGradientWhenSplittingParticles=1} assigns
+The default \path{applyVelocityGradientWhenSplittingParticles=1} sets
 \begin{equation}
- \mathbf v_{p_i}=\mathbf v_p+\mathbf L_p(\mathbf x_{p_i}-\mathbf x_p).
+ v_c=v_p+L_p\Delta x_c.
 \end{equation}
-Symmetric equal-mass children conserve linear momentum, but their kinetic energy increases by
-$\tfrac12\sum_i m_{p_i}\|\mathbf L_p(\mathbf x_{p_i}-\mathbf x_p)\|^2$
-relative to the parent's point-particle energy. There is no kinetic-energy renormalization.
-Set the option to 0 to copy the parent velocity and preserve that kinetic energy at child creation. Child IDs are assigned using the existing global maximum and rank offsets.
+The weighted-centroid identity conserves linear momentum, including unequal
+child masses. Discrete kinetic energy is recomputed and increases by
+$\tfrac12\sum_c m_c\lVert L_p\Delta x_c\rVert^2$ relative to the parent point
+energy. No energy renormalization is applied, and general angular momentum
+conservation is not asserted. Value 0 copies parent velocity and conserves
+point-particle kinetic energy at the split.
 
-\paragraph{Native geometry and limits.}
-A selected native wedge or tetrahedron (geometry tag 1 or 2) raises an error: runtime subdivision of native simplices is not implemented. An unsplit native particle remains valid. For runtime box splitting, regenerate the particle file with \texttt{particleGeometry="box"}. There is no alternate output geometry switch.
+\texttt{particleSurfaceTraction} contributes an integrated force to grid
+assembly. Its current and reference values are multiplied by $w_c$, preserving
+the parent's total applied force. Ordinary current surface offsets are shifted
+by $-\Delta x_c$; constitutive-reference offsets shift by $-F^{-1}\Delta x_c$.
+The children initially represent the same approximate absolute surface point.
+Nonzero estimated offsets are likewise rebased; zero retains its existing
+unavailable-data meaning. This representation does not assign explicit boundary
+facets to particular children or turn internal subdivision faces into interfaces.
 
-One pass creates at most four children in plane strain or eight in 3D. Repeated steps may be needed for very large domains. Ordinary surface-particle offsets are rebased to preserve the parent absolute surface point; estimated surface offsets are adjusted when their normal is nonzero. Mass/volume conservation at splitting does not establish conservation of every contact or constitutive discretization error. Initial PFW refinement is a separate preprocessing operation (Section~\ref{sec:pfw-refinement}).
+Cohesive and damaged-cohesive particles, and any particle with nonzero
+\mpmcode{particleCohesiveZoneFlag}, remain excluded. Their cached mappings,
+anchors, interface forces, and history require a separate CZ splitting method.
+Geometry type and interpolation type are preserved: boxes remain boxes, tets
+remain tets, and point interpolation remains point interpolation. CPTI, warped
+CPDI2, native 2D grids, and axisymmetry remain separate work.
+
+\begin{lstlisting}[language=Python,caption={Native surface geometry with runtime size control.}]
+pfw['particleGeometry'] = 'fromRefinement'
+pfw['surfaceRefinementMethod'] = 'simplex'
+pfw['surfaceRefinementLevel'] = 2
+pfw['subdivideParticles'] = 0
+pfw['oversizedParticleTreatment'] = 'split'
+pfw['defGradResetMaxParticleDomainToGridCellRatio'] = 0.75
+pfw['oversizedParticleResetRankParticleCountThreshold'] = -1
+pfw['geometryReset'] = 'FOnly'
+\end{lstlisting}
+PFW simplex generation still requires object \texttt{particleType=1}
+(SinglePointBSpline). Runtime splitting introduces no particle-file columns or
+new XML controls. See \path{PARTICLE_SPLITTING.md} for standalone tests and the
+full-build, MPI, restart, and GPU integration checks.

@@ -32,7 +32,7 @@ shown verbatim. Inherited attributes are not repeated.
    * - applyVelocityGradientWhenSplittingParticles
      - OPTIONAL / int
      - 1
-     - Flag for assigning split-particle velocities with the parent velocity gradient: v_child = v_parent + L_parent * dx_child.
+     - Flag for assigning split-particle velocities with the parent velocity gradient: v_child = v_parent + L_parent * dx_child. Mass-weighted centroid offsets conserve linear momentum; kinetic energy is recomputed and can increase. Zero copies parent velocity.
    * - areaIntegrationMethod
      - OPTIONAL / string (enum)
      - BruteForce
@@ -540,7 +540,7 @@ shown verbatim. Inherited attributes are not repeated.
    * - subdivideParticles
      - OPTIONAL / int
      - -1
-     - Particle subdivision policy: -1 selects the automatic default, 0 disables subdivision, and 1 enables it. Automatic subdivision is enabled only for vpHencky CPDI domain scaling with linear CPDI shape functions; it remains disabled for B-spline particles and deformation-gradient reset alone.
+     - Particle subdivision policy: -1 selects the automatic default, 0 disables subdivision, and 1 enables it. Automatic subdivision is enabled only for vpHencky CPDI domain scaling with linear CPDI shape functions; it remains disabled for B-spline particles and deformation-gradient reset alone. Explicit 1 also splits native tets/wedges by current diameter using 0.99998 times the minimum active grid spacing. Native splits preserve shape and are bounded to four children in plane strain or eight in 3D.
    * - surfaceDetection
      - OPTIONAL / int
      - 0

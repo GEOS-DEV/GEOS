@@ -371,6 +371,7 @@ post_scripts=sorted(set(post_scripts))
 source_inventory=[
     {'component':'MPM solver','path':'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.[ch]pp'},
     {'component':'MPM unified geometry','path':'src/coreComponents/mesh/ParticleGeometry.hpp'},
+    {'component':'MPM particle subdivision','path':'src/coreComponents/mesh/ParticleSubdivision.hpp'},
     {'component':'MPM solver fields','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverFields.hpp'},
     {'component':'MPM events','path':'src/coreComponents/events/mpmEvents/*'},
     {'component':'Particle mesh and regions','path':'src/coreComponents/mesh/Particle*.{hpp,cpp}, src/coreComponents/mesh/particleGenerators/*'},
@@ -412,6 +413,7 @@ fingerprint_paths=[
  'src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp',
  'src/coreComponents/mesh/ParticleRegion.cpp',
  'src/coreComponents/mesh/ParticleGeometry.hpp',
+ 'src/coreComponents/mesh/ParticleSubdivision.hpp',
  'src/coreComponents/mesh/ParticleSubRegionBase.hpp',
  'src/coreComponents/mesh/ParticleSubRegionBase.cpp',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py',

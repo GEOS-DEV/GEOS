@@ -24,6 +24,7 @@ pfw = dict(
 )
 
 # The interpolation algorithm remains SinglePointBSpline, including cut tets.
-# Runtime tetrahedron splitting and CPTI are not implemented by this patch.
+# Runtime tet/wedge splitting is available but disabled in this example; CPTI
+# remains future work. See ../geometrySplitting/pfw_input_geometry_splitting.py.
 pfw['objects'] = [geom.sphere('ball', [0.5, 0.5, 0.5], 0.3,
                              mat=0, group=0, particleType=1)]

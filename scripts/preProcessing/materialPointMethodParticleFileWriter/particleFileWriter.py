@@ -989,7 +989,7 @@ parameters = {
                'stressTable': ( None, True ),  # MPM: time-dependent stress table.
                'stressTableInterpType': ( None, True ),  # MPM: interpolation type for stressTable.
                'surfaceTensionPairs': (None, True ), # MPM: pair-wise surface tension coefficient.
-               'subdivideParticles': ( None, True ),  # MPM: -1 automatic, 0 off, 1 on; automatic is on only for vpHencky linear CPDI scaling.
+               'subdivideParticles': ( None, True ),  # MPM: -1 automatic (vpHencky CPDI only), 0 off, 1 explicit; native tets/wedges use actual diameter with 1.
                'surfaceDetection': ( None, True ),  # MPM: automatic initial surface detection.
                'surfaceNormalAndPositionDamageThreshold': ( None, True ),  # MPM: damage threshold for disabling explicit surfaces.
                'surfaceQualityThreshold': ( None, True ),  # MPM: mapping-normal tensor quality threshold for same-group DFG.

@@ -3,7 +3,7 @@
 This patch replaces the previous optional native-glyph layer. Every particle
 has one material shape and two minimal full-edge matrices. Constitutive F,
 material geometry, and the temporary integration domain have separate roles.
-Old GEOS particle files, XML output switches, and restart files are not supported.
+Pre-schema-2 GEOS particle files, XML output switches, and restart files are not supported.
 Regenerate particles and XML using the updated PFW. Old Python `pfw_input` files
 remain accepted through normalization in PFW.
 
@@ -58,7 +58,7 @@ does not change physical particle mass or volume. Geometry measure may differ
 from physical volume after a deliberate geometry reset, especially if healing
 has changed the constitutive reference volume. Subsequent convection preserves
 that distinction. FOnly does not cure material-domain distortion; use the
-geometry-reset policy or supported box splitting when that is the intention.
+geometry-reset policy or geometry-aware splitting when that is the intention.
 
 The VP-Hencky F-selection algorithm applies to boxes. Simplex F selection uses
 isotropic-polar reset; no box feasibility cap is imposed on a simplex.
@@ -91,15 +91,36 @@ native 2D mesh topology/mapping, and axisymmetric mechanics remain future work.
 
 ## Splitting and cohesive zones
 
-Box splitting makes decisions from unscaled current G. Apply the same selected
-generator bisections to G0 and G, and place children using current-G offsets.
-Mass and current/reference physical volume are divided by child count; history
-is copied and the existing optional velocity-gradient correction is retained.
-Current and constitutive-reference surface offsets are translated consistently
-even after FOnly. Cohesive particles remain excluded from generic splitting.
-A selected wedge or tet raises an explicit runtime-splitting error: simplex
-splitting is not implemented, and duplicating a parent tet into each child is
-not allowed. PFW surface refinement is already supported.
+Runtime splitting uses unscaled current G. Boxes retain the generator-mask
+split policy. Tets bisect their longest current edge; wedges bisect a triangle
+edge or, in 3D, their thickness. Plane strain preserves wedge thickness.
+Native children are reevaluated and the largest violating child is split until
+all meet the diameter limit or the pass reaches four leaves in plane strain /
+eight in 3D. A single tet bisection need not reduce maximum diameter. The log
+reports selected parents that still have oversized children; later steps can
+continue refinement.
+
+A temporary child map (A,q,w) gives row-stored G_child=A G and G0_child=A G0,
+and current offset G^T q. The same map acts on both frames after either reset
+policy. No new persistent geometry or file columns are required. Fraction w
+partitions mass and physical current/reference volumes even if geometry measure
+differs from physical volume. Adaptive child fractions can differ within a family.
+
+Intensive state, specific internal energy, F and material history are copied
+using particle-sized wrappers, including the `meltFlag` field. The optional
+velocity-gradient correction conserves linear momentum through the weighted
+centroid identity; kinetic energy is recomputed and can increase. With correction
+off, parent velocity and point-particle kinetic energy are preserved. There is no
+energy renormalization or general angular-momentum conservation claim.
+
+`particleSurfaceTraction` contributes an integrated force in grid assembly:
+current and reference values are partitioned by w. Surface offsets preserve the
+parent's approximate absolute surface point; constitutive-reference offsets use
+F^-1 times the current child offset, not the fixed G0 offset. This does not infer
+exact child boundary-facet ownership. Cohesive and damaged-cohesive particles,
+and particles with active cohesive state, remain excluded. Mapping and neighbor
+caches are invalidated; CPDI diagnostics are refreshed before subsequent reset
+selection. See `PARTICLE_SPLITTING.md` for controls and verification.
 
 CZ TypeA caches the supplied surface offset. TypeB now intersects the ray from
 the particle center along its current surface normal with the actual unscaled

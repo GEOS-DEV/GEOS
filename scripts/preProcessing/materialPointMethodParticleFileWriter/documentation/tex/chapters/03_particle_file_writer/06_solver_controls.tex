@@ -189,7 +189,7 @@ pfw["subdivideParticles"] = 0
 pfw["oversizedParticleTreatment"] = "none"
 pfw["resetDefGradForOversizedParticles"] = 0
 \end{lstlisting}
-This block is appropriate when using native simplex metadata without runtime splitting. Initial PFW refinement still operates. To keep oversized \emph{reset} while disabling splitting, choose \texttt{"resetDeformationGradient"} with a positive ratio and retain \mpmcode{subdivideParticles=0}.
+This block disables runtime splitting while retaining native simplex geometry. Native tet/wedge splitting is also supported: select oversized treatment \texttt{"split"} with a positive ratio, or explicitly set \mpmcode{subdivideParticles=1}. Initial PFW refinement still operates. To keep oversized \emph{reset} while disabling splitting, choose \texttt{"resetDeformationGradient"} with a positive ratio and retain \mpmcode{subdivideParticles=0}.
 
 \paragraph{Mapping execution controls.}
 \mpmcode{gridToParticleMapping} accepts the case-sensitive strings \texttt{"Precomputed"} (default) and \texttt{"OnTheFly"}. They choose whether mapping data are stored or recomputed. The on-the-fly path rejects rigid-body MPM events. \texttt{batchSize} is a performance/storage control, not a physical refinement factor.

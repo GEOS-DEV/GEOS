@@ -48,11 +48,14 @@ $M\leq(D/\sqrt d)^d$. Physical G, $G_0$, F, mass and volume are unchanged by
 integration scaling. SinglePoint and SinglePointBSpline sample at the center
 and retain the same material geometry for output and splitting.
 
-Box splitting uses unscaled G and applies matching generator bisections to G
-and $G_0$. Surface-reference offsets are translated in the constitutive F
-frame, which can differ from $G_0$ after FOnly. A selected native simplex is
-rejected because runtime tet/wedge splitting is not implemented. The generic
-splitter continues to exclude cohesive particles. CZ TypeB selects its cached
+Splitting uses unscaled G and applies identical child maps to G and $G_0$.
+Boxes bisect generators; tets bisect their longest current edge; wedges split
+a triangle edge or their thickness (3D only). A bounded pass has at most four
+children in plane strain or eight in 3D. Mass and physical volumes use child
+fractions. Applied surface forces are partitioned, and kinetic energy is
+recomputed after the optional velocity correction. Surface-reference offsets
+are translated in the constitutive F frame, which can differ from $G_0$ after
+FOnly. The generic splitter continues to exclude cohesive particles. CZ TypeB selects its cached
 anchor by intersecting the current surface-normal ray with the actual material
 shape at CZ initialization; TypeA uses the supplied surface offset. Subsequent
 relative-F transport and Nodal behavior retain their existing roles. The
@@ -83,7 +86,7 @@ regenerate particles/XML and start a new run. New restarts carry both geometry
 matrices and require geometry schema version 2.
 
 \subsection{Scope and verification}
-CPTI, runtime simplex splitting, arbitrary warped CPDI2, native 2D meshes and
+CPTI, arbitrary warped CPDI2, native 2D meshes and
 axisymmetry are not enabled. Planned CPTI uses tet corner weights $1/4$ and
 barycentric gradients $b_0=-G_{\rm column}^{-T}\mathbf{1}$,
 $b_i=G_{\rm column}^{-T}e_i$; triangles use $1/3$ and two edges. Simplex scaling
@@ -91,8 +94,9 @@ must use actual vertices rather than the box feasibility cap. Current CPDI
 requires boxes; PFW simplex cuts require SinglePointBSpline. A simplex requesting
 VP-Hencky F selection uses the isotropic-polar reset algorithm.
 
-Standalone tests exercise production geometry and CPDI kernel bodies with CPU
-adapters. Full-writer checks include independent processes with explicitly
+Standalone tests exercise production geometry, subdivision, and CPDI kernel
+bodies with CPU adapters. Splitting tests cover unequal child fractions,
+surface-force transfer, constitutive history, melt state, and both reset policies. Full-writer checks include independent processes with explicitly
 emulated collectives. A full GEOS build, real MPI migration/restart, GPU execution,
 and coupled CZ regression remain integration checks. See
 \path{UNIFIED_PARTICLE_GEOMETRY.md} and the complete

@@ -41,6 +41,7 @@
 #include "LvArray/src/output.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
+#include "mesh/ParticleSubdivision.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -2918,7 +2919,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_applyVelocityGradientWhenSplittingParticles ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag for assigning split-particle velocities with the parent velocity gradient: v_child = v_parent + L_parent * dx_child." );
+    setDescription( "Flag for assigning split-particle velocities with the parent velocity gradient: v_child = v_parent + L_parent * dx_child. "
+                    "Mass-weighted centroid offsets conserve linear momentum; kinetic energy is recomputed and can increase. Zero copies parent velocity." );
 
   registerWrapper( "subdivideParticles", &m_subdivideParticles ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2926,7 +2928,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Particle subdivision policy: -1 selects the automatic default, 0 disables subdivision, and 1 enables it. "
                     "Automatic subdivision is enabled only for vpHencky CPDI domain scaling with linear CPDI shape functions; "
-                    "it remains disabled for B-spline particles and deformation-gradient reset alone." );
+                    "it remains disabled for B-spline particles and deformation-gradient reset alone. "
+                    "Explicit 1 also splits native tets/wedges by current diameter using 0.99998 times the minimum active grid spacing. "
+                    "Native splits preserve shape and are bounded to four children in plane strain or eight in 3D." );
 
   registerWrapper( "surfaceDetection", &m_surfaceDetection ).
     setApplyDefaultValue( m_surfaceDetection ).
@@ -6622,6 +6626,8 @@ void SolidMechanicsMPM::resizeGridAndCleanParticlesForExplicitStep( real64 const
     {
       particleManager.updateMaps();
       setActiveParticleIndices( particleManager );
+      // Reset selection below must see the children's integration diagnostics.
+      if( m_cpdiDomainScaling == 1 ) cpdiDomainScaling( particleManager );
     }
   }
   flagOutOfRangeParticles( particleManager, partition );
@@ -11928,7 +11934,6 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
   }
 }
 
-// Should only be an option for CPDI, CPTI, and CPDI2 particles, right?
 /**
  * @brief Resolves the conditional default for particle subdivision.
  *
@@ -11965,13 +11970,24 @@ void SolidMechanicsMPM::resolveParticleSubdivisionDefault( ParticleManager & par
 }
 
 /**
- * @brief Subdivides particles using VP-Hencky feasibility or the legacy length criterion.
+ * @brief Partitions material geometry and transfers particle state using bounded shape-aware plans.
  */
 bool SolidMechanicsMPM::subdivideParticles(
   ParticleManager & particleManager,
   localIndex const rankParticleCountForSplitDecision )
 {
   GEOS_MARK_FUNCTION;
+
+  // Topology, wrapper resizing and history transfer are host operations.
+  // Scan only selection fields first; transfer the full state only if some
+  // rank actually splits. Sparse plans exist only for selected parents.
+  using particleGeometry::affine::Domain;
+  using particleGeometry::subdivision::Plan;
+  struct SelectedSplit { localIndex parent; Plan plan; };
+  std::vector< std::vector< SelectedSplit > > plans( m_numberOfSubRegions );
+  int unresolvedRank = 0;
+  int tetrahedraRank = 0;
+  int wedgesRank = 0;
 
   int const numDims = m_numDims;
   int const applyVelocityGradientWhenSplittingParticles =
@@ -12030,6 +12046,16 @@ bool SolidMechanicsMPM::subdivideParticles(
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    // Avoid moving constitutive history to the host on every no-split step.
+    for( char const * key : { "particleDeleteFlag", "particleID", "particleSurfaceFlag",
+                             "particleCohesiveZoneFlag", "particleDamage", "meltFlag",
+                             "particleReferenceVolume", "particleVolume" } )
+      subRegion.getWrapperBase( key ).move( hostMemorySpace, false );
+    subRegion.getWrapperBase( "particleSubdivideFlag" ).move( hostMemorySpace, true );
+    if( m_cpdiDomainScaling == 1 )
+      subRegion.getWrapperBase( "particleDomainScaledFlag" ).move( hostMemorySpace, false );
+    auto const referenceGeometry = subRegion.geometryViewOnHost();
+
     arrayView1d< int > const particleSubdivideFlag =
       subRegion.getField< fields::mpm::particleSubdivideFlag >();
     arrayView1d< int const > const particleDeleteFlag =
@@ -12044,8 +12070,6 @@ bool SolidMechanicsMPM::subdivideParticles(
     arrayView1d< real64 const > const particleReferenceVolume =
       subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
-    arrayView3d< real64 const > const particleDeformationGradient =
-      subRegion.getField< fields::mpm::particleDeformationGradient >();
     arrayView3d< real64 const > const particleGeometryReference =
       subRegion.getField< fields::mpm::particleGeometryReference >();
     arrayView3d< real64 const > const particleGeometryCurrent =
@@ -12086,8 +12110,8 @@ bool SolidMechanicsMPM::subdivideParticles(
       particleSubdivideFlag[p] = 0;
     } );
 
-    auto const referenceGeometry = subRegion.geometryViewOnHost();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    // Plans contain host-owned topology data; do not capture them in a device lambda.
+    forAll< serialPolicy >( activeParticleIndices.size(), [&]( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
       if( particleDeleteFlag[p] != 0 )
@@ -12122,7 +12146,8 @@ bool SolidMechanicsMPM::subdivideParticles(
       bool const isOversizedParticle =
         ( resetOversizedParticles || splitOversizedParticles ) &&
         oversizedResetMaximumDiagonal > 0.0 &&
-        referenceGeometry.currentDomain(p, numDims).diameter() >
+        particleGeometry::subdivision::diameter(
+          Domain::fromGenerators( referenceGeometry.particleShape( p ), particleGeometryCurrent[p] ), numDims ) >
           oversizedResetMaximumDiagonal * ( 1.0 + 1.0e-12 );
       bool const oversizedResetCandidate =
         resetOversizedParticles && isOversizedParticle;
@@ -12145,6 +12170,9 @@ bool SolidMechanicsMPM::subdivideParticles(
           resetForScaledSurfaceParticle ||
           oversizedResetCandidate );
 
+      particleGeometry::Shape const geometryShape = referenceGeometry.particleShape( p );
+      bool const nativeGeometry = geometryShape != particleGeometry::Shape::Parallelepiped;
+      Plan plan;
       int subdivisionMask = 0;
       if( hasActiveCohesiveState )
       {
@@ -12153,6 +12181,19 @@ bool SolidMechanicsMPM::subdivideParticles(
         // conservatively partitioned by the generic particle splitter, so the
         // integration-domain projection remains the fallback for this case.
         subdivisionMask = 0;
+      }
+      else if( nativeGeometry )
+      {
+        // Native geometry has no box VP-Hencky volume cap. Explicit subdivision
+        // uses actual diameter and the existing full-edge h_min threshold;
+        // oversized treatment supplies its own diameter limit independently.
+        real64 const targetDiameter = oversizedSplitCandidate
+          ? oversizedResetMaximumDiagonal
+          : ( subdivisionEnabled && automaticSubdivision == 0
+              ? 2.0 * LvArray::math::sqrt( legacyCriticalLengthSquared ) : -1.0 );
+        plan = particleGeometry::subdivision::sizePlan(
+          Domain::fromGenerators( geometryShape, particleGeometryCurrent[p] ),
+          numDims, targetDiameter );
       }
       else if( cpdiVPHenckyCandidate ||
                resetVPHenckyCandidate ||
@@ -12238,16 +12279,22 @@ bool SolidMechanicsMPM::subdivideParticles(
         }
       }
 
-      GEOS_ERROR_IF( subdivisionMask != 0 && referenceGeometry.isSimplex( p ),
-                     "Runtime subdivision of native simplex geometry is not implemented; use PFW refinement" );
-      particleSubdivideFlag[p] = subdivisionMask;
-      int const numberOfDirections =
-        countSubdivisionDirections( subdivisionMask, numDims );
-      if( numberOfDirections > 0 )
+      if( !nativeGeometry )
       {
-        int const numberOfChildren = ( 1 << numberOfDirections ) - 1;
-        subRegionNumNewParticles += numberOfChildren;
-        numNewParticles += numberOfChildren;
+        plan = particleGeometry::subdivision::boxPlan( subdivisionMask, numDims );
+        plan.unresolved = oversizedSplitCandidate &&
+          particleDomainMaximumDiagonalAfterSubdivisionMask( rawRVectors, numDims, subdivisionMask ) >
+            oversizedResetMaximumDiagonal * ( 1.0 + 1.0e-12 );
+      }
+      particleSubdivideFlag[p] = plan.count - 1;
+      if( plan.count > 1 )
+      {
+        plans[subRegionIndex].push_back( { p, plan } );
+        subRegionNumNewParticles += plan.count - 1;
+        numNewParticles += plan.count - 1;
+        if( plan.unresolved ) ++unresolvedRank;
+        if( geometryShape == particleGeometry::Shape::Tetrahedron ) ++tetrahedraRank;
+        if( geometryShape == particleGeometry::Shape::TriangleWedge ) ++wedgesRank;
       }
     } );
 
@@ -12280,6 +12327,7 @@ bool SolidMechanicsMPM::subdivideParticles(
     return false;
   }
 
+  moveParticleWrappersToHost( particleManager );
   subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -12307,116 +12355,68 @@ bool SolidMechanicsMPM::subdivideParticles(
       subRegion.getField< fields::mpm::particleGeometryReference >();
     arrayView3d< real64 > const & particleGeometryCurrent = subRegion.getParticleGeometryCurrent();
 
-    // Surface-position fields are vectors measured from the particle center.
-    // Store each child's center offsets so those relative vectors can be
-    // translated after the ordinary particle fields have been copied.
-    array2d< real64 > subdivisionCurrentCenterOffset( newSubRegionSize, 3 );
-    array1d< int > subdivisionMember( newSubRegionSize );
-    arrayView2d< real64 > const subdivisionCurrentCenterOffsetView =
-      subdivisionCurrentCenterOffset.toView();
-    arrayView1d< int > const subdivisionMemberView =
-      subdivisionMember.toView();
-    forAll< serialPolicy >( newSubRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const p )
+    // Snapshot parent geometry and extensive state before modifying its retained
+    // child. Only new rows use particleCopyFlag; all child-specific corrections
+    // are delayed until intensive/history fields have been copied unmodified.
+    struct SplitMember
     {
-      subdivisionMemberView[p] = 0;
-      LvArray::tensorOps::fill< 3 >( subdivisionCurrentCenterOffsetView[p], 0.0 );
-    } );
-
+      localIndex index;
+      real64 fraction;
+      real64 currentOffset[3];
+    };
+    std::vector< SplitMember > members;
+    for( localIndex p = 0; p < newSubRegionSize; ++p ) particleCopyFlag[p] = -1;
+    arrayView1d< integer const > const geometryShapes = subRegion.getParticleGeometryShape();
     localIndex subRegionNewParticleIndex = oldSubRegionSize;
-
-    // Resizing and copying wrappers are host operations, so subdivision remains
-    // a serial topology update even though the feasibility scan is device-safe.
-    for( localIndex p = 0; p < oldSubRegionSize; ++p )
+    for( SelectedSplit const & selected : plans[subRegionIndex] )
     {
-      particleCopyFlag[p] = -1;
-      int const subdivisionMask = particleSubdivideFlag[p];
-      if( subdivisionMask == 0 )
+      localIndex const p = selected.parent;
+      auto const geometryShape = static_cast< particleGeometry::Shape >( geometryShapes[p] );
+      Domain const referenceParent = Domain::fromGenerators( geometryShape, particleGeometryReference[p] );
+      Domain const currentParent = Domain::fromGenerators( geometryShape, particleGeometryCurrent[p] );
+      real64 const parentMass = particleMass[p];
+      real64 const parentVolume = particleVolume[p];
+      real64 const parentReferenceVolume = particleReferenceVolume[p];
+      real64 parentCenter[3], parentReferenceCenter[3];
+      LvArray::tensorOps::copy<3>( parentCenter, particlePosition[p] );
+      LvArray::tensorOps::copy<3>( parentReferenceCenter, particleReferencePosition[p] );
+
+      for( int member = 0; member < selected.plan.count; ++member )
       {
-        continue;
+        localIndex const childIndex = member == 0 ? p : subRegionNewParticleIndex++;
+        auto const & transform = selected.plan.children[member];
+        Domain const referenceChild = transform.geometry( referenceParent );
+        Domain const currentChild = transform.geometry( currentParent );
+        SplitMember transfer;
+        transfer.index = childIndex;
+        transfer.fraction = transform.fraction;
+        real64 referenceOffset[3];
+        transform.offset( currentParent, transfer.currentOffset );
+        transform.offset( referenceParent, referenceOffset );
+        particleMass[childIndex] = parentMass * transfer.fraction;
+        particleVolume[childIndex] = parentVolume * transfer.fraction;
+        particleReferenceVolume[childIndex] = parentReferenceVolume * transfer.fraction;
+        for( int i = 0; i < 3; ++i )
+        {
+          particlePosition[childIndex][i] = parentCenter[i] + transfer.currentOffset[i];
+          particleReferencePosition[childIndex][i] = parentReferenceCenter[i] + referenceOffset[i];
+          for( int a = 0; a < 3; ++a )
+          {
+            particleGeometryReference[childIndex][a][i] = referenceChild.generators[a][i];
+            particleGeometryCurrent[childIndex][a][i] = currentChild.generators[a][i];
+          }
+        }
+        if( member != 0 )
+        {
+          particleID[childIndex] = currGlobalIndex++;
+          particleCopyFlag[childIndex] = p;
+        }
+        members.push_back( transfer );
       }
-
-      int const numberOfDirections =
-        countSubdivisionDirections( subdivisionMask, numDims );
-      array1d< array1d< int > > rVectorDivisions( numDims );
-      for( int d = 0; d < numDims; ++d )
-      {
-        if( ( subdivisionMask & ( 1 << d ) ) != 0 )
-        {
-          rVectorDivisions[d].resize( 2 );
-          rVectorDivisions[d][0] = 1;
-          rVectorDivisions[d][1] = -1;
-        }
-        else
-        {
-          rVectorDivisions[d].resize( 1 );
-          rVectorDivisions[d][0] = 0;
-        }
-      }
-
-      array2d< int > const rVectorOffsetCombinations =
-        generateCombinations( rVectorDivisions );
-      int const subdivisionFactor = 1 << numberOfDirections;
-      real64 const newMass = particleMass[p] / subdivisionFactor;
-      real64 const newVolume = particleVolume[p] / subdivisionFactor;
-      real64 const newReferenceVolume =
-        particleReferenceVolume[p] / subdivisionFactor;
-
-      real64 rawRVectors[3][3] = {};
-      LvArray::tensorOps::copy<3,3>(rawRVectors, particleGeometryCurrent[p]);
-
-      // Subdivision uses the same full-edge geometry as output and the split
-      // feasibility scan. Preserve child ordering, IDs and history transfer.
-      // These are boxes: the earlier simplex guard remains authoritative.
-      // Plane strain still has a finite z thickness, so use a 3D box and split
-      // only the directions selected by the two-dimensional mask.
-      using particleGeometry::affine::Domain;
-      auto const referenceParent = Domain::fromGenerators(
-        particleGeometry::Shape::Parallelepiped, particleGeometryReference[p] );
-      auto const currentParent = Domain::fromGenerators(
-        particleGeometry::Shape::Parallelepiped, rawRVectors );
-      auto assignChildGeometry = [&]( localIndex const childIndex, int const member )
-      {
-        int positiveMask = 0;
-        for( int d=0; d<numDims; ++d )
-          if( rVectorOffsetCombinations[member][d] > 0 ) positiveMask |= 1 << d;
-        Domain referenceChild, currentChild;
-        real64 referenceOffset[3], currentOffset[3];
-        referenceParent.boxChild( subdivisionMask, positiveMask, referenceChild, referenceOffset );
-        currentParent.boxChild( subdivisionMask, positiveMask, currentChild, currentOffset );
-        for( int a=0; a<3; ++a ) for( int i=0; i<3; ++i )
-        {
-          particleGeometryReference[childIndex][a][i] = referenceChild.generators[a][i];
-          particleGeometryCurrent[childIndex][a][i] = currentChild.generators[a][i];
-        }
-        subdivisionMemberView[childIndex] = 1;
-        for( int i=0; i<3; ++i )
-        {
-          subdivisionCurrentCenterOffsetView[childIndex][i] = currentOffset[i];
-          particlePosition[childIndex][i] = particlePosition[p][i] + currentOffset[i];
-          particleReferencePosition[childIndex][i] = particleReferencePosition[p][i] + referenceOffset[i];
-        }
-      };
-
-      for( int np = 1; np < subdivisionFactor; ++np )
-      {
-        particleID[subRegionNewParticleIndex] = currGlobalIndex++;
-        particleMass[subRegionNewParticleIndex] = newMass;
-        particleVolume[subRegionNewParticleIndex] = newVolume;
-        particleReferenceVolume[subRegionNewParticleIndex] = newReferenceVolume;
-        assignChildGeometry( subRegionNewParticleIndex, np );
-        particleCopyFlag[subRegionNewParticleIndex] = static_cast< int >( p );
-        ++subRegionNewParticleIndex;
-      }
-
-      particleMass[p] = newMass;
-      particleVolume[p] = newVolume;
-      particleReferenceVolume[p] = newReferenceVolume;
-      // Update the retained parent last: child positions above use its center.
-      assignChildGeometry( p, 0 );
-
-      // New particles copy this cleared value from the parent below.
       particleSubdivideFlag[p] = 0;
     }
+    GEOS_ERROR_IF( subRegionNewParticleIndex != newSubRegionSize,
+                   "Particle subdivision count changed between planning and transfer." );
 
     std::set< std::string > ignoreFieldCopy( {
       "particleID",
@@ -12427,18 +12427,23 @@ bool SolidMechanicsMPM::subdivideParticles(
       "particleReferencePosition",
       "particleGeometryCurrent",
       "particleGeometryReference",
-      "particleCopyFlag"
+      "particleCopyFlag",
+      // Object-manager maps are rebuilt from IDs, not inherited from a parent.
+      "localToGlobalMap", "globalToLocalMap", "ghostRank", "parentIndex", "childIndex"
     } );
 
     subRegion.forWrappers( [&]( WrapperBase & fieldWrapper )
     {
       string const fieldName = fieldWrapper.getName();
-      if( fieldName.substr( 0, 8 ) != "particle" ||
+      // Particle-sized wrappers include physical fields whose names do not
+      // start with "particle", notably meltFlag and imported material fields.
+      if( !fieldWrapper.sizedFromParent() || fieldWrapper.numArrayDims() == 0 ||
           ignoreFieldCopy.count( fieldName ) > 0 )
       {
         return;
       }
 
+      fieldWrapper.move( hostMemorySpace, true );
       types::dispatch( types::ListofTypeList< types::StandardArrays >{},
                        [&]( auto tupleOfTypes )
       {
@@ -12473,69 +12478,55 @@ bool SolidMechanicsMPM::subdivideParticles(
       }, fieldWrapper );
     } );
 
-    if( applyVelocityGradientWhenSplittingParticles == 1 )
-    {
-      arrayView2d< real64 > const particleVelocity =
-        subRegion.getParticleVelocity();
-      arrayView3d< real64 const > const particleVelocityGradient =
-        subRegion.getField< fields::mpm::particleVelocityGradient >();
-
-      forAll< serialPolicy >( newSubRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const p )
-      {
-        if( subdivisionMemberView[p] == 0 )
-        {
-          return;
-        }
-
-        real64 velocityCorrection[3] = {};
-        LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >(
-          velocityCorrection,
-          particleVelocityGradient[p],
-          subdivisionCurrentCenterOffsetView[p] );
-        LvArray::tensorOps::add< 3 >( particleVelocity[p],
-                                      velocityCorrection );
-      } );
-    }
-
-    arrayView1d< integer const > const particleSurfaceFlag =
-      subRegion.getParticleSurfaceFlag();
-    arrayView2d< real64 > const particleSurfacePosition =
-      subRegion.getParticleSurfacePosition();
+    // Correct extensive and center-relative data after every copy has finished.
+    // SurfaceTraction is an integrated FORCE in grid assembly; partition both
+    // current and constitutive-reference values. A child inherits the parent's
+    // approximate surface point, not a newly inferred internal/exterior facet.
+    arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
+    arrayView3d< real64 const > const particleVelocityGradient =
+      subRegion.getField< fields::mpm::particleVelocityGradient >();
+    arrayView1d< real64 > const particleKineticEnergy =
+      subRegion.getField< fields::mpm::particleKineticEnergy >();
+    arrayView2d< real64 > const particleSurfaceTraction = subRegion.getParticleSurfaceTraction();
+    arrayView2d< real64 > const particleReferenceSurfaceTraction =
+      subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
+    arrayView2d< real64 > const particleCohesiveForce =
+      subRegion.getField< fields::mpm::particleCohesiveForce >();
+    arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+    arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
     arrayView2d< real64 > const particleReferenceSurfacePosition =
       subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
     arrayView2d< real64 > const particleEstimatedSurfacePosition =
       subRegion.getField< fields::mpm::particleEstimatedSurfacePosition >();
-    forAll< serialPolicy >( newSubRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const p )
+    for( SplitMember const & member : members )
     {
-      if( subdivisionMemberView[p] == 0 )
+      localIndex const p = member.index;
+      if( applyVelocityGradientWhenSplittingParticles == 1 )
       {
-        return;
+        real64 velocityCorrection[3];
+        LvArray::tensorOps::Ri_eq_AijBj<3,3>( velocityCorrection, particleVelocityGradient[p], member.currentOffset );
+        LvArray::tensorOps::add<3>( particleVelocity[p], velocityCorrection );
       }
+      particleKineticEnergy[p] = 0.5 * particleMass[p] * LvArray::tensorOps::l2NormSquared<3>( particleVelocity[p] );
+      LvArray::tensorOps::scale<3>( particleSurfaceTraction[p], member.fraction );
+      LvArray::tensorOps::scale<3>( particleReferenceSurfaceTraction[p], member.fraction );
+      // Active/damaged cohesive parents are excluded; discard any stale force.
+      LvArray::tensorOps::fill<3>( particleCohesiveForce[p], 0.0 );
 
-      bool const hasCenterRelativeSurfacePosition =
-        particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface );
-      if( hasCenterRelativeSurfacePosition )
+      if( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) )
       {
-        LvArray::tensorOps::subtract< 3 >(
-          particleSurfacePosition[p],
-          subdivisionCurrentCenterOffsetView[p] );
-        // Surface reference vectors belong to the constitutive F frame,
-        // which can differ from the fixed geometry G0 after an FOnly reset.
-        // Transport the current child-center offset back through that F.
+        LvArray::tensorOps::subtract<3>( particleSurfacePosition[p], member.currentOffset );
+        // Surface reference vectors belong to the constitutive F frame, which
+        // can differ from the fixed geometry frame G0 after an FOnly reset.
         real64 inverseF[3][3], surfaceReferenceOffset[3];
-        LvArray::tensorOps::invert<3>(inverseF,particleDeformationGradient[p]);
-        LvArray::tensorOps::Ri_eq_AijBj<3,3>(surfaceReferenceOffset,inverseF,subdivisionCurrentCenterOffsetView[p]);
-        LvArray::tensorOps::subtract<3>(particleReferenceSurfacePosition[p],surfaceReferenceOffset);
+        LvArray::tensorOps::invert<3>( inverseF, particleDeformationGradient[p] );
+        LvArray::tensorOps::Ri_eq_AijBj<3,3>( surfaceReferenceOffset, inverseF, member.currentOffset );
+        LvArray::tensorOps::subtract<3>( particleReferenceSurfacePosition[p], surfaceReferenceOffset );
       }
-
-      if( LvArray::tensorOps::l2NormSquared< 3 >(
-            particleEstimatedSurfacePosition[p] ) > 0.0 )
-      {
-        LvArray::tensorOps::subtract< 3 >(
-          particleEstimatedSurfacePosition[p],
-          subdivisionCurrentCenterOffsetView[p] );
-      }
-    } );
+      // Zero is the existing sentinel for an unavailable estimated offset.
+      if( LvArray::tensorOps::l2NormSquared<3>( particleEstimatedSurfacePosition[p] ) > 0.0 )
+        LvArray::tensorOps::subtract<3>( particleEstimatedSurfacePosition[p], member.currentOffset );
+    }
 
     string const & modelName =
       subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
@@ -12544,11 +12535,13 @@ bool SolidMechanicsMPM::subdivideParticles(
 
     constitutiveModel.forWrappers( [&]( WrapperBase & fieldWrapper )
     {
-      if( fieldWrapper.numArrayDims() == 0 )
+      // Model parameters not indexed by particles must not be copied as history.
+      if( !fieldWrapper.sizedFromParent() || fieldWrapper.numArrayDims() == 0 )
       {
         return;
       }
 
+      fieldWrapper.move( hostMemorySpace, true );
       types::dispatch( types::ListofTypeList< types::StandardArrays >{},
                        [&]( auto tupleOfTypes )
       {
@@ -12592,11 +12585,33 @@ bool SolidMechanicsMPM::subdivideParticles(
     ++subRegionIndex;
   } );
 
-  GEOS_LOG_RANK_0_IF(
-    totalNewParticles > 0,
-    "Generated " << totalNewParticles
-                 << " particles while subdividing domains that could not satisfy "
-                 << "the requested volume and maximum-diagonal constraints." );
+  // Current mapping arrays and neighbor indices belong to the old topology.
+  // Every rank participates, including ranks with no locally selected parents.
+  // The next step's normal mapping/ghosting passes rebuild these caches.
+  for( localIndex r = 0; r < m_numberOfSubRegions; ++r )
+  {
+    m_mappedNodes[r].resize( 0, 0 );
+    m_mappedFields[r].resize( 0, 0 );
+    m_shapeFunctionValues[r].resize( 0, 0 );
+    m_shapeFunctionGradientValues[r].resize( 0, 0, 0 );
+    m_effectiveMappedNodes[r].resize( 0, 0 );
+    m_effectiveMappedFields[r].resize( 0, 0 );
+    m_effectiveShapeFunctionValues[r].resize( 0, 0 );
+    m_effectiveShapeFunctionGradientValues[r].resize( 0, 0, 0 );
+    m_numEffectiveMappedNodes[r].resize( 0 );
+  }
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.neighborList().resize( 0 );
+  } );
+
+  int const unresolved = MpiWrapper::sum( unresolvedRank );
+  int const tetrahedra = MpiWrapper::sum( tetrahedraRank );
+  int const wedges = MpiWrapper::sum( wedgesRank );
+  GEOS_LOG_RANK_0( "Particle subdivision: generated " << totalNewParticles
+                   << " additional particles; split " << tetrahedra << " tet and "
+                   << wedges << " wedge parents; " << unresolved
+                   << " parents retain children above the requested size after this bounded pass." );
   return true;
 }
 

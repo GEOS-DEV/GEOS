@@ -435,7 +435,7 @@ DECLARE_FIELD( particleSubdivideFlag,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "particleSubdivideFlag" );
+               "Temporary number of additional children selected for subdivision; cleared after transfer." );
 
 DECLARE_FIELD( particleCopyFlag,
                "particleCopyFlag",

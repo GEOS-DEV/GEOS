@@ -1,3 +1,16 @@
+# Geometry-aware splitting update (2026-10-21)
+
+The current source supports native tet/wedge runtime subdivision. Documentation
+below describing native splitting as unavailable is historical and superseded.
+Updated the splitting theory, controls, unified-geometry contract and examples;
+corrected full-edge box feasibility/length conventions in the splitting section.
+Documented force partition, specific-vs-total energy, melt/history transfer,
+FOnly surface frames, pass limits and remaining CZ/CPTI/2D scope. Added standalone
+production-header and extracted-solver tests with strict warnings. Nine files
+missing from the uploaded ZIP are restored, including the required geometry header.
+
+---
+
 # Current unified-geometry audit (2026-10-21)
 
 Current contract: schema 2 only; shape + full reference/current generators;
