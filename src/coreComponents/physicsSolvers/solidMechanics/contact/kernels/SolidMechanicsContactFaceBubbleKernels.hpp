@@ -610,14 +610,8 @@ public:
 
     // Only the bubble of the parent face is active
     localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
-    real64 strainBubble[6] = {0};
-    for( int i = 0; i < 6; ++i )
-    {
-      for( int j = 0; j < 3; ++j )
-      {
-        strainBubble[i] += strainBubbleMatrix[i][parentFaceIndex*3+j] * stack.bLocal[j];
-      }
-    }
+    real64 strainBubble[6];
+    solidMechanicsConformingContactKernelsHelper::computeFaceBubbleStrain( strainBubbleMatrix, parentFaceIndex, stack.bLocal, strainBubble );
 
     m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
     real64 stressBubble[6] = {0};

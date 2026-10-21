@@ -515,7 +515,7 @@ namespace poromechanicsMatrixBubbleKernels
  * Physics:
  *   R_b = -∫ B_b^T * (biot * p * I) * detJ dΩ
  *   dR_b/dP = -∫ B_b^T * (biot * I) * detJ dΩ
- *   dR_b/dT = +∫ B_b^T * (3 alpha K * I) * detJ dΩ   (thermal only)
+ *   dR_b/dT = -∫ B_b^T * dSigma/dT * detJ dΩ, dSigma/dT = -3 alpha K I when isotropic   (thermal only)
  *
  * Only its derivative w.r.t. temperature is missing, hence the dR_b/dT column below.
  * sigma is already updated w.r.t temperature so no need for extra edition of residuals.
@@ -806,20 +806,14 @@ public:
     LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( dRbdP_gauss, strainBubbleMatrix, biotIdentity );
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRbdP, dRbdP_gauss, -detJ );
 
-    // Jacobian contribution: dR_b/dT += B_b^T * ( -3 alpha K * I ) * (-detJ) (thermal only), i.e. the
-    // temperature derivative of -B_b^T sigma_new, sigma_new carrying -3 alpha K dT I
+    // Jacobian contribution: dR_b/dT += B_b^T * dSigma/dT * (-detJ) (thermal only), i.e. the temperature
+    // derivative of -B_b^T sigma_new, with the same dSigma/dT (-3 alpha K I when isotropic) as the bulk kernel
     if( m_isThermal )
     {
-      real64 thermalExpansionCoefficient;
-      m_constitutiveUpdate.getThermalExpansionCoefficient( k, thermalExpansionCoefficient );
-      real64 bulkModulus;
-      m_constitutiveUpdate.getBulkModulus( k, bulkModulus );
-      real64 const thermalStressCoefficient = 3.0 * thermalExpansionCoefficient * bulkModulus;
-
-      real64 thermalIdentity[6] = {0};
-      LvArray::tensorOps::symAddIdentity< 3 >( thermalIdentity, -thermalStressCoefficient );
+      real64 dTotalStress_dTemperature[6];
+      m_constitutiveUpdate.getDtotalStress_dTemperature( k, q, dTotalStress_dTemperature );
       real64 dRbdT_gauss[nBubbleUdof];
-      LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( dRbdT_gauss, strainBubbleMatrix, thermalIdentity );
+      LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( dRbdT_gauss, strainBubbleMatrix, dTotalStress_dTemperature );
       LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRbdT, dRbdT_gauss, -detJ );
     }
 
@@ -839,14 +833,8 @@ public:
     {
       localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
       localIndex const bFace = m_elemsToFaces[kk][0];
-      real64 bubbleVolumetricStrainIncrement = 0.0;
-      for( localIndex i = 0; i < 3; ++i )
-      {
-        for( localIndex j = 0; j < 3; ++j )
-        {
-          bubbleVolumetricStrainIncrement += strainBubbleMatrix[i][parentFaceIndex*3+j] * m_incrBubbleDisp[bFace][j];
-        }
-      }
+      real64 const bubbleVolumetricStrainIncrement =
+        solidMechanicsConformingContactKernelsHelper::computeFaceBubbleVolumetricStrain( strainBubbleMatrix, parentFaceIndex, m_incrBubbleDisp[bFace] );
       m_constitutiveUpdate.addVolumetricStrainIncrementToPorosity( k, q, bubbleVolumetricStrainIncrement );
     }
   }

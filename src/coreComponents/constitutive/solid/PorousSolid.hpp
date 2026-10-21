@@ -219,16 +219,28 @@ public:
   }
 
   /**
-   * @brief Return the bulk modulus at a given element
+   * @brief Return the derivative of the total stress w.r.t. temperature at a given quadrature point,
+   *        dTotalStress/dT = -thermalExpansionCoefficient * C : I (Voigt), i.e. -3 alpha K I for an isotropic solid.
+   *        It is the derivative computeTotalStress returns (through DiscretizationOps::computeTemperatureDerivative),
+   *        for use by kernels that do not call the stress update (e.g. enrichments such as face bubbles).
    *
    * @param [in] k the element number
-   * @param [out] bulkModulus the bulk modulus
+   * @param [in] q the quadrature point index
+   * @param [out] dTotalStress_dTemperature the derivative of the total stress w.r.t. temperature (Voigt)
    */
   GEOS_HOST_DEVICE
   inline
-  void getBulkModulus( localIndex const k, real64 & bulkModulus ) const
+  void getDtotalStress_dTemperature( localIndex const k,
+                                     localIndex const q,
+                                     real64 ( & dTotalStress_dTemperature )[6] ) const
   {
-    bulkModulus = m_solidUpdate.getBulkModulus( k );
+    real64 stiffness[6][6]{};
+    m_solidUpdate.getElasticStiffness( k, q, stiffness );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    for( int i = 0; i < 6; ++i )
+    {
+      dTotalStress_dTemperature[i] = -thermalExpansionCoefficient * ( stiffness[i][0] + stiffness[i][1] + stiffness[i][2] );
+    }
   }
 
   /**

@@ -277,14 +277,8 @@ public:
     // No constitutive update here: smallStrainUpdatePoromechanicsFixedStress would overwrite the stored
     // stress (saveStress) and the mean-stress increment, e.g. dropping the thermal increment.
     localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
-    real64 bubbleVolumetricStrainIncrement = 0.0;
-    for( localIndex i = 0; i < 3; ++i )
-    {
-      for( localIndex j = 0; j < 3; ++j )
-      {
-        bubbleVolumetricStrainIncrement += strainBubbleMatrix[i][parentFaceIndex*3+j] * stack.bIncrLocal[j];
-      }
-    }
+    real64 const bubbleVolumetricStrainIncrement =
+      solidMechanicsConformingContactKernelsHelper::computeFaceBubbleVolumetricStrain( strainBubbleMatrix, parentFaceIndex, stack.bIncrLocal );
     m_constitutiveUpdate.addVolumetricStrainIncrementToMeanTotalStress( k, q, bubbleVolumetricStrainIncrement );
 
 
