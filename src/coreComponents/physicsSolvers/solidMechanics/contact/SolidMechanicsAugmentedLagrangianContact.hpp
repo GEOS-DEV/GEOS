@@ -242,10 +242,12 @@ private:
   void validateTetrahedralQuadrature( Group & meshBodies );
 
   /**
-   * @brief Validate that the solid model of every target cell region is exactly ElasticIsotropic.
-   *        The face-bubble kernels (Abb/Abu/Aub and the bubble residual built from the stored stress)
-   *        assume a linear isotropic elastic stiffness; derived models (e.g. damage) would pass the
-   *        constitutive dispatch while giving inconsistent bubble terms.
+   * @brief Validate the solid model of every target cell region for the face-bubble kernels.
+   *        These kernels (Abb/Abu/Aub and the bubble residual built from the stored stress) are dispatched on
+   *        ElasticIsotropic and assume a linear isotropic elastic response of the bubble enrichment:
+   *        - a model not derived from ElasticIsotropic cannot be dispatched: input error;
+   *        - a derived model (e.g. plasticity, damage) is accepted with a warning, the bubble enrichment being then
+   *          exact only while the cells along the fracture stay elastic.
    * @param meshBodies the group containing the mesh bodies
    */
   void validateFaceBubbleSolidModel( Group & meshBodies );

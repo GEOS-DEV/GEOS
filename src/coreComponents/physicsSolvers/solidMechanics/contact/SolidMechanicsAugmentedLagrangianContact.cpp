@@ -229,13 +229,23 @@ void SolidMechanicsAugmentedLagrangianContact::validateFaceBubbleSolidModel( Gro
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       constitutive::ConstitutiveBase const & solid = subRegion.getConstitutiveModel( solidName );
 
-      // exact match: models deriving from ElasticIsotropic would pass the kernel dispatch silently
-      GEOS_THROW_IF( solid.getCatalogName() != ElasticIsotropic::catalogName(),
+      string const & regionName = subRegion.getParent().getParent().getName();
+
+      // The face-bubble kernels are dispatched on ElasticIsotropic: other models cannot be handled at all
+      GEOS_THROW_IF( dynamicCast< ElasticIsotropic const * >( &solid ) == nullptr,
                      GEOS_FMT( "{}: the face-bubble contributions of the augmented Lagrangian contact are only implemented "
-                               "for {} solids, but region '{}' uses '{}' of type {}.",
-                               getName(), ElasticIsotropic::catalogName(), subRegion.getParent().getParent().getName(),
-                               solidName, solid.getCatalogName() ),
+                               "for {} solids and the models derived from it, but region '{}' uses '{}' of type {}.",
+                               getName(), ElasticIsotropic::catalogName(), regionName, solidName, solid.getCatalogName() ),
                      InputError );
+
+      // Derived (e.g. plastic or damage) models pass the dispatch, but the bubble enrichment then responds elastically
+      if( solid.getCatalogName() != ElasticIsotropic::catalogName() )
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: region '{}' uses '{}' of type {}. The face-bubble enrichment of the augmented "
+                                   "Lagrangian contact uses the elastic stiffness and a linear elastic response, so it is exact "
+                                   "only while the cells along the fracture stay elastic (no plastic flow or damage there).",
+                                   getName(), regionName, solidName, solid.getCatalogName() ) );
+      }
     } );
   } );
 }
