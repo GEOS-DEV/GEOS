@@ -179,7 +179,6 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              bool const useAugmentedLagrangianMultiplier = false,
                               localIndex const dR_dAperEnergyOffset = -1 ) override final;
 
   /**@}*/
@@ -211,22 +210,6 @@ private:
                              DomainPartition & domain,
                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                              arrayView1d< real64 > const & localRhs );
-
-  /**
-   * @brief Shared implementation for assembleHydrofracFluxTerms, templated on the (Lagrange-multiplier-
-   *   or Augmented-Lagrangian-Multiplier-formulation) conforming-fractures kernel factories to use for
-   *   the fracture-connector flux.
-   * @tparam ISOTHERMAL_FRACTURE_KERNEL_FACTORY the isothermal ConnectorBasedAssemblyKernelFactory to use
-   * @tparam THERMAL_FRACTURE_KERNEL_FACTORY the thermal ConnectorBasedAssemblyKernelFactory to use
-   */
-  template< typename ISOTHERMAL_FRACTURE_KERNEL_FACTORY, typename THERMAL_FRACTURE_KERNEL_FACTORY >
-  void assembleHydrofracFluxTermsImpl( real64 const dt,
-                                       DomainPartition const & domain,
-                                       DofManager const & dofManager,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                       arrayView1d< real64 > const & localRhs,
-                                       CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                       localIndex const dR_dAperEnergyOffset );
 
   // no data needed here, see SinglePhaseBase
 

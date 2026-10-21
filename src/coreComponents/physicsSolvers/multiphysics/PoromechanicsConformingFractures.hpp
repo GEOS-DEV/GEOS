@@ -416,7 +416,6 @@ public:
                                                     localMatrix,
                                                     localRhs,
                                                     getDerivativeFluxResidual_dNormalJump(),
-                                                    CONTACT_SOLVER::hasContactStabilization,
                                                     m_derivativeFluxResidual_dApertureEnergyOffset );
 
     m_derivativeFluxResidual_dAperture->move( hostMemorySpace, false );

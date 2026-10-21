@@ -30,10 +30,9 @@ namespace thermalConformingFracturesKernels
 
 /**
  * @class ThermalConformingFracturesConnectorBasedAssemblyKernel
- * @tparam BASE_KERNEL the (Lagrange-multiplier- or Augmented-Lagrangian-Multiplier-formulation) isothermal
- *   ConnectorBasedAssemblyKernel this thermal layer extends. The thermal logic (enthalpy-carried advective
- *   flux, conductive flux, energy-balance row/Jacobian assembly, dR_dAper energy-block write) is identical
- *   across both contact formulations; only the underlying mass-flux/aperture-sensitivity kernel differs.
+ * @tparam BASE_KERNEL the isothermal ConnectorBasedAssemblyKernel this thermal layer extends (enthalpy-carried
+ *   advective flux, conductive flux, energy-balance row/Jacobian assembly, dR_dAper energy-block write).
+ *   It is shared by the Lagrange-multiplier and Augmented-Lagrangian contact formulations.
  */
 template< integer NUM_EQN, integer NUM_DOF, template< integer, integer > class BASE_KERNEL >
 class ThermalConformingFracturesConnectorBasedAssemblyKernel : public BASE_KERNEL< NUM_EQN, NUM_DOF >

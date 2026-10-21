@@ -14,7 +14,7 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsConformingFractures.hpp
+ * @file ThermalSinglePhasePoromechanicsConformingFractures.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP

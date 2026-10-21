@@ -156,8 +156,6 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    * @param dR_dAper derivative of the flux residual with respect to the aperture
-   * @param useAugmentedLagrangianMultiplier true to assemble against the Augmented-Lagrangian-Multiplier
-   *        conforming-fractures kernels, false (default) for the Lagrange-multiplier formulation.
    * @param dR_dAperEnergyOffset first row of the energy-balance block appended after the
    *        mass-balance rows in @p dR_dAper, when the flow solver is thermal (ignored otherwise).
    *        Pass -1 when no energy block was built.
@@ -169,13 +167,10 @@ public:
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs,
                                            CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                           bool const useAugmentedLagrangianMultiplier = false,
                                            localIndex const dR_dAperEnergyOffset = -1 )
   {
     GEOS_UNUSED_VAR ( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperEnergyOffset );
-    GEOS_ERROR( (useAugmentedLagrangianMultiplier
-               ? "Poroelastic fluxes with conforming fractures ALM not yet implemented."
-               : "Poroelastic fluxes with conforming fractures not yet implemented.") );
+    GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
   }
 
   void initializeState( DomainPartition & domain );

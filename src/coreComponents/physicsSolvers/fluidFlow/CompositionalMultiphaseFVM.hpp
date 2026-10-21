@@ -156,7 +156,6 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              bool const useAugmentedLagrangianMultiplier = false,
                               localIndex const dR_dAperEnergyOffset = -1 ) override final;
 
   virtual void
