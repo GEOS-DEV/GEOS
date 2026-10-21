@@ -1,0 +1,99 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Unified material geometry and schema 2}
+\label{sec:unified-particle-geometry}
+\index{geometryReset}
+\index{particleGeometry}
+
+Every particle stores a shape tag and two minimal full-edge matrices:
+\mpmcode{particleGeometryReference} ($G_0$) and
+\mpmcode{particleGeometryCurrent} ($G$). Generators are rows in memory and files;
+the corresponding column-vector equation $G=F G_0$ is stored as $G=G_0F^T$.
+That equality need not hold after an F-only reset. The current geometry is
+advanced by the physical increment, $G^{n+1}=G^n(\Delta F)^T$, independently of
+constitutive reference changes. Vertices and integration geometry are temporary.
+
+\begin{center}\small
+\begin{tabular}{@{}p{0.18\linewidth}p{0.49\linewidth}p{0.20\linewidth}@{}}
+\toprule Shape & Generator and vertex convention & Initial measure\\\midrule
+Box (0) & Three full edges; $c\pm g_1/2\pm g_2/2\pm g_3/2$ & $\det G$\\
+Wedge (1) & Two triangle edges plus thickness; triangle offsets $\pm g_3/2$ & $\det G/2$\\
+Tet (2) & Three edges from $v_0$; $v_0=c-(g_1+g_2+g_3)/4$ & $\det G/6$\\
+Planned 2D quad & Two 2-component edges; centered parallelogram & $\det G$\\
+Planned 2D tri & Two 2-component edges; $v_0=c-(g_1+g_2)/3$ & $\det G/2$\\
+\bottomrule
+\end{tabular}\end{center}
+
+The matrices occupy 144 bytes per 3D particle, plus the shape tag. This retains
+the previous two-matrix box cost and removes the extra 72-byte glyph-reference
+matrix for native simplices. Planned native 2D storage needs 64 bytes for two
+$2\times2$ matrices; the solver in this patch still uses 3D or thin-3D plane strain.
+
+\subsection{Reset policy and integration geometry}
+\mpmcode{geometryReset=FOnly} (default) changes F and preserves G and $G_0$.
+\mpmcode{geometryReset=FAndGeometry} also sets $G=G_0F_{\rm new}^T$, preserving
+$G_0$. The policy applies to automatic and healing resets and is independent of
+\mpmcode{domainResetType}, which chooses the new F. Startup thermal initialization
+may establish $G_0$ from the initial F; subdivision assigns smaller child
+references. Neither numerical reset policy changes particle mass or physical
+volume. Material geometry measure can therefore differ from physical volume
+after a deliberate reset, especially after healing changes reference volume.
+
+CPDI mapping copies G into a temporary integration matrix $\widehat G$, applies
+Homel or VP-Hencky scaling, and uses local half edges $r=\widehat G/2$ in the
+eight-corner basis/gradient formula. No integration matrix is stored per
+particle. Cached and on-demand mapping, neighbor support, and CPDI boundary
+checks use the same projection. The projections are generally anisotropic;
+one scalar cannot encode them. Full-edge VP-Hencky feasibility is
+$M\leq(D/\sqrt d)^d$. Physical G, $G_0$, F, mass and volume are unchanged by
+integration scaling. SinglePoint and SinglePointBSpline sample at the center
+and retain the same material geometry for output and splitting.
+
+Box splitting uses unscaled G and applies matching generator bisections to G
+and $G_0$. Surface-reference offsets are translated in the constitutive F
+frame, which can differ from $G_0$ after FOnly. A selected native simplex is
+rejected because runtime tet/wedge splitting is not implemented. The generic
+splitter continues to exclude cohesive particles. CZ TypeB selects its cached
+anchor by intersecting the current surface-normal ray with the actual material
+shape at CZ initialization; TypeA uses the supplied surface offset. Subsequent
+relative-F transport and Nodal behavior retain their existing roles. The
+TypeB anchor is a boundary estimate, not an explicit interface-facet record.
+
+\subsection{PFW inputs and the one file contract}
+\begin{lstlisting}[language=Python]
+pfw['particleGeometry'] = 'fromRefinement'  # default: box
+pfw['surfaceRefinementMethod'] = 'simplex'
+pfw['surfaceRefinementLevel'] = 2
+pfw['geometryReset'] = 'FOnly'              # or FAndGeometry
+\end{lstlisting}
+Old Python input names are normalized in PFW: \texttt{particleReferenceGeometry}
+maps \texttt{equivalentBox} to \texttt{box}; \texttt{fromRefinement} retains cut
+shapes. Both old \texttt{particleGeometryFormat} values emit schema 2.
+\texttt{RVector} field requests are consumed. \texttt{particleDomainOutput} and
+\texttt{plotUnscaledParticles} are accepted by PFW but no longer emitted to XML;
+Silo and VTK always display current material geometry.
+
+Every particle row requires \texttt{GeometryVersion=2}, \texttt{GeometryShape},
+\texttt{ParticleVolume}, and nine full-edge \texttt{GeometryXX} through
+\texttt{GeometryZZ} components. ID and PositionX/Y/Z remain required. The reader
+rejects partial/old schemas, nonfinite or inverted geometry, and initial measure
+disagreement above relative tolerance $10^{-9}$. Initial wedges are xy triangles
+extruded in z. There are no R-vector, optional glyph, or integration-width
+columns. GEOS XML and restart backward compatibility are intentionally removed:
+regenerate particles/XML and start a new run. New restarts carry both geometry
+matrices and require geometry schema version 2.
+
+\subsection{Scope and verification}
+CPTI, runtime simplex splitting, arbitrary warped CPDI2, native 2D meshes and
+axisymmetry are not enabled. Planned CPTI uses tet corner weights $1/4$ and
+barycentric gradients $b_0=-G_{\rm column}^{-T}\mathbf{1}$,
+$b_i=G_{\rm column}^{-T}e_i$; triangles use $1/3$ and two edges. Simplex scaling
+must use actual vertices rather than the box feasibility cap. Current CPDI
+requires boxes; PFW simplex cuts require SinglePointBSpline. A simplex requesting
+VP-Hencky F selection uses the isotropic-polar reset algorithm.
+
+Standalone tests exercise production geometry and CPDI kernel bodies with CPU
+adapters. Full-writer checks include independent processes with explicitly
+emulated collectives. A full GEOS build, real MPI migration/restart, GPU execution,
+and coupled CZ regression remain integration checks. See
+\path{UNIFIED_PARTICLE_GEOMETRY.md} and the complete
+\path{examples/unifiedGeometry/pfw_input_unified_geometry.py} input.
