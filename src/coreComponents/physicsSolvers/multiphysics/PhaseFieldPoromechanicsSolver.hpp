@@ -22,9 +22,9 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/multiphysics/PhaseFieldFractureSolver.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
@@ -43,7 +43,7 @@ public:
   PhaseFieldPoromechanicsSolver( const string & name,
                                  Group * const parent );
 
-  ~PhaseFieldPoromechanicsSolver() override;
+  ~PhaseFieldPoromechanicsSolver() override = default;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -73,7 +73,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the poromechanics solver
    */
-  SinglePhasePoromechanics< SinglePhaseBase > * poromechancisSolver() const
+  SinglePhasePoromechanics< SinglePhaseBase > * poromechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
@@ -89,8 +89,6 @@ public:
 
   virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
 
-  void mapDamageAndGradientToQuadrature( DomainPartition & domain );
-
   void applyDamageOnTractionBC( DomainPartition & domain );
 
 protected:
@@ -99,67 +97,6 @@ protected:
 
 };
 
-template< typename FE_TYPE >
-struct DamageAndDamageGradientInterpolationKernel
-{
-  DamageAndDamageGradientInterpolationKernel( CellElementSubRegion const & subRegion ):
-    m_numElems( subRegion.size() )
-  {}
-
-  void interpolateDamageAndGradient( arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes,
-                                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes,
-                                     arrayView1d< real64 const > const nodalDamage,
-                                     arrayView2d< real64 > damageFieldOnMaterial,
-                                     arrayView3d< real64 > damageGradOnMaterial )
-  {
-    forAll< parallelDevicePolicy<> >( m_numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
-      constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
-
-      real64 xLocal[ numNodesPerElement ][ 3 ];
-      real64 nodalDamageLocal[ numNodesPerElement ];
-
-      for( localIndex a = 0; a < numNodesPerElement; ++a )
-      {
-        localIndex const localNodeIndex = elemToNodes( k, a );
-
-        for( int dim=0; dim < 3; ++dim )
-        {
-          xLocal[a][dim] = xNodes[ localNodeIndex ][dim];
-        }
-
-        nodalDamageLocal[ a ] = nodalDamage[ localNodeIndex ];
-      }
-
-      for( localIndex q = 0; q < n_q_points; ++q )
-      {
-        real64 N[ numNodesPerElement ];
-        FE_TYPE::calcN( q, N );
-
-        real64 dNdX[ numNodesPerElement ][ 3 ];
-        real64 const detJ = FE_TYPE::calcGradN( q, xLocal, dNdX );
-
-        GEOS_UNUSED_VAR( detJ );
-
-        real64 qDamage = 0.0;
-        real64 qDamageGrad[3] = {0, 0, 0};
-        finiteElement::feOps::valueAndGradient( N, dNdX, nodalDamageLocal, qDamage, qDamageGrad );
-
-        damageFieldOnMaterial( k, q ) = qDamage;
-
-        for( int dim=0; dim < 3; ++dim )
-        {
-          damageGradOnMaterial[k][q][dim] = qDamageGrad[dim];
-        }
-      }
-
-    } );
-  }
-
-  localIndex m_numElems;
-};
-
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PhaseFieldPoromechanicsSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_PHASEFIELDPOROMECHANICSSOLVER_HPP_ */

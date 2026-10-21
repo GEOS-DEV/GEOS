@@ -87,7 +87,8 @@ public:
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
-                                CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                localIndex const dR_dAperOffset )
     : Base( rankOffset,
             stencilWrapper,
             flowDofNumberAccessor,
@@ -98,6 +99,7 @@ public:
             localMatrix,
             localRhs ),
     m_dR_dAper( dR_dAper ),
+    m_dR_dAperOffset( dR_dAperOffset ),
     m_dPerm_dDispJump( fracturePermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
   {}
 
@@ -147,7 +149,7 @@ public:
       {
         stack.dofColIndices[i * numDof + jdof] = offset + jdof;
       }
-      stack.localColIndices[ i ] = m_sei( iconn, i );
+      stack.localColIndices[ i ] = m_dR_dAperOffset + m_sei( iconn, i );
     }
   }
 
@@ -250,7 +252,7 @@ public:
                                         localIndex const localRow )
     {
 
-      localIndex const row = LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
+      localIndex const row = m_dR_dAperOffset + LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
 
       m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,
                                                                stack.localColIndices.data(),
@@ -264,6 +266,7 @@ public:
 private:
 
   CRSMatrixView< real64, localIndex const > m_dR_dAper;
+  localIndex const m_dR_dAperOffset;
 
   ElementViewConst< arrayView4d< real64 const > > const m_dPerm_dDispJump;
 };
@@ -300,7 +303,8 @@ public:
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
-                   CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                   CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                   localIndex const dR_dAperOffset = 0 )
   {
     integer constexpr NUM_DOF = 1; // pressure
     integer constexpr NUM_EQN = 1;
@@ -317,7 +321,7 @@ public:
 
     kernelType kernel( rankOffset, stencilWrapper, flowDofNumberAccessor,
                        flowAccessors, fluidAccessors, permAccessors, fracPermAccessors,
-                       dt, localMatrix, localRhs, dR_dAper );
+                       dt, localMatrix, localRhs, dR_dAper, dR_dAperOffset );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }

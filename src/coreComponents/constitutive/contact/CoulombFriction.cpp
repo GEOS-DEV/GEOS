@@ -30,32 +30,89 @@ namespace constitutive
 CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
   FrictionBase( name, parent )
 {
+  // register wrappers
+
   registerWrapper( viewKeyStruct::shearStiffnessString(), &m_shearStiffness ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Value of the shear elastic stiffness. Units of Pressure/length" );
 
-  registerWrapper( viewKeyStruct::cohesionString(), &m_cohesion ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Cohesion" );
-
-  registerWrapper( viewKeyStruct::frictionCoefficientString(), &m_frictionCoefficient ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Friction coefficient" );
-
   registerWrapper( viewKeyStruct::elasticSlipString(), &m_elasticSlip ).
     setApplyDefaultValue( 0.0 ).
     setDescription( "Elastic Slip" );
+
+  registerWrapper( viewKeyStruct::defaultCohesionString(), &m_defaultCohesion ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default cohesion value" );
+
+  registerWrapper( viewKeyStruct::defaultFrictionCoefficientString(), &m_defaultFrictionCoefficient ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default friction coefficient value" );
+
+  // register fields
+  registerField< fields::contact::cohesion >( &m_cohesion );
+  registerField< fields::contact::frictionCoefficient >( &m_frictionCoefficient );
+
 }
 
 void CoulombFriction::postInputInitialization()
 {
-  GEOS_THROW_IF( m_frictionCoefficient < 0.0,
-                 GEOS_FMT( ": The provided friction coefficient is less than zero. Value: {}",
-                           m_frictionCoefficient ),
+  GEOS_THROW_IF( m_defaultCohesion < 0.0,
+                 GEOS_FMT( ": The provided default cohesion is less than zero. Value: {}",
+                           m_defaultCohesion ),
                  InputError, getDataContext() );
 
+  GEOS_THROW_IF( m_defaultFrictionCoefficient < 0.0,
+                 GEOS_FMT( ": The provided default friction coefficient is less than zero. Value: {}",
+                           m_defaultFrictionCoefficient ),
+                 InputError, getDataContext() );
+
+  getField< fields::contact::cohesion >().
+    setApplyDefaultValue( m_defaultCohesion );
+
+  getField< fields::contact::frictionCoefficient >().
+    setApplyDefaultValue( m_defaultFrictionCoefficient );
+}
+
+void CoulombFriction::initializePostInitialConditionsPreSubGroups()
+{
+  FrictionBase::initializePostInitialConditionsPreSubGroups();
+
+  localIndex negativeCohesionCount = 0;
+  localIndex negativeFrictionCoefficientCount = 0;
+  localIndex firstNegativeCohesionIndex = -1;
+  localIndex firstNegativeFrictionCoefficientIndex = -1;
+
+  for( localIndex k = 0; k < m_cohesion.size(); ++k )
+  {
+    if( m_cohesion[k] < 0.0 )
+    {
+      ++negativeCohesionCount;
+      if( firstNegativeCohesionIndex < 0 )
+      {
+        firstNegativeCohesionIndex = k;
+      }
+    }
+
+    if( m_frictionCoefficient[k] < 0.0 )
+    {
+      ++negativeFrictionCoefficientCount;
+      if( firstNegativeFrictionCoefficientIndex < 0 )
+      {
+        firstNegativeFrictionCoefficientIndex = k;
+      }
+    }
+  }
+
+  GEOS_THROW_IF( negativeCohesionCount > 0 || negativeFrictionCoefficientCount > 0,
+                 GEOS_FMT( "Negative Coulomb properties detected in per-cell data: "
+                           "cohesion count = {} (first index = {}), "
+                           "friction coefficient count = {} (first index = {})",
+                           negativeCohesionCount,
+                           firstNegativeCohesionIndex,
+                           negativeFrictionCoefficientCount,
+                           firstNegativeFrictionCoefficientIndex ),
+                 InputError,
+                 getDataContext() );
 }
 
 void CoulombFriction::allocateConstitutiveData( Group & parent, localIndex const numPts )
@@ -69,8 +126,8 @@ CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const
 {
   return CoulombFrictionUpdates( m_displacementJumpThreshold,
                                  m_shearStiffness,
-                                 m_cohesion,
-                                 m_frictionCoefficient,
+                                 m_cohesion.toViewConst(),
+                                 m_frictionCoefficient.toViewConst(),
                                  m_elasticSlip );
 }
 

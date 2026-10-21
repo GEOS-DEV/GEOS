@@ -127,8 +127,8 @@
 
     <Coulomb
       name="fractureContact"
-      cohesion="1e5"
-      frictionCoefficient="0.23"/>
+      defaultCohesion="1e5"
+      defaultFrictionCoefficient="0.23"/>
 
     <HydraulicApertureTable
       name="hApertureModel"

@@ -184,6 +184,11 @@ public:
   void closeFile()
   { if( m_CSVOutputOpened ) { m_logStream.close(); m_CSVOutputOpened = false; } }
 
+  /**
+   * @brief Get the number of time steps
+   */
+  integer const & getNumTimeSteps() const { return m_numTimeSteps; }
+
 protected:
 
   /// Number of time steps

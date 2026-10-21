@@ -57,7 +57,7 @@ struct AcousticMatricesSEM
                        arrayView1d< real32 > const mass )
 
     {
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const e )
       {
 
         real32 const invC2 = 1.0 / ( density[e] * pow( velocity[e], 2 ) );
@@ -117,7 +117,7 @@ struct AcousticMatricesSEM
                           arrayView1d< real32 const > const density,
                           arrayView1d< real32 > const damping )
     {
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const e )
       {
         for( localIndex i = 0; i < elemsToFaces.size( 1 ); ++i )
         {
@@ -186,7 +186,7 @@ struct AcousticMatricesSEM
                      arrayView1d< real32 > const grad2 )
 
     {
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const e )
       {
         if( elemGhostRank[e]<0 )
         {
@@ -247,7 +247,7 @@ struct AcousticMatricesSEM
                              arrayView1d< real32 > const imag )
 
     {
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      forAll< EXEC_POLICY >( size, [=, this] GEOS_HOST_DEVICE ( localIndex const e )
       {
         if( elemGhostRank[e]<0 )
         {

@@ -221,18 +221,22 @@ endmacro()
 ##                  KEY <key to use when looking up the kernel specification in the JSON object>
 ##                  RESULT <name of the variable to store the list of generated files in>
 ##                  SPLIT <delimiter used to split the instantiation strings into lists>
-##                  JSON <name of the JSON object variable> )
+##                  JSON <name of the JSON object variable>
+##                  LIST_TEMPLATE <path to the dispatch type list template> )
 ##
 ## This function generates kernel files from a template.
 ## The kernel specification is looked up in a JSON object using the provided key.
 ## The list of generated files is stored in the provided variable in the parent scope.
 ## The delimiter is used to split the instantiation strings into lists of symbol values.
 ## The JSON object is expected to be defined in the calling scope.
+## The dispatch type list template will be used to generate a list of types for dispatch of the
+## kernel. If this is not specified KernelDispatchTypeList.hpp.template in the parent directory
+## will be used.
 ##
 ##------------------------------------------------------------------------------
 function(generateKernels)
   set(options)
-  set(oneValueArgs TEMPLATE KEY HEADERS SOURCES SPLIT JSON)
+  set(oneValueArgs TEMPLATE KEY HEADERS SOURCES SPLIT JSON LIST_TEMPLATE)
   set(multiValueArgs)
 
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -297,6 +301,17 @@ function(generateKernels)
       configure_file(${ARG_TEMPLATE} ${generatedFileName} @ONLY)
       list(APPEND generatedSourcesList ${generatedFileName})
 
+      # ROCm 7.2/amdclang currently reports an invalid register class while
+      # compiling some large solid-mechanics HIP instantiations for gfx10/gfx11
+      # when inlining is enabled. Keep the workaround limited to the generated
+      # solid/poro-mechanics kernels so regular libraries and tests retain
+      # their normal optimization settings.
+      if( ENABLE_HIP AND CMAKE_HIP_ARCHITECTURES MATCHES "(^|;)gfx(10|11)"
+          AND generatedFileName MATCHES "(SolidMechanics.*Kernels|PoromechanicsKernels|ThermoPoromechanicsKernels)" )
+        set_source_files_properties( "${generatedFileName}"
+                                     PROPERTIES COMPILE_OPTIONS "-fno-inline" )
+      endif()
+
       string(REPLACE "${ARG_SPLIT}" ", " typeCombination ${instantiation})
       set(typeCombinationList "${typeCombinationList},
   types::TypeList< ${typeCombination} >")
@@ -309,7 +324,11 @@ function(generateKernels)
   set(generatedFileName "${CMAKE_BINARY_DIR}/include/${relativeSourceDir}/${localRelDir}/${KERNEL_GROUP_NAME}DispatchTypeList.hpp")
   string(REPLACE "coreComponents/" "" generatedFileName "${generatedFileName}")
   message(STATUS "Generating file: ${generatedFileName}")
-  configure_file(../KernelDispatchTypeList.hpp.template "${generatedFileName}" @ONLY)
+  set(LIST_TEMPLATE "${ARG_LIST_TEMPLATE}")
+  if ("${LIST_TEMPLATE}" STREQUAL "")
+    set(LIST_TEMPLATE "../KernelDispatchTypeList.hpp.template")
+  endif()
+  configure_file(${LIST_TEMPLATE} "${generatedFileName}" @ONLY)
   list(APPEND generatedHeadersList ${generatedFileName})
 
   # The list of generated files is returned by setting the variable in the parent scope
@@ -329,6 +348,10 @@ endfunction()
 ## Adds a test to the project, remaining arguments are forwarded to `blt_add_test`
 ## As a side effect, uses and populates a global property named `geos_tests_exe_list`
 ## initialized in `src/CMakeLists.txt`.
+## MPI tests keep using BLT's NUM_MPI_TASKS command wrapping, and GEOS mirrors
+## that rank count into CTest's PROCESSORS property so parallel CTest runs can
+## schedule multi-rank tests against the same processor-slot budget as serial
+## tests.
 ##------------------------------------------------------------------------------
 macro( geos_add_test )
 
@@ -351,8 +374,27 @@ macro( geos_add_test )
 
     message( DEBUG "arg_NAME=${arg_NAME} arg_EXECUTABLE=${arg_EXECUTABLE} arg_COMMAND=${arg_COMMAND} ARGN=${ARGN}" )  # debug
 
+    set( _geos_test_processors )
+    set( _geos_read_num_mpi_tasks OFF )
+    foreach( _geos_test_arg ${ARGN} )
+      if( _geos_read_num_mpi_tasks )
+        set( _geos_test_processors ${_geos_test_arg} )
+        set( _geos_read_num_mpi_tasks OFF )
+      elseif( _geos_test_arg STREQUAL "NUM_MPI_TASKS" )
+        set( _geos_read_num_mpi_tasks ON )
+      endif()
+    endforeach()
+
     blt_add_test( NAME ${arg_NAME}
                   COMMAND ${arg_COMMAND} ${ARGN} )
+
+    if( _geos_test_processors )
+      set_tests_properties( ${arg_NAME} PROPERTIES PROCESSORS ${_geos_test_processors} )
+    endif()
+
+    unset( _geos_read_num_mpi_tasks )
+    unset( _geos_test_processors )
+    unset( _geos_test_arg )
 
 endmacro( geos_add_test )
 

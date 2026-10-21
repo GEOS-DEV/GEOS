@@ -12,13 +12,50 @@ def create_pvt_test(name, description=None):
         check_step=0,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 
+def create_relperm_test(name, description=None):
+    if description is None: description = name
+    return TestDeck(
+        name=name,
+        description=description,
+        partitions=[(1, 1, 1)],
+        restart_step=0,
+        check_step=0,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+        
+def create_triaxial_test(name, description=None):
+    if description is None: description = name
+    return TestDeck(
+        name=name,
+        description=description,
+        partitions=[(1, 1, 1)],
+        restart_step=0,
+        check_step=0,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+
 decks = [
     create_pvt_test("testPVT"),
     create_pvt_test("testPVT_CO2Brine", "PVT Driver test for CO2 fluid models"),
     create_pvt_test("testPVT_CO2BrineTables", "PVT Driver test for CO2 fluid models with solubility tables"),
     create_pvt_test("testPVT_PhaseComposition", "PVT Driver test with composition output"),
     create_pvt_test("testPVT_ThreePhaseCompositional", "PVT Driver test for three phase compositional models"),
-    create_pvt_test("testPVT_docExample", "PVT Driver documentation example")
+    create_pvt_test("testPVT_docExample", "PVT Driver documentation example"),   
+    create_relperm_test("testRelperm_Table_2_phase", "Relperm driver for 2 phase tables"),
+    create_relperm_test("testRelperm_Table_3_phase", "Relperm driver for 3 phase tables"),
+    create_relperm_test("testRelperm_TableHyst2ph", "Two-phase hysteresis with large tables"),
+    create_relperm_test("testRelperm_BrooksCorey", "Three-phase Brooks-Corey with Baker and Stone II mixing rule"),
+    create_relperm_test("testRelperm_VanGenuchten", "Three-phase van Genuchten-Mualem models"),
+    create_relperm_test("testRelperm_docExample", "Relperm Driver documentation example"),
+    create_relperm_test("testRelperm_3_phase_example", "Relperm Driver 3-phase documentation example"),
+    create_triaxial_test("testTriaxial_delftEggCase1", "Delft Egg Case 1"),
+    create_triaxial_test("testTriaxial_delftEggCase2", "Delft Egg Case 2"),
+    create_triaxial_test("testTriaxial_delftEggLoadPathDryUseLinear", "Delft Egg with load path"),
+    create_triaxial_test("testTriaxial_delftEggLoadPathWetUseLinear", "Delft Egg with load path"),
+    create_triaxial_test("testTriaxial_delftEggUseLinear", "Delft Egg linear"),
+    create_triaxial_test("testTriaxial_druckerPragerExtended", "Extended Drucker-Prager model"),
+    create_triaxial_test("testTriaxial_elasticIsotropic", "Elastic isotropic model"),
+    create_triaxial_test("testTriaxial_elasticIsotropicPressureDependent", "Pressure dependent elastic isotropic model"),
+    create_triaxial_test("testTriaxial_modifiedCamClay", "Modified CamClay model"),
+    create_triaxial_test("testTriaxial_modifiedCamClayVolumetric", "Volumetric modified CamClay model")
 ]
 
 generate_geos_tests(decks)

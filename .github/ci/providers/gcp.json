@@ -1,5 +1,0 @@
-{
-  "artifact_upload_command": "CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead \"$UPLOAD_SRC\" \"$UPLOAD_DST\"",
-  "artifact_upload_pre_command": "if [[ -z \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" || ! -f \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" ]]; then echo \"ARTIFACT_UPLOAD_CREDENTIALS_FILE is required when artifact upload is enabled.\" >&2; exit 1; fi; if ! jq -e . \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" >/dev/null 2>&1; then echo \"::error::Invalid JSON in artifact upload credentials file.\" >&2; exit 1; fi; CLOUDSDK_PYTHON=python3 gcloud auth activate-service-account --key-file \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\"; CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True",
-  "artifact_upload_uri_root": "gs://"
-}

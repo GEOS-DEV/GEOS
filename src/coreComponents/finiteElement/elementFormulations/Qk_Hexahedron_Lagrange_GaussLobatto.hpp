@@ -1807,6 +1807,7 @@ public:
     return static_cast< const Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * >(this);
   }
 
+  GEOS_HOST_DEVICE
   virtual ~Qk_Hexahedron_Lagrange_GaussLobatto() override final = default;
 };
 

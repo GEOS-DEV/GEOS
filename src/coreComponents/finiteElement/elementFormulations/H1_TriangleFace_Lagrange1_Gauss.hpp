@@ -470,6 +470,7 @@ public:
   {}
 
   /// Destructor
+  GEOS_HOST_DEVICE
   virtual ~H1_TriangleFace_Lagrange1_Gauss() override final = default;
 
   /**

@@ -1081,6 +1081,7 @@ public:
 
   UpwindScheme & operator=( UpwindScheme && ) = delete;
 
+  GEOS_HOST_DEVICE
   virtual ~UpwindScheme() = default;
 
   template< localIndex numComp, localIndex numFluxSupportPoints, class UPWIND >

@@ -6,9 +6,7 @@ Continuous Integration process
 To save building time, the third party libraries (that do not change so often) and GEOS are build separately.
 
 Everytime a pull is requested in the TPL repository, docker images are generated and deployed on `dockerhub <https://hub.docker.com/r/geosx>`_.
-The repository names (`ubuntu18.04-gcc8 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc8>`_,
-`centos7.7.1908-clang9.0.0 <https://hub.docker.com/r/geosx/centos7.5.1804-clang6.0.1>`_, `centos7.6.1810-gcc8.3.1-cuda10.1.243 <https://hub.docker.com/r/geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243>`_ etc.)
-obviously reflect the OS and the compiler flavour used.
+The repository names (e.g. `ubuntu24.04-gcc13-cuda12.9.1 <https://hub.docker.com/r/geosx/ubuntu24.04-gcc13-cuda12.9.1>`_) obviously reflect the OS and the compiler flavour used.
 For each image, the unique tag ``${PULL_REQUEST_NUMBER}-${BUILD_NUMBER}`` (defined as ``${{ github.event.number }}-${{ github.run_number }}`` in github actions) is used so we can connect the related code source in a rather convenient way.
 Each docker contains the ``org.opencontainers.image.created`` and ``org.opencontainers.image.revision`` labels to provide additional information.
 

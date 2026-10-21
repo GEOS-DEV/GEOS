@@ -122,6 +122,21 @@ macro(mandatory_tpl_doesnt_exist
 
 endmacro(mandatory_tpl_doesnt_exist)
 
+macro( hypredrv_install_not_found extra_detail )
+    message( FATAL_ERROR
+             "A valid hypredrive installation is required because ENABLE_HYPREDRV is ON "
+             "(this is the default when ENABLE_HYPRE is ON).\n"
+             "  ${extra_detail}\n"
+             "  ENABLE_HYPRE    = ${ENABLE_HYPRE}\n"
+             "  ENABLE_HYPREDRV = ${ENABLE_HYPREDRV}\n"
+             "  HYPREDRV_DIR    = \"${HYPREDRV_DIR}\"\n"
+             "  GEOS_TPL_DIR    = \"${GEOS_TPL_DIR}\"\n"
+             "hypredrive was not found in the current third-party library (TPL) bundle. "
+             "Update your TPLs to a version that includes hypredrive, then set HYPREDRV_DIR "
+             "to that installation (or ensure \"${GEOS_TPL_DIR}/hypredrive\" exists).\n"
+             "To build with HYPRE but without hypredrive, reconfigure with -DENABLE_HYPREDRV=OFF." )
+endmacro()
+
 
 set(thirdPartyLibs "")
 
@@ -390,7 +405,7 @@ if(DEFINED UMPIRE_DIR)
     message( " ----> umpire_VERSION = ${umpire_VERSION}")
 
     set(ENABLE_UMPIRE ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} umpire)
+    set(thirdPartyLibs ${thirdPartyLibs} umpire::umpire)
 else()
     mandatory_tpl_doesnt_exist("Umpire" UMPIRE_DIR)
 endif()
@@ -680,7 +695,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         get_filename_component( HYPRE_INSTALL_DIR "${HYPRE_DIR}/../../.." ABSOLUTE )
     endif()
 
-    set( HYPRE_DEPENDS blas lapack umpire )
+    set( HYPRE_DEPENDS blas lapack umpire::umpire )
     if( ENABLE_SUPERLU_DIST )
         list( APPEND HYPRE_DEPENDS superlu_dist )
     endif()
@@ -706,6 +721,12 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                      LIBRARIES HYPRE
                      DEPENDS ${HYPRE_DEPENDS} )
 
+    # HYPREDRVConfig.cmake probes for a CMake HYPRE package.  Legacy Autotools
+    # installs do not provide one, and that probe can replace HYPRE_DIR with a
+    # -NOTFOUND cache entry even though the imported legacy target is valid.
+    # Preserve the user/TPL-supplied path for subsequent reconfiguration.
+    set( _geos_hypre_dir "${HYPRE_DIR}" )
+
     extract_version_from_header( NAME hypre
                                  HEADER "${HYPRE_INSTALL_DIR}/include/HYPRE_config.h"
                                  VERSION_STRING "HYPRE_RELEASE_VERSION" )
@@ -717,7 +738,9 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         if( "${header_file}" MATCHES "HYPRE_BRANCH_NAME *\"([^\"]*)\"" )
             set( hypre_dev_branch "${CMAKE_MATCH_1}" )
         endif()
-        set( hypre_VERSION "${hypre_dev_string} (${hypre_dev_branch})" CACHE STRING "" FORCE )
+        # HYPRE_DEVELOP_STRING is already the canonical git-describe value
+        # (vX.Y.Z-N-g<abbreviated-sha>); keep it unmodified.
+        set( hypre_VERSION "${hypre_dev_string}" CACHE STRING "" FORCE )
         message( " ----> hypre_VERSION = ${hypre_VERSION}" )
     endif()
 
@@ -753,7 +776,21 @@ if( ENABLE_HYPREDRV AND NOT ENABLE_HYPRE )
     message( FATAL_ERROR "ENABLE_HYPREDRV requires ENABLE_HYPRE." )
 endif()
 
-if( DEFINED HYPREDRV_DIR AND ENABLE_HYPREDRV )
+if( ENABLE_HYPREDRV )
+    # Host-configs and -DHYPREDRV_DIR win. Otherwise look in the TPL bundle.
+    if( NOT HYPREDRV_DIR AND DEFINED GEOS_TPL_DIR AND EXISTS "${GEOS_TPL_DIR}/hypredrive" )
+        set( HYPREDRV_DIR "${GEOS_TPL_DIR}/hypredrive" CACHE PATH
+             "Path to a HYPREDRV installation prefix or package config directory" FORCE )
+    endif()
+
+    if( NOT HYPREDRV_DIR )
+        hypredrv_install_not_found( "HYPREDRV_DIR is not set." )
+    endif()
+
+    if( NOT EXISTS "${HYPREDRV_DIR}" )
+        hypredrv_install_not_found( "HYPREDRV_DIR does not exist on disk." )
+    endif()
+
     message( STATUS "HYPREDRV_DIR = ${HYPREDRV_DIR}" )
 
     list( PREPEND CMAKE_PREFIX_PATH "${HYPREDRV_DIR}" )
@@ -761,21 +798,70 @@ if( DEFINED HYPREDRV_DIR AND ENABLE_HYPREDRV )
         list( PREPEND CMAKE_PREFIX_PATH "${HYPRE_DIR}" )
     endif()
 
-    find_package( HYPREDRV REQUIRED CONFIG
+    find_package( HYPREDRV CONFIG QUIET
                   PATHS ${HYPREDRV_DIR}
                         ${HYPREDRV_DIR}/lib/cmake/HYPREDRV
+                        ${HYPREDRV_DIR}/lib64/cmake/HYPREDRV
                         ${HYPREDRV_DIR}/cmake/HYPREDRV
                   NO_DEFAULT_PATH )
+
+    if( DEFINED _geos_hypre_dir )
+        set( HYPRE_DIR "${_geos_hypre_dir}" CACHE PATH "" FORCE )
+    endif()
+
+    if( NOT HYPREDRV_FOUND )
+        hypredrv_install_not_found(
+            "No HYPREDRV CMake package was found under HYPREDRV_DIR (looked for HYPREDRVConfig.cmake)." )
+    endif()
 
     blt_convert_to_system_includes( TARGET HYPREDRV::HYPREDRV )
 
     unset( hypredrv_config_header )
     unset( hypredrv_dev_string )
     unset( hypredrv_dev_branch )
-    get_target_property( hypredrv_include_dirs HYPREDRV::HYPREDRV INTERFACE_INCLUDE_DIRECTORIES )
+    unset( hypredrv_git_sha )
+    unset( hypredrv_target_include_dirs )
+    unset( hypredrv_include_dirs )
+    unset( hypredrv_config_header_candidates )
+
+    # HYPREDRV_DIR can be either an install prefix or the directory that
+    # contains HYPREDRVConfig.cmake.  Do not rely solely on the imported
+    # target's include directories: package generators may omit the config
+    # header from INTERFACE_INCLUDE_DIRECTORIES.
+    list( APPEND hypredrv_config_header_candidates
+          "${HYPREDRV_DIR}/include/HYPREDRV_config.h"
+          "${HYPREDRV_DIR}/HYPREDRV_config.h" )
+
+    get_target_property( hypredrv_target_include_dirs HYPREDRV::HYPREDRV
+                         INTERFACE_INCLUDE_DIRECTORIES )
+    if( DEFINED hypredrv_target_include_dirs AND
+        NOT "${hypredrv_target_include_dirs}" STREQUAL "" AND
+        NOT "${hypredrv_target_include_dirs}" MATCHES "-NOTFOUND$" )
+        list( APPEND hypredrv_include_dirs ${hypredrv_target_include_dirs} )
+    endif()
+
+    if( DEFINED HYPREDRV_INCLUDE_DIRS AND
+        NOT "${HYPREDRV_INCLUDE_DIRS}" STREQUAL "" AND
+        NOT "${HYPREDRV_INCLUDE_DIRS}" MATCHES "-NOTFOUND$" )
+        list( APPEND hypredrv_include_dirs ${HYPREDRV_INCLUDE_DIRS} )
+    endif()
+
     foreach( include_dir IN LISTS hypredrv_include_dirs )
-        if( EXISTS "${include_dir}/HYPREDRV_config.h" )
-            set( hypredrv_config_header "${include_dir}/HYPREDRV_config.h" )
+        # Imported targets can expose BUILD_INTERFACE/INSTALL_INTERFACE
+        # generator expressions.  The latter is not useful at configure time.
+        if( include_dir MATCHES "^\\$<BUILD_INTERFACE:(.*)>$" )
+            set( include_dir "${CMAKE_MATCH_1}" )
+        elseif( include_dir MATCHES "^\\$<INSTALL_INTERFACE:.*>$" )
+            continue()
+        endif()
+        list( APPEND hypredrv_config_header_candidates
+              "${include_dir}/HYPREDRV_config.h" )
+    endforeach()
+
+    list( REMOVE_DUPLICATES hypredrv_config_header_candidates )
+    foreach( config_header IN LISTS hypredrv_config_header_candidates )
+        if( EXISTS "${config_header}" )
+            set( hypredrv_config_header "${config_header}" )
             break()
         endif()
     endforeach()
@@ -796,28 +882,36 @@ if( DEFINED HYPREDRV_DIR AND ENABLE_HYPREDRV )
                 set( hypredrv_dev_branch "${CMAKE_MATCH_1}" )
             endif()
 
-            if( hypredrv_dev_branch )
-                set( HYPREDRV_VERSION "${hypredrv_dev_string} (${hypredrv_dev_branch})" )
-                set( HYPREDRV_VERSION "${hypredrv_dev_string} (${hypredrv_dev_branch})" CACHE STRING "" FORCE )
-            else()
-                set( HYPREDRV_VERSION "${hypredrv_dev_string}" )
-                set( HYPREDRV_VERSION "${hypredrv_dev_string}" CACHE STRING "" FORCE )
-            endif()
+            # HYPREDRV_DEVELOP_STRING is generated by git describe and is
+            # already the canonical value (vX.Y.Z-N-g<abbreviated-sha>).
+            # Keep it intact; appending the branch made the value unsuitable
+            # for consumers that expect a Git-describe version.
+            set( HYPREDRV_VERSION "${hypredrv_dev_string}" )
+            set( HYPREDRV_VERSION "${hypredrv_dev_string}" CACHE STRING "" FORCE )
+        endif()
+
+        if( "${header_file}" MATCHES "HYPREDRV_GIT_SHA *\"([^\"]*)\"" )
+            set( hypredrv_git_sha "${CMAKE_MATCH_1}" )
         endif()
     endif()
 
+    if( hypredrv_config_header )
+        message( STATUS " ----> HYPREDRV_config.h = ${hypredrv_config_header}" )
+    else()
+        message( WARNING
+                 "Could not locate HYPREDRV_config.h under HYPREDRV_DIR or "
+                 "the HYPREDRV target include directories." )
+    endif()
     if( HYPREDRV_VERSION )
         message( " ----> HYPREDRV_VERSION = ${HYPREDRV_VERSION}" )
+    endif()
+    if( hypredrv_git_sha )
+        message( " ----> HYPREDRV_GIT_SHA = ${hypredrv_git_sha}" )
     endif()
 
     set( ENABLE_HYPREDRV ON CACHE BOOL "" FORCE )
     set( thirdPartyLibs ${thirdPartyLibs} HYPREDRV::HYPREDRV )
 else()
-    if( ENABLE_HYPREDRV )
-        message( WARNING "ENABLE_HYPREDRV is ON but HYPREDRV_DIR isn't defined." )
-    endif()
-
-    set( ENABLE_HYPREDRV OFF CACHE BOOL "" FORCE )
     message( STATUS "Not using HYPREDRV." )
 endif()
 

@@ -22,10 +22,10 @@ def main():
     outputDir = args.outputDir
     geosDir = args.geosDir
     path = outputDir + "/DruckerPragerResults.txt"
-    xmlFilePath = geosDir + "/inputFiles/triaxialDriver/triaxialDriver_base.xml"
-    xmlFilePath_case = geosDir + "/inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml"
-    imposedStrainFilePath = geosDir + "/inputFiles/triaxialDriver/tables/axialStrain.geos"
-    imposedStressFilePath = geosDir + "/inputFiles/triaxialDriver/tables/radialStress.geos"
+    xmlFilePath = geosDir + "/inputFiles/constitutiveDriver/triaxialDriver_base.xml"
+    xmlFilePath_case = geosDir + "/inputFiles/constitutiveDriver/triaxialDriver_DruckerPrager.xml"
+    imposedStrainFilePath = geosDir + "/inputFiles/constitutiveDriver/tables/axialStrain.geos"
+    imposedStressFilePath = geosDir + "/inputFiles/constitutiveDriver/tables/radialStress.geos"
          
     # Load GEOSX results
     time, ax_strain, ra_strain1, ra_strain2, ax_stress, ra_stress1, ra_stress2, newton_iter, residual_norm = np.loadtxt(

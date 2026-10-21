@@ -57,6 +57,12 @@ public:
   TableErrorListing & getErrorsList() const
   { return *m_errors; }
 
+  /**
+   * @return The prepared table layout
+   */
+  PreparedTableLayout const & getLayout() const
+  { return m_tableLayout; }
+
 protected:
 
   /// Layout for a table

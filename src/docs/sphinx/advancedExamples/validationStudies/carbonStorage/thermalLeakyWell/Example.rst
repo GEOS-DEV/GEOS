@@ -144,13 +144,11 @@ for density and viscosity, respectively.
 The density and viscosity values are internally tabulated by GEOS at the beginning of the simulation by solving
 the Helmholtz energy equation for each pair :math:`(p,T)`.
 
-The tables size and spacing are specified in the file `pvtgas.txt`.
-Here, for both quantities, the values are tabulated between 6.6e6 Pa and 4e7 Pa, with a pressure spacing of 1e6 Pa,
+The tables size and spacing are specified by the parameters in the fluid xml element.
+Here, for all quantities, the values are tabulated between 6.6e6 Pa and 4e7 Pa, with a uniform pressure spacing of 1e6 Pa,
 and between 302 K and 312 K, with a temperature increment of 5 K.
 These values have been chosen using the initial condition and an upper bound on the expected pressure increase
 during the simulation.
-
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/pvtgas.txt
 
 .. note::
    If pressure or temperature go outside the values specified in this parameter file, constant extrapolation is used to obtain the density and viscosity values. Note that for now, no warning is issued by GEOS when this happens. We plan to add a warning message to document this behavior in the near future.  
@@ -161,13 +159,9 @@ Brine density and viscosity
 These properties depend on pressure, temperature, composition, and salinity via the models proposed by
 Phillips et al. (1981). The brine density is modified to account for the presence of dissolved CO2 using
 the method proposed by Garcia (2001).   
-The values of (pure) brine density are also tabulated at a function of pressure and temperature, and we
-use the same range as for the CO2 properties to construct this table:
+The values of (pure) brine density are also tabulated at a function of pressure and temperature at the same pressure and temperature points as the CO2.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/pvtliquid.txt
-
-Importantly, the last value on each line in the file `pvtliquid.txt` defines the salinity in the domain.
-In our model, salinity is constant in space and in time (i.e., unlike water and CO2, it is not tracked as
+In this model, salinity is constant in space and in time (i.e., unlike water and CO2, it is not tracked as
 a component in GEOS).
 In our model, salinity is specified as a molal concentration in mole of NaCl per kg of solvent (brine).
 The value used here (1000 x 10 / ( 58.44 x ( 100 - 10 ) ) = 1.901285269 moles/kg) is
@@ -178,10 +172,8 @@ CO2 solubility in brine
 
 As explained in :ref:`CO2-EOS`, we use the highly nonlinear model proposed by Duan and Sun (2004)
 to compute the CO2 solubility as a function of pressure, temperature, composition, and salinity.
-In `co2flash.txt`, we use the same parameters as above to construct the pressure-temperature tables
+The pressure and temperature points defined in the xml entry, as above, are used to construct the pressure-temperature tables
 of precomputed CO2 solubility in brine.
-
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/co2flash.txt
 	
 ------------------------------------------------------------------
 Initial and boundary conditions
