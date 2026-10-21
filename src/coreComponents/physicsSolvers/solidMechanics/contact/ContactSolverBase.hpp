@@ -30,7 +30,8 @@ namespace geos
 class ContactSolverBase : public SolidMechanicsLagrangianFEM
 {
 public:
-  static constexpr bool hasContactStabilization = false;
+  /// Whether the contact is stabilized with face bubble functions, which carry their own (bubble displacement) DOFs
+  static constexpr bool hasFaceBubbles = false;
 
   ContactSolverBase( const string & name,
                      Group * const parent );

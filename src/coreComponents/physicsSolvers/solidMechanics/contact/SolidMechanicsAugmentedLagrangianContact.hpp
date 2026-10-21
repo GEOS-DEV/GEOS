@@ -31,7 +31,8 @@ namespace geos
 class SolidMechanicsAugmentedLagrangianContact : public ContactSolverBase
 {
 public:
-  static constexpr bool hasContactStabilization = true;
+  /// The contact is stabilized with face bubble functions, which carry their own (bubble displacement) DOFs
+  static constexpr bool hasFaceBubbles = true;
 
   SolidMechanicsAugmentedLagrangianContact( const string & name,
                                             Group * const parent );
@@ -125,10 +126,6 @@ public:
   virtual bool updateConfiguration( DomainPartition & domain,
                                     integer configurationLoopIter ) override final;
 
-
-  //TODO (jafranc) - bubble should be reframe as a stabilization
-  string getStabilizationName() const { return "TODO:bubble"; }
-  bool hasStabilization() const { return false;}
 
   /**
    * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.

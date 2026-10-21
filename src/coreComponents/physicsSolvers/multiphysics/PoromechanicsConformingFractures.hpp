@@ -61,7 +61,7 @@ public:
     // 1. Poromechanical coupling in the bulk (p<->disp)
     Base::setupCoupling( domain, dofManager );
 
-    if constexpr (CONTACT_SOLVER::hasContactStabilization) {
+    if constexpr (CONTACT_SOLVER::hasFaceBubbles) {
       // 2. Pressure - bubble displacement coupling in the fracture
       dofManager.addCoupling( this->getFlowDofKey(),
                               fields::contact::totalBubbleDisplacement::key(),
@@ -86,7 +86,7 @@ public:
     this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, patternOriginal );
 
     SparsityPattern< globalIndex > mechanicsPattern;
-    if constexpr (CONTACT_SOLVER::hasContactStabilization) {
+    if constexpr (CONTACT_SOLVER::hasFaceBubbles) {
       this->solidMechanicsSolver()->setSparsityPattern( domain, dofManager, localMatrix, mechanicsPattern );
     }
 
@@ -95,7 +95,7 @@ public:
     for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
     {
       rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
-      if constexpr ( CONTACT_SOLVER::hasContactStabilization )
+      if constexpr ( CONTACT_SOLVER::hasFaceBubbles )
       {
         //compute overlap to have the exact size
         auto const flowCols = patternOriginal.getColumns( localRow );
@@ -115,11 +115,10 @@ public:
     // Add the number of nonzeros induced by coupling
     //displacement (and opt. bubble) to flow coupling
     addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView());
-    if constexpr (CONTACT_SOLVER::hasContactStabilization) {
-      //bubble to displacement coupling
+    if constexpr (CONTACT_SOLVER::hasFaceBubbles) {
+      // fracture pressure to bubble, and matrix cell flow to/from bubble couplings
       addPressureForceCouplingNNZ( domain, dofManager, rowLengths.toView() );
-      addMatrixTemperaturePressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );//TODO should be brought by
-                                                                                               // CONTACT::STABILIZATION
+      addMatrixTemperaturePressureBubbleCouplingNNZ( domain, dofManager, rowLengths.toView() );
     }
 
 
@@ -131,14 +130,14 @@ public:
     // Copy the original nonzeros
     appendSparsityPattern( pattern, patternOriginal );
     //ALM appendSparsityPattern( pattern, flowPattern );
-    if constexpr (CONTACT_SOLVER::hasContactStabilization) {
+    if constexpr (CONTACT_SOLVER::hasFaceBubbles) {
       appendSparsityPattern( pattern, mechanicsPattern );
     }
 
     // Add the nonzeros from coupling
     //displacement (and opt. bubble) to flow coupling
     addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
-    if constexpr (CONTACT_SOLVER::hasContactStabilization) {
+    if constexpr (CONTACT_SOLVER::hasFaceBubbles) {
       addPressureForceCouplingPattern( domain, dofManager, pattern.toView() );
       addMatrixTemperaturePressureBubbleCouplingPattern( domain, dofManager, pattern.toView() );
     }
@@ -146,8 +145,7 @@ public:
     setUpDerivativeFluxResidual_dNormalJump( domain );
   }
 
-  //Stabilization specific
-  //TODO see refacto with below
+  // Face bubbles only
   void addPressureForceCouplingNNZ( DomainPartition const & domain,
                                     DofManager const & dofManager,
                                     arrayView1d< localIndex > const & rowLengths ) const
@@ -525,8 +523,8 @@ protected:
       NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
       FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-      //TODO (jafranc) - remove once ALM-bubble is frame as a stab method - tmp runtime is fine as it is tmp
-      if( this->solidMechanicsSolver()->hasStabilization())//why is this not done in SolidMech ?
+      // Lagrange multipliers: the traction stabilization stencil connects the fracture elements
+      if constexpr ( !CONTACT_SOLVER::hasFaceBubbles )
       {
 
         FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( this->solidMechanicsSolver()->getStabilizationName() );
@@ -573,8 +571,10 @@ protected:
           }
         } );
       }
-      //to decide -- reduce duplication -- can we have both ?
-      if constexpr (CONTACT_SOLVER::hasContactStabilization) {
+      // Face bubbles (augmented Lagrangian): the flow stencil connects the fracture elements, and the flow rows
+      // also couple to the bubble DOFs of the neighbors
+      else
+      {
 
         FluxApproximationBase const & fvMethod = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
 
@@ -651,7 +651,7 @@ protected:
                                           [&faceToNodeMap]( localIndex const & faceIndex, localIndex const & a ){ return faceToNodeMap( faceIndex, a ); },
                                           [&faceToNodeMap]( localIndex const & faceIndex ){ return faceToNodeMap.sizeOfArray( faceIndex ); } );
 
-      if constexpr (CONTACT_SOLVER::hasContactStabilization)
+      if constexpr (CONTACT_SOLVER::hasFaceBubbles)
       {
         addTransmissibilityCouplingPattern( domain, mesh, dofManager, pattern,
                                             faceManager.getReference< globalIndex_array >( dofManager.getKey( fields::contact::totalBubbleDisplacement::key() ) ),
@@ -673,7 +673,7 @@ protected:
                                            ) const
   {
 
-    // Get the finite volume method used to compute the stabilization
+    // Get the finite volume method used to compute the fracture fluxes
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fvDiscretization = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );
@@ -915,8 +915,8 @@ protected:
       assembleFluidMassResidualDerivativeWrtDisplacement( meshName, mesh, regionNames, dofManager, localMatrix, localRhs );
     } );
 
-    //if hasStabilization via bubble - Apb
-    if constexpr (CONTACT_SOLVER::hasContactStabilization)
+    // face bubbles: matrix cell flow to/from bubble couplings (A_bp, A_bT, A_pb, A_Tb)
+    if constexpr (CONTACT_SOLVER::hasFaceBubbles)
       assembleMatrixPressureBubbleContribution( dt, const_cast< DomainPartition & >( domain ), dofManager, localMatrix, localRhs );
 
   }
