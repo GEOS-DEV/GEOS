@@ -59,7 +59,7 @@ set( mesh_headers
      ParticleSubRegion.hpp
      ParticleSubRegionBase.hpp
      ParticleType.hpp
-     ParticleReferenceGeometry.hpp
+     ParticleGeometry.hpp
      CohesiveZoneManager.hpp
      CohesiveZoneRegionBase.hpp
      CohesiveZoneRegion.hpp

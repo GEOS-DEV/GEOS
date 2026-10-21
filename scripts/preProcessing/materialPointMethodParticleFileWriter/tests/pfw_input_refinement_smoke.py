@@ -32,6 +32,10 @@ pfw = dict(
         for i in (0, 1)),
 )
 
+# Omit the default key so the same fixture can exercise an unpatched writer.
+if os.environ.get('PFW_TEST_GEOMETRY_FORMAT', 'legacy') != 'legacy':
+    pfw['particleGeometryFormat'] = os.environ['PFW_TEST_GEOMETRY_FORMAT']
+
 
 class PlanarSide(geom.Geometry):
     def __init__(self, sign, material):

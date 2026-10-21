@@ -1,4 +1,61 @@
+# Current unified-geometry audit (2026-10-21)
+
+Current contract: schema 2 only; shape + full reference/current generators;
+temporary CPDI projection; FOnly/FAndGeometry reset policies. Old PFW Python
+inputs normalize to new files/XML. Old GEOS files and restarts are unsupported.
+The sections below are historical audit records and are superseded on geometry
+storage, file compatibility, reset behavior and output by
+`../UNIFIED_PARTICLE_GEOMETRY.md` and manual section `unified-particle-geometry`.
+
+Updated: reader/writer, geometry, CPDI mapping, box splitting, reset/healing,
+rigid rotation, TypeB CZ anchors, Silo/VTK, PFW aliases, examples, source-derived
+option/schema tables, geometry/refinement/output/robustness/CZ theory.
+
+Checks: Python geometry/refinement suite; standalone production geometry and
+CPDI kernel bodies; full writer with 1/3/7 emulated ranks and C++ record validation.
+Full GEOS build, device execution, actual MPI migration, new restart round-trip,
+and coupled CZ mechanics still need validation in the configured GEOS environment.
+CPTI, runtime simplex splitting, native 2D and axisymmetry are future extensions.
+
+---
+
 # MPM source and documentation audit
+
+## Current unified geometry patch (GEOS-mpm-4.zip)
+
+`GEOS-mpm-4-unified-geometry.patch` applies to the current v4 upload, including
+the earlier merge/build fix and PFW progress/comment updates. It centralizes
+affine geometry operations, updates output and box splitting to use them,
+separates mapping capacity from geometry vertex count, and adds an opt-in
+`particleGeometryFormat="unified"` file schema. See
+[`../UNIFIED_PARTICLE_GEOMETRY.md`](../UNIFIED_PARTICLE_GEOMETRY.md).
+
+Existing runtime arrays/checkpoint names remain. Runtime memory reduction, CPTI,
+tet splitting, true 2D and axisymmetry are not implemented by this first patch.
+The narrative, generated references/source fingerprints, and PDF were rebuilt.
+
+Validation: 32 Python unit tests; 3,000 C++ affine/reset trials; 5,000 domain
+checks with 34,000 box children; 96 refined writer executions using emulated
+1/3/7-rank collectives; 16 byte-identical comparisons against the pristine v4
+writer; eight no-refinement writer executions; and a 2,277-particle complete
+example. The production C++ codec reproduced legacy R/native generators for
+7,622 particles across 20 corresponding serial cases. Explicit volumes agreed
+with legacy determinant volumes within floating-point tolerance.
+
+The standalone tests do not compile the complete GEOS solver or validate its
+field registration, Silo/VTK runtime, MPI transport/migration, restart, or GPU
+execution. The archive does not contain the required dependency-submodule
+contents. Those remain target-build integration checks.
+
+Apply this incremental patch from the unmodified v4 repository root:
+
+    git apply --check /path/to/GEOS-mpm-4-unified-geometry.patch
+    git apply /path/to/GEOS-mpm-4-unified-geometry.patch
+
+The earlier v3 audit below is historical; its patch commands describe the
+previous merge and must not be reapplied to the v4 baseline.
+
+## Earlier v3 audit record
 
 Audited 2026-10-20 against the selective MPM update based on GEOS-mpm-3.zip.
 The source version file still identifies v1.1.0; that identifier alone does not

@@ -17,7 +17,7 @@
  */
 
 #include "ParticleMeshGenerator.hpp"
-#include "mesh/ParticleReferenceGeometry.hpp"
+#include "mesh/ParticleGeometry.hpp"
 
 #include "mainInterface/GeosxState.hpp"
 #include "common/initializeEnvironment.hpp"
@@ -177,19 +177,11 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   requireColumn( ParticleColumnHeaders::PositionX );
   requireColumn( ParticleColumnHeaders::PositionY );
   requireColumn( ParticleColumnHeaders::PositionZ );
-  requireColumn( ParticleColumnHeaders::RVectorXX ); // For single point we currently use this to input particle volume 
-  // I don't like that we should optionally check if particleVolume field is defined and use that regardless of rvectors if instead, and warn if the user tries specifying both
-
-  // Header presence is rank-independent, including on empty ranks. A partial
-  // geometry record is an error, never a request to infer missing generators.
-  bool hasReferenceGeometry = false;
-  for( int h = static_cast< int >( ParticleColumnHeaders::ParticleReferenceGeometry );
-       h <= static_cast< int >( ParticleColumnHeaders::GeometryRVectorZZ ); ++h )
-    hasReferenceGeometry = hasReferenceGeometry || columnHeaderMap.count( h ) != 0;
-  if( hasReferenceGeometry )
-    for( int h = static_cast< int >( ParticleColumnHeaders::ParticleReferenceGeometry );
-         h <= static_cast< int >( ParticleColumnHeaders::GeometryRVectorZZ ); ++h )
-      requireColumn( static_cast< ParticleColumnHeaders >( h ) );
+  // Schema 2 is mandatory. PFW owns compatibility with old Python inputs.
+  requireColumn(ParticleColumnHeaders::GeometryVersion);
+  for(int h=static_cast<int>(ParticleColumnHeaders::GeometryShape);
+      h<=static_cast<int>(ParticleColumnHeaders::GeometryZZ);++h)
+    requireColumn(static_cast<ParticleColumnHeaders>(h));
 
   // Read in particle data
   int lineNumber = 1; // Since column header takes one line
@@ -275,17 +267,18 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleColumnHeaders::SurfaceTractionX:
         case ParticleColumnHeaders::SurfaceTractionY:
         case ParticleColumnHeaders::SurfaceTractionZ:
-        case ParticleColumnHeaders::ParticleReferenceGeometry:
-        case ParticleColumnHeaders::GeometryRVectorXX:
-        case ParticleColumnHeaders::GeometryRVectorXY:
-        case ParticleColumnHeaders::GeometryRVectorXZ:
-        case ParticleColumnHeaders::GeometryRVectorYX:
-        case ParticleColumnHeaders::GeometryRVectorYY:
-        case ParticleColumnHeaders::GeometryRVectorYZ:
-        case ParticleColumnHeaders::GeometryRVectorZX:
-        case ParticleColumnHeaders::GeometryRVectorZY:
-        case ParticleColumnHeaders::GeometryRVectorZZ:
         case ParticleColumnHeaders::TemperatureRate:
+        case ParticleColumnHeaders::GeometryShape:
+        case ParticleColumnHeaders::ParticleVolume:
+        case ParticleColumnHeaders::GeometryXX:
+        case ParticleColumnHeaders::GeometryXY:
+        case ParticleColumnHeaders::GeometryXZ:
+        case ParticleColumnHeaders::GeometryYX:
+        case ParticleColumnHeaders::GeometryYY:
+        case ParticleColumnHeaders::GeometryYZ:
+        case ParticleColumnHeaders::GeometryZX:
+        case ParticleColumnHeaders::GeometryZY:
+        case ParticleColumnHeaders::GeometryZZ:
           defaultValue = 0.0;
           break;
         default:
@@ -295,6 +288,10 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
       lineDataInside.push_back( defaultValue );
     }
+
+    real64 const geometryVersion = lineDataInside[static_cast< int >( ParticleColumnHeaders::GeometryVersion )];
+    GEOS_ERROR_IF( !std::isfinite( geometryVersion ) || std::abs( geometryVersion - 2.0 ) > 1.0e-12,
+                   "Unsupported particle geometry schema: regenerate particles and XML with current PFW" );
 
     int materialTypeIndex = lineDataInside[static_cast< int >( ParticleColumnHeaders::MaterialType )];
     int particleTypeIndex = lineDataInside[static_cast< int >( ParticleColumnHeaders::ParticleType )];
@@ -338,19 +335,13 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array1d< real64 > particleTemperatureRate( npInBlock );
     array1d< real64 > particleVolume( npInBlock );
     array1d< real64 > particleStrengthScale( npInBlock );
-    array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
+    array3d< real64 > particleGeometryCurrent( npInBlock, 3, 3 ); // Full edge generators, stored by rows.
     array2d< real64 > particleSurfaceNormal( npInBlock, 3 );
     array2d< real64 > particleSurfacePosition( npInBlock, 3 );
     array2d< real64 > particleSurfaceTraction( npInBlock, 3 );
     array1d< int > particleCZTag( npInBlock );
 
-    array1d< integer > referenceGeometry;
-    array3d< real64 > referenceGeometryVectors;
-    if( hasReferenceGeometry )
-    {
-      referenceGeometry.resize( npInBlock );
-      referenceGeometryVectors.resize( npInBlock, 3, 3 );
-    }
+    array1d< integer > referenceGeometry(npInBlock);
 
     // Populate particle fields with data
     for( localIndex i = 0; i < npInBlock; i++ )
@@ -397,132 +388,20 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       // Cohesive Zone ID
       particleCZTag[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::CZTag )];
 
-      // Volume and R-Vectors
-      switch( particleBlock.getParticleType() )
-      {
-        case ParticleType::SinglePoint:
-        {
-          particleVolume[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
-
-          GEOS_ERROR_IF( !std::isfinite( particleVolume[i] ) || particleVolume[i] <= 0.0,
-               "MPM particle volume must be finite and positive." );
-
-          real64 a = LvArray::math::pow( particleVolume[i], 1.0/3.0 );
-          particleRVectors[i][0][0] = a;
-          particleRVectors[i][0][1] = 0.0;
-          particleRVectors[i][0][2] = 0.0;
-          particleRVectors[i][1][0] = 0.0;
-          particleRVectors[i][1][1] = a;
-          particleRVectors[i][1][2] = 0.0;
-          particleRVectors[i][2][0] = 0.0;
-          particleRVectors[i][2][1] = 0.0;
-          particleRVectors[i][2][2] = a;
-          break;
-        }
-        case ParticleType::SinglePointBSpline:
-        {
-          // SinglePointBSpline uses particle centers for MPM interpolation.
-          // CPDI-style r-vectors are retained for particle-domain output and
-          // the existing particle-volume initialization convention.
-          double x1, y1, z1, x2, y2, z2, x3, y3, z3;
-          x1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
-          y1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXY )];
-          z1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXZ )];
-          x2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYX )];
-          y2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYY )];
-          z2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYZ )];
-          x3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZX )];
-          y3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZY )];
-          z3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZZ )];
-          particleRVectors[i][0][0] = x1;
-          particleRVectors[i][0][1] = y1;
-          particleRVectors[i][0][2] = z1;
-          particleRVectors[i][1][0] = x2;
-          particleRVectors[i][1][1] = y2;
-          particleRVectors[i][1][2] = z2;
-          particleRVectors[i][2][0] = x3;
-          particleRVectors[i][2][1] = y3;
-          particleRVectors[i][2][2] = z3;
-          particleVolume[i] = 8.0*LvArray::math::abs( -(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3 );
-          break;
-        }
-        case ParticleType::CPDI:
-        {
-          double x1, y1, z1, x2, y2, z2, x3, y3, z3;
-          x1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
-          y1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXY )];
-          z1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXZ )];
-          x2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYX )];
-          y2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYY )];
-          z2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYZ )];
-          x3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZX )];
-          y3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZY )];
-          z3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZZ )];
-          particleRVectors[i][0][0] = x1;
-          particleRVectors[i][0][1] = y1;
-          particleRVectors[i][0][2] = z1;
-          particleRVectors[i][1][0] = x2;
-          particleRVectors[i][1][1] = y2;
-          particleRVectors[i][1][2] = z2;
-          particleRVectors[i][2][0] = x3;
-          particleRVectors[i][2][1] = y3;
-          particleRVectors[i][2][2] = z3;
-          particleVolume[i] = 8.0*LvArray::math::abs( -(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3 );
-          break;
-        }
-        case ParticleType::CPTI:
-        {
-          GEOS_ERROR( "CPTI particle type is not implemented!" );
-          break;
-        }
-        case ParticleType::CPDI2:
-        {
-          GEOS_ERROR( "CPDI2 particle type is not implemented!" );
-          break;
-        }
-        default:
-        {
-          GEOS_ERROR( "Invalid particle type: " << particleBlock.getParticleType() );
-          break;
-        }
-      }
-
-      // Native geometry is supplementary metadata. The preceding legacy
-      // R-vector calculation remains authoritative for mechanical volume.
-      if( hasReferenceGeometry )
-      {
-        real64 const tag = particleData[b][i][static_cast< int >( ParticleColumnHeaders::ParticleReferenceGeometry )];
-        real64 const integerTag = std::floor( tag );
-        real64 constexpr tagTolerance = 1.0e-12;
-        GEOS_ERROR_IF( !std::isfinite( tag ) || tag < 0.0 || tag > 2.0 || std::abs( integerTag - tag ) > tagTolerance,
-                       "Invalid ParticleReferenceGeometry for particle " << particleID[i] );
-        integer const shape = static_cast< integer >( tag );
-        referenceGeometry[i] = shape;
-        GEOS_ERROR_IF( shape != 0 && particleBlock.getParticleType() != ParticleType::SinglePointBSpline,
-                       "Native wedge/tetrahedron geometry currently requires SinglePointBSpline" );
-        for( int a=0; a<3; ++a ) for( int j=0; j<3; ++j )
-        {
-          real64 const value = particleData[b][i][static_cast< int >( ParticleColumnHeaders::GeometryRVectorXX )+3*a+j];
-          GEOS_ERROR_IF( !std::isfinite( value ), "Nonfinite particle reference geometry" );
-          referenceGeometryVectors[i][a][j] = value;
-        }
-        if( shape == 1 )
-        {
-          real64 extent = 0.0;
-          for( int a=0; a<3; ++a ) for( int j=0; j<3; ++j )
-            extent = std::max( extent, std::abs( referenceGeometryVectors[i][a][j] ) );
-          real64 const tolerance = 1.0e-12*extent;
-          GEOS_ERROR_IF( std::abs( referenceGeometryVectors[i][0][2] ) > tolerance ||
-                         std::abs( referenceGeometryVectors[i][1][2] ) > tolerance ||
-                         std::abs( referenceGeometryVectors[i][2][0] ) > tolerance ||
-                         std::abs( referenceGeometryVectors[i][2][1] ) > tolerance,
-                         "TriangleWedge geometry must be an in-plane triangle extruded in z" );
-        }
-        real64 const volume = particleGeometry::signedMeasure( shape, referenceGeometryVectors[i] );
-        GEOS_ERROR_IF( !std::isfinite( volume ) || volume <= 0.0 || particleVolume[i] <= 0.0 ||
-                       std::abs( volume-particleVolume[i] ) > 1.0e-9*particleVolume[i],
-                       "Native geometry must have positive orientation and agree with legacy R-vector volume for particle " << particleID[i] );
-      }
+      // Material shape is independent of interpolation. Store full edges once.
+      particleVolume[i]=particleData[b][i][static_cast<int>(ParticleColumnHeaders::ParticleVolume)];
+      real64 const tag=particleData[b][i][static_cast<int>(ParticleColumnHeaders::GeometryShape)];
+      for(int a=0;a<3;++a) for(int j=0;j<3;++j)
+        particleGeometryCurrent[i][a][j]=particleData[b][i][static_cast<int>(ParticleColumnHeaders::GeometryXX)+3*a+j];
+      auto const error=particleGeometry::affine::validateFileGeometry(tag,particleVolume[i],particleGeometryCurrent[i]);
+      GEOS_ERROR_IF(error!=particleGeometry::affine::InputError::None,
+                    "Particle " << particleID[i] << ": " << particleGeometry::affine::inputErrorMessage(error));
+      referenceGeometry[i]=static_cast<integer>(tag);
+      ParticleType const type=particleBlock.getParticleType();
+      GEOS_ERROR_IF(type==ParticleType::CPTI || type==ParticleType::CPDI2,
+                    "CPTI and CPDI2 mapping are not implemented in this geometry-foundation patch");
+      GEOS_ERROR_IF(type==ParticleType::CPDI && referenceGeometry[i]!=0,
+                    "CPDI requires parallelepiped geometry; use point interpolation for simplex geometry until CPTI is implemented");
 
       // Material Direction
       // For convenient indexing we store the transpose of the particle material directions so the X axis is easy accessed from [0]
@@ -549,15 +428,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       particleSurfaceTraction[i][2] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfaceTractionZ )];
     }
 
-    if( hasReferenceGeometry )
-    {
-      // Not an external property: explicitly copied by ParticleSubRegion. This
-      // avoids changing ParticleBlockABC or any existing mechanical accessor.
-      particleBlock.registerWrapper< array1d< integer > >( particleGeometry::shapeKey() ).
-        reference() = referenceGeometry;
-      particleBlock.registerWrapper< array3d< real64 > >( particleGeometry::vectorsKey() ).
-        reference() = referenceGeometryVectors;
-    }
+    particleBlock.registerWrapper<array1d<integer>>(particleGeometry::shapeKey()).reference()=referenceGeometry;
 
     particleBlock.setParticleID( particleID );
     particleBlock.setParticleCenter( particleCenter );
@@ -572,7 +443,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     particleBlock.setParticleTemperatureRate( particleTemperatureRate );
     particleBlock.setParticleStrengthScale( particleStrengthScale );
     particleBlock.setParticleVolume( particleVolume );
-    particleBlock.setParticleRVectors( particleRVectors );
+    particleBlock.setParticleGeometryCurrent( particleGeometryCurrent );
     particleBlock.setParticleSurfaceNormal( particleSurfaceNormal );
     particleBlock.setParticleSurfacePosition( particleSurfacePosition );
     particleBlock.setParticleSurfaceTraction( particleSurfaceTraction );

@@ -830,6 +830,7 @@ parameters = {
                'damageFieldPartitioning': ( None, True ),  # MPM: partition velocity fields using damage gradients.
                'dependencies': ( [], False ),  # PFW: files to stage beside generated input.
                'directionalOverlapCorrection': ( None, True ),  # MPM: directional correction for particle pile-up.
+               'geometryReset': ( 'FOnly', True ),  # Preserve material shape, or reset it to F_new G0.
                'domainResetType': ( None, True ),  # MPM: deformation-gradient reset algorithm: isotropicPolar or vpHencky.
                'disableSurfaceNormalsAndPositionsOnCPDIScaling': ( None, True ),  # MPM: drop explicit surfaces after CPDI scaling.
                'disableSurfaceNormalsAndPositionsOnDamage': ( None, True ),  # MPM: drop explicit surfaces after damage.
@@ -905,8 +906,10 @@ parameters = {
                # Native geometry controls optional output metadata, not the mapping algorithm.
                'particleRefinement': ( None, False ),  # PFW: material-wise particle refinement settings.
                'surfaceRefinementLevel': ( 1, False ),  # PFW: per-direction subdivision in the two-pass surface band.
-               'particleReferenceGeometry': ( 'equivalentBox', False ),  # Optional fromRefinement metadata; no mechanics change.
-               'particleDomainOutput': ( 'native', False ),  # ParticleRegion output: native or equivalentBox.
+               'particleGeometryFormat': ( 'unified', False ),  # Old PFW format names accepted; both emit canonical schema 2.
+               'particleGeometry': ( None, False ),  # box or fromRefinement; preferred geometry selection.
+               'particleReferenceGeometry': ( 'equivalentBox', False ),  # Old alias: equivalentBox -> box; fromRefinement retains cut shapes.
+               'particleDomainOutput': ( 'native', False ),  # Old PFW input accepted; output always uses material geometry.
                'surfaceRefinementMethod': ( 'cartesian', False ),  # PFW: cartesian or simplex (single-point B-splines).
                'surfaceRefinementFallback': ( 'cartesian', False ),  # PFW: cartesian or error for unresolved local simplex cuts.
                'surfaceRefinementPlaneTolerance': ( 0.05, False ),  # PFW: allowed corner/plane disagreement divided by child diagonal.
@@ -915,7 +918,7 @@ parameters = {
                'plotGridFields': ( None, True ),  # MPM: write grid fields to plot output.
                'plotInterval': ( None, False ),  # PFW: output event interval.
                'plottableFields': ( None, True ),  # MPM: explicit particle-field output list.
-               'plotUnscaledParticles': ( None, True ),  # MPM: plot particles without CPDI scaling.
+               'plotUnscaledParticles': ( None, False ),  # Old PFW input accepted; output always uses unscaled material geometry.
                'ppc': ( 2, False ),  # PFW: particles per cell in all directions.
                'ppcx': ( None, False ),  # PFW: particles per cell in x.
                'ppcy': ( None, False ),  # PFW: particles per cell in y.
@@ -1134,22 +1137,28 @@ mpmSolverParameterString = ''.join(parameterStrings)
 
 cohesiveZoneRegionString = ""
 
-# Select the native-reference metadata mode and the requested output columns.
-# RVector is always included for the existing reader. fromRefinement appends
-# a shape tag plus nine reference-generator components; the legacy RVector
-# columns retain their equivalent-box meaning. Native wedge/tet metadata does
-# not select CPTI or enable runtime simplex splitting in the current solver.
-particleReferenceGeometry = str(particleReferenceGeometry)
+# Geometry normalization is the only compatibility boundary. Old pfw_input
+# dictionaries remain accepted; every generated file uses canonical schema 2.
+# RVector in particleFileFields requests geometry and is replaced automatically.
+from pfw_reference_geometry import COLUMN_NAMES, encode_geometry, geometry_columns
+if geometryReset not in ('FOnly', 'FAndGeometry'):
+  raise ValueError("geometryReset must be FOnly or FAndGeometry")
+if particleGeometryFormat not in ('legacy', 'unified'):
+  raise ValueError("particleGeometryFormat must be legacy or unified (both now emit schema 2)")
 if particleReferenceGeometry not in ('equivalentBox', 'fromRefinement'):
-  raise ValueError("particleReferenceGeometry must be 'equivalentBox' or 'fromRefinement'")
-nativeReferenceGeometry = particleReferenceGeometry == 'fromRefinement'
+  raise ValueError("particleReferenceGeometry must be equivalentBox or fromRefinement")
+if particleGeometry is None:
+  particleGeometry = 'fromRefinement' if particleReferenceGeometry == 'fromRefinement' else 'box'
+if particleGeometry not in ('box', 'fromRefinement'):
+  raise ValueError("particleGeometry must be box or fromRefinement")
+nativeReferenceGeometry = particleGeometry == 'fromRefinement'
 if particleDomainOutput not in ('native', 'equivalentBox'):
-  raise ValueError("particleDomainOutput must be 'native' or 'equivalentBox'")
-if nativeReferenceGeometry:
-  from pfw_reference_geometry import COLUMN_NAMES, encode_reference_geometry, geometry_columns
-particleFileFields.extend([ 'RVector' ]) # MaterialType, velocity, contact group, and surface flags should all default to 0 if unspecified in GEOS initialization
+  raise ValueError("particleDomainOutput must be native or equivalentBox")
+if particleDomainOutput == 'equivalentBox' and nativeReferenceGeometry and rank == 0:
+  print("PFW: particleDomainOutput=equivalentBox is obsolete; output now shows material geometry.")
 particleFileFields = set(particleFileFields)
-particleFieldOrder = [ f for f in particleFieldOrder if f in particleFileFields ]
+particleFileFields.discard('RVector')
+particleFieldOrder = [f for f in particleFieldOrder if f in particleFileFields]
 
 # ============================================================================
 # 08. OBJECT CONSTRUCTION, GEOS JOB RESOURCES, AND GLOBAL MATERIAL METADATA
@@ -1659,27 +1668,6 @@ if generateParticleFile:
     if "CZTag" in particleFileFields:
       pString = pString + delim + str(data["czTag"])
 
-    # Legacy RVector columns are three axis-aligned half edges. For simplex output,
-    # the refiner supplies equivalent-box widths representing the piece volume;
-    # native vertex geometry is encoded separately at the end of this record.
-    if "RVector" in particleFileFields:
-      rVectorValues = [dxr*0.5, 0, 0,
-                       0, dyr*0.5, 0,
-                       0, 0, dzr*0.5]
-      _validate_particle_value("RVector", object, rVectorValues, particlePosition)
-      pString = pString + delim + str(rVectorValues[0]) + delim \
-                                + str(rVectorValues[1]) + delim \
-                                + str(rVectorValues[2]) + delim \
-                                + str(rVectorValues[3]) + delim \
-                                + str(rVectorValues[4]) + delim \
-                                + str(rVectorValues[5]) + delim \
-                                + str(rVectorValues[6]) + delim \
-                                + str(rVectorValues[7]) + delim \
-                                + str(rVectorValues[8])
-
-    # Material directions accept either a full 3x3 array or a three-component first
-    # direction; the latter uses the existing fixed y/z rows for the remaining data.
-    # The writer does not orthogonalize or otherwise modify a supplied basis.
     if "MaterialDirection" in particleFileFields:
       matDir = data["matDir"]
       if (np.array(matDir).size == 9):
@@ -1733,13 +1721,12 @@ if generateParticleFile:
     if "ShrinkageFlag" in particleFileFields:
       pString = pString + delim + str(data["shrinkageFlag"])
 
-    # Append optional native reference geometry after all legacy columns. The
-    # encoder handles boxes, 3D tets, and plane-strain triangular wedges; plotting
-    # can reconstruct their vertices without changing the B-spline mapping type.
-    if nativeReferenceGeometry:
-      geometry = encode_reference_geometry(particlePosition, (dxr, dyr, dzr),
-                                           geometryVertices, plane_strain=planeStrain == 1)
-      pString += delim + geometry_columns(geometry, delim)
+    # One material geometry record, independent of interpolation. Refinement
+    # vertices become minimal simplex edges; ordinary particles retain boxes.
+    geometry = encode_geometry(particlePosition, (dxr, dyr, dzr),
+                               geometryVertices if nativeReferenceGeometry else None,
+                               plane_strain=planeStrain == 1)
+    pString += delim + geometry_columns(geometry, dxr*dyr*dzr, delim)
     return pString +'\n'
 
   # ============================================================================
@@ -1991,8 +1978,7 @@ if generateParticleFile:
 
         columnNames = columnNames + delim + fieldString
 
-      if nativeReferenceGeometry:
-        columnNames += delim + delim.join(COLUMN_NAMES)
+      columnNames += delim + delim.join(COLUMN_NAMES)
       columnNames = columnNames + "\n"
       outfile.write(columnNames)
 
@@ -2134,14 +2120,12 @@ if rank == 0:
     if i < numMats-1:
       particleBlockString+=", "
       targetRegionsString+=", "
-    geometryOutputAttribute = (f'\n        particleDomainOutput="{particleDomainOutput}"'
-                               if nativeReferenceGeometry else "")
     particleRegionString+=f"""
     <ParticleRegion
         name="ParticleRegion{i+1}"
         meshBody="particles"
         particleBlocks="{{ {regionBlocksStr} }}"
-        materialList="{{ {matsOrig[i]} }}"{geometryOutputAttribute}/>"""
+        materialList="{{ {matsOrig[i]} }}"/>"""
 
 
   # Format explicit solver child XML blocks after defaults have been resolved.

@@ -27,7 +27,7 @@ The principal automatic deletion criteria are:
   \item \textbf{Constitutive failure flag.}  If a material wrapper exposes \mpmcode{constitutiveUpdateFlag}, \mpmcode{updateSolverDependencies} copies it to the solver field \mpmcode{particleConstitutiveUpdateFlag}.  A negative value at the first material point flags the particle for deletion.  This path lets a constitutive model request deletion after an unrecoverable update, for example failed return mapping or a material-specific erosion condition.
   \item \textbf{Deformation-gradient determinant limits.}  During \mpmcode{particleKinematicUpdate}, the solver computes
   \begin{equation}
-    J_p = \det \mathbf{F}_p.
+    J_p = V_p/V_p^0.
   \end{equation}
   The particle is flagged if
   \begin{equation}
@@ -35,8 +35,8 @@ The principal automatic deletion criteria are:
     \label{eq:robust-j-deletion}
   \end{equation}
   where $J_{\min}=\mpmcode{minParticleJacobian}$ and $J_{\max}=\mpmcode{maxParticleJacobian}$.  In the reviewed source snapshot the constructor defaults are $J_{\min}=0.1$ and $J_{\max}=10$.  This criterion removes particles that have inverted, collapsed, or expanded beyond the range for which the mapped particle volume and constitutive response are trustworthy.
-  \item \textbf{Velocity overflow and maximum velocity.}  The kinematic update also checks whether any component is so large that squaring it would overflow a floating-point value.  Such particles are flagged before kinetic-energy or speed calculations can fail.  The registered user parameter \mpmcode{maxParticleVelocity} sets the intended speed limit through \mpmcode{maxParticleVelocitySquared}.  In the reviewed code, the overflow guard is active; the speed-squared accumulation for the ordinary maximum-speed comparison appears inside the overflow branch after a \texttt{break}, so that ordinary \mpmcode{maxParticleVelocity} deletion should be verified before relying on it as an active erosion rule.
-  \item \textbf{Out-of-domain particles.}  At the end-of-step cleanup stage, \mpmcode{flagOutOfRangeParticles} removes particles that cannot be mapped safely on the next step.  For \texttt{SinglePoint} particles the center must remain inside the global domain plus one buffer-cell layer, excluding periodic directions.  For \mpmcode{SinglePointBSpline} particles the center must remain inside the physical global domain because the cubic B-spline basis already needs the available buffer support.  For \texttt{CPDI} particles, all eight current-domain corners generated from the center and three $\mathbf{r}$ vectors must remain in range.  Periodic directions are skipped because particle centers are wrapped during repartitioning.
+  \item \textbf{Velocity overflow and maximum velocity.}  The kinematic update also checks whether any component is so large that squaring it would overflow a floating-point value.  Such particles are flagged before kinetic-energy or speed calculations can fail.  The registered user parameter \mpmcode{maxParticleVelocity} sets the intended speed limit through \mpmcode{maxParticleVelocitySquared}.  The solver accumulates speed squared after checking each component for overflow and applies the configured maximum-speed threshold.
+  \item \textbf{Out-of-domain particles.}  At the end-of-step cleanup stage, \mpmcode{flagOutOfRangeParticles} removes particles that cannot be mapped safely on the next step.  For \texttt{SinglePoint} particles the center must remain inside the global domain plus one buffer-cell layer, excluding periodic directions.  For \mpmcode{SinglePointBSpline} particles the center must remain inside the physical global domain because the cubic B-spline basis already needs the available buffer support.  For \texttt{CPDI} particles, all eight projected integration-domain corners generated from the center and temporary half edges must remain in range.  Periodic directions are skipped because particle centers are wrapped during repartitioning.
   \item \textbf{Event-driven machining.}  The \texttt{MachineSample} event sets delete flags for particles outside an idealized dogbone, cylinder, or Brazilian-disk sample geometry.  This is a constructive-geometry deletion mechanism rather than a numerical-failure guard.
 \end{enumerate}
 
@@ -45,7 +45,7 @@ A compact view of the deletion path is:
 for particle p:
     if constitutiveUpdateFlag[p,0] < 0:
         particleDeleteFlag[p] = 1
-    J = det(F[p])
+    J = volume[p] / referenceVolume[p]
     if J <= minParticleJacobian or J >= maxParticleJacobian:
         particleDeleteFlag[p] = 1
     if any velocity component would overflow when squared:
@@ -96,7 +96,7 @@ so that
 This removes all active-dimensional deviatoric stretch while preserving rotation and $J_p$.
 
 \paragraph{VP-Hencky reset.}
-For \texttt{vpHencky}, the solver first forms the raw current domain matrix from $\mathbf{F}^{\mathrm{old}}_p$ and the reference particle vectors as in Equation~\eqref{eq:cpdi-raw-domain-from-f}.  The requested half-domain measure is
+For \texttt{vpHencky}, the solver first forms the raw current domain matrix from current material G, independent of $\mathbf{F}^{\mathrm{old}}_p$, as in Equation~\eqref{eq:cpdi-raw-domain-from-f}.  The requested half-domain measure is
 \begin{equation}
   M_p^{\star}=J_p M_p^0,
   \label{eq:reset-target-measure}
@@ -114,7 +114,7 @@ The new physical deformation gradient is recovered from the projected domain usi
   =\left[(\mathbf{R}^0_p)^{-1}\mathbf{R}^{\mathrm{new}}_p\right]^T,
   \label{eq:reset-f-from-domains}
 \end{equation}
-with particle half-edge vectors stored row-wise in $\mathbf{R}$.  If the old domain already satisfies the diagonal constraint and its measure agrees with Equation~\eqref{eq:reset-target-measure}, the VP-Hencky reset leaves $\mathbf{F}$ unchanged.  If the fixed measure and diagonal bound are incompatible, the reset preserves $M_p^{\star}$ and uses the equal-measure $\beta=0$ domain; particle splitting is then required to make the bound feasible.  Singular or invalid domain geometry falls back to \texttt{isotropicPolar}.
+with temporary half-edge matrices $R=G/2$ and $R^0=G_0/2$; persistent generators are full edges. The VP-Hencky algorithm applies to boxes; simplex resets use isotropic-polar selection.  If the old domain already satisfies the diagonal constraint and its measure agrees with Equation~\eqref{eq:reset-target-measure}, the VP-Hencky reset leaves $\mathbf{F}$ unchanged.  If the fixed measure and diagonal bound are incompatible, the reset preserves $M_p^{\star}$ and uses the equal-measure $\beta=0$ domain; particle splitting is then required to make the bound feasible.  Singular or invalid domain geometry falls back to \texttt{isotropicPolar}.
 
 The activation routes are:
 \begin{description}
@@ -124,7 +124,7 @@ The activation routes are:
   \item[Scaled surface particles and events.]  If \mpmcode{resetDefGradForScaledSurfaceParticles=1}, scaled CPDI particles with surface-like flags are eligible.  The \mpmcode{ResetDeformationGradient} MPM event sets this one-pass request, and the solver clears it after the cleanup pass.
 \end{description}
 
-Changing $\mathbf{F}$ without changing its associated reference data would rotate or distort surfaces, material axes, cohesive kinematics, and particle domains on the next update.  The reset therefore rebases the stored reference quantities so their current values are preserved.  In particular,
+Changing $\mathbf{F}$ without changing its associated surface/material reference data would alter those quantities on the next update. Current material geometry is independent of F and follows the selected geometry reset policy.  The reset therefore rebases the stored reference quantities so their current values are preserved.  In particular,
 \begin{align}
   \boldsymbol{n}^{s,0}_p
     &\leftarrow \operatorname{cof}(\mathbf{F}^{\mathrm{new}}_p)^{-1}
@@ -137,7 +137,7 @@ Changing $\mathbf{F}$ without changing its associated reference data would rotat
     &\leftarrow \operatorname{cof}(\mathbf{F}^{\mathrm{new}}_p)^{-1}
       \boldsymbol{t}^{s}_p.
 \end{align}
-Normals and directional material vectors are normalized after rebasing; traction magnitude is retained.  Fiber-like material directions use $(\mathbf{F}^{\mathrm{new}})^{-1}$, while area-like material directions use the inverse cofactor, matching their ordinary forward updates.  For cohesive particles the reference cohesive deformation gradient is changed so that $\mathbf{F}\mathbf{F}_{\mathrm{cz}}^{-1}$ is unchanged.  Current particle $\mathbf{r}$ vectors are regenerated from the new $\mathbf{F}$ for every reset route, and the stored $\dot{\mathbf{F}}$ and velocity gradient are cleared because the reset is not a physical rate increment.
+Normals and directional material vectors are normalized after rebasing; traction magnitude is retained.  Fiber-like material directions use $(\mathbf{F}^{\mathrm{new}})^{-1}$, while area-like material directions use the inverse cofactor, matching their ordinary forward updates.  For cohesive particles the reference cohesive deformation gradient is changed so that $\mathbf{F}\mathbf{F}_{\mathrm{cz}}^{-1}$ is unchanged.  \mpmcode{geometryReset=FOnly} preserves current G and $G_0$; \mpmcode{FAndGeometry} replaces G by $G_0F_{\rm new}^T$ while preserving $G_0$. These policies also apply to healing resets. Integration geometry is temporary. The the stored $\dot{\mathbf{F}}$ and velocity gradient are cleared because the reset is not a physical rate increment.
 
 \begin{lstlisting}[language=Python,caption={Deformation-gradient reset selection and dispatch.}]
 for active particle p:
@@ -151,7 +151,7 @@ for active particle p:
     if domainResetType == "isotropicPolar":
         Fnew = polar_rotation(Fold) @ isotropic_stretch(J)
     else:  # vpHencky
-        raw_domain = Fold @ reference_domain
+        raw_domain = current_material_geometry / 2
         target_measure = J * reference_domain_measure
         projected_domain = vp_hencky_project(raw_domain,
                                                target_measure,
@@ -210,7 +210,7 @@ If $k$ directions are selected, the parent particle is replaced by $2^k$ childre
       \sum_{a\in\mathcal{S}_p}s_{i,a}\boldsymbol{r}_{p_i,a},
   &s_{i,a}&\in\{-1,+1\}.
 \end{align}
-Except for the velocity correction below, remaining particle fields and constitutive history fields are copied from the parent through \mpmcode{particleCopyFlag}.  Since the reference and current vectors are bisected consistently, every child retains the parent's deformation gradient before any subsequent reset.  Surface-position fields are stored relative to the particle center; their current and reference values are translated by the corresponding child-center offsets so that every child initially represents the same absolute surface point as the parent.
+Except for the velocity correction below, remaining particle fields and constitutive history fields are copied from the parent through \mpmcode{particleCopyFlag}.  Since the reference and current vectors are bisected consistently, every child retains the parent's deformation gradient before any subsequent reset.  Surface-position fields are stored relative to the particle center; their current values are translated by the current child-center offsets and their constitutive-reference values by $F^{-1}$ times those offsets so that every child initially represents the same absolute surface point as the parent.
 
 Particles flagged \texttt{Cohesive} or \texttt{DamagedCohesive}, or with nonzero \mpmcode{particleCohesiveZoneFlag}, are not subdivided by this generic path.  Their cached reference-node maps, shape functions, cohesive reference geometry, and constitutive history cannot be conservatively partitioned by merely copying the parent state.  For such particles, CPDI scaling uses the exact feasible integration-measure cap when necessary, while an infeasible physical VP-Hencky reset preserves particle volume and reports that the equal-volume domain remains over the diagonal limit.
 
@@ -244,6 +244,6 @@ relative to the parent's point-particle energy. There is no kinetic-energy renor
 Set the option to 0 to copy the parent velocity and preserve that kinetic energy at child creation. Child IDs are assigned using the existing global maximum and rank offsets.
 
 \paragraph{Native geometry and limits.}
-A selected native wedge or tetrahedron (geometry tag 1 or 2) raises an error: runtime subdivision of native simplices is not implemented. An unsplit native particle remains valid. Selecting equivalent-box \emph{output} does not bypass this guard. For runtime splitting of the equivalent mechanical domains, regenerate the particle file with \texttt{particleReferenceGeometry="equivalentBox"}.
+A selected native wedge or tetrahedron (geometry tag 1 or 2) raises an error: runtime subdivision of native simplices is not implemented. An unsplit native particle remains valid. For runtime box splitting, regenerate the particle file with \texttt{particleGeometry="box"}. There is no alternate output geometry switch.
 
 One pass creates at most four children in plane strain or eight in 3D. Repeated steps may be needed for very large domains. Ordinary surface-particle offsets are rebased to preserve the parent absolute surface point; estimated surface offsets are adjusted when their normal is nonzero. Mass/volume conservation at splitting does not establish conservation of every contact or constitutive discretization error. Initial PFW refinement is a separate preprocessing operation (Section~\ref{sec:pfw-refinement}).

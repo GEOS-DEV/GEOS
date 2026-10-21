@@ -669,7 +669,7 @@ Volume is not recomputed from $\det\mathbf F_p$; this distinction matters after 
 $\dot{\mathbf F}_p=(\mathbf F_p^{n+1}-\mathbf F_p^n)/\Delta t$.
 The old rotation is retained and the new rotation is obtained from the updated deformation gradient.
 
-The subsequent kinematic pass applies particle-transform events, checks failure/deletion criteria, Jacobian bounds and velocity limits, updates density, CPDI domain vectors and material directions, transforms surface data, and computes kinetic energy. Native simplex output follows the physical deformation gradient; numerical reference resets rebase its reference generators to preserve current vertices.
+The subsequent kinematic pass applies particle-transform events, checks failure/deletion criteria, Jacobian bounds and velocity limits, updates density, CPDI domain vectors and material directions, transforms surface data, and computes kinetic energy. All material generators advance with the physical deformation increment. FOnly preserves them; FAndGeometry resets current geometry to the selected F applied to fixed G0. Output reconstructs current material vertices.
 
 \begin{lstlisting}[caption={Particle kinematic update.},basicstyle=\ttfamily\small]
 if prescribed_domain_deformation_enabled:
@@ -751,7 +751,7 @@ This cleanup step performs post-update domain management.  If prescribed boundar
 \begin{equation}
   x_{I,i}^{\mathrm{ref},n+1}=\frac{\bar F_i(t^{n+1})}{\bar F_i(t^n)}x_{I,i}^{\mathrm{ref},n}.
 \end{equation}
-The same ratio updates element spacing, local/global extents, partition dimensions, rigid-wall geometry, and optional box-average bounds.  Other moving-domain paths retain the existing rate-based factor $1+\Delta t\,\bar L_i$.  CPDI domain vectors are scaled or unscaled around this resize depending on plotting and domain-scaling options.
+The same ratio updates element spacing, local/global extents, partition dimensions, rigid-wall geometry, and optional box-average bounds.  Other moving-domain paths retain the existing rate-based factor $1+\Delta t\,\bar L_i$.  CPDI integration geometry is projected temporarily using the updated grid scales. Material geometry is never scaled for plotting.
 
 Particles flagged as failed, out of range, or otherwise invalid are deleted or compacted.  In parallel runs, the partition is updated, particles are redistributed, and periodic corrections are reapplied.  If reset-deformation-gradient events are active, the relevant particle deformation measures are reset after output and before the next step begins.  This cleanup ensures that the next cycle starts from a consistent particle set, updated domain geometry, and zeroed transient grid state.
 
@@ -760,7 +760,7 @@ if prescribed_boundary_F_or_stress_control_requires_resize:
   resize_background_grid_and_domain_bounds()
   update_box_average_extents_if_needed()
 if CPDI_domain_scaling_enabled:
-  apply_or_remove_CPDI_plot_scaling_as_requested()
+  refresh_integration_scaling_diagnostics()
 flag_particles_outside_valid_domain()
 delete_or_compact_bad_particles()
 if running_in_parallel:

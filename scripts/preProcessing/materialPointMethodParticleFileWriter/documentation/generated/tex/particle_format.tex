@@ -5,7 +5,7 @@
 \index{particle file format}
 \index{ParticleMesh}
 
-Header names map columns; the enum index below is not a required physical column position. Native geometry is an optional group: all ten geometry columns must appear together, and a partial group is rejected. Omitting the complete group allocates no native geometry state.
+Header names map columns; the enum index below is not a required physical column position. Every record requires the complete twelve-column geometry group: version 2, shape, physical volume and nine full-edge components. Old R-vector/native-reference/integration-width columns are not accepted. See Section~\ref{sec:unified-particle-geometry} for reset policies and the full contract.
 
 {\renewcommand{\arraystretch}{1.15}\setlength{\tabcolsep}{3pt}
 \small
@@ -68,43 +68,36 @@ Header names map columns; the enum index below is not a required physical column
 15 & {\ttfamily Temperature\allowbreak{}Rate} & {\ttfamily 0.\allowbreak{}0} & no\\
 16 & {\ttfamily Strength\allowbreak{}Scale} & {\ttfamily 1.\allowbreak{}0} & no\\
 17 & {\ttfamily CZTag} & {\ttfamily 0.\allowbreak{}0} & no\\
-18 & {\ttfamily RVector\allowbreak{}XX} & {\ttfamily no default} & yes\\
-19 & {\ttfamily RVector\allowbreak{}XY} & {\ttfamily no default} & yes\\
-20 & {\ttfamily RVector\allowbreak{}XZ} & {\ttfamily no default} & yes\\
-21 & {\ttfamily RVector\allowbreak{}YX} & {\ttfamily no default} & yes\\
-22 & {\ttfamily RVector\allowbreak{}YY} & {\ttfamily no default} & yes\\
-23 & {\ttfamily RVector\allowbreak{}YZ} & {\ttfamily no default} & yes\\
-24 & {\ttfamily RVector\allowbreak{}ZX} & {\ttfamily no default} & yes\\
-25 & {\ttfamily RVector\allowbreak{}ZY} & {\ttfamily no default} & yes\\
-26 & {\ttfamily RVector\allowbreak{}ZZ} & {\ttfamily no default} & yes\\
-27 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}XX} & {\ttfamily 1.\allowbreak{}0} & no\\
-28 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}XY} & {\ttfamily 0.\allowbreak{}0} & no\\
-29 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}XZ} & {\ttfamily 0.\allowbreak{}0} & no\\
-30 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}YX} & {\ttfamily 0.\allowbreak{}0} & no\\
-31 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}YY} & {\ttfamily 1.\allowbreak{}0} & no\\
-32 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}YZ} & {\ttfamily 0.\allowbreak{}0} & no\\
-33 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}ZX} & {\ttfamily 0.\allowbreak{}0} & no\\
-34 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}ZY} & {\ttfamily 0.\allowbreak{}0} & no\\
-35 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}ZZ} & {\ttfamily 1.\allowbreak{}0} & no\\
-36 & {\ttfamily Surface\allowbreak{}Normal\allowbreak{}X} & {\ttfamily 0.\allowbreak{}0} & no\\
-37 & {\ttfamily Surface\allowbreak{}Normal\allowbreak{}Y} & {\ttfamily 0.\allowbreak{}0} & no\\
-38 & {\ttfamily Surface\allowbreak{}Normal\allowbreak{}Z} & {\ttfamily 0.\allowbreak{}0} & no\\
-39 & {\ttfamily Surface\allowbreak{}Position\allowbreak{}X} & {\ttfamily 0.\allowbreak{}0} & no\\
-40 & {\ttfamily Surface\allowbreak{}Position\allowbreak{}Y} & {\ttfamily 0.\allowbreak{}0} & no\\
-41 & {\ttfamily Surface\allowbreak{}Position\allowbreak{}Z} & {\ttfamily 0.\allowbreak{}0} & no\\
-42 & {\ttfamily Surface\allowbreak{}Traction\allowbreak{}X} & {\ttfamily 0.\allowbreak{}0} & no\\
-43 & {\ttfamily Surface\allowbreak{}Traction\allowbreak{}Y} & {\ttfamily 0.\allowbreak{}0} & no\\
-44 & {\ttfamily Surface\allowbreak{}Traction\allowbreak{}Z} & {\ttfamily 0.\allowbreak{}0} & no\\
-45 & {\ttfamily Particle\allowbreak{}Reference\allowbreak{}Geometry} & {\ttfamily group absent: no native state} & all 10 together\\
-46 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}XX} & {\ttfamily group absent: no native state} & all 10 together\\
-47 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}XY} & {\ttfamily group absent: no native state} & all 10 together\\
-48 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}XZ} & {\ttfamily group absent: no native state} & all 10 together\\
-49 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}YX} & {\ttfamily group absent: no native state} & all 10 together\\
-50 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}YY} & {\ttfamily group absent: no native state} & all 10 together\\
-51 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}YZ} & {\ttfamily group absent: no native state} & all 10 together\\
-52 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}ZX} & {\ttfamily group absent: no native state} & all 10 together\\
-53 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}ZY} & {\ttfamily group absent: no native state} & all 10 together\\
-54 & {\ttfamily Geometry\allowbreak{}RVector\allowbreak{}ZZ} & {\ttfamily group absent: no native state} & all 10 together\\
+18 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}XX} & {\ttfamily 1.\allowbreak{}0} & no\\
+19 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}XY} & {\ttfamily 0.\allowbreak{}0} & no\\
+20 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}XZ} & {\ttfamily 0.\allowbreak{}0} & no\\
+21 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}YX} & {\ttfamily 0.\allowbreak{}0} & no\\
+22 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}YY} & {\ttfamily 1.\allowbreak{}0} & no\\
+23 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}YZ} & {\ttfamily 0.\allowbreak{}0} & no\\
+24 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}ZX} & {\ttfamily 0.\allowbreak{}0} & no\\
+25 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}ZY} & {\ttfamily 0.\allowbreak{}0} & no\\
+26 & {\ttfamily Material\allowbreak{}Direction\allowbreak{}ZZ} & {\ttfamily 1.\allowbreak{}0} & no\\
+27 & {\ttfamily Surface\allowbreak{}Normal\allowbreak{}X} & {\ttfamily 0.\allowbreak{}0} & no\\
+28 & {\ttfamily Surface\allowbreak{}Normal\allowbreak{}Y} & {\ttfamily 0.\allowbreak{}0} & no\\
+29 & {\ttfamily Surface\allowbreak{}Normal\allowbreak{}Z} & {\ttfamily 0.\allowbreak{}0} & no\\
+30 & {\ttfamily Surface\allowbreak{}Position\allowbreak{}X} & {\ttfamily 0.\allowbreak{}0} & no\\
+31 & {\ttfamily Surface\allowbreak{}Position\allowbreak{}Y} & {\ttfamily 0.\allowbreak{}0} & no\\
+32 & {\ttfamily Surface\allowbreak{}Position\allowbreak{}Z} & {\ttfamily 0.\allowbreak{}0} & no\\
+33 & {\ttfamily Surface\allowbreak{}Traction\allowbreak{}X} & {\ttfamily 0.\allowbreak{}0} & no\\
+34 & {\ttfamily Surface\allowbreak{}Traction\allowbreak{}Y} & {\ttfamily 0.\allowbreak{}0} & no\\
+35 & {\ttfamily Surface\allowbreak{}Traction\allowbreak{}Z} & {\ttfamily 0.\allowbreak{}0} & no\\
+36 & {\ttfamily Geometry\allowbreak{}Version} & {\ttfamily required schema 2} & yes\\
+37 & {\ttfamily Geometry\allowbreak{}Shape} & {\ttfamily required schema 2} & yes\\
+38 & {\ttfamily Particle\allowbreak{}Volume} & {\ttfamily required schema 2} & yes\\
+39 & {\ttfamily Geometry\allowbreak{}XX} & {\ttfamily required schema 2} & yes\\
+40 & {\ttfamily Geometry\allowbreak{}XY} & {\ttfamily required schema 2} & yes\\
+41 & {\ttfamily Geometry\allowbreak{}XZ} & {\ttfamily required schema 2} & yes\\
+42 & {\ttfamily Geometry\allowbreak{}YX} & {\ttfamily required schema 2} & yes\\
+43 & {\ttfamily Geometry\allowbreak{}YY} & {\ttfamily required schema 2} & yes\\
+44 & {\ttfamily Geometry\allowbreak{}YZ} & {\ttfamily required schema 2} & yes\\
+45 & {\ttfamily Geometry\allowbreak{}ZX} & {\ttfamily required schema 2} & yes\\
+46 & {\ttfamily Geometry\allowbreak{}ZY} & {\ttfamily required schema 2} & yes\\
+47 & {\ttfamily Geometry\allowbreak{}ZZ} & {\ttfamily required schema 2} & yes\\
 \end{longtable}
 }
 

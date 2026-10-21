@@ -36,46 +36,6 @@ ParticleBlock::~ParticleBlock()
 void ParticleBlock::setParticleType( ParticleType const particleType )
 {
   m_particleType = particleType;
-
-  switch( m_particleType )
-  {
-    case ParticleType::SinglePoint:
-    {
-      // Single Point
-      m_hasRVectors = true; // For visualization only
-      break;
-    }
-    case ParticleType::SinglePointBSpline:
-    {
-      // Single-point B-spline particles use the particle center for MPM mapping.
-      // Keep CPDI-style r-vectors for particle-domain output; they are not used
-      // by the B-spline interpolation.
-      m_hasRVectors = true;
-      break;
-    }
-    case ParticleType::CPDI:
-    {
-      // CPDI
-      m_hasRVectors = true;
-      break;
-    }
-    case ParticleType::CPTI:
-    {
-      // CPTI
-      m_hasRVectors = true;
-      break;
-    }
-    case ParticleType::CPDI2:
-    {
-      // CPDI2
-      m_hasRVectors = false;
-      break;
-    }
-    default:
-    {
-      GEOS_ERROR( "Invalid particle type: " << m_particleType );
-    }
-  }
 }
 
 void ParticleBlock::resize( dataRepository::indexType const numParticles )

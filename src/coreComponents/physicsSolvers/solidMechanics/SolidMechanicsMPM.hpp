@@ -494,7 +494,7 @@ public:
                                   arraySlice1d< localIndex const > const neighborSubRegions,
                                   arraySlice1d< localIndex const > const neighborIndices,
                                   ParticleManager::ParticleViewConst< arrayView2d< real64 const > > const particleCenter,
-                                  ParticleManager::ParticleViewConst< arrayView3d< real64 const > > const particleRVectors,
+                                  ParticleManager::ParticleViewConst< arrayView3d< real64 const > > const particleGeometryCurrent,
                                   arraySlice1d< real64 const > const surfaceNormal,
                                   arraySlice1d< real64 const > const surfacePosition );
 
@@ -509,7 +509,7 @@ public:
                                                      arraySlice1d< localIndex const > const neighborSubRegions,
                                                      arraySlice1d< localIndex const > const neighborIndices,
                                                      ParticleManager::ParticleViewConst< arrayView2d< real64 const > > const particleCenter,
-                                                     ParticleManager::ParticleViewConst< arrayView3d< real64 const > > const particleRVectors,
+                                                     ParticleManager::ParticleViewConst< arrayView3d< real64 const > > const particleGeometryCurrent,
                                                      arraySlice1d< real64 const > const surfaceNormal,
                                                      arraySlice1d< real64 const > const surfacePosition );
 
@@ -849,11 +849,7 @@ public:
                                                  NodeManager & nodeManager,
                                                  MeshLevel & mesh );
 
-  bool interiorToParticleProjectedArea( ParticleManager & particleManager,
-                                        globalIndex const GEOS_UNUSED_PARAM( gridIndex ),
-                                        int const gridFieldIndex,
-                                        real64 const (&gridSurfaceNormal)[3],
-                                        real64 const (&gridSurfacePoint)[3] );
+
 
   void projectToPlane( real64 const (&vector)[3],
                        real64 const (&normal)[3],
@@ -865,8 +861,7 @@ public:
                            SpatialPartition & partition );
 
   GEOS_HOST_DEVICE
-  real64 computeDistanceToParticleSurface( real64 ( &normal )[3],
-                                           arraySlice2d< real64 const > const rVectors );
+
 
   void updateGridBackgroundStress( NodeManager & nodeManager );
 
@@ -1051,7 +1046,6 @@ public:
   void flagOutOfRangeParticles( ParticleManager & particleManager,
                                 SpatialPartition & partition );
 
-  void computeRVectors( ParticleManager & particleManager );
 
   void cpdiDomainScaling( ParticleManager & particleManager );
 
@@ -1110,11 +1104,16 @@ public:
                                                 arraySlice1d< real64 > const shapeFunctionValues,
                                                 arraySlice2d< real64 > const shapeFunctionGradientValues );
 
+  // Return status bits: changed=1, relaxed integration measure=2, invalid=4.
+  // No per-particle integration matrix is stored or checkpointed.
+  GEOS_HOST_DEVICE int projectIntegrationGeometry(
+    arraySlice2d<real64 const> const geometry, real64 (&projected)[3][3]) const;
+
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   bool computeCPDIShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                   arraySlice1d< real64 const > const particlePosition,
-                                  arraySlice2d< real64 const > const particleRVectors,
+                                  arraySlice2d< real64 const > const particleGeometryCurrent,
                                   arrayView3d< int const > const ijkMap,
                                   real64 const (&xLocalMin)[3],
                                   real64 const (&hEl)[3],
@@ -1131,7 +1130,7 @@ public:
                                          localIndex const (&nEl)[3],
                                          ParticleType particleType,
                                          arraySlice1d< real64 const > const particlePosition,
-                                         arraySlice2d< real64 const > const particleRVectors,
+                                         arraySlice2d< real64 const > const particleGeometryCurrent,
                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                          localIndex * const mappedNode,
                                          real64 * const shapeFunctionValues,
@@ -1165,7 +1164,7 @@ public:
   GEOS_HOST_DEVICE
   void computeCPDIParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                           arraySlice1d< real64 const > const particlePosition,
-                                          arraySlice2d< real64 const > const particleRVectors,
+                                          arraySlice2d< real64 const > const particleGeometryCurrent,
                                           arrayView3d< int const > const ijkMap,
                                           real64 const (&xLocalMin)[3],
                                           real64 const (&hEl)[3],
@@ -1190,7 +1189,7 @@ public:
   GEOS_HOST_DEVICE
   void computeCPDIParticleShapeFunctionsSlower( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                           arraySlice1d< real64 const > const particlePosition,
-                                          arraySlice2d< real64 const > const particleRVectors,
+                                          arraySlice2d< real64 const > const particleGeometryCurrent,
                                           arrayView3d< int const > const ijkMap,
                                           real64 const (&xLocalMin)[3],
                                           real64 const (&hEl)[3],
@@ -1231,7 +1230,6 @@ public:
 
   void resetDeformationGradient( ParticleManager & particleManager );
 
-  void unscaleCPDIVectors( ParticleManager & particleManager );
 
   void computeKineticEnergy( ParticleManager & particleManager );
 
@@ -1345,6 +1343,8 @@ protected:
   array1d< real64 > m_domainIncrementalStretch;
   array1d< real64 > m_domainL;
   mpm::DomainResetTypeOption m_domainResetType;
+  integer m_geometryRestartVersion = 0;
+  mpm::GeometryResetOption m_geometryReset = mpm::GeometryResetOption::FOnly;
   array1d< real64 > m_domainStress;
   real64 m_domainTemperature;
   real64 m_domainTemperatureRate;
@@ -1427,7 +1427,6 @@ protected:
   int m_plotGridFields;
   string_array m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;
-  int m_plotUnscaledParticles;
   real64 m_polymerCZThickness;
   int m_prescribedBcTable;
   int m_prescribedBoundaryFTable;

@@ -139,13 +139,12 @@ public:
    * @brief Get the list of particle r-vectors in this subregion.
    * @return the list of particle r-vectors in this subregion.
    */
-  virtual array3d< real64 > getParticleRVectors() const = 0;
+  virtual array3d< real64 > getParticleGeometryCurrent() const = 0;
 
   /**
    * @brief Query whether this subregion has particles of a type that have r-vectors that depend on the deformation gradient
    * @return a bool indicating whether particles on this subregion have r-vectors that depend on the deformation gradient
    */
-  virtual bool hasRVectors() const = 0;
 
   /**
    * @brief Get the list of particle surface normal in this subregion.

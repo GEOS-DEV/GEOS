@@ -17,7 +17,3 @@ shown verbatim. Inherited attributes are not repeated.
      - OPTIONAL / string_array
      - not explicitly set
      -
-   * - particleDomainOutput
-     - OPTIONAL / string
-     - "native"
-     - native: use optional simplex reference geometry; equivalentBox: legacy particle domains

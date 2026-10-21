@@ -188,10 +188,11 @@ for group in switch.split('break;'):
         for name in re.findall(r'case ParticleColumnHeaders::(\w+):',group):col_defaults[name]=value[1].strip()
 particle_columns_data=[]
 for index,name in enumerate(particle_columns):
-    native=name=='ParticleReferenceGeometry' or name.startswith('GeometryRVector')
+    geometry=name in ('GeometryVersion','GeometryShape','ParticleVolume') or name.startswith('Geometry')
     particle_columns_data.append({'index':index,'name':name,
-        'default':'group absent: no native state' if native else col_defaults.get(name,'no default'),
-        'required':not native and name not in col_defaults,'required_when':'all 10 together' if native else ''})
+        'default':'required schema 2' if geometry else col_defaults.get(name,'no default'),
+        'required':geometry or name not in col_defaults,
+        'required_when':''})
 
 # Solver enum options live primarily in MPMSolverEnums.hpp. Preserve serialized
 # XML spellings, which need not match C++ enum names.
@@ -369,7 +370,7 @@ post_scripts=sorted(set(post_scripts))
 # Source inventory
 source_inventory=[
     {'component':'MPM solver','path':'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.[ch]pp'},
-    {'component':'MPM native geometry','path':'src/coreComponents/mesh/ParticleReferenceGeometry.hpp'},
+    {'component':'MPM unified geometry','path':'src/coreComponents/mesh/ParticleGeometry.hpp'},
     {'component':'MPM solver fields','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverFields.hpp'},
     {'component':'MPM events','path':'src/coreComponents/events/mpmEvents/*'},
     {'component':'Particle mesh and regions','path':'src/coreComponents/mesh/Particle*.{hpp,cpp}, src/coreComponents/mesh/particleGenerators/*'},
@@ -410,8 +411,12 @@ fingerprint_paths=[
  'src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp',
  'src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp',
  'src/coreComponents/mesh/ParticleRegion.cpp',
+ 'src/coreComponents/mesh/ParticleGeometry.hpp',
+ 'src/coreComponents/mesh/ParticleSubRegionBase.hpp',
+ 'src/coreComponents/mesh/ParticleSubRegionBase.cpp',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_surface_refinement.py',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_reference_geometry.py',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_check.py',
 ]
 data['source_sha256']={p:hashlib.sha256((repo/p).read_bytes()).hexdigest() for p in fingerprint_paths}

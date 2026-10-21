@@ -221,6 +221,10 @@ shown verbatim. Inherited attributes are not repeated.
      - OPTIONAL / int
      - 0
      - Option for CPDI domain scaling
+   * - geometryReset
+     - OPTIONAL
+     - FOnly
+     - FOnly preserves current material geometry; FAndGeometry resets it to F_new G0. Applies to automatic and healing resets.
    * - gpuScheme
      - OPTIONAL / string (enum)
      - Atomics
@@ -313,10 +317,6 @@ shown verbatim. Inherited attributes are not repeated.
      - OPTIONAL / int
      - 0
      - Flag to enable plotting of grid fields in vtk output
-   * - plotUnscaledParticles
-     - OPTIONAL / int
-     - 0
-     - Flag for plotting particles without CPDI domain scaling
    * - plottableFields
      - OPTIONAL / string_array
      - not explicitly set

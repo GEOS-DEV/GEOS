@@ -1,5 +1,9 @@
 # Two-pass surface refinement in PFW
 
+Refinement can write either the default legacy schema or the opt-in unified
+geometry schema. See [UNIFIED_PARTICLE_GEOMETRY.md](UNIFIED_PARTICLE_GEOMETRY.md)
+for `particleGeometryFormat`, examples and the shared geometry source interface.
+
 ## Configuration
 
 ```python
@@ -101,27 +105,21 @@ not the exact curved object. Positive-volume pieces are retained; numerical
 coincidences at vertices/edges are handled without an arbitrary physical
 sliver-volume threshold.
 
-## Current GEOS file-format compatibility
+## Current geometry and file format
 
-The default writes equivalent mechanical boxes using the existing particle-file
-columns. Optional `particleReferenceGeometry="fromRefinement"`
-also writes native wedge/tetrahedron geometry for Silo and VTK output in the
-patched GEOS reader. See [NATIVE_REFERENCE_GEOMETRY.md](NATIVE_REFERENCE_GEOMETRY.md).
-This adds output geometry, not a new interpolation or simplex contact method.
+The default `particleGeometry="box"` writes an equivalent-volume axis-aligned
+box at each simplex centroid. `particleGeometry="fromRefinement"` retains actual
+cut wedges/tets while uncut/fallback particles remain boxes. Both selections
+write schema 2: version, shape, explicit physical volume, and nine full-edge
+components. Output reconstructs the current material geometry; there is no
+independent equivalent-box display switch or second integration-width array.
 
-For `particleType=1` (SinglePointBSpline), the existing reader obtains volume
-from the determinant of the R-vectors. The writer therefore emits an
-**equal-volume axis-aligned box** at each simplex centroid. Its aspect ratio
-matches the local sampling box; in plane strain its z thickness is unchanged.
-Thus the existing reader receives the intended physical volume without new
-columns or a density correction. With the default geometry setting, visualization uses these equivalent boxes.
-With native metadata enabled, the output policy selects native or equivalent-box
-geometry. Mechanical R-vectors keep their equivalent-box meaning in both cases.
-
-Emitting an actual simplex-cut particle with another particle type produces a
-clear error. Use Cartesian refinement for CPDI/CPTI. Merely giving a CPDI
-particle an equal-volume box is not the same as supplying a conforming CPDI
-integration domain and is deliberately not advertised as such.
+Actual simplex cuts currently require `particleType=1` (SinglePointBSpline).
+Use Cartesian refinement for supported CPDI box particles. CPTI and runtime
+tet/wedge splitting remain unimplemented. Old PFW Python inputs are normalized;
+regenerate all GEOS particle/XML inputs. Old GEOS restarts are unsupported.
+See [UNIFIED_PARTICLE_GEOMETRY.md](UNIFIED_PARTICLE_GEOMETRY.md) for storage,
+reset policies, integration scaling and the precise scope.
 
 ## Parallel PFW and rank-based object slicing
 

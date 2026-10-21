@@ -51,7 +51,7 @@ Table~\ref{tab:pfw-output-controls} summarizes the PFW keys most commonly used t
 \texttt{gridFieldNames} & list or GEOS name array & Silo-only alias for requested background-grid fields on the \texttt{Silo} output block.\\
 \mpmcode{siloGridFieldNames} & list or GEOS name array & Equivalent Silo-only alias for \texttt{gridFieldNames}.\\
 \texttt{siloGridFields} & \texttt{False}, \texttt{True}, \texttt{"common"}, \texttt{"all"}, list & Convenience Silo-only control.  \texttt{True} and \texttt{"common"} request the standard debug set; \texttt{"all"} requests every grid field known to PFW and should be used sparingly.\\
-\mpmcode{plotUnscaledParticles} & \texttt{0}, \texttt{1} & Plot CPDI/domain-scaled particles without drawing the scaled particle domain.  This is useful when scaled domains obscure particle-center fields.\\
+\mpmcode{plotUnscaledParticles} & Old Python input & Accepted but ignored; output always uses current unscaled material geometry.\\
 \end{longtable}
 }
 
@@ -210,10 +210,14 @@ Use this only for short debugging runs or single-output snapshots, because it re
 \subsection{Practical output guidance}
 \label{sec:pfw-output-guidance}
 
-For routine V\&V or parameter studies, prefer particle-only VTK or Silo output plus the CSV diagnostics from Section~\ref{sec:pfw-diagnostics}.  Increase the plot cadence only for short windows of interest, because plot-file writes can dominate wall time and storage.  For contact and boundary-condition debugging, enable grid diagnostics for a small number of output frames and include only the grid fields needed to answer the question.  For CPDI/domain-scaling visualization, \texttt{pfw["plotUnscaledParticles"] = 1} can make particle-center fields easier to interpret when scaled domains overlap visually.
+For routine V\&V or parameter studies, prefer particle-only VTK or Silo output plus the CSV diagnostics from Section~\ref{sec:pfw-diagnostics}.  Increase the plot cadence only for short windows of interest, because plot-file writes can dominate wall time and storage.  For contact and boundary-condition debugging, enable grid diagnostics for a small number of output frames and include only the grid fields needed to answer the question.  Output always reconstructs current material geometry, independently of CPDI integration scaling.
 
 \subsection{Native refined-particle geometry}
 \index{particleDomainOutput}
-With \texttt{particleReferenceGeometry="fromRefinement"}, PFW writes the optional ten-column geometry group and emits \mpmcode{particleDomainOutput} on each \texttt{ParticleRegion}. The default \texttt{"native"} displays cut plane-strain triangles as wedges and 3D cuts as tetrahedra in both Silo and VTK. Each particle remains one zone with one value for each particle field. Uncut pieces remain boxes, and vertices are not shared across particles.
-
-Select \texttt{particleDomainOutput="equivalentBox"} to display the legacy mechanical domains while retaining native metadata. This output switch does not change mechanics or remove the runtime-splitting guard on native simplices. To generate files without native state, rerun PFW with \texttt{particleReferenceGeometry="equivalentBox"}. See Section~\ref{sec:pfw-refinement} for initialization and Section~\ref{subsec:robust-particle-splitting} for runtime restrictions.
+With \texttt{particleGeometry="fromRefinement"}, cut plane-strain triangles
+appear as wedges and 3D cuts as tetrahedra in both Silo and VTK. Uncut pieces
+remain boxes; each particle is one disconnected zone with one value per field.
+Both output backends reconstruct current unscaled material geometry from G.
+There is no separate equivalent-box display switch. Old Python inputs using
+\texttt{particleDomainOutput} are accepted but are not emitted to XML.
+See Section~\ref{sec:unified-particle-geometry} for the geometry contract.

@@ -67,7 +67,7 @@ For the \texttt{TypeA} update, the stored reference surface-position vector is m
     + \left(\mathbf{F}_p \mathbf{F}^{-1}_{p,cz}\mathbf{s}^0_p-\mathbf{s}^0_p\right),
   \label{eq:cz-typea-displacement}
 \end{equation}
-where $\mathbf{F}_{p,cz}$ is the deformation gradient stored at cohesive initialization and $\mathbf{s}^0_p$ is the particle-to-surface reference vector.  For the \texttt{TypeB} update, the particle-domain surface vector is reconstructed from the particle geometry, mapped by the current and cohesive-reference deformation gradients, and differenced.  Both forms have the same purpose: they estimate the displacement of the material surface point, not merely the particle centroid.
+where $\mathbf{F}_{p,cz}$ is the deformation gradient stored at cohesive initialization and $\mathbf{s}^0_p$ is the particle-to-surface reference vector.  For the \texttt{TypeB} update, the surface-normal ray is intersected with the current unscaled material box, wedge or tet at cohesive initialization. This anchor is cached in the cohesive frame and subsequently convected with relative F, as in TypeA. This replaces the old reference-box construction and remains valid after FOnly resets.  Both forms have the same purpose: they estimate the displacement of the material surface point, not merely the particle centroid.
 
 The particle surface displacements are projected to each cohesive node using the stored reference weights.  For side $\alpha\in\{A,B\}$,
 \begin{equation}

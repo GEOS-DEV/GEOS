@@ -148,6 +148,8 @@ namespace mpm
    *
    * The algorithms available when the physical deformation gradient is reset.
    */
+  enum struct GeometryResetOption : integer { FOnly, FAndGeometry };
+
   enum struct DomainResetTypeOption : integer
   {
     IsotropicPolar, //!< Preserve rotation and volume while replacing the stretch by an isotropic stretch.
@@ -280,6 +282,8 @@ ENUM_STRINGS( mpm::ContactGapCorrectionOption,
 ENUM_STRINGS( mpm::CPDIDomainScalingTypeOption,
               "homel",
               "vpHencky" );
+
+ENUM_STRINGS( mpm::GeometryResetOption, "FOnly", "FAndGeometry" );
 
 ENUM_STRINGS( mpm::DomainResetTypeOption,
               "isotropicPolar",

@@ -32,7 +32,6 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
   m_particleType(),
-  m_hasRVectors(),
   m_particleRank(),
   m_particleID(),
   m_particleGroup(),
@@ -48,13 +47,20 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleVelocity(),
   m_particleMaterialDirection(),
   m_particleVolume(),
-  m_particleRVectors(),
+  m_particleGeometryCurrent(),
   m_particleSurfaceNormal(),
   m_particleSurfacePosition(),
   m_particleSurfaceTraction()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
+
+  // Register the same schema on every rank, including empty partitions.
+  registerWrapper<array1d<integer>>(particleGeometry::shapeKey()).
+    setSizedFromParent(1).setPlotLevel(PlotLevel::LEVEL_1);
+  registerWrapper<array3d<real64>>(particleGeometry::vectorsKey()).
+    setSizedFromParent(1).setPlotLevel(PlotLevel::NOPLOT).
+    reference().resizeDimension<1,2>(3,3);
 
   registerWrapper( viewKeyStruct::particleRankString(), &m_particleRank ).
     setPlotLevel( PlotLevel::LEVEL_1 );
@@ -104,7 +110,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleVolumeString(), &m_particleVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
-  registerWrapper( viewKeyStruct::particleRVectorsString(), &m_particleRVectors ).
+  registerWrapper( viewKeyStruct::particleGeometryCurrentString(), &m_particleGeometryCurrent ).
     setPlotLevel( PlotLevel::NOPLOT ).
     reference().resizeDimension< 1, 2 >( 3, 3 );
 
@@ -127,30 +133,15 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
 ParticleSubRegionBase::~ParticleSubRegionBase()
 {}
 
-void ParticleSubRegionBase::enableParticleReferenceGeometry()
+ParticleSubRegionBase::GeometryView ParticleSubRegionBase::geometryViewOnHost()
 {
-  if( hasParticleReferenceGeometry() ) return;
-  registerWrapper< array1d< integer > >( particleGeometry::shapeKey() ).
-    setSizedFromParent( 1 ).setPlotLevel( PlotLevel::LEVEL_1 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).reference().resize( size() );
-  registerWrapper< array3d< real64 > >( particleGeometry::vectorsKey() ).
-    setSizedFromParent( 1 ).setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).reference().resize( size(), 3, 3 );
+  getWrapperBase(particleGeometry::shapeKey()).move(LvArray::MemorySpace::host,false);
+  getWrapperBase(particleGeometry::vectorsKey()).move(LvArray::MemorySpace::host,false);
+  getWrapperBase(particleGeometry::currentKey()).move(LvArray::MemorySpace::host,true);
+  return {getParticleGeometryShape(),
+          getReference<array3d<real64>>(particleGeometry::vectorsKey()).toViewConst(),
+          getParticleGeometryCurrent()};
 }
-
-ParticleSubRegionBase::ReferenceGeometryView ParticleSubRegionBase::referenceGeometryViewOnHost()
-{
-  ReferenceGeometryView result;
-  if( hasParticleReferenceGeometry() )
-  {
-    getWrapperBase( particleGeometry::shapeKey() ).move( LvArray::MemorySpace::host, false );
-    getWrapperBase( particleGeometry::vectorsKey() ).move( LvArray::MemorySpace::host, true );
-    result.shape = getReference< array1d< integer > >( particleGeometry::shapeKey() ).toViewConst();
-    result.vectors = getReference< array3d< real64 > >( particleGeometry::vectorsKey() ).toView();
-  }
-  return result;
-}
-
 
 unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
                                                   arrayView1d< localIndex > const & localIndices,

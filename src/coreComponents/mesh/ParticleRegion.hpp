@@ -108,10 +108,9 @@ public:
   ///@}
 
   /**
-   * @brief Calculate and return the locations of all particle corners
+   * @brief Disconnected material-domain mesh, reconstructed from minimal generators
    * @return The list of particle corner coordinates
    */
-  array2d< real64 > getParticleCorners() const;
 
   struct ParticleDomainMesh
   {
@@ -121,8 +120,7 @@ public:
     std::vector< int > ownerRank;
   };
 
-  /// A separate API: numberOfVerticesPerParticle is an interpolation capacity.
-  bool usesNativeParticleGeometry() const;
+  /// Geometry vertices are independent of mappedNodeCapacity().
   ParticleDomainMesh getParticleDomainMesh() const;
 
 
@@ -141,9 +139,6 @@ private:
 
   // Cell block names
   string_array m_particleBlockNames;
-
-  /// native uses optional simplex geometry; equivalentBox forces legacy output.
-  string m_particleDomainOutput;
 
 };
 

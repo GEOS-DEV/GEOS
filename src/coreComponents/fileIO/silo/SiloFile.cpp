@@ -2256,54 +2256,6 @@ static int toSiloShapeType( ElementType const elementType )
   return -1;
 }
 
-static stdVector< int > getSiloNodeOrdering( ParticleType const particleType )
-{
-  switch( particleType )
-  {
-    case ParticleType::SinglePoint:
-    case ParticleType::SinglePointBSpline:
-    case ParticleType::CPDI:
-    case ParticleType::CPDI2:
-    {
-      // Same ordering used by the VTK MPM particle-domain writer and by
-      // the existing hexahedron Silo element path.
-      return { 0, 1, 3, 2, 4, 5, 7, 6 };
-    }
-    case ParticleType::CPTI:
-    {
-      return { 0, 1, 2, 3 };
-    }
-    default:
-    {
-      GEOS_ERROR( "Unsupported particle type for Silo particle-domain output: " << particleType );
-    }
-  }
-  return {};
-}
-
-static int toSiloShapeType( ParticleType const particleType )
-{
-  switch( particleType )
-  {
-    case ParticleType::SinglePoint:
-    case ParticleType::SinglePointBSpline:
-    case ParticleType::CPDI:
-    case ParticleType::CPDI2:
-    {
-      return DB_ZONETYPE_HEX;
-    }
-    case ParticleType::CPTI:
-    {
-      return DB_ZONETYPE_TET;
-    }
-    default:
-    {
-      GEOS_ERROR( "Unsupported particle type for Silo particle-domain output: " << particleType );
-    }
-  }
-  return -1;
-}
-
 void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
                                  NodeManager const & nodeManager,
                                  string const & meshName,
@@ -2533,8 +2485,7 @@ void SiloFile::writeParticleMeshObject( ParticleRegion const & particleRegion,
                                         int const cycleNumber,
                                         real64 const problemTime )
 {
-  if( particleRegion.usesNativeParticleGeometry() )
-  {
+
     // Preserve particle order: fields are flattened in subregion/particle order.
     // Shape runs may repeat; do not sort zones into geometry-type groups.
     auto const mesh = particleRegion.getParticleDomainMesh();
@@ -2575,111 +2526,7 @@ void SiloFile::writeParticleMeshObject( ParticleRegion const & particleRegion,
                      LvArray::integerConversion< int >( counts.size() ), counts.data(), pointers.data(),
                      nullptr, types.data(), sizes.data(), cycleNumber, problemTime );
     return;
-  }
 
-  localIndex const numParticles = particleRegion.getNumberOfParticles();
-
-  array2d< real64 > const particleCorners = particleRegion.getParticleCorners();
-  localIndex const numCorners = particleCorners.size( 0 );
-
-  array1d< real64 > xcoords( numCorners );
-  array1d< real64 > ycoords( numCorners );
-  array1d< real64 > zcoords( numCorners );
-
-  for( localIndex k = 0; k < numCorners; ++k )
-  {
-    xcoords[k] = particleCorners[k][0];
-    ycoords[k] = particleCorners[k][1];
-    zcoords[k] = particleCorners[k][2];
-  }
-
-  real64 * coords[3];
-  coords[0] = xcoords.data();
-  coords[1] = ycoords.data();
-  coords[2] = zcoords.data();
-
-  localIndex const numParticleShapes = particleRegion.numSubRegions();
-
-  array1d< localIndex * > meshConnectivity( numParticleShapes );
-  array1d< int > shapecnt( numParticleShapes );
-  array1d< int > shapetype( numParticleShapes );
-  array1d< int > shapesize( numParticleShapes );
-
-  array1d< array1d< localIndex > > particleToCornerMap( numParticleShapes );
-
-  array1d< char > ghostNodeFlag( numCorners );
-  array1d< char > ghostZoneFlag( numParticles );
-
-  for( localIndex i = 0; i < numCorners; ++i )
-  {
-    ghostNodeFlag[i] = 0;
-  }
-  for( localIndex i = 0; i < numParticles; ++i )
-  {
-    ghostZoneFlag[i] = 0;
-  }
-
-  localIndex particleOffset = 0;
-  localIndex cornerOffset = 0;
-
-  particleRegion.forParticleSubRegionsIndex< ParticleSubRegion >( [&]( localIndex const psr,
-                                                                       ParticleSubRegion const & subRegion )
-  {
-    stdVector< int > const nodeOrdering = getSiloNodeOrdering( subRegion.getParticleType() );
-    int const numCornersPerParticle = LvArray::integerConversion< int >( nodeOrdering.size() );
-
-    particleToCornerMap[psr].resize( subRegion.size() * numCornersPerParticle );
-
-    arrayView1d< int const > const particleRank = subRegion.getParticleRank();
-    int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOS );
-
-    for( localIndex p = 0; p < subRegion.size(); ++p )
-    {
-      // For ParticleSubRegion, particleRank stores the rank that owns the
-      // particle. The active/non-ghost particles are those owned by the
-      // current rank, matching ParticleSubRegionBase::setActiveParticleIndices().
-      char const ghostFlag = particleRank[p] == mpiRank ? 0 : 1;
-
-      ghostZoneFlag[particleOffset + p] = ghostFlag;
-
-      for( int a = 0; a < numCornersPerParticle; ++a )
-      {
-        localIndex const sourceCorner = cornerOffset + p * numCornersPerParticle + nodeOrdering[a];
-        particleToCornerMap[psr][p * numCornersPerParticle + a] = sourceCorner;
-        ghostNodeFlag[sourceCorner] = ghostFlag;
-      }
-    }
-
-    meshConnectivity[psr] = particleToCornerMap[psr].data();
-    shapecnt[psr] = LvArray::integerConversion< int >( subRegion.size() );
-    shapetype[psr] = toSiloShapeType( subRegion.getParticleType() );
-    shapesize[psr] = numCornersPerParticle;
-
-    particleOffset += subRegion.size();
-    cornerOffset += subRegion.size() * numCornersPerParticle;
-  } );
-
-  GEOS_ERROR_IF_NE_MSG( particleOffset,
-                        numParticles,
-                        "Mismatch between ParticleRegion particle count and accumulated ParticleSubRegion sizes." );
-  GEOS_ERROR_IF_NE_MSG( cornerOffset,
-                        numCorners,
-                        "Mismatch between ParticleRegion corner count and particle connectivity." );
-
-  writeMeshObject( meshName,
-                   numCorners,
-                   coords,
-                   nullptr,
-                   ghostNodeFlag.data(),
-                   ghostZoneFlag.data(),
-                   LvArray::integerConversion< int >( numParticleShapes ),
-                   shapecnt.data(),
-                   meshConnectivity.data(),
-                   nullptr,
-                   shapetype.data(),
-                   shapesize.data(),
-                   cycleNumber,
-                   problemTime );
 }
 
 void SiloFile::writeParticleRegionSilo( ParticleRegionBase const & particleRegion,

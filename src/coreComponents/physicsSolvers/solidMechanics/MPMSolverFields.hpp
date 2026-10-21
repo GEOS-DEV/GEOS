@@ -188,8 +188,8 @@ DECLARE_FIELD( particleReferencePorosity,
                WRITE_AND_READ,
                "ParticleReferencePorosity" );
 
-DECLARE_FIELD( particleReferenceRVectors,
-               "particleReferenceRVectors",
+DECLARE_FIELD( particleGeometryReference,
+               "particleGeometryReference",
                array3d< real64 >,
                0.0,
                NOPLOT,

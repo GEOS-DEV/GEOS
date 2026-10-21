@@ -128,7 +128,7 @@ The three-dimensional basis is the tensor product
 \end{equation}
 and the gradient is obtained by differentiating the one-dimensional factor in the selected coordinate direction.  The code applies a deterministic closure correction to the final supported node so that the sum of the stored shape values is exactly one and the sum of the stored gradients is exactly zero to roundoff.
 
-The motivation for this option is the same as in smoother-basis MPM studies: broader, smoother basis functions reduce force and velocity projection jumps when particles cross grid-cell boundaries.  Steffen et al. analyzed implementation choices and quadrature errors in MPM, and later B-spline MPM work showed that B-spline bases can reduce cell-crossing artifacts and improve continuity of grid fields \cite{steffen2008quadrature,steffen2008choices,gan2018bspline}.  The GEOS option should be interpreted as a single-point B-spline quadrature choice, not as a finite particle-domain method: the particle center controls the interpolation, while the stored particle domain vectors are retained for volume accounting and output.
+The motivation for this option is the same as in smoother-basis MPM studies: broader, smoother basis functions reduce force and velocity projection jumps when particles cross grid-cell boundaries.  Steffen et al. analyzed implementation choices and quadrature errors in MPM, and later B-spline MPM work showed that B-spline bases can reduce cell-crossing artifacts and improve continuity of grid fields \cite{steffen2008quadrature,steffen2008choices,gan2018bspline}.  The GEOS option should be interpreted as a single-point B-spline quadrature choice, not as a finite particle-domain method: the particle center controls the interpolation, while material geometry is retained for output, CZ anchors and splitting; physical volume is stored independently.
 
 \begin{figure}[tbp]
   \centering
@@ -234,13 +234,13 @@ CPDI remains a background-grid method: nodal equations are still solved on the r
 \index{VP-Hencky domain scaling}
 \index{numerical fracture}
 
-The optional CPDI domain-scaling step regularizes only the particle domain used for CPDI integration and mapping.  It does not replace the constitutive deformation gradient.  Before each map, the solver first reconstructs the unscaled current half-edge vectors from the physical deformation gradient and the reference domain,
+The optional CPDI domain-scaling step regularizes only the particle domain used for CPDI integration and mapping.  It does not replace the constitutive deformation gradient.  Before each map, the solver reads unscaled current material generators G and constructs temporary half-edge vectors for the following mathematical notation,
 \begin{equation}
-  \boldsymbol{r}_{a}=\mathbf{F}\boldsymbol{r}^{0}_{a},
+  \boldsymbol{r}_{a}=\tfrac12\boldsymbol{g}_{a},
   \qquad a=1,\ldots,d,
   \label{eq:cpdi-raw-domain-from-f}
 \end{equation}
-where $d=2$ for plane strain and $d=3$ otherwise.  The input \mpmcode{cpdiDomainScalingType} selects either the compatibility method \texttt{homel}, which is the default, or the fixed-measure \texttt{vpHencky} projection.
+where $d=2$ for plane strain and $d=3$ otherwise. Persistent G advances with the physical increment independently of F resets. Projection operates on a temporary copy; the implementation stores full edges and the equivalent formulas below use half edges.  The input \mpmcode{cpdiDomainScalingType} selects either the compatibility method \texttt{homel}, which is the default, or the fixed-measure \texttt{vpHencky} projection.
 
 \paragraph{Homel compatibility method.}
 The \texttt{homel} option retains the previous GEOS implementation based on the CPDI domain-scaling work of Homel, Brannon, and Guilkey \cite{homel2016domaindef}.  It constructs selected center-to-corner vectors and caps their lengths by
@@ -323,7 +323,7 @@ Here $\beta=1$ retains all deviatoric Hencky stretch, while $\beta=0$ gives the 
 
 For CPDI mapping, $M^{\star}$ is normally the unscaled domain measure.  If Equation~\eqref{eq:vp-hencky-feasibility} is violated, particle subdivision is the conservative remedy.  If subdivision is disabled, or if more than one subdivision generation is needed, the integration domain alone is temporarily assigned $M^{\star}=M_{\max}$ so that the diagonal bound is still enforced.  The physical particle volume and constitutive deformation gradient are not changed by this temporary CPDI-only relaxation.
 
-A particle flag records that scaling occurred.  The \mpmcode{plotUnscaledParticles} option reconstructs Equation~\eqref{eq:cpdi-raw-domain-from-f} for output, and the next pre-map scaling pass recreates the integration domain.  The existing surface-data guard can disable explicit surface normals and positions on highly distorted scaled particles.  Thus, both scaling types are numerical regularizations of the CPDI integration domain rather than constitutive models.
+A particle flag records that scaling occurred.  Output always reconstructs current unscaled material G. Each mapping call projects a temporary integration domain; old Python plotUnscaledParticles inputs are accepted but ignored.  The existing surface-data guard can disable explicit surface normals and positions on highly distorted scaled particles.  Thus, both scaling types are numerical regularizations of the CPDI integration domain rather than constitutive models.
 
 \subsection{CPTI and CPDI2 placeholders}
 \label{subsec:cpti-cpdi2-placeholders}

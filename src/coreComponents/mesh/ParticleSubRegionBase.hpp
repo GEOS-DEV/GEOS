@@ -21,7 +21,7 @@
 #define GEOS_MESH_PARTICLESUBREGIONBASE_HPP_
 
 #include "mesh/ParticleType.hpp"
-#include "mesh/ParticleReferenceGeometry.hpp"
+#include "mesh/ParticleGeometry.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
@@ -65,35 +65,36 @@ public:
    */
   ~ParticleSubRegionBase();
 
-  /** Register on ALL ranks when the input schema contains native geometry,
-   * including ranks with no local particles. Registered, parent-sized arrays
-   * participate in the normal particle packing, erasure, and restart paths.
+  /** All particles own shape, reference generators and current generators.
+   * The two matrices contain full edges; vertices are reconstructed on demand.
+   * Point interpolation uses exactly the same material geometry as CPDI.
    */
-  void enableParticleReferenceGeometry();
-  bool hasParticleReferenceGeometry() const
-  { return hasWrapper( particleGeometry::shapeKey() ); }
-
-  struct ReferenceGeometryView
+  struct GeometryView
   {
     arrayView1d< integer const > shape;
-    arrayView3d< real64 > vectors;
-    GEOS_HOST_DEVICE bool isSimplex( localIndex const p ) const
-    { return shape.size() != 0 && shape[p] != 0; }
-
-    template< class OLD_F, class NEW_F >
-    GEOS_HOST_DEVICE void rebase( localIndex const p, OLD_F const & oldF, NEW_F const & newF ) const
+    arrayView3d< real64 const > reference;
+    arrayView3d< real64 > current;
+    GEOS_HOST_DEVICE bool isSimplex(localIndex p) const { return shape[p]!=0; }
+    GEOS_HOST_DEVICE particleGeometry::Shape particleShape(localIndex p) const
+    { return static_cast<particleGeometry::Shape>(shape[p]); }
+    GEOS_HOST_DEVICE particleGeometry::affine::Domain currentDomain(localIndex p, int dimensions=3) const
     {
-      if( isSimplex( p ) )
-      {
-        bool const valid = particleGeometry::rebase( oldF, newF, vectors[p] );
-        GEOS_ERROR_IF( !valid, "Cannot preserve native particle geometry through a singular/nonfinite F reset" );
-      }
+      auto domainShape=particleShape(p);
+      if(dimensions==2 && domainShape==particleGeometry::Shape::Parallelepiped)
+        domainShape=particleGeometry::Shape::Parallelogram;
+      if(dimensions==2 && domainShape==particleGeometry::Shape::TriangleWedge)
+        domainShape=particleGeometry::Shape::Triangle;
+      return particleGeometry::affine::Domain::fromGenerators(domainShape,current[p]);
     }
+    GEOS_HOST_DEVICE particleGeometry::affine::Domain referenceDomain(localIndex p) const
+    { return particleGeometry::affine::Domain::fromGenerators(particleShape(p),reference[p]); }
+    template<class FTYPE>
+    GEOS_HOST_DEVICE void reset(localIndex p, FTYPE const & newF, bool resetGeometry) const
+    { particleGeometry::affine::reset(reference[p],current[p],newF,resetGeometry); }
   };
-
-  /// For the existing serial reset paths. Explicitly synchronizes ONLY this
-  /// optional state; the caller retains responsibility for its existing F data.
-  ReferenceGeometryView referenceGeometryViewOnHost();
+  GeometryView geometryViewOnHost();
+  arrayView1d< integer const > getParticleGeometryShape() const
+  { return getReference<array1d<integer>>(particleGeometry::shapeKey()).toViewConst(); }
 
 
   ///@}
@@ -102,20 +103,6 @@ public:
    * @name Getters / Setters
    */
   ///@{
-
-  /**
-   * @brief Get whether particle has r-vectors.
-   * @return bool indicating whether particle has r-vectors.
-   */
-  bool hasRVectors() const
-  { return m_hasRVectors; }
-
-  /**
-   * @brief Set whether particle has r-vectors.
-   * @param[in] hasRVectors bool indicating whether particle has r-vectors.
-   */
-  void setHasRVectors( bool hasRVectors )
-  { m_hasRVectors = hasRVectors; }
 
   /**
    * @brief Get the global ID of each particle in this subregion.
@@ -320,17 +307,17 @@ public:
   { return m_particleVolume; }
 
   /**
-   * @brief Get the r-vectors of each particle in this subregion.
-   * @return an arrayView3d of const particle r-vectors
+   * @brief Get the full geometry generators of each particle in this subregion.
+   * @return an arrayView3d of const particle full geometry generators
    */
-  arrayView3d< real64 const > getParticleRVectors() const
-  { return m_particleRVectors; }
+  arrayView3d< real64 const > getParticleGeometryCurrent() const
+  { return m_particleGeometryCurrent; }
 
   /**
-   * @copydoc getParticleRVectors() const
+   * @copydoc getParticleGeometryCurrent() const
    */
-  arrayView3d< real64 > getParticleRVectors()
-  { return m_particleRVectors; }
+  arrayView3d< real64 > getParticleGeometryCurrent()
+  { return m_particleGeometryCurrent; }
 
   /**
    * @brief Get the surface normal of each particle in this subregion.
@@ -428,67 +415,30 @@ public:
   virtual void setParticleType( ParticleType const particleType )
   { m_particleType = particleType; }
 
-  /**
-   * @brief Get the number of vertices for particles in this subregion.
-   * @return the type of particle in this subregion
+  /** Raw corner-to-grid capacity, independent of material shape. The default
+   * is 3 even in the existing thin-3D plane-strain mode. A native-2D caller
+   * must explicitly request 2 after providing 2D topology and mapping kernels.
    */
-  int numberOfVerticesPerParticle() const
-  { return m_numVerticesPerParticle; }
-
-  /**
-   * @brief Set the number of vertices for particles in this subregion.
-   * @param[in] particleType the particle type
-   */
-  virtual void setNumberOfVerticesPerParticle( ParticleType const particleType )
+  int mappedNodeCapacity( int const gridDimension = 3 ) const
   {
-    switch( particleType )
+    GEOS_ERROR_IF( gridDimension != 2 && gridDimension != 3, "MPM grid dimension must be 2 or 3" );
+    switch( m_particleType )
     {
-      case ParticleType::SinglePoint:
-      {
-        m_numVerticesPerParticle = 1;
-        break;
-      }
-      case ParticleType::SinglePointBSpline:
-      {
-        // Cubic single-point B-spline MPM maps to 4^3 = 64 grid/control nodes.
-        // The existing mapping-array sizing is 8 * numberOfVerticesPerParticle,
-        // so use the CPDI-sized raw map. The r-vectors are not used by mapping.
-        m_numVerticesPerParticle = 8;
-        break;
-      }
-      case ParticleType::CPDI:
-      {
-        m_numVerticesPerParticle = 8;
-        break;
-      }
-      default:
-      {
-        GEOS_ERROR( "Particle type \"" << m_particleType << "\" is not yet supported." );
-        break;
-      }
+      case ParticleType::SinglePoint: return 1 << gridDimension;
+      case ParticleType::SinglePointBSpline: return 1 << ( 2*gridDimension );
+      case ParticleType::CPDI: return 1 << ( 2*gridDimension );
+      default: GEOS_ERROR( "Mapping capacity requested for an unimplemented particle type" ); return 0;
     }
   }
 
-  /**
-   * @brief Provide an immutable accessor to the particle neighbor list.
-   * @return const reference to neighbor list
-   */
+  /// Neighbor topology is independent of geometry and mapping capacity.
   OrderedVariableToManyParticleRelation const & neighborList() const
   { return m_neighborList; }
-
-  /**
-   * @brief Get a mutable accessor to the particle neighbor list.
-   * @return reference to neighbor list
-   */
   OrderedVariableToManyParticleRelation & neighborList()
   { return m_neighborList; }
 
   ///@}
 
-  /**
-   * @brief A struct to serve as a container for variable strings and keys.
-   * @struct viewKeyStruct
-   */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     /// @return String key for the member level field for the particle global ID.
@@ -537,7 +487,7 @@ public:
     static constexpr char const * particleVolumeString() { return "particleVolume"; }
 
     /// @return String key for the member level field for the particle volume.
-    static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
+    static constexpr char const * particleGeometryCurrentString() { return "particleGeometryCurrent"; }
 
     /// @return String key for the member level field for the particle surface normal.
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
@@ -625,12 +575,6 @@ protected:
   /// Type of particles in this subregion.
   ParticleType m_particleType;
   
-  /// Boolean indicating whether the particle subregion contains particles needing r-vectors defining their domain extent.
-  bool m_hasRVectors;
-  
-  /// The number of vertices each particle has
-  int m_numVerticesPerParticle;
-
   /// Member level field for particle ghost ranks
   array1d< int > m_particleRank;
 
@@ -676,8 +620,8 @@ protected:
   /// Member level field for the current particle volume.
   array1d< real64 > m_particleVolume;
 
-  /// current half-R-vectors (center to face)
-  array3d< real64 > m_particleRVectors;
+  /// Current material full-edge generators; independent of constitutive F.
+  array3d< real64 > m_particleGeometryCurrent;
 
   /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;

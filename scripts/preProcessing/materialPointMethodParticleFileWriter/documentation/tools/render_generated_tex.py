@@ -222,7 +222,7 @@ This appendix is generated from current wrapper registrations and constructor de
 
 \section{{Particle region output controls}}
 {region_table}
-The native geometry output policy belongs on each particle region, not on the solver. Cached schema RST files are not used as an alternate source for defaults.
+Silo and VTK reconstruct the current material geometry; there is no separate particle-region output geometry policy. Cached schema RST files are not used as an alternate source for defaults.
 """)
 
     # Events appendix.
@@ -293,7 +293,7 @@ A default of \texttt{{None}} on an emitted solver parameter omits the attribute 
 \index{{particle file format}}
 \index{{ParticleMesh}}
 
-Header names map columns; the enum index below is not a required physical column position. Native geometry is an optional group: all ten geometry columns must appear together, and a partial group is rejected. Omitting the complete group allocates no native geometry state.
+Header names map columns; the enum index below is not a required physical column position. Every record requires the complete twelve-column geometry group: version 2, shape, physical volume and nine full-edge components. Old R-vector/native-reference/integration-width columns are not accepted. See Section~\ref{{sec:unified-particle-geometry}} for reset policies and the full contract.
 
 {ptype_table}
 

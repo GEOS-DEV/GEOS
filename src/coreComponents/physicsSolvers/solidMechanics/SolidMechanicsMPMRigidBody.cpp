@@ -858,7 +858,7 @@ void SolidMechanicsMPM::computeRigidBodyColorFieldMappings( DomainPartition & do
       arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
       arrayView1d< integer const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
       arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-      int const mappedNodeCount = 8 * subRegion.numberOfVerticesPerParticle();
+      int const mappedNodeCount = subRegion.mappedNodeCapacity();
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
       for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
@@ -927,7 +927,7 @@ void SolidMechanicsMPM::computeRigidBodyColorFieldMappings( DomainPartition & do
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[overflowSubRegionIndex];
     arrayView1d< integer const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
     arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-    int const mappedNodeCount = 8 * subRegion.numberOfVerticesPerParticle();
+    int const mappedNodeCount = subRegion.mappedNodeCapacity();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
@@ -1034,7 +1034,7 @@ void SolidMechanicsMPM::computeRigidBodyColorFieldMappings( DomainPartition & do
     arrayView2d< localIndex const > const effectiveMappedNodes = m_effectiveMappedNodes[assignmentSubRegionIndex];
     arrayView1d< integer const > const particleColor = subRegion.getField< fields::mpm::particleColor >();
     arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-    int const mappedNodeCount = 8 * subRegion.numberOfVerticesPerParticle();
+    int const mappedNodeCount = subRegion.mappedNodeCapacity();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
@@ -1509,7 +1509,6 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
       fields::mpm::particleKineticEnergy::key(),
       fields::mpm::particleReferenceSurfaceNormal::key(),
       fields::mpm::particleReferenceSurfacePosition::key(),
-      fields::mpm::particleReferenceRVectors::key(),
       fields::mpm::particleDeformationGradient::key(),
       fields::mpm::particleVelocityGradient::key(),
       ParticleSubRegion::viewKeyStruct::particleCenterString(),
@@ -1517,7 +1516,7 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
       ParticleSubRegion::viewKeyStruct::particleSurfaceFlagString(),
       ParticleSubRegion::viewKeyStruct::particleSurfaceNormalString(),
       ParticleSubRegion::viewKeyStruct::particleSurfacePositionString(),
-      ParticleSubRegion::viewKeyStruct::particleRVectorsString()
+      ParticleSubRegion::viewKeyStruct::particleGeometryCurrentString()
     };
     for( string const & fieldName : rigidUpdateFields )
     {
@@ -1529,14 +1528,11 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
     arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
-    arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
-    ParticleType const particleType = subRegion.getParticleType();
+    arrayView3d< real64 > const particleGeometryCurrent = subRegion.getParticleGeometryCurrent();
     arrayView2d< real64 > const particleReferenceSurfaceNormal =
       subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
     arrayView2d< real64 > const particleReferenceSurfacePosition =
       subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
-    arrayView3d< real64 > const particleReferenceRVectors =
-      subRegion.getField< fields::mpm::particleReferenceRVectors >();
     arrayView3d< real64 > const particleDeformationGradient =
       subRegion.getField< fields::mpm::particleDeformationGradient >();
     arrayView3d< real64 > const particleVelocityGradient =
@@ -1628,11 +1624,11 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
       };
       rotateVector2D( particleSurfaceNormal[p] );
       rotateVector2D( particleSurfacePosition[p] );
-      if( particleType != ParticleType::SinglePoint )
+      // Rotate current material geometry for every interpolation type.
       {
         for( int a = 0; a < 3; ++a )
         {
-          rotateVector2D( particleRVectors[p][a] );
+          rotateVector2D( particleGeometryCurrent[p][a] );
         }
       }
 
@@ -1640,13 +1636,6 @@ void SolidMechanicsMPM::rigidBodyParticleUpdate( real64 const time_n,
       {
         particleReferenceSurfaceNormal[p][i] = particleSurfaceNormal[p][i];
         particleReferenceSurfacePosition[p][i] = particleSurfacePosition[p][i];
-      }
-      for( int a = 0; a < 3; ++a )
-      {
-        for( int i = 0; i < 3; ++i )
-        {
-          particleReferenceRVectors[p][a][i] = particleRVectors[p][a][i];
-        }
       }
       for( int i = 0; i < 3; ++i )
       {

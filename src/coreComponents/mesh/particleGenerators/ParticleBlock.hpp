@@ -211,18 +211,16 @@ public:
   void setParticleVolume( array1d< real64 > const particleVolume )
   { m_particleVolume = particleVolume; }
 
-  array3d< real64 > getParticleRVectors() const override
-  { return m_particleRVectors; }
+  array3d< real64 > getParticleGeometryCurrent() const override
+  { return m_particleGeometryCurrent; }
 
   /**
    * @brief Set the list of particle r-vectors in this subregion.
-   * @param particleRVectors The input list of r-vectors
+   * @param particleGeometryCurrent The input list of r-vectors
    */
-  void setParticleRVectors( array3d< real64 > const particleRVectors )
-  { m_particleRVectors = particleRVectors; }
+  void setParticleGeometryCurrent( array3d< real64 > const particleGeometryCurrent )
+  { m_particleGeometryCurrent = particleGeometryCurrent; }
 
-  bool hasRVectors() const override
-  { return m_hasRVectors; }
 
   array2d< real64 > getParticleSurfaceNormal() const override
   { return m_particleSurfaceNormal; }
@@ -346,10 +344,9 @@ private:
   ParticleType m_particleType;
 
   /// Bool flag for whether particles in this block have r-vectors defining its domain
-  bool m_hasRVectors;
 
   /// R-vectors
-  array3d< real64 > m_particleRVectors;
+  array3d< real64 > m_particleGeometryCurrent;
 
   /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;

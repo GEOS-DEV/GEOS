@@ -62,21 +62,16 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleVelocity = particleBlock.getParticleVelocity();
   m_particleMaterialDirection = particleBlock.getParticleMaterialDirection();
   m_particleVolume = particleBlock.getParticleVolume();
-  m_particleRVectors = particleBlock.getParticleRVectors();
-  m_hasRVectors = particleBlock.hasRVectors();
+  m_particleGeometryCurrent = particleBlock.getParticleGeometryCurrent();
   m_particleSurfaceNormal = particleBlock.getParticleSurfaceNormal();
   m_particleSurfacePosition = particleBlock.getParticleSurfacePosition();
   m_particleSurfaceTraction = particleBlock.getParticleSurfaceTraction();
   m_particleCZTag = particleBlock.getParticleCZTag();
 
-  if( particleBlock.hasWrapper( particleGeometry::shapeKey() ) )
-  {
-    enableParticleReferenceGeometry();
-    getReference< array1d< integer > >( particleGeometry::shapeKey() ) =
-      particleBlock.getReference< array1d< integer > >( particleGeometry::shapeKey() );
-    getReference< array3d< real64 > >( particleGeometry::vectorsKey() ) =
-      particleBlock.getReference< array3d< real64 > >( particleGeometry::vectorsKey() );
-  }
+  // The versioned reader always supplies the same schema, even on empty ranks.
+  getReference< array1d< integer > >( particleGeometry::shapeKey() ) =
+    particleBlock.getReference< array1d< integer > >( particleGeometry::shapeKey() );
+  getReference< array3d< real64 > >( particleGeometry::vectorsKey() ) = m_particleGeometryCurrent;
 
   // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
   // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
