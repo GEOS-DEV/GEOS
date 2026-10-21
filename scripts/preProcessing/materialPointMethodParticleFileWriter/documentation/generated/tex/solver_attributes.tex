@@ -89,8 +89,8 @@ This appendix is generated from current wrapper registrations and constructor de
 {\ttfamily contact\allowbreak{}Gap\allowbreak{}Correction} & {\ttfamily OPTIONAL} & {\ttfamily Implicit} & Flag for mitigating contact gaps\\
 {\ttfamily contact\allowbreak{}Normal\allowbreak{}Exponent} & {\ttfamily OPTIONAL} & {\ttfamily 1.\allowbreak{}0} & Exponent value for surface normal weights in contact normal type aligned\\
 {\ttfamily contact\allowbreak{}Normal\allowbreak{}Type} & {\ttfamily OPTIONAL} & {\ttfamily Mass\allowbreak{}Weighted} & Flag for contact normal type\\
-{\ttfamily cpdi\allowbreak{}Domain\allowbreak{}Scaling} & {\ttfamily OPTIONAL} & {\ttfamily 0} & Option for CPDI domain scaling\\
-{\ttfamily cpdi\allowbreak{}Domain\allowbreak{}Scaling\allowbreak{}Type} & {\ttfamily OPTIONAL} & {\ttfamily homel} & CPDI domain-scaling algorithm. Options are:; * ; *\\
+{\ttfamily cpdi\allowbreak{}Domain\allowbreak{}Scaling} & {\ttfamily OPTIONAL} & {\ttfamily 0} & Enable temporary CPDI/CPTI integration-domain scaling; physical geometry is unchanged\\
+{\ttfamily cpdi\allowbreak{}Domain\allowbreak{}Scaling\allowbreak{}Type} & {\ttfamily OPTIONAL} & {\ttfamily homel} & CPDI domain-scaling algorithm (CPTI uses isotropic diameter clipping with the selected size limit). Options are:; * ; *\\
 {\ttfamily crack\allowbreak{}Tip\allowbreak{}Detection\allowbreak{}Threshold} & {\ttfamily OPTIONAL} & {\ttfamily 0.\allowbreak{}5} & Set threshold for crack-tip detection\\
 {\ttfamily damage\allowbreak{}Field\allowbreak{}Partitioning} & {\ttfamily OPTIONAL} & {\ttfamily 0} & Flag for using the gradient of the particle damage field to partition material into separate velocity fields\\
 {\ttfamily damage\allowbreak{}Hessian\allowbreak{}Surface\allowbreak{}Threshold} & {\ttfamily OPTIONAL} & {\ttfamily 1e16} & Threshold to update surface flag of damaged material\\

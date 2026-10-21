@@ -73,6 +73,8 @@ import builtins
 import json
 from collections import Counter
 from pfw_surface_refinement import GeometryQueries, TwoPassRefiner, object_slice_bounds
+from pfw_particle_layout import (resolve_surface_layout, validate_hex_tet_bulk_type,
+                                 ParticleLayoutStatistics, combine_layout_statistics)
 
 parser = argparse.ArgumentParser(description='Particle File Writer for GEOS-MPM')
 parser.add_argument('input_file', help="PFW input file", type=str)
@@ -824,8 +826,8 @@ parameters = {
                'contactGapCorrection': ( None, True ),  # MPM: enable contact-gap mitigation.
                'contactNormalExponent': ( None, True ),  # MPM: exponent for weighted contact normals.
                'contactNormalType': ( None, True ),  # MPM: contact-normal construction mode.
-               'cpdiDomainScaling': ( None, True ),  # MPM: enable CPDI integration-domain scaling.
-               'cpdiDomainScalingType': ( None, True ),  # MPM: CPDI scaling algorithm: homel or vpHencky.
+               'cpdiDomainScaling': ( None, True ),  # MPM: enable temporary CPDI/CPTI integration-domain scaling.
+               'cpdiDomainScalingType': ( None, True ),  # MPM: CPDI algorithm; CPTI clips diameter uniformly with this option's size limit.
                'crackTipDetectionThreshold': ( None, True ),  # MPM: crack-tip detection threshold.
                'damageFieldPartitioning': ( None, True ),  # MPM: partition velocity fields using damage gradients.
                'dependencies': ( [], False ),  # PFW: files to stage beside generated input.
@@ -910,7 +912,8 @@ parameters = {
                'particleGeometry': ( None, False ),  # box or fromRefinement; preferred geometry selection.
                'particleReferenceGeometry': ( 'equivalentBox', False ),  # Old alias: equivalentBox -> box; fromRefinement retains cut shapes.
                'particleDomainOutput': ( 'native', False ),  # Old PFW input accepted; output always uses material geometry.
-               'surfaceRefinementMethod': ( 'cartesian', False ),  # PFW: cartesian or simplex (single-point B-splines).
+               'surfaceRefinementMethod': ( 'cartesian', False ),  # PFW: cartesian, simplex, or hexTet (3D native tets at cuts; hex bulk).
+               'simplexParticleType': ( None, False ),  # PFW: optional cut-simplex interpolation: 0, 1, or 3 (3D CPTI).
                'surfaceRefinementFallback': ( 'cartesian', False ),  # PFW: cartesian or error for unresolved local simplex cuts.
                'surfaceRefinementPlaneTolerance': ( 0.05, False ),  # PFW: allowed corner/plane disagreement divided by child diagonal.
                'periodic': ( [ False, False, False ], False ),  # PFW: periodicity in x/y/z.
@@ -1140,15 +1143,25 @@ cohesiveZoneRegionString = ""
 # Geometry normalization is the only compatibility boundary. Old pfw_input
 # dictionaries remain accepted; every generated file uses canonical schema 2.
 # RVector in particleFileFields requests geometry and is replaced automatically.
-from pfw_reference_geometry import COLUMN_NAMES, encode_geometry, geometry_columns
+from pfw_reference_geometry import box_tetrahedra, COLUMN_NAMES, encode_geometry, geometry_columns
 if geometryReset not in ('FOnly', 'FAndGeometry'):
   raise ValueError("geometryReset must be FOnly or FAndGeometry")
 if particleGeometryFormat not in ('legacy', 'unified'):
   raise ValueError("particleGeometryFormat must be legacy or unified (both now emit schema 2)")
 if particleReferenceGeometry not in ('equivalentBox', 'fromRefinement'):
   raise ValueError("particleReferenceGeometry must be equivalentBox or fromRefinement")
-if particleGeometry is None:
-  particleGeometry = 'fromRefinement' if particleReferenceGeometry == 'fromRefinement' else 'box'
+# hexTet is a named layout for the existing native simplex cutter. Resolve it
+# before geometry aliases/defaults so explicit incompatible settings fail early.
+# Keep the user's request for reporting; the cutter receives method='simplex'.
+requestedSurfaceRefinementMethod = surfaceRefinementMethod
+surfaceLayout = resolve_surface_layout(
+  surfaceRefinementMethod, particleGeometry, particleReferenceGeometry,
+  simplexParticleType, planeStrain,
+  reference_geometry_explicit=('particleReferenceGeometry' in pfw))
+surfaceRefinementMethod = surfaceLayout.method
+particleGeometry = surfaceLayout.geometry
+simplexParticleType = surfaceLayout.simplex_particle_type
+hexTetRefinement = surfaceLayout.hex_tet
 if particleGeometry not in ('box', 'fromRefinement'):
   raise ValueError("particleGeometry must be box or fromRefinement")
 nativeReferenceGeometry = particleGeometry == 'fromRefinement'
@@ -1182,11 +1195,20 @@ if float(surfaceRefinementLevel) != int(surfaceRefinementLevel) or int(surfaceRe
 surfaceRefinementLevel = int(surfaceRefinementLevel)
 surfaceRefinementMethod = str(surfaceRefinementMethod).lower().replace('-conforming', '')
 if surfaceRefinementMethod not in ('cartesian', 'simplex'):
-  raise ValueError("surfaceRefinementMethod must be 'cartesian' or 'simplex'")
+  raise ValueError("surfaceRefinementMethod must be 'cartesian', 'simplex', or 'hexTet'")
 # Cartesian level 1 selects the legacy traversal. Simplex selects the two-pass
 # path even at level 1, because a surface cell can still require a plane cut.
 # Material-wise particleRefinement remains available on either traversal path.
 surfaceRefinementEnabled = surfaceRefinementLevel > 1 or surfaceRefinementMethod == 'simplex'
+if simplexParticleType is not None:
+  if simplexParticleType not in (0, 1, 3):
+    raise ValueError("simplexParticleType must be None, 0 (SinglePoint), 1 (B-spline), or 3 (CPTI)")
+  simplexParticleType = int(simplexParticleType)
+  if surfaceRefinementMethod != 'simplex':
+    raise ValueError("simplexParticleType requires surfaceRefinementMethod='simplex'")
+  if simplexParticleType == 3 and (planeStrain or not nativeReferenceGeometry):
+    raise ValueError("CPTI requires planeStrain=0 and particleGeometry='fromRefinement'")
+
 
 # Geometry input has three forms: an explicit objects list, make_objects(),
 # or make_objects(rankxmin, rankxmax). A sliced factory limits construction
@@ -1283,6 +1305,20 @@ for obj in objects:
 if not flux:
   subregions_all = [entry for entries in comm.allgather(subregions_all) for entry in entries]
 subregions_all = sorted(set(tuple(entry) for entry in subregions_all))
+# Validate the globally known bulk types before adding cut-only subregions.
+# Every rank must see the same error even if a sliced factory hides the bad
+# object from rank 0, or a rank owns no particle rows.
+if hexTetRefinement:
+  for _, particle_type in subregions_all:
+    validate_hex_tet_bulk_type(particle_type)
+if simplexParticleType is not None:
+  subregions_all = sorted(set(subregions_all +
+    [(material, simplexParticleType) for material, _ in subregions_all]))
+for material, particle_type in subregions_all:
+  if particle_type == 3 and (planeStrain or not nativeReferenceGeometry):
+    raise ValueError("CPTI requires planeStrain=0 and particleGeometry='fromRefinement'")
+  if particle_type not in (0, 1, 2, 3):
+    raise ValueError("Supported particle types are 0, 1, 2, and 3; CPDI2 is not implemented")
 print("subregions_all:", subregions_all)
 
 particleTypesPerMat = [set() for m in materials]
@@ -1447,6 +1483,9 @@ if generateParticleFile:
       data["particleType"] = object.getParticleType( pt )
     else:
       data["particleType"] = object.particleType( object, pt ) if callable( object.particleType ) else object.particleType
+
+    if hexTetRefinement:
+      validate_hex_tet_bulk_type(data['particleType'])
 
     # Kinematic and bulk scalar fields are sampled only when requested. The optional
     # sinusoidal-damage/wavy-crack settings override the object's damage value.
@@ -1726,8 +1765,38 @@ if generateParticleFile:
     geometry = encode_geometry(particlePosition, (dxr, dyr, dzr),
                                geometryVertices if nativeReferenceGeometry else None,
                                plane_strain=planeStrain == 1)
+    if data['particleType'] == 3 and geometry[0] != 2:
+      raise ValueError("CPTI requires tetrahedron geometry")
+    if data['particleType'] == 2 and geometry[0] != 0:
+      raise ValueError("CPDI requires box geometry; set simplexParticleType=3 for CPTI cut tets")
     pString += delim + geometry_columns(geometry, dxr*dyr*dzr, delim)
     return pString +'\n'
+
+  def _particle_records(point, data, widths, vertices=None):
+    """Emit one native piece, or six tetrahedra when a CPTI piece is a box.
+
+    Cut tetrahedra already carry the correct centroid/volume/geometry. Cartesian
+    CPTI pieces (bulk, material refinement, or cut fallback) are tessellated
+    before serialization. Child state is sampled at its actual centroid, with
+    material/contact ownership checked against the selected parent piece.
+    Surface tractions are integrated forces, so each equal-volume child takes
+    one sixth of the locally evaluated parent-scale force.
+    """
+    if data['particleType'] != 3 or vertices is not None:
+      yield point, data, widths, vertices
+      return
+    obj = data['object']
+    for center, child_widths, tet in box_tetrahedra(point, widths):
+      obj.isInterior(center, surfaceDepth)  # Refresh compound-object caches.
+      child = _evaluate_particle_data(obj, center, data['surfaceFlag'])
+      if child['particleType'] != 3:
+        raise ValueError("Particle type changed inside a Cartesian CPTI piece")
+      for field in ('mat', 'group'):
+        if field in data and child[field] != data[field]:
+          raise ValueError("Material/contact ownership changed inside a Cartesian CPTI piece")
+      if 'surfaceTraction' in child:
+        child['surfaceTraction'] = np.asarray(child['surfaceTraction']) / 6.0
+      yield center, child, child_widths, tet
 
   # ============================================================================
   # 11. GENERATE PARTICLES: REFINEMENT PATH OR LEGACY PATH
@@ -1737,6 +1806,8 @@ if generateParticleFile:
   # coarse centers directly and retains the established state-sampling order.
   # Both emit rank-local records into the file opened in section 09.
   refinementReport = None
+  # Track only final emissions. Staged coarse records may be discarded later.
+  layoutStatistics = ParticleLayoutStatistics()
   if surfaceRefinementEnabled:
     # Logical pass 1: ordinary coarse-center occupancy and surface flags.
     # Logical pass 2: replace only the selected band, including empty centers.
@@ -1759,6 +1830,7 @@ if generateParticleFile:
       # records are discarded and replaced, not added to their children.
       obj = objects[sample.object_index]
       data = _evaluate_particle_data(obj, sample.point, sample.surface_flag)
+      sample.coarse_particle_type = data['particleType']
       if sample.surface_flag and {'SurfaceNormal', 'SurfacePosition'} <= particleFileFields:
         normal = np.array(data['surfaceNormal'], dtype=float).copy()
         offset = np.array(data['surfacePosition'], dtype=float).copy()
@@ -1770,6 +1842,9 @@ if generateParticleFile:
         if np.isfinite(length) and length > 1.0e-14 and np.all(np.isfinite(offset)):
           sample.surface = (normal / length, sample.point + offset)
         queries.stats['surface_queries'] += 1
+      # A CPTI box emits six records at new centroids; do not cache a box row.
+      if data['particleType'] == 3:
+        return None
       return _particle_file_line(0, sample.point, data, dx, dy, dz).split(delim, 1)[1]
 
     n_p = 0
@@ -1812,6 +1887,7 @@ if generateParticleFile:
           n_p += 1
           particleVolume += piece.volume
           particleFile.write(str(n_p) + delim + piece.coarse_record)
+          layoutStatistics.record(piece.sample.coarse_particle_type, 0, piece.volume)
           continue
         obj = objects[piece.sample.object_index]
         # Restore any geometry-object membership cache before evaluating state.
@@ -1831,25 +1907,31 @@ if generateParticleFile:
           distance = float(np.dot(piece.normal, piece.point - piece.surface_point))
           override = (piece.normal, -distance * piece.normal)
         data = _evaluate_particle_data(obj, piece.point, flag, surfaceOverride=override)
-        # The current simplex-refinement integration path is single-point B-spline.
-        # Recheck material/contact labels against classification to catch inconsistent
-        # getters before writing a record with mismatched ownership or state.
-        if piece.vertices is not None and data["particleType"] != 1:
-          raise ValueError("Simplex refinement requires particleType=1 (SinglePointBSpline) "
-                           "at cut domains; use cartesian refinement for CPDI/CPTI particles")
+        # Override only emitted cut simplices, keeping each object's bulk type.
+        # CPTI requires native 3D tetrahedra; point methods retain their existing
+        # geometry choice. Cartesian fallback keeps the object's bulk type.
+        if piece.vertices is not None:
+          if simplexParticleType is not None:
+            data['particleType'] = simplexParticleType
+          if data['particleType'] not in (0, 1, 3):
+            raise ValueError("Cut simplex particles require type 0, 1, or 3; set simplexParticleType=3 for CPTI")
         if "MaterialType" in particleFileFields and data["mat"] != piece.sample.material:
           raise ValueError("Geometry getMat changed between classification and particle output")
         if "ContactGroup" in particleFileFields and data["group"] != piece.sample.group:
           raise ValueError("Geometry getGroup changed between classification and particle output")
         _validate_particle_value("Position", obj, piece.point, piece.point)
         _validate_particle_value("ParticleType", obj, data["particleType"], piece.point)
-        n_p += 1
-        particleVolume += piece.volume
-        # Keep legacy equivalent-box R-vectors unchanged. Optional native
-        # reference geometry is appended from the already constructed simplex.
-        particleFile.write(_particle_file_line(n_p, piece.point, data, *piece.widths,
-                                               geometryVertices=piece.vertices))
+        for center, record, widths, vertices in _particle_records(piece.point, data, piece.widths, piece.vertices):
+          n_p += 1
+          particleVolume += float(np.prod(widths))
+          particleFile.write(_particle_file_line(n_p, center, record, *widths, geometryVertices=vertices))
+          shape = (1 if planeStrain else 2) if nativeReferenceGeometry and vertices is not None else 0
+          layoutStatistics.record(record['particleType'], shape, float(np.prod(widths)))
       refinementReport = refiner.report()
+      # The geometric refiner counts pieces before a CPTI box becomes six tets.
+      # Keep that count and also report the actual number of serialized particles.
+      refinementReport['emitted_refinement_pieces'] = refinementReport.get('emitted_particles', 0)
+      refinementReport['emitted_particles'] = n_p
     except Exception as exc:
       particleFile.close()
       _abort_particle_generation("Two-pass surface refinement failed on rank " + str(rank) + ": " + str(exc))
@@ -1907,9 +1989,10 @@ if generateParticleFile:
                   continue
                 _validate_particle_value("Position", childData["object"], particlePosition, particlePosition)
                 _validate_particle_value("ParticleType", childData["object"], childData["particleType"], particlePosition)
-                n_p = n_p + 1
-                particleVolume += dxr*dyr*dzr
-                particleFile.write(_particle_file_line(n_p, particlePosition, childData, dxr, dyr, dzr))
+                for center, record, widths, vertices in _particle_records(particlePosition, childData, (dxr, dyr, dzr)):
+                  n_p += 1
+                  particleVolume += float(np.prod(widths))
+                  particleFile.write(_particle_file_line(n_p, center, record, *widths, geometryVertices=vertices))
 
   particleFile.close()
 
@@ -1924,8 +2007,10 @@ if generateParticleFile:
   if not flux:
     particleVolume = comm.allreduce(particleVolume, op=MPI.SUM)
     rankReports = comm.gather(refinementReport, root=0)
+    rankLayoutReports = comm.gather(layoutStatistics.report(), root=0) if surfaceRefinementEnabled else []
   else:
     rankReports = [refinementReport]
+    rankLayoutReports = [layoutStatistics.report()]
   if rank == 0 and surfaceRefinementEnabled:
     # Ordinary counters are summed across ranks. peak_* counters report the largest
     # single-rank peak, not a sum. Save the combined data beside the particle file
@@ -1941,6 +2026,12 @@ if generateParticleFile:
     summary.update(method=surfaceRefinementMethod, level=surfaceRefinementLevel,
                    pfw_ranks=num_ranks, particle_volume=particleVolume,
                    peak_values_are_per_rank=True)
+    summary['requested_method'] = requestedSurfaceRefinementMethod
+    summary['particle_layout'] = combine_layout_statistics(rankLayoutReports)
+    if summary['particle_layout']['total_count'] != summary.get('emitted_particles', 0):
+      raise ValueError('Particle layout count disagrees with emitted-particle count')
+    summary['resolved_geometry'] = particleGeometry
+    summary['resolved_simplex_particle_type'] = simplexParticleType
     with open(particleFileName + '_refinement.json', 'w') as reportFile:
       json.dump(summary, reportFile, indent=2, sort_keys=True)
       reportFile.write('\n')
@@ -2086,11 +2177,11 @@ if rank == 0:
   blockIndex = 0
   for i in range(numMats):
     numTypes = len(particleTypesPerMat[i])
-    types = list(particleTypesPerMat[i])
+    types = sorted(particleTypesPerMat[i])
     regionBlocksStr = ""
     # Translate file particle-type IDs into GEOS input names and associate each
-    # type with a particle block. Listing a name here does not implement that
-    # mapping method in GEOS; CPTI/CPDI2 still require solver support.
+    # type with a particle block. CPTI uses native tetrahedra; CPDI2 is rejected
+    # during preflight because its mapping is not implemented.
     for j in range(numTypes):
       regionBlocksStr += "pb"+str(blockIndex)
       

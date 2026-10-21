@@ -265,8 +265,8 @@ Cohesive and damaged-cohesive particles, and any particle with nonzero
 \mpmcode{particleCohesiveZoneFlag}, remain excluded. Their cached mappings,
 anchors, interface forces, and history require a separate CZ splitting method.
 Geometry type and interpolation type are preserved: boxes remain boxes, tets
-remain tets, and point interpolation remains point interpolation. CPTI, warped
-CPDI2, native 2D grids, and axisymmetry remain separate work.
+remain tets, and CPTI children retain CPTI interpolation. Warped CPDI2,
+native 2D grids, and axisymmetry remain separate work.
 
 \begin{lstlisting}[language=Python,caption={Native surface geometry with runtime size control.}]
 pfw['particleGeometry'] = 'fromRefinement'

@@ -78,3 +78,26 @@ def geometry_columns(geometry, volume, delimiter="\t"):
             raise ValueError("Wedge must be an in-plane triangle extruded in z")
     return delimiter.join(["2", str(int(shape)), format(float(volume), ".17g")]
                           + [format(float(x), ".17g") for x in g.flat])
+
+
+def box_tetrahedra(point, widths):
+    """Partition a Cartesian box into six conforming, equal-volume tetrahedra.
+
+    The Freudenthal diagonal is lower-to-upper on every box. Each permutation
+    of coordinate steps defines one tetrahedron. This also gives matching
+    triangular facets on adjacent boxes with the same Cartesian resolution.
+    Orientation is canonicalized by encode_geometry at serialization.
+    """
+    from itertools import permutations
+    point = np.asarray(point, dtype=float)
+    widths = np.asarray(widths, dtype=float)
+    encode_geometry(point, widths)  # Validate dimensions, finiteness and widths.
+    lower = point - 0.5 * widths
+    for order in permutations(range(3)):
+        vertices = [lower.copy()]
+        for axis in order:
+            vertex = vertices[-1].copy()
+            vertex[axis] += widths[axis]
+            vertices.append(vertex)
+        vertices = np.array(vertices)
+        yield vertices.mean(axis=0), widths / np.cbrt(6.0), vertices

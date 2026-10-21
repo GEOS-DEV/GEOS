@@ -1104,6 +1104,26 @@ public:
                                                 arraySlice1d< real64 > const shapeFunctionValues,
                                                 arraySlice2d< real64 > const shapeFunctionGradientValues );
 
+  /** CPTI uses the same implementation for cached views and on-demand arrays.
+   * Raw entries retain corner order; the normal effective-map pass coalesces
+   * duplicate grid nodes. Invalid geometry/stencils return an empty row.
+   */
+  template< class NODES, class VALUES, class GRADIENTS >
+  GEOS_HOST_DEVICE
+  bool computeCPTIShapeFunctions( arraySlice1d< real64 const > const particlePosition,
+                                  arraySlice2d< real64 const > const particleGeometryCurrent,
+                                  arrayView3d< int const > const ijkMap,
+                                  real64 const (&xLocalMin)[3],
+                                  real64 const (&hEl)[3],
+                                  localIndex const (&nEl)[3],
+                                  NODES const mappedNodes, VALUES const shapeFunctionValues,
+                                  GRADIENTS const shapeFunctionGradientValues ) const;
+
+  // Shape-preserving, temporary CPTI projection; never apply box VP-Hencky
+  // formulas or box feasibility bounds to a tetrahedron.
+  GEOS_HOST_DEVICE int projectCPTIIntegrationGeometry(
+    arraySlice2d< real64 const > const geometry, real64 (&projected)[3][3] ) const;
+
   // Return status bits: changed=1, relaxed integration measure=2, invalid=4.
   // No per-particle integration matrix is stored or checkpointed.
   GEOS_HOST_DEVICE int projectIntegrationGeometry(

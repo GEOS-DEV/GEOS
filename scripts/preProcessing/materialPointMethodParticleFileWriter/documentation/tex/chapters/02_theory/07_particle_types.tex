@@ -22,7 +22,7 @@ and the velocity/state update enumeration
 \begin{equation}
   \texttt{FLIP},\quad \texttt{PIC},\quad \texttt{XPIC},\quad \texttt{FMPM}.
 \end{equation}
-The implemented particle setup paths in the reviewed source are \texttt{SinglePoint}, \mpmcode{SinglePointBSpline}, and \texttt{CPDI}.  The \texttt{CPTI} and \texttt{CPDI2} identifiers are reserved for future development; attempting to generate those particle types in the reviewed particle setup path raises a not-implemented error.  The same particle-to-grid and grid-to-particle mapping data are reused by the force, kinematic, contact, boundary, and diagnostic steps described in Sections~\ref{sec:solver-steps} and~\ref{sec:bc-internals}.
+The implemented particle setup paths are \texttt{SinglePoint}, \mpmcode{SinglePointBSpline}, \texttt{CPDI}, and 3D tetrahedral \texttt{CPTI}. The \texttt{CPDI2} identifier remains reserved and is rejected by the reader. CPTI requires native tetrahedral geometry and does not provide a plane-strain specialization.  The same particle-to-grid and grid-to-particle mapping data are reused by the force, kinematic, contact, boundary, and diagnostic steps described in Sections~\ref{sec:solver-steps} and~\ref{sec:bc-internals}.
 
 \subsection{Mapping notation and effective support}
 \label{subsec:mapping-notation}
@@ -325,15 +325,65 @@ For CPDI mapping, $M^{\star}$ is normally the unscaled domain measure.  If Equat
 
 A particle flag records that scaling occurred.  Output always reconstructs current unscaled material G. Each mapping call projects a temporary integration domain; old Python plotUnscaledParticles inputs are accepted but ignored.  The existing surface-data guard can disable explicit surface normals and positions on highly distorted scaled particles.  Thus, both scaling types are numerical regularizations of the CPDI integration domain rather than constitutive models.
 
-\subsection{CPTI and CPDI2 placeholders}
+\subsection{CPTI: tetrahedral domain interpolation}
 \label{subsec:cpti-cpdi2-placeholders}
 \index{CPTI}
 \index{CPDI2}
 
-The \texttt{CPTI} and \texttt{CPDI2} particle-type names are present in the enumeration but are not implemented in the reviewed particle-generation path.  They are retained in this manual as forward links to the methods intended by those names.
+The implemented CPTI method uses a four-node affine tetrahedron on the existing
+3D Cartesian grid. It belongs to the tetrahedral convected-domain family
+\cite{leavy2019cpti,noh2026cpdi}. Type 3 requires geometry shape 2. Geometry uses
+the same current/reference full-edge generators as other particle types, with
+no additional per-particle vertices or integration matrix.
 
-\paragraph{CPTI.}
-Convected-particle tetrahedron interpolation represents the particle domain by tetrahedra rather than by a parallelepiped.  The method was introduced for mesoscale ceramic calculations by Leavy, Guilkey, Phung, Spear, and Brannon and was motivated by the need to represent complex material geometry while retaining the efficiency of a rectilinear computational grid \cite{leavy2019cpti}.  A future GEOS implementation would need particle-domain storage for tetrahedral vertices, tetrahedral volume and face-gradient rules, particle-to-grid support construction for each convected tetrahedron, and output conventions for deformed tetrahedral domains.
+Let $E=[g_1\;g_2\;g_3]=G^T$ for the temporary integration domain. Its vertices
+and constant barycentric gradients are
+\begin{align}
+ x_0 &= x_p-\tfrac14(g_1+g_2+g_3), & x_a &= x_0+g_a,\quad a=1,2,3,\\
+ b_a &= E^{-T}e_a,\quad a=1,2,3, & b_0 &= -(b_1+b_2+b_3).
+\end{align}
+Using the linear grid basis $N_I$ evaluated at these vertices gives
+\begin{equation}
+ N_{Ip}^{\rm CPTI}=\frac14\sum_{a=0}^{3}N_I(x_a),\qquad
+ \nabla N_{Ip}^{\rm CPTI}=\sum_{a=0}^{3}N_I(x_a)b_a.
+\end{equation}
+The gradient denominator is the geometric determinant of the integration
+tetrahedron, never the independent physical particle volume. Thus temporary
+scaling and F-only resets preserve constant/affine-field reproduction. Four
+eight-node corner stencils produce 32 raw entries. Existing effective-map
+construction combines repeated node IDs; cached and on-demand mapping share
+one implementation. Invalid, inverted or nonfinite geometry and unsupported
+stencils produce an empty mapping row before any out-of-bounds grid lookup.
+
+\paragraph{CPTI scaling.}
+With \mpmcode{cpdiDomainScaling=0}, the material tetrahedron is the integration
+domain. Otherwise CPTI uses uniform centroidal scaling $G_\star=sG$ with
+\begin{equation}
+ D=\max_{a<b}\|x_a-x_b\|,\qquad s=\min(1,D_{\max}/D).
+\end{equation}
+The \texttt{homel} selection supplies $D_{\max}=0.99998\min_i h_i$;
+\texttt{vpHencky} supplies $D_{\max}=0.99999r_{\rm neighbor}$. These names
+retain their box-specific algorithms for CPDI. For CPTI both select isotropic
+diameter clipping, not a volume-preserving Hencky projection. Integration volume
+is multiplied by $s^3$; material G, G0, F, mass and physical volume do not change.
+The scaled flag participates in existing reset selection. Surface-data disabling
+remains a separate explicit control.
+
+\paragraph{Generation, splitting and resets.}
+PFW object \texttt{particleType=3} divides each Cartesian piece into six tets.
+Native cut tets are emitted directly. For mixed CPDI bulk/CPTI surface domains,
+use object type 2, \texttt{surfaceRefinementMethod='simplex'},
+\texttt{simplexParticleType=3}, and \texttt{particleGeometry='fromRefinement'}.
+The \texttt{hexTet} surface-refinement preset selects this same combination. The override applies only to emitted cut pieces. Each material's XML includes
+the required CPDI and CPTI subregions. Existing PFW inputs retain their defaults.
+
+CPTI children use the geometry-aware longest-edge splitter and retain type 3.
+Explicit \mpmcode{subdivideParticles=1} or the independent oversized split policy
+enables splitting; automatic mode remains specific to CPDI boxes. Both
+\texttt{FOnly} and \texttt{FAndGeometry} apply without extra state. A simplex
+requesting VP-Hencky F selection retains the existing isotropic-polar fallback.
+Cohesive particles remain excluded from splitting. True 2D triangle mapping,
+axisymmetry and a CPTI plane-strain specialization are outside this patch.
 
 \paragraph{CPDI2.}
 Second-order CPDI generalizes the original CPDI parallelogram/parallelepiped representation to more flexible quadrilateral or hexahedral particle domains and supports enrichment for weak discontinuities at material interfaces \cite{sadeghirad2013cpdi2}.  In the code snapshot reviewed for this manual, the \texttt{CPDI2} generator branch is a placeholder.  Completing it would require storage for the full convected hexahedral geometry, generalized corner or quadrature-gradient weights, robust coalescing for larger supports, and consistency tests against the published CPDI2 patch and interface examples.
@@ -517,7 +567,7 @@ Name & Status & Internal interpretation \\
 \texttt{SinglePoint} & implemented & Point particle with eight-node trilinear support.  Stored domain vectors are used for volume/output, not for interpolation. \\
 \mpmcode{SinglePointBSpline} & implemented & Point particle with $4^3$ cubic B-spline support.  The center controls interpolation; domain vectors are retained for output/volume. \\
 \texttt{CPDI} & implemented & Convected parallelepiped domain with corner-based trilinear integration, gradient coefficients from particle-domain area vectors, and optional domain scaling. \\
-\texttt{CPTI} & placeholder & Reserved for convected tetrahedral particle domains; generator branch is not implemented in the reviewed source. \\
+\texttt{CPTI} & 3D implemented & Native tetrahedra; four linear corner stencils, 32 raw entries; no plane-strain specialization. \\
 \texttt{CPDI2} & placeholder & Reserved for second-order CPDI with generalized hexahedral/quadrilateral domains; generator branch is not implemented in the reviewed source. \\
 \texttt{PIC} & implemented & Replaces particle velocity by interpolated post-force grid velocity; robust but diffusive. \\
 \texttt{FLIP} & implemented, default & Increments particle velocity by grid acceleration; less diffusive but can retain null-space noise. \\

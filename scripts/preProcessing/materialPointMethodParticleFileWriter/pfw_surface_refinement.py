@@ -65,6 +65,7 @@ class Sample:
     surface_checked: bool = False
     surface: Optional[tuple] = None  # (outward unit normal, absolute surface point)
     coarse_record: Optional[str] = None  # Optional ordinary-pass output, without ID.
+    coarse_particle_type: Optional[int] = None  # Diagnostics for a reused cached row.
 
     @property
     def region(self):

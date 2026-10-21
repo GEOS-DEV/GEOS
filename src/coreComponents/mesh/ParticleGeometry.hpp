@@ -7,6 +7,7 @@
 
 #include "common/DataTypes.hpp"
 #include <cmath>
+#include <cfloat>
 
 namespace geos
 {
@@ -14,7 +15,7 @@ namespace particleGeometry
 {
 
 // Geometry and interpolation are independent. The file schema is version 2. The 2D shapes are geometry-kernel support only;
-// they do not enable a native-2D mesh, CPTI mapping, or axisymmetric mechanics.
+// they do not enable a native-2D mesh or axisymmetric mechanics. CPTI uses 3D tetrahedra.
 enum class Shape : integer
 {
   Parallelepiped = 0, TriangleWedge = 1, Tetrahedron = 2,
@@ -212,6 +213,42 @@ struct Domain
     return true;
   }
 };
+
+/** Constant barycentric gradients for a positively oriented tetrahedron.
+ * G rows are edges from vertex 0. The other three vertex gradients are the
+ * reciprocal edge vectors; vertex 0 closes their sum to zero. Normalize first
+ * to avoid cubing the dimensional length scale in the determinant test.
+ * Integration volume is geometric: physical particle volume is not an input.
+ */
+template< class MATRIX >
+GEOS_HOST_DEVICE inline bool tetrahedronGradients( MATRIX const & g, real64 (&gradient)[4][3] )
+{
+  real64 scale = 0.0;
+  for( int a=0; a<3; ++a ) for( int i=0; i<3; ++i )
+  {
+    real64 const value = ::fabs( g[a][i] );
+    if( !( value <= DBL_MAX ) ) return false;
+    if( value > scale ) scale = value;
+  }
+  if( !( scale > 0.0 ) ) return false;
+  real64 normalized[3][3];
+  for( int a=0; a<3; ++a ) for( int i=0; i<3; ++i ) normalized[a][i] = g[a][i]/scale;
+  real64 const det = determinant( normalized );
+  if( !( det > 0.0 ) ) return false;
+  for( int i=0; i<3; ++i )
+  {
+    gradient[0][i] = 0.0;
+    for( int a=0; a<3; ++a )
+    {
+      gradient[a+1][i] = ( ( normalized[(a+1)%3][(i+1)%3]*normalized[(a+2)%3][(i+2)%3]
+                             - normalized[(a+1)%3][(i+2)%3]*normalized[(a+2)%3][(i+1)%3] ) / det ) / scale;
+      if( !( ::fabs( gradient[a+1][i] ) <= DBL_MAX ) ) return false;
+      gradient[0][i] -= gradient[a+1][i];
+    }
+    if( !( ::fabs( gradient[0][i] ) <= DBL_MAX ) ) return false;
+  }
+  return true;
+}
 
 enum class InputError { None, Shape, Volume, Generators, Measure, Wedge };
 

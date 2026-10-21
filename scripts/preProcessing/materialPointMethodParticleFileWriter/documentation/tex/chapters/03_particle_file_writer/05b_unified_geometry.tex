@@ -86,13 +86,13 @@ regenerate particles/XML and start a new run. New restarts carry both geometry
 matrices and require geometry schema version 2.
 
 \subsection{Scope and verification}
-CPTI, arbitrary warped CPDI2, native 2D meshes and
-axisymmetry are not enabled. Planned CPTI uses tet corner weights $1/4$ and
-barycentric gradients $b_0=-G_{\rm column}^{-T}\mathbf{1}$,
-$b_i=G_{\rm column}^{-T}e_i$; triangles use $1/3$ and two edges. Simplex scaling
-must use actual vertices rather than the box feasibility cap. Current CPDI
-requires boxes; PFW simplex cuts require SinglePointBSpline. A simplex requesting
-VP-Hencky F selection uses the isotropic-polar reset algorithm.
+CPTI is supported for 3D native tetrahedra, with corner weights $1/4$ and
+barycentric gradients computed from current integration geometry. CPTI uses
+uniform diameter clipping rather than the box feasibility cap; see
+Section~\ref{subsec:cpti-cpdi2-placeholders}. CPDI requires boxes, while PFW cuts
+support point types 0/1 or CPTI type 3. A simplex requesting VP-Hencky F selection
+uses the isotropic-polar reset algorithm. Warped CPDI2, native 2D meshes,
+triangle interpolation and axisymmetry remain future work.
 
 Standalone tests exercise production geometry, subdivision, and CPDI kernel
 bodies with CPU adapters. Splitting tests cover unequal child fractions,

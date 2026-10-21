@@ -26,15 +26,16 @@ Key & Default & Meaning\\
 \path{ppcx}, \path{ppcy}, \path{ppcz} & \texttt{None} & Directional base counts; unset values inherit \texttt{ppc}.\\
 \path{particleRefinement} & \texttt{None} & Material-indexed factors; unset means one for every material. A scalar applies to all materials. Use positive integers.\\
 \mpmcode{surfaceRefinementLevel} & 1 & Positive integer factor per active direction in surface/interface candidates; not a recursive depth.\\
-\mpmcode{surfaceRefinementMethod} & \texttt{cartesian} & Midpoint subdivision, or \texttt{simplex} local plane cuts. Alias: \texttt{simplex-conforming}.\\
+\mpmcode{surfaceRefinementMethod} & \texttt{cartesian} & Midpoint subdivision, \texttt{simplex} cuts, or 3D \texttt{hexTet} for native cut tets with hex bulk. Alias: \texttt{simplex-conforming}.\\
+\mpmcode{simplexParticleType} & \texttt{None} & Cut-only interpolation override: 0/1/3. Normally inherit object type; \texttt{hexTet} selects 3 when unset.\\
 \mpmcode{surfaceRefinementFallback} & \texttt{cartesian} & On an invalid local cut, midpoint-sample the whole subdomain; \texttt{error} stops instead.\\
 \mpmcode{surfaceRefinementPlaneTolerance} & 0.05 & Side-label/plane consistency tolerance, normalized by child diagonal; valid range $0\leq t<0.5$.\\
-\mpmcode{particleGeometry} & \texttt{box} & Use equivalent-volume boxes, or \texttt{fromRefinement} to retain cut shapes.\\
+\mpmcode{particleGeometry} & \texttt{box} & Use equivalent-volume boxes, or \texttt{fromRefinement} to retain cut shapes. The \texttt{hexTet} preset selects the latter.\\
 \end{longtable}}
 
 \mpmcode{particleRefinement} is indexed by material, not by geometry-object order or contact group. It applies in the bulk as well as near boundaries. For surface candidates, the maximum material factor in the immediate neighborhood supplies a common partition on both sides, multiplied by \mpmcode{surfaceRefinementLevel}. This can refine a lower-factor material next to a higher-factor material. Plane strain subdivides x/y and preserves the existing z thickness.
 
-The two-pass surface algorithm is enabled when the level exceeds 1, or when the method is \texttt{simplex} even at level 1. With the default \texttt{cartesian}, level 1 retains the ordinary material-refinement path. Increasing the surface level by $q$ can produce up to $q^d$ Cartesian subdomains per selected parent before any simplex decomposition; it is not a promise of a fixed total particle-count multiplier.
+The two-pass surface algorithm is enabled when the level exceeds 1, or when the method is \texttt{simplex} or \texttt{hexTet} even at level 1. With the default \texttt{cartesian}, level 1 retains the ordinary material-refinement path. Increasing the surface level by $q$ can produce up to $q^d$ Cartesian subdomains per selected parent before any simplex decomposition; it is not a promise of a fixed total particle-count multiplier.
 
 \begin{lstlisting}[language=Python,caption={Cartesian refinement of two materials.}]
 # Requires an existing complete input with two materials.
@@ -47,12 +48,12 @@ pfw["surfaceRefinementMethod"] = "cartesian"
 \subsection{Candidate detection and local cuts}
 The first pass samples the coarse particle lattice and its immediate 8-neighbor (2D) or 26-neighbor (3D) band. Occupancy, material/contact labels, and surface flags identify free-surface and interface candidates, including empty-center parents adjacent to occupied cells. A three-slice cache bounds coarse occupancy storage in x. Features without any sampled occupancy, label change, or nearby surface flag can remain undetected.
 
-Cartesian refinement samples subdomain midpoints. Simplex refinement fits one local surface plane and partitions each accepted subdomain into complementary material-side pieces, using area/volume and centroid integration. A triangle in plane strain retains the original z thickness; 3D pieces are tetrahedra. Actual simplex-cut particles require \texttt{particleType=1} (\mpmcode{SinglePointBSpline}) on the geometry objects. Cartesian refinement remains the choice for other supported particle types; retaining cut geometry does not implement CPTI or simplex-based CPDI quadrature.
+Cartesian refinement samples subdomain midpoints. Simplex refinement fits one local surface plane and partitions each accepted subdomain into complementary material-side pieces, using area/volume and centroid integration. A triangle in plane strain retains the original z thickness; 3D pieces are tetrahedra. Actual simplex-cut particles support point types 0/1 and 3D CPTI type 3. The optional \texttt{simplexParticleType=3} override selects CPTI only for cut tets, allowing CPDI boxes in the bulk. CPTI requires \texttt{particleGeometry=\textquotesingle fromRefinement\textquotesingle} and \texttt{planeStrain=0}.
 
 Missing or invalid surface data, unsupported multiple-region configurations, inconsistent side labels, invalid partitions, or centroids outside their assigned actual region trigger fallback for the \emph{whole subdomain}. The default samples it with ordinary Cartesian midpoints. Strict \texttt{error} mode stops. The plane tolerance is a consistency control, not a certified geometric-error bound.
 
 \begin{lstlisting}[language=Python,caption={Local simplex cuts with equivalent-volume box geometry.}]
-# Geometry objects that produce cuts must use particleType=1.
+# This equivalent-box example uses particleType=1 (B-spline).
 pfw["surfaceRefinementLevel"] = 4
 pfw["surfaceRefinementMethod"] = "simplex"
 pfw["surfaceRefinementFallback"] = "cartesian"  # or "error"
@@ -78,8 +79,49 @@ generators and explicit physical volume. Current material geometry is convected
 independently of constitutive F resets, and Silo/VTK reconstruct that geometry.
 The old \texttt{particleReferenceGeometry} Python input is accepted as an alias.
 See Section~\ref{sec:unified-particle-geometry} for storage, validation, and reset
-semantics. Runtime simplex splitting and CPTI remain unsupported; choosing box
-geometry at generation time permits the existing box splitter.
+semantics. Runtime splitting supports native tets/wedges, including CPTI tets.
+An object requesting CPTI tessellates every Cartesian piece into six tets, so
+its uncut/fallback pieces are tetrahedral too. The lattice ppc setting therefore
+counts seed boxes, not final CPTI particles.
+
+\subsection{Hex bulk with tetrahedral surface refinement}
+\index{hexTet}
+The \texttt{hexTet} preset names the mixed workflow already supported by the
+CPTI implementation. It resolves to native simplex geometry and cut-only CPTI
+interpolation. It changes no GEOS solver field, particle-file column or clipping
+algorithm. In a complete input:
+\begin{lstlisting}[language=Python,caption={CPDI hex bulk with CPTI surface/interface tets.}]
+pfw['planeStrain'] = 0
+pfw['surfaceRefinementMethod'] = 'hexTet'
+pfw['surfaceRefinementLevel'] = 2
+# Geometry objects use particleType=2 for CPDI bulk.
+\end{lstlisting}
+This is equivalent to explicitly selecting \texttt{simplex},
+\texttt{particleGeometry='fromRefinement'}, and \texttt{simplexParticleType=3}.
+An explicit native-geometry selection is valid; an explicit box selection is
+rejected. Remove or replace the old equivalent-box alias as well, unless the
+preferred native-geometry key overrides it. Bulk object types 0/1 are also
+accepted for point interpolation; explicit cut types 0/1 are available for
+comparisons. Type-3 objects are rejected in this preset because they would
+convert every Cartesian piece to tets. Use the ordinary all-CPTI workflow for
+that purpose. There is no CPTI plane-strain specialization.
+
+Interior particles remain hexes. Within the candidate band, uncut subdomains
+remain smaller hexes and accepted cut pieces become native tets. At material
+interfaces both occupied sides are retained; at free surfaces the void side is
+omitted. Cartesian fallback also retains hexes where midpoint classification
+finds material. The level remains a per-direction factor with default 1; the
+preset does not silently increase it. Runtime shape evolution, splitting,
+geometry resets and integration scaling retain their existing behavior.
+
+PFW declares matching CPDI/CPTI subregions for the materials, including a
+possibly empty CPTI subregion when all cuts fall back. This is initialization
+of independent particle domains, not a conforming shared-vertex mesh or runtime
+conversion of newly exposed hex surfaces. Curvature and coarse resolution can
+cause fallback and geometric volume error. Local planes do not guarantee a
+globally continuous surface. See \path{HEX_BULK_TET_SURFACE_PLAN.md} and
+\path{examples/hexBulkTetSurface/pfw_input_hex_bulk_tet_surface.py} for the full
+plan, example and target integration checks.
 
 \subsection{Rank slicing, diagnostics, and verification}
 Each non-Flux writer rank owns a half-open interval of coarse x rows and queries one read-only halo row on each side. Only owned parents emit particles; children retain parent ownership. Ranks with no owned rows still participate in metadata and diagnostic collectives. The serial-only Flux generation path is unchanged.
@@ -87,5 +129,19 @@ Each non-Flux writer rank owns a half-open interval of coarse x rows and queries
 A \texttt{make\_objects(rankxmin, rankxmax)} factory must return complete objects whose bounding boxes intersect the supplied bounds, with consistent priority ordering and global material IDs on all ranks. It must not clip the objects to those bounds. Geometry and property functions must be deterministic in global coordinates. With periodic x, the factory receives the full x interval because one interval cannot express a disjoint opposite-edge halo.
 
 PFW writes \path{mpmParticleFile_<case>_refinement.json}, recording candidates, recovered empty parents, simplex and fallback counts, geometry queries, total volume, and peak slice-cache size. Counts are summed across ranks; cache peaks are maxima. Halo queries can increase with rank count while particle records remain unchanged.
+
+The report also records \texttt{requested\_method},
+\texttt{resolved\_geometry} and \path{resolved_simplex_particle_type}.
+The \texttt{particle\_layout} object contains \texttt{total\_count},
+\texttt{total\_volume} and \texttt{by\_type\_and\_shape}. Each group has
+\texttt{particle\_type}, \texttt{geometry\_shape}, \texttt{shape\_name},
+\texttt{count}, \texttt{volume}, \texttt{min\_particle\_volume}, and
+\texttt{max\_particle\_volume}. These describe final serialized particles,
+including fallback, and exclude discarded staged records. The total count is
+checked against \texttt{emitted\_particles}. Existing fallback counters describe
+failed subdomains, not emitted hexes. Only small summaries are gathered; no
+particle arrays or completed-file parsing are added. Volume sums may differ by
+summation roundoff across ranks even when particle bytes are identical.
+
 
 The repository includes geometry/ownership unit tests, a complete writer regression, and standalone C++ geometry tests. The writer regression can use real MPI or explicitly selected file-backed emulation; emulation verifies independent-process writer logic, not MPI transport or cluster performance. See \path{SURFACE_REFINEMENT.md} and \path{UNIFIED_PARTICLE_GEOMETRY.md} for commands and remaining full-solver integration checks.

@@ -1,3 +1,35 @@
+# Hex-bulk/tet-surface workflow update (2026-10-21)
+
+The CPTI update already supports mixed CPDI hexes/CPTI tets. The incremental
+hexTet patch adds a named PFW preset, early compatibility checks, final layout
+statistics, a complete example and workflow tests. It changes no GEOS C++ or
+clipping algorithm. Updated refinement/type documentation, generated metadata
+and the manual. Corrected the stale surface-refinement introduction: all outputs
+use schema 2; there is no selectable legacy GEOS file format.
+
+See `../HEX_BULK_TET_SURFACE_PLAN.md` for the implementation plan, exact scope,
+tests and remaining mechanical/MPI integration checks. Earlier audit entries
+below describe their respective historical patches.
+
+---
+
+# CPTI support update (2026-10-21)
+
+Implemented 3D CPTI mapping, 32-entry capacity, geometry/type validation,
+temporary tetrahedral scaling, neighborhoods/outflow checks, PFW all-tet and
+mixed CPDI/CPTI generation. Uses the existing minimal geometry, resets and
+native splitting. No plane-strain specialization; true 2D remains separate work.
+Updated theory, refinement/type contracts, examples, generated metadata and PDF.
+The older entries below are historical; their statements that CPTI or native
+splitting are unavailable are superseded by `../CPTI.md`.
+
+Verification includes production-kernel host tests, conservation/ownership
+checks, old CPDI/splitting regressions, and full writer executions with emulated
+collectives. See `../CPTI.md` for counts and limits. Full GEOS compilation,
+actual MPI/restart, GPU, and coupled contact/CZ integration remain target tests.
+
+---
+
 # Geometry-aware splitting update (2026-10-21)
 
 The current source supports native tet/wedge runtime subdivision. Documentation

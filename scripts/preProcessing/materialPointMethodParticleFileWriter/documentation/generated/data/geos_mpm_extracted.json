@@ -294,7 +294,7 @@
       "default_expression": "m_cpdiDomainScaling",
       "type": "int",
       "restart": "NO_WRITE",
-      "description": "Option for CPDI domain scaling",
+      "description": "Enable temporary CPDI/CPTI integration-domain scaling; physical geometry is unchanged",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
       "line": 1989
     },
@@ -305,7 +305,7 @@
       "default_expression": "m_cpdiDomainScalingType",
       "type": "string (enum)",
       "restart": "NO_WRITE",
-      "description": "CPDI domain-scaling algorithm. Options are:; * ; *",
+      "description": "CPDI domain-scaling algorithm (CPTI uses isotropic diameter clipping with the selected size limit). Options are:; * ; *",
       "source": "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp",
       "line": 1995
     },
@@ -5928,6 +5928,11 @@
       "emitsSolverAttribute": false
     },
     {
+      "name": "simplexParticleType",
+      "default": "None",
+      "emitsSolverAttribute": false
+    },
+    {
       "name": "surfaceRefinementFallback",
       "default": "'cartesian'",
       "emitsSolverAttribute": false
@@ -5939,7 +5944,7 @@
     },
     {
       "name": "periodic",
-      "default": "[False, False, False]",
+      "default": "[ False, False, False ]",
       "emitsSolverAttribute": false
     },
     {
@@ -5999,7 +6004,7 @@
     },
     {
       "name": "prescribedBoundaryTransverseVelocities",
-      "default": "[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]",
+      "default": "[ [ 0.0, 0.0 ], [ 0.0, 0.0 ], [ 0.0, 0.0 ], [ 0.0, 0.0 ], [ 0.0, 0.0 ], [ 0.0, 0.0 ] ]",
       "emitsSolverAttribute": true
     },
     {
@@ -7860,6 +7865,18 @@
         "description": "-*- coding: utf-8 -*- ---- GEOS-MPM example input metadata ---- Purpose: Plane-strain reverse-ballistic uniaxial compression of copper foam."
       },
       {
+        "family": "cpti",
+        "case": "cpti/cpti",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/cpti/pfw_input_cpti.py",
+        "description": "Initial discretization only; runtime splitting can be enabled separately."
+      },
+      {
+        "family": "cpti",
+        "case": "cpti/cpti_mixed",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/cpti/pfw_input_cpti_mixed.py",
+        "description": "The small ratio deliberately exercises runtime splitting of both shapes."
+      },
+      {
         "family": "elasticDisk",
         "case": "elasticDisk/elasticDisk",
         "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/elasticDisk/pfw_input_elasticDisk.py",
@@ -7870,6 +7887,12 @@
         "case": "geometrySplitting/geometry_splitting",
         "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/geometrySplitting/pfw_input_geometry_splitting.py",
         "description": "Retain cut geometry while using point B-spline interpolation."
+      },
+      {
+        "family": "hexBulkTetSurface",
+        "case": "hexBulkTetSurface/hex_bulk_tet_surface",
+        "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/examples/hexBulkTetSurface/pfw_input_hex_bulk_tet_surface.py",
+        "description": "Hex bulk with tetrahedral surface refinement, using CPDI and CPTI. Writes particle/XML/launch files; does not submit a job. See HEX_BULK_TET_SURFACE_PLAN.md for configuration and diagnostics."
       },
       {
         "family": "pdc",
@@ -8690,6 +8713,10 @@
       "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py"
     },
     {
+      "component": "PFW particle layout",
+      "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_particle_layout.py"
+    },
+    {
       "component": "PFW geometry objects",
       "path": "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_geometryObjects.py"
     },
@@ -8707,18 +8734,21 @@
     }
   ],
   "source_sha256": {
-    "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp": "b5199fad021e3b2d5e4887f6a2a92eae9c8fa27d708772c46ca128b4531e444a",
+    "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp": "5c2aba7c52380658f09d2ce3291220e999abeb00e29a37d2a8e0808d13bb5850",
+    "src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp": "1b9207ef835496bb613e78fb82f48e109c4bd59d60cc40ca86a9d324b10cfbb8",
     "src/coreComponents/physicsSolvers/solidMechanics/MPMSolverEnums.hpp": "7d2b66c532d81cc6f0e291e628b65712c86348e0e2f572dc3c973565c1734328",
-    "src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp": "735cecbd89031791470a17b16662d62fd922eb31f603babfe02d760b7897917f",
+    "src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp": "38a16ca22bfccddde22cff5635f79275e11db94086f01fbbe7ebd1e340bf338f",
     "src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp": "b367eb19eb8181d669bc2663f8e339b0f5473e8dfbb4ac30c978b45780b9ff0a",
     "src/coreComponents/mesh/ParticleRegion.cpp": "2cb29ca5c6fbb648ed528bc999f7cd7058c1d1e95293b5d37fcd5365aa78748f",
-    "src/coreComponents/mesh/ParticleGeometry.hpp": "cbf4880c5607e9cf394ff744b92710ed81a919698ef52d6691b7f88ea2816224",
+    "src/coreComponents/mesh/ParticleGeometry.hpp": "7ef22d915591446d516deff46f55b982e02431613740633cb41ff571c0b1f17d",
     "src/coreComponents/mesh/ParticleSubdivision.hpp": "b839dc1bcde7ed462a2a22dac3c36998a02dd59fb6cb52a3007baaf7a890515a",
-    "src/coreComponents/mesh/ParticleSubRegionBase.hpp": "7ce94b1f4621dd1af996ea1226f122d358b8e59120e0d6a90d44cb3d18255431",
+    "src/coreComponents/mesh/ParticleSubRegionBase.hpp": "cc293e3851e0731024fbcb9055eda7aac67ca8f146a32a4520ef509541f9ccef",
     "src/coreComponents/mesh/ParticleSubRegionBase.cpp": "ed6f7fdd09500d38fe5d4d6e3aec9e10a5d3ac2ef6130c749bbcbc2521d4563e",
-    "scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py": "5fa417df621a11f3738384eae1e73c8b09d2fe4c4558024310f0a75ffe763d44",
-    "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_surface_refinement.py": "c8c6660dedd4b35498779e83959de0e23e071c830eadf11455516ddf1e0f1624",
-    "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_reference_geometry.py": "a7c5d532e76a9cc4906e7d342af16b441834bc50d4a09d6381b91017a81e00ac",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py": "c85fc5a604c0b96adeaec8b2b159299fc891df0eb558c26cf335e2de40049cc5",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_surface_refinement.py": "59ad21a8a77c3de105eb6d3df59de9398c8191d2728323e0960178284383c18f",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_particle_layout.py": "ec6f8a01645c1996247b13c6f263b84b8150db076708d61cea9f0e982455d550",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_simplex_clipping.py": "96992739468c795bc6c398ed09567804ea6a41b956029993c06d14678827acba",
+    "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_reference_geometry.py": "25c44c2f04d5c26c8133e516dd1f875de7b1fbc0505dd9c3f62d34ba7bbab6fe",
     "scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_check.py": "c05ecf83dbf01ea37ef13a4f7f624e1331a93b09ab4d3249137dedc658a426d7"
   }
 }

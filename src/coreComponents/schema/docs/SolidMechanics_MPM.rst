@@ -120,11 +120,11 @@ shown verbatim. Inherited attributes are not repeated.
    * - cpdiDomainScaling
      - OPTIONAL / int
      - 0
-     - Option for CPDI domain scaling
+     - Enable temporary CPDI/CPTI integration-domain scaling; physical geometry is unchanged
    * - cpdiDomainScalingType
      - OPTIONAL / string (enum)
      - homel
-     - CPDI domain-scaling algorithm. Options are:; * ; *
+     - CPDI domain-scaling algorithm (CPTI uses isotropic diameter clipping with the selected size limit). Options are:; * ; *
    * - crackTipDetectionThreshold
      - OPTIONAL / real64
      - 0.5

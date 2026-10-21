@@ -1990,13 +1990,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_cpdiDomainScaling ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Option for CPDI domain scaling" );
+    setDescription( "Enable temporary CPDI/CPTI integration-domain scaling; physical geometry is unchanged" );
 
   registerWrapper( "cpdiDomainScalingType", &m_cpdiDomainScalingType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_cpdiDomainScalingType ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "CPDI domain-scaling algorithm. Options are:\n* " +
+    setDescription( "CPDI domain-scaling algorithm (CPTI uses isotropic diameter clipping with the selected size limit). Options are:\n* " +
                     EnumStrings< mpm::CPDIDomainScalingTypeOption >::concat( "\n* " ) );
 
   registerWrapper( "crackTipDetectionThreshold", &m_crackTipDetectionThreshold ).
@@ -13891,6 +13891,103 @@ int SolidMechanicsMPM::projectIntegrationGeometry(
   return scaled ? 1 : 0;
 }
 
+/** CPTI projection is uniform about the particle centroid. The two existing
+ * scaling selections provide their usual size limits, but both use the same
+ * tetrahedron-specific isotropic operation. This can reduce integration volume;
+ * G, G0, F, mass and physical volume remain untouched. With scaling disabled,
+ * the full material tetrahedron is used and normal stencil checks still apply.
+ */
+GEOS_HOST_DEVICE
+int SolidMechanicsMPM::projectCPTIIntegrationGeometry(
+  arraySlice2d< real64 const > const geometry, real64 (&projected)[3][3] ) const
+{
+  LvArray::tensorOps::copy<3,3>( projected, geometry );
+  real64 gradients[4][3];
+  if( !particleGeometry::affine::tetrahedronGradients( geometry, gradients ) ) return 4;
+  if( m_cpdiDomainScaling == 0 ) return 0;
+  auto const domain = particleGeometry::affine::Domain::fromGenerators(
+    particleGeometry::Shape::Tetrahedron, geometry );
+  real64 const diameter = domain.diameter();
+  real64 const limit = m_cpdiDomainScalingType == mpm::CPDIDomainScalingTypeOption::VPHencky
+    ? 0.99999*m_neighborRadius
+    : 0.99998*LvArray::math::min( m_hEl[0], LvArray::math::min( m_hEl[1], m_hEl[2] ) );
+  if( !( diameter > 0.0 && diameter <= DBL_MAX && limit > 0.0 && limit <= DBL_MAX ) ) return 4;
+  if( diameter <= limit ) return 0;
+  real64 const scale = limit/diameter;
+  for( int a=0; a<3; ++a ) for( int i=0; i<3; ++i ) projected[a][i] *= scale;
+  if( particleGeometry::affine::tetrahedronGradients( projected, gradients ) ) return 3;
+  LvArray::tensorOps::copy<3,3>( projected, geometry );
+  return 4;
+}
+
+/** First-order tetrahedral domain interpolation (CPDI-Tet4).
+ * S_I = sum_a N_I(x_a)/4; grad S_I = sum_a N_I(x_a) grad(lambda_a).
+ * The four vertices and barycentric gradients come from the SAME temporary
+ * integration domain. No particle-volume denominator or constitutive F is used.
+ * Check every corner before reading ijkMap, including nonfinite/huge coordinates
+ * before the float-to-int cell conversion. Failure leaves all 32 entries empty.
+ */
+template< class NODES, class VALUES, class GRADIENTS >
+GEOS_HOST_DEVICE
+bool SolidMechanicsMPM::computeCPTIShapeFunctions(
+  arraySlice1d< real64 const > const particlePosition,
+  arraySlice2d< real64 const > const particleGeometryCurrent,
+  arrayView3d< int const > const ijkMap,
+  real64 const (&xLocalMin)[3], real64 const (&hEl)[3], localIndex const (&nEl)[3],
+  NODES const mappedNodes, VALUES const shapeFunctionValues,
+  GRADIENTS const shapeFunctionGradientValues ) const
+{
+  for( int n=0; n<32; ++n )
+  {
+    mappedNodes[n] = -1;
+    shapeFunctionValues[n] = 0.0;
+    for( int d=0; d<3; ++d ) shapeFunctionGradientValues[n][d] = 0.0;
+  }
+  real64 integration[3][3], gradient[4][3];
+  if( projectCPTIIntegrationGeometry( particleGeometryCurrent, integration ) & 4 ) return false;
+  if( !particleGeometry::affine::tetrahedronGradients( integration, gradient ) ) return false;
+  auto const domain = particleGeometry::affine::Domain::fromGenerators(
+    particleGeometry::Shape::Tetrahedron, integration );
+  int cell[4][3];
+  real64 coordinate[4][3];
+  for( int a=0; a<4; ++a )
+  {
+    real64 offset[3];
+    domain.vertexOffset( a, offset );
+    for( int d=0; d<3; ++d )
+    {
+      if( !( hEl[d] > 0.0 && hEl[d] <= DBL_MAX ) || nEl[d] < 1 ) return false;
+      real64 const u = ( particlePosition[d] + offset[d] - xLocalMin[d] )/hEl[d];
+      if( !( u >= -1.0 && u <= static_cast<real64>( nEl[d] ) + 1.0 ) ) return false;
+      cell[a][d] = computeLocalCellIndexWithBoundaryTolerance( u, 0, nEl[d]-1, coordinate[a][d] );
+      if( cell[a][d] < 0 || cell[a][d] >= nEl[d] ) return false;
+    }
+  }
+  // Eight trilinear nodes per vertex, z varying fastest. Per-corner closure
+  // retains partition of unity without normalizing the geometric gradients.
+  for( int a=0; a<4; ++a )
+  {
+    real64 sum = 0.0, gradientSum[3] = {};
+    for( int b=0; b<8; ++b )
+    {
+      int const i = b/4, j = ( b/2 )%2, k = b%2;
+      int const n = 8*a + b;
+      mappedNodes[n] = ijkMap[cell[a][0]+i][cell[a][1]+j][cell[a][2]+k];
+      real64 const weight = ( i ? coordinate[a][0] : 1.0-coordinate[a][0] )
+                          * ( j ? coordinate[a][1] : 1.0-coordinate[a][1] )
+                          * ( k ? coordinate[a][2] : 1.0-coordinate[a][2] );
+      shapeFunctionValues[n] = b == 7 ? 0.25-sum : 0.25*weight;
+      for( int d=0; d<3; ++d )
+      {
+        shapeFunctionGradientValues[n][d] = b == 7 ? gradient[a][d]-gradientSum[d] : weight*gradient[a][d];
+        gradientSum[d] += shapeFunctionGradientValues[n][d];
+      }
+      sum += shapeFunctionValues[n];
+    }
+  }
+  return true;
+}
+
 void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
 {
   // Refresh diagnostics only. Mapping constructs its own projected generators;
@@ -13898,7 +13995,8 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
   RAJA::ReduceSum<parallelDeviceReduce,int> relaxed(0), invalid(0);
   particleManager.forParticleSubRegions([&](ParticleSubRegion & subRegion)
   {
-    if(subRegion.getParticleType()!=ParticleType::CPDI) return;
+    bool const isCPTI = subRegion.getParticleType() == ParticleType::CPTI;
+    if( subRegion.getParticleType() != ParticleType::CPDI && !isCPTI ) return;
     auto const geometry=subRegion.getParticleGeometryCurrent();
     auto const flag=subRegion.getField<fields::mpm::particleDomainScaledFlag>();
     auto const normal=subRegion.getParticleSurfaceNormal();
@@ -13910,14 +14008,16 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
     forAll<parallelDevicePolicy<>>(subRegion.size(),[=] GEOS_HOST_DEVICE(localIndex p)
     {
       real64 projected[3][3];
-      int const status=projectIntegrationGeometry(geometry[p],projected);
+      int const status = isCPTI ? projectCPTIIntegrationGeometry( geometry[p], projected )
+                                : projectIntegrationGeometry( geometry[p], projected );
       flag[p]=(status & 1)!=0;
       if(status & 2) relaxed+=1;
       if(status & 4) invalid+=1;
       // Retain the explicit surface-data disabling option, using material
       // corner aspect ratio. Projection itself has no surface side effects.
       real64 minLength=DBL_MAX,maxLength=0;
-      auto const shape=dims==2 ? particleGeometry::Shape::Parallelogram : particleGeometry::Shape::Parallelepiped;
+      auto const shape = isCPTI ? particleGeometry::Shape::Tetrahedron
+        : ( dims==2 ? particleGeometry::Shape::Parallelogram : particleGeometry::Shape::Parallelepiped );
       auto const domain=particleGeometry::affine::Domain::fromGenerators(shape,geometry[p]);
       for(int k=0;k<domain.verticesCount();++k)
       {
@@ -13933,8 +14033,8 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
     });
   });
   int const nr=MpiWrapper::sum(relaxed.get()), ni=MpiWrapper::sum(invalid.get());
-  GEOS_LOG_RANK_0_IF(nr>0,"CPDI projection reduced integration-domain measure for " << nr << " particles; physical volume is unchanged.");
-  GEOS_LOG_RANK_0_IF(ni>0,"CPDI projection encountered " << ni << " invalid domains.");
+  GEOS_LOG_RANK_0_IF(nr>0,"CPDI/CPTI projection reduced integration-domain measure for " << nr << " particles; physical volume is unchanged.");
+  GEOS_LOG_RANK_0_IF(ni>0,"CPDI/CPTI projection encountered " << ni << " invalid domains.");
 }
 
 /**
@@ -14114,6 +14214,17 @@ bool SolidMechanicsMPM::populateMappingArraysForActiveParticles( ParticleManager
             //   }
             // }
 
+          } );
+          break;
+        }
+      case ParticleType::CPTI:
+        {
+          auto const geometry = subRegion.getParticleGeometryCurrent();
+          forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+          {
+            localIndex const p = activeParticleIndices[pp];
+            badMappingRowsView[pp] = computeCPTIShapeFunctions( particlePosition[p], geometry[p], ijkMap,
+              xLocalMin, hEl, nEl, mappedNodes[pp], shapeFunctionValues[pp], shapeFunctionGradientValues[pp] ) ? 0 : 1;
           } );
           break;
         }
@@ -15351,6 +15462,12 @@ void SolidMechanicsMPM::mapNodesAndComputeShapeFunctionsForSingleParticle( array
                                          shapeFunctionGradientValues );
       break;
     }
+    case ParticleType::CPTI:
+    {
+      computeCPTIShapeFunctions( particlePosition, particleGeometryCurrent, ijkMap,
+        xLocalMin, hEl, nEl, mappedNodes, shapeFunctionValues, shapeFunctionGradientValues );
+      break;
+    }
     default:
     {
 #if defined(GEOS_DEVICE_COMPILE)
@@ -16327,6 +16444,16 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
                 }
               }
             }
+            break;
+          }
+          case ParticleType::CPTI:
+          {
+            localIndex mapped[32];
+            real64 values[32], gradients[32][3];
+            computeCPTIShapeFunctions( particlePosition[p], particleGeometryCurrent[p], ijkMap,
+              xLocalMin, hEl, nEl, mapped, values, gradients );
+            for( int g=0; g<32; ++g )
+              uniqueNodesView[p][g] = mapped[g] < 0 ? localIndexMax : mapped[g];
             break;
           }
           default:
@@ -30527,26 +30654,25 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
           break;
         }
       case ParticleType::CPDI:
+      case ParticleType::CPTI:
         {
           arrayView3d< real64 const > const particleGeometryCurrent = subRegion.getParticleGeometryCurrent();
-          int const signs[8][3] = { { 1, 1, 1},
-            { 1, 1, -1},
-            { 1, -1, 1},
-            { 1, -1, -1},
-            {-1, 1, 1},
-            {-1, 1, -1},
-            {-1, -1, 1},
-            {-1, -1, -1} };
+          bool const isCPTI = particleType == ParticleType::CPTI;
           forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
         {
           localIndex const p = activeParticleIndices[pp];
-      real64 integration[3][3]; projectIntegrationGeometry(particleGeometryCurrent[p],integration);
-          for( int cornerIndex=0; cornerIndex<8; cornerIndex++ )
+          real64 integration[3][3];
+          if( isCPTI ) projectCPTIIntegrationGeometry( particleGeometryCurrent[p], integration );
+          else projectIntegrationGeometry( particleGeometryCurrent[p], integration );
+          auto const domain = particleGeometry::affine::Domain::fromGenerators(
+            isCPTI ? particleGeometry::Shape::Tetrahedron : particleGeometry::Shape::Parallelepiped, integration );
+          for( int cornerIndex=0; cornerIndex<domain.verticesCount(); ++cornerIndex )
           {
+            real64 offset[3];
+            domain.vertexOffset( cornerIndex, offset );
             for( int i=0; i<3; ++i )
             {
-              real64 cornerPositionComponent = particlePosition[p][i] + signs[cornerIndex][0] * (0.5*integration[0][i]) + signs[cornerIndex][1] * (0.5*integration[1][i]) + signs[cornerIndex][2] *
-                                               (0.5*integration[2][i]);
+              real64 const cornerPositionComponent = particlePosition[p][i] + offset[i];
               if( ( (particleDeleteFlag[p] == 0 ) && ( !periodic[i] ) ) && ( cornerPositionComponent < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < cornerPositionComponent ) )
               {
                 // Delete regardless but only log if we aren't at a non-periodic outflow boundary condition
@@ -30594,7 +30720,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
                             << " out-of-range MPM particle(s) at non-outflow domain boundaries"
                             << " (singlePoint=" << globalReportedOutOfRangeSinglePointParticles
                             << ", singlePointBSpline=" << globalReportedOutOfRangeBSplineParticles
-                            << ", CPDI=" << globalReportedOutOfRangeCPDIParticles << ")." );
+                            << ", CPDI/CPTI=" << globalReportedOutOfRangeCPDIParticles << ")." );
 }
 
 /**

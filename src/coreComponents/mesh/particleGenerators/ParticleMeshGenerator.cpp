@@ -398,10 +398,11 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
                     "Particle " << particleID[i] << ": " << particleGeometry::affine::inputErrorMessage(error));
       referenceGeometry[i]=static_cast<integer>(tag);
       ParticleType const type=particleBlock.getParticleType();
-      GEOS_ERROR_IF(type==ParticleType::CPTI || type==ParticleType::CPDI2,
-                    "CPTI and CPDI2 mapping are not implemented in this geometry-foundation patch");
+      GEOS_ERROR_IF(type==ParticleType::CPDI2, "CPDI2 mapping is not implemented");
       GEOS_ERROR_IF(type==ParticleType::CPDI && referenceGeometry[i]!=0,
-                    "CPDI requires parallelepiped geometry; use point interpolation for simplex geometry until CPTI is implemented");
+                    "CPDI requires parallelepiped geometry");
+      GEOS_ERROR_IF(type==ParticleType::CPTI && referenceGeometry[i]!=2,
+                    "CPTI requires tetrahedron geometry (GeometryShape=2)");
 
       // Material Direction
       // For convenient indexing we store the transpose of the particle material directions so the X axis is easy accessed from [0]

@@ -82,12 +82,16 @@ volume. A projection failure retains its input and reports an invalid-domain
 diagnostic. The existing explicit surface-data disabling control remains a
 separate side effect. Output always reconstructs unscaled material geometry.
 
-CPTI is a planned interpolation kernel, not enabled by this patch. For an affine
-tet its domain weights will be 1/4 and barycentric gradients will be
-`b0=-G_column^-T [1,1,1]`, `bi=G_column^-T ei`. In 2D use 1/3 and two edges.
-Initial simplex scaling should be uniform and use actual vertices/radial bounds;
-it must not reuse the box VP-Hencky measure cap. Arbitrary warped CPDI2 cells,
-native 2D mesh topology/mapping, and axisymmetric mechanics remain future work.
+CPTI is implemented for 3D tetrahedra (`particleType=3`, shape 2). Domain
+weights are 1/4 and gradients are `b0=-G_column^-T [1,1,1]`,
+`bi=G_column^-T ei`. Mapping uses four corner stencils (32 raw entries) and
+the same temporary geometry for corners and gradients. CPTI scaling is uniform:
+Homel selects diameter limit `0.99998*min(h)`, vpHencky selects
+`0.99999*neighborRadius`; neither applies the box VP-Hencky algorithm/cap.
+Scaling can reduce integration volume, but leaves all material state unchanged.
+See [CPTI.md](CPTI.md) for generation and runtime controls. Arbitrary warped
+CPDI2 cells, native 2D topology/triangle mapping, and axisymmetry remain future
+work. CPTI has no thin-3D plane-strain specialization.
 
 ## Splitting and cohesive zones
 
@@ -142,7 +146,7 @@ pfw['geometryReset'] = 'FOnly'              # or FAndGeometry
 ```
 
 PFW simplex cuts still require object `particleType=1` (SinglePointBSpline).
-Uncut/fallback pieces remain boxes, producing hex bulk plus surface tets in 3D
+Uncut/fallback pieces remain boxes for point/CPDI objects, producing hex bulk plus surface tets in 3D
 and boxes plus wedges in the current plane-strain mode. GEOS also accepts point
 linear interpolation with supplied canonical simplex geometry; PFW's cut
 algorithm retains its B-spline restriction. CPDI with a simplex is rejected.
@@ -189,3 +193,8 @@ The standalone tests compile production geometry and mapping bodies with minimal
 CPU adapters. Writer collectives are explicitly emulated unless real MPI is
 selected. These checks do not replace a complete GEOS build, MPI migration,
 restart round trip, GPU execution or a coupled CZ mechanics regression.
+
+
+The named `surfaceRefinementMethod='hexTet'` preset selects native 3D cut tets
+with CPTI and preserves hex bulk. It adds no geometry state or solver option.
+See [HEX_BULK_TET_SURFACE_PLAN.md](HEX_BULK_TET_SURFACE_PLAN.md).

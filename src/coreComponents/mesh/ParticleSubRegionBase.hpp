@@ -427,6 +427,9 @@ public:
       case ParticleType::SinglePoint: return 1 << gridDimension;
       case ParticleType::SinglePointBSpline: return 1 << ( 2*gridDimension );
       case ParticleType::CPDI: return 1 << ( 2*gridDimension );
+      case ParticleType::CPTI:
+        GEOS_ERROR_IF( gridDimension != 3, "CPTI currently requires a 3D grid" );
+        return 32; // Four tetrahedron vertices, eight linear grid nodes each.
       default: GEOS_ERROR( "Mapping capacity requested for an unimplemented particle type" ); return 0;
     }
   }

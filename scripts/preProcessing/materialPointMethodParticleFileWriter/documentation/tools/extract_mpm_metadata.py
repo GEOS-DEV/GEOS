@@ -377,6 +377,7 @@ source_inventory=[
     {'component':'Particle mesh and regions','path':'src/coreComponents/mesh/Particle*.{hpp,cpp}, src/coreComponents/mesh/particleGenerators/*'},
     {'component':'Solver enums','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverEnums.hpp'},
     {'component':'ParticleFileWriter','path':'scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py'},
+    {'component':'PFW particle layout','path':'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_particle_layout.py'},
     {'component':'PFW geometry objects','path':'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_geometryObjects.py'},
     {'component':'PFW material library','path':'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_materials.py'},
     {'component':'PFW suite tools','path':'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_suite.py and mpm_vv_*.py'},
@@ -408,6 +409,7 @@ data={
 }
 fingerprint_paths=[
  'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.cpp',
+ 'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp',
  'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverEnums.hpp',
  'src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.cpp',
  'src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp',
@@ -418,6 +420,8 @@ fingerprint_paths=[
  'src/coreComponents/mesh/ParticleSubRegionBase.cpp',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/particleFileWriter.py',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_surface_refinement.py',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_particle_layout.py',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_simplex_clipping.py',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_reference_geometry.py',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_check.py',
 ]
