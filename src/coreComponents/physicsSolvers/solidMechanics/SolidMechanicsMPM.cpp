@@ -12814,6 +12814,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
   real64 tStart = MPI_Wtime();
 
   localIndex const numberOfSubRegions = m_numberOfSubRegions;
+  bool const planeStrain = m_numDims == 2;
 
   // Expand bin limits by neighbor radius to account for the buffer zone of ghost particles outside the patch limits
   real64 neighborRadius = m_neighborRadius;
@@ -12829,7 +12830,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
   real64 binWidth = m_binSizeMultiplier * neighborRadius;
   localIndex nxbins = LvArray::math::ceil( ( xmax - xmin ) / binWidth ),
              nybins = LvArray::math::ceil( ( ymax - ymin ) / binWidth ),
-             nzbins = m_planeStrain ? 1 : LvArray::math::ceil( ( zmax - zmin ) / binWidth );
+             nzbins = planeStrain ? 1 : LvArray::math::ceil( ( zmax - zmin ) / binWidth );
   localIndex nbins = nxbins * nybins * nzbins;
 
   GEOS_ERROR_IF( nbins <= 0,
@@ -12840,7 +12841,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
 
   real64 dx = ( xmax - xmin ) / nxbins,
          dy = ( ymax - ymin ) / nybins,
-         dz = ( zmax - zmin ) / nzbins;
+         dz = planeStrain ? 1.0 : ( zmax - zmin ) / nzbins;
 
   localIndex totalNumberOfParticles = particleManager.getNumberOfParticles();
   localIndex totalNumberOfBins = nbins * m_numberOfSubRegions;
@@ -12894,10 +12895,14 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
         return;
       }
 
-      // Particle bin ijk indices
-      localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
-      localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
-      localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
+      // Clamp to valid bins, including particles exactly on a halo's upper
+      // boundary. Native 2D has one inactive z bin, independent of z storage.
+      localIndex i = LvArray::math::max( localIndex( 0 ), LvArray::math::min( nxbins - 1,
+                            localIndex( LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx ) ) ) );
+      localIndex j = LvArray::math::max( localIndex( 0 ), LvArray::math::min( nybins - 1,
+                            localIndex( LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy ) ) ) );
+      localIndex k = planeStrain ? 0 : LvArray::math::max( localIndex( 0 ), LvArray::math::min( nzbins - 1,
+                            localIndex( LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz ) ) ) );
       localIndex binIndex = i + j * nxbins + k * nxbins * nybins;
 
       binSizeReduction[binIndex] += 1;
@@ -12970,10 +12975,14 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
         return;
       }
 
-      // Particle bin ijk indices
-      localIndex i = LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx );
-      localIndex j = LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy );
-      localIndex k = LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz );
+      // Clamp to valid bins, including particles exactly on a halo's upper
+      // boundary. Native 2D has one inactive z bin, independent of z storage.
+      localIndex i = LvArray::math::max( localIndex( 0 ), LvArray::math::min( nxbins - 1,
+                            localIndex( LvArray::math::floor( ( particlePosition[p][0] - xmin ) / dx ) ) ) );
+      localIndex j = LvArray::math::max( localIndex( 0 ), LvArray::math::min( nybins - 1,
+                            localIndex( LvArray::math::floor( ( particlePosition[p][1] - ymin ) / dy ) ) ) );
+      localIndex k = planeStrain ? 0 : LvArray::math::max( localIndex( 0 ), LvArray::math::min( nzbins - 1,
+                            localIndex( LvArray::math::floor( ( particlePosition[p][2] - zmin ) / dz ) ) ) );
       localIndex binIndex = nbins * subRegionIndex + i + j * nxbins + k * nxbins * nybins;
 
       localIndex const slot = RAJA::atomicAdd( parallelDeviceAtomic{},
@@ -13063,12 +13072,20 @@ binCount.move( hostMemorySpace, true );
       localIndex a = subRegionAActiveParticleIndices[pp];
 
       // Bin ijk indices bounding a sphere of radius m_neighborRadius centered at 'this' particle
-      localIndex imin = LvArray::math::floor( ( xA[a][0] - neighborRadius - xmin ) / dx );
-      localIndex jmin = LvArray::math::floor( ( xA[a][1] - neighborRadius - ymin ) / dy );
-      localIndex kmin = LvArray::math::floor( ( xA[a][2] - neighborRadius - zmin ) / dz );
-      localIndex imax = LvArray::math::floor( ( xA[a][0] + neighborRadius - xmin ) / dx );
-      localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
-      localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
+      // Intersect the search with allocated bins. In 2D both z bounds must
+      // be zero: the former 3D upper bound evaluated to 1 for every z=0 particle.
+      localIndex imin = LvArray::math::max( localIndex( 0 ),
+                            localIndex( LvArray::math::floor( ( xA[a][0] - neighborRadius - xmin ) / dx ) ) );
+      localIndex jmin = LvArray::math::max( localIndex( 0 ),
+                            localIndex( LvArray::math::floor( ( xA[a][1] - neighborRadius - ymin ) / dy ) ) );
+      localIndex kmin = planeStrain ? 0 : LvArray::math::max( localIndex( 0 ),
+                            localIndex( LvArray::math::floor( ( xA[a][2] - neighborRadius - zmin ) / dz ) ) );
+      localIndex imax = LvArray::math::min( nxbins - 1,
+                            localIndex( LvArray::math::floor( ( xA[a][0] + neighborRadius - xmin ) / dx ) ) );
+      localIndex jmax = LvArray::math::min( nybins - 1,
+                            localIndex( LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy ) ) );
+      localIndex kmax = planeStrain ? 0 : LvArray::math::min( nzbins - 1,
+                            localIndex( LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz ) ) );
 
 #ifdef MPM_DEBUG_GPU
       if( imin < 0 )
@@ -13122,6 +13139,10 @@ binCount.move( hostMemorySpace, true );
                 //   neighborRadiusSquared.
                 LvArray::tensorOps::copy< 3 >( xBA, allParticleCentersView[particleIndexOffset2 + b] );
                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
+                if( planeStrain )
+                {
+                  xBA[2] = 0.0;
+                }
                 if( LvArray::tensorOps::l2NormSquared< 3 >( xBA ) <= neighborRadiusSquared )
                 {
                   // Update neighbor count for this particles
@@ -13231,12 +13252,20 @@ binCount.move( hostMemorySpace, true );
       localIndex a = subRegionAActiveParticleIndices[pp];
 
       // Bin ijk indices bounding a sphere of radius neighborRadius centered at 'this' particle
-      localIndex imin = LvArray::math::floor( ( xA[a][0] - neighborRadius - xmin ) / dx );
-      localIndex jmin = LvArray::math::floor( ( xA[a][1] - neighborRadius - ymin ) / dy );
-      localIndex kmin = LvArray::math::floor( ( xA[a][2] - neighborRadius - zmin ) / dz );
-      localIndex imax = LvArray::math::floor( ( xA[a][0] + neighborRadius - xmin ) / dx );
-      localIndex jmax = LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy );
-      localIndex kmax = LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz );
+      // Intersect the search with allocated bins. In 2D both z bounds must
+      // be zero: the former 3D upper bound evaluated to 1 for every z=0 particle.
+      localIndex imin = LvArray::math::max( localIndex( 0 ),
+                            localIndex( LvArray::math::floor( ( xA[a][0] - neighborRadius - xmin ) / dx ) ) );
+      localIndex jmin = LvArray::math::max( localIndex( 0 ),
+                            localIndex( LvArray::math::floor( ( xA[a][1] - neighborRadius - ymin ) / dy ) ) );
+      localIndex kmin = planeStrain ? 0 : LvArray::math::max( localIndex( 0 ),
+                            localIndex( LvArray::math::floor( ( xA[a][2] - neighborRadius - zmin ) / dz ) ) );
+      localIndex imax = LvArray::math::min( nxbins - 1,
+                            localIndex( LvArray::math::floor( ( xA[a][0] + neighborRadius - xmin ) / dx ) ) );
+      localIndex jmax = LvArray::math::min( nybins - 1,
+                            localIndex( LvArray::math::floor( ( xA[a][1] + neighborRadius - ymin ) / dy ) ) );
+      localIndex kmax = planeStrain ? 0 : LvArray::math::min( nzbins - 1,
+                            localIndex( LvArray::math::floor( ( xA[a][2] + neighborRadius - zmin ) / dz ) ) );
 
 
 #ifdef MPM_DEBUG_GPU
@@ -13290,6 +13319,10 @@ binCount.move( hostMemorySpace, true );
                 //   neighborRadiusSquared.
                 LvArray::tensorOps::copy< 3 >( xBA, allParticleCentersDeviceView[particleIndexOffset3 + b] );
                 LvArray::tensorOps::subtract< 3 >( xBA, xA[a] );
+                if( planeStrain )
+                {
+                  xBA[2] = 0.0;
+                }
                 if( LvArray::tensorOps::l2NormSquared< 3 >( xBA ) <= neighborRadiusSquared )
                 {
                   neighborRegions[pp][neighborCount] = regionIndicesOfSubRegionsDeviceView[subRegionIndex2];
