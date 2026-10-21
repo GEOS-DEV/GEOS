@@ -34,7 +34,7 @@ namespace singlePhasePoromechanicsConformingFracturesKernels
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel
   : public poromechanicsConformingFracturesKernels::
-  ConformingFracturesFluxKernelBase< singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >
+    ConformingFracturesFluxKernelBase< singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >
 {
 public:
 
@@ -68,7 +68,7 @@ public:
 
 
   using Base = poromechanicsConformingFracturesKernels::
-    ConformingFracturesFluxKernelBase< singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >;
+                 ConformingFracturesFluxKernelBase< singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >;
   using FracturePermeabilityAccessors = typename Base::FracturePermeabilityAccessors;
   using FractureApertureAccessors = typename Base::FractureApertureAccessors;
   using Base::numDof;

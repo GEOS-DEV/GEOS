@@ -199,7 +199,7 @@ public:
                                          localIndex const connectionIndex,
                                          real64 const dFlux_dTrans,
                                          DFLUX_DAPERTURE && dFlux_dAperture,
-                                         real64 ( &dFlux_dAper )[maxNumElems] ) const
+                                         real64 ( & dFlux_dAper )[maxNumElems] ) const
   {
     for( localIndex j = 0; j < stack.stencilSize; ++j )
     {

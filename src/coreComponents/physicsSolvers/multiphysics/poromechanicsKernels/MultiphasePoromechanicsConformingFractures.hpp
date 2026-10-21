@@ -33,7 +33,7 @@ namespace multiphasePoromechanicsConformingFracturesKernels
 template< integer NUM_EQN, integer NUM_DOF >
 class FluxComputeKernel
   : public poromechanicsConformingFracturesKernels::
-  ConformingFracturesFluxKernelBase< isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >
+    ConformingFracturesFluxKernelBase< isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >
 {
 public:
 
@@ -59,7 +59,7 @@ public:
   using AbstractBase::m_pres;
 
   using Base = poromechanicsConformingFracturesKernels::
-    ConformingFracturesFluxKernelBase< isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >;
+                 ConformingFracturesFluxKernelBase< isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >;
   using FracturePermeabilityAccessors = typename Base::FracturePermeabilityAccessors;
   using FractureApertureAccessors = typename Base::FractureApertureAccessors;
   using Base::numDof;

@@ -192,8 +192,8 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   // Launch the ComputeNormalJumpDerivatives kernel to fill dNormalJump_dU and dNormalJump_dB
   this->solidMechanicsSolver()->forFiniteElementOnFractureSubRegions( meshName,
                                                                       [&, dNormalJump_dUView, dNormalJump_dBView] ( string const &,
-                                                                                                              finiteElement::FiniteElementBase const & subRegionFE,
-                                                                                                              arrayView1d< localIndex const > const & faceElementList )
+                                                                                                                    finiteElement::FiniteElementBase const & subRegionFE,
+                                                                                                                    arrayView1d< localIndex const > const & faceElementList )
   {
     poromechanicsALMKernels::ComputeNormalJumpDerivativesFactory
     kernelFactory( dispDofNumber,
@@ -366,8 +366,8 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
   // The kernel below adds the bubble volumetric strain increment on top of the stored porosity: this is only
   // correct if the bulk kernel has reset the porosity in this same assembly (assembleElementBasedContributions)
   GEOS_ERROR_IF( !this->m_isPorosityReset,
-                   GEOS_FMT( "{}: the bubble contribution would be added twice to the porosity "
-                             "(the bulk poromechanics kernel did not reset it since the last addition)", this->getName() ) );
+                 GEOS_FMT( "{}: the bubble contribution would be added twice to the porosity "
+                           "(the bulk poromechanics kernel did not reset it since the last addition)", this->getName() ) );
   this->m_isPorosityReset = false;
 
   string const flowDofKey = dofManager.getKey( this->getFlowDofKey() );

@@ -862,8 +862,8 @@ protected:
       if( numRows > 0 )
       {
         derivativeFluxResidual_dNormalJump->resizeFromRowCapacities< parallelHostPolicy >( numRows,
-                                                                                         numElems,
-                                                                                         rowCapacities.data() );
+                                                                                           numElems,
+                                                                                           rowCapacities.data() );
       }
 
       fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
