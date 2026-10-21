@@ -9374,7 +9374,187 @@ class surfaceWrapper(BaseWrapper):
      
     return self.subObject.getSurfacePosition(pt)
 
+
+
+############################################
+class interfaceWrapper(BaseWrapper):
+  """Insert a planar, two-sided interface into an existing geometry object.
+
+  ``point`` lies on the interface, and ``normal`` points from its negative
+  side to its positive side.  In 2D the interface is a line in the xy plane;
+  in 3D it is a plane.  The interface is clipped by ``subObject``'s domain.
+
+  ``dim`` may be 2 or 3.  If omitted, use the wrapped object's dimension
+  (looking through other BaseWrappers), then the input vector lengths.
+  Two-dimensional input accepts two components or three with a zero normal
+  z component.  Interface normals and positions always have three components.
+
+  ``negativeGroup`` and ``positiveGroup`` optionally override contact groups
+  throughout the respective side, including particles away from the interface.
+  A value of None preserves the wrapped object's group on that side.  Points
+  exactly on the interface belong to the negative side.
+
+  isInterior uses the supplied skinDepth to flag interface particles with
+  ``surfaceFlag``.  When an existing explicit surface is also within the skin,
+  the closer surface supplies its flag, normal, and position; an exact distance
+  tie favors the inserted interface.  Other particle properties are delegated.
+
+  Surface positions follow the PFW convention: particle-to-surface offsets,
+  not absolute coordinates.  For signed distance d and unit normal n they are
+  -d*n.  The two sides receive opposing outward normals, including a finite,
+  deterministic +n normal for points exactly on the interface.
+  """
+  def __init__(self,
+               name,
+               subObject,
+               point,
+               normal,
+               dim=None,
+               negativeGroup=None,
+               positiveGroup=None,
+               surfaceFlag=SurfaceFlag.Surface):
+    super().__init__(name, subObject)
+
+    if dim is None:
+      obj = subObject
+      visited = set()
+      while obj is not None and id(obj) not in visited:
+        visited.add(id(obj))
+        if getattr(obj, 'dim', None) is not None:
+          dim = obj.dim
+          break
+        obj = getattr(obj, 'subObject', None)
+      if dim is None:
+        dim = 2 if 2 in (np.size(point), np.size(normal)) else 3
+
+    if isinstance(dim, (bool, np.bool_)) or not isinstance(dim, (int, np.integer)) or dim not in (2, 3):
+      raise ValueError("dim must be 2 or 3")
+    self.dim = int(dim)
+    self.interfacePoint = self._vector3(point, 'point')
+    n = self._vector3(normal, 'normal')
+    if self.dim == 2:
+      if n[2] != 0.0:
+        raise ValueError("a 2D interface normal must have a zero z component")
+      self.interfacePoint[2] = 0.0
+
+    # Scale before taking the norm, avoiding overflow/underflow for non-unit
+    # input normals with very large or small finite components.
+    scale = float(np.max(np.abs(n)))
+    if scale == 0.0:
+      raise ValueError("normal must be nonzero")
+    n = n / scale
+    self.interfaceNormal = n / np.linalg.norm(n)
+
+    for label, group in (('negativeGroup', negativeGroup), ('positiveGroup', positiveGroup)):
+      if group is not None and (isinstance(group, (bool, np.bool_)) or
+                                not isinstance(group, (int, np.integer)) or group < 0):
+        raise ValueError(label + " must be a nonnegative integer or None")
+    self.negativeGroup = None if negativeGroup is None else int(negativeGroup)
+    self.positiveGroup = None if positiveGroup is None else int(positiveGroup)
+
+    if (isinstance(surfaceFlag, (bool, np.bool_)) or
+        not isinstance(surfaceFlag, (int, np.integer)) or
+        int(surfaceFlag) not in tuple(int(flag) for flag in SurfaceFlag if flag != SurfaceFlag.Interior)):
+      raise ValueError("surfaceFlag must be a non-interior SurfaceFlag value")
+    self.surfaceFlag = int(surfaceFlag)
+    self._lastInterfaceKey = None
+    self._lastInterfaceState = None
+
+  def _vector3(self, value, label):
+    v = np.asarray(value, dtype=float)
+    sizes = (2, 3) if self.dim == 2 else (3,)
+    if v.ndim != 1 or v.size not in sizes or not np.all(np.isfinite(v)):
+      raise ValueError(label + " must be a finite vector with " +
+                       ("2 or 3 components" if self.dim == 2 else "3 components"))
+    return np.append(v, 0.0) if v.size == 2 else v.copy()
+
+  def _pointKey(self, pt):
+    self._vector3(pt, 'pt')
+    # Keep the original z coordinate in the key: a 2D interface may wrap a
+    # 3D object whose membership still depends on z.
+    return tuple(np.asarray(pt, dtype=float))
+
+  def signedDistance(self, pt):
+    """Signed perpendicular distance, negative on the normal's starting side."""
+    x = self._vector3(pt, 'pt')
+    d = float(np.dot(x[:self.dim] - self.interfacePoint[:self.dim],
+                     self.interfaceNormal[:self.dim]))
+    if not np.isfinite(d):
+      raise ValueError("interface signed distance must be finite")
+    return d
+
+  def getSide(self, pt):
+    """Return -1 on the negative side (including d == 0), otherwise +1."""
+    return -1 if self.signedDistance(pt) <= 0.0 else 1
+
+  @staticmethod
+  def _surfaceVector(value):
+    v = np.asarray(value, dtype=float).reshape(-1).copy()
+    return np.append(v, 0.0) if v.size == 2 else v
+
+  def _classifyInterface(self, pt, skinDepth):
+    # None is only used internally for getters without a preceding isInterior:
+    # choose the nearest surface without assuming a skin depth in model units.
+    flag = self.subObject.isInterior(pt, 0.0 if skinDepth is None else skinDepth)
+    if flag < 0:
+      return {'flag': flag, 'normal': np.zeros(3), 'position': np.zeros(3)}
+
+    d = self.signedDistance(pt)
+    normal = self._surfaceVector(super().getSurfaceNormal(pt))
+    position = self._surfaceVector(super().getSurfacePosition(pt))
+    state = {'flag': flag, 'normal': normal, 'position': position}
+
+    if skinDepth is not None and abs(d) > skinDepth:
+      return state
+
+    # A default zero normal does not identify an explicit wrapped surface.
+    # In particular, Geometry's default zero position is not a distance of zero.
+    wrappedDistance = np.inf
+    if (flag > 0 or skinDepth is None) and normal.size == 3 and position.size == 3:
+      if np.all(np.isfinite(normal)) and np.any(normal != 0.0) and np.all(np.isfinite(position)):
+        wrappedDistance = math.hypot(*position)
+
+    if abs(d) <= wrappedDistance:
+      state = {'flag': self.surfaceFlag,
+               'normal': self.interfaceNormal.copy() if d <= 0.0 else -self.interfaceNormal,
+               'position': -d * self.interfaceNormal}
+    return state
+
+  def isInterior(self, pt, skinDepth):
+    skinDepth = float(skinDepth)
+    if not np.isfinite(skinDepth) or skinDepth < 0.0:
+      raise ValueError("skinDepth must be finite and nonnegative")
+    key = self._pointKey(pt)
+    state = self._classifyInterface(pt, skinDepth)
+    # Snapshot all three fields together so normal/position queries cannot
+    # disagree with the selected flag or depend on another particle's query.
+    self._lastInterfaceKey = key
+    self._lastInterfaceState = state
+    return state['flag']
+
+  def _interfaceState(self, pt):
+    key = self._pointKey(pt)
+    if key != self._lastInterfaceKey:
+      self._lastInterfaceState = self._classifyInterface(pt, None)
+      self._lastInterfaceKey = key
+    return self._lastInterfaceState
+
+  def getSurfaceNormal(self, pt):
+    return self._interfaceState(pt)['normal'].copy()
+
+  def getSurfacePosition(self, pt):
+    return self._interfaceState(pt)['position'].copy()
+
+  def getGroup(self, pt):
+    if self.negativeGroup is None and self.positiveGroup is None:
+      return super().getGroup(pt)
+    if self._interfaceState(pt)['flag'] >= 0:
+      group = self.negativeGroup if self.getSide(pt) < 0 else self.positiveGroup
+      if group is not None:
+        return group
+    return super().getGroup(pt)
   
+
 ############################################
 class czTagWrapper(BaseWrapper):
   def __init__(self,
