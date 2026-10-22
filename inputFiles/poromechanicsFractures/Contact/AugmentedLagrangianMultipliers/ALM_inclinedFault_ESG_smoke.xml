@@ -171,6 +171,13 @@
 
 <!-- SPHINX_INJECTION -->
   <FieldSpecifications>
+    <FieldSpecification
+      name="prescribedFaultPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="pressure"
+      scale="35.0e6"/>
+
    <FieldSpecification 
       name="injection"
       initialCondition="0"
