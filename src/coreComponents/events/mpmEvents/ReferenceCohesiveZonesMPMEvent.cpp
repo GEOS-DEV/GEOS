@@ -31,12 +31,18 @@ ReferenceCohesiveZonesMPMEvent::ReferenceCohesiveZonesMPMEvent( const string & n
   m_czVolumeNormalization( 1 ),
   m_computeNormalsAndPositions( 0 ),
   m_normalsAndPositionsMethod( mpm::NormalsAndPositionsMethodOption::LogisticRegression ),
-  m_czSurfaceDisplacementUpdate( mpm::CohesiveSurfaceDisplacementUpdateOption::Nodal )
+  m_czSurfaceDisplacementUpdate( mpm::CohesiveSurfaceDisplacementUpdateOption::Nodal ),
+  m_referenceApplied( 0 )
 {
   registerWrapper( viewKeyStruct::regionNamesString(), &m_regionNames ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Region names for cohesive zones");
+
+  registerWrapper( viewKeyStruct::referenceAppliedString(), &m_referenceApplied ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Whether this event has already activated its cohesive reference configuration" );
 
   registerWrapper( viewKeyStruct::czVolumeNormalizationString(), &m_czVolumeNormalization ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -60,7 +66,7 @@ ReferenceCohesiveZonesMPMEvent::ReferenceCohesiveZonesMPMEvent( const string & n
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_czSurfaceDisplacementUpdate ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Cohesive surface displacement update method. Nodal preserves the bugfix branch nodal update; TypeA uses the stored surface-position vector; TypeB uses the CPDI particle-face vector. Options are:\n* " +
+    setDescription( "Cohesive surface displacement update method. Nodal preserves the bugfix branch nodal update; TypeA uses the stored surface-position vector; TypeB intersects the normal ray with the unscaled material shape (quad/triangle in 2D, hex/tet/wedge in 3D). Options are:\n* " +
                     EnumStrings< mpm::CohesiveSurfaceDisplacementUpdateOption >::concat( "\n* " ) );
 }
 

@@ -29,7 +29,8 @@ namespace geos
 /**
  * @class ReferenceCohesiveZonesMPMEvent
  *
- * This class implements the material swap mpm event for the solid mechanics material point method solver
+ * Activates a cohesive reference configuration once, then retains it until
+ * the event ends. The activation state is saved in restart files.
  */
 class ReferenceCohesiveZonesMPMEvent : public MPMEventBase
 {
@@ -69,6 +70,7 @@ public:
     static constexpr char const * computeNormalsAndPositionsString() { return "computeNormalsAndPositions"; }
     static constexpr char const * normalsAndPositionsMethodString() { return "normalsAndPositionsMethod"; }
     static constexpr char const * czSurfaceDisplacementUpdateString() { return "czSurfaceDisplacementUpdate"; }
+    static constexpr char const * referenceAppliedString() { return "referenceApplied"; }
   } CohesiveZoneMPMEventViewKeys;
   /// @endcond
 
@@ -76,6 +78,10 @@ public:
   int getComputeNormalsAndPositions() const { return m_computeNormalsAndPositions; }
   mpm::NormalsAndPositionsMethodOption getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
   mpm::CohesiveSurfaceDisplacementUpdateOption getCZSurfaceDisplacementUpdate() const { return m_czSurfaceDisplacementUpdate; }
+
+  /// Whether this event has already requested its cohesive reference state.
+  int referenceApplied() const { return m_referenceApplied; }
+  void setReferenceApplied( int const applied ) { m_referenceApplied = applied; }
 
 private:
 
@@ -88,6 +94,9 @@ protected:
   int m_computeNormalsAndPositions;
   mpm::NormalsAndPositionsMethodOption m_normalsAndPositionsMethod;
   mpm::CohesiveSurfaceDisplacementUpdateOption m_czSurfaceDisplacementUpdate;
+  // Separate from hasStarted: dependent events set hasStarted when scheduled,
+  // which can precede activation by the configured delay.
+  int m_referenceApplied;
 };
 
 } /* namespace geos */

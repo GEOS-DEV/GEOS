@@ -1,5 +1,5 @@
 % !TeX root = ../../../geos_mpm_manual.tex
-\section{Native axisymmetric mechanics and ordinary contact}
+\section{Native axisymmetric mechanics, contact and cohesive zones}
 \label{sec:axisymmetric}
 \index{axisymmetry}
 Set \mpmcode{formulation=Axisymmetric} in PFW. The same timestep uses the
@@ -59,7 +59,7 @@ stretch and use $J/F_{\theta\theta}$ for planar geometry projection.
 The implementation supports ordinary contact between separate body groups,
 Q1 point, CPDI and CPTI particles, fixed Outflow/Symmetry boundaries, and
 compatible body-force, initial-velocity and material initialization.
-It explicitly rejects DFG, CZ, surface tension, reconstructed surfaces/nodal areas,
+It explicitly rejects DFG, finite-thickness polymer CZ, surface tension, reconstructed surfaces/nodal areas,
 SPH/overlap corrections, crack-tip detection, profileHistory slice normalization,
 B-splines, prescribed BC/F tables
 and stress-controlled domain motion. PFW rejects surface traction generation;
@@ -68,7 +68,8 @@ forces. The uniform-confinement follow-up supports
 \mpmcode{ConfiningPressure} with \mpmcode{uniformPressure=1} and no box/sphere
 exclusion. Its background stress includes the hoop component; pressure is
 retained after the event and across restart. Spatially restricted pressure
-remains unsupported. Most geometry-changing/healing/CZ events are rejected.
+remains unsupported. Most geometry-changing/healing events are rejected. The prescribed-interface
+\mpmcode{ReferenceCohesiveZones} event is supported with explicit surface data.
 
 Built-in area-only Weibull objects are rejected: a statistical cell needs
 $2\pi\int_A r\,dA$, before minimum-volume clamping. A custom wrapper can
@@ -96,7 +97,7 @@ split conservation. Complete writer checks cover both ordinary and curved
 refined geometry at 1, 3 and 7 explicitly emulated ranks. These checks do not
 replace the target GEOS build, actual MPI migration/restart, GPU execution or
 output readback. See \path{AXISYMMETRIC_PLAN.md} for exact limits, local results,
-and the next CZ, traction and verification stages.
+and the remaining polymer CZ, traction and verification stages.
 
 \path{examples/axisymmetricJacketedSample} adds a 20-mm-diameter, 20-mm-long
 compliant sample between 2-mm steel plates inside a 1-mm rubber jacket.
@@ -129,7 +130,7 @@ The same assembled normals serve ordinary and FMPM contact.
 Explicit PFW surface positions can be used with
 \mpmcode{useSurfacePositionForContact=1}; otherwise the existing approximate
 centre-of-mass gap criterion applies. Solver-reconstructed surface positions,
-overlap correction, nodal areas, moving walls and cohesive zones remain
+overlap correction, nodal areas and moving walls remain
 unsupported. Contact and slip have only radial and axial components.
 
 \path{examples/axisymmetricContact} supplies two elastic cylinders with separate
@@ -146,3 +147,73 @@ The uniform pressure bath used in the bonded jacketed example can also load
 newly exposed internal surfaces if the materials are separated into contact
 groups. A sealed jacket with internal separation needs exterior-only pressure
 loading, which remains a separate integration task.
+
+
+\subsection{Prescribed axisymmetric cohesive interfaces}
+Use exactly two contact groups, 0 and 1, and disable DFG. A
+\mpmcode{CohesiveZoneRegion} selects particles through its tag; surface
+particles use \mpmcode{SurfaceFlag=3}. PFW must include ContactGroup, CZTag,
+SurfaceFlag, SurfaceNormal and SurfacePosition columns. The surface vectors
+are meridional and the normal is nonzero. Set \mpmcode{useEvents=1} on the
+solver and activate the region with
+\mpmcode{ReferenceCohesiveZones}, using \mpmcode{computeNormalsAndPositions=0}.
+The event dispatcher defaults to disabled; declaring the event and marking
+surface candidates alone does not set active particle cohesive flags.
+Each reference event requests initialization once, using an internal
+\mpmcode{referenceApplied} flag saved across restart. A time window alone is
+insufficient: timestep growth can admit repeated activation and overwrite the
+bonded reference after separation begins. Dependency scheduling is distinct
+from activation, so its \mpmcode{hasStarted} flag is not used for this purpose.
+Finite event end times still disable the region; a separate reference event
+can intentionally initialize it again. This fix leaves general event
+scheduling unchanged and applies to all formulations. Rebuild and restart a
+case affected by repeated initialization from time zero.
+Uncoupled, Coupled and Bicrystal traction--separation laws are supported.
+Finite-thickness Polymer and SurfaceInformedPolymer CZ models remain rejected:
+they need hoop stretch in their constitutive deformation reconstruction.
+
+At activation, the reference nodal area is
+\[
+ A_{I,\mathrm{CZ}}=\int_{\Gamma}2\pi r N_I\,ds.
+\]
+The reconstructed local line is clipped to nodal support and $r\geq0$, split
+at Q1 hat-function kinks, and integrated exactly with two-point Gauss rules.
+The optional region \mpmcode{czVolumeNormalization=1} uses the matching support
+volume $\int 2\pi r N_I\,dA$; at an axis node it is
+$2\pi h_r^2h_y/6$. Multiplication by the node radius alone is incorrect.
+Finite interface ends retain the existing local-line occupancy approximation;
+verify area and reaction convergence with refinement.
+
+Current area uses the full three-dimensional relative cofactor,
+\[
+ H=F F_{\mathrm{CZ}}^{-1},\qquad
+ \mathbf a_I=\langle\operatorname{cof}H\rangle_I
+              A_{I,\mathrm{CZ}}\mathbf n_{I,\mathrm{CZ}}.
+\]
+Thus axial and cylindrical areas include hoop stretch. Reference normals are
+normalized. Re-basing $F_{\mathrm{CZ}}$ during an F reset preserves H and area.
+Both FOnly and FAndGeometry retain the cached cohesive anchor. TypeB selects
+that anchor by intersecting the normal ray with the unscaled quad/triangle
+material domain; TypeA uses the supplied surface offset and Nodal retains the
+reference-grid affine reconstruction. These choices change the displacement
+reconstruction, not the reference-area integration.
+
+The law uses opening and meridional slip; force is traction times the current
+full-ring area once. With \mpmcode{preventCZInterpenetration=1}, ordinary contact
+handles compression. A particle retains cohesive forces while any cached CZ
+node remains intact; complete failure releases it to ordinary contact.
+Contact handoff remains particle-based, not an independently tracked per-node
+crack front. Active/damaged cohesive surface particles are not subdivided.
+Scaling/reset options preserve their surface normals and positions.
+
+\mpmcode{gridCohesiveArea} now contains current area vectors, and
+\mpmcode{gridCohesiveForce} contains forces, at cached reference-grid locations.
+Meridional Silo/VTK output needs no extra thickness conversion.
+\path{examples/axisymmetricCZ} provides mixed CPDI/CPTI elastic and debond
+variants, a runner, input checks and tracer plots. Standalone tests compile
+production area, CZ-law, relative-F, reset and gather excerpts. An event test
+also compiles the reference event and scheduler/handler excerpts to check
+adaptive timesteps, dependency delays and restart-wrapper state. Writer tests
+exercise FLIP/FMPM with one and three emulated ranks. Full GEOS dynamics,
+actual MPI/restart and GPU execution remain target tests. See
+\path{AXISYMMETRIC_CZ.md} for the precise validation scope.

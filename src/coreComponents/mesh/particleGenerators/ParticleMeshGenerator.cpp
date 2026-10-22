@@ -417,8 +417,6 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
           GEOS_ERROR_IF(particleCenter[i][0]+offset[0]<-1e-12*std::max(1.0,particleCenter[i][0]),
                         "Initial axisymmetric material domain crosses r=0");
         }
-        GEOS_ERROR_IF(particleSurfaceFlag[i]>=3 || particleCZTag[i]!=0,
-                      "Axisymmetric cohesive particles are not implemented");
       }
       referenceGeometry[i]=static_cast<integer>(tag);
       ParticleType const type=particleBlock.getParticleType();
@@ -453,6 +451,18 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       particleSurfacePosition[i][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfacePositionX )];
       particleSurfacePosition[i][1] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfacePositionY )];
       particleSurfacePosition[i][2] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfacePositionZ )];
+
+      if( partition.axisymmetric() && particleSurfaceFlag[i] >= 3 )
+      {
+        real64 const normalLength = std::hypot(particleSurfaceNormal[i][0],particleSurfaceNormal[i][1]);
+        GEOS_ERROR_IF( !(std::isfinite(normalLength) && normalLength > 0) ||
+                       !(std::abs(particleSurfaceNormal[i][2]) <= 1e-12) ||
+                       !(std::abs(particleSurfacePosition[i][2]) <= 1e-12) ||
+                       !std::isfinite(particleSurfacePosition[i][0]) || !std::isfinite(particleSurfacePosition[i][1]),
+                       "Axisymmetric CZ requires a nonzero meridional normal and meridional surface-position vector." );
+        GEOS_ERROR_IF( particleGroup[i] < 0 || particleGroup[i] > 1,
+                       "Axisymmetric CZ particles require contact group 0 or 1." );
+      }
 
       particleSurfaceTraction[i][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfaceTractionX )];
       particleSurfaceTraction[i][1] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfaceTractionY )];

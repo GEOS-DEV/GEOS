@@ -3958,7 +3958,7 @@
           "default_expression": "m_czSurfaceDisplacementUpdate",
           "type": "string (enum)",
           "restart": "WRITE_AND_READ",
-          "description": "Cohesive surface displacement update method. Nodal preserves the bugfix branch nodal update; TypeA uses the stored surface-position vector; TypeB uses the CPDI particle-face vector. Options are:; * ; *",
+          "description": "Cohesive surface displacement update method. Nodal preserves the bugfix branch nodal update; TypeA uses the stored surface-position vector; TypeB intersects the normal ray with the unscaled material shape (quad/triangle in 2D, hex/tet/wedge in 3D). Options are:; * ; *",
           "source": "src/coreComponents/events/mpmEvents/ReferenceCohesiveZonesMPMEvent.cpp",
           "line": 59
         }

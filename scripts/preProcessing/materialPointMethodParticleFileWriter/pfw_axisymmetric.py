@@ -38,6 +38,26 @@ def validate_options(pfw):
         if any(key in event.attrib for key in ('confiningPressureBoxMin', 'confiningPressureBoxMax',
                                                'confiningPressureSphereRadius')):
             raise ValueError('Uniform axisymmetric pressure must omit box and sphere exclusions')
+    for event in events.iter('ReferenceCohesiveZones'):
+        if pfw.get('useEvents') not in (1, '1'):
+            raise ValueError('Axisymmetric ReferenceCohesiveZones requires useEvents=1; otherwise the interface never activates')
+        if int(event.get('computeNormalsAndPositions', '0')):
+            raise ValueError('Axisymmetric CZ requires explicit normals and positions')
+    regions = pfw.get('cohesiveZoneRegions') or ''
+    if isinstance(regions, (list, tuple)):
+        regions = '\n'.join(regions)
+    regions = ET.fromstring('<root>' + regions + '</root>')
+    materials = ET.fromstring('<root>' + (pfw.get('materialPropertyString') or '') + '</root>')
+    material_types = {item.get('name'): item.tag for item in materials.iter() if item.get('name')}
+    for region in regions.iter('CohesiveZoneRegion'):
+        if int(region.get('computeParticleSurfaceNormalsAndPositions', '0')):
+            raise ValueError('Axisymmetric CZ requires explicit normals and positions')
+        model = material_types.get(region.get('constitutiveModel'))
+        if model is not None and model not in ('UncoupledCohesiveZone', 'CoupledCohesiveZone', 'BicrystalCohesiveZone'):
+            raise ValueError('Axisymmetric CZ supports traction-separation laws; finite-thickness polymer CZ needs hoop-stretch kinematics')
+        missing = set(('ContactGroup', 'SurfaceFlag', 'SurfaceNormal', 'SurfacePosition', 'CZTag')) - set(pfw.get('particleFileFields', []))
+        if missing:
+            raise ValueError('Axisymmetric CZ requires particleFileFields: ' + ', '.join(sorted(missing)))
     bc=pfw.get('boundaryConditionTypes')
     if bc is not None and any(value not in (0,1) for value in bc):
         raise ValueError('Axisymmetric supports Outflow and Symmetry boundaries')
@@ -79,8 +99,17 @@ def validate_particle(point, data, geometry):
     group = data.get('group', 0)
     if not (0 <= group < 100 and int(group) == group):
         raise ValueError('Axisymmetric ContactGroup must be an integer from 0 to 99')
-    if data.get('czTag',0)!=0 or data.get('surfaceFlag',0) in (3,4):
-        raise ValueError('Axisymmetric cohesive particles are not yet supported')
+    tag = data.get('czTag', 0)
+    if not (math.isfinite(tag) and tag >= 0 and int(tag) == tag):
+        raise ValueError('Axisymmetric CZTag must be a nonnegative integer')
+    if data.get('surfaceFlag',0) in (3,4):
+        if group not in (0, 1):
+            raise ValueError('Axisymmetric CZ requires contact groups 0 and 1')
+        normal = np.asarray(data.get('surfaceNormal', [0,0,0]), dtype=float)
+        position = np.asarray(data.get('surfacePosition', [0,0,0]), dtype=float)
+        if (not np.all(np.isfinite(normal)) or not np.all(np.isfinite(position)) or
+                np.linalg.norm(normal[:2]) <= 0 or abs(normal[2]) > 1.e-12 or abs(position[2]) > 1.e-12):
+            raise ValueError('Axisymmetric CZ requires a nonzero meridional normal and meridional surface position')
     if np.any(np.asarray(data.get('surfaceTraction',[0,0,0]))):
         raise ValueError('Axisymmetric PFW surface-traction integration is not implemented; use body forces or initial velocity/stress')
     if abs(float(data.get('velocity',[0,0,0])[2]))>0:

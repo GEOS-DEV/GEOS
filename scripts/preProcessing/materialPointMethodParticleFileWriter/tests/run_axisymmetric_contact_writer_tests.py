@@ -26,7 +26,7 @@ data = dict(particleType=2, group=0, surfaceFlag=2, czTag=0, velocity=[0, 1, 0])
 for group in (0, 1, 7, 99):
     axis.validate_particle([2, 0, 0], dict(data, group=group), (3, np.eye(2)))
 for change in (dict(group=-1), dict(group=.5), dict(group=100),
-               dict(czTag=1), dict(surfaceFlag=3), dict(surfaceFlag=4),
+               dict(czTag=-1), dict(surfaceFlag=3), dict(surfaceFlag=4),
                dict(velocity=[0, 0, 1])):
     try:
         axis.validate_particle([2, 0, 0], dict(data, **change), (3, np.eye(2)))

@@ -1,9 +1,9 @@
 # Axisymmetric MPM: implementation and acceptance plan
 
 The implementation includes native axisymmetric mechanics, uniform confinement,
-and ordinary contact between separate body groups. ParticleColor remains
+ordinary contact, and prescribed two-group cohesive interfaces. ParticleColor remains
 available. The existing timestep dispatches 2D kernels; there is no second
-timestep solver. CZ and damage-field partitioning remain separate follow-ups.
+timestep solver. Finite-thickness polymer CZ and damage-field partitioning remain separate follow-ups.
 
 ## Coordinates, geometry and units
 
@@ -90,11 +90,13 @@ per-radian convention by 2*pi consistently.
   the existing approximate centre-of-mass gap criterion can be used.
   Solver-reconstructed surface positions and overlap correction remain disabled.
   ParticleColor is independent of contact groups.
-- **CZ and DFG:** cohesive particles and damage-field partitioning remain
-  unsupported. Next add radius-weighted interface integrals, consistent nodal
-  support volumes where required, cohesive tractions/work and reference-area
-  evolution including hoop stretch. Prescribed two-field interfaces come first;
-  multiple CZ field pairs and active-CZ subdivision require further work.
+- **CZ:** prescribed interfaces between groups 0 and 1 support Uncoupled,
+  Coupled and Bicrystal traction-separation laws. Ring-weighted line integrals
+  and nodal support volumes initialize area; the full relative-F cofactor
+  transports it, including hoop stretch and reset invariance. See
+  `AXISYMMETRIC_CZ.md` and `examples/axisymmetricCZ` for input, tests and limits.
+  Finite-thickness polymer CZ, DFG, multiple field pairs and active-CZ
+  subdivision remain future work.
 - **Surface tension and tractions:** surface tension, reconstructed surface
   positions/nodal-area output, borehole pressure, spatially restricted confining
   pressure and PFW surface traction generation are rejected. Uniform
@@ -113,10 +115,10 @@ per-radian convention by 2*pi consistently.
   crack-tip detection, profileHistory slice-volume normalization, prescribed BC/F tables or stress-controlled domain motion.
   Boundaries are Outflow or Symmetry. Existing point/CPDI/CPTI body forces,
   initial velocity and compatible stress/thermal initialization remain usable.
-  Most geometry-changing/healing/CZ runtime events are rejected; allowed events
+  Most geometry-changing/healing runtime events are rejected; allowed events
   are BodyForceUpdate, ResetDeformationGradient, InitializeStress,
   SetInitialTemperatureAndPressure, Anneal, MaterialSwap, TemperatureProfile,
-  and uniform ConfiningPressure.
+  ReferenceCohesiveZones with explicit normals/positions, and uniform ConfiningPressure.
 - **Validation next:** full CPU build, actual MPI migration and split/restart,
   GPU execution, and Silo/VTK readback. Compare cylindrical elastic wave and
   thick-cylinder pressure solutions after traction integration is added.
@@ -203,3 +205,12 @@ The patch updates manual LaTeX; it does not include a regenerated manual PDF.
 Uniform confinement is not selective to the outside of a sealed jacket when
 internal interfaces separate. Such an assembly needs exterior-only pressure
 loading; the existing bonded jacketed example is left unchanged.
+
+## Prescribed-CZ follow-up
+
+The current patch adds full-ring cohesive areas, corrects reference-relative
+area transport and partial-node debonding, and preserves CZ surface data under
+quadrature scaling and reset. These shared reference/damage corrections also
+apply to Cartesian CZ runs. The user reported that ordinary axisymmetric
+contact built and ran before this patch. The new CZ examples still require a
+target build and dynamics/MPI/restart checks; see `AXISYMMETRIC_CZ.md`.
