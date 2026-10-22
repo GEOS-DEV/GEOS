@@ -3,6 +3,7 @@
 
 set -euo pipefail
 brew install cmake open-mpi openblas python@3.14 binutils
+python_bin="$(brew --prefix python@3.14)/bin/python3.14"
 curl -fsSL -o "$RUNNER_TEMP/sccache.tgz" \
   https://github.com/mozilla/sccache/releases/download/v0.17.0/sccache-v0.17.0-aarch64-apple-darwin.tar.gz
 tar -xzf "$RUNNER_TEMP/sccache.tgz" -C "$RUNNER_TEMP" --strip-components=1 \
@@ -23,7 +24,7 @@ bucket = "geos-dev"
 key_prefix = "sccache"
 EOF
 "$RUNNER_TEMP/sccache" --show-stats || true
-"$(brew --prefix python@3.14)/bin/python3.14" -m pip install --upgrade --break-system-packages virtualenv
+"$python_bin" -m pip install --upgrade --break-system-packages virtualenv
 # Caliper records the Open MPI Cellar path from the TPL build. Homebrew on this
 # runner may install a different version, so point that path at the one just installed.
 if [[ ! -d /opt/homebrew/Cellar/open-mpi/5.0.11 ]]; then
@@ -36,10 +37,11 @@ log="$RUNNER_TEMP/geos-build.log"
 set +e
 set -o pipefail
 {
-  python3 scripts/config-build.py \
+  "$python_bin" scripts/config-build.py \
     -hc /opt/GEOS/spack-generated.cmake \
     -bt Release \
     --buildpath "$RUNNER_TEMP/geos-build" \
+    -DPython3_EXECUTABLE="$python_bin" \
     -DCMAKE_C_COMPILER_LAUNCHER="$RUNNER_TEMP/sccache" \
     -DCMAKE_CXX_COMPILER_LAUNCHER="$RUNNER_TEMP/sccache"
   cmake --build "$RUNNER_TEMP/geos-build" -j 2 --target geosx
