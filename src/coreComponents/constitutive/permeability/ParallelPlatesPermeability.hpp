@@ -35,10 +35,13 @@ public:
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dPressure,
                                     arrayView4d< real64 > const & dPerm_dDispJump,
-                                    bool const updateTransversalComponent )
+                                    bool const updateTransversalComponent,
+                                    real64 const jointRoughnessCoefficient )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dDispJump( dPerm_dDispJump ),
-    m_numDimensionsToUpdate( 3 )
+    m_numDimensionsToUpdate( 3 ),
+    m_jointRoughnessCoefficient( jointRoughnessCoefficient ),
+    m_printWarning(true)
   {
     m_numDimensionsToUpdate = updateTransversalComponent ? 3 : 2;
   }
@@ -52,8 +55,23 @@ public:
   {
     GEOS_UNUSED_VAR( oldHydraulicAperture );
 
-    real64 const perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
-    real64 const dPerm_dHydraulicAperture = newHydraulicAperture / 6.0;
+    real64 aperture = newHydraulicAperture;
+    if ( m_jointRoughnessCoefficient >= 1.0 )
+    {
+      if( std::pow( newHydraulicAperture, 0.4 ) <= m_jointRoughnessCoefficient )
+      {
+        aperture = (newHydraulicAperture*newHydraulicAperture * 1e6) / std::pow( m_jointRoughnessCoefficient, 2.5 );
+        if ( aperture > newHydraulicAperture ) // invalid region of the plot
+        {
+          aperture = newHydraulicAperture;
+          GEOS_LOG_RANK_0_IF( m_printWarning, "Warning: computed aperture with JRC is greater than the hydraulic aperture. This is an invalid region of the plot. Using the original aperture value instead.");
+          m_printWarning = false;
+        }
+      }
+    }
+
+    real64 const perm  = aperture*aperture / 12.0;
+    real64 const dPerm_dHydraulicAperture = aperture / 6.0;
 
     for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
@@ -99,6 +117,8 @@ private:
 
   arrayView4d< real64 > m_dPerm_dDispJump;
   int m_numDimensionsToUpdate;
+  real64 m_jointRoughnessCoefficient;
+  bool mutable m_printWarning;
 };
 
 
@@ -129,13 +149,15 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
                           m_dPerm_dDispJump,
-                          m_updateTransversalComponent );
+                          m_updateTransversalComponent,
+                          m_jointRoughnessCoefficient );
   }
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
     static constexpr char const * transversalPermeabilityString() { return "transversalPermeability"; }
+    static constexpr char const * jointRoughnessCoefficientString() { return "jointRoughnessCoefficient"; }
   };
 
 protected:
@@ -150,6 +172,7 @@ private:
   array4d< real64 > m_dPerm_dDispJump;
 
   real64 m_transversalPermeability;
+  real64 m_jointRoughnessCoefficient;
 
   bool m_updateTransversalComponent;
 

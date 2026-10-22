@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Reduced GEOS input: compressible single-phase water flow with one EDFM fracture.
+
+  This variant injects mass directly into the first EDFM control volume through
+  SourceFlux. It deliberately omits InternalWell/WellManager because an EDFM
+  embedded surface is generated after InternalWell perforations are mapped.
+
+  Domain: 100 x 10 x 10 m, with 10 x 1 x 1 matrix cells.
+  Fracture: z = 5 m, aperture b = 1e-4 m, k_f = b^2/12.
+  Target fracture Darcy velocity: 1 m/day.
+  Fracture flow area: b * 10 m = 1e-3 m^2.
+  Target volume rate: Q = 1.1574074074074074e-8 m^3/s.
+  SourceFlux uses mass rate and GEOS uses a negative sign for injection:
+    m_dot = -rho_ref * Q = -1.1574074074074074e-5 kg/s.
+
+  The first matrix cell remains a distinct cell block. Its permeability is set
+  back to 1e-18 m^2 here because direct fracture injection no longer requires a
+  high-permeability transfer cell.
+-->
+
+<Problem>
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
+
+    <SinglePhaseFVM
+      name="singlePhaseFlow"
+      discretization="singlePhaseTPFA"
+      initialDt="60.0"
+      targetRegions="{ RockMatrix, Fracture }"
+      temperature="293.15"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="20"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1.0e-10"
+        logLevel="0"/>
+    </SinglePhaseFVM>
+
+    <EmbeddedSurfaceGenerator
+      name="surfaceGenerator"
+      discretization="FE1"
+      targetRegions="{ RockMatrix, Fracture }"
+      targetObjects="{ FracturePlane }"
+      fractureRegion="Fracture"
+      mpiCommOrder="1"
+      logLevel="1"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0.0, 10.0, 100.0 }"
+      yCoords="{ 0.0, 10.0 }"
+      zCoords="{ 0.0, 10.0 }"
+      nx="{ 1, 9 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ wellCell, matrixCells }">
+    </InternalMesh>
+  </Mesh>
+
+  <Geometry>
+    <!-- Horizontal fracture at z = 5 m, through the centers of all 10 cells. -->
+    <Rectangle
+      name="FracturePlane"
+      normal="{ 0.0, 0.0, 1.0 }"
+      origin="{ 50.0, 5.0, 5.0 }"
+      lengthVector="{ 1.0, 0.0, 0.0 }"
+      widthVector="{ 0.0, 1.0, 0.0 }"
+      dimensions="{ 100.0, 10.0 }"/>
+
+    <!-- Select the first EDFM control volume, centered at x = 5 m. -->
+    <Box
+      name="fractureInjectionCell"
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ 10.001, 10.001, 10.001 }"/>
+
+    <!-- Select the terminal EDFM control volume, centered at x = 95 m. -->
+    <Box
+      name="fractureOutletCell"
+      xMin="{ 89.999, -0.001, -0.001 }"
+      xMax="{ 100.001, 10.001, 10.001 }"/>
+  </Geometry>
+
+  <Events maxTime="2.592e6">
+    <!-- EDFM elements must be generated before the flow solve. -->
+    <SoloEvent
+      name="generateEmbeddedFracture"
+      target="/Solvers/surfaceGenerator"/>
+
+    <PeriodicEvent
+      name="solveFractureAndMatrixFlow"
+      maxEventDt="2.16e4"
+      target="/Solvers/singlePhaseFlow"/>
+
+    <PeriodicEvent
+      name="writeVTK"
+      timeFrequency="8.64e4"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"/>
+    </FiniteVolume>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="RockMatrix"
+      cellBlocks="{ wellCell, matrixCells }"
+      materialList="{ water, rock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      defaultAperture="1.0e-4"
+      materialList="{ water, fractureFilling }"
+      subRegionType="embeddedElement"/>
+
+  </ElementRegions>
+
+  <Constitutive>
+    <!-- Approximate liquid-water properties near ambient temperature. -->
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000.0"
+      defaultViscosity="1.0e-3"
+      referencePressure="1.0e6"
+      compressibility="4.4e-10"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel name="nullSolid"/>
+
+    <!-- Matrix porosity was not specified; 0.10 is a neutral modeling choice. -->
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.10"
+      referencePressure="1.0e6"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.0"
+      referencePressure="1.0e6"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability 
+	 name="fracturePerm"
+	 jointRoughnessCoefficient="5.0"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="wellCellReferencePorosity"
+      initialCondition="1"
+      objectPath="ElementRegions/RockMatrix/wellCell"
+      fieldName="rockPorosity_referencePorosity"
+      setNames="{ all }"
+      scale="0.10"/>
+
+    <FieldSpecification
+      name="matrixCellsReferencePorosity"
+      initialCondition="1"
+      objectPath="ElementRegions/RockMatrix/matrixCells"
+      fieldName="rockPorosity_referencePorosity"
+      setNames="{ all }"
+      scale="0.10"/>
+
+    <!-- Keep the first, separately named matrix cell at the baseline permeability. -->
+    <FieldSpecification
+      name="wellCellPermeabilityX"
+      initialCondition="1"
+      objectPath="ElementRegions/RockMatrix/wellCell"
+      fieldName="rockPerm_permeability"
+      component="0"
+      setNames="{ all }"
+      scale="1.0e-18"/>
+
+    <FieldSpecification
+      name="wellCellPermeabilityY"
+      initialCondition="1"
+      objectPath="ElementRegions/RockMatrix/wellCell"
+      fieldName="rockPerm_permeability"
+      component="1"
+      setNames="{ all }"
+      scale="1.0e-18"/>
+
+    <FieldSpecification
+      name="wellCellPermeabilityZ"
+      initialCondition="1"
+      objectPath="ElementRegions/RockMatrix/wellCell"
+      fieldName="rockPerm_permeability"
+      component="2"
+      setNames="{ all }"
+      scale="1.0e-18"/>
+
+    <FieldSpecification
+      name="fracturePorosity"
+      initialCondition="1"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      setNames="{ all }"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      setNames="{ all }"
+      scale="1.0e6"/>
+
+    <!-- Direct mass injection into the first EDFM element. -->
+    <SourceFlux
+      name="fractureInjection"
+      objectPath="ElementRegions/Fracture"
+      setNames="{ fractureInjectionCell }"
+      scale="-1.1574074074074074e-5"/>
+
+    <!-- Cell-based Dirichlet condition applied only to the terminal EDFM element. -->
+    <FieldSpecification
+      name="pressureAtFractureOutlet"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      setNames="{ fractureOutletCell }"
+      scale="1.0e6"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="singlePhaseEDFM_10x1x1"
+      plotLevel="1"
+      format="binary"/>
+
+  </Outputs>
+</Problem>
