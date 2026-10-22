@@ -23,7 +23,7 @@ bucket = "geos-dev"
 key_prefix = "sccache"
 EOF
 "$RUNNER_TEMP/sccache" --show-stats || true
-/opt/homebrew/opt/python@3.14/bin/python3 -m pip install --upgrade --break-system-packages virtualenv
+"$(brew --prefix python@3.14)/bin/python3.14" -m pip install --upgrade --break-system-packages virtualenv
 # Caliper records the Open MPI Cellar path from the TPL build. Homebrew on this
 # runner may install a different version, so point that path at the one just installed.
 if [[ ! -d /opt/homebrew/Cellar/open-mpi/5.0.11 ]]; then
