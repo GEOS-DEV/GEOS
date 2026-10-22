@@ -212,7 +212,7 @@ shown verbatim. Inherited attributes are not repeated.
    * - formulation
      - OPTIONAL
      - string("Cartesian3D"
-     - MPM formulation: Cartesian3D or PlaneStrain (native XY grid).
+     - MPM formulation: Cartesian3D, PlaneStrain, or Axisymmetric (x=r, y=axial, no swirl).
    * - frictionCoefficient
      - OPTIONAL / real64
      - -1.0
@@ -236,7 +236,7 @@ shown verbatim. Inherited attributes are not repeated.
    * - gridToParticleMapping
      - OPTIONAL / string (enum)
      - Precomputed
-     - Mapping evaluation used by FLIP, PIC, XPIC, and FMPM grid-to-particle updates. Options are:; * ; * . Precomputed reuses the raw arrays built once per step; OnTheFly recomputes the raw node connectivity, shape values, gradients, and field assignment inside each G2P particle kernel. RigidBodyMPM events require Precomputed because their color-field assignments are stored in the field map.
+     - Mapping evaluation used by FLIP, PIC, XPIC, and FMPM grid-to-particle updates. Options are:; * ; * . Precomputed reuses the raw arrays built once per step; OnTheFly recomputes the raw node connectivity, shape values, gradients, and field assignment inside each G2P particle kernel.
    * - logMomentum
      - OPTIONAL / int
      - not explicitly set
@@ -389,10 +389,6 @@ shown verbatim. Inherited attributes are not repeated.
      - OPTIONAL / int
      - 0
      - Flag for resetting deformation gradient of CPDI scaled surface particles
-   * - rigidBodyMaxGridFields
-     - OPTIONAL / int
-     - 0
-     - Optional solver-level reservation for color-partitioned rigid-body MPM grid fields. RigidBodyMPM events also reserve their maxGridFields during initialization.
    * - separabilityMinDamage
      - OPTIONAL / real64
      - 0.5

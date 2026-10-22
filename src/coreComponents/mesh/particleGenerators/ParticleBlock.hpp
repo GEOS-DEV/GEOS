@@ -135,8 +135,8 @@ public:
   { return m_particleColor; }
 
   /**
-   * @brief Set the list of particle rigid-body colors.
-   * @param particleColor The input list of rigid-body colors.
+   * @brief Set the list of particle color labels.
+   * @param particleColor The input list of particle color labels.
    */
   void setParticleColor( array1d< int > const particleColor )
   { m_particleColor = particleColor; }
@@ -307,7 +307,7 @@ private:
   /// Member level field for the particle contact group.
   array1d< int > m_particleGroup;
 
-  /// Member level field for the rigid-body color.
+  /// Member level field for the particle color label.
   array1d< int > m_particleColor;
 
   /// Member level field for the particle surface flag.

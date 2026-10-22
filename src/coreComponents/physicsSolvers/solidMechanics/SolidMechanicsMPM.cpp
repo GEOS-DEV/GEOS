@@ -19,6 +19,7 @@
 
 #include "SolidMechanicsMPM.hpp"
 #include "MPMMappingKernels.hpp"
+#include "mesh/AxisymmetricGeometry.hpp"
 #include "MPMGeometryMeasures.hpp"
 
 #if defined( GEOS_USE_HIP )
@@ -1691,7 +1692,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_nextParticleDataWriteTime( 0.0 ),
   m_nextProfileWriteTime( 0.0 ),
   m_nextReactionWriteTime( 0.0 ),
-  m_nextRigidBodyHistoryWriteTime( 0.0 ),
   m_nextTracerWriteTime( 0.0 ),
   m_normalAndPositionMethod( mpm::NormalsAndPositionsMethodOption::LogisticRegression ),
 
@@ -1728,30 +1728,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_profilingTimes(),
   m_reactionHistory( 0 ),
   m_reactionWriteInterval( 0.0 ),
-  m_rigidBodyActiveEventName(),
-  m_rigidBodyAnchorParticleIDs(),
-  m_rigidBodyAngularDamping( 0.0 ),
-  m_rigidBodyColors(),
-  m_rigidBodyContactGroups(),
-  m_rigidBodyContactCFL( -1.0 ),
-  m_rigidBodyContactLengthScale( 0.0 ),
-  m_rigidBodyHistory( 0 ),
-  m_rigidBodyHistoryWriteInterval( 0.0 ),
-  m_rigidBodyKineticEnergy( 0.0 ),
-  m_rigidBodyLinearDamping( 0.0 ),
-  m_rigidBodyMaxGridFields( 0 ),
-  m_rigidBodyMaxForce( -1.0 ),
-  m_rigidBodyMaxTimeStep( -1.0 ),
-  m_rigidBodyMode( 0 ),
-  m_rigidBodyObservedJammingStress( 0.0 ),
-  m_rigidBodyObservedMaxForce( 0.0 ),
-  m_rigidBodyObservedMaxPenetration( 0.0 ),
-  m_rigidBodyPenetrationPenaltyBeta( 0.0 ),
-  m_rigidBodyPeriodicDirections(),
-  m_rigidBodyRegistryInitialized( 0 ),
-  m_rigidBodyRegistrySynchronized( 0 ),
-  m_rigidBodyStopKineticEnergy( -1.0 ),
-  m_rigidBodyUnwrappedCenters(),
   m_resetDefGradForFullyDamagedParticles( 0 ),
   m_resetDefGradForMeltedParticles( 0 ),
   m_resetDefGradForScaledSurfaceParticles( 0 ),
@@ -2482,7 +2458,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "formulation", &m_formulation ).
     setApplyDefaultValue( string("Cartesian3D") ).setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "MPM formulation: Cartesian3D or PlaneStrain (native XY grid)." );
+    setDescription( "MPM formulation: Cartesian3D, PlaneStrain, or Axisymmetric (x=r, y=axial, no swirl)." );
 
   // Cached domain measure is restart state, never a second XML input.
   registerWrapper( "domainThickness", &m_planeStrainThickness ).
@@ -2551,48 +2527,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Interval between writing reactions to files" );
 
-
-  registerWrapper( "rigidBodyMaxGridFields", &m_rigidBodyMaxGridFields ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( m_rigidBodyMaxGridFields ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Optional solver-level reservation for color-partitioned rigid-body MPM grid fields. "
-                    "RigidBodyMPM events also reserve their maxGridFields during initialization." );
-
-  registerWrapper( "rigidBodyActiveEventName", &m_rigidBodyActiveEventName ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Internal name of the RigidBodyMPM event owning the current MPI body registry." );
-
-  registerWrapper( "rigidBodyRegistryInitialized", &m_rigidBodyRegistryInitialized ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Internal flag indicating that the global rigid-body color registry is initialized." );
-
-  registerWrapper( "rigidBodyColors", &m_rigidBodyColors ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Deterministically ordered particleColor value for each rigid body." );
-
-  registerWrapper( "rigidBodyContactGroups", &m_rigidBodyContactGroups ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Globally validated contact-group id for each rigid body." );
-
-  registerWrapper( "rigidBodyAnchorParticleIDs", &m_rigidBodyAnchorParticleIDs ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Minimum global particle id defining deterministic body priority and periodic anchoring." );
-
-  registerWrapper( "rigidBodyUnwrappedCenters", &m_rigidBodyUnwrappedCenters ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Persistent unwrapped rigid-body centers used for periodic minimum-image moments and torque." );
-
-  registerWrapper( "rigidBodyMode", &m_rigidBodyMode ).
-    setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Internal flag indicating that the current explicit MPM step is executing in rigid-body mode." );
 
   registerWrapper( "resetDefGradForFullyDamagedParticles", &m_resetDefGradForFullyDamagedParticles ).
     setApplyDefaultValue( m_resetDefGradForFullyDamagedParticles ).
@@ -3006,8 +2940,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Mapping evaluation used by FLIP, PIC, XPIC, and FMPM grid-to-particle updates. Options are:\n* " +
                     EnumStrings< mpm::GridToParticleMappingOption >::concat( "\n* " ) +
                     ". Precomputed reuses the raw arrays built once per step; OnTheFly recomputes the raw "
-                    "node connectivity, shape values, gradients, and field assignment inside each G2P particle kernel. "
-                    "RigidBodyMPM events require Precomputed because their color-field assignments are stored in the field map." );
+                    "node connectivity, shape values, gradients, and field assignment inside each G2P particle kernel." );
 
   registerWrapper( "updateMethod", &m_updateMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -3245,6 +3178,7 @@ void SolidMechanicsMPM::postInputInitialization()
   CohesiveZoneManager & cohesiveZoneManager = getGroup< CohesiveZoneManager >( groupKeyStruct::cohesiveZoneManagerString() );
   cohesiveZoneManager.forCohesiveZoneRegions< CohesiveZoneRegion >( [&]( CohesiveZoneRegion & czRegion )
   {
+    GEOS_ERROR_IF(m_formulation=="Axisymmetric", "Axisymmetric cohesive zones are not implemented");
     std::string constitutiveModelName = czRegion.getConstitutiveModelName();
 
     // Allocate constitutive relation we only register the constitutive relation if it has not been registered yet.
@@ -3287,9 +3221,10 @@ void SolidMechanicsMPM::postInputInitialization()
     m_needsNeighborList = 1;
   }
 
-  GEOS_ERROR_IF( m_formulation != "Cartesian3D" && m_formulation != "PlaneStrain",
-                 "formulation must be Cartesian3D or PlaneStrain; axisymmetry is not implemented" );
-  m_planeStrain = m_formulation == "PlaneStrain" ? 1 : 0;
+  GEOS_ERROR_IF( m_formulation != "Cartesian3D" && m_formulation != "PlaneStrain" && m_formulation != "Axisymmetric",
+                 "formulation must be Cartesian3D, PlaneStrain or Axisymmetric" );
+  m_axisymmetric = m_formulation == "Axisymmetric";
+  m_planeStrain = m_formulation != "Cartesian3D" ? 1 : 0;
   m_numDims = m_planeStrain ? 2 : 3;
 
   // Native input has four geometric sides. Shared boundary bookkeeping keeps
@@ -3383,6 +3318,19 @@ void SolidMechanicsMPM::postInputInitialization()
   {
     m_boundaryConditionTypes[4]=m_boundaryConditionTypes[5]=0;
     m_enablePrescribedBoundaryTransverseVelocities[4]=m_enablePrescribedBoundaryTransverseVelocities[5]=0;
+  }
+
+  if(m_axisymmetric)
+  {
+    GEOS_ERROR_IF(m_damageFieldPartitioning || m_enableSurfaceTension || m_computeSPHJacobian || m_directionalOverlapCorrection ||
+                  m_overlapCorrection!=mpm::OverlapCorrectionOption::Off || m_computeParticleSurfaceNormalsAndPositions ||
+                  m_computeNodalArea || m_profileHistory || m_generalizedVortexMMS || m_enableBoreholePressure || m_enableConfiningPressure || m_useCrackTipDetection,
+                  "Axisymmetric currently requires DFG, surface tension, SPH/overlap corrections, reconstructed surfaces and profileHistory to be off");
+    GEOS_ERROR_IF(m_prescribedBcTable || m_prescribedFTable || m_prescribedBoundaryFTable,
+                  "Axisymmetric currently supports fixed grid boundaries, not BC/F tables or affine domain driving");
+    GEOS_ERROR_IF(std::any_of(m_boundaryConditionTypes.begin(),m_boundaryConditionTypes.end(),
+                             [](int bc){return bc>1;}),
+                  "Axisymmetric currently supports Outflow and Symmetry boundaries");
   }
 
   // Read and distribute BC table
@@ -3518,6 +3466,10 @@ void SolidMechanicsMPM::postInputInitialization()
                    "stressControlSolverDampingRatio must be non-negative." );
   }
 
+  GEOS_ERROR_IF(m_axisymmetric && (m_stressControl[0] || m_stressControl[1] || m_stressControl[2]),
+                 "Axisymmetric stress-controlled domain motion is not implemented");
+  GEOS_ERROR_IF(m_axisymmetric && (!isEqual(m_domainL[0],0.0) || !isEqual(m_domainL[1],0.0)),
+                 "Axisymmetric affine domain driving is not implemented");
   GEOS_ERROR_IF(m_numDims==2 && m_stressControl[2]!=0, "PlaneStrain cannot control out-of-plane deformation by stress");
 
   if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 )
@@ -4065,22 +4017,6 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the contact force on the nodes." );
 
-      nodeManager.registerWrapper< array2d< globalIndex > >( viewKeyStruct::gridRigidBodyFieldKeyString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Deterministic rigid-body field-selection key on each node. "
-                        "The key is synchronized before rigid-body P2G field assignment." );
-
-      nodeManager.registerWrapper< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "RigidBodyMPM particleColor assigned to each synchronized nodal field; -2 denotes overflow." );
-
-      nodeManager.registerWrapper< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "Contact-group id associated with each rigid-body nodal field; -2 denotes mixed overflow." );
-
       nodeManager.registerWrapper< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
@@ -4344,7 +4280,19 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   GEOS_MARK_FUNCTION;
   GEOS_ERROR_IF( partition.spatialDimension()!=m_numDims,
                  "MPM formulation and InternalMesh spatialDimension must agree" );
+  GEOS_ERROR_IF(partition.axisymmetric()!=m_axisymmetric,
+                "MPM formulation and InternalMesh axisymmetric flag must agree, including restart");
+  GEOS_ERROR_IF(m_axisymmetric && partition.getPeriodic()[0], "Axisymmetric radial periodicity is invalid");
   m_planeStrainThickness=partition.planeStrainThickness();
+
+  if(m_axisymmetric)
+  {
+    particleManager.forParticleSubRegions([&](ParticleSubRegion & subRegion)
+    {
+      GEOS_ERROR_IF(subRegion.getParticleType()==ParticleType::SinglePointBSpline,
+                    "Axisymmetric B-splines require an axis-parity extension and are not yet supported");
+    });
+  }
 
   // Probably un-needed unless initialize can somehow be called twice.
   m_numberOfSubRegions = 0;
@@ -4527,6 +4475,11 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
 
   if(m_numDims==2) m_xGlobalMin[2]=m_xGlobalMax[2]=m_domainExtent[2]=0;
+  if(m_axisymmetric)
+  {
+    GEOS_ERROR_IF(m_xGlobalMin[0]<-1e-10*m_hEl[0], "Axisymmetric physical mesh cannot extend to negative radius");
+    if(LvArray::math::abs(m_xGlobalMin[0])<=1e-10*m_hEl[0]) m_boundaryConditionTypes[0]=1;
+  }
 
   // Get number of elements in each direction
   m_nEl.resize( 3 );
@@ -4703,6 +4656,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Number of contact groups
   m_numContactGroups = maxGlobalGroupNumber + 1;
+  GEOS_ERROR_IF(m_axisymmetric && m_numContactGroups!=1,
+                 "Axisymmetric material contact is not implemented; use contact group 0");
 
   if( m_enableSurfaceTension == 1 )
   {
@@ -4738,20 +4693,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Specified number of damage flags.
   m_numContactFlags = m_damageFieldPartitioning == 1 ? 2 : 1;
 
-  // Total number of velocity fields. Continuum DFG contact uses contactGroup x contactFlag.
-  // RigidBodyMPM events reserve maxGridFields fields for color partitioning; the last field is the weighted-overflow field.
-  if( m_useEvents == 1 )
-  {
-    eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
-    {
-      if( event.getCatalogName() == "RigidBodyMPM" )
-      {
-        RigidBodyMPMEvent & rigidBodyEvent = dynamicCast< RigidBodyMPMEvent & >( event );
-        m_rigidBodyMaxGridFields = std::max( m_rigidBodyMaxGridFields, rigidBodyEvent.getMaxGridFields() );
-      }
-    } );
-  }
-  m_numVelocityFields = std::max( m_numContactGroups * m_numContactFlags, m_rigidBodyMaxGridFields );
+  // DFG contact uses one velocity field per contact-group/contact-flag pair.
+  m_numVelocityFields = m_numContactGroups * m_numContactFlags;
 
   // Resize grid field arrays
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridReferenceAreaVectorString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -4779,9 +4722,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceTensionForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() ).resize( numNodes, m_numVelocityFields, 3 );
-  nodeManager.getReference< array2d< globalIndex > >( viewKeyStruct::gridRigidBodyFieldKeyString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() ).resize( numNodes, m_numVelocityFields );
-  nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridInterfaceNormalForceString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridInterfaceTangentialForceString() ).resize( numNodes, m_numVelocityFields );
@@ -4809,22 +4749,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() ).resize( numNodes, 6 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridBasedSurfaceNormalString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridBasedSurfacePositionString() ).resize( numNodes, m_numVelocityFields, 3 );
-
-  arrayView2d< globalIndex > const rigidBodyFieldKey =
-    nodeManager.getReference< array2d< globalIndex > >( viewKeyStruct::gridRigidBodyFieldKeyString() );
-  arrayView2d< integer > const rigidBodyFieldColor =
-    nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() );
-  arrayView2d< integer > const rigidBodyFieldContactGroup =
-    nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() );
-  forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const g )
-  {
-    for( localIndex fieldIndex = 0; fieldIndex < m_numVelocityFields; ++fieldIndex )
-    {
-      rigidBodyFieldKey[g][fieldIndex] = std::numeric_limits< globalIndex >::max();
-      rigidBodyFieldColor[g][fieldIndex] = -1;
-      rigidBodyFieldContactGroup[g][fieldIndex] = -1;
-    }
-  } );
 
   // Precompute the square to save on computation later
   m_maxParticleVelocitySquared = m_maxParticleVelocity * m_maxParticleVelocity;
@@ -4866,6 +4790,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   SpatialPartition & partition = managers.partition;
   GEOS_ERROR_IF(partition.spatialDimension()!=m_numDims,
                  "MPM formulation and mesh spatial dimension differ (including restart)");
+  GEOS_ERROR_IF(partition.axisymmetric()!=m_axisymmetric,
+                "MPM formulation and InternalMesh axisymmetric flag must agree, including restart");
+  GEOS_ERROR_IF(m_axisymmetric && partition.getPeriodic()[0], "Axisymmetric radial periodicity is invalid");
   m_planeStrainThickness=partition.planeStrainThickness();
   arrayView1d< int const > const periodic = managers.periodic;
   ParticleManager & particleManager = managers.particleManager;
@@ -5063,95 +4990,41 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   synchronizePostBoundaryKinematicFieldsForG2P( domain,
                                                 nodeManager,
                                                 mesh );
-  if( m_rigidBodyMode == 1 )
-  {
-    /*
-     * ----------------------------------------------------------------------------------------------------------
-     * 15. Rigid-body particle update.
-     *
-     * Use the contact/boundary-corrected grid impulse to advance one rigid body per particleColor, then map the
-     * resulting rigid kinematic state back to particles. Internal constitutive evolution is intentionally skipped
-     * while the RigidBodyMPM event is active.
-     * ----------------------------------------------------------------------------------------------------------
-     */
-    logAndProfile( "15. Rigid-body particle update", particleManager, nodeManager );
-    rigidBodyParticleUpdate( time_n,
-                             dt,
-                             particleManager,
-                             nodeManager,
-                             partition );
+  /*
+   * ----------------------------------------------------------------------------------------------------------
+   * 15. Map grid state back to particles.
+   *
+   * Interpolate grid velocity/momentum increments back to particles.
+   * ----------------------------------------------------------------------------------------------------------
+   */
+  logAndProfile( "15. Map grid state back to particles", particleManager, nodeManager );
+  gridToParticle( dt, particleManager, nodeManager, domain, mesh );
 
-    // The rigid-body update re-references F to identity.  Re-reference the
-    // authoritative scalar volume state at the same time so the later
-    // continuum handoff starts from J = particleVolume / referenceVolume = 1.
-    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-    {
-#ifdef GEOS_USE_DEVICE
-      subRegion.getWrapperBase( fields::mpm::particleReferenceVolume::key() ).move(
-        hostMemorySpace, true );
-      subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
-        hostMemorySpace, true );
-#endif
+  /*
+   * ----------------------------------------------------------------------------------------------------------
+   * 16. Update particle kinematics.
+   *
+   * Apply prescribed velocity gradients, update deformation gradients, process transform-particle events, apply SPH
+   * overlap correction, update particle geometry/density, and compute kinetic energy.
+   * ----------------------------------------------------------------------------------------------------------
+   */
+  logAndProfile( "16. Update particle kinematics", particleManager, nodeManager );
+  updateParticleKinematicsForExplicitStep( dt,
+                                           time_n,
+                                           particleManager,
+                                           partition );
 
-      arrayView1d< real64 > const particleReferenceVolume =
-        subRegion.getField< fields::mpm::particleReferenceVolume >();
-      arrayView1d< real64 const > const particleVolume =
-        subRegion.getParticleVolume();
-      SortedArrayView< localIndex const > const activeParticleIndices =
-        subRegion.activeParticleIndices();
-
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
-      {
-        localIndex const p = activeParticleIndices[pp];
-        particleReferenceVolume[p] = particleVolume[p];
-      } );
-
-#ifdef GEOS_USE_DEVICE
-      subRegion.getWrapperBase( fields::mpm::particleReferenceVolume::key() ).move(
-        parallelDeviceMemorySpace, true );
-      subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move(
-        parallelDeviceMemorySpace, true );
-#endif
-    } );
-  }
-  else
-  {
-    /*
-     * ----------------------------------------------------------------------------------------------------------
-     * 15. Map grid state back to particles.
-     *
-     * Interpolate grid velocity/momentum increments back to particles.
-     * ----------------------------------------------------------------------------------------------------------
-     */
-    logAndProfile( "15. Map grid state back to particles", particleManager, nodeManager );
-    gridToParticle( dt, particleManager, nodeManager, domain, mesh );
-
-    /*
-     * ----------------------------------------------------------------------------------------------------------
-     * 16. Update particle kinematics.
-     *
-     * Apply prescribed velocity gradients, update deformation gradients, process transform-particle events, apply SPH
-     * overlap correction, update particle geometry/density, and compute kinetic energy.
-     * ----------------------------------------------------------------------------------------------------------
-     */
-    logAndProfile( "16. Update particle kinematics", particleManager, nodeManager );
-    updateParticleKinematicsForExplicitStep( dt,
-                                             time_n,
-                                             particleManager,
-                                             partition );
-
-    /*
-     * ----------------------------------------------------------------------------------------------------------
-     * 17. Update constitutive and thermal state.
-     *
-     * Update optional generic internal-energy terms, constitutive dependencies, stress, and solver dependencies that
-     * depend on the new constitutive state.
-     * ----------------------------------------------------------------------------------------------------------
-     */
-    logAndProfile( "17. Update constitutive and thermal state", particleManager, nodeManager );
-    updateConstitutiveAndThermalStateForExplicitStep( dt,
-                                                      particleManager );
-  }
+  /*
+   * ----------------------------------------------------------------------------------------------------------
+   * 17. Update constitutive and thermal state.
+   *
+   * Update optional generic internal-energy terms, constitutive dependencies, stress, and solver dependencies that
+   * depend on the new constitutive state.
+   * ----------------------------------------------------------------------------------------------------------
+   */
+  logAndProfile( "17. Update constitutive and thermal state", particleManager, nodeManager );
+  updateConstitutiveAndThermalStateForExplicitStep( dt,
+                                                    particleManager );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -5801,17 +5674,9 @@ void SolidMechanicsMPM::updateDamageAndSurfaceFieldsForExplicitStep( DomainParti
                                       nodeManager,
                                       mesh );
   }
-  computeParticleFieldMappings( domain,
-                                particleManager,
-                                nodeManager,
-                                mesh );
+  computeParticleFieldMappings( particleManager, nodeManager );
   if( m_computeParticleSurfaceNormalsAndPositions == 1 )
   {
-    GEOS_ERROR_IF( m_rigidBodyMode == 1 &&
-                   m_normalAndPositionMethod == mpm::NormalsAndPositionsMethodOption::LogisticRegression,
-                   "RigidBodyMPM color fields are incompatible with logistic-regression particle surface reconstruction, "
-                   "which classifies continuum contact-group/DFG fields. Provide explicit surface normals/positions "
-                   "for rigid packing or select a non-logistic reconstruction method." );
     m_computeParticleSurfaceNormalsAndPositions = 0;
     computeParticleSurfaceNormalsAndPositions( particleManager,
                                                nodeManager );
@@ -6508,18 +6373,6 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
  */
 void SolidMechanicsMPM::applyFMPMUncontactedVelocityBoundaryConditions( NodeManager & nodeManager )
 {
-  /*
-   * RigidBodyMPM recovers boundary/contact forces from the difference between
-   * the post-constraint velocity and gridUncontactedVelocity.  Do not copy the
-   * constrained moving-wall velocity back into the uncontacted seed while a
-   * rigid-body event is active, otherwise F-table wall impulses become
-   * invisible to the rigid bodies.
-   */
-  if( m_rigidBodyMode == 1 )
-  {
-    return;
-  }
-
   if( m_updateMethod != mpm::UpdateMethodOption::FMPM )
   {
     return;
@@ -9884,8 +9737,8 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
         particleDomainScaledFlag[p] = 0;
       }
 
-      // particleColor is imported from the particle file and must remain distinct from the contact group.
-      GEOS_ERROR_IF( particleColor[p] < 0, "particleColor must be non-negative for rigid-body MPM." );
+      // Preserve imported visualization labels independently of the contact group.
+      GEOS_ERROR_IF( particleColor[p] < 0, "particleColor must be non-negative." );
 
       for( integer g = 0; g < mappedNodeCapacity; ++g )
       {
@@ -10026,9 +9879,6 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   }
 
   nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() ).setDimLabels( 1, fieldLabels );
-  nodeManager.getWrapper< array2d< globalIndex > >( viewKeyStruct::gridRigidBodyFieldKeyString() ).setDimLabels( 1, fieldLabels );
-  nodeManager.getWrapper< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() ).setDimLabels( 1, fieldLabels );
-  nodeManager.getWrapper< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< int > >( viewKeyStruct::gridInterfaceMechanismString() ).setDimLabels( 1, fieldLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() ).setDimLabels( 1, axesLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() ).setDimLabels( 1, axesLabels );
@@ -10259,16 +10109,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
     nodeManager.getReference< array3d< real64 > >(
       viewKeyStruct::gridContactForceString() );
 
-
-
-
-
-
-
-
-
-
-
   arrayView2d< int > const gridInterfaceMechanism =
     nodeManager.getReference< array2d< int > >(
       viewKeyStruct::gridInterfaceMechanismString() );
@@ -10494,9 +10334,9 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
                      << "' returned nonpositive Jacobian " << state.jacobian << "." );
 
       real64 const J = state.jacobian;
-      real64 const sx = m_planeStrain == 1 ? LvArray::math::sqrt( J ) : LvArray::math::pow( J, 1.0 / 3.0 );
+      real64 const sx = m_planeStrain == 1 && !m_axisymmetric ? LvArray::math::sqrt( J ) : LvArray::math::pow( J, 1.0 / 3.0 );
       real64 const sy = sx;
-      real64 const sz = m_planeStrain == 1 ? 1.0 : sx;
+      real64 const sz = m_planeStrain == 1 && !m_axisymmetric ? 1.0 : sx;
       real64 const scale[3] = { sx, sy, sz };
       real64 const cofactorScale[3] = { sy * sz, sx * sz, sx * sy };
 
@@ -10766,13 +10606,17 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
   int const planeStrain = m_planeStrain;
   GEOS_UNUSED_VAR( planeStrain );
 
-  // Rigid-body mode is step-local and is reactivated below when a RigidBodyMPM event is active.
-  m_rigidBodyMode = 0;
-
   //Iterate over every MPM Events to check if conditions are met and if so perform event
   MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
   eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
   {
+    GEOS_ERROR_IF(m_axisymmetric && event.getCatalogName()!="BodyForceUpdate" &&
+                  event.getCatalogName()!="ResetDeformationGradient" &&
+                  event.getCatalogName()!="InitializeStress" &&
+                  event.getCatalogName()!="SetInitialTemperatureAndPressure" &&
+                  event.getCatalogName()!="Anneal" && event.getCatalogName()!="MaterialSwap" &&
+                  event.getCatalogName()!="TemperatureProfile",
+                  "This MPM event has not been adapted for axisymmetric geometry: " << event.getCatalogName());
     // 1. Do not run completed events.
     if( event.isComplete() )
     {
@@ -10830,58 +10674,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
     // ------------------------------------------------------------------------------------------------------
     // Event specific handlers
     // ------------------------------------------------------------------------------------------------------
-
-    if( event.getCatalogName() == "RigidBodyMPM" )
-    {
-      RigidBodyMPMEvent & rigidBodyEvent = dynamicCast< RigidBodyMPMEvent & >( event );
-      GEOS_ERROR_IF( m_rigidBodyMode == 1 &&
-                     m_rigidBodyActiveEventName != event.getName(),
-                     "Overlapping RigidBodyMPM events are not supported because one "
-                     "authoritative color-body registry is active per solver step." );
-      if( m_rigidBodyActiveEventName != event.getName() )
-      {
-        resetRigidBodyMPIState();
-        m_rigidBodyActiveEventName = event.getName();
-      }
-      m_rigidBodyMode = 1;
-      m_rigidBodyMaxGridFields = rigidBodyEvent.getMaxGridFields();
-      m_rigidBodyLinearDamping = rigidBodyEvent.getLinearDamping();
-      m_rigidBodyAngularDamping = rigidBodyEvent.getAngularDamping();
-      m_rigidBodyStopKineticEnergy = rigidBodyEvent.getStopKineticEnergy();
-      m_rigidBodyMaxForce = rigidBodyEvent.getMaxForce();
-      m_rigidBodyContactCFL = rigidBodyEvent.getContactCFL();
-      m_rigidBodyContactLengthScale = computeRigidBodyContactLengthScale();
-      m_rigidBodyMaxTimeStep = rigidBodyEvent.getMaxTimeStep();
-      m_rigidBodyPenetrationPenaltyBeta = rigidBodyEvent.getRigidBodyPenetrationPenaltyBeta();
-      m_rigidBodyPeriodicDirections.resize( 3 );
-      arrayView1d< int const > const periodicDirections = partition.getPeriodic();
-      bool hasNonPeriodicDirection = false;
-      for( int direction = 0; direction < 3; ++direction )
-      {
-        m_rigidBodyPeriodicDirections[direction] = periodicDirections[direction];
-        if( direction < m_numDims && periodicDirections[direction] == 0 )
-        {
-          hasNonPeriodicDirection = true;
-        }
-      }
-      GEOS_ERROR_IF( rigidBodyEvent.getMaxJammingStress() > 0.0 && !hasNonPeriodicDirection,
-                     "RigidBodyMPM maxJammingStress requires at least one nonperiodic direction with physical opposing faces. "
-                     "A fully periodic packing requires a contact-virial stress criterion, which is not implemented." );
-      m_rigidBodyHistoryWriteInterval = rigidBodyEvent.getHistoryWriteInterval();
-      m_rigidBodyObservedJammingStress = 0.0;
-      m_rigidBodyObservedMaxForce = 0.0;
-      m_rigidBodyObservedMaxPenetration = 0.0;
-      m_rigidBodyKineticEnergy = 0.0;
-      GEOS_ERROR_IF( m_rigidBodyMaxGridFields > m_numVelocityFields,
-                     "RigidBodyMPM maxGridFields exceeds the solver-reserved number of grid velocity fields." );
-      if( rigidBodyEvent.getWriteHistory() == 1 && m_rigidBodyHistory == 0 && MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
-      {
-        std::ofstream history( "rigidBodyHistory.csv" );
-        history << "time,color,mass,mappedContactMass,contactMassRatio,jammingStress,contactLengthScale,maxContactPenetration,maxContactPenetrationRatio,centerX,centerY,centerZ,velocityX,velocityY,velocityZ,omegaZ,forceX,forceY,forceZ,torqueZ,kineticEnergy\n";
-        m_rigidBodyHistory = 1;
-        m_nextRigidBodyHistoryWriteTime = time_n;
-      }
-    }
 
     if( event.getCatalogName() == "MaterialSwap" )
     {
@@ -11247,7 +11039,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       // F table. DeformationUpdate table times are relative to the scheduled event start.
       // For a dependency-driven continuum event this makes the compaction duration relative to
-      // the actual end of the rigid-body packing event rather than to absolute simulation time.
+      // the actual completion of their dependencies rather than to absolute simulation time.
       real64 const deformationUpdateTimeOrigin = event.getStartTime();
       for( int i  = 0; i < m_fTable.size( 0 ); ++i)
       {
@@ -11664,107 +11456,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 }
 
 
-real64 SolidMechanicsMPM::computeRigidBodyContactLengthScale() const
-{
-  real64 diagonalSquared = 0.0;
-  for( int direction = 0; direction < m_numDims; ++direction )
-  {
-    diagonalSquared += m_hEl[direction] * m_hEl[direction];
-  }
-  return LvArray::math::sqrt( diagonalSquared );
-}
-
-
-real64 SolidMechanicsMPM::computeRigidBodyJammingStress() const
-{
-  real64 endOfStepExtent[3] = {};
-  for( int direction = 0; direction < 3; ++direction )
-  {
-    endOfStepExtent[direction] =
-      LvArray::math::max( 0.0, m_domainExtent[direction] * m_domainIncrementalStretch[direction] );
-  }
-
-  auto const opposedFaceStress = [&]( int const direction )
-  {
-    real64 faceArea = 1.0;
-    for( int transverseDirection = 0; transverseDirection < 3; ++transverseDirection )
-    {
-      if( transverseDirection == direction )
-      {
-        continue;
-      }
-
-      real64 transverseExtent = endOfStepExtent[transverseDirection];
-      if( transverseExtent <= 0.0 )
-      {
-        // A strictly two-dimensional plane-strain grid may omit an explicit
-        // out-of-plane extent. In that case interpret the reaction per unit
-        // thickness. Normal GEOS plane-strain MPM inputs retain a finite z
-        // thickness and use that physical value here.
-        if( m_planeStrain == 1 && transverseDirection == 2 )
-        {
-          transverseExtent = m_planeStrainThickness;
-        }
-        else
-        {
-          return 0.0;
-        }
-      }
-      faceArea *= transverseExtent;
-    }
-
-    if( faceArea <= 0.0 )
-    {
-      return 0.0;
-    }
-
-    real64 const opposedFaceReaction = LvArray::math::min(
-      LvArray::math::abs( m_globalFaceReactions[2 * direction] ),
-      LvArray::math::abs( m_globalFaceReactions[2 * direction + 1] ) );
-    return opposedFaceReaction / faceArea;
-  };
-
-  real64 jammingStress = 0.0;
-  bool foundCompressingDirection = false;
-
-  for( int direction = 0; direction < m_numDims; ++direction )
-  {
-    if( m_rigidBodyPeriodicDirections.size() == 3 &&
-        m_rigidBodyPeriodicDirections[direction] == 1 )
-    {
-      continue;
-    }
-
-    if( m_domainL[direction] >= -1.0e-16 )
-    {
-      continue;
-    }
-
-    foundCompressingDirection = true;
-    jammingStress = LvArray::math::max( jammingStress,
-                                        opposedFaceStress( direction ) );
-  }
-
-  // At an F-table plateau the current rate can be zero even though the packed
-  // state remains load bearing. In that case inspect all active dimensions.
-  if( !foundCompressingDirection )
-  {
-    for( int direction = 0; direction < m_numDims; ++direction )
-    {
-      if( m_rigidBodyPeriodicDirections.size() == 3 &&
-          m_rigidBodyPeriodicDirections[direction] == 1 )
-      {
-        continue;
-      }
-      jammingStress = LvArray::math::max( jammingStress,
-                                          opposedFaceStress( direction ) );
-    }
-  }
-
-  return jammingStress;
-}
-
-
 void SolidMechanicsMPM::checkEventCompletion( const real64 time_n )
 {
   GEOS_MARK_FUNCTION;
@@ -11782,104 +11473,6 @@ void SolidMechanicsMPM::checkEventCompletion( const real64 time_n )
       event.setIsComplete( 1 );
       GEOS_LOG_RANK_0_IF( m_eventReporting == 1, event.getName() << " (" << event.getCatalogName() << ") completed at " << time_n);
       return;
-    }
-
-    if( event.getCatalogName() == "RigidBodyMPM" )
-    {
-      RigidBodyMPMEvent & rigidBodyEvent = dynamicCast< RigidBodyMPMEvent & >( event );
-      int completionReason = 0;
-      int penetrationExceedanceCount = rigidBodyEvent.getContactPenetrationExceedanceCount();
-
-      if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
-      {
-        bool const optionalStopsEnabled =
-          time_n >= event.getStartTime() + rigidBodyEvent.getMinActiveTime();
-
-        if( rigidBodyEvent.getMaxContactPenetration() >= 0.0 )
-        {
-          real64 const maxContactPenetrationRatio =
-            m_rigidBodyContactLengthScale > 0.0
-            ? m_rigidBodyObservedMaxPenetration / m_rigidBodyContactLengthScale
-            : 0.0;
-
-          if( maxContactPenetrationRatio > rigidBodyEvent.getMaxContactPenetration() )
-          {
-            ++penetrationExceedanceCount;
-          }
-          else
-          {
-            penetrationExceedanceCount = 0;
-          }
-
-          if( penetrationExceedanceCount >= 2 )
-          {
-            completionReason = 1;
-          }
-        }
-        else
-        {
-          penetrationExceedanceCount = 0;
-        }
-
-        if( completionReason == 0 && optionalStopsEnabled &&
-            rigidBodyEvent.getMaxJammingStress() > 0.0 &&
-            m_rigidBodyObservedJammingStress >= rigidBodyEvent.getMaxJammingStress() )
-        {
-          completionReason = 2;
-        }
-        else if( completionReason == 0 && optionalStopsEnabled &&
-                 rigidBodyEvent.getMaxForce() > 0.0 &&
-                 m_rigidBodyObservedMaxForce >= rigidBodyEvent.getMaxForce() )
-        {
-          completionReason = 3;
-        }
-        else if( completionReason == 0 && optionalStopsEnabled &&
-                 rigidBodyEvent.getStopKineticEnergy() >= 0.0 &&
-                 m_rigidBodyKineticEnergy <= rigidBodyEvent.getStopKineticEnergy() )
-        {
-          completionReason = 4;
-        }
-      }
-
-      MPI_Bcast( &penetrationExceedanceCount, 1, MPI_INT, 0, MPI_COMM_GEOS );
-      MPI_Bcast( &completionReason, 1, MPI_INT, 0, MPI_COMM_GEOS );
-      rigidBodyEvent.setContactPenetrationExceedanceCount( penetrationExceedanceCount );
-
-      if( completionReason != 0 )
-      {
-        event.setIsComplete( 1 );
-        if( completionReason == 1 )
-        {
-          real64 const maxContactPenetrationRatio =
-            m_rigidBodyContactLengthScale > 0.0
-            ? m_rigidBodyObservedMaxPenetration / m_rigidBodyContactLengthScale
-            : 0.0;
-          GEOS_LOG_RANK_0_IF( m_eventReporting == 1,
-                              event.getName() << " (RigidBodyMPM maxContactPenetration ratio="
-                                              << maxContactPenetrationRatio
-                                              << ", absolute=" << m_rigidBodyObservedMaxPenetration
-                                              << ", cellDiagonal=" << m_rigidBodyContactLengthScale
-                                              << ") completed at " << time_n );
-        }
-        else if( completionReason == 2 )
-        {
-          GEOS_LOG_RANK_0_IF( m_eventReporting == 1,
-                              event.getName() << " (RigidBodyMPM maxJammingStress="
-                                              << m_rigidBodyObservedJammingStress
-                                              << ") completed at " << time_n );
-        }
-        else if( completionReason == 3 )
-        {
-          GEOS_LOG_RANK_0_IF( m_eventReporting == 1,
-                              event.getName() << " (RigidBodyMPM maxForce) completed at " << time_n );
-        }
-        else
-        {
-          GEOS_LOG_RANK_0_IF( m_eventReporting == 1,
-                              event.getName() << " (RigidBodyMPM kinetic energy) completed at " << time_n );
-        }
-        return;
-      }
     }
 
     // These are effectively instantaneous events in the feature branch.
@@ -12159,6 +11752,9 @@ bool SolidMechanicsMPM::subdivideParticles(
     subRegion.getWrapperBase( "particleSubdivideFlag" ).move( hostMemorySpace, true );
     if( m_cpdiDomainScaling == 1 )
       subRegion.getWrapperBase( "particleDomainScaledFlag" ).move( hostMemorySpace, false );
+    if(m_axisymmetric)
+      subRegion.getWrapperBase(fields::mpm::particleDeformationGradient::key()).move(hostMemorySpace,false);
+    auto const particleDeformationGradient=subRegion.getField<fields::mpm::particleDeformationGradient>();
     auto const referenceGeometry = subRegion.geometryViewOnHost();
 
     arrayView1d< int > const particleSubdivideFlag =
@@ -12330,7 +11926,7 @@ bool SolidMechanicsMPM::subdivideParticles(
           {
             requiredMeasure = LvArray::math::max(
               requiredMeasure,
-              J * referenceMeasure );
+              J * referenceMeasure / (m_axisymmetric ? particleDeformationGradient[p][2][2] : 1.0) );
           }
         }
 
@@ -12472,6 +12068,7 @@ bool SolidMechanicsMPM::subdivideParticles(
       localIndex index;
       real64 fraction;
       real64 currentOffset[3];
+      real64 velocityOffset[3];
     };
     std::vector< SplitMember > members;
     for( localIndex p = 0; p < newSubRegionSize; ++p ) particleCopyFlag[p] = -1;
@@ -12490,6 +12087,18 @@ bool SolidMechanicsMPM::subdivideParticles(
       LvArray::tensorOps::copy<3>( parentCenter, particlePosition[p] );
       LvArray::tensorOps::copy<3>( parentReferenceCenter, particleReferencePosition[p] );
 
+      real64 meanOffset[3]={};
+      if(m_axisymmetric)
+      {
+        GEOS_ERROR_IF(!(parentCenter[0]>0), "Cannot subdivide a particle at nonpositive radius");
+        for(int c=0;c<selected.plan.count;++c)
+        {
+          real64 offset[3]; selected.plan.children[c].offset(currentParent,offset);
+          real64 const fraction=axisymmetric::splitFraction(selected.plan.children[c].fraction,parentCenter[0],offset[0]);
+          GEOS_ERROR_IF(!(fraction>0), "Axisymmetric split would create a child at nonpositive radius");
+          for(int d=0;d<3;++d) meanOffset[d]+=fraction*offset[d];
+        }
+      }
       for( int member = 0; member < selected.plan.count; ++member )
       {
         localIndex const childIndex = member == 0 ? p : subRegionNewParticleIndex++;
@@ -12502,6 +12111,8 @@ bool SolidMechanicsMPM::subdivideParticles(
         real64 referenceOffset[3];
         transform.offset( currentParent, transfer.currentOffset );
         transform.offset( referenceParent, referenceOffset );
+        if(m_axisymmetric) transfer.fraction=axisymmetric::splitFraction(transform.fraction,parentCenter[0],transfer.currentOffset[0]);
+        for(int d=0;d<3;++d) transfer.velocityOffset[d]=transfer.currentOffset[d]-meanOffset[d];
         particleMass[childIndex] = parentMass * transfer.fraction;
         particleVolume[childIndex] = parentVolume * transfer.fraction;
         particleReferenceVolume[childIndex] = parentReferenceVolume * transfer.fraction;
@@ -12613,7 +12224,7 @@ bool SolidMechanicsMPM::subdivideParticles(
       if( applyVelocityGradientWhenSplittingParticles == 1 )
       {
         real64 velocityCorrection[3];
-        LvArray::tensorOps::Ri_eq_AijBj<3,3>( velocityCorrection, particleVelocityGradient[p], member.currentOffset );
+        LvArray::tensorOps::Ri_eq_AijBj<3,3>( velocityCorrection, particleVelocityGradient[p], member.velocityOffset );
         LvArray::tensorOps::add<3>( particleVelocity[p], velocityCorrection );
       }
       particleKineticEnergy[p] = 0.5 * particleMass[p] * LvArray::tensorOps::l2NormSquared<3>( particleVelocity[p] );
@@ -14099,18 +13710,33 @@ GEOS_HOST_DEVICE bool SolidMechanicsMPM::computeParticleMapping(
   };
   clear();
   bool valid=false;
+  if(m_axisymmetric && (!(center[0]>0) || type==ParticleType::SinglePointBSpline)) return false;
   if(type==ParticleType::SinglePoint)
     valid=mpmMapping::point<DIM,false>(center,map,origin,spacing,cells,nodes,values,gradients);
   else if(type==ParticleType::SinglePointBSpline)
     valid=mpmMapping::point<DIM,true>(center,map,origin,spacing,cells,nodes,values,gradients);
-  else
+  else if(type==ParticleType::CPDI || type==ParticleType::CPTI)
   {
     real64 integration[3][3];
-    if(type==ParticleType::CPDI && !(projectIntegrationGeometry<DIM>(geometry,integration)&4))
-      valid=mpmMapping::domain<DIM,false>(center,integration,map,origin,spacing,cells,nodes,values,gradients);
-    else if(type==ParticleType::CPTI && !(projectCPTIIntegrationGeometry<DIM>(geometry,integration)&4))
-      valid=mpmMapping::domain<DIM,true>(center,integration,map,origin,spacing,cells,nodes,values,gradients);
+    int status=type==ParticleType::CPDI ? projectIntegrationGeometry<DIM>(geometry,integration)
+                                      : projectCPTIIntegrationGeometry<DIM>(geometry,integration);
+    if constexpr(DIM==2)
+    {
+      if(m_axisymmetric && !(status&4))
+      {
+        status |= axisymmetric::fitIntegrationDomain(center[0], type==ParticleType::CPTI
+          ? particleGeometry::Shape::Triangle : particleGeometry::Shape::Parallelogram, integration);
+        if(!(status&4)) valid=type==ParticleType::CPTI
+          ? mpmMapping::domain<2,true,true>(center,integration,map,origin,spacing,cells,nodes,values,gradients)
+          : mpmMapping::domain<2,false,true>(center,integration,map,origin,spacing,cells,nodes,values,gradients);
+      }
+    }
+    if(!m_axisymmetric && !(status&4)) valid=type==ParticleType::CPTI
+      ? mpmMapping::domain<DIM,true>(center,integration,map,origin,spacing,cells,nodes,values,gradients)
+      : mpmMapping::domain<DIM,false>(center,integration,map,origin,spacing,cells,nodes,values,gradients);
   }
+  if(m_axisymmetric && valid && type==ParticleType::SinglePoint)
+    for(int n=0;n<capacity;++n) gradients[n][2]=values[n]/center[0];
   // A late invalid corner must never leave a partially valid row behind.
   if(!valid) clear();
   return valid;
@@ -14130,6 +13756,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
     bool const isCPTI = subRegion.getParticleType() == ParticleType::CPTI;
     if( subRegion.getParticleType() != ParticleType::CPDI && !isCPTI ) return;
     auto const geometry=subRegion.getParticleGeometryCurrent();
+    auto const centers=subRegion.getParticleCenter();
     auto const flag=subRegion.getField<fields::mpm::particleDomainScaledFlag>();
     auto const normal=subRegion.getParticleSurfaceNormal();
     auto const position=subRegion.getParticleSurfacePosition();
@@ -14140,8 +13767,11 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
     forAll<parallelDevicePolicy<>>(subRegion.size(),[=] GEOS_HOST_DEVICE(localIndex p)
     {
       real64 projected[3][3];
-      int const status = isCPTI ? projectCPTIIntegrationGeometry<DIM>( geometry[p], projected )
+      int status = isCPTI ? projectCPTIIntegrationGeometry<DIM>( geometry[p], projected )
                                 : projectIntegrationGeometry<DIM>( geometry[p], projected );
+      if constexpr(DIM==2) if(m_axisymmetric && !(status&4))
+        status |= axisymmetric::fitIntegrationDomain(centers[p][0], isCPTI
+          ? particleGeometry::Shape::Triangle : particleGeometry::Shape::Parallelogram,projected);
       flag[p]=(status & 1)!=0;
       if(status & 2) relaxed+=1;
       if(status & 4) invalid+=1;
@@ -15421,27 +15051,13 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
 /**
  * @brief Assigns each particle-node contribution to a DFG velocity field.
  */
-void SolidMechanicsMPM::computeParticleFieldMappings( DomainPartition & domain,
-                                                      ParticleManager & particleManager,
-                                                      NodeManager & nodeManager,
-                                                      MeshLevel & mesh )
+void SolidMechanicsMPM::computeParticleFieldMappings( ParticleManager & particleManager,
+                                                      NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
 
   localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
-
-  if( m_rigidBodyMode == 1 )
-  {
-    computeRigidBodyColorFieldMappings( domain,
-                                        particleManager,
-                                        nodeManager,
-                                        mesh );
-    return;
-  }
-
-  GEOS_UNUSED_VAR( domain );
-  GEOS_UNUSED_VAR( mesh );
 
   // Grid fields
   arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
@@ -15905,15 +15521,9 @@ void SolidMechanicsMPM::synchronizePostBoundaryKinematicFieldsForG2P( DomainPart
                                           viewKeyStruct::gridAccelerationString(),
                                           viewKeyStruct::gridDVelocityString() };
 
-  if( m_updateMethod == mpm::UpdateMethodOption::FMPM || m_rigidBodyMode == 1 )
+  if( m_updateMethod == mpm::UpdateMethodOption::FMPM )
   {
-    /*
-     * RigidBodyMPM option-B force recovery uses the total post-contact /
-     * post-boundary nodal impulse, M (v_final - v_uncontacted).  Make the
-     * uncontacted seed velocity owner-to-ghost consistent even for FLIP/PIC
-     * rigid steps, because the rigid update reads it directly rather than
-     * entering the ordinary G2P/FMPM update path.
-     */
+    // FMPM reads the uncontacted seed during its particle velocity update.
     fieldNames.push_back( viewKeyStruct::gridUncontactedVelocityString() );
   }
 
@@ -17714,6 +17324,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
       arrayView1d< int > const particleCohesiveZoneFlag = subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
+    arrayView1d< int > const particleColor = subRegion.getField< fields::mpm::particleColor >();
       arrayView1d< integer > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
       arrayView1d< localIndex const > const particleCZTag = subRegion.getParticleCZTag();
       arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
@@ -18113,6 +17724,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
       arrayView1d< int > const particleCohesiveZoneFlag = subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
+    arrayView1d< int > const particleColor = subRegion.getField< fields::mpm::particleColor >();
       arrayView1d< integer > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
       arrayView1d< localIndex const > const particleCZTag = subRegion.getParticleCZTag();
       arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
@@ -18165,8 +17777,6 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
 
   updateInterfaceMechanismDiagnostics( nodeManager );
 }
-
-
 
 /**
  * @brief Assembles diffuse-interface surface-tension force with a weak-form P2G pass.
@@ -18986,7 +18596,6 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const planeStrain = m_planeStrain;
-  int const rigidBodyMode = m_rigidBodyMode;
 #ifndef GEOS_USE_DEVICE
   GEOS_UNUSED_VAR( numContactGroups );
   GEOS_UNUSED_VAR( damageFieldPartitioning );
@@ -19285,18 +18894,6 @@ localIndex const numberOfEffectiveMappedNodesPerParticle =
         pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
         pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
         pSurfaceFlag == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ); // DamagedCohesive may not have an explicit surface normal if it was disabled
-
-      if( rigidBodyMode == 1 &&
-          !SolidMechanicsMPM::isRigidBodySurfaceFlag( pSurfaceFlag ) )
-      {
-        /*
-         * Surface-only rigid-body MPM: interior particles retain their true
-         * mass and state for the continuum handoff, but are massless/invisible
-         * to the rigid-stage grid contact solve.  The color-body rigid update
-         * below moves them from the surface shell kinematics.
-         */
-        return;
-      }
 
       real64 const px =
         particlePosition[p][0];
@@ -19799,11 +19396,6 @@ localIndex const mappedNode =
                            massWeightedShape * dzParticleNode );
         }
 
-        if( rigidBodyMode == 1 )
-        {
-          continue;
-        }
-
         // Internal force:
         //
         // Original code looped over i and k and performed one atomic add for
@@ -19922,7 +19514,8 @@ localIndex const mappedNode =
 
           real64 const internalForce0 =
             -pVolume *
-            ( grad0 * sigma0 + grad1 * sigma5 );
+            ( grad0 * sigma0 + grad1 * sigma5 + (m_axisymmetric
+              ? grad2 * (pStress2-gridBackgroundStress[mappedNode][2]-supplementalPressure) : 0.0) );
 
           real64 const internalForce1 =
             -pVolume *
@@ -20726,14 +20319,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
-  int const rigidBodyMode = m_rigidBodyMode;
-  real64 const rigidBodyPenetrationPenaltyBeta =
-    rigidBodyMode == 1 ? m_rigidBodyPenetrationPenaltyBeta : 0.0;
-  arrayView2d< integer const > const rigidBodyGridFieldColor =
-    nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() );
-  arrayView2d< integer const > const rigidBodyGridFieldContactGroup =
-    nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() );
-
   real64 const smallMass = m_smallMass;
   real64 const neighborRadius = m_neighborRadius;
   real64 const separabilityMinDamage = m_separabilityMinDamage;
@@ -20746,13 +20331,11 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
     m_maxSingleFieldStateFractionForSeparability;
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
-  real64 maxFrictionCoefficient = 0.0;
   for( integer i = 0; i < numContactGroups; ++i )
   {
     for( integer j = 0; j < numContactGroups; ++j )
     {
       frictionCoefficientTableCopy[i][j] = m_frictionCoefficientTable[i][j];
-      maxFrictionCoefficient = LvArray::math::max( maxFrictionCoefficient, m_frictionCoefficientTable[i][j] );
     }
   }
   arrayView2d< real64 const > const frictionCoefficientTable = frictionCoefficientTableCopy;
@@ -20791,8 +20374,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   ArrayOfArraysView< localIndex const > const neighborSubRegions = m_nodalNeighborList.m_toParticleSubRegion.toViewConst();
   ArrayOfArraysView< localIndex const > const neighborIndices = m_nodalNeighborList.m_toParticleIndex.toViewConst();
 
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxMaterialContactPenetration( 0.0 );
-
   forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
     // Initialize gridContactForce[g] to zero. TODO: This shouldn't be necessary?
@@ -20827,55 +20408,13 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
         if( active )
         {
-          bool const rigidBodyContactPair =
-            rigidBodyMode == 1 &&
-            rigidBodyGridFieldColor[g][A] != -1 &&
-            rigidBodyGridFieldColor[g][B] != -1 &&
-            rigidBodyGridFieldColor[g][A] != rigidBodyGridFieldColor[g][B];
-          if( rigidBodyMode == 1 && !rigidBodyContactPair )
-          {
-            /*
-             * RigidBodyMPM has already partitioned this node by first-in
-             * ParticleColor.  In rigid mode the nodal fields are the contact
-             * bodies, so contact is evaluated only between distinct color
-             * fields.  Do not fall back to DFG/contact-group separability for
-             * same-color or unassigned rigid fields.
-             */
-            continue;
-          }
-          if( rigidBodyContactPair )
-          {
-            integer const groupA = rigidBodyGridFieldContactGroup[g][A];
-            integer const groupB = rigidBodyGridFieldContactGroup[g][B];
-            if( groupA >= 0 && groupA < numContactGroups && groupB >= 0 && groupB < numContactGroups )
-            {
-              frictionCoefficient = frictionCoefficientTable[groupA][groupB];
-            }
-            else
-            {
-              /* Mixed-contact-group overflow is expected to be rare; use the
-               * conservative largest tabulated friction coefficient. */
-              frictionCoefficient = maxFrictionCoefficient;
-            }
-          }
-
           // Evaluate the separability criterion for the contact pair.
           bool separable = false;
           int useCohesiveTangentialForces = 0;
           // int zeroTangentialForces 0; // When using contact compressive forces to prevent interpenetration, ignore
           // tangential forces //
           // Don't think this is needed if friction coefficient is set to zero
-          if( rigidBodyMode == 1 )
-          {
-            /*
-             * The first-in color mapping is the rigid-body partitioning.
-             * Distinct color fields are always a separable contact pair;
-             * cohesive/damage DFG criteria are intentionally bypassed.
-             */
-            separable = true;
-            useCohesiveTangentialForces = 0;
-          }
-          else if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
+          if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
                                                                            // to pairs for which a cohesive law is
                                                                            // defined
           {
@@ -20942,16 +20481,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
           // Outward normal of field A with respect to field B.
           real64 nAB[3] = {};
 
-          // Logistic regression classifies particles with continuum DFG field ids and is not
-          // compatible with first-in ParticleColor field numbering.  In rigid mode, use the
-          // mapped exact/implicit surface normals with mass weighting instead.
-          mpm::ContactNormalTypeOption const activeContactNormalType =
-            rigidBodyMode == 1 && contactNormalType == mpm::ContactNormalTypeOption::LogisticRegression
-            ? mpm::ContactNormalTypeOption::MassWeighted
-            : contactNormalType;
-
           // contact normal averaging: 0: simple, 1: mass weighted, 2: follow larger mass (useful for platens)
-          switch( activeContactNormalType )
+          switch( contactNormalType )
           {
             case mpm::ContactNormalTypeOption::Difference:
               // Tensor equation: nAB = nA - nB.
@@ -21094,7 +20625,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
           //   nAB = 1 / norm * (nAB).
           LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
 
-          real64 contactPenetration = 0.0;
           computePairwiseNodalContactForce( contactGapCorrection,
                                             overlapCorrection,
                                             overlapThreshold1,
@@ -21106,8 +20636,6 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                             smallMass,
                                             useSurfacePositionForContact,
                                             useCohesiveTangentialForces,
-                                            rigidBodyPenetrationPenaltyBeta,
-                                            contactPenetration,
                                             separable,
                                             dt,
                                             frictionCoefficient,
@@ -21130,21 +20658,11 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                             gridCenterOfVolume[g][B],
                                             gridContactForce[g][A],
                                             gridContactForce[g][B] );
-          if( rigidBodyMode == 1 )
-          {
-            maxMaterialContactPenetration.max( contactPenetration );
-          }
         }
       }
     }
   } );
 
-  if( rigidBodyMode == 1 )
-  {
-    real64 const globalMaxPenetration = MpiWrapper::max( maxMaterialContactPenetration.get() );
-    m_rigidBodyObservedMaxPenetration = LvArray::math::max( m_rigidBodyObservedMaxPenetration,
-                                                            globalMaxPenetration );
-  }
 }
 
 /**
@@ -21185,14 +20703,6 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
   int const numContactGroups = m_numContactGroups;
   int const numVelocityFields = m_numVelocityFields;
-  int const rigidBodyMode = m_rigidBodyMode;
-  real64 const rigidBodyPenetrationPenaltyBeta =
-    rigidBodyMode == 1 ? m_rigidBodyPenetrationPenaltyBeta : 0.0;
-  arrayView2d< integer const > const rigidBodyGridFieldColor =
-    nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldColorString() );
-  arrayView2d< integer const > const rigidBodyGridFieldContactGroup =
-    nodeManager.getReference< array2d< integer > >( viewKeyStruct::gridRigidBodyFieldContactGroupString() );
-
   real64 const smallMass = m_smallMass;
   real64 const neighborRadius = m_neighborRadius;
   real64 const separabilityMinDamage = m_separabilityMinDamage;
@@ -21205,13 +20715,11 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
     m_maxSingleFieldStateFractionForSeparability;
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
-  real64 maxFrictionCoefficient = 0.0;
   for( int i = 0; i < numContactGroups; ++i )
   {
     for( int j = 0; j < numContactGroups; ++j )
     {
       frictionCoefficientTableCopy[i][j] = m_frictionCoefficientTable[i][j];
-      maxFrictionCoefficient = LvArray::math::max( maxFrictionCoefficient, m_frictionCoefficientTable[i][j] );
     }
   }
   arrayView2d< real64 const > const frictionCoefficientTable = frictionCoefficientTableCopy;
@@ -21245,8 +20753,6 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   ArrayOfArraysView< localIndex const > const neighborRegions = m_nodalNeighborList.m_toParticleRegion.toViewConst();
   ArrayOfArraysView< localIndex const > const neighborSubRegions = m_nodalNeighborList.m_toParticleSubRegion.toViewConst();
   ArrayOfArraysView< localIndex const > const neighborIndices = m_nodalNeighborList.m_toParticleIndex.toViewConst();
-
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxMaterialContactPenetration( 0.0 );
 
   forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
@@ -21285,53 +20791,13 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
         if( active )
         {
-          bool const rigidBodyContactPair =
-            rigidBodyMode == 1 &&
-            rigidBodyGridFieldColor[g][A] != -1 &&
-            rigidBodyGridFieldColor[g][B] != -1 &&
-            rigidBodyGridFieldColor[g][A] != rigidBodyGridFieldColor[g][B];
-          if( rigidBodyMode == 1 && !rigidBodyContactPair )
-          {
-            /*
-             * RigidBodyMPM uses first-in ParticleColor fields as the contact
-             * partition.  Pairs that are not distinct rigid color fields do
-             * not participate in nodal material contact during the rigid event.
-             */
-            continue;
-          }
-          if( rigidBodyContactPair )
-          {
-            integer const groupA = rigidBodyGridFieldContactGroup[g][A];
-            integer const groupB = rigidBodyGridFieldContactGroup[g][B];
-            if( groupA >= 0 && groupA < numContactGroups && groupB >= 0 && groupB < numContactGroups )
-            {
-              frictionCoefficient = frictionCoefficientTable[groupA][groupB];
-            }
-            else
-            {
-              /* Mixed-contact-group overflow is expected to be rare; use the
-               * conservative largest tabulated friction coefficient. */
-              frictionCoefficient = maxFrictionCoefficient;
-            }
-          }
-
           // Evaluate the separability criterion for the contact pair.
           bool separable = 0;
           int useCohesiveTangentialForces = 0;
           // int zeroTangentialForces 0; // When using contact compressive forces to prevent interpenetration, ignore
           // tangential forces //
           // Don't think this is needed if friction coefficient is set to zero
-          if( rigidBodyMode == 1 )
-          {
-            /*
-             * The first-in color mapping is the rigid-body partitioning.
-             * Distinct color fields are always a separable contact pair;
-             * cohesive/damage DFG criteria are intentionally bypassed.
-             */
-            separable = true;
-            useCohesiveTangentialForces = 0;
-          }
-          else if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
+          if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
                                                                            // to pairs for which a cohesive law is
                                                                            // defined
           {
@@ -21398,16 +20864,8 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
           // Outward normal of field A with respect to field B.
           real64 nAB[3] = {};
 
-          // Logistic regression classifies particles with continuum DFG field ids and is not
-          // compatible with first-in ParticleColor field numbering.  In rigid mode, use the
-          // mapped exact/implicit surface normals with mass weighting instead.
-          mpm::ContactNormalTypeOption const activeContactNormalType =
-            rigidBodyMode == 1 && contactNormalType == mpm::ContactNormalTypeOption::LogisticRegression
-            ? mpm::ContactNormalTypeOption::MassWeighted
-            : contactNormalType;
-
           // contact normal averaging: 0: simple, 1: mass weighted, 2: follow larger mass (useful for platens)
-          switch( activeContactNormalType )
+          switch( contactNormalType )
           {
             case mpm::ContactNormalTypeOption::Difference:
               // Tensor equation: nAB = nA - nB.
@@ -21550,7 +21008,6 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
           //   nAB = 1 / norm * (nAB).
           LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
 
-          real64 contactPenetration = 0.0;
           computePairwiseNodalContactImpulse( contactGapCorrection,
                                               overlapCorrection,
                                             overlapThreshold1,
@@ -21562,8 +21019,6 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                                               smallMass,
                                               useSurfacePositionForContact,
                                               useCohesiveTangentialForces,
-                                              rigidBodyPenetrationPenaltyBeta,
-                                              contactPenetration,
                                               separable,
                                               dt,
                                               frictionCoefficient,
@@ -21588,21 +21043,11 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                                               gridCenterOfMass[g][B],
                                               contactMomentumTarget[g][A],
                                               contactMomentumTarget[g][B] );
-          if( rigidBodyMode == 1 )
-          {
-            maxMaterialContactPenetration.max( contactPenetration );
-          }
         }
       }
     }
   } );
 
-  if( rigidBodyMode == 1 )
-  {
-    real64 const globalMaxPenetration = MpiWrapper::max( maxMaterialContactPenetration.get() );
-    m_rigidBodyObservedMaxPenetration = LvArray::math::max( m_rigidBodyObservedMaxPenetration,
-                                                            globalMaxPenetration );
-  }
 }
 
 
@@ -21813,8 +21258,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorre
                                                             real64 const & smallMass,
                                                             int const & useSurfacePositionForContact,
                                                             int const & useCohesiveTangentialForces,
-                                                            real64 const rigidBodyPenetrationPenaltyBeta,
-                                                            real64 & contactPenetration,
                                                             bool & separable,
                                                             real64 const & dt,
                                                             real64 const & frictionCoefficient,
@@ -21840,8 +21283,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorre
                                                             arraySlice1d< real64 > const jA,
                                                             arraySlice1d< real64 > const jB )
 {
-  contactPenetration = 0.0;
-
   real64 const mAB = mA + mB;
 
   real64 vAB[3] = {};
@@ -21910,7 +21351,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorre
   }
 
   real64 gap = (surfacePosB[0] - surfacePosA[0]) * nAB[0] + (surfacePosB[1] - surfacePosA[1]) * nAB[1] + (surfacePosB[2] - surfacePosA[2]) * nAB[2] - gapScale*gap0;
-  contactPenetration = LvArray::math::max( 0.0, -gap );
 
   real64 contact = 0.0;
   real64 temp[3] = {};
@@ -21982,12 +21422,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( mpm::ContactGapCorre
     }
   }
 
-  if( rigidBodyPenetrationPenaltyBeta > 0.0 && contactPenetration > 0.0 )
-  {
-    real64 const effectiveMass = mA * mB / ( mA + mB );
-    jgap += -rigidBodyPenetrationPenaltyBeta * effectiveMass * contactPenetration / dt;
-  }
-
   real64 jtanMag = sqrt( jtan1 * jtan1 + jtan2 * jtan2 );
 
   real64 sAB[3] = {};
@@ -22034,8 +21468,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( mpm::ContactGapCorrect
                                                           real64 const & smallMass,
                                                           int const & useSurfacePositionForContact,
                                                           int const & useCohesiveTangentialForces,
-                                                          real64 const rigidBodyPenetrationPenaltyBeta,
-                                                          real64 & contactPenetration,
                                                           bool & separable,
                                                           real64 const & dt,
                                                           real64 const & frictionCoefficient,
@@ -22069,8 +21501,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( mpm::ContactGapCorrect
                                                           arraySlice1d< real64 > const fA,
                                                           arraySlice1d< real64 > const fB )
 {
-  contactPenetration = 0.0;
-
   // Total mass for the contact pair.
   real64 mAB = mA + mB;
 
@@ -22185,7 +21615,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( mpm::ContactGapCorrect
   // }
 
   real64 gap = (surfacePosB[0] - surfacePosA[0]) * nAB[0] + (surfacePosB[1] - surfacePosA[1]) * nAB[1] + (surfacePosB[2] - surfacePosA[2]) * nAB[2] - gapScale*gap0;
-  contactPenetration = LvArray::math::max( 0.0, -gap );
 
   real64 contact = 0.0;
   real64 temp[3] = {};
@@ -22275,12 +21704,6 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( mpm::ContactGapCorrect
       fgap = correctionScale*LvArray::math::max( -maxGapForceMagnitude, -2.0 * overlapLength * mA * mB / ( dt * dt * ( mA + mB ) ) );
 
     }
-  }
-
-  if( rigidBodyPenetrationPenaltyBeta > 0.0 && contactPenetration > 0.0 )
-  {
-    real64 const effectiveMass = mA * mB / ( mA + mB );
-    fgap += -rigidBodyPenetrationPenaltyBeta * effectiveMass * contactPenetration / ( dt * dt );
   }
 
   // Determine force for tangential sticking
@@ -22791,7 +22214,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
   GEOS_ERROR_IF( maximumBulkModulus <= 0.0, "At least one material must have a positive bulk or effective bulk modulus for stress control!" );
 
   // Could some numerical artifact ever produce a negative relative density? Do I need a check for that or clip is to 0
-  real64 relativeDensity = LvArray::math::min( 1.0, boxMaterialVolume / ( physicalVolume(m_domainExtent) ) );
+  real64 relativeDensity = LvArray::math::min( 1.0, boxMaterialVolume / ( physicalDomainVolume() ) );
 
   if( m_stressControlAdaptiveSeek == 1 )
   {
@@ -22919,7 +22342,7 @@ void SolidMechanicsMPM::adaptiveSeekStressControl( const real64 dt,
   constexpr int PASSIVE_SATISFIED = 3;
   constexpr int UNREACHABLE = 4;
 
-  real64 const boxVolume = physicalVolume(m_domainExtent);
+  real64 const boxVolume = physicalDomainVolume();
   real64 const relativeDensity = boxVolume > 0.0 ? clampValue( boxMaterialVolume / boxVolume, 0.0, 1.0 ) : 1.0;
 
   real64 targetMagnitude = 0.0;
@@ -23374,7 +22797,7 @@ void SolidMechanicsMPM::computeBoxMetrics( ParticleManager & particleManager,
     boxSums[i] = globalSum;
   }
 
-  real64 boxVolume = physicalVolume(m_domainExtent);
+  real64 boxVolume = physicalDomainVolume();
 
   currentStress[0] = boxSums[0] / boxVolume;
   currentStress[1] = boxSums[1] / boxVolume;
@@ -23424,8 +22847,6 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   LvArray::tensorOps::copy< 6 >( boundaryFaceFrictionCoefficients, m_boundaryFaceFrictionCoefficients );
   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
   int const useInternalForceAsFaceReaction = m_useInternalForceAsFaceReaction;
-  int const rigidBodyMode = m_rigidBodyMode;
-  real64 const rigidBodyPenetrationPenaltyBeta = m_rigidBodyPenetrationPenaltyBeta;
 
   localIndex const numNodes = nodeManager.size();
   localIndex const numVelocityFields = m_numVelocityFields;
@@ -23494,9 +22915,8 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
     }
   } );
 
-  // Impose BCs on each face while gathering reaction forces and rigid-event wall penetration.
+  // Impose BCs on each face while gathering reaction forces.
   real64 localFaceReactions[6] = {};
-  real64 localMaxBoundaryPenetration = 0.0;
   for( integer face = 0; face < 6; ++face )
   {
     int const boundaryType = boundaryConditionTypes[face];
@@ -23559,7 +22979,6 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
       for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         RAJA::ReduceSum< parallelDeviceReduce, real64 > faceReaction( 0.0 );
-        RAJA::ReduceMax< parallelDeviceReduce, real64 > faceMaxPenetration( 0.0 );
         forAll< parallelDevicePolicy<> >( numBoundaryNodes, [=] GEOS_HOST_DEVICE ( localIndex const gg )
         {
           localIndex const g = boundaryNodes[gg];
@@ -23567,7 +22986,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
           // Contact faces prescribe the normal component only when the material
           // surface is moving into the wall relative to the wall.  This relative
           // test is essential for F-table/stress-control moving walls: a wall
-          // moving into an initially stationary rigid body must still generate
+          // moving into initially stationary material must still generate
           // a contact impulse.  Moving faces prescribe the normal component from
           // the domain-rate/F-table state unconditionally.
           real64 prescribedVelocity = gridVelocity[g][fieldIndex][dir0];
@@ -23590,39 +23009,11 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
             bool const movingIntoWall = outwardSign * relativeNormalVelocity > 0.0;
             bool const intersectsWall = currentOutwardSurfacePosition > 0.0 ||
                                         predictedOutwardSurfacePosition > 0.0;
-            real64 const penetration = LvArray::math::max(
-              0.0,
-              LvArray::math::max( currentOutwardSurfacePosition, predictedOutwardSurfacePosition ) );
-            if( rigidBodyMode == 1 && gridMass[g][fieldIndex] > smallMass )
-            {
-              // Empty boundary fields have zeroed surface data; do not let the
-              // moving-wall prediction on an inactive field create a false
-              // penetration exceedance.
-              faceMaxPenetration.max( penetration );
-            }
-            bool const rigidPenaltyActive = rigidBodyMode == 1 &&
-                                            rigidBodyPenetrationPenaltyBeta > 0.0 &&
-                                            gridMass[g][fieldIndex] > smallMass &&
-                                            penetration > 0.0;
-            bool const inContact = intersectsWall && ( movingIntoWall || rigidPenaltyActive );
+            bool const inContact = intersectsWall && movingIntoWall;
 
             if( inContact )
             {
               prescribedVelocity = wallVelocity;
-              if( rigidPenaltyActive )
-              {
-                /*
-                 * The additional velocity correction is the impulse form of
-                 *
-                 *   f_pen = beta * m_I * penetration / dt^2.
-                 *
-                 * It points into the domain and is visible to the rigid-body
-                 * option-B force recovery through v_post - v_uncontacted.
-                 */
-                real64 const boundaryPenaltyForceMagnitude =
-                  rigidBodyPenetrationPenaltyBeta * gridMass[g][fieldIndex] * penetration / ( dt * dt );
-                prescribedVelocity -= outwardSign * boundaryPenaltyForceMagnitude * dt / gridMass[g][fieldIndex];
-              }
             }
 
             // Boundary friction acts only in tangential components.  It is staged
@@ -23737,11 +23128,9 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 
           if( gridGhostRank[g] <= -1 && gridMass[g][fieldIndex] > smallMass )
           {
-            if( useInternalForceAsFaceReaction == 0 || rigidBodyMode == 1 )
+            if( useInternalForceAsFaceReaction == 0 )
             {
-              // RigidBodyMPM intentionally skips internal-force assembly, so its
-              // face reaction must come from the boundary impulse even when the
-              // continuum input requests internal-force-based reactions.
+              // Recover the face reaction from the imposed boundary impulse.
               faceReaction += normalDVelocity * gridMass[g][fieldIndex] / dt;
             }
             else
@@ -23771,21 +23160,12 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
           }
         } );
         localFaceReactions[face] += faceReaction.get();
-        localMaxBoundaryPenetration = LvArray::math::max( localMaxBoundaryPenetration,
-                                                          faceMaxPenetration.get() );
       }
     }
     else
     {
       GEOS_ERROR( "Unrecognized boundary condition type in MPM Solver!" );
     }
-  }
-
-  if( rigidBodyMode == 1 )
-  {
-    real64 const globalMaxBoundaryPenetration = MpiWrapper::max( localMaxBoundaryPenetration );
-    m_rigidBodyObservedMaxPenetration = LvArray::math::max( m_rigidBodyObservedMaxPenetration,
-                                                            globalMaxBoundaryPenetration );
   }
 
   /*
@@ -24033,16 +23413,13 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   }
   // Tensor equation: m_globalFaceReactions = globalFaceReactions.
   LvArray::tensorOps::copy< 6 >( m_globalFaceReactions, globalFaceReactions );
-  if( rigidBodyMode == 1 )
-  {
-    m_rigidBodyObservedJammingStress = computeRigidBodyJammingStress();
-  }
 
   // Get end-of-step domain dimensions - note that m_domainExtent is updated later
   real64 length, width, height;
   length = m_domainExtent[0] * m_domainIncrementalStretch[0];
   width  = m_domainExtent[1] * m_domainIncrementalStretch[1];
-  height = m_numDims==2 ? m_planeStrainThickness : m_domainExtent[2] * m_domainIncrementalStretch[2];
+  // Axisymmetry has no third geometric length; reactions already include 2*pi.
+  height = m_axisymmetric ? 0.0 : (m_numDims==2 ? m_planeStrainThickness : m_domainExtent[2] * m_domainIncrementalStretch[2]);
 
   // Write global reactions to file
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 && m_reactionHistory == 1 )
@@ -25289,12 +24666,6 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
                                         MeshLevel & mesh )
 {
   GEOS_MARK_FUNCTION;
-
-  GEOS_ERROR_IF( m_rigidBodyMode == 1 &&
-                 m_gridToParticleMapping == mpm::GridToParticleMappingOption::OnTheFly,
-                 "gridToParticleMapping=OnTheFly is not supported during RigidBodyMPM events because rigid-body "
-                 "color-field assignments are stored in the precomputed field map." );
-
   // Grid-to-particle map
   switch( m_updateMethod )
   {
@@ -25548,6 +24919,14 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
             particleVelocity[p][1] += gridAcceleration1 * shapeDt;
             particleVelocityGradient[p][1][0] += gridVelocity1 * grad0;
             particleVelocityGradient[p][1][1] += gridVelocity1 * grad1;
+            // Slot 2 is the cylindrical hoop operator, never a z derivative.
+            if(m_axisymmetric)
+            {
+              real64 hoop=0;
+              if constexpr(usePrecomputedMapping) hoop=precomputedShapeFunctionGradientValues[pp][g][2];
+              else hoop=shapeFunctionGradientValuesForParticle[g][2];
+              particleVelocityGradient[p][2][2] += gridVelocity0*hoop;
+            }
           }
         }
         else
@@ -25763,6 +25142,7 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
           {
             real64 const gridVelocityI = gridVelocity[mappedNode][fieldIndex][i];
             real64 const gridAccelerationI = gridAcceleration[mappedNode][fieldIndex][i];
+            if(m_axisymmetric && i==0) particleVelocityGradient[p][2][2]+=gridVelocityI*grad[2];
 
             particlePosition[p][i] +=
               ( gridVelocityI - 0.5 * gridAccelerationI * dt ) * shapeFunctionValue * dt;
@@ -26351,6 +25731,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
             real64 const gridAccelerationI = gridAcceleration[mappedNode][fieldIndex][i];
             real64 const gridVelocityI = gridVelocity[mappedNode][fieldIndex][i];
             real64 const vStarI = vStarConstView[mappedNode][fieldIndex][i];
+            if(m_axisymmetric && i==0) particleVelocityGradient[p][2][2]+=gridVelocityI*grad[2];
 
             particlePosition[p][i] +=
               shapeFunctionValue * gridVelocityI * dt -
@@ -27125,6 +26506,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
           for( localIndex i = 0; i < numDims; ++i )
           {
             real64 const vFmpmI = vFmpmConstView[mappedNode][fieldIndex][i];
+            if(m_axisymmetric && i==0) particleVelocityGradient[p][2][2]+=vFmpmI*grad[2];
             particlePosition[p][i] += 0.5 * dt * shapeFunctionValue * vFmpmI;
             particleVelocity[p][i] += shapeFunctionValue * vFmpmI;
 
@@ -27212,7 +26594,7 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
 
   GEOS_MARK_FUNCTION;
 
-  integer const numDims = DIM;
+  integer const numDims = m_axisymmetric ? 3 : DIM;
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -27230,6 +26612,15 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
 //       hostMemorySpace, true );
 // #endif
 
+    if(m_axisymmetric)
+    {
+      auto const center=subRegion.getParticleCenter();
+      RAJA::ReduceSum<parallelDeviceReduce,int> invalidRadius(0);
+      forAll<parallelDevicePolicy<>>(subRegion.size(),[=] GEOS_HOST_DEVICE(localIndex p)
+      { if(!(center[p][0]>0 && center[p][0]<=DBL_MAX)) invalidRadius+=1; });
+      GEOS_ERROR_IF(MpiWrapper::sum(invalidRadius.get())>0,
+                    "Axisymmetric particle center reached/crossed r=0 or became nonfinite; reduce the timestep");
+    }
     auto const geometry = subRegion.getParticleGeometryCurrent();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
@@ -27372,7 +26763,7 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
-  integer const numDims = m_numDims;
+  integer const numDims = m_axisymmetric ? 3 : m_numDims;
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -27901,6 +27292,7 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     arrayView1d< real64 const > const particleReferenceVolume =
       subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+    auto const particlePosition=subRegion.getParticleCenter();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
     // Get constitutive model reference
@@ -27923,7 +27315,8 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
         localIndex const p = activeParticleIndices[pp];
         // Crack-band length is in-plane in native 2D. Physical fracture
         // area is crack length times thickness, so thickness cancels from V/Acrack.
-        lengthScale[p] = m_numDims==2 ? LvArray::math::sqrt(particleVolume[p]/m_planeStrainThickness)
+        lengthScale[p] = m_numDims==2 ? LvArray::math::sqrt(particleVolume[p]/
+          (m_axisymmetric ? axisymmetric::twoPi*particlePosition[p][0] : m_planeStrainThickness))
                                      : LvArray::math::pow(particleVolume[p],1.0/3.0);
       } );
     }
@@ -28664,7 +28057,6 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
   GEOS_MARK_FUNCTION;
 
   real64 const cflFactor = m_cflFactor;
-  int const rigidBodyMode = m_rigidBodyMode;
 
   RAJA::ReduceMax< parallelDeviceReduce, real64 > maxWavespeed( 0.0 );
   real64 length = m_planeStrain == 1 ? LvArray::math::min( m_hEl[0], m_hEl[1] ) : LvArray::math::min( m_hEl[0], LvArray::math::min( m_hEl[1], m_hEl[2] ) );
@@ -28680,19 +28072,13 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
     {
       localIndex const p = activeParticleIndices[pp];
       real64 const particleAdvectionSpeed = LvArray::tensorOps::l2Norm< 3 >( particleVelocity[p] );
-      real64 const speedLimit = rigidBodyMode == 1 ? particleAdvectionSpeed : particleWavespeed[p] + particleAdvectionSpeed;
+      real64 const speedLimit = particleWavespeed[p] + particleAdvectionSpeed;
       maxWavespeed.max( speedLimit );
     } );
   } );
 
-  // This partition's continuum estimate is unchanged. RigidBodyMPM replaces
-  // it below with a globally synchronized advection/contact estimate.
+  // CFL estimate from particle wavespeed plus advection speed.
   real64 dtReturn = maxWavespeed.get() > 1.0e-16 ? cflFactor * length / maxWavespeed.get() : DBL_MAX;
-
-  if( rigidBodyMode == 1 )
-  {
-    dtReturn = computeRigidBodyStableTimeStep( maxWavespeed.get(), length );
-  }
 
   if( m_enableSurfaceTension == 1 )
   {
@@ -28739,11 +28125,6 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
           LvArray::math::min( dtReturn, capillaryDt );
       }
     }
-  }
-
-  if( rigidBodyMode == 1 )
-  {
-    dtReturn = MpiWrapper::min( dtReturn );
   }
 
   // TODO: expand time-step calculation to account for:
@@ -29342,7 +28723,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
         if constexpr(DIM==2) rawRVectors[2][2]=1;
         real64 const referenceMeasure =
           particleDomainMeasure( particleGeometryReference[p], numDims );
-        real64 const requestedMeasure = J * referenceMeasure;
+        real64 const requestedMeasure = J * referenceMeasure / (m_axisymmetric ? oldDeformationGradient[2][2] : 1.0);
         real64 projectedRVectors[3][3] = {};
         VPHenckyDomainProjectionResult const projection =
           projectVPHenckyParticleDomain(
@@ -29359,6 +28740,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
               projectedRVectors,
               newDeformationGradient ) )
         {
+          if(m_axisymmetric) newDeformationGradient[2][2]=oldDeformationGradient[2][2];
           validVPHenckyReset = true;
           if( projection.volumeFeasible == 0 )
           {
@@ -29411,10 +28793,10 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
         real64 isotropicStretch[3][3] = {};
         if( planeStrain == 1 )
         {
-          real64 const activeStretch = LvArray::math::sqrt( J );
+          real64 const activeStretch = LvArray::math::sqrt( J / (m_axisymmetric ? oldDeformationGradient[2][2] : 1.0) );
           isotropicStretch[0][0] = activeStretch;
           isotropicStretch[1][1] = activeStretch;
-          isotropicStretch[2][2] = 1.0;
+          isotropicStretch[2][2] = m_axisymmetric ? oldDeformationGradient[2][2] : 1.0;
         }
         else
         {

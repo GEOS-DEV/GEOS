@@ -59,6 +59,7 @@ set( mesh_headers
      ParticleSubRegion.hpp
      ParticleSubRegionBase.hpp
      ParticleType.hpp
+     AxisymmetricGeometry.hpp
      ParticleGeometry.hpp
      ParticleSubdivision.hpp
      CohesiveZoneManager.hpp

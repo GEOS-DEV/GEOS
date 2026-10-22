@@ -372,6 +372,10 @@ SpatialPartition::SpatialPartition( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Ghost position min." );
 
+  registerWrapper("axisymmetric", &m_axisymmetric).
+    setInputFlag(InputFlags::FALSE).
+    setDescription("Full-ring meridional coordinates, retained on restart.");
+
   registerWrapper( "planeStrainThickness", &m_planeStrainThickness ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Domain-wide physical thickness for native 2D; retained on restart." );

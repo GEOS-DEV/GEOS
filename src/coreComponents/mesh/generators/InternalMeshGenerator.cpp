@@ -43,6 +43,10 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   m_setCoords{},
   m_periodic( 3 )
 {
+  registerWrapper("axisymmetric", &m_axisymmetric).
+    setInputFlag(InputFlags::OPTIONAL).setApplyDefaultValue(0).
+    setDescription("Use x=radius, y=axial position on a native 2D mesh; full-ring measures.");
+
   registerWrapper( "planeStrainThickness", &m_planeStrainThickness ).
     setApplyDefaultValue( 1.0 ).setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Positive physical thickness for native 2D mass, Weibull volume and fracture area; no z mesh is generated." );
@@ -149,6 +153,12 @@ static int getNumElemPerBox( ElementType const elementType )
 
 void InternalMeshGenerator::postInputInitialization()
 {
+  GEOS_ERROR_IF(m_axisymmetric<0 || m_axisymmetric>1 || (m_axisymmetric && m_dim!=2),
+                "axisymmetric must be 0 or 1 and requires spatialDimension=2");
+  // The mesh includes a nonphysical buffer cell below r=0. The solver checks
+  // the physical bounds after removing that buffer; particles never sample it.
+  GEOS_ERROR_IF(m_axisymmetric && !isEqual(m_planeStrainThickness,1.0),
+                "Axisymmetric measures use full rings, not planeStrainThickness");
   GEOS_ERROR_IF( m_dim != 2 && m_dim != 3, "spatialDimension must be 2 or 3" );
   GEOS_ERROR_IF( m_elementType.empty(), "InternalMesh requires elementTypes" );
   for( string const & type : m_elementType )
@@ -612,6 +622,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
     partition.setSpatialDimension( m_dim );
     partition.setPlaneStrainThickness( m_planeStrainThickness );
+    partition.setAxisymmetric(m_axisymmetric);
+    GEOS_ERROR_IF(m_axisymmetric && partition.getPeriodic()[0], "Axisymmetric radial periodicity is invalid");
     partition.setPeriodic( m_periodic );
     partition.setSizes( m_min, m_max );
   }

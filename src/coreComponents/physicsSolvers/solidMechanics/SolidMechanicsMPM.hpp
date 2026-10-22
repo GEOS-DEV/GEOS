@@ -148,9 +148,6 @@ public:
 
     // Contact
     static constexpr char const * gridContactForceString() { return "gridContactForce"; }
-    static constexpr char const * gridRigidBodyFieldKeyString() { return "gridRigidBodyFieldKey"; }
-    static constexpr char const * gridRigidBodyFieldColorString() { return "gridRigidBodyFieldColor"; }
-    static constexpr char const * gridRigidBodyFieldContactGroupString() { return "gridRigidBodyFieldContactGroup"; }
     static constexpr char const * gridInterfaceMechanismString() { return "gridInterfaceMechanism"; }
     static constexpr char const * gridInterfaceNormalForceString() { return "gridInterfaceNormalForce"; }
     static constexpr char const * gridInterfaceTangentialForceString() { return "gridInterfaceTangentialForce"; }
@@ -258,10 +255,6 @@ public:
                                          SetInitialTemperatureAndPressureMPMEvent const & event );
 
   void checkEventCompletion( const real64 time_n );
-
-  real64 computeRigidBodyJammingStress() const;
-
-  real64 computeRigidBodyContactLengthScale() const;
 
   void performMaterialSwap( ParticleManager & particleManager,
                             string sourceRegionName,
@@ -565,8 +558,6 @@ public:
                                            real64 const & smallMass,
                                            int const & useSurfacePositionForContact,
                                            int const & useCohesiveTangentialForces,
-                                           real64 const rigidBodyPenetrationPenaltyBeta,
-                                           real64 & contactPenetration,
                                            bool & separable,
                                            real64 const & dt,
                                            real64 const & frictionCoefficient,
@@ -605,8 +596,6 @@ public:
                                          real64 const & smallMass,
                                          int const & useSurfacePositionForContact,
                                          int const & useCohesiveTangentialForces,
-                                         real64 const rigidBodyPenetrationPenaltyBeta,
-                                         real64 & contactPenetration,
                                          bool & separable,
                                          real64 const & dt,
                                          real64 const & frictionCoefficient,
@@ -774,38 +763,8 @@ public:
                                          NodeManager & nodeManager,
                                          MeshLevel & mesh );
 
-  void computeParticleFieldMappings( DomainPartition & domain,
-                                     ParticleManager & particleManager,
-                                     NodeManager & nodeManager,
-                                     MeshLevel & mesh );
-
-  void computeRigidBodyColorFieldMappings( DomainPartition & domain,
-                                           ParticleManager & particleManager,
-                                           NodeManager & nodeManager,
-                                           MeshLevel & mesh );
-
-  void rigidBodyParticleUpdate( real64 const time_n,
-                                real64 const dt,
-                                ParticleManager & particleManager,
-                                NodeManager & nodeManager,
-                                SpatialPartition & partition );
-
-  void resetRigidBodyMPIState();
-
-  void initializeRigidBodyMPIState( ParticleManager & particleManager,
-                                    SpatialPartition & partition );
-
-  real64 computeRigidBodyStableTimeStep( real64 localMaximumParticleSpeed,
-                                         real64 localMinimumCellLength ) const;
-
-  static GEOS_FORCE_INLINE
-  GEOS_HOST_DEVICE
-  bool isRigidBodySurfaceFlag( integer const surfaceFlag )
-  {
-    return surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
-           surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
-           surfaceFlag == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
-  }
+  void computeParticleFieldMappings( ParticleManager & particleManager,
+                                     NodeManager & nodeManager );
 
   void updateDeformationGradient( real64 dt,
                                   ParticleManager & particleManager );
@@ -1312,7 +1271,6 @@ protected:
   real64 m_nextParticleDataWriteTime;
   real64 m_nextProfileWriteTime;
   real64 m_nextReactionWriteTime;
-  real64 m_nextRigidBodyHistoryWriteTime;
   real64 m_nextTracerWriteTime;
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   mpm::NormalsAndPositionsMethodOption m_normalAndPositionMethod;
@@ -1335,7 +1293,8 @@ protected:
   string_array m_profileVariables;
   real64 m_profileWriteInterval;
   array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
-  int m_planeStrain;
+  int m_planeStrain; // Historical name: selects native 2D geometry, including axisymmetry.
+  bool m_axisymmetric = false;
   string m_formulation = "Cartesian3D";
   // Cached from the domain's partition; never an independent solver input.
   real64 m_planeStrainThickness = 1.0;
@@ -1344,6 +1303,10 @@ protected:
   template<class EXTENTS>
   GEOS_HOST_DEVICE real64 physicalVolume( EXTENTS const & extent ) const
   { return extent[0]*extent[1]*(m_numDims==2 ? m_planeStrainThickness : extent[2]); }
+  real64 physicalDomainVolume() const
+  { return m_axisymmetric ? 3.14159265358979323846 *
+      (m_xGlobalMax[0]*m_xGlobalMax[0]-m_xGlobalMin[0]*m_xGlobalMin[0])*m_domainExtent[1]
+      : physicalVolume(m_domainExtent); }
   int m_plotGridFields;
   string_array m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;
@@ -1357,30 +1320,6 @@ protected:
   stdVector< real64 > m_profilingTimes;
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
-  string m_rigidBodyActiveEventName;
-  array1d< globalIndex > m_rigidBodyAnchorParticleIDs;
-  real64 m_rigidBodyAngularDamping;
-  array1d< integer > m_rigidBodyColors;
-  array1d< integer > m_rigidBodyContactGroups;
-  real64 m_rigidBodyContactCFL;
-  real64 m_rigidBodyContactLengthScale;
-  int m_rigidBodyHistory;
-  real64 m_rigidBodyHistoryWriteInterval;
-  real64 m_rigidBodyKineticEnergy;
-  real64 m_rigidBodyLinearDamping;
-  int m_rigidBodyMaxGridFields;
-  real64 m_rigidBodyMaxForce;
-  real64 m_rigidBodyMaxTimeStep;
-  int m_rigidBodyMode;
-  real64 m_rigidBodyObservedJammingStress;
-  real64 m_rigidBodyObservedMaxForce;
-  real64 m_rigidBodyObservedMaxPenetration;
-  real64 m_rigidBodyPenetrationPenaltyBeta;
-  array1d< integer > m_rigidBodyPeriodicDirections;
-  int m_rigidBodyRegistryInitialized;
-  int m_rigidBodyRegistrySynchronized;
-  real64 m_rigidBodyStopKineticEnergy;
-  array1d< real64 > m_rigidBodyUnwrappedCenters;
   int m_resetDefGradForFullyDamagedParticles;
   int m_resetDefGradForMeltedParticles;
   int m_resetDefGradForScaledSurfaceParticles;

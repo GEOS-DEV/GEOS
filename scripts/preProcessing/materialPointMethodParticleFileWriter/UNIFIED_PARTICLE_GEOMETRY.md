@@ -91,7 +91,8 @@ Homel selects diameter limit `0.99998*min(h)`, vpHencky selects
 `0.99999*neighborRadius`; neither applies the box VP-Hencky algorithm/cap.
 Scaling can reduce integration volume, but leaves all material state unchanged.
 See [CPTI.md](CPTI.md) for generation and runtime controls. Arbitrary warped
-CPDI2 cells and axisymmetry remain future work. Native triangles use three
+CPDI2 remains future work. Axisymmetric single-field mechanics use the native
+quad/triangle geometry; see AXISYMMETRIC_PLAN.md for its scope and restrictions. Native triangles use three
 corner stencils (12 raw entries), weights 1/3, and the 2D reciprocal edge basis.
 
 ## Splitting and cohesive zones

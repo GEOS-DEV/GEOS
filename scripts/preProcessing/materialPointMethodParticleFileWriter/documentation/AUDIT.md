@@ -11,7 +11,7 @@ Updated theory, grid, geometry, mapping/type, refinement, reset, CZ and output
 documentation; added TRUE_2D_PLAN.md and PFW_2D_OBJECTS.md and a complete native
 mixed example. The generated particle-column table distinguishes four active
 2D generators from nine 3D entries. Source fingerprints include the new kernels,
-mesh/partition, rigid-body, output, object and VisIt code. Restart geometry version
+mesh/partition, output, object and VisIt code. Restart geometry version
 is 3; particle-file version remains 2. Old PFW Python inputs are supported, old
 GEOS XML/particle/checkpoint compatibility is not a target.
 

@@ -166,6 +166,7 @@ protected:
   /// Mesh number of dimension
   int m_dim;
   real64 m_planeStrainThickness = 1.0;
+  integer m_axisymmetric = 0;
 
   /// Minimum extent of mesh dimensions
   real64 m_min[3];

@@ -372,6 +372,7 @@ source_inventory=[
     {'component':'MPM solver','path':'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.[ch]pp'},
     {'component':'Dimension-specialized MPM mapping','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMMappingKernels.hpp'},
     {'component':'Native interface measures','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMGeometryMeasures.hpp'},
+    {'component':'Axisymmetric ring measures','path':'src/coreComponents/mesh/AxisymmetricGeometry.hpp'},
     {'component':'MPM unified geometry','path':'src/coreComponents/mesh/ParticleGeometry.hpp'},
     {'component':'MPM particle subdivision','path':'src/coreComponents/mesh/ParticleSubdivision.hpp'},
     {'component':'MPM solver fields','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMSolverFields.hpp'},
@@ -412,7 +413,6 @@ data={
 fingerprint_paths=[
  'src/coreComponents/physicsSolvers/solidMechanics/MPMMappingKernels.hpp',
  'src/coreComponents/physicsSolvers/solidMechanics/MPMGeometryMeasures.hpp',
- 'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPMRigidBody.cpp',
  'src/coreComponents/mesh/generators/InternalMeshGenerator.cpp',
  'src/coreComponents/mesh/mpiCommunications/SpatialPartition.cpp',
  'src/coreComponents/fileIO/silo/SiloFile.cpp',
@@ -426,6 +426,7 @@ fingerprint_paths=[
  'src/coreComponents/mesh/particleGenerators/ParticleMeshGenerator.hpp',
  'src/coreComponents/mesh/ParticleRegion.cpp',
  'src/coreComponents/mesh/ParticleGeometry.hpp',
+ 'src/coreComponents/mesh/AxisymmetricGeometry.hpp',
  'src/coreComponents/mesh/ParticleSubdivision.hpp',
  'src/coreComponents/mesh/ParticleSubRegionBase.hpp',
  'src/coreComponents/mesh/ParticleSubRegionBase.cpp',
@@ -434,6 +435,7 @@ fingerprint_paths=[
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_particle_layout.py',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_simplex_clipping.py',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_reference_geometry.py',
+ 'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_axisymmetric.py',
  'scripts/preProcessing/materialPointMethodParticleFileWriter/pfw_check.py',
 ]
 data['source_sha256']={p:hashlib.sha256((repo/p).read_bytes()).hexdigest() for p in fingerprint_paths}

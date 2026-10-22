@@ -70,8 +70,8 @@ public:
   virtual array1d< int > getParticleGroup() const = 0;
 
   /**
-   * @brief Get the list of particle rigid-body color numbers in this subregion.
-   * @return the list of particle rigid-body colors in this subregion.
+   * @brief Get the list of particle color labels in this subregion.
+   * @return the list of particle color labels in this subregion.
    */
   virtual array1d< int > getParticleColor() const = 0;
 

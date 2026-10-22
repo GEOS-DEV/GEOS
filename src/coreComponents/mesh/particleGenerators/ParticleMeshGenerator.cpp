@@ -17,6 +17,7 @@
  */
 
 #include "ParticleMeshGenerator.hpp"
+#include "mesh/AxisymmetricGeometry.hpp"
 #include "mesh/ParticleGeometry.hpp"
 
 #include "mainInterface/GeosxState.hpp"
@@ -367,7 +368,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       // Group
       particleGroup[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::ContactGroup )];
 
-      // Rigid body color. This is intentionally separate from the contact group.
+      // Visualization color label, independent of the contact group.
       particleColor[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::ParticleColor )];
 
       // surfaceFlag
@@ -399,9 +400,26 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
                     "Particle geometry dimension must match the native mesh" );
       for(int a=0;a<dimensions;++a) for(int j=0;j<dimensions;++j)
         particleGeometryCurrent[i][a][j]=particleData[b][i][static_cast<int>(ParticleColumnHeaders::GeometryXX)+3*a+j];
-      auto const error=particleGeometry::affine::validateFileGeometry(tag,particleVolume[i],particleGeometryCurrent[i],partition.planeStrainThickness());
+      real64 const measureScale=partition.axisymmetric()
+        ? axisymmetric::twoPi*particleCenter[i][0] : partition.planeStrainThickness();
+      GEOS_ERROR_IF(partition.axisymmetric() && !(particleCenter[i][0]>0),
+                    "Axisymmetric particle centers must have positive radius");
+      auto const error=particleGeometry::affine::validateFileGeometry(tag,particleVolume[i],particleGeometryCurrent[i],measureScale);
       GEOS_ERROR_IF(error!=particleGeometry::affine::InputError::None,
                     "Particle " << particleID[i] << ": " << particleGeometry::affine::inputErrorMessage(error));
+      if(partition.axisymmetric())
+      {
+        auto const domain=particleGeometry::affine::Domain::fromGenerators(
+          static_cast<particleGeometry::Shape>(static_cast<int>(tag)),particleGeometryCurrent[i]);
+        for(int vertex=0;vertex<domain.verticesCount();++vertex)
+        {
+          real64 offset[3]; domain.vertexOffset(vertex,offset);
+          GEOS_ERROR_IF(particleCenter[i][0]+offset[0]<-1e-12*std::max(1.0,particleCenter[i][0]),
+                        "Initial axisymmetric material domain crosses r=0");
+        }
+        GEOS_ERROR_IF(particleSurfaceFlag[i]>=3 || particleCZTag[i]!=0,
+                      "Axisymmetric cohesive particles are not implemented");
+      }
       referenceGeometry[i]=static_cast<integer>(tag);
       ParticleType const type=particleBlock.getParticleType();
       GEOS_ERROR_IF(type==ParticleType::CPDI2, "CPDI2 mapping is not implemented");

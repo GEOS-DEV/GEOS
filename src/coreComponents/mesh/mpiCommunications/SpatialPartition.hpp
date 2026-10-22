@@ -307,6 +307,8 @@ public:
   }
 
   /// Ambient dimension is supplied by the mesh before Cartesian MPI setup.
+  bool axisymmetric() const { return m_axisymmetric != 0; }
+  void setAxisymmetric(int value) { m_axisymmetric=value; }
   int spatialDimension() const { return m_spatialDimension; }
   void setSpatialDimension( int dimension );
 
@@ -318,6 +320,7 @@ public:
 
 private:
   real64 m_planeStrainThickness = 1.0;
+  integer m_axisymmetric = 0;
 
   /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).

@@ -294,3 +294,10 @@ The current manual, including PFW defaults and complete splitting behavior, is
 documentation/geos_mpm_manual.pdf. Rebuild with:
   bash documentation/build_manual.sh --refresh-data
 See documentation/AUDIT.md for the source audit and validation scope.
+
+Axisymmetric native 2D (single-field first stage)
+------------------------------------------------
+Use formulation='Axisymmetric' for x=radius and y=axial position, with full-ring
+physical mass/volume and no swirl. Do not set planeStrainThickness. See
+AXISYMMETRIC_PLAN.md for supported options, explicit restrictions and tests;
+examples/axisymmetricCylinder supplies a CPDI-core/CPTI-annulus smoke case.

@@ -845,7 +845,6 @@ parameters = {
                'enableSurfaceTension': ( None, True ),  # MPM: enable particle surface-tension force.
                'eventReporting': (None, True), # MPM: enable event information reporting.
                'gridToParticleMapping': (None, True), # Determines shape function computations at runtime.
-               'rigidBodyMaxGridFields': ( None, True ),  # MPM: reserve nodal velocity fields for rigid-body color partitioning.
                'endTime': ( 1.0, False ),  # PFW: simulation end time for generated event.
                'exactJIntegration': ( None, True ),  # MPM: enforce exact J integration for F updates.
                'explicitSurfaceNormalInfluence': ( None, True ),  # MPM: dimensionless weight of explicit vs implicit surface normals; solver scales by inverse grid-cell diagonal.
@@ -1072,12 +1071,16 @@ if not isinstance(pfw, dict):
 pfw = dict(pfw)
 legacyPlaneStrain = bool(pfw.get('planeStrain', 0))
 formulationInput = pfw.get('formulation', 'PlaneStrain' if legacyPlaneStrain else 'Cartesian3D')
-if formulationInput not in ('Cartesian3D', 'PlaneStrain'):
-  raise ValueError("formulation must be Cartesian3D or PlaneStrain")
+axisymmetric = formulationInput == 'Axisymmetric'
+if axisymmetric:
+  from pfw_axisymmetric import validate_options, ring_volume, bind_objects, validate_particle
+  validate_options(pfw)
+if formulationInput not in ('Cartesian3D', 'PlaneStrain', 'Axisymmetric'):
+  raise ValueError("formulation must be Cartesian3D, PlaneStrain or Axisymmetric")
 if 'planeStrain' in pfw and legacyPlaneStrain != (formulationInput == 'PlaneStrain'):
   raise ValueError("planeStrain and formulation disagree")
 pfw['formulation'] = formulationInput
-pfw['planeStrain'] = int(formulationInput == 'PlaneStrain')
+pfw['planeStrain'] = int(formulationInput != 'Cartesian3D')
 if pfw['planeStrain']:
   defaultThickness = (float(pfw.get('zmax', 0.5))-float(pfw.get('zmin', -0.5))) if legacyPlaneStrain else 1.0
   thickness = float(pfw.get('planeStrainThickness', defaultThickness))
@@ -1162,9 +1165,6 @@ if requiresSurfaceContactFields:
       ', '.join(missingFields)
     )
 
-requiresRigidBodyColorField = ('mpmEventsString' in pfw and 'RigidBodyMPM' in str(pfw['mpmEventsString']))
-if requiresRigidBodyColorField and 'ParticleColor' not in particleFileFields:
-  raise ValueError('RigidBodyMPM events require particleFileFields to include ParticleColor')
 
 # Remove new line from last parameter to be added (for XML formatting).
 
@@ -1274,7 +1274,10 @@ else:
 if planeStrain:
   from pfw_geometryObjects import prepare_plane_strain_objects, bind_plane_strain_thickness
   prepare_plane_strain_objects(objects)
-  bind_plane_strain_thickness(objects, planeStrainThickness)
+  if axisymmetric:
+    bind_objects(objects)
+  else:
+    bind_plane_strain_thickness(objects, planeStrainThickness)
 
 # Compute resources for the subsequent GEOS job, independently of the number
 # of ranks currently running PFW. Partition counts determine mCores; machine
@@ -1426,7 +1429,10 @@ dz = dZ if planeStrain == 1 else dZ/ppcz
 
 # Sum particle volume to compute volume fraction.
 particleVolume = 0.
-domainVolume = (xmax-xmin)*(ymax-ymin)*(planeStrainThickness if planeStrain else zmax-zmin)
+domainVolume = (math.pi*(xmax*xmax-xmin*xmin)*(ymax-ymin) if axisymmetric else
+                (xmax-xmin)*(ymax-ymin)*(planeStrainThickness if planeStrain else zmax-zmin))
+def physical_particle_volume(center, widths):
+  return ring_volume(center, widths) if axisymmetric else float(np.prod(widths))
 
 # Continuation runs reuse the existing checkpoint and particle file. Otherwise,
 # each PFW rank opens its own temporary particle file without a header; rank 0
@@ -1794,7 +1800,10 @@ if generateParticleFile:
       raise ValueError("CPTI requires triangle geometry in 2D or tetrahedron geometry in 3D")
     if data['particleType'] == 2 and geometry[0] != (3 if planeStrain else 0):
       raise ValueError("CPDI requires box geometry; set simplexParticleType=3 for CPTI cut tets")
-    pString += delim + geometry_columns(geometry, dxr*dyr*dzr, delim, thickness=planeStrainThickness)
+    if axisymmetric:
+      validate_particle(particlePosition, data, geometry)
+    measureScale = 2*math.pi*particlePosition[0] if axisymmetric else planeStrainThickness
+    pString += delim + geometry_columns(geometry, physical_particle_volume(particlePosition,(dxr,dyr,dzr)), delim, thickness=measureScale)
     return pString +'\n'
 
   def _particle_records(point, data, widths, vertices=None):
@@ -1910,9 +1919,9 @@ if generateParticleFile:
         # Supply only a local ID and account for their volume, without querying again.
         if piece.coarse_record is not None:
           n_p += 1
-          particleVolume += piece.volume
+          particleVolume += physical_particle_volume(piece.point,piece.widths)
           particleFile.write(str(n_p) + delim + piece.coarse_record)
-          layoutStatistics.record(piece.sample.coarse_particle_type, 3 if planeStrain else 0, piece.volume)
+          layoutStatistics.record(piece.sample.coarse_particle_type, 3 if planeStrain else 0, physical_particle_volume(piece.point,piece.widths))
           continue
         obj = objects[piece.sample.object_index]
         # Restore any geometry-object membership cache before evaluating state.
@@ -1948,10 +1957,10 @@ if generateParticleFile:
         _validate_particle_value("ParticleType", obj, data["particleType"], piece.point)
         for center, record, widths, vertices in _particle_records(piece.point, data, piece.widths, piece.vertices):
           n_p += 1
-          particleVolume += float(np.prod(widths))
+          particleVolume += physical_particle_volume(center,widths)
           particleFile.write(_particle_file_line(n_p, center, record, *widths, geometryVertices=vertices))
           shape = (4 if planeStrain else 2) if nativeReferenceGeometry and vertices is not None else (3 if planeStrain else 0)
-          layoutStatistics.record(record['particleType'], shape, float(np.prod(widths)))
+          layoutStatistics.record(record['particleType'], shape, physical_particle_volume(center,widths))
       refinementReport = refiner.report()
       # The geometric refiner counts pieces before a CPTI box becomes six tets.
       # Keep that count and also report the actual number of serialized particles.
@@ -2016,7 +2025,7 @@ if generateParticleFile:
                 _validate_particle_value("ParticleType", childData["object"], childData["particleType"], particlePosition)
                 for center, record, widths, vertices in _particle_records(particlePosition, childData, (dxr, dyr, dzr)):
                   n_p += 1
-                  particleVolume += float(np.prod(widths))
+                  particleVolume += physical_particle_volume(center,widths)
                   particleFile.write(_particle_file_line(n_p, center, record, *widths, geometryVertices=vertices))
 
   particleFile.close()
@@ -2271,6 +2280,7 @@ if rank == 0:
   # coordinates, cells or ghost layers in native 2D XML.
   meshZAttributes = '' if planeStrain else f'zCoords="{{ {ZMIN}, {ZMAX} }}"\n      nz="{{ {NK} }}"'
   meshDimensionAttributes = f'spatialDimension="2" planeStrainThickness="{planeStrainThickness}"' if planeStrain else 'spatialDimension="3"'
+  if axisymmetric: meshDimensionAttributes = 'spatialDimension="2" axisymmetric="1"'
   meshElementType = 'C2D4' if planeStrain else 'C3D8'
   geosInputFileString = f"""<?xml version="1.0" ?>
 <!-- 

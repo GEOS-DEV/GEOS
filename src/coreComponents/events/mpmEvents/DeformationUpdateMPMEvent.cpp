@@ -40,8 +40,7 @@ DeformationUpdateMPMEvent::DeformationUpdateMPMEvent( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_relativeDeformation ).
     setDescription( "Determines whether F-table deformation is absolute or relative to the configuration at event activation. "
-                    "For a DeformationUpdate that depends on a RigidBodyMPM event, relativeDeformation=1 starts continuum "
-                    "compaction from the jammed grid configuration." );
+                    "Use relativeDeformation=1 to apply a new loading stage relative to the current grid configuration." );
 
   registerWrapper( viewKeyStruct::prescribedFTableString(), &m_prescribedFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
