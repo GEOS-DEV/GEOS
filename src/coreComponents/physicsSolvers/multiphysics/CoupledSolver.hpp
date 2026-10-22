@@ -576,6 +576,7 @@ protected:
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->getIterationStats().iterateTimeStepStatistics();
+          solver->getIterationStats().writeIterationStatsToTable();
         } );
         // get out of the time loop
         break;
@@ -592,6 +593,7 @@ protected:
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->getIterationStats().updateTimeStepCut();
+          solver->getIterationStats().writeIterationStatsToTable();
         } );
       }
     }
