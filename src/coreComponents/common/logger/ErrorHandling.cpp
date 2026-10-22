@@ -18,6 +18,7 @@
  */
 
 #include "ErrorHandling.hpp"
+#include "LvArray/src/system.hpp"
 #include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/format/StringUtilities.hpp"
@@ -44,6 +45,11 @@ ErrorLogger g_errorLogger{};
 
 ErrorLogger & ErrorLogger::global()
 { return g_errorLogger; }
+
+ErrorLogger::ErrorLogger()
+{
+  setDiagnosticInfoLevel( DiagnosticInfoLevel::Basic );
+}
 
 std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
 {
@@ -277,7 +283,29 @@ void ErrorLogger::createFile()
   }
 }
 
-std::string ErrorLogger::toString( MsgType const type )
+void ErrorLogger::setDiagnosticInfoLevel( DiagnosticInfoLevel const level )
+{
+  switch( level )
+  {
+    case DiagnosticInfoLevel::Basic:
+      m_msgTypeSourceInfoEnabled.fill( false );
+      break;
+    case DiagnosticInfoLevel::ErrorSources:
+      m_msgTypeSourceInfoEnabled.fill( true );
+      m_msgTypeSourceInfoEnabled[integer( MsgType::Warning )] = false;
+      break;
+    case DiagnosticInfoLevel::WarningSources:
+      m_msgTypeSourceInfoEnabled.fill( true );
+      break;
+    default:
+      // if option has a wrong value, we output every details for any messages
+      m_msgTypeSourceInfoEnabled.fill( true );
+      break;
+  }
+}
+
+
+std::string ErrorLogger::typeToString( MsgType const type )
 {
   switch( type )
   {
@@ -289,12 +317,26 @@ std::string ErrorLogger::toString( MsgType const type )
   }
 }
 
-void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & os )
+bool ErrorLogger::isSourceInfoEnabled( MsgType const type ) const
+{
+  switch( type )
+  {
+    case MsgType::Error: return m_msgTypeSourceInfoEnabled[integer( MsgType::Error )];
+    case MsgType::Warning: return m_msgTypeSourceInfoEnabled[integer( MsgType::Warning )];
+    case MsgType::Exception: return m_msgTypeSourceInfoEnabled[integer( MsgType::Exception )];
+    case MsgType::ExternalError: return m_msgTypeSourceInfoEnabled[integer( MsgType::ExternalError )];
+    default: return m_msgTypeSourceInfoEnabled[integer( MsgType::Undefined )];
+  }
+}
+
+void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg,
+                                   std::ostream & os,
+                                   bool enableSourceInfo )
 {
   static constexpr string_view PREFIX = "***** ";
   // --- HEADER ---
-  os << PREFIX << ErrorLogger::toString( errMsg.m_type ) << "\n";
-  if( !errMsg.m_file.empty())
+  os << PREFIX << typeToString( errMsg.m_type ) << "\n";
+  if( enableSourceInfo && !errMsg.m_file.empty() )
   {
     os << PREFIX<< "LOCATION: " << errMsg.m_file;
     if( errMsg.m_line > 0 )
@@ -332,7 +374,7 @@ void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & 
     }
   }
   // --- STACKTRACE ---
-  if( !errMsg.m_sourceCallStack.empty() )
+  if( enableSourceInfo && !errMsg.m_sourceCallStack.empty() )
   {
     os << "\n***** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames\n";
     for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
@@ -353,7 +395,9 @@ void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & 
 void ErrorLogger::writeToLogStream( DiagnosticMsg & errMsg )
 {
   std::lock_guard< std::mutex > guard( m_errorHandlerAsciiMutex );
-  formatMsgForLog( errMsg, m_stream );
+  formatMsgForLog( errMsg,
+                   m_stream,
+                   isSourceInfoEnabled( errMsg.m_type ) );
   m_stream.flush();
 }
 
@@ -364,7 +408,7 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
   if( yamlFile.is_open() )
   {
     // General errors info (type, rank on which the error occured)
-    yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errMsg.m_type ) << "\n";
+    yamlFile << g_level1Start << "type: " << typeToString( errMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: " << stringutilities::join( errMsg.m_ranksInfo, "," );
     yamlFile << "\n";
 
