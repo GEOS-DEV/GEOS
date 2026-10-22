@@ -1,0 +1,110 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Native axisymmetric mechanics: first stage}
+\label{sec:axisymmetric}
+\index{axisymmetry}
+Set \mpmcode{formulation=Axisymmetric} in PFW. The same timestep uses the
+native 2D mesh with $x=r$ and $y$ axial. The geometric z coordinate and
+circumferential velocity are zero. Constitutive tensors use the
+$(r,y,\theta)$ basis: their zz entry is the hoop component. G and $G_0$
+remain two full meridional edge generators, for a parallelogram or triangle.
+No extra radius, hoop generator or vertex array is stored.
+
+\subsection{Full-ring measures and cylindrical mapping}
+PFW writes \mpmcode{spatialDimension=2} and \mpmcode{axisymmetric=1} on
+\texttt{InternalMesh}. The partition retains this flag on restart; solver and
+mesh must agree. The physical radial minimum is nonnegative, all particle
+centers have positive radius, and radial periodicity is forbidden. Standard
+exterior mesh buffer cells remain; they are not physical negative-radius
+material. The solver applies radial symmetry at $r=0$.
+
+Use full-ring physical quantities, without \texttt{planeStrainThickness}:
+\[
+ V_p=2\pi r_p A_p,\qquad m_p=\rho_p V_p,\qquad
+ V_\Omega=\pi(r_{\max}^2-r_{\min}^2)(y_{\max}-y_{\min}).
+\]
+The particle center is the meridional area centroid. PFW evaluates every
+emitted child's ring volume at its own radius, including cut triangles and
+Cartesian-to-CPTI tessellation. Particle-sized fracture lengths use
+$\sqrt{V_p/(2\pi r_p)}$; scalar user-specified lengths are unchanged.
+
+The radius-weighted operators are
+\[
+ S_I=\frac{\int_A r N_I\,dA}{A r_p},\qquad
+ \mathbf G_I=\frac{\int_A r\nabla N_I\,dA}{A r_p},\qquad
+ T_I=\frac{\int_A N_I\,dA}{A r_p}.
+\]
+CPDI/CPTI integrate the material-domain interpolant of the grid basis. The
+otherwise inactive third mapping-gradient slot stores $T_I$, not a z
+spatial derivative. Point Q1 uses $T_I=N_I/r_p$. CPDI has four corners;
+CPTI has three. The cylindrical force and hoop kinematics are
+\begin{align*}
+ f_{Ir}&=-V_p(\sigma_{rr}G_{Ir}+\sigma_{ry}G_{Iy}+\sigma_{\theta\theta}T_I),\\
+ f_{Iy}&=-V_p(\sigma_{ry}G_{Ir}+\sigma_{yy}G_{Iy}),&
+ L_{\theta\theta}&=\sum_I v_{Ir}T_I.
+\end{align*}
+FLIP, PIC, XPIC and FMPM include the hoop term. F, physical volume and stress
+power use all three tensor diagonal components; only the 2D block advances G.
+Material symmetries/orientations must be compatible with no swirl.
+
+Temporary integration geometry is uniformly shrunk about its center if a
+corner would pass below $r=0$. Stored material geometry, mass and physical
+volume are unchanged. A center reaching $r\leq0$ is an error. Splitting uses
+area fraction times $r_{\mathrm{child}}/r_{\mathrm{parent}}$ for extensive
+state, with a weighted-mean correction for optional affine child velocities.
+This conserves momentum, but resolving the velocity gradient can add resolved
+kinetic energy, as in the existing splitter. Automatic resets preserve hoop
+stretch and use $J/F_{\theta\theta}$ for planar geometry projection.
+
+\subsection{Supported scope and deferred integrations}
+This first stage supports a single velocity/contact group, Q1 point, CPDI and
+CPTI particles, fixed Outflow/Symmetry boundaries, and compatible body-force,
+initial-velocity and material initialization. It explicitly rejects DFG,
+material contact/CZ, surface tension, reconstructed surfaces/nodal areas,
+SPH/overlap corrections, crack-tip detection, profileHistory slice normalization,
+B-splines, prescribed BC/F tables
+and stress-controlled domain motion. PFW rejects surface traction generation;
+direct GEOS particle tractions are interpreted as already integrated full-ring
+forces. The uniform-confinement follow-up supports
+\mpmcode{ConfiningPressure} with \mpmcode{uniformPressure=1} and no box/sphere
+exclusion. Its background stress includes the hoop component; pressure is
+retained after the event and across restart. Spatially restricted pressure
+remains unsupported. Most geometry-changing/healing/CZ events are rejected.
+
+Built-in area-only Weibull objects are rejected: a statistical cell needs
+$2\pi\int_A r\,dA$, before minimum-volume clamping. A custom wrapper can
+implement \texttt{setAxisymmetric()}; explicit StrengthScale values are not
+rescaled. Plane-strain thickness binding remains unchanged. Weibull and
+localized hoop-driven cracking are deferred because circumferential
+localization requires a treatment beyond the current symmetry assumption.
+
+Silo/VTK output continues to show meridional quad/triangle glyphs at z=0.
+Stress zz is hoop stress; volume, mass and reactions are full-ring values.
+Reaction-history length\_z is zero; do not use Cartesian thickness-based
+force-to-pressure conversions.
+No automatic revolved output mesh is generated. ParticleColor is retained.
+
+\subsection{Example, validation and remaining work}
+\path{examples/axisymmetricCylinder} supplies a CPDI core with CPTI outer
+annulus and radial contraction pulse. Its radius-1, length-1 cylinder has
+volume $\pi$ and mass $1000\pi$. It is a smoke test, not a validated dynamics
+benchmark. The runner generates inputs and optionally runs a selected GEOS
+executable; its particle check verifies geometry and full-ring volume.
+
+Standalone checks cover 1800 production axisymmetric mappings, cylindrical
+moments, hoop work, hydrostatic radial equilibrium, near-axis restriction and
+split conservation. Complete writer checks cover both ordinary and curved
+refined geometry at 1, 3 and 7 explicitly emulated ranks. These checks do not
+replace the target GEOS build, actual MPI migration/restart, GPU execution or
+output readback. See \path{AXISYMMETRIC_PLAN.md} for exact limits, local results,
+and the next contact/CZ, traction and verification stages.
+
+\path{examples/axisymmetricJacketedSample} adds a 20-mm-diameter, 20-mm-long
+compliant sample between 2-mm steel plates inside a 1-mm rubber jacket.
+CPDI quads fill the sample and plates; CPTI triangles fill the jacket and end
+caps. A uniform pressure bath ramps to 10 kPa over 1 ms and holds for 1 ms.
+All interfaces remain bonded in group zero. The sample is an effective elastic
+porous continuum, without explicit pores, pore fluid, failure or plastic
+compaction. An equal-material variant checks the small-strain homogeneous
+reference $\sigma_{rr}=\sigma_{yy}=\sigma_{\theta\theta}=-p$ and
+$\Delta V/V=-p/K$. Source-level checks do not establish dynamics convergence;
+run the included histories and resolution checks on the target build.

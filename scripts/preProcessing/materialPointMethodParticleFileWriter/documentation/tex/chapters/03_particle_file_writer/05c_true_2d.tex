@@ -1,0 +1,139 @@
+% !TeX root = ../../../geos_mpm_manual.tex
+\section{Native XY plane strain}
+\label{sec:native-true-2d}
+\index{plane strain!native 2D}
+\index{planeStrainThickness}
+\index{CPTI!triangles}
+
+\subsection{One timestep, dimension-specific kernels}
+\texttt{formulation=Cartesian3D} remains the default. Selecting
+\texttt{PlaneStrain} uses the same timestep sequence with dimension-specialized
+mapping, gather/update, integration-domain and splitting paths. The background
+mesh has native C2D4 cells and two-node faces. Partition ownership, periodic
+neighbors and ghost regions operate in XY; no z cell or z communication slab
+is constructed. Framework vectors retain three components with inactive z zero.
+Constitutive tensors remain $3\times3$ so that plane-strain material response
+retains $\sigma_{zz}$ while $F_{zz}=1$ and $L_{zz}=0$.
+
+G and $G_0$ each store two full XY edge generators. Shape 3 reconstructs a
+parallelogram at $c\pm g_1/2\pm g_2/2$. Shape 4 reconstructs a triangle at
+$v_0=c-(g_1+g_2)/3$, $v_1=v_0+g_1$, $v_2=v_0+g_2$. No thickness generator,
+vertex array or glyph array is stored. The two matrices cost 64 bytes per
+particle. F-only and F-plus-geometry reset semantics are unchanged, applied
+to the active geometry block. Native splitting retains shape and interpolation.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrp{0.35\linewidth}@{}}
+\toprule Mapping & 2D entries & 3D entries & Material geometry\\\midrule
+SinglePoint & 4 & 8 & Any matching-dimension shape\\
+SinglePointBSpline & 16 & 64 & Any matching-dimension shape\\
+CPDI & 16 raw & 64 raw & Parallelogram / box\\
+CPTI & 12 raw & 32 raw & Triangle / tetrahedron\\
+\bottomrule
+\end{tabular}\end{center}
+Raw CPDI/CPTI entries include repeated grid nodes. Effective mapping coalesces
+them. For triangle CPTI, $E=[g_1\ g_2]$, $b_a=E^{-T}e_a$ and
+$b_0=-b_1-b_2$. With bilinear grid basis $N_I$, the mapping is
+\[
+ S_I=\frac{1}{3}\sum_{a=0}^{2}N_I(x_a),\qquad
+ \nabla S_I=\sum_{a=0}^{2}N_I(x_a)b_a.
+\]
+Corners and gradient coefficients use the same temporary integration geometry.
+CPDI uses four corners and the reciprocal parallelogram basis. Homel and
+VP-Hencky retain their active-dimension box policies. CPTI uniformly clips
+its diameter using active grid spacings or neighbor radius, without the box
+volume-preserving feasibility cap. Scaling never changes stored material
+geometry, physical volume, mass or F.
+
+\subsection{Physical thickness and statistical volume}
+The single finite positive \texttt{planeStrainThickness} is written on
+\texttt{InternalMesh} and stored on the domain partition, including restart.
+It supplies
+\[
+ V_p=A_p t,\qquad m_p=\rho_p A_p t,\qquad
+ A_\Gamma=\ell_\Gamma t.
+\]
+In-plane geometry, CPDI scaling, diameter-based splitting and plot extents are
+independent of $t$. The particle-sized fracture \texttt{lengthScale} uses
+$\sqrt{V_p/t}$; a scalar constitutive length-scale parameter is not overwritten.
+Nodal physical-volume normalization uses $h_xh_yt$. CZ line-interface weights
+integrate the Q1 basis along the segment and multiply by $t$. Force and energy
+retain physical units, while constitutive tensors include the out-of-plane
+plane-strain stress.
+
+Native dim=2 Voronoi/layered Weibull wrappers use $\max(A t,V_{\min})$ in the
+strength law. They preserve random draws when the writer binds thickness;
+rebinding is idempotent. An explicit old layered-wrapper thickness must agree
+with the domain scalar. Arbitrary supplied \texttt{StrengthScale} fields are
+not rescaled; custom fields can implement \texttt{setPlaneStrainThickness(t)}.
+The Brazilian-disk and borehole examples now use native 2D random fields, so
+their realization changes from the previous 3D construction even with the same
+seed. General 3D stochastic/flaw-file models retain their previous meaning.
+
+\subsection{Objects without artificial end caps}
+New \texttt{geom.disk} represents a disk or annulus using an XY center and radii;
+\texttt{geom.rectangle} constructs \texttt{box(dim=2)}. Existing
+\texttt{polygon}, \texttt{foam(dim=2)}, and
+\texttt{packedSphericalBed(dim=2)} already perform XY geometry queries.
+Native flags, normals and surface offsets do not depend on query z.
+\begin{lstlisting}[language=Python]
+disk = geom.disk('disk', [0.0, 0.0], 1.0, particleType=2)
+ring = geom.disk('ring', [0.0, 0.0], 1.0, ri=0.4,
+                 flaggedSurfaces=[True, True]) # outer, inner
+block = geom.rectangle('block', [-1.0, -0.5], [1.0, 0.5])
+\end{lstlisting}
+Before sampling PlaneStrain objects, the writer adapts simple legacy z-axis
+cylinders to disk/annulus sections and axis-aligned 3D boxes to XY rectangles.
+It removes end-cap influence from membership and surface methods and traverses
+owned wrapper subobjects. This assumes these objects represent intended
+extrusions. Material/group/velocity attributes remain on the original objects.
+The disk frame matches the positive-z legacy cylinder frame.
+
+Tilted cylinders, oblique caps, spheres, STL/general 3D objects, and transforms
+mixing XY with z retain existing cross-section sampling. They require deliberate
+section geometry; projecting an arbitrary 3D normal alone is not an exact
+section algorithm. See \path{PFW_2D_OBJECTS.md} for the example audit and the
+legacy adaptation contract. The copper-foam, packed-bed and polygon examples
+retain their native XY objects; disk examples now use the new constructor.
+
+\subsection{Input, output and restart contract}
+Native inputs need no z bounds or nK. The example
+\path{examples/true2D/pfw_input_true_2d.py} combines CPDI parallelogram bulk with
+CPTI surface triangles using \texttt{simplex},
+\mpmcode{particleGeometry=fromRefinement}, and \mpmcode{simplexParticleType=3}.
+The named hexTet preset remains 3D only. All-CPTI objects tessellate each
+Cartesian seed into two triangles in 2D or six tets in 3D.
+
+Old Python \texttt{planeStrain=1} maps to the native formulation. If thickness
+is unset, its old z extent supplies $t$; otherwise new inputs default to 1.
+Four boundary types and time-plus-four boundary tables are supported; old
+six-face values are accepted with z inactive. F tables retain four columns
+(time and three diagonal entries), with Fzz=1. The optional transverse-velocity
+matrix retains its existing 6-by-2 interface; only in-plane entries act.
+
+Native particle rows carry version 2, shape 3/4, physical volume, and only four
+geometry components XX/XY/YX/YY. PositionZ is zero or may be omitted by a native
+reader. Both geometry matrices are restartable. Restart geometry version 3 is
+required; old GEOS particle/XML/restart compatibility is not retained.
+Regenerate inputs and start a new run after applying this patch.
+
+Silo writes dimension-2 quad/triangle zones. VTK writes quad/triangle cells with
+z=0 coordinates. Both reconstruct current unscaled G, and grid quads use
+consistent perimeter order. The shared VisIt script selects a fitted
+\texttt{View2D} from native-2D metadata; case renderers accept four-value XY
+extents. Full material tensors, including $\sigma_{zz}$, remain available.
+
+\subsection{Validation boundary}
+Standalone CPU tests compile production geometry/mapping code and selected
+mesh/partition/splitting bodies with small adapters. They check mapping
+moments, compact storage, reset/scaling, native split conservation, line
+integrals, quad topology, partition neighbors, object surface data and Weibull
+volume scaling. Writer checks use explicitly emulated ranks, including empty
+ranks. Camera tests mock the VisIt API.
+
+These checks do not replace the target GEOS build, actual MPI migration and
+restart, GPU execution, coupled contact/CZ mechanics, or
+Silo/VTK readback in VisIt. The delivery validation report lists exact local
+results. Axisymmetric single-field mechanics are described in
+Section~\ref{sec:axisymmetric}; its remaining extensions, plane stress, CPDI2
+and cohesive-particle subdivision remain separate work. See \path{TRUE_2D_PLAN.md} for target acceptance cases.

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Generate in the current directory, then run the explicitly selected executable.
+set -euo pipefail
+case_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+pfw_root=$(cd "$case_dir/../.." && pwd)
+python_cmd=${PFW_PYTHON:-python3}
+cp -- "$case_dir/pfw_input_axisymmetricCylinder.py" ./pfw_input_case.py
+"$python_cmd" "$pfw_root/particleFileWriter.py" pfw_input_case.py
+"$python_cmd" "$case_dir/checkParticles.py" mpmParticleFile_case
+if [[ ${1:-} == --generate-only ]]; then exit 0; fi
+: "${GEOS_EXECUTABLE:?Set GEOS_EXECUTABLE to the rebuilt geos executable, or use --generate-only}"
+"$GEOS_EXECUTABLE" -i mpm_case.xml
