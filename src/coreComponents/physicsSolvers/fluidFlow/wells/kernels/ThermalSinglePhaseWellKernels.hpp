@@ -590,6 +590,13 @@ public:
         {
           normalizer = m_targetBHP;
         }
+
+        // we have the normalizer now, we can compute a dimensionless Linfty norm contribution
+        real64 const val = LvArray::math::abs( m_localResidual[stack.localRow + idof] ) / normalizer;
+        if( val > stack.localValue[0] )
+        {
+          stack.localValue[0] = val;
+        }
       }
       // Step 2: compute a normalizer for the mass balance equation
       else if( idof == WJ_ROFFSET::MASSBAL )
