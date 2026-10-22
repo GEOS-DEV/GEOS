@@ -87,9 +87,15 @@ public:
     integer almostPureComponent = -1;
     checkPureMixture( m_numComponents, compFraction, pureComponent, almostPureComponent );
 
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      incipientComposition[ic] = compFraction[ic];
+    }
+
     // Check if k-Values need to be initialised
     auto kVapourLiquid = kValues[0];
     bool const needInitialisation = (pureComponent < 0) && hasZero( m_numComponents, kVapourLiquid.toSliceConst() );
+
     if( needInitialisation )
     {
       if( m_flashData.liquidEos == EquationOfStateType::SoreideWhitson )

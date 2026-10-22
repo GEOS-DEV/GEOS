@@ -131,6 +131,7 @@ public:
     flashParameters->m_continuousParameters[FlashParameters::STABILITY_TOLERANCE] = 1.0e-12;
     flashParameters->m_continuousParameters[FlashParameters::STABILITY_THRESHOLD] = -1.0e-3;
     flashParameters->m_discreteParameters[FlashParameters::FLASH_MAX_ITERATIONS] = 20;
+    flashParameters->m_continuousParameters[FlashParameters::SSI_TOLERANCE] = 1.0e-12;
 
     m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::LIQUID));
     m_phaseTypes.emplace_back( static_cast< integer >(PhaseType::VAPOUR));

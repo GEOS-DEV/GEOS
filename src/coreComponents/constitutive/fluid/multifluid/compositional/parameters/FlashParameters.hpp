@@ -63,8 +63,11 @@ public:
   /** The tolerance to use to determine convergece to a stationary point in the stability test. */
   static integer constexpr STABILITY_TOLERANCE = 3;
 
+  /** The tolerance to use to switch from SSI iterations to Newton iterations. */
+  static integer constexpr SSI_TOLERANCE = 4;
+
   /* Number of continuous variables */
-  static integer constexpr NUM_FLOAT = 4;
+  static integer constexpr NUM_FLOAT = 5;
 
 public:
   FlashParameters( std::unique_ptr< ModelParameters > parameters );
@@ -78,7 +81,9 @@ public:
     static constexpr char const * flashMaxIterationsString() { return "flashMaxIterations"; }
     static constexpr char const * stabilityThresholdString() { return "stabilityThreshold"; }
     static constexpr char const * stabilityToleranceString() { return "stabilityTolerance"; }
+    static constexpr char const * ssiToleranceString() { return "ssiTolerance"; }
     static constexpr char const * stabilityMaxIterationsString() { return "stabilityMaxIterations"; }
+    static constexpr char const * negativeFlashToleranceString() { return "negativeFlashTolerance"; }
   };
 
   array1d< real64 > m_continuousParameters;
