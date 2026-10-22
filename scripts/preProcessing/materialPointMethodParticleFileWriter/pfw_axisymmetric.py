@@ -18,7 +18,7 @@ def validate_options(pfw):
         raise ValueError("Axisymmetric radial periodicity is invalid")
     if pfw.get('planeStrainThickness') is not None:
         raise ValueError("Axisymmetric uses full rings; omit planeStrainThickness")
-    unsupported=('damageFieldPartitioning','enableSurfaceTension','computeSPHJacobian','directionalOverlapCorrection',
+    unsupported=('enableSurfaceTension','computeSPHJacobian','directionalOverlapCorrection',
                  'computeParticleSurfaceNormalsAndPositions','computeNodalArea','profileHistory',
                  'generalizedVortexMMS','enableBoreholePressure','enableConfiningPressure',
                  'useCrackTipDetection','prescribedBcTable','prescribedFTable','prescribedBoundaryFTable')

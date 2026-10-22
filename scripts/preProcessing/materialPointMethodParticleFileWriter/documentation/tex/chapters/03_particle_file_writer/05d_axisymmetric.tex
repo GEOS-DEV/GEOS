@@ -59,7 +59,8 @@ stretch and use $J/F_{\theta\theta}$ for planar geometry projection.
 The implementation supports ordinary contact between separate body groups,
 Q1 point, CPDI and CPTI particles, fixed Outflow/Symmetry boundaries, and
 compatible body-force, initial-velocity and material initialization.
-It explicitly rejects DFG, finite-thickness polymer CZ, surface tension, reconstructed surfaces/nodal areas,
+It supports DFG contact-surface insertion. It explicitly rejects finite-thickness
+polymer CZ, surface tension, reconstructed surfaces/nodal areas,
 SPH/overlap corrections, crack-tip detection, profileHistory slice normalization,
 B-splines, prescribed BC/F tables
 and stress-controlled domain motion. PFW rejects surface traction generation;
@@ -112,9 +113,10 @@ run the included histories and resolution checks on the target build.
 
 
 \subsection{Ordinary contact between bodies}
-Assign separate nonnegative \mpmcode{ContactGroup} values and set
+For ordinary contact without DFG, assign separate nonnegative
+\mpmcode{ContactGroup} values and set
 \mpmcode{enableContact=1}, with \mpmcode{damageFieldPartitioning=0} and
-\mpmcode{overlapCorrection=off}. Existing normal-selection, gap-gating and
+\mpmcode{overlapCorrection=Off}. Existing normal-selection, gap-gating and
 Coulomb-friction options are retained. Nodal mass and momentum already use
 full-ring measures, so the contact force/impulse law needs no extra $2\pi r$.
 The shared boundary-normal reconstruction is
@@ -148,6 +150,50 @@ newly exposed internal surfaces if the materials are separated into contact
 groups. A sealed jacket with internal separation needs exterior-only pressure
 loading, which remains a separate integration task.
 
+
+\subsection{Axisymmetric DFG contact-surface insertion}
+Set \mpmcode{damageFieldPartitioning=1} and \mpmcode{enableContact=1}.
+The existing DFG field assignment, separability law and defaults remain in
+use. For $n_g$ contact groups, DFG supplies two slots per group with field
+index $\mathrm{side}\,n_g+\mathrm{group}$. Ordinary contact evaluates the
+occupied field pairs in both the standard and FMPM paths. This does not
+create cohesive bonds or generalize the CZ field-pair representation.
+
+Damage is a scalar on the meridional section. Its reconstruction uses
+\[
+ A_q=\frac{V_q}{2\pi r_q},\qquad
+ \bar d(\boldsymbol x)=\frac{\sum_q A_q d_q K(\boldsymbol x-\boldsymbol x_q)}
+                              {\sum_q A_q K(\boldsymbol x-\boldsymbol x_q)},\qquad
+ \nabla\bar d=\frac{\sum_q A_q(d_q-\bar d)\nabla K_q}{\sum_q A_q K_q}.
+\]
+Use the existing compact cubic kernel and neighbor set. Each sample also
+contributes its image at $(-r_q,y_q)$ when within support. This even radial
+extension makes the radial derivative zero at the axis; it creates no
+particles or additional physical mass. The existing surface-as-damage
+convention is retained. Particle positions and volumes are current values.
+Only this reconstruction changes measure: mapped damage, quality tensors,
+volume fractions, nodal mass, momentum and contact forces retain full-ring
+weights. No additional circumference factor enters the contact law.
+
+The existing separability criterion decides whether same-group fields remain
+tied or can open and recontact. Its development is separate from this
+axisymmetric adaptation. Solver-reconstructed surface positions remain
+unsupported; a newly inserted DFG surface can use the existing approximate
+centre-of-mass gap criterion with \mpmcode{useSurfacePositionForContact=0}.
+The current partition uses one reference direction per grid node and two
+slots per group; this patch does not add unresolved crack-junction topology.
+Only cracks whose revolution is axisymmetric are representable. Localized
+longitudinal hoop fractures and swirl remain outside the formulation.
+
+\path{examples/axisymmetricDFG} contains four isolation cases: an intact
+cylinder, the same cylinder with a prescribed damaged central band, three
+approaching contact groups, and the three groups with damage in the central
+body. The first pair initially moves away from the midplane. There is no
+applied tensile end traction, new damage-evolution law, explicit internal
+normal, or CZ activation. Select with \mpmcode{AXIS_DFG_CASE}; use
+\mpmcode{AXIS_DFG_UPDATE=FMPM} for FMPM(2), otherwise FLIP. Particle checks,
+runner and tracer postprocessing are included. See \path{AXISYMMETRIC_DFG.md}
+for the standalone kernel and writer checks and the remaining target tests.
 
 \subsection{Prescribed axisymmetric cohesive interfaces}
 Use exactly two contact groups, 0 and 1, and disable DFG. A

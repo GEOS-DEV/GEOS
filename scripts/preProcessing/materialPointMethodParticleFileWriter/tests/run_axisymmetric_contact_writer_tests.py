@@ -34,7 +34,7 @@ for change in (dict(group=-1), dict(group=.5), dict(group=100),
         pass
     else:
         raise AssertionError('Unsupported particle accepted: '+repr(change))
-for change in (dict(damageFieldPartitioning=1), dict(overlapCorrection='normalForce'),
+for change in (dict(overlapCorrection='NormalForce'),
                dict(computeParticleSurfaceNormalsAndPositions=1), dict(computeNodalArea=1)):
     try:
         axis.validate_options(dict(xmin=0, xmax=2, **change))
@@ -43,6 +43,7 @@ for change in (dict(damageFieldPartitioning=1), dict(overlapCorrection='normalFo
     else:
         raise AssertionError('Unsupported option accepted: '+repr(change))
 axis.validate_options(dict(xmin=0, xmax=2, enableContact=1))
+axis.validate_options(dict(xmin=0, xmax=2, enableContact=1, damageFieldPartitioning=1))
 print('Contact-group and unsupported-feature validation passed.', flush=True)
 
 for update in ('FLIP', 'FMPM'):

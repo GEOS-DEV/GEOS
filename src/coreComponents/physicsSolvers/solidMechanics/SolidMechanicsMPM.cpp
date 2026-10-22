@@ -20,6 +20,7 @@
 #include "SolidMechanicsMPM.hpp"
 #include "MPMMappingKernels.hpp"
 #include "mesh/AxisymmetricGeometry.hpp"
+#include "MPMDamageGradient.hpp"
 #include "MPMGeometryMeasures.hpp"
 
 #if defined( GEOS_USE_HIP )
@@ -3340,10 +3341,10 @@ void SolidMechanicsMPM::postInputInitialization()
 
   if(m_axisymmetric)
   {
-    GEOS_ERROR_IF(m_damageFieldPartitioning || m_enableSurfaceTension || m_computeSPHJacobian || m_directionalOverlapCorrection ||
+    GEOS_ERROR_IF(m_enableSurfaceTension || m_computeSPHJacobian || m_directionalOverlapCorrection ||
                   m_overlapCorrection!=mpm::OverlapCorrectionOption::Off || m_computeParticleSurfaceNormalsAndPositions ||
                   m_computeNodalArea || m_profileHistory || m_generalizedVortexMMS || m_enableBoreholePressure || m_useCrackTipDetection,
-                  "Axisymmetric currently requires DFG, surface tension, SPH/overlap corrections, reconstructed surfaces and profileHistory to be off");
+                  "Axisymmetric currently requires surface tension, SPH/overlap corrections, reconstructed surfaces and profileHistory to be off");
     GEOS_ERROR_IF(m_prescribedBcTable || m_prescribedFTable || m_prescribedBoundaryFTable,
                   "Axisymmetric currently supports fixed grid boundaries, not BC/F tables or affine domain driving");
     GEOS_ERROR_IF(std::any_of(m_boundaryConditionTypes.begin(),m_boundaryConditionTypes.end(),
@@ -4675,8 +4676,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Number of contact groups
   m_numContactGroups = maxGlobalGroupNumber + 1;
   // Axisymmetric ordinary contact uses the same per-group velocity fields.
-  // Mass and momentum already carry full-ring weights; DFG remains
-  // guarded separately until its interface geometry is implemented.
+  // Mass and momentum carry full-ring weights. DFG adds two meridional
+  // partition fields per group; its damage-gradient reconstruction is 2D.
 
   if( m_enableSurfaceTension == 1 )
   {
@@ -14456,15 +14457,16 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
 }
 
 /**
- * @brief Computes damage field gradient.
+ * @brief Computes the damage gradient used by the existing DFG partition.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * Axisymmetric reconstruction uses meridional area and an even radial extension.
  */
 void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
 
   int const planeStrain = m_planeStrain;
+  bool const axisymmetric = m_axisymmetric;
   real64 const neighborRadius = m_neighborRadius;
 
   // Get accessors for volume, position, damage, surface flag, and cohesive flag
@@ -14516,26 +14518,52 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
 
       // Call kernel field gradient function
       real64 grad[3] = { };
-      computeKernelFieldGradientDevice( particlePosition[p],
-                                        neighborRadius,
-                                        planeStrain,
-                                        numNeighborsAll[pp],
-                                        neighborRegions[pp],
-                                        neighborSubRegions[pp],
-                                        neighborIndices[pp],
-                                        particleVolumeView,
-                                        particlePositionView,
-                                        [=](
-                                              localIndex regionIndex, localIndex subRegionIndex, localIndex particleIndex ){
-                                              real64 fp = particleDamageView[regionIndex][subRegionIndex][particleIndex];                                   // Damage for dfg
-                                              if( markSurfaceAsDamage( particleSurfaceFlagView[regionIndex][subRegionIndex][particleIndex] ) ||
-                                                  particleCohesiveZoneFlagView[regionIndex][subRegionIndex][particleIndex] == 1 )
-                                              {
-                                                fp = 1.0;
-                                              }
-                                              return fp;
-                                           },
-                                        grad );
+      if( axisymmetric )
+      {
+        // Recover the meridional scalar damage gradient.
+        // Ring quadrature is converted to area only for this reconstruction;
+        // mapped damage, normal-quality tensors, mass and forces keep their
+        // existing physical ring weights. Reflection enforces axis parity.
+        mpmDamage::AxisymmetricDamageGradient reconstruction( particlePosition[p][0],
+                                                             particlePosition[p][1], neighborRadius );
+        for( localIndex n = 0; n < numNeighborsAll[pp]; ++n )
+        {
+          localIndex const r = neighborRegions[pp][n];
+          localIndex const sr = neighborSubRegions[pp][n];
+          localIndex const q = neighborIndices[pp][n];
+          real64 damage = particleDamageView[r][sr][q];
+          if( markSurfaceAsDamage( particleSurfaceFlagView[r][sr][q] ) ||
+              particleCohesiveZoneFlagView[r][sr][q] == 1 ) damage = 1.0;
+          real64 const radius = particlePositionView[r][sr][q][0];
+          GEOS_ERROR_IF( !( radius > 0.0 ), "Axisymmetric DFG requires positive particle radii." );
+          reconstruction.add( radius, particlePositionView[r][sr][q][1],
+                              particleVolumeView[r][sr][q], damage );
+        }
+        reconstruction.gradient( grad );
+      }
+      else
+      {
+        computeKernelFieldGradientDevice( particlePosition[p],
+                                          neighborRadius,
+                                          planeStrain,
+                                          numNeighborsAll[pp],
+                                          neighborRegions[pp],
+                                          neighborSubRegions[pp],
+                                          neighborIndices[pp],
+                                          particleVolumeView,
+                                          particlePositionView,
+                                          [=](
+                                                localIndex regionIndex, localIndex subRegionIndex, localIndex particleIndex ){
+                                                real64 fp = particleDamageView[regionIndex][subRegionIndex][particleIndex];                                   // Damage for dfg
+                                                if( markSurfaceAsDamage( particleSurfaceFlagView[regionIndex][subRegionIndex][particleIndex] ) ||
+                                                    particleCohesiveZoneFlagView[regionIndex][subRegionIndex][particleIndex] == 1 )
+                                                {
+                                                  fp = 1.0;
+                                                }
+                                                return fp;
+                                             },
+                                          grad );
+      }
       // Tensor equation: particleDamageGradient[p] = grad.
       LvArray::tensorOps::copy< 3 >( particleDamageGradient[p], grad );
     } );

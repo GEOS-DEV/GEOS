@@ -1,9 +1,11 @@
 # Axisymmetric MPM: implementation and acceptance plan
 
 The implementation includes native axisymmetric mechanics, uniform confinement,
-ordinary contact, and prescribed two-group cohesive interfaces. ParticleColor remains
+ordinary multi-group contact, DFG contact-surface insertion, and prescribed
+two-group cohesive interfaces. ParticleColor remains
 available. The existing timestep dispatches 2D kernels; there is no second
-timestep solver. Finite-thickness polymer CZ and damage-field partitioning remain separate follow-ups.
+timestep solver. Finite-thickness polymer CZ and general multi-field CZ remain
+separate work.
 
 ## Coordinates, geometry and units
 
@@ -90,13 +92,19 @@ per-radian convention by 2*pi consistently.
   the existing approximate centre-of-mass gap criterion can be used.
   Solver-reconstructed surface positions and overlap correction remain disabled.
   ParticleColor is independent of contact groups.
+- **DFG:** `damageFieldPartitioning=1` is accepted with ordinary contact.
+  Reconstruct the damage gradient using meridional area `V/(2*pi*r)` and an
+  even extension across the axis. Existing neighbor selection, field mapping,
+  separability criteria and their defaults are retained. Physical grid
+  measures keep full-ring weights. See `AXISYMMETRIC_DFG.md` and
+  `examples/axisymmetricDFG`. This enables contact-surface insertion, not new CZ bonds.
 - **CZ:** prescribed interfaces between groups 0 and 1 support Uncoupled,
   Coupled and Bicrystal traction-separation laws. Ring-weighted line integrals
   and nodal support volumes initialize area; the full relative-F cofactor
   transports it, including hoop stretch and reset invariance. See
   `AXISYMMETRIC_CZ.md` and `examples/axisymmetricCZ` for input, tests and limits.
-  Finite-thickness polymer CZ, DFG, multiple field pairs and active-CZ
-  subdivision remain future work.
+  Combining CZ with DFG, general multi-field CZ, finite-thickness polymer CZ
+  and active-CZ subdivision remain separate work.
 - **Surface tension and tractions:** surface tension, reconstructed surface
   positions/nodal-area output, borehole pressure, spatially restricted confining
   pressure and PFW surface traction generation are rejected. Uniform
@@ -214,3 +222,19 @@ quadrature scaling and reset. These shared reference/damage corrections also
 apply to Cartesian CZ runs. The user reported that ordinary axisymmetric
 contact built and ran before this patch. The new CZ examples still require a
 target build and dynamics/MPI/restart checks; see `AXISYMMETRIC_CZ.md`.
+
+## Axisymmetric DFG/contact follow-up
+
+The focused DFG patch removes axisymmetric rejection in the solver and PFW,
+then supplies a meridional normalized-kernel damage gradient with axis parity.
+It does not alter the common separability law or defaults, neighbor-selection
+policy, ordinary pairwise contact laws, or CZ machinery. Ordinary contact
+already loops over all occupied velocity-field pairs; examples now exercise
+three groups, optionally with two DFG slots per group.
+
+The new example has `intact`, `damage`, `contact` and `combined` variants,
+with FLIP/FMPM selections and CPDI/CPTI particles. Damage is prescribed initially
+to isolate the partition/insertion path; no new constitutive damage law is
+introduced. See its README for commands and limits. The new CPU and writer
+checks are listed in `AXISYMMETRIC_DFG.md`; full target dynamics, MPI and restart
+validation are still needed for this follow-up.
