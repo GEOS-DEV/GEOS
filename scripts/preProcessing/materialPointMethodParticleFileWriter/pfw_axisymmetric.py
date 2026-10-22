@@ -74,8 +74,13 @@ def bind_objects(objects):
 def validate_particle(point, data, geometry):
     if data['particleType'] not in (0,2,3):
         raise ValueError('Axisymmetric supports Q1 point, CPDI and CPTI particles')
-    if data.get('group',0)!=0 or data.get('czTag',0)!=0 or data.get('surfaceFlag',0) in (3,4):
-        raise ValueError('Axisymmetric currently requires contact group 0 and no cohesive particles')
+    # Ordinary body contact uses the existing ContactGroup fields. Geometry
+    # stays meridional; mass and momentum already represent complete rings.
+    group = data.get('group', 0)
+    if not (0 <= group < 100 and int(group) == group):
+        raise ValueError('Axisymmetric ContactGroup must be an integer from 0 to 99')
+    if data.get('czTag',0)!=0 or data.get('surfaceFlag',0) in (3,4):
+        raise ValueError('Axisymmetric cohesive particles are not yet supported')
     if np.any(np.asarray(data.get('surfaceTraction',[0,0,0]))):
         raise ValueError('Axisymmetric PFW surface-traction integration is not implemented; use body forces or initial velocity/stress')
     if abs(float(data.get('velocity',[0,0,0])[2]))>0:

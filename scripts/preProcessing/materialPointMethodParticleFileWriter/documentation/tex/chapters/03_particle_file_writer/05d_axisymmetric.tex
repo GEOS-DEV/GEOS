@@ -1,5 +1,5 @@
 % !TeX root = ../../../geos_mpm_manual.tex
-\section{Native axisymmetric mechanics: first stage}
+\section{Native axisymmetric mechanics and ordinary contact}
 \label{sec:axisymmetric}
 \index{axisymmetry}
 Set \mpmcode{formulation=Axisymmetric} in PFW. The same timestep uses the
@@ -56,10 +56,10 @@ kinetic energy, as in the existing splitter. Automatic resets preserve hoop
 stretch and use $J/F_{\theta\theta}$ for planar geometry projection.
 
 \subsection{Supported scope and deferred integrations}
-This first stage supports a single velocity/contact group, Q1 point, CPDI and
-CPTI particles, fixed Outflow/Symmetry boundaries, and compatible body-force,
-initial-velocity and material initialization. It explicitly rejects DFG,
-material contact/CZ, surface tension, reconstructed surfaces/nodal areas,
+The implementation supports ordinary contact between separate body groups,
+Q1 point, CPDI and CPTI particles, fixed Outflow/Symmetry boundaries, and
+compatible body-force, initial-velocity and material initialization.
+It explicitly rejects DFG, CZ, surface tension, reconstructed surfaces/nodal areas,
 SPH/overlap corrections, crack-tip detection, profileHistory slice normalization,
 B-splines, prescribed BC/F tables
 and stress-controlled domain motion. PFW rejects surface traction generation;
@@ -96,7 +96,7 @@ split conservation. Complete writer checks cover both ordinary and curved
 refined geometry at 1, 3 and 7 explicitly emulated ranks. These checks do not
 replace the target GEOS build, actual MPI migration/restart, GPU execution or
 output readback. See \path{AXISYMMETRIC_PLAN.md} for exact limits, local results,
-and the next contact/CZ, traction and verification stages.
+and the next CZ, traction and verification stages.
 
 \path{examples/axisymmetricJacketedSample} adds a 20-mm-diameter, 20-mm-long
 compliant sample between 2-mm steel plates inside a 1-mm rubber jacket.
@@ -108,3 +108,41 @@ compaction. An equal-material variant checks the small-strain homogeneous
 reference $\sigma_{rr}=\sigma_{yy}=\sigma_{\theta\theta}=-p$ and
 $\Delta V/V=-p/K$. Source-level checks do not establish dynamics convergence;
 run the included histories and resolution checks on the target build.
+
+
+\subsection{Ordinary contact between bodies}
+Assign separate nonnegative \mpmcode{ContactGroup} values and set
+\mpmcode{enableContact=1}, with \mpmcode{damageFieldPartitioning=0} and
+\mpmcode{overlapCorrection=off}. Existing normal-selection, gap-gating and
+Coulomb-friction options are retained. Nodal mass and momentum already use
+full-ring measures, so the contact force/impulse law needs no extra $2\pi r$.
+The shared boundary-normal reconstruction is
+\[
+ \boldsymbol b_I=\sum_p V_p\bigl(G_{Ir}+T_I,\ G_{Iy},\ 0\bigr).
+\]
+The added radial term follows from
+$\nabla(rN_I)=r\nabla N_I+N_I\boldsymbol e_r$ and removes the radial bias
+that would otherwise remain inside a fully occupied nodal support. It does
+not prescribe extra circumference weighting for supplied unit normals.
+The same assembled normals serve ordinary and FMPM contact.
+
+Explicit PFW surface positions can be used with
+\mpmcode{useSurfacePositionForContact=1}; otherwise the existing approximate
+centre-of-mass gap criterion applies. Solver-reconstructed surface positions,
+overlap correction, nodal areas, moving walls and cohesive zones remain
+unsupported. Contact and slip have only radial and axial components.
+
+\path{examples/axisymmetricContact} supplies two elastic cylinders with separate
+contact groups and mixed CPDI/CPTI particles. Each has radius 10 mm and length
+8 mm; they approach at $\pm1$ m/s across a 2-mm gap. The example includes input
+checks, a runner and history plots. \mpmcode{AXIS_CONTACT_UPDATE=FMPM} selects
+FMPM(2); the default is FLIP. Standalone tests check normal cancellation and
+orientation on axial, cylindrical and inclined interfaces, axis behavior,
+friction limits, separation, momentum exchange and contact dissipation. Writer
+checks use emulated collectives; full GEOS contact dynamics and MPI/restart
+validation remain target-machine tasks.
+
+The uniform pressure bath used in the bonded jacketed example can also load
+newly exposed internal surfaces if the materials are separated into contact
+groups. A sealed jacket with internal separation needs exterior-only pressure
+loading, which remains a separate integration task.

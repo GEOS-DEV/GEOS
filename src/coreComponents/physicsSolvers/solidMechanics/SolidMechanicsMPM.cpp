@@ -4663,8 +4663,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Number of contact groups
   m_numContactGroups = maxGlobalGroupNumber + 1;
-  GEOS_ERROR_IF(m_axisymmetric && m_numContactGroups!=1,
-                 "Axisymmetric material contact is not implemented; use contact group 0");
+  // Axisymmetric ordinary contact uses the same per-group velocity fields.
+  // Mass and momentum already carry full-ring weights; DFG and CZ remain
+  // guarded separately until their interface geometry is implemented.
 
   if( m_enableSurfaceTension == 1 )
   {
@@ -15255,7 +15256,12 @@ void SolidMechanicsMPM::computeParticleSurfaceNormalsAndPositions( ParticleManag
 
         for( localIndex i = 0; i < numDims; ++i )
         {
-          particleContributionToGrid = shapeFunctionGradientValue[i] * particleVolume[p];
+          // Use the same cylindrical boundary operator as the main P2G
+          // scatter. The hoop coefficient contributes to the radial normal,
+          // never to a third geometric component.
+          real64 const boundaryGradient = shapeFunctionGradientValue[i] +
+            ( m_axisymmetric && i == 0 ? shapeFunctionGradientValue[2] : 0.0 );
+          particleContributionToGrid = boundaryGradient * particleVolume[p];
           if( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) || 
               particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) || 
               particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) )
@@ -18556,6 +18562,8 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
    * with an optional explicit particle-normal contribution:
    *
    *   + explicitSurfaceNormalInfluence / h_diag * V_p N_Ip n_p[i]
+   *   In axisymmetry the radial term uses G_r + T, and n_z remains zero.
+   *   This removes the radial interior bias of the ring-volume gradient.
    *
    * Surface position is mapped along the particle surface normal:
    *
@@ -19242,8 +19250,12 @@ localIndex const mappedNode =
           //
           //   n_I += V_p grad N_Ip
           //
+          // In axisymmetry grad2 is T=<N/r>, not a spatial z derivative.
+          // Integral(r*grad(N)) alone has an interior radial bias. Adding
+          // Integral(N) gives the boundary integral of r*N*n. This changes
+          // only the normal reconstruction, not mass, momentum or forces.
           real64 surfaceNormalContribution0 =
-            grad0 * pVolume;
+            ( grad0 + ( m_axisymmetric ? grad2 : 0.0 ) ) * pVolume;
 
           real64 surfaceNormalContribution1 =
             grad1 * pVolume;

@@ -1,9 +1,9 @@
 # Axisymmetric MPM: implementation and acceptance plan
 
-This patch is the first, single-field stage, against the branch after rigid-body
-removal. ParticleColor remains available. The existing timestep dispatches 2D
-kernels; there is no second timestep solver. This is not yet a cylindrical
-replacement for every plane-strain option.
+The implementation includes native axisymmetric mechanics, uniform confinement,
+and ordinary contact between separate body groups. ParticleColor remains
+available. The existing timestep dispatches 2D kernels; there is no second
+timestep solver. CZ and damage-field partitioning remain separate follow-ups.
 
 ## Coordinates, geometry and units
 
@@ -27,7 +27,7 @@ sqrt(V/(2*pi*r)); explicit scalar constitutive lengths remain user choices.
 The physical volume remains independently integrated, as in the baseline;
 F-only resets do not redefine it from the current glyph geometry.
 
-## Implemented in this patch
+## Implemented mechanics
 
 1. Read/write and validate full-ring particle volumes using the unchanged
    schema-2 native quad/triangle record. PFW keeps old plane-strain and 3D inputs.
@@ -80,12 +80,21 @@ The cylindrical weak form follows Nairn and Guilkey (2015),
 DOI: https://doi.org/10.1002/nme.4792 . Full-ring measures multiply the
 per-radian convention by 2*pi consistently.
 
-## Explicit first-stage limits and next patches
+## Current scope and next patches
 
-- **Contact and CZ:** one contact group (0), no DFG or cohesive particles.
-  Next implement meridional-area contact-normal reconstruction, radius-weighted
-  interface integrals, axis nodal support volumes and cohesive tractions/work;
-  then test annular compression and separation. ParticleColor is independent.
+- **Contact:** ordinary contact between nonnegative ContactGroup indices is
+  supported with `enableContact=1`. The common P2G normal uses
+  `V*(G_r+T, G_y, 0)` to remove the radial interior bias of the ring-volume
+  gradient. Existing mass-based normal/friction forces and FMPM impulses need
+  no additional circumference multiplier. Explicit PFW surface positions or
+  the existing approximate centre-of-mass gap criterion can be used.
+  Solver-reconstructed surface positions and overlap correction remain disabled.
+  ParticleColor is independent of contact groups.
+- **CZ and DFG:** cohesive particles and damage-field partitioning remain
+  unsupported. Next add radius-weighted interface integrals, consistent nodal
+  support volumes where required, cohesive tractions/work and reference-area
+  evolution including hoop stretch. Prescribed two-field interfaces come first;
+  multiple CZ field pairs and active-CZ subdivision require further work.
 - **Surface tension and tractions:** surface tension, reconstructed surface
   positions/nodal-area output, borehole pressure, spatially restricted confining
   pressure and PFW surface traction generation are rejected. Uniform
@@ -153,3 +162,44 @@ pressure state across restart, and corrects axisymmetric box-history density
 normalization to use ring volume. The same setup with equal material properties
 provides a homogeneous hydrostatic reference. See its README for dimensions,
 model assumptions, commands and local validation limits.
+
+## Ordinary-contact follow-up
+
+`examples/axisymmetricContact` contains two 10-mm-radius, 8-mm-long elastic
+cylinders approaching at +/-1 m/s across a 2-mm gap. Each body mixes CPDI core
+particles with CPTI skin particles. Separate groups permit separation/rebound;
+the within-body particle-type seam stays in one field. Explicit interface
+positions gate contact; the corrected volume-gradient estimate supplies normals.
+The example defaults to FLIP; `AXIS_CONTACT_UPDATE=FMPM` selects FMPM(2).
+
+The source change is shared by the ordinary and FMPM contact paths. It does
+not change the existing normal-selection or friction laws. At a straight
+interface, weighting identical unit normals by circumference cannot change
+their direction; the new T term instead corrects the cylindrical boundary
+identity used to reconstruct normals from bulk particle data.
+
+Local checks compile actual production mapping, normal assembly and both
+pairwise laws with strict warnings and address/undefined-behavior sanitizers.
+Mixed CPDI/CPTI tiles test axial, cylindrical and inclined interfaces, interior
+normal cancellation and axis behavior. 540 force/impulse comparisons cover
+radius/mass-ratio/friction variations, supplemented by separation, gap gating,
+equal-and-opposite impulses and contact kinetic-energy checks. Four complete
+writer runs (FLIP/FMPM, 1/3 emulated ranks) check contact groups, mixed geometry,
+ring measures, XML options and byte-identical particle emission.
+
+Run from the PFW directory:
+
+```sh
+python3 tests/run_axisymmetric_contact_cpp_tests.py
+python3 tests/run_axisymmetric_contact_writer_tests.py --output /tmp/axis-contact-writer
+```
+
+The user reported a successful target build and jacketed-sample run before
+this contact follow-up. The contact patch still needs a full target build,
+GEOS dynamics, actual MPI migration/restart and GPU validation. Its example
+postprocessor produces diagnostics, not an established convergence benchmark.
+The patch updates manual LaTeX; it does not include a regenerated manual PDF.
+
+Uniform confinement is not selective to the outside of a sealed jacket when
+internal interfaces separate. Such an assembly needs exterior-only pressure
+loading; the existing bonded jacketed example is left unchanged.

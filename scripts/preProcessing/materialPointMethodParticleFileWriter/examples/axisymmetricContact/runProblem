@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Run from a fresh directory. Submit through the site's scheduler if required.
+set -euo pipefail
+case_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+pfw_root=$(cd -- "$case_dir/../.." && pwd)
+python_cmd=${PFW_PYTHON:-python3}
+if [[ $# -gt 1 || ( $# -eq 1 && $1 != --generate-only ) ]]; then
+  echo "Usage: runProblem [--generate-only]" >&2; exit 2
+fi
+for artifact in case.json mpm_axisymmetricContact.xml mpmParticleFile_axisymmetricContact; do
+  if [[ -e $artifact ]]; then
+    echo "Use a fresh run directory; $artifact already exists." >&2; exit 2
+  fi
+done
+user_name=$(id -un)
+if [[ ! -f userDefs_${user_name}.py && -f "$pfw_root/userDefs_${user_name}.py" ]]; then
+  cp -- "$pfw_root/userDefs_${user_name}.py" .
+fi
+if [[ ${1:-} != --generate-only ]]; then
+  : "${GEOS_EXECUTABLE:?Set GEOS_EXECUTABLE to the rebuilt executable, or use --generate-only}"
+fi
+"$python_cmd" "$case_dir/caseSettings.py" --write case.json
+"$python_cmd" "$pfw_root/particleFileWriter.py" "$case_dir/pfw_input_axisymmetricContact.py" 2>&1 | tee generation.log
+"$python_cmd" "$case_dir/checkParticles.py"
+if [[ ${1:-} == --generate-only ]]; then exit 0; fi
+"$GEOS_EXECUTABLE" -i mpm_axisymmetricContact.xml 2>&1 | tee geos.log
+"$python_cmd" "$case_dir/postProcess.py"
