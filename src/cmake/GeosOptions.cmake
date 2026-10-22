@@ -125,7 +125,6 @@ if( GEOS_PARALLEL_LINK_JOBS )
 endif()
 
 # Physics packages
-option( GEOS_ENABLE_CONTACT "Enables contact physics package" ON )
 option( GEOS_ENABLE_FLUIDFLOW "Enables fluid flow physics package" ON )
 option( GEOS_ENABLE_INDUCEDSEISMICITY "Enables induced seismicity physics package" ON )
 option( GEOS_ENABLE_MULTIPHYSICS "Enables multiphysics physics package" ON )

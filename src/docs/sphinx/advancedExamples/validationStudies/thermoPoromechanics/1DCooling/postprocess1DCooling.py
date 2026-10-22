@@ -2,8 +2,8 @@
 
 Run by hand, after running both cases:
 
-    geosx -i ThermoElastic_1DCooling_fim_smoke.xml        # in an elastic/ directory
-    geosx -i ThermoDruckerPrager_1DCooling_fim_smoke.xml  # in a druckerPrager/ directory
+    geos -i ThermoElastic_1DCooling_fim_smoke.xml        # in an elastic/ directory
+    geos -i ThermoDruckerPrager_1DCooling_fim_smoke.xml  # in a druckerPrager/ directory
     python3 postprocess1DCooling.py -e elastic -d druckerPrager -o <doc_directory>
 
 It reads the GEOS TimeHistory outputs (stressHistory.hdf5, displacementHistory.hdf5) and
