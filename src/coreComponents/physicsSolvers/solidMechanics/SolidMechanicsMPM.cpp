@@ -1620,6 +1620,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_confiningPressureBoxMax(),
   m_confiningPressureBoxMin(),
   m_confiningPressureSphereRadius( 0.0 ),
+  m_uniformConfiningPressure( 0 ),
   m_confiningStress(),
   m_contactGapCorrection( mpm::ContactGapCorrectionOption::Implicit ),
   m_contactNormalExponent( 1.0 ),
@@ -1929,24 +1930,30 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription(
     "Overlap correction flag (0=off, 1=increase normal force to remove gap. (not fully developed), 2=compute the SPH Jacobian and use it to scale particle density to improve the overlap. )" );
 
+  // Retain the pressure after a completed event, including across restart.
   registerWrapper( "confiningPressureBoxMax", &m_confiningPressureBoxMax ).
     setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "xyz coordinate of confining pressure box max corner" );
 
   registerWrapper( "confiningPressureBoxMin", &m_confiningPressureBoxMin ).
     setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "xyz coordinate of confining pressure box min corner" );
 
   registerWrapper( "confiningPressureSphereRadius", &m_confiningPressureSphereRadius ).
     setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Origin-centered spherical confining pressure radius; positive values select spherical confining pressure instead of the box test." );
+
+  registerWrapper( "uniformConfiningPressure", &m_uniformConfiningPressure ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Uniform confining-pressure state set by the ConfiningPressure event" );
 
   registerWrapper( "confiningStress", &m_confiningStress ).
     setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array that stores confining stress state" );
 
   registerWrapper( "contactGapCorrection", &m_contactGapCorrection ).
@@ -2102,7 +2109,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "enableConfiningPressure", &m_enableConfiningPressure ).
     setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag to enable confining pressure" );
 
   registerWrapper( "enableContact", &m_enableContact ).
@@ -3324,7 +3331,7 @@ void SolidMechanicsMPM::postInputInitialization()
   {
     GEOS_ERROR_IF(m_damageFieldPartitioning || m_enableSurfaceTension || m_computeSPHJacobian || m_directionalOverlapCorrection ||
                   m_overlapCorrection!=mpm::OverlapCorrectionOption::Off || m_computeParticleSurfaceNormalsAndPositions ||
-                  m_computeNodalArea || m_profileHistory || m_generalizedVortexMMS || m_enableBoreholePressure || m_enableConfiningPressure || m_useCrackTipDetection,
+                  m_computeNodalArea || m_profileHistory || m_generalizedVortexMMS || m_enableBoreholePressure || m_useCrackTipDetection,
                   "Axisymmetric currently requires DFG, surface tension, SPH/overlap corrections, reconstructed surfaces and profileHistory to be off");
     GEOS_ERROR_IF(m_prescribedBcTable || m_prescribedFTable || m_prescribedBoundaryFTable,
                   "Axisymmetric currently supports fixed grid boundaries, not BC/F tables or affine domain driving");
@@ -10613,10 +10620,17 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
     GEOS_ERROR_IF(m_axisymmetric && event.getCatalogName()!="BodyForceUpdate" &&
                   event.getCatalogName()!="ResetDeformationGradient" &&
                   event.getCatalogName()!="InitializeStress" &&
+                  event.getCatalogName()!="ConfiningPressure" &&
                   event.getCatalogName()!="SetInitialTemperatureAndPressure" &&
                   event.getCatalogName()!="Anneal" && event.getCatalogName()!="MaterialSwap" &&
                   event.getCatalogName()!="TemperatureProfile",
                   "This MPM event has not been adapted for axisymmetric geometry: " << event.getCatalogName());
+    if( m_axisymmetric && event.getCatalogName() == "ConfiningPressure" )
+    {
+      ConfiningPressureMPMEvent const & pressureEvent = dynamicCast< ConfiningPressureMPMEvent const & >( event );
+      GEOS_ERROR_IF( !pressureEvent.getUniformPressure(),
+                     "Axisymmetric ConfiningPressure requires uniformPressure=1; spatial exclusions are not supported." );
+    }
     // 1. Do not run completed events.
     if( event.isComplete() )
     {
@@ -10732,6 +10746,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       m_confiningPressureBoxMin = confiningPressure.getConfiningPressureBoxMin();
       m_confiningPressureBoxMax = confiningPressure.getConfiningPressureBoxMax();
       m_confiningPressureSphereRadius = confiningPressure.getConfiningPressureSphereRadius();
+      m_uniformConfiningPressure = confiningPressure.getUniformPressure();
 
       real64 startPressure = confiningPressure.getStartPressure();
       real64 endPressure = confiningPressure.getEndPressure();
@@ -18380,6 +18395,9 @@ void SolidMechanicsMPM::updateGridBackgroundStress( NodeManager & nodeManager )
 
   if( m_enableConfiningPressure == 1 )
   {
+    bool const uniformConfiningPressure = m_uniformConfiningPressure != 0;
+    GEOS_ERROR_IF( m_axisymmetric && !uniformConfiningPressure,
+                   "Axisymmetric confining pressure must be uniform." );
     real64 confiningStress[6] = { };
     real64 const confiningPressureSphereRadius = m_confiningPressureSphereRadius;
     real64 const confiningPressureSphereRadiusSqr =
@@ -18390,6 +18408,14 @@ void SolidMechanicsMPM::updateGridBackgroundStress( NodeManager & nodeManager )
     LvArray::tensorOps::copy< 6 >( confiningStress, m_confiningStress );
     forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
     {
+      // Uniform -p I enters the existing cylindrical weak form, including
+      // sigma_theta*N/r. No 2*pi factor is added: particle volumes are rings.
+      // This also avoids any Cartesian nodal-volume or surface-area estimate.
+      if( uniformConfiningPressure )
+      {
+        LvArray::tensorOps::copy< 6 >( gridBackgroundStress[g], confiningStress );
+        return;
+      }
       bool applyConfiningStress = false;
       if( confiningPressureSphereRadius > 0.0 )
       {
@@ -27937,10 +27963,13 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   if( rank == 0 )
   {
     real64 const selectedBoxVolume =
-      LvArray::math::max( ( boxAverageMax[0] - boxAverageMin[0] ) *
-                          ( boxAverageMax[1] - boxAverageMin[1] ) *
-                          ( boxAverageMax[2] - boxAverageMin[2] ),
-                          1.0e-300 );
+      LvArray::math::max( m_axisymmetric
+        ? axisymmetric::boxVolume( LvArray::math::max( boxAverageMin[0], 0.0 ),
+                                   LvArray::math::max( boxAverageMax[0], 0.0 ),
+                                   boxAverageMax[1] - boxAverageMin[1] )
+        : ( boxAverageMax[0] - boxAverageMin[0] ) *
+          ( boxAverageMax[1] - boxAverageMin[1] ) *
+          ( boxAverageMax[2] - boxAverageMin[2] ), 1.0e-300 );
     real64 const massNormalization = boxSums[6] > 0.0 ? boxSums[6] : 1.0;
     real64 const materialVolumeNormalization = boxSums[17] > 0.0 ? boxSums[17] : 1.0;
     real64 const stressNormalization = boxSums[17] > 0.0 ? boxSums[17] : selectedBoxVolume;

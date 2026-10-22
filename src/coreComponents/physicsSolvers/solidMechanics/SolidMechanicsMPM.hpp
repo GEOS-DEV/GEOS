@@ -1191,6 +1191,7 @@ protected:
   array1d< real64 > m_confiningPressureBoxMax;
   array1d< real64 > m_confiningPressureBoxMin;
   real64 m_confiningPressureSphereRadius;
+  int m_uniformConfiningPressure;
   array1d< real64 > m_confiningStress;
   mpm::ContactGapCorrectionOption m_contactGapCorrection;
   real64 m_contactNormalExponent;

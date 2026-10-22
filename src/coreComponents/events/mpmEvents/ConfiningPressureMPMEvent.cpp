@@ -29,6 +29,7 @@ ConfiningPressureMPMEvent::ConfiningPressureMPMEvent( const string & name,
   m_confiningPressureBoxMin(  ),
   m_confiningPressureBoxMax(  ),
   m_confiningPressureSphereRadius( 0.0 ),
+  m_uniformPressure( 0 ),
   m_startPressure( 0.0 ),
   m_endPressure( 0.0 ),
   m_interpType( 1 )
@@ -45,6 +46,14 @@ ConfiningPressureMPMEvent::ConfiningPressureMPMEvent( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_confiningPressureSphereRadius ).
     setDescription( "Optional origin-centered spherical confining pressure region radius. If positive, nodes outside this radius receive the confining background stress instead of using the box test." );
+
+  // Uniform pressure needs no surface reconstruction or geometric exclusion.
+  // With one velocity field, the background-stress weak form loads the external
+  // boundary; contributions on conforming internal material interfaces cancel.
+  registerWrapper( viewKeyStruct::uniformPressureString(), &m_uniformPressure ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_uniformPressure ).
+    setDescription( "Apply pressure everywhere (0/1), without box or sphere exclusion. Required for Axisymmetric." );
 
   registerWrapper( viewKeyStruct::startPressureString(), &m_startPressure ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -70,18 +79,24 @@ void ConfiningPressureMPMEvent::postInputInitialization()
   GEOS_ERROR_IF( m_confiningPressureSphereRadius < 0.0,
                  "confiningPressureSphereRadius must be non-negative." );
 
+  GEOS_ERROR_IF( m_uniformPressure < 0 || m_uniformPressure > 1,
+                 "uniformPressure must be 0 or 1." );
+  GEOS_ERROR_IF( m_uniformPressure && (m_confiningPressureBoxMin.size() > 0 ||
+                  m_confiningPressureBoxMax.size() > 0 || m_confiningPressureSphereRadius > 0.0),
+                 "uniformPressure=1 must not specify a confining-pressure box or sphere." );
+
   bool const useSphere = m_confiningPressureSphereRadius > 0.0;
   bool const hasBoxMin = m_confiningPressureBoxMin.size() > 0;
   bool const hasBoxMax = m_confiningPressureBoxMax.size() > 0;
-  GEOS_ERROR_IF( !useSphere && !( hasBoxMin && hasBoxMax ),
-                 "ConfiningPressure requires either a positive confiningPressureSphereRadius or both confiningPressureBoxMin and confiningPressureBoxMax." );
+  GEOS_ERROR_IF( !m_uniformPressure && !useSphere && !( hasBoxMin && hasBoxMax ),
+                 "ConfiningPressure requires uniformPressure=1, a positive sphere radius, or both box corners." );
   GEOS_ERROR_IF( hasBoxMin && m_confiningPressureBoxMin.size() != 3,
                  "confiningPressureBoxMin must be of length 3." );
   GEOS_ERROR_IF( hasBoxMax && m_confiningPressureBoxMax.size() != 3,
                  "confiningPressureBoxMax must be of length 3." );
-  GEOS_ERROR_IF( !useSphere && m_confiningPressureBoxMin.size() != 3,
+  GEOS_ERROR_IF( !m_uniformPressure && !useSphere && m_confiningPressureBoxMin.size() != 3,
                  "confiningPressureBoxMin must be of length 3 when confiningPressureSphereRadius is not positive." );
-  GEOS_ERROR_IF( !useSphere && m_confiningPressureBoxMax.size() != 3,
+  GEOS_ERROR_IF( !m_uniformPressure && !useSphere && m_confiningPressureBoxMax.size() != 3,
                  "confiningPressureBoxMax must be of length 3 when confiningPressureSphereRadius is not positive." );
 
   GEOS_LOG_RANK_0( "ConfiningPressureEvent: " <<
@@ -90,6 +105,7 @@ void ConfiningPressureMPMEvent::postInputInitialization()
                    "confiningPressureBoxMin=" << m_confiningPressureBoxMin << ", " <<
                    "confiningPressureBoxMax=" << m_confiningPressureBoxMax << ", " <<
                    "confiningPressureSphereRadius=" << m_confiningPressureSphereRadius << ", " <<
+                   "uniformPressure=" << m_uniformPressure << ", " <<
                    "startPressure=" << m_startPressure << ", " <<
                    "endPressure=" << m_endPressure << ", " <<
                    "interpType=" << m_interpType );

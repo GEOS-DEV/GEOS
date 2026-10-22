@@ -217,12 +217,12 @@ The event selects and initializes regions; the constitutive law supplies $\mathc
 
 \paragraph{Inputs.}
 \begin{description}[leftmargin=*,style=nextline]
-\item[\textbf{Required.}] \texttt{startTime}; \texttt{startPressure}; \texttt{endPressure}; and either a box, given by \mpmcode{confiningPressureBoxMin} and \mpmcode{confiningPressureBoxMax}, or a positive \mpmcode{confiningPressureSphereRadius}.
-\item[\textbf{Optional.}] \texttt{endTime}; \texttt{interpType}, with options \texttt{0} linear, \texttt{1} cosine, and \texttt{2} smoothstep.  The default is the event's initialized interpolation type, which is cosine in the current source.
+\item[\textbf{Required.}] \texttt{startTime}; \texttt{startPressure}; \texttt{endPressure}; and either \mpmcode{uniformPressure=1}, a box given by \mpmcode{confiningPressureBoxMin} and \mpmcode{confiningPressureBoxMax}, or a positive \mpmcode{confiningPressureSphereRadius}.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{uniformPressure} (default 0); \texttt{interpType}, with options \texttt{0} linear, \texttt{1} cosine, and \texttt{2} smoothstep.  The default is the event's initialized interpolation type, which is cosine in the current source.
 \end{description}
 
 \paragraph{Algorithm.}
-\mpmcode{ConfiningPressure} applies a virtual hydrostatic pressure to grid nodes outside either a user-specified axis-aligned box or, when \mpmcode{confiningPressureSphereRadius} is positive, an origin-centered spherical region.  Let $\mathbf{X}^{\min}$ and $\mathbf{X}^{\max}$ denote the two box corners and let $R_c$ denote the spherical radius.  During each active event step, the pressure
+\mpmcode{uniformPressure=1} applies a virtual hydrostatic pressure at every grid node and must omit box/sphere exclusions. This is the supported axisymmetric pressure mode; the cylindrical force includes the hoop pressure term and uses full-ring particle volumes. Otherwise, \mpmcode{ConfiningPressure} applies pressure to grid nodes outside either a user-specified axis-aligned box or, when \mpmcode{confiningPressureSphereRadius} is positive, an origin-centered spherical region.  Let $\mathbf{X}^{\min}$ and $\mathbf{X}^{\max}$ denote the two box corners and let $R_c$ denote the spherical radius.  During each active event step, the pressure
 \begin{equation}
   p_c(t^n)=I(t^n;t_s,t_e,p_s,p_e)
 \end{equation}
@@ -248,10 +248,13 @@ if event active:
   solver.confiningPressureBoxMin = event.confiningPressureBoxMin
   solver.confiningPressureBoxMax = event.confiningPressureBoxMax
   solver.confiningPressureSphereRadius = event.confiningPressureSphereRadius
+  solver.uniformConfiningPressure = event.uniformPressure
   solver.confiningStress = [-p, -p, -p, 0, 0, 0]
 
 for grid node I:
-  if sphereRadius > 0:
+  if uniformConfiningPressure:
+    apply = true
+  elif sphereRadius > 0:
     apply = norm(X[I, active_dimensions]) > sphereRadius
   else:
     apply = any_coordinate_outside_box(X[I], boxMin, boxMax)
@@ -260,7 +263,7 @@ for grid node I:
 \end{lstlisting}
 
 \paragraph{Implementation note.}
-Like \mpmcode{BoreholePressure}, this event is not marked complete at \texttt{endTime} in the current runtime branch and does not explicitly reset the confining-pressure flag.
+The event completion pass marks the event complete after its active interval. The final evaluated pressure remains applied until another pressure event changes it. The enable flag, exclusion geometry, uniform flag and confining stress are saved in restart state, so a completed ramp does not lose its held load on restart.
 
 \subsection{\texttt{CrystalHeal}}
 \label{subsec:event-crystal-heal}
@@ -776,7 +779,7 @@ Table~\ref{tab:events-manual-summary} summarizes the user-facing inputs discusse
 \eventtwoline{BodyForce}{Update} & None & \texttt{bodyForce}; one-shot.\\
 \eventtwoline{Borehole}{Pressure} & \texttt{boreholeRadius}, \texttt{startPressure}, \texttt{endPressure} & \texttt{interpType}; active-window pressure update; leaves last value in solver state.\\
 \eventtwoline{Reference}{CohesiveZones} & \texttt{regionNames} & \mpmcode{czVolumeNormalization}, \mpmcode{computeNormalsAndPositions}, \mpmcode{normalsAndPositionsMethod}, \mpmcode{czSurfaceDisplacementUpdate}.\\
-\eventtwoline{Confining}{Pressure} & \mpmcode{confiningPressureBoxMin}, \mpmcode{confiningPressureBoxMax}, \texttt{startPressure}, \texttt{endPressure} & \texttt{interpType}; active-window pressure update.\\
+\eventtwoline{Confining}{Pressure} & \texttt{startPressure}, \texttt{endPressure}; uniform mode or exclusion geometry & \texttt{uniformPressure}, \texttt{interpType}; pressure retained after event.\\
 \eventtwoline{Crystal}{Heal} & \texttt{targetRegion}, \texttt{healType} & Internal \mpmcode{markedParticlesToHeal}; damage decay until complete.\\
 \eventtwoline{Deformation}{Update} & None & \mpmcode{prescribedFTable}, intended \mpmcode{prescribedBoundaryFTable}, \texttt{stressControl}.\\
 \eventthreeline{Friction}{Coefficient}{Swap} & None & \mpmcode{frictionCoefficient}, \mpmcode{frictionCoefficientTable}; one-shot.\\
