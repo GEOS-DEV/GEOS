@@ -149,19 +149,14 @@ class ParticleFluidBase : public ConstitutiveBase
 {
 public:
 
-  ParticleFluidBase( string const & name, Group * const parent );
+  ParticleFluidBase( string const & name, dataRepository::Group * const parent );
 
-  virtual ~ParticleFluidBase() override;
-
-  // *** ConstitutiveBase interface
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 4;
 
 protected:
-
-  virtual void postInputInitialization() override;
 
   array1d< real64 > m_settlingFactor;
   array1d< real64 > m_dSettlingFactor_dPressure;

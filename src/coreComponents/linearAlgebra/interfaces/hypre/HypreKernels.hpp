@@ -36,24 +36,28 @@ namespace hypre
 
 /// @cond DO_NOT_DOCUMENT
 
-namespace ops
+namespace internal
 {
 
-template< typename T >
-GEOS_HYPRE_HOST_DEVICE
-constexpr T identity( T const v )
+struct ZeroRowSumMessage
 {
-  return v;
+  long long row;
+};
+
+inline std::ostream & operator<<( std::ostream & os, ZeroRowSumMessage const & msg )
+{
+  return os << "Zero row sum in row " << msg.row;
 }
 
-template< typename T >
-GEOS_HYPRE_HOST_DEVICE
-constexpr T plus( T const lhs, T const rhs )
+GEOS_HOST_DEVICE inline ZeroRowSumMessage zeroRowSumMessage( globalIndex const row )
 {
-  return lhs + rhs;
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+  printf( "***** Zero row sum in row %lld\n", static_cast< long long >( row ) );
+#endif
+  return { static_cast< long long >( row ) };
 }
 
-}
+} // namespace internal
 
 template< bool CONST >
 struct CSRData
@@ -94,25 +98,6 @@ real64 computeMaxNorm( hypre_CSRMatrix const * const mat,
                        arrayView1d< globalIndex const > const & rowIndices,
                        globalIndex const firstLocalRow );
 
-namespace internal
-{
-
-/// This type is needed because CUDA does not allow a local type to be captured in a device lambda.
-template< typename F, typename R >
-struct RowReducer
-{
-  F transform;
-  R reduce;
-
-  auto GEOS_HYPRE_HOST_DEVICE
-  operator()( double acc, double v ) const
-  {
-    return reduce( acc, transform( v ) );
-  }
-};
-
-} // namespace internal
-
 template< typename F, typename R >
 void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
                         arrayView1d< globalIndex const > const & rowIndices,
@@ -122,40 +107,39 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
   CSRData< false > diag{ hypre_ParCSRMatrixDiag( mat ) };
   CSRData< false > offd{ hypre_ParCSRMatrixOffd( mat ) };
   HYPRE_BigInt const firstLocalRow = hypre_ParCSRMatrixFirstRowIndex( mat );
-  internal::RowReducer< F, R > reducer{ std::move( transform ), std::move( reduce ) };
 
-  forAll< execPolicy >( rowIndices.size(), [diag, offd, reducer, rowIndices, firstLocalRow] GEOS_HYPRE_HOST_DEVICE ( localIndex const i )
+  forAll< execPolicy >( rowIndices.size(), [diag, offd, transform, reduce, rowIndices, firstLocalRow] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( rowIndices[i] - firstLocalRow );
+    GEOS_ASSERT( 0 <= localRow && localRow < diag.nrow );
+
+    HYPRE_Real scale = 0.0;
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      scale = reduce( scale, transform( diag.values[k] ) );
+    }
+    if( offd.ncol > 0 )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
       {
-        HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( rowIndices[i] - firstLocalRow );
-        GEOS_ASSERT( 0 <= localRow && localRow < diag.nrow );
+        scale = reduce( scale, transform( offd.values[k] ) );
+      }
+    }
 
-        HYPRE_Real scale = 0.0;
-        for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
-        {
-          scale = reducer( scale, diag.values[k] );
-        }
-        if( offd.ncol > 0 )
-        {
-          for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
-          {
-            scale = reducer( scale, offd.values[k] );
-          }
-        }
-
-        GEOS_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << rowIndices[i] );
-        scale = 1.0 / scale;
-        for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
-        {
-          diag.values[k] *= scale;
-        }
-        if( offd.ncol > 0 )
-        {
-          for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
-          {
-            offd.values[k] *= scale;
-          }
-        }
-      } );
+    GEOS_ASSERT_MSG( !isZero( scale ), internal::zeroRowSumMessage( rowIndices[i] ) );
+    scale = 1.0 / scale;
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      diag.values[k] *= scale;
+    }
+    if( offd.ncol > 0 )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
+      {
+        offd.values[k] *= scale;
+      }
+    }
+  } );
 }
 
 template< typename F, typename R >
@@ -167,31 +151,30 @@ void computeRowsSums( hypre_ParCSRMatrix const * const mat,
   CSRData< true > const diag{ hypre_ParCSRMatrixDiag( mat ) };
   CSRData< true > const offd{ hypre_ParCSRMatrixOffd( mat ) };
   HYPRE_Real * const values = hypre_VectorData( hypre_ParVectorLocalVector( vec ) );
-  internal::RowReducer< F, R > reducer{ std::move( transform ), std::move( reduce ) };
 
-  forAll< execPolicy >( diag.nrow, [diag, offd, reducer, values] GEOS_HYPRE_HOST_DEVICE ( HYPRE_Int const localRow )
+  forAll< execPolicy >( diag.nrow, [diag, offd, transform, reduce, values] GEOS_HOST_DEVICE ( HYPRE_Int const localRow )
+  {
+    HYPRE_Real sum = 0.0;
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      sum = reduce( sum, transform( diag.values[k] ) );
+    }
+    if( offd.ncol )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
       {
-        HYPRE_Real sum = 0.0;
-        for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
-        {
-          sum = reducer( sum, diag.values[k] );
-        }
-        if( offd.ncol )
-        {
-          for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
-          {
-            sum = reducer( sum, offd.values[k] );
-          }
-        }
-        values[localRow] = sum;
-      } );
+        sum = reduce( sum, transform( offd.values[k] ) );
+      }
+    }
+    values[localRow] = sum;
+  } );
 }
 
 namespace internal
 {
 
 template< typename MAP >
-void GEOS_HYPRE_HOST_DEVICE
+void GEOS_HOST_DEVICE
 makeSortedPermutation( HYPRE_Int const * const indices,
                        HYPRE_Int const size,
                        HYPRE_Int * const perm,
@@ -201,7 +184,7 @@ makeSortedPermutation( HYPRE_Int const * const indices,
   {
     perm[i] = i; // std::iota
   }
-  auto const comp = [indices, map] GEOS_HYPRE_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j )
+  auto const comp = [indices, map] GEOS_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j )
   {
     return map( indices[i] ) < map( indices[j] );
   };
@@ -210,72 +193,150 @@ makeSortedPermutation( HYPRE_Int const * const indices,
 
 } // namespace internal
 
-template< typename SRC_COLMAP, typename DST_COLMAP >
-void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
-                           SRC_COLMAP const src_colmap,
-                           hypre_CSRMatrix * const dst_mat,
-                           DST_COLMAP const dst_colmap,
-                           real64 const scale )
+template< typename KERNEL >
+void addMatrixEntries( hypre_ParCSRMatrix const * const src,
+                       hypre_ParCSRMatrix * const dst,
+                       real64 const scale )
 {
-  GEOS_LAI_ASSERT( src_mat != nullptr );
-  GEOS_LAI_ASSERT( dst_mat != nullptr );
-
-  CSRData< true > src{ src_mat };
-  CSRData< false > dst{ dst_mat };
-  GEOS_LAI_ASSERT_EQ( src.nrow, dst.nrow );
-
-  if( src.ncol == 0 || isZero( scale ) )
+  GEOS_LAI_ASSERT( src != nullptr );
+  GEOS_LAI_ASSERT( dst != nullptr );
+  KERNEL::launch( hypre_ParCSRMatrixDiag( src ),
+                  [] GEOS_HOST_DEVICE ( HYPRE_Int const x ){ return x; },
+                  hypre_ParCSRMatrixDiag( dst ),
+                  [] GEOS_HOST_DEVICE ( HYPRE_Int const x ){ return x; },
+                  scale );
+  if( hypre_CSRMatrixNumCols( hypre_ParCSRMatrixOffd( dst ) ) > 0 )
   {
-    return;
+    HYPRE_BigInt const * const src_colmap = hypre::getOffdColumnMap( src );
+    HYPRE_BigInt const * const dst_colmap = hypre::getOffdColumnMap( dst );
+    KERNEL::launch( hypre_ParCSRMatrixOffd( src ),
+                    [src_colmap] GEOS_HOST_DEVICE ( HYPRE_Int const i ){ return src_colmap[i]; },
+                    hypre_ParCSRMatrixOffd( dst ),
+                    [dst_colmap] GEOS_HOST_DEVICE ( HYPRE_Int const i ){ return dst_colmap[i]; },
+                    scale );
   }
-
-  // Allocate contiguous memory to store sorted column permutations of each row
-  array1d< HYPRE_Int > const src_permutation_arr( hypre_CSRMatrixNumNonzeros( src_mat ) );
-  array1d< HYPRE_Int > const dst_permutation_arr( hypre_CSRMatrixNumNonzeros( dst_mat ) );
-
-  arrayView1d< HYPRE_Int > const src_permutation = src_permutation_arr.toView();
-  arrayView1d< HYPRE_Int > const dst_permutation = dst_permutation_arr.toView();
-  // Each thread adds one row of src into dst
-  forAll< hypre::execPolicy >( dst.nrow,
-                               [ src,
-                                 src_colmap,
-                                 dst,
-                                 dst_colmap,
-                                 scale,
-                                 src_permutation,
-                                 dst_permutation] GEOS_HYPRE_DEVICE ( HYPRE_Int const localRow )
-  {
-    HYPRE_Int const src_offset = src.rowptr[localRow];
-    HYPRE_Int const src_length = src.rowptr[localRow + 1] - src_offset;
-    HYPRE_Int const * const src_indices = src.colind + src_offset;
-    HYPRE_Real const * const src_values = src.values + src_offset;
-    HYPRE_Int * const src_perm = src_permutation.data() + src_offset;
-
-    HYPRE_Int const dst_offset = dst.rowptr[localRow];
-    HYPRE_Int const dst_length = dst.rowptr[localRow + 1] - dst_offset;
-    HYPRE_Int const * const dst_indices = dst.colind + dst_offset;
-    HYPRE_Real * const dst_values = dst.values + dst_offset;
-    HYPRE_Int * const dst_perm = dst_permutation.data() + dst_offset;
-
-    // Since hypre does not store columns in sorted order, create a sorted "view" of src and dst rows
-    // TODO: it would be nice to cache the permutation arrays somewhere to avoid recomputing
-    internal::makeSortedPermutation( src_indices, src_length, src_perm, src_colmap );
-    internal::makeSortedPermutation( dst_indices, dst_length, dst_perm, dst_colmap );
-
-    // Add entries looping through them in sorted column order, skipping src entries not in dst
-    for( HYPRE_Int i = 0, j = 0; i < dst_length && j < src_length; ++i )
-    {
-      while( j < src_length && src_colmap( src_indices[src_perm[j]] ) < dst_colmap( dst_indices[dst_perm[i]] ) )
-      {
-        ++j;
-      }
-      if( j < src_length && src_colmap( src_indices[src_perm[j]] ) == dst_colmap( dst_indices[dst_perm[i]] ) )
-      {
-        dst_values[dst_perm[i]] += scale * src_values[src_perm[j++]];
-      }
-    }
-  } );
 }
+
+struct AddEntriesRestrictedKernel
+{
+  template< typename SRC_COLMAP, typename DST_COLMAP >
+  static void
+  launch( hypre_CSRMatrix const * const src_mat,
+          SRC_COLMAP const src_colmap,
+          hypre_CSRMatrix * const dst_mat,
+          DST_COLMAP const dst_colmap,
+          real64 const scale )
+  {
+    GEOS_LAI_ASSERT( src_mat != nullptr );
+    GEOS_LAI_ASSERT( dst_mat != nullptr );
+
+    CSRData< true > src{ src_mat };
+    CSRData< false > dst{ dst_mat };
+    GEOS_LAI_ASSERT_EQ( src.nrow, dst.nrow );
+
+    if( src.ncol == 0 || isZero( scale ) )
+    {
+      return;
+    }
+
+    // Allocate contiguous memory to store sorted column permutations of each row
+    array1d< HYPRE_Int > const src_permutation_arr( src.nnz );
+    array1d< HYPRE_Int > const dst_permutation_arr( dst.nnz );
+
+    arrayView1d< HYPRE_Int > const src_permutation = src_permutation_arr.toView();
+    arrayView1d< HYPRE_Int > const dst_permutation = dst_permutation_arr.toView();
+    // Each thread adds one row of src into dst
+    forAll< hypre::execPolicy >( dst.nrow,
+                                 [src,
+                                  src_colmap,
+                                  dst,
+                                  dst_colmap,
+                                  scale,
+                                  src_permutation,
+                                  dst_permutation ] GEOS_HOST_DEVICE ( HYPRE_Int const localRow )
+    {
+      HYPRE_Int const src_offset = src.rowptr[localRow];
+      HYPRE_Int const src_length = src.rowptr[localRow + 1] - src_offset;
+      HYPRE_Int const * const src_indices = src.colind + src_offset;
+      HYPRE_Real const * const src_values = src.values + src_offset;
+      HYPRE_Int * const src_perm = src_permutation.data() + src_offset;
+
+      HYPRE_Int const dst_offset = dst.rowptr[localRow];
+      HYPRE_Int const dst_length = dst.rowptr[localRow + 1] - dst_offset;
+      HYPRE_Int const * const dst_indices = dst.colind + dst_offset;
+      HYPRE_Real * const dst_values = dst.values + dst_offset;
+      HYPRE_Int * const dst_perm = dst_permutation.data() + dst_offset;
+
+      // Since hypre does not store columns in sorted order, create a sorted "view" of src and dst rows
+      // TODO: it would be nice to cache the permutation arrays somewhere to avoid recomputing
+      internal::makeSortedPermutation( src_indices, src_length, src_perm, src_colmap );
+      internal::makeSortedPermutation( dst_indices, dst_length, dst_perm, dst_colmap );
+
+      // Add entries looping through them in sorted column order, skipping src entries not in dst
+      for( HYPRE_Int i = 0, j = 0; i < dst_length && j < src_length; ++i )
+      {
+        while( j < src_length && src_colmap( src_indices[src_perm[j]] ) < dst_colmap( dst_indices[dst_perm[i]] ) )
+        {
+          ++j;
+        }
+        if( j < src_length && src_colmap( src_indices[src_perm[j]] ) == dst_colmap( dst_indices[dst_perm[i]] ) )
+        {
+          dst_values[dst_perm[i]] += scale * src_values[src_perm[j++]];
+        }
+      }
+    } );
+  }
+};
+
+struct AddEntriesSamePatternKernel
+{
+  template< typename SRC_COLMAP, typename DST_COLMAP >
+  static void
+  launch( hypre_CSRMatrix const * const src_mat,
+          SRC_COLMAP const src_colmap,
+          hypre_CSRMatrix * const dst_mat,
+          DST_COLMAP const dst_colmap,
+          real64 const scale )
+  {
+    GEOS_LAI_ASSERT( src_mat != nullptr );
+    GEOS_LAI_ASSERT( dst_mat != nullptr );
+
+    CSRData< true > src{ src_mat };
+    CSRData< false > dst{ dst_mat };
+    GEOS_LAI_ASSERT_EQ( src.nrow, dst.nrow );
+
+    if( src.ncol == 0 || isZero( scale ) )
+    {
+      return;
+    }
+
+    // Each thread adds one row of src into dst
+    forAll< hypre::execPolicy >( dst.nrow,
+                                 [src, src_colmap, dst, dst_colmap, scale] GEOS_HOST_DEVICE ( HYPRE_Int const localRow )
+    {
+      HYPRE_Int const src_offset = src.rowptr[localRow];
+      HYPRE_Int const src_length = src.rowptr[localRow + 1] - src_offset;
+      HYPRE_Int const * const src_indices = src.colind + src_offset;
+      HYPRE_Real const * const src_values = src.values + src_offset;
+
+      HYPRE_Int const dst_offset = dst.rowptr[localRow];
+      HYPRE_Int const dst_length = dst.rowptr[localRow + 1] - dst_offset;
+      HYPRE_Int const * const dst_indices = dst.colind + dst_offset;
+      HYPRE_Real * const dst_values = dst.values + dst_offset;
+
+      GEOS_ASSERT_EQ( src_offset, dst_offset );
+      GEOS_ASSERT_EQ( src_length, dst_length );
+      GEOS_DEBUG_VAR( src_length, dst_length, src_indices, dst_indices, src_colmap, dst_colmap );
+
+      // NOTE: this assumes that entries are in the exact same order, to avoid creating a sorted view
+      for( HYPRE_Int i = 0; i < dst_length; ++i )
+      {
+        GEOS_ASSERT_EQ( src_colmap( src_indices[i] ), dst_colmap( dst_indices[i] ) );
+        dst_values[i] += scale * src_values[i];
+      }
+    } );
+  }
+};
 
 /// @endcond
 

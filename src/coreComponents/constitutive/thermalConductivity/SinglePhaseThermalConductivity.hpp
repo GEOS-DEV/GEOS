@@ -40,9 +40,11 @@ public:
    * @param effectiveConductivity the array of cell-wise effective conductivities in the subregion
    * the subregion
    */
-  SinglePhaseThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
+  SinglePhaseThermalConductivityUpdate( arrayView3d< real64 > const & referenceThermalConductivity,
+                                        arrayView3d< real64 > const & effectiveConductivity,
                                         arrayView3d< real64 > const & dEffectiveConductivity_dT )
-    : SinglePhaseThermalConductivityBaseUpdate( effectiveConductivity,
+    : SinglePhaseThermalConductivityBaseUpdate( referenceThermalConductivity,
+                                                effectiveConductivity,
                                                 dEffectiveConductivity_dT )
   {}
 
@@ -68,19 +70,19 @@ public:
    */
   SinglePhaseThermalConductivity( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "SinglePhaseThermalConductivity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void allocateConstitutiveData( Group & parent, localIndex const numPts ) override;
+
   virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const override final;
 
   virtual void updateFromTemperature( arrayView1d< real64 const > const & temperature ) const override final;
+
+  virtual void initializeState() const override;
+
+  void initializeState( localIndex const size ) const;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SinglePhaseThermalConductivityUpdate;
@@ -91,7 +93,8 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_effectiveConductivity,
+    return KernelWrapper( m_referenceThermalConductivity,
+                          m_effectiveConductivity,
                           m_dEffectiveConductivity_dT );
   }
 
@@ -100,7 +103,7 @@ public:
     static constexpr char const * defaultThermalConductivityComponentsString() { return "defaultThermalConductivityComponents"; }
     static constexpr char const * thermalConductivityGradientComponentsString() { return "thermalConductivityGradientComponents"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
-  } viewKeys;
+  };
 
 protected:
 

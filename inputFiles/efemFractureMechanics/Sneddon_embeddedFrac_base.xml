@@ -69,6 +69,7 @@
       name="Traction"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture"
+      errorSetMode="warning"
       fieldName="traction"
       component="0"
       scale="-2.0e6"/>      

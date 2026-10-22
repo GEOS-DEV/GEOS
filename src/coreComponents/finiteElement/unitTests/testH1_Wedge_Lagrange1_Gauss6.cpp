@@ -60,7 +60,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      H1_Wedge_Lagrange1_Gauss6::calcN( q, N );
+      H1_Wedge_Lagrange1_Gauss6_impl::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -75,9 +75,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJxW[q] = H1_Wedge_Lagrange1_Gauss6::calcGradN( q,
-                                                            xCoords,
-                                                            dNdX );
+      viewDetJxW[q] = H1_Wedge_Lagrange1_Gauss6_impl::calcGradN( q,
+                                                                 xCoords,
+                                                                 dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )

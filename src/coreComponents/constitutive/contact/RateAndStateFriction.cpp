@@ -76,10 +76,6 @@ RateAndStateFriction< USE_SLIP_LAW >::RateAndStateFriction( string const & name,
 }
 
 template< typename USE_SLIP_LAW >
-RateAndStateFriction< USE_SLIP_LAW >::~RateAndStateFriction()
-{}
-
-template< typename USE_SLIP_LAW >
 void RateAndStateFriction< USE_SLIP_LAW >::postInputInitialization()
 {
   this->getWrapper< array1d< real64 > >( viewKeyStruct::aCoefficientString() ).
@@ -99,13 +95,6 @@ void RateAndStateFriction< USE_SLIP_LAW >::postInputInitialization()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::frictionCoefficientString() ).
     setApplyDefaultValue( m_defaultMu0 );
-}
-
-template< typename USE_SLIP_LAW >
-void RateAndStateFriction< USE_SLIP_LAW >::allocateConstitutiveData( Group & parent,
-                                                                     localIndex const numConstitutivePointsPerParentIndex )
-{
-  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 namespace

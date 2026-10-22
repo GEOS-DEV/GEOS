@@ -23,6 +23,7 @@
 //#include "ExplicitFiniteStrain.hpp"
 #include "ExplicitSmallStrain.hpp"
 
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 
 namespace geos
 {
@@ -73,10 +74,7 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( l
     localIndex const nodeIndex = m_elemsToNodes( k, a );
     for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
-#endif
-
 #if UPDATE_STRESS==2
       stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
 #else
@@ -98,11 +96,11 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 //#define USE_JACOBIAN
 #if !defined( USE_JACOBIAN )
   real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+  real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
   /// Macro to substitute in the shape function derivatives.
   real64 strain[6] = {0};
   //real64 timeIncrement = 0.0;
-  FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
+  finiteElement::feOps::symmetricGradient( dNdX, stack.varLocal, strain );
 
   real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
@@ -124,14 +122,14 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 #endif
   }
 
-  FE_TYPE::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
+  finiteElement::feOps::plusGradNajAij( dNdX, stressLocal, stack.fLocal );
 
 #else
   real64 invJ[3][3];
   real64 const detJ = FE_TYPE::inverseJacobianTransformation( q, stack.xLocal, invJ );
 
   real64 strain[6] = {0};
-  FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
+  finiteElement::feOps::symmetricGradient( q, invJ, stack.varLocal, strain );
 
   real64 stressLocal[ 6 ] = {0};
 #if UPDATE_STRESS == 2
@@ -153,7 +151,7 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 #endif
   }
 
-  FE_TYPE::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
+  finiteElement::feOps::plusGradNajAij( q, invJ, stressLocal, stack.fLocal );
 #endif
 }
 

@@ -30,7 +30,7 @@ namespace geos
 namespace petsc
 {
 
-// Check matching requirements on index/value types between GEOSX and PETSc
+// Check matching requirements on index/value types between GEOS and PETSc
 
 static_assert( sizeof( PetscInt ) == sizeof( geos::globalIndex ),
                "PetscInt and geos::globalIndex must have the same size" );
@@ -42,7 +42,7 @@ static_assert( std::is_same< PetscScalar, geos::real64 >::value,
                "PetscScalar and geos::real64 must be the same type" );
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to PetscInt
+ * @brief Converts a non-const array from GEOS globalIndex type to PetscInt
  * @param[in] index the input array
  * @return the converted array
  */
@@ -52,7 +52,7 @@ inline PetscInt * toPetscInt( globalIndex * const index )
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to PetscInt
+ * @brief Converts a const array from GEOS globalIndex type to PetscInt
  * @param[in] index the input array
  * @return the converted array
  */

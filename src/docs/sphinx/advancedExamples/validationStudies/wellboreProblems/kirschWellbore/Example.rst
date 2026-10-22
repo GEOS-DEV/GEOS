@@ -140,6 +140,8 @@ In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time h
 Either the entire field or specified named sets of indices in the field can be collected. 
 In this example, ``stressCollection`` and ``displacementCollection`` tasks are specified to output the resultant stresses (tensor stored as an array with Voigt notation) and total displacement field (stored as a 3-component vector) respectively.
 
+Note: The output field named averageStress (comprising six components per cell) represents the cell-wise average of each stress component, calculated using the finite element quadrature rule. The same definition applies to averageStrain.
+
 .. literalinclude:: ../../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml
     :language: xml
     :start-after: <!-- SPHINX_TASKS -->

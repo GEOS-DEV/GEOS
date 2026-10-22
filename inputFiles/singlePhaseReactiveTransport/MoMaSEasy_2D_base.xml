@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="PorositySource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="rockPorosityA_referencePorosity"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="PorosityMediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="rockPorosityA_referencePorosity"
+      scale="0.25"/>
+
+    <FieldSpecification
+      name="PorosityMediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="rockPorosityB_referencePorosity"
+      scale="0.5"/>
+
+    <FieldSpecification
+      name="initialPressureSource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="pressure"
+      scale="1e4"/>
+
+    <FieldSpecification
+      name="initialPressureMediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="pressure"
+      scale="1e4"/>
+
+    <FieldSpecification
+      name="initialPressureMediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="pressure"
+      scale="1e4"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      scale="-22.5"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ sink }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="pressure"
+      scale="1.0e4"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

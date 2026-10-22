@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<Problem>
+    <Included>
+        <File name="dome_kvalue_base.xml" />
+        <File name="dome_mesh_smoke.xml" />
+    </Included>
+</Problem>

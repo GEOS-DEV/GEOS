@@ -23,6 +23,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
@@ -85,8 +86,8 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
   m_performStressInitialization( performStressInitialization )
 {
   GEOS_ERROR_IF_GT_MSG( m_numComponents, maxNumComponents,
-                        "MultiphasePoromechanics solver allows at most " <<
-                        maxNumComponents << " components at the moment" );
+                        GEOS_FMT( "MultiphasePoromechanics solver allows at most {} components at the moment",
+                                  maxNumComponents ) );
 
   // extract fluid constitutive data views
   {
@@ -617,12 +618,12 @@ quadraturePointKernel( localIndex const k,
   real64 N[numNodesPerElem]{};
   real64 dNdX[numNodesPerElem][3]{};
   FE_TYPE::calcN( q, stack.feStack, N );
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
-                                                                           stack.feStack, dNdX );
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal,
+                                            stack.feStack, dNdX );
 
   // Step 2: compute strain increment
   LvArray::tensorOps::fill< 6 >( stack.strainIncrement, 0.0 );
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
+  finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
   // using quantities returned by the PorousSolid constitutive model.
@@ -656,7 +657,7 @@ complete( localIndex const k,
 
   real64 maxForce = 0;
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
   constexpr integer maxNumDisplacementDofs = FE_TYPE::maxSupportPoints * numDofPerTestSupportPoint;
 

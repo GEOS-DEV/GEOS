@@ -1,0 +1,99 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PhaseFieldFracture_ThreePointsBendWithHoles_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"
+        subcycling="0"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="SolidMechSolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        lineSearchAction="None"
+        newtonTol="1.0e-5"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      irreversibilityFlag="1"
+      damageUpperBound="0.95"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        lineSearchAction="None"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Region1 }"
+      initialRockToughness="0"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Mesh>
+    <VTKMesh
+      name="ThreePointsBendWithHoles"
+      file="mesh/threePointsBendingWithHolesCoarse.vtu"
+      nodesetNames="{ support_left_line, support_right_line, load_line_full_thickness, starter_notch_shared_face_nodes }"/>
+  </Mesh>
+
+  <Events
+    maxTime="100.0">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="50.0"
+      targetExactTimestep="1"
+      target="/Outputs/ThreePointsBendWithHoles_VTKOutput"/>
+    
+    <PeriodicEvent
+      name="solverApplication"
+      maxEventDt="10.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="50.0"
+      targetExactTimestep="1"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="ThreePointsBendWithHoles_VTKOutput"
+      plotFileRoot="threePointsBendWithHoles"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

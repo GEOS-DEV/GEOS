@@ -10,10 +10,10 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangeContact
       name="lagrangiancontact"
-      timeIntegrationOption="QuasiStatic"
       stabilizationName="TPFAstabilization"
       logLevel="1"
       discretization="FE1"
+      stabilizationScalingCoefficient="0.5"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"

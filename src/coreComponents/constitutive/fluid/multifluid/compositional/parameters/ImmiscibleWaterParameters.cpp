@@ -105,23 +105,23 @@ void ImmiscibleWaterParameters::postInputInitializationImpl( MultiFluidBase cons
 {
   integer const waterIndex = fluid->getWaterPhaseIndex();
   GEOS_THROW_IF_LT_MSG( waterIndex, 0,
-                        GEOS_FMT( "{}: water phase not found '{}'", fluid->getFullName(),
+                        GEOS_FMT( "water phase not found '{}'",
                                   MultiFluidBase::viewKeyStruct::phaseNamesString() ),
-                        InputError );
+                        InputError, fluid->getDataContext() );
 
   integer const h2oIndex = getWaterComponentIndex( componentProperties );
   GEOS_THROW_IF_LT_MSG( h2oIndex, 0,
-                        GEOS_FMT( "{}: water component not found '{}'", fluid->getFullName(),
+                        GEOS_FMT( "water component not found '{}'",
                                   MultiFluidBase::viewKeyStruct::componentNamesString() ),
-                        InputError );
+                        InputError, fluid->getDataContext() );
 
   // Pretty much everything should be positive
   auto const checkLowerBound = [&]( real64 const & value, real64 const & bound, string const & attribute )
   {
     GEOS_THROW_IF_LT_MSG( value, bound,
-                          GEOS_FMT( "{}: invalid number of value in attribute '{}'. Should be greater than {}",
-                                    fluid->getFullName(), bound, attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of value in attribute '{}'. Should be greater than {}",
+                                    bound, attribute ),
+                          InputError, fluid->getDataContext() );
   };
 
   real64 constexpr epsilon = MultiFluidConstants::epsilon;

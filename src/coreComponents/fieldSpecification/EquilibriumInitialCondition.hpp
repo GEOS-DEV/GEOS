@@ -21,7 +21,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_EQUILIBRIUMINITIALCONDITION_HPP
 #define GEOS_FIELDSPECIFICATION_EQUILIBRIUMINITIALCONDITION_HPP
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 
 namespace geos
 {
@@ -30,11 +30,11 @@ namespace geos
  * @class EquilibriumInitialCondition
  * Holds data to compute an hydrostatic equilibrium condition for flow problems
  */
-class EquilibriumInitialCondition : public FieldSpecificationBase
+class EquilibriumInitialCondition : public FieldSpecification
 {
 public:
 
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecification(string const &, dataRepository::Group *)
   EquilibriumInitialCondition( string const & name, Group * parent );
 
   /// deleted default constructor
@@ -116,9 +116,15 @@ public:
   string getTemperatureVsElevationTableName() const { return m_temperatureVsElevationTableName; }
 
   /**
+   * @brief Getter for the phase contacts' elevations
+   * @return the phase contacts' elevations
+   */
+  real64_array const & getPhaseContacts() const { return m_phaseContacts; }
+
+  /**
    * @brief View keys
    */
-  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
   {
 
     // equilibration parameters
@@ -158,6 +164,11 @@ public:
     /// @return String key for the temperature vs elevation table name
     constexpr static char const * temperatureVsElevationTableNameString() { return "temperatureVsElevationTableName"; }
 
+    // array storing phase contact elevations
+
+    /// @return String key for the phase contacts' elevations
+    constexpr static char const * phaseContactsString() { return "phaseContacts"; }
+
   };
 
 
@@ -195,6 +206,9 @@ private:
 
   /// Table name for temperature vs elevation
   string m_temperatureVsElevationTableName;
+
+  /// Array of phase contacts' elevations
+  real64_array m_phaseContacts;
 
 };
 

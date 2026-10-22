@@ -141,7 +141,9 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   auto asOMB = []( Group const * grp ) -> ObjectManagerBase const *
   {
     ObjectManagerBase const * omb = dynamicCast< ObjectManagerBase const * >( grp );
-    GEOS_ERROR_IF( omb == nullptr, "Group " << grp->getName() << " could not be converted to an ObjectManagerBase during the `PackCollection` process." );
+    GEOS_ERROR_IF( omb == nullptr,
+                   GEOS_FMT( "Group {} could not be converted to an ObjectManagerBase during the `PackCollection` process.",
+                             grp->getName() ) );
     return omb;
   };
 
@@ -153,6 +155,11 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   }
   catch( std::exception const & e )
   {
+    ErrorLogger::global().modifyCurrentExceptionMessage()
+      .addToMsg( getWrapperDataContext( viewKeysStruct::fieldNameString() ).toString() +
+                 ": Target not found !\n" )
+      .addContextInfo( getWrapperDataContext( viewKeysStruct::fieldNameString() ).getContextInfo()
+                         .setPriority( 1 ) );
     throw InputError( e, getWrapperDataContext( viewKeysStruct::fieldNameString() ).toString() +
                       ": Target not found !\n" );
   }

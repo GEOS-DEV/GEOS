@@ -51,7 +51,7 @@ public:
     /// Flux(es) production rate. Negative if injecting. One value for each fluid phase.
     /// In kg/s by default, or in mol/s if useMass = 0 on the solver.
     array1d< real64 > m_productionRate;
-    /// Number of elements in which we are producing / injecting
+    /// Owned cells producing/injecting. Local until mpiReduce()/finalizePeriod(), then global.
     integer m_elementCount = 0;
 
     /**
@@ -99,7 +99,7 @@ public:
      * @param currentTime  time of the timestep start since simulation starting
      * @param dt           time delta of the current timestep
      * @param producedMass Amount of produced fluid (see StatData::m_producedMass).
-     * @param elementCount number of cell elements concerned by this instance
+     * @param elementCount local owned (non-ghost) cell count for this flux; MPI-summed in finalizePeriod()
      */
     void gatherTimeStepStats( real64 currentTime, real64 dt,
                               arrayView1d< real64 const > const & producedMass,
@@ -111,6 +111,14 @@ public:
      * @note This method must be synchronously called by all MPI ranks.
      */
     void finalizePeriod();
+
+    /**
+     * @brief Aggregate the statistics of the instance with those of another one.
+     * @details Adds @p other 's StatData into this object. Period start is the max of the two
+     *          values so a parent wrapper still at the -max sentinel picks up a child's real time.
+     * @param other the other WrappedStats object.
+     */
+    void combine( WrappedStats const & other );
 
     /**
      * @return the reference to the wrapped stats data collected over the last period (one timestep or more), computed by finalizePeriod()
@@ -151,7 +159,7 @@ private:
     /// stats data collected over the last period (one timestep or more), computed by finalizePeriod()
     StatData m_stats;
     /// the start time of the wrapped stats period (in s)
-    real64 m_statsPeriodStart;
+    real64 m_statsPeriodStart{-LvArray::NumericLimits< real64 >::max};
     /// the duration of the wrapped stats period (in s)
     real64 m_statsPeriodDT;
 
@@ -169,7 +177,7 @@ private:
       /// time that the current timestep is simulating.
       real64 m_timeStepDeltaTime = 0.0;
       /// start time of the current period.
-      real64 m_periodStart = 0.0;
+      real64 m_periodStart = -LvArray::NumericLimits< real64 >::max;
       /// delta time from all previous time-step of the current period.
       real64 m_periodPendingDeltaTime = 0.0;
       /// number of cell elements targeted by this instance
@@ -318,10 +326,7 @@ private:
   TableLayout m_logLayout;
   TableLayout m_csvLayout;
 
-  string_array m_subRegionsfilename;
-  string_array m_regionsfilename;
-  string_array m_allRegionFluxsfilename;
-  string_array m_allRegionWrapperFluxFilename;
+  string m_csvFilename;
 
 
   /**
@@ -335,18 +340,18 @@ private:
   void postInputInitialization() override;
 
   dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group,
-                                                                  string_view fluxName,
-                                                                  string_view elementSetName,
-                                                                  string_array & filenames );
+                                                                  string_view fluxName );
 
   /**
    * @brief  If requested, collect statistics in a tableData.
    * @param logLevel  the min log level to collect any statistics.
-   * @param regionName The region name where we collect statistics
+   * @param fluxName The name of the flux(es) for which we collect statistics
+   * @param elementSetName The name of collection of element (region) where we collect statistics
    * @param tableData The table data where we collect statistics
    * @param wrappedStats the statistics that must be retrieved.
    */
   void gatherStatsForLog( bool logLevelActive,
+                          string_view fluxName,
                           string_view elementSetName,
                           TableData & tableData,
                           WrappedStats const & wrappedStats );
@@ -355,22 +360,24 @@ private:
    * @param tableData The TableData where we collect the statistics
    * @param stats the statistics that must be retrieved.
    */
-  void gatherStatsForCSV( TableData & tableData, WrappedStats const & stats );
+  void gatherStatsForCSV( string_view fluxName,
+                          string_view elementSetName,
+                          TableData & tableData,
+                          WrappedStats const & stats );
 
   /**
    * @brief If requested, output statistics in the log.
    * @param logLevel the min log level to output any statistics.
-   * @param statsName The stat name where we collect
+   * @param fluxesStr A string designating the collection of the subject fluxes in the table title
    * @param tableMeshData The TableData where we have all collected statistics
    */
-  void outputStatsToLog( bool logLevelActive, string_view elementSetName, TableData const & tableMeshData );
+  void outputStatsToLog( bool logLevelActive, string_view fluxesStr, TableData const & tableMeshData );
 
   /**
    * @brief If requested, output statistics in csv.
-   * @param filenames String array containing all filenames to be generated
    * @param csvData The TableData where we have all collected statistics
    */
-  void outputStatsToCSV( string_array const & filenames, TableData & csvData );
+  void outputStatsToCSV( TableData & csvData );
 
 };
 

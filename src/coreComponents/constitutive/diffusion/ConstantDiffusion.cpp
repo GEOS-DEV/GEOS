@@ -36,19 +36,11 @@ ConstantDiffusion::ConstantDiffusion( string const & name, Group * const parent 
     setDescription( "xx, yy, and zz components of a diffusivity tensor [m^2/s]" );
 }
 
-std::unique_ptr< ConstitutiveBase >
-ConstantDiffusion::deliverClone( string const & name,
-                                 Group * const parent ) const
+void ConstantDiffusion::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  return DiffusionBase::deliverClone( name, parent );
-}
+  DiffusionBase::allocateConstitutiveData( parent, numPts );
 
-void ConstantDiffusion::allocateConstitutiveData( dataRepository::Group & parent,
-                                                  localIndex const numConstitutivePointsPerParentIndex )
-{
-  DiffusionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < parent.size(); ++ei ) // TODO move into initializeState?
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
@@ -60,19 +52,38 @@ void ConstantDiffusion::allocateConstitutiveData( dataRepository::Group & parent
   }
 }
 
+void ConstantDiffusion::initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const
+{
+  DiffusionBase::initializeTemperatureState( initialTemperature );
+
+  localIndex const numE = m_diffusivity.size( 0 );
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+
+  auto diffusivityView = m_diffusivity.toView();
+  auto const diffusivityComponentsView = m_diffusivityComponents.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      diffusivityView[ei][q][0] = diffusivityComponentsView[0];
+      diffusivityView[ei][q][1] = diffusivityComponentsView[1];
+      diffusivityView[ei][q][2] = diffusivityComponentsView[2];
+    }
+  } );
+}
+
 void ConstantDiffusion::postInputInitialization()
 {
   GEOS_THROW_IF( m_diffusivityComponents.size() != 3,
-                 GEOS_FMT( "{}: the size of the diffusivity must be equal to 3",
-                           getFullName() ),
-                 InputError );
+                 "the size of the diffusivity must be equal to 3",
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( m_diffusivityComponents[0] < 0 ||
                  m_diffusivityComponents[1] < 0 ||
                  m_diffusivityComponents[2] < 0,
-                 GEOS_FMT( "{}: the components of the diffusivity tensor must be non-negative",
-                           getFullName() ),
-                 InputError );
+                 "the components of the diffusivity tensor must be non-negative",
+                 InputError, getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ConstantDiffusion, string const &, Group * const )

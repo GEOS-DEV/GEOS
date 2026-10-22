@@ -77,46 +77,6 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
   } );
 }
 
-
-/**
- * @struct Structure to wrap templated function that implements the explicit time integration kernel.
- */
-struct ExplicitKernel
-{
-
-  static inline real64
-  calculateSingleNodalForce( localIndex const k,
-                             localIndex const targetNode,
-                             localIndex const numQuadraturePoints,
-                             arrayView4d< real64 const > const & dNdX,
-                             arrayView2d< real64 const > const & detJ,
-                             arrayView3d< real64 const, solid::STRESS_USD > const & stress,
-                             real64 ( & force )[ 3 ] )
-  {
-    GEOS_MARK_FUNCTION;
-    localIndex const & a = targetNode;
-
-    //Compute Quadrature
-    for( localIndex q = 0; q < numQuadraturePoints; ++q )
-    {
-      force[ 0 ] -= ( stress( k, q, 0 ) * dNdX( k, q, a, 0 ) +
-                      stress( k, q, 5 ) * dNdX( k, q, a, 1 ) +
-                      stress( k, q, 4 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
-      force[ 1 ] -= ( stress( k, q, 5 ) * dNdX( k, q, a, 0 ) +
-                      stress( k, q, 1 ) * dNdX( k, q, a, 1 ) +
-                      stress( k, q, 3 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
-      force[ 2 ] -= ( stress( k, q, 4 ) * dNdX( k, q, a, 0 ) +
-                      stress( k, q, 3 ) * dNdX( k, q, a, 1 ) +
-                      stress( k, q, 2 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
-
-    }//quadrature loop
-
-    return 0;
-  }
-
-};
-
-
 } // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geos

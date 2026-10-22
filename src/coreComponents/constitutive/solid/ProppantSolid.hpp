@@ -104,9 +104,6 @@ public:
    */
   ProppantSolid( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~ProppantSolid() override;
-
   /**
    * @brief Catalog name
    * @return Static catalog string

@@ -19,7 +19,9 @@
 
 #include "WellSolverBase.hpp"
 
+#include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
@@ -27,7 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-
+#include "functions/FunctionManager.hpp"
 namespace geos
 {
 
@@ -36,7 +38,7 @@ using namespace fields;
 
 WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
-  : PhysicsSolverBase( name, parent ),
+  : WellControls( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
@@ -44,6 +46,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
   m_keepVariablesConstantDuringInitStep( false )
+
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -56,44 +59,48 @@ WellSolverBase::WellSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the rates into a CSV file" );
+    setDescription( "When set to 1, write the rates into a CSV file." );
 
   this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
+
+
+  addLogLevel< logInfo::WellControl >();
 }
 
 Group * WellSolverBase::createChild( string const & childKey, string const & childName )
 {
+  Group * baseChild = WellControls::createChild( childKey, childName );
+  if( baseChild != nullptr )
+  {
+    return baseChild;
+  }
   static std::set< string > const childTypes = {
-    keys::wellControls,
+    //keys::wellControls,
     PhysicsSolverBase::groupKeyStruct::linearSolverParametersString(),
     PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
   };
   GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
-  if( childKey == keys::wellControls )
-  {
-    return &registerGroup< WellControls >( childName );
-  }
-  else
-  {
-    PhysicsSolverBase::createChild( childKey, childName );
-    return nullptr;
-  }
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+                 getDataContext() );
+
+  PhysicsSolverBase::createChild( childKey, childName );
+  return nullptr;
+
 }
 
 void WellSolverBase::expandObjectCatalogs()
 {
-  createChild( keys::wellControls, keys::wellControls );
+  //createChild( keys::wellControls, keys::wellControls );
 }
 
 WellSolverBase::~WellSolverBase() = default;
 
 void WellSolverBase::postInputInitialization()
 {
-  PhysicsSolverBase::postInputInitialization();
+  WellControls::postInputInitialization();
 
   // 1. Set key dimensions of the problem
   m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal
@@ -147,9 +154,11 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 void WellSolverBase::initializePostSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  Group & meshBodies = domain.getMeshBodies();
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
@@ -157,6 +166,19 @@ void WellSolverBase::initializePostSubGroups()
                                                                    WellElementSubRegion & subRegion )
     {
       validateWellConstraints( 0, 0, subRegion );
+
+      // validate perforation status table
+      PerforationData & perforationData = *subRegion.getPerforationData();
+      string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
+      for( integer i=0; i<perforationData.size(); i++ )
+      {
+        TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
+        GEOS_THROW_IF( tableFunction->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+                       GEOS_FMT( "The interpolation method for the perforation status table {} "
+                                 "should be TableFunction::InterpolationType::Lower",
+                                 tableFunction->getName() ),
+                       InputError, getDataContext() );
+      }
     } );
   } );
 }
@@ -191,13 +213,67 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
                           DofManager::Connector::Node );
 }
 
-void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOS_UNUSED_PARAM( dt ),
-                                        DomainPartition & domain )
-{
-  // Initialize the primary and secondary variables for the first time step
 
-  initializeWells( domain, time_n );
+
+void WellSolverBase::selectWellConstraint( real64 const & time_n,
+                                           real64 const & dt,
+                                           const integer coupledIterationNumber,
+                                           DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( coupledIterationNumber );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                               MeshLevel & meshLevel,
+                                                               string_array const & regionNames )
+  {
+    GEOS_UNUSED_VAR( meshBodyName );
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
+    {
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+      WellControls & wellControls = getWellControls( subRegion );
+      // Intiialize well if it is open
+      // Well state estimated from reservoir conditions
+      if( wellControls.isWellOpen() )
+      {
+        if( !wellControls.getWellState() )
+        {
+          wellControls.setWellState( 1 );
+
+          initializeWell( domain, meshLevel, subRegion, time_n );
+        }
+      }
+      else
+      {
+        wellControls.setWellState( 0 );
+      }
+
+      if( wellControls.getWellState())
+      {
+        evaluateConstraints( time_n,
+                             subRegion );
+
+        // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
+        // the well initialization code requires control type to by synced
+        integer owner = -1;
+        // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+        if( subRegion.isLocallyOwned() )
+        {
+          owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+        }
+        owner = MpiWrapper::max( owner );
+        WellControls::Control wellControl = wellControls.getControl();
+        MpiWrapper::broadcast( wellControl, owner );
+        wellControls.setControl( wellControl );
+      }
+    } );
+  } );
+
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )
@@ -208,8 +284,9 @@ void WellSolverBase::updateState( DomainPartition & domain )
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion & subRegion )
     { updateSubRegionState( subRegion ); } );
   } );
 }
@@ -221,13 +298,39 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-  string const wellDofKey = dofManager.getKey( wellElementDofName());
+
+
+  // selects constraints one of 2 ways
+  //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
+  // iteration
+  //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
+  //                         =>   estimator solve only performed first "wellEstimator" iterations
+  NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
+  selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
+
+
 
   // assemble the accumulation term in the mass balance equations
   assembleAccumulationTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
-  assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
+  //assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
+    {
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+      assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+    } );
+  } );
+
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( time, dt, domain );
 
@@ -289,8 +392,15 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
         wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
       } );
 
+      wellControls.forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint >( [&]( auto & constraint )
+      {
+        // set the reference well element where the BHP control is applied
+        real64 const refElev1 = constraint.getReferenceElevation();
+        constraint.setReferenceGravityCoef( refElev1 * gravVector[2] );
+      } );
+
       // set the reference well element where the BHP control is applied
-      wellControls.setReferenceGravityCoef( refElev * gravVector[2] );
+      wellControls.setReferenceGravityCoef( refElev * gravVector[2] );  // tjb remove
     } );
   } );
 }
@@ -307,6 +417,7 @@ WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const
 
 real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & currentDt, geos::DomainPartition & domain )
 {
+  FunctionManager & functionManager = FunctionManager::getInstance();
   real64 nextDt = PhysicsSolverBase::setNextDt( currentTime, currentDt, domain );
 
   if( m_timeStepFromTables )
@@ -318,7 +429,20 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
       mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             WellElementSubRegion & subRegion )
       {
+        real64 nextDt_perf=nextDt;
         WellControls & wellControls = getWellControls( subRegion );
+        // Find min dt from perf status tables
+        PerforationData & perforationData = *subRegion.getPerforationData();
+        string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
+
+        // Get dt for local perforations
+        for( integer i=0; i<perforationData.size(); i++ )
+        {
+          TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
+          WellControls::setNextDtFromTable( tableFunction, currentTime, nextDt_perf );
+        }
+        nextDt = MpiWrapper::min< real64 >( nextDt_perf );
+        // Find min dt including rate and status tables
         real64 const nextDt_orig = nextDt;
         wellControls.setNextDtFromTables( currentTime, nextDt );
         if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDt < nextDt_orig )

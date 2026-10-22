@@ -22,6 +22,7 @@
 #define GEOS_FILEIO_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
+#include "dataRepository/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -68,6 +69,12 @@ struct HDF5Writing
 {
   static constexpr int getMinLogLevel() { return 3; }
   static constexpr std::string_view getDescription() { return "Information on buffered data in an HDF5 file "; }
+};
+
+struct OutputTimers
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static std::string_view getDescription() { return "Output timing information"; }
 };
 
 /// @endcond

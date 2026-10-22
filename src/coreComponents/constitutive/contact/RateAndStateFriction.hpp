@@ -55,11 +55,6 @@ public:
    */
   RateAndStateFriction( string const & name, Group * const parent );
 
-  /**
-   * Default Destructor
-   */
-  virtual ~RateAndStateFriction() override;
-
   static string catalogName()
   {
     if constexpr ( USE_SLIP_LAW::value )
@@ -76,13 +71,39 @@ public:
 
   ///@}
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override final;
-
   enum class StateEvolutionLawType : integer
   {
     slipLaw,
     agingLaw
+  };
+
+  /**
+   * @struct Set of "char const *" and keys for data specified in this class.
+   */
+  struct viewKeyStruct : public FrictionBase::viewKeyStruct
+  {
+    /// string/key for friction coefficient
+    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
+    /// string/key for Rate and State coefficient a
+    static constexpr char const * aCoefficientString() { return "a"; }
+    /// string/key for Rate and State coefficient b
+    static constexpr char const * bCoefficientString() { return "b"; }
+    /// string/key for Rate and State characteristic length
+    static constexpr char const * DcCoefficientString() { return "Dc"; }
+    /// string/key for reference slip rate
+    static constexpr char const * referenceVelocityString() { return "referenceVelocity"; }
+    /// string/key for reference friction coefficient
+    static constexpr char const * referenceFrictionCoefficientString() { return "referenceFrictionCoefficient"; }
+    /// string/key for the default value of Rate and State coefficient a
+    static constexpr char const * defaultACoefficientString() { return "defaultA"; }
+    /// string/key for the default value of Rate and State coefficient b
+    static constexpr char const * defaultBCoefficientString() { return "defaultB"; }
+    /// string/key for the default value of Rate and State characteristic length
+    static constexpr char const * defaultDcCoefficientString() { return "defaultDc"; }
+    /// string/key for the default value ofreference slip rate
+    static constexpr char const * defaultReferenceVelocityString() { return "defaultReferenceVelocity"; }
+    /// string/key for the default value of reference friction coefficient
+    static constexpr char const * defaultReferenceFrictionCoefficientString() { return "defaultReferenceFrictionCoefficient"; }
   };
 
   class KernelWrapper : public FrictionBaseUpdates
@@ -130,7 +151,8 @@ public:
 
     GEOS_HOST_DEVICE
     inline
-    virtual void updateFractureState( arraySlice1d< real64 const > const & dispJump,
+    virtual void updateFractureState( localIndex const k,
+                                      arraySlice1d< real64 const > const & dispJump,
                                       arraySlice1d< real64 const > const & tractionVector,
                                       integer & fractureState ) const override final;
 
@@ -185,16 +207,17 @@ private:
     StateEvolutionLawType m_stateEvolutionLawType;
   };
 
-
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
   KernelWrapper createKernelUpdates() const;
 
-private:
+protected:
 
   virtual void postInputInitialization() override;
+
+private:
 
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_frictionCoefficient;
@@ -228,45 +251,17 @@ private:
   /// Default value of Rate and State reference friction coefficient
   real64 m_defaultMu0;
 
-/**
- * @struct Set of "char const *" and keys for data specified in this class.
- */
-  struct viewKeyStruct : public FrictionBase::viewKeyStruct
-  {
-    /// string/key for friction coefficient
-    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
-    /// string/key for Rate and State coefficient a
-    static constexpr char const * aCoefficientString() { return "a"; }
-    /// string/key for Rate and State coefficient b
-    static constexpr char const * bCoefficientString() { return "b"; }
-    /// string/key for Rate and State characteristic length
-    static constexpr char const * DcCoefficientString() { return "Dc"; }
-    /// string/key for reference slip rate
-    static constexpr char const * referenceVelocityString() { return "referenceVelocity"; }
-    /// string/key for reference friction coefficient
-    static constexpr char const * referenceFrictionCoefficientString() { return "referenceFrictionCoefficient"; }
-    /// string/key for the default value of Rate and State coefficient a
-    static constexpr char const * defaultACoefficientString() { return "defaultA"; }
-    /// string/key for the default value of Rate and State coefficient b
-    static constexpr char const * defaultBCoefficientString() { return "defaultB"; }
-    /// string/key for the default value of Rate and State characteristic length
-    static constexpr char const * defaultDcCoefficientString() { return "defaultDc"; }
-    /// string/key for the default value ofreference slip rate
-    static constexpr char const * defaultReferenceVelocityString() { return "defaultReferenceVelocity"; }
-    /// string/key for the default value of reference friction coefficient
-    static constexpr char const * defaultReferenceFrictionCoefficientString() { return "defaultReferenceFrictionCoefficient"; }
-  };
-
 };
 
 template< typename USE_SLIP_LAW >
 GEOS_HOST_DEVICE
-inline void RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::updateFractureState( arraySlice1d< real64 const > const & dispJump,
+inline void RateAndStateFriction< USE_SLIP_LAW >::KernelWrapper::updateFractureState( localIndex const k,
+                                                                                      arraySlice1d< real64 const > const & dispJump,
                                                                                       arraySlice1d< real64 const > const & tractionVector,
                                                                                       integer & fractureState ) const
 {
 
-  GEOS_UNUSED_VAR( tractionVector );
+  GEOS_UNUSED_VAR( k, tractionVector );
   using namespace fields::contact;
 
   if( dispJump[0] >  -m_displacementJumpThreshold )

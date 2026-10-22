@@ -12,8 +12,8 @@
       name="lagrangiancontact"
       stabilizationName="TPFAstabilization"
       logLevel="1"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
+      stabilizationScalingCoefficient="0.6"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"

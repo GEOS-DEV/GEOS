@@ -99,14 +99,14 @@ public:
   /**
    * @brief Allocate constitutive data and make views to data on parent objects
    * @param[in] parent reference to the group that holds the constitutive relation
-   * @param[in] numConstitutivePointsPerParentIndex number of quadrature points
+   * @param[in] numPts number of quadrature points
    *
    * This function does 2 things:
-   *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
+   *   1) Allocate data according to the size of parent and numPts
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex );
+                                         localIndex const numPts );
 
   struct viewKeyStruct
   {};
@@ -129,14 +129,13 @@ public:
    * TODO: Remove duplicated code with ObjectManagerBase
    */
   template< typename FIELD_TRAIT >
-  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
-                                                                         typename FIELD_TRAIT::type * newObject )
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( typename FIELD_TRAIT::type * newObject )
   {
     if( FIELD_TRAIT::plotLevel != dataRepository::PlotLevel::NOPLOT )
-      m_userFields.emplace_back( fieldTrait.key() );
+      m_userFields.emplace_back( FIELD_TRAIT::key() );
 
-    return registerWrapper( fieldTrait.key(), newObject ).
-             setApplyDefaultValue( fieldTrait.defaultValue() ).
+    return registerWrapper( FIELD_TRAIT::key(), newObject ).
+             setApplyDefaultValue( FIELD_TRAIT::defaultValue() ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
              setRestartFlags( FIELD_TRAIT::restartFlag ).
              setDescription( FIELD_TRAIT::description );
@@ -171,7 +170,7 @@ public:
   /**
    * @return A const vector containing all fields
    */
-  std::vector< std::string > const & getUserFields() const
+  stdVector< std::string > const & getUserFields() const
   {
     return m_userFields;
   }
@@ -190,7 +189,7 @@ private:
   bool m_isClone;
 
   // Vector containing all fields registered with `registerField()`
-  std::vector< std::string > m_userFields;
+  stdVector< std::string > m_userFields;
 };
 
 }

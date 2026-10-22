@@ -145,9 +145,6 @@ public:
    */
   CoupledSolid( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~CoupledSolid() override;
-
   virtual void initializePreSubGroups() override;
 
   /**
@@ -163,8 +160,12 @@ public:
                                                                     getPermModel() );
   }
 
+public:
+  typedef  PERM_TYPE PermType;
+
   //START_SPHINX_INCLUDE_01
 protected:
+
   SOLID_TYPE const & getSolidModel() const
   { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
 
@@ -188,34 +189,31 @@ CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::CoupledSolid( string const & n
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
-CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid() = default;
-
-
-template< typename SOLID_TYPE,
-          typename PORO_TYPE,
-          typename PERM_TYPE >
 void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
 {
   if( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
   {
-    GEOS_ERROR( " The coupled solid " << getDataContext() <<
-                " expects a porosity model of type " << PORO_TYPE::catalogName() <<
-                " but the specified porosity model \"" << m_porosityModelName <<
-                "\" is of type " << getPorosityModel().getCatalogName() );
+    GEOS_ERROR( GEOS_FMT( " The coupled solid  expects a porosity model of type {} but the specified porosity model \"{}\" is of type {}",
+                          PORO_TYPE::catalogName(),
+                          m_porosityModelName,
+                          getPorosityModel().getCatalogName() ),
+                getDataContext() );
   }
   if( PERM_TYPE::catalogName() != getPermModel().getCatalogName() )
   {
-    GEOS_ERROR( " The coupled solid " << getDataContext() <<
-                " expects a permeability model of type " << PERM_TYPE::catalogName() <<
-                " but the specified permeability model \"" << m_permeabilityModelName <<
-                "\" is of type " << getPermModel().getCatalogName() );
+    GEOS_ERROR( GEOS_FMT( " The coupled solid  expects a permeability model of type {} but the specified permeability model \"{}\" is of type {}",
+                          PERM_TYPE::catalogName(),
+                          m_permeabilityModelName,
+                          getPermModel().getCatalogName() ),
+                getDataContext() );
   }
   if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
   {
-    GEOS_ERROR( " The coupled solid " << getDataContext() <<
-                " expects a solid model of type " << SOLID_TYPE::catalogName() <<
-                " but the specified solid model \"" << m_solidModelName <<
-                "\" is of type" << getSolidModel().getCatalogName() );
+    GEOS_ERROR( GEOS_FMT( " The coupled solid  expects a solid model of type {} but the specified solid model \"{}\" is of type {}",
+                          SOLID_TYPE::catalogName(),
+                          m_solidModelName,
+                          getSolidModel().getCatalogName() ),
+                getDataContext() );
   }
 }
 

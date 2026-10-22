@@ -21,6 +21,11 @@
     <PeriodicEvent name="outputs"
                    timeFrequency="10.0e6"
                    target="/Outputs/reservoir_with_properties" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="10.0e6"
+                   target="/Outputs/restartOutput"/>
+
   </Events>
   <!-- SPHINX_FIELD_CASE_EVENTS_END -->
 

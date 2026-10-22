@@ -89,6 +89,14 @@ DECLARE_FIELD( facePressure_n,
                NO_WRITE,
                "Face pressure at the previous converged time step" );
 
+DECLARE_FIELD( isBoundaryFace,
+               "isBoundaryFace",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Boundary face indicator: 1 for faces with Dirichlet BCs, 0 for interior faces" );
+
 DECLARE_FIELD( pressureGradient,
                "pressureGradient",
                array2d< real64 >,

@@ -40,28 +40,26 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
     setSizedFromParent( 0 ).
     setDescription( "Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. " );
 
-  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
-std::unique_ptr< ConstitutiveBase >
-ParallelPlatesPermeability::deliverClone( string const & name,
-                                          Group * const parent ) const
-{
-  return PermeabilityBase::deliverClone( name, parent );
-}
-
-void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                           localIndex const numConstitutivePointsPerParentIndex )
+void ParallelPlatesPermeability::allocateConstitutiveData( Group & parent,
+                                                           localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
+}
+
+void ParallelPlatesPermeability::postInputInitialization()
+{
+  PermeabilityBase::postInputInitialization();
 
   if( m_transversalPermeability > -1 )
   {
     m_updateTransversalComponent = false;
   }
-
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void ParallelPlatesPermeability::initializeState() const

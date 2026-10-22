@@ -1,0 +1,67 @@
+<?xml version="1.0" ?>
+<Problem>
+    <FieldSpecifications>
+        <FieldSpecification
+            name="POROSITY.SAND"
+            fieldName="ROCK.POROSITY_referencePorosity"
+            setNames="{ all }"
+            objectPath="ElementRegions/SAND"
+            initialCondition="1"
+            scale="0.14375" />
+        <FieldSpecification
+            name="POROSITY.CLAY"
+            fieldName="ROCK.POROSITY_referencePorosity"
+            setNames="{ all }"
+            objectPath="ElementRegions/CLAY"
+            initialCondition="1"
+            scale="0.125" />
+        <FieldSpecification
+            name="PERMX.CLAY"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            setNames="{ all }"
+            objectPath="ElementRegions/CLAY"
+            initialCondition="1"
+            component="0"
+            scale="3.1209255e-14" />
+        <FieldSpecification
+            name="PERMY.CLAY"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            setNames="{ all }"
+            objectPath="ElementRegions/CLAY"
+            initialCondition="1"
+            component="1"
+            scale="3.1209255e-14" />
+        <FieldSpecification
+            name="PERMZ.CLAY"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            setNames="{ all }"
+            objectPath="ElementRegions/CLAY"
+            initialCondition="1"
+            component="2"
+            scale="3.1209255e-15" />
+        <FieldSpecification
+            name="PERMX.SAND"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            setNames="{ all }"
+            objectPath="ElementRegions/SAND"
+            initialCondition="1"
+            component="0"
+            scale="3.1209255e-13" />
+        <FieldSpecification
+            name="PERMY.SAND"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            setNames="{ all }"
+            objectPath="ElementRegions/SAND"
+            initialCondition="1"
+            component="1"
+            scale="3.1209255e-13" />
+        <FieldSpecification
+            name="PERMZ.SAND"
+            fieldName="ROCK.PERMEABILITY_permeability"
+            setNames="{ all }"
+            objectPath="ElementRegions/SAND"
+            initialCondition="1"
+            component="2"
+            scale="3.1209255e-14" />
+    </FieldSpecifications>
+</Problem>

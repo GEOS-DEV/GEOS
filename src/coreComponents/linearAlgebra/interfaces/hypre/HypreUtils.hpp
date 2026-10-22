@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
@@ -29,20 +30,17 @@
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE GEOS_DEVICE
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_HOST_DEVICE GEOS_HOST_DEVICE
-#else
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_HOST_DEVICE
-#endif
+/**
+ * @def GEOS_HYPRE_DEVICE
+ * @brief Host/device annotation used by hypre wrappers.
+ */
+#define GEOS_HYPRE_DEVICE GEOS_HOST_DEVICE
 
 namespace geos
 {
+
+class HypreMatrix;
+class HypreVector;
 
 /**
  * @brief Container for hypre preconditioner function pointers.
@@ -131,7 +129,7 @@ constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 
 #endif
 
-// Check matching requirements on index/value types between GEOSX and Hypre
+// Check matching requirements on index/value types between GEOS and Hypre
 
 // WARNING. We don't have consistent types between HYPRE_Int and localIndex.
 //          Decision needs to be made either to use bigint option, or change
@@ -167,8 +165,9 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 }
 
 /**
- * @brief Check for previous device errors and report with line information.
- * @param msg custom message to add
+ * @def GEOS_HYPRE_CHECK_DEVICE_ERRORS
+ * @brief Check for previous device errors and report with file/line information.
+ * @param msg Custom message to add.
  */
 #define GEOS_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 
@@ -182,7 +181,7 @@ static_assert( std::is_same< HYPRE_Real, geos::real64 >::value,
                "HYPRE_Real and geos::real64 must be the same type" );
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt.
+ * @brief Converts a non-const array from GEOS globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -192,7 +191,7 @@ inline HYPRE_BigInt * toHypreBigInt( geos::globalIndex * const index )
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to HYPRE_BigInt.
+ * @brief Converts a const array from GEOS globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -202,14 +201,24 @@ inline HYPRE_BigInt const * toHypreBigInt( geos::globalIndex const * const index
 }
 
 /**
- * @brief Gather a parallel vector on a every rank.
+ * @brief Gather a parallel vector on every rank.
  * @param vec the vector to gather
- * @return A newly allocated serial vector (may be null on ranks that don't have any elements)
+ * @return a newly allocated serial vector (may be null on ranks that don't have any elements)
+ * @note caller takes ownership and must dispose of the vector appropriately
  *
  * This is a wrapper around hypre_ParVectorToVectorAll() that works for both host-based
  * and device-based vectors without relying on Unified Memory.
  */
 HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec );
+
+/**
+ * @brief Gather a parallel vector onto a single rank.
+ * @param vec the vector to gather
+ * @param targetRank the rank to gather the vector on
+ * @return a newly allocated serial vector on @p targetRank, nullptr on the rest
+ * @note caller takes ownership and must dispose of the vector appropriately
+ */
+HYPRE_Vector parVectorToVector( HYPRE_ParVector const vec, int const targetRank );
 
 /**
  * @brief Dummy function that does nothing but conform to hypre's signature for preconditioner setup/apply functions.
@@ -221,6 +230,47 @@ HYPRE_Int dummySetup( HYPRE_Solver,
                       HYPRE_ParCSRMatrix,
                       HYPRE_ParVector,
                       HYPRE_ParVector );
+
+/**
+ * @brief Copy DoF-component labels used to tag hypre Krylov vectors.
+ * @param mat Matrix whose DofManager (when present) provides the labels.
+ * @param labels Output local DoF-component labels; emptied when none are available.
+ *
+ * Prefers `mat.dofManager()` when present. A testing override is used only when
+ * the matrix has no DofManager, so unit tests can exercise tagged GMRES without
+ * building a mesh.
+ */
+void fillKrylovDofLabels( HypreMatrix const & mat,
+                          array1d< int > & labels );
+
+/**
+ * @brief Convert local DoF-component labels into hypre Krylov tag arrays.
+ * @param labels Local DoF-component labels (empty on ranks that own no rows).
+ * @param comm Communicator used to agree on the global tag count.
+ * @param tags Output per-row tags; emptied when only one tag is present.
+ * @param numTags Output global tag count (at least 1).
+ */
+void assignKrylovDofTags( arrayView1d< int const > const & labels,
+                          MPI_Comm const comm,
+                          array1d< HYPRE_Int > & tags,
+                          HYPRE_Int & numTags );
+
+namespace testing
+{
+
+/**
+ * @brief Install fallback Krylov DoF labels for unit tests without a DofManager.
+ * @param labels Local labels; copied and used by fillKrylovDofLabels when the
+ *   matrix has no DofManager and `labels.size()` matches the local row count.
+ */
+void setKrylovDofLabels( arrayView1d< int const > const & labels );
+
+/**
+ * @brief Clear fallback Krylov DoF labels installed by setKrylovDofLabels().
+ */
+void clearKrylovDofLabels();
+
+}
 
 /**
  * @brief The missing wrapper compatible with hypre solver solve signature.
@@ -283,6 +333,50 @@ HYPRE_Int relaxationSolve( HYPRE_Solver solver,
  * @return always 0
  */
 HYPRE_Int relaxationDestroy( HYPRE_Solver solver );
+
+/**
+ * @brief Create a Chebyshev smoother.
+ * @param solver the solver
+ * @param order Chebyshev order (degree)
+ * @param eigNumIter number of eigenvalue estimation iterations
+ * @return always 0
+ */
+HYPRE_Int chebyshevCreate( HYPRE_Solver & solver,
+                           HYPRE_Int const order,
+                           HYPRE_Int const eigNumIter );
+
+/**
+ * @brief Setup a Chebyshev smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int chebyshevSetup( HYPRE_Solver solver,
+                          HYPRE_ParCSRMatrix A,
+                          HYPRE_ParVector b,
+                          HYPRE_ParVector x );
+
+/**
+ * @brief Solve with a Chebyshev smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int chebyshevSolve( HYPRE_Solver solver,
+                          HYPRE_ParCSRMatrix A,
+                          HYPRE_ParVector b,
+                          HYPRE_ParVector x );
+
+/**
+ * @brief Destroy a Chebyshev smoother.
+ * @param solver the solver
+ * @return always 0
+ */
+HYPRE_Int chebyshevDestroy( HYPRE_Solver solver );
 
 /**
  * @brief Returns hypre's identifier of the AMG cycle type.
@@ -375,7 +469,7 @@ inline HYPRE_Int getILUType( LinearSolverParameters::AMG::SmootherType const typ
 {
   static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
-    { LinearSolverParameters::AMG::SmootherType::ilu0, 0 },
+    { LinearSolverParameters::AMG::SmootherType::iluk, 0 },
     { LinearSolverParameters::AMG::SmootherType::ilut, 1 },
   };
   return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
@@ -502,7 +596,8 @@ enum class MGRRestrictionType : HYPRE_Int
   approximateInverse = 3,  //!< Approximate inverse
   blockJacobi = 12,        //!< Block-Jacobi
   cprLike = 13,            //!< CPR-like restriction
-  blockColLumped = 14      //!< Block column-lumped approximation
+  blockColLumped = 14,     //!< Block column-lumped approximation
+  partialColLumped = 15    //!< Partial column-lumped approximation
 };
 
 /**
@@ -540,6 +635,7 @@ enum class MGRFRelaxationType : HYPRE_Int
   l1forwardGaussSeidel = 13,        //!< \f$\ell_1\f$ Gauss-Seidel, forward solve
   l1backwardGaussSeidel = 14,       //!< \f$\ell_1\f$ Gauss-Seidel, backward solve
   l1jacobi = 18,                    //!< \f$\ell_1\f$-scaled Jacobi
+  ilu = 32,                         //!< incomplete LU factorization
   gsElimWPivoting = 99,             //!< Gaussian Elimination with pivoting direct solver (for small systems)
   gsElimWInverse = 199              //!< Direct Inversion with Gaussian Elimination (OK for larger systems)
 };

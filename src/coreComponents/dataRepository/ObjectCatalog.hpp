@@ -22,8 +22,8 @@
  * a similar manner to classic virtual factory method, except that it is no
  * maintained list of derived objects that is required to create new objects.
  * Instead, the ``ObjectCatalog`` creates a "catalog" of derived objects using
- * a ``std::unordered_map``.
- * This ``std::unordered_map`` is then statically initialized through the declaration
+ * a ``stdUnorderedMap``.
+ * This ``stdUnorderedMap`` is then statically initialized through the declaration
  * of a
  */
 
@@ -71,8 +71,8 @@ public:
 
   /// This is the type that will be used for the catalog. The catalog is actually instantiated in the @p BASETYPE.
   //START_SPHINX_1
-  typedef std::unordered_map< std::string,
-                              std::unique_ptr< CatalogInterface< BASETYPE, ARGS... > > > CatalogType;
+  typedef stdUnorderedMap< std::string,
+                           std::unique_ptr< CatalogInterface< BASETYPE, ARGS... > > > CatalogType;
   //STOP_SPHINX
 
   /**
@@ -181,7 +181,7 @@ public:
    */
   //START_SPHINX_2
   static std::unique_ptr< BASETYPE > factory( std::string const & objectTypeName,
-                                              DataContext const & context,
+                                              GEOS_MAYBE_UNUSED DataContext const & context,
                                               ARGS... args )
   {
     // We stop the simulation if the type to create is not found
@@ -426,7 +426,7 @@ class CatalogInterface< BASETYPE >
 public:
 
   /// This is the type that will be used for the catalog. The catalog is actually instantiated in the @p BASETYPE.
-  typedef std::unordered_map< std::string, std::unique_ptr< CatalogInterface< BASETYPE > > > CatalogType;
+  typedef stdUnorderedMap< std::string, std::unique_ptr< CatalogInterface< BASETYPE > > > CatalogType;
 
   /**
    * @brief Default constructor.

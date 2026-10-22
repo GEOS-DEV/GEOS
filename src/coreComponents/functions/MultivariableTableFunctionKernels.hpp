@@ -80,7 +80,7 @@ public:
     m_axisStepInvs ( axisStepInvs ),
     m_axisHypercubeMults ( axisHypercubeMults ),
     m_hypercubeData ( hypercubeData )
-  {};
+  {}
 
 /**
  * @brief interpolate all operators at a given point
@@ -201,7 +201,9 @@ protected:
       axisIntervalIndex = 0;
       if( axisCoordinate < axisMin )
       {
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
         printf( "Interpolation warning: axis coordinate is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+#endif
       }
     }
     else if( axisIntervalIndex > (axisPoints - 2))
@@ -209,7 +211,9 @@ protected:
       axisIntervalIndex = axisPoints - 2;
       if( axisCoordinate > axisMax )
       {
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
         printf( "Interpolation warning: axis coordinate is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+#endif
       }
     }
 
@@ -377,14 +381,6 @@ protected:
 
   /// Coordinates in numDims-dimensional space where interpolation is requested
   arrayView1d< real64 const > m_coordinates;
-
-  // outputs
-
-  /// Interpolated values
-  arrayView1d< real64 > m_values;
-
-  /// /// Interpolated derivatives
-  arrayView1d< real64 > m_derivatives;
 };
 
 } /* namespace geos */

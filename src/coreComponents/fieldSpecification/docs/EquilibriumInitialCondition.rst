@@ -12,6 +12,70 @@ The hydrostatic initialization is done by placing one or more **HydrostaticEquil
 This initialization procedure is described below in the context of single-phase and compositional multiphase flow.
 At the end of this document, we compare the hydrostatic equilibrium method to another initialization method, based on the input of x-y-z tables.
 
+Hydrostatic Equilibration
+==============================
+The objective of the hydrostatic equilibration is to achieve a fluid configuration in which all phases are static. We set the Darcy velocity of each phase, :math:`\mathbf{u}_j`, to zero:
+
+.. math::
+   \mathbf{u}_j = -\lambda_j \mathbf{K} \left ( \nabla p_j - \rho_j \mathbf{g} \right ) = 0
+
+Here, :math:`\lambda_j`, :math:`p_j` and :math:`\rho_j` denote the mobility, pressure and density of phase :math:`j`. :math:`\mathbf{K}` is the second order absolute permeability tensor and the gravity vector is represented by :math:`\mathbf{g}`.
+Alternatively, equating the pressure gradient with the gravitational gradient results in a no-flow phases' configuration and assuming the gravity vector is aligned with the z-axis:
+
+.. math::
+   \frac{\partial p_j}{\partial z} = \rho_j g
+
+where $g = -9.81 \frac{m}{s^2}$.
+A mixed discretization is utilized where the pressure derivative is approximated using backward difference while density is evaluated as an average between the reference elevation, :math:`z_{ref}` and current elevation, :math:`z`.
+The average density and the discretized pressure equation are given:
+
+.. math::
+   {\rho_j}_{avg} = \frac{{\rho_j}_{ref} + \rho_j \left( p(z), T(z), z_i(z) \right )}{2}
+
+.. math::
+   p_j(z) = p_{ref} - {\rho_j}_{avg} g \left (z_{ref} - z \right )
+
+The pressure equation is nonlinear because :math:`{\rho_j}_{avg}(z)` is a function of :math:`p_j(z)`. We use the fixed-point method to iteratively solve the pressure equation.
+
+For single phase cases, pressure is computed at the elevation points and then mapped into cell centers. 
+However, multiphase systems require phase contact enforcement and composition correction.
+
+Phase Contact Enforcement
+------------------------------
+
+Field data usually provide the depths of phase contacts with a high degree of certainty. Therefore, users want to enforce phase contacts precisely. 
+Here, the method by which phase contacts are enforced is discussed. Firstly, we define phase contact as the depth at which the capillary pressure, :math:`p_c` is zero:
+
+.. math::
+   p_c(z_{contact}) = p_{nw} - p_{w} = 0
+
+$z_{contact}$, $p_{nw}$ and $p_w$ refer to phase contact depth, non-wetting phase pressure and wetting phase pressure respectively.
+A nested fixed-point iterative method is used to enforce phase contacts. Given a datum, where pressure of the "primary phase" is known, a phase contact and elevation points between the datum and the phase contact, the algorithm begins by marching from the datum to the phase contact. 
+At the phase contact, pressure of "secondary phase" is equated to "primary phase" pressure and the "secondary phase" pressure is then corrected. The process is repeated until the pressure of the two phases at the phase contact are equal upto a tolerace.
+
+Composition Correction
+==============================
+
+Once phase pressures are computed during the hydrostatic equilibration step, capillary pressures are then determined. A capillary pressure model relates capillary pressure to the wetting phase saturation. 
+Therefore, phase saturations can be back-calculated according to the capillary pressure model. To achieve this, a Newton-based solver is implemented that inverts capillary pressure to obtain the corresponding phase saturations. 
+The capillary pressure inversion solver can handle three-phase systems and supports inversion for any generic capillary pressure model.
+
+On the other hand, hydrostatic equilibration requires phase densities. Given a pressure, temperature and overall compositions, the fluid is flashed to obtain phase densities during each iteration of hydrostatic pressure computation. 
+The other outputs of the flash are phase compositions, :math:`x_{ij}` and phase fractions, :math:`\gamma_j`. Phase saturations can then be computed from the phase densities and phase fractions. 
+Lets denote these saturations as :math:`S_j^{flash}`` and the saturations from the capillary pressure inversion as :math:`S_j^{p_c}`. To account for capillary effects, :math:`S_j^{flash}` has to be equal to :math:`S_j^{p_c}`. 
+This is achieved by recombining phases at the corrected overall compositions, without affecting the hydrostatic or thermodynamic equilibrium---the post-correction flash must yield the same density and phase compositions as before the correction. 
+The choice of modifying the overall compositions stems from the fact that they are the least certain among the inputs to the flash. Phase fractions are modified using :math:`S_j^{p_c}` and phase densities from pre-correction flash:
+
+.. math::
+   \gamma_j^{corr} = \frac{S_j^{p_c} \rho_j}{\sum_j S_j^{p_c} \rho_j}
+
+The phases are then recombined using the corrected phase fractions and the phase compositions from pre-correction flash:
+
+.. math::
+   z_i^{corr} = \sum_j \gamma_j^{corr} x_{ij}
+
+Note that volume change upon mixing is ignored.
+
 Single-phase flow parameters
 ==============================
 
@@ -47,6 +111,8 @@ In addition to the required ``datumElevation``, ``datumPressure``, and ``objectP
 * ``temperatureVsElevationTableName``: the names of the table specifying the temperature (in Kelvin) as a function of elevation.
 
 * ``initialPhaseName``: the name of the phase initially saturating the domain. The other phases are assumed to be at residual saturation at the beginning of the simulation. 
+
+* ``phaseContacts``: the elevation of the phase contacts. There must be :math:`n_p - 1` phase contacts (where :math:`n_p` is the number of phases). The phase contacts must be in descending order.
 
 These parameters are used with the fluid density model (depending for compositional flow on pressure, component fractions, and in some cases, temperature) to populate the hydrostatic pressure table, and later initialize the pressure in each cell.
 
@@ -91,6 +157,7 @@ For compositional multiphase flow, using for instance the CO2-brine flow model, 
         datumPressure="1.1e7"
         initialPhaseName="water"
         componentNames="{ co2, water }"
+        phaseContacts="{ 50 }"
         componentFractionVsElevationTableNames="{ initCO2CompFracTable,
                                                   initWaterCompFracTable }"
         temperatureVsElevationTableName="initTempTable"/>

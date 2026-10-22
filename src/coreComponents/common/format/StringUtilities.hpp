@@ -268,6 +268,17 @@ stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
                                            size_t & maxLineLength );
 
 /**
+ * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
+ * If a word has a greater size than maxLength, it will be cut in one or many parts.
+ * @param text The input text to wrap
+ * @param maxLineLength [inout] The max length a line can have.
+ *                      The value is then set to the effective maximum line length
+ * @tparam STRING_T The type of the string (string or string_view)
+ * @return A vector containing the lines wrapped.
+ */
+string wrapTextToMaxLength( string_view text, size_t maxLineLength );
+
+/**
  * @brief Take a string, and return a array1d with the cast values
  * @tparam T the type to which the string will be cast
  * @param[in] str the string to turn into an array1d

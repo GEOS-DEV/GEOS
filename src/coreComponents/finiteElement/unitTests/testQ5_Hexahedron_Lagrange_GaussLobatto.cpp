@@ -53,7 +53,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      Q5_Hexahedron_Lagrange_GaussLobatto::calcN( q, N );
+      Q5_Hexahedron_Lagrange_GaussLobatto_impl::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         if( fabs( N[a] )<1e-9 )
@@ -209,12 +209,12 @@ void testKernelDriver()
       real64 dNdX[numNodes][3] = {{0}};
       real64 dNdXcheck[numNodes][3] = {{0}};
       // check the explicit calculation of gradient values
-      viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto::calcGradN( xLocal[ q ],
-                                                                    xLocal,
-                                                                    dNdXcheck );
-      viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto::calcGradN( q,
-                                                                    xLocal,
-                                                                    dNdX );
+      viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto_impl::calcGradN( xLocal[ q ],
+                                                                         xLocal,
+                                                                         dNdXcheck );
+      viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto_impl::calcGradN( q,
+                                                                         xLocal,
+                                                                         dNdX );
 
       for( localIndex a=0; a<numNodes; ++a )
       {

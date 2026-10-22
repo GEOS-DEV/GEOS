@@ -56,7 +56,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      H1_Tetrahedron_Lagrange1_Gauss1::calcN( q, N );
+      H1_Tetrahedron_Lagrange1_Gauss1_impl::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -71,9 +71,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJxW[q] = H1_Tetrahedron_Lagrange1_Gauss1::calcGradN( q,
-                                                                  xCoords,
-                                                                  dNdX );
+      viewDetJxW[q] = H1_Tetrahedron_Lagrange1_Gauss1_impl::calcGradN( q,
+                                                                       xCoords,
+                                                                       dNdX );
       for( localIndex a=0; a<numNodes; ++a )
       {
         for( int i = 0; i < 3; ++i )

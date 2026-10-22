@@ -140,13 +140,13 @@ void NegativeTwoPhaseFlashModel::calculatePhaseOrdering( arrayView1d< integer co
   }
   else if( 0 <= li )
   {
-    // Oil and gas both present: gas is the wetting phase
+    // Oil and gas both present: oil is the wetting phase
     vapourIndex = vi;
     liquidIndex = li;
   }
   else
   {
-    // Gas and water: gas is the wetting phase
+    // Gas and water: water is the wetting phase
     vapourIndex = vi;
     liquidIndex = ai;
   }

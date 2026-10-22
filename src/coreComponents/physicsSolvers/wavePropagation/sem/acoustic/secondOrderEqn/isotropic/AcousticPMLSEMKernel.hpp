@@ -20,6 +20,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPMLSEMKERNEL_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICPMLSEMKERNEL_HPP_
 
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
+
 namespace geos
 {
 
@@ -190,15 +192,15 @@ struct AcousticPMLSEM
         {
 
           /// compute the shape functions gradients
-          real32 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, i, xLocal, gradN );
+          real32 const detJ = FE_TYPE::calcGradN( i, xLocal, gradN );
           GEOS_UNUSED_VAR ( detJ );
 
           /// compute the gradient of the pressure and the PML auxiliary variables at the node
-          m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, pressure, pressureGrad );
-          m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxU, auxUGrad );
+          finiteElement::feOps::gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, pressure, pressureGrad );
+          finiteElement::feOps::gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxU, auxUGrad );
           for( int j=0; j<3; ++j )
           {
-            m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxV[j], auxVGrad[j] );
+            finiteElement::feOps::gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxV[j], auxVGrad[j] );
           }
 
           /// compute the PML damping profile

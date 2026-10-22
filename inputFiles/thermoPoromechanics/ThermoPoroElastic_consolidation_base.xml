@@ -196,7 +196,12 @@
       name="displacementCollection"
       objectPath="nodeManager"
       fieldName="totalDisplacement"/>
-    
+
+    <PackCollection
+      name="stressCollection"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="averageStress"/>
+
   </Tasks>
   
   <Outputs>
@@ -216,7 +221,12 @@
       name="displacementHistoryOutput"
       sources="{ /Tasks/displacementCollection }"
       filename="displacementHistory"/>
-    
+
+    <TimeHistory
+      name="stressHistoryOutput"
+      sources="{ /Tasks/stressCollection }"
+      filename="stressHistory"/>
+
     <Restart
       name="restartOutput"/>
   </Outputs>

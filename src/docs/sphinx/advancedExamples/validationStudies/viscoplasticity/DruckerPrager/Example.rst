@@ -55,19 +55,19 @@ This validation example uses two GEOS xml files that are located at:
 
 .. code-block:: console
 
-  inputFiles/triaxialDriver/triaxialDriver_base.xml
+  inputFiles/constitutiveDriver/triaxialDriver_base.xml
 
 and
 
 .. code-block:: console
 
-  inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml
+  inputFiles/constitutiveDriver/triaxialDriver_DruckerPrager.xml
 
 It also uses a set of table files located at:
 
 .. code-block:: console
 
-  inputFiles/triaxialDriver/tables/
+  inputFiles/constitutiveDriver/tables/
 
 
 A Python script for the semi-analytical solutions presented above as well as for post-processing the GEOS results is provided at:
@@ -84,7 +84,7 @@ Task
 
 The imposed axial strain loading/unloading periods, the constant lateral confining stress, and the initial stress are defined in the ``Task`` block as:
 
-.. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_DruckerPrager.xml
+.. literalinclude:: ../../../../../../../inputFiles/constitutiveDriver/triaxialDriver_DruckerPrager.xml
     :language: xml
     :start-after: <!-- SPHINX_TASK -->
     :end-before: <!-- SPHINX_TASK_END -->
@@ -96,7 +96,7 @@ Constitutive laws
 The elasto-plastic parameters are defined as:
 
 
-.. literalinclude:: ../../../../../../../inputFiles/triaxialDriver/triaxialDriver_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/constitutiveDriver/triaxialDriver_base.xml
     :language: xml
     :start-after: <!-- SPHINX_MATERIAL_DRUCKER_PRAGER -->
     :end-before: <!-- SPHINX_MATERIAL_DRUCKER_PRAGER_END -->

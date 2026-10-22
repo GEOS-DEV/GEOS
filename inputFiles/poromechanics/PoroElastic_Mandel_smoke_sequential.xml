@@ -17,9 +17,9 @@
       <NonlinearSolverParameters
         newtonMaxIter="2"
         newtonTol="1.0e-2"
-	couplingType="Sequential"  
+        couplingType="Sequential"  
         lineSearchAction="None"
-	subcycling="1"
+        subcycling="1"
         maxTimeStepCuts="1"
         lineSearchMaxCuts="0"/>
       <LinearSolverParameters
@@ -30,7 +30,6 @@
     <!-- SPHINX_MECHANICALSOLVER -->
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">

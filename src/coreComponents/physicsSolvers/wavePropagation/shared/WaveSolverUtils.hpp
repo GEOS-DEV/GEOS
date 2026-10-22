@@ -13,7 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
 /**
  * @file WaveSolverUtils.hpp
  */
@@ -32,22 +31,21 @@ struct WaveSolverUtils
 {
   static constexpr real64 epsilonLoc = 1e-8;
 
-  using EXEC_POLICY = parallelDevicePolicy< >;
+  using EXEC_POLICY = parallelDevicePolicy<>;
   using wsCoordType = real32;
 
   enum class DASType : integer
   {
-    none,               ///< deactivate DAS computation
-    dipole,             ///< use dipole formulation for DAS
-    strainIntegration,  ///< use strain integration for DAS
+    none,                ///< deactivate DAS computation
+    dipole,              ///< use dipole formulation for DAS
+    strainIntegration,   ///< use strain integration for DAS
   };
 
   enum class AttenuationType : integer
   {
-    none,               ///< deactivate attenuation (default)
-    sls,                ///< istandard-linear-solid description [Fichtner 2014]
+    none,   ///< deactivate attenuation (default)
+    sls,    ///< istandard-linear-solid description [Fichtner 2014]
   };
-
 
   GEOS_HOST_DEVICE
   static real32 evaluateRicker( real64 const time_n, real32 const f0, real32 const t0, localIndex const order )
@@ -91,18 +89,19 @@ struct WaveSolverUtils
    * @param[in] nReceivers Number of receivers
    * @param[in] receiverIsLocal Array to check if the receiver is local to the MPI partition
    */
-  static void initTrace( char const * prefix,
+  static void initTrace( char const *prefix,
                          string const & name,
                          bool const outputSeismoTrace,
                          localIndex const nReceivers,
                          arrayView1d< localIndex const > const receiverIsLocal )
   {
-    if( !outputSeismoTrace ) return;
+    if( !outputSeismoTrace )
+      return;
 
     string const outputDir = OutputBase::getOutputDirectory();
     RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count( 0 );
 
-    forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
+    forAll< serialPolicy >( nReceivers, [=]( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
@@ -112,8 +111,8 @@ struct WaveSolverUtils
       }
     } );
 
-    localIndex const total = MpiWrapper::sum( count.get() );
-    GEOS_ERROR_IF( nReceivers != total, GEOS_FMT( ": Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ) );
+    localIndex const total = MpiWrapper::sum( count.get());
+    GEOS_ERROR_IF( nReceivers != total, GEOS_FMT( ": Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ));
   }
 
   /**
@@ -128,7 +127,7 @@ struct WaveSolverUtils
    * @param[out] varAtReceiversy Array containing the variable (y-direction) computed at the receivers
    * @param[out] varAtReceiversz Array containing the variable (z-direction) computed at the receivers
    */
-  static void writeSeismoTraceVector( char const * prefix,
+  static void writeSeismoTraceVector( char const *prefix,
                                       string const & name,
                                       bool const outputSeismoTrace,
                                       localIndex const nReceivers,
@@ -153,7 +152,7 @@ struct WaveSolverUtils
    * @param[in] nsamplesSeismoTrace Number of samples per seismo trace
    * @param[in] varAtReceivers Array containing the the variable computed at the receivers
    */
-  static void writeSeismoTrace( char const * prefix,
+  static void writeSeismoTrace( char const *prefix,
                                 string const & name,
                                 bool const outputSeismoTrace,
                                 localIndex const nReceivers,
@@ -161,10 +160,11 @@ struct WaveSolverUtils
                                 localIndex const nsamplesSeismoTrace,
                                 arrayView2d< real32 const > const varAtReceivers )
   {
-    if( !outputSeismoTrace ) return;
+    if( !outputSeismoTrace )
+      return;
 
     string const outputDir = OutputBase::getOutputDirectory();
-    forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
+    forAll< serialPolicy >( nReceivers, [=]( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
@@ -328,7 +328,7 @@ struct WaveSolverUtils
                        arraySlice1d< localIndex const > const elemsToFaces,
                        real64 const (&coords)[3] )
   {
-    //Loop over the element faces
+    // Loop over the element faces
     real64 tmpVector[3]{};
     for( localIndex kfe = 0; kfe < numFacesPerElem; ++kfe )
     {
@@ -341,7 +341,7 @@ struct WaveSolverUtils
                                     faceNormal[iface][1],
                                     faceNormal[iface][2]};
 
-      //Test to make sure if the normal is outwardly directed
+      // Test to make sure if the normal is outwardly directed
       LvArray::tensorOps::copy< 3 >( tmpVector, faceCenterOnFace );
       LvArray::tensorOps::subtract< 3 >( tmpVector, elemCenter );
       if( LvArray::tensorOps::AiBi< 3 >( tmpVector, faceNormalOnFace ) < 0.0 )
@@ -354,8 +354,8 @@ struct WaveSolverUtils
       localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
 
       // all dot products should be non-negative (we enforce outward normals)
-      if( s < 0 ) return false;
-
+      if( s < 0 )
+        return false;
     }
     return true;
   }
@@ -369,8 +369,7 @@ struct WaveSolverUtils
    * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
    */
   template< typename FE_TYPE >
-  GEOS_HOST_DEVICE
-  static void
+  GEOS_HOST_DEVICE static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
@@ -380,7 +379,7 @@ struct WaveSolverUtils
     real64 xLocal[8][3]{};
     for( localIndex a = 0; a < 8; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ a ] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[elemsToNodes[a]] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};
@@ -407,7 +406,6 @@ struct WaveSolverUtils
    * @return true if coords is inside the element
    */
 
-
   static void dotProduct( localIndex const size,
                           arrayView1d< real32 > const & vector1,
                           arrayView1d< real32 > const & vector2,
@@ -416,32 +414,84 @@ struct WaveSolverUtils
 
     RAJA::ReduceSum< parallelDeviceReduce, real64 > tmp( 0.0 );
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      tmp+= vector1[a]*vector2[a];
-    } );
+    { tmp += vector1[a] * vector2[a]; } );
 
     res = tmp.get();
-
   }
 
-/**
- * @brief Converts the DAS direction from dip/azimuth to a 3D unit vector
- * @param[in] dip the dip of the linear DAS
- * @param[in] azimuth the azimuth of the linear DAS
- * @param[out] a unit vector pointing in the DAS direction
- */
+  /**
+   * @brief Converts the DAS direction from dip/azimuth to a 3D unit vector
+   * @param[in] dip the dip of the linear DAS
+   * @param[in] azimuth the azimuth of the linear DAS
+   * @param[out] a unit vector pointing in the DAS direction
+   */
   GEOS_HOST_DEVICE
-  static
-  R1Tensor computeDASVector( real64 const dip, real64 const azimuth )
+  static R1Tensor computeDASVector( real64 const dip, real64 const azimuth )
   {
     real64 cd = cos( dip );
     real64 v1 = cd * cos( azimuth );
     real64 v2 = cd * sin( azimuth );
     real64 v3 = sin( dip );
-    R1Tensor dasVector = { v1, v2, v3 };
+    R1Tensor dasVector = {v1, v2, v3};
     return dasVector;
   }
 
+  /**
+   * @brief Compute the reference size used for the tetrahederal DG penalty coefficient.
+   *   This implementation uses the radius of the sphere inscribed to the tetrahedron.
+   * @param[in] elemsToNodes element to node map for the base mesh
+   * @param[in] nodeCoords array of base mesh nodes coordinates
+   * @return the radius of the inscribed sphere
+   */
+  template< typename REAL >
+  GEOS_HOST_DEVICE static REAL
+  computeReferenceLengthForPenalty( arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
+                                    arrayView2d< REAL const, nodes::REFERENCE_POSITION_USD > const nodeCoords )
+  {
+    // Loop over the element faces
+    REAL hs = 0;
+    REAL spxf[3][2]{};
+    REAL v1[3]{};
+    REAL v2[3]{};
+    REAL spx[3][3]{};
+    for( int i = 0; i < 4; i++ )
+    {
+      REAL cross[3]{};
+      int cf = 0;
+      int jstart = (i + 1) % 4;
+      int j = (jstart + 1) % 4;
+      do
+      {
+        for( int k = 0; k < 3; k++ )
+        {
+          spxf[k][cf] = nodeCoords( elemsToNodes[j], k ) - nodeCoords( elemsToNodes[jstart], k );
+        }
+        j = (j + 1) % 4;
+        cf++;
+      }
+      while (i != j);
+
+      v1[0] = spxf[0][0];
+      v1[1] = spxf[1][0];
+      v1[2] = spxf[2][0];
+      v2[0] = spxf[0][1];
+      v2[1] = spxf[1][1];
+      v2[2] = spxf[2][1];
+      LvArray::tensorOps::crossProduct( cross, v1, v2 );
+      hs = hs + LvArray::math::sqrt( LvArray::tensorOps::l2NormSquared< 3 >( cross ));
+    }
+
+    for( int i = 0; i < 3; i++ )
+    {
+      for( int k = 0; k < 3; k++ )
+      {
+        spx[i][k] = nodeCoords( elemsToNodes[i], k ) - nodeCoords( elemsToNodes[3], k );
+      }
+    }
+
+
+    return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( spx ) / hs );
+  }
 };
 
 /// Declare strings associated with enumeration values.

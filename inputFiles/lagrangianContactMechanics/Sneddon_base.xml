@@ -54,8 +54,8 @@
 
     <Coulomb
       name="frictionLaw"
-      cohesion="0.0"
-      frictionCoefficient="0.577350269"/>
+      defaultCohesion="0.0"
+      defaultFrictionCoefficient="0.577350269"/>
   </Constitutive>
   <!-- SPHINX_SNEDDON_MATERIAL_END-->
 

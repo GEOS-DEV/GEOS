@@ -19,7 +19,6 @@
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
       logLevel="1"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"

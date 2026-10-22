@@ -18,6 +18,7 @@
  */
 
 #include "Damage.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -28,57 +29,8 @@ namespace constitutive
 
 template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
-  BASE( name, parent ),
-  m_newDamage(),
-  m_oldDamage(),
-  m_damageGrad(),
-  m_strainEnergyDensity(),
-  m_volStrain(),
-  m_extDrivingForce(),
-  m_lengthScale(),
-  m_defaultCriticalFractureEnergy(),
-  m_criticalStrainEnergy(),
-  m_degradationLowerLimit( 0.0 ),
-  m_extDrivingForceFlag( 0 ),
-  m_defaultTensileStrength(),
-  m_defaultCompressStrength(),
-  m_defaultDeltaCoefficient(),
-  m_biotCoefficient(),
-  m_criticalFractureEnergy(),
-  m_tensileStrength(),
-  m_compressStrength(),
-  m_deltaCoefficient()
+  BASE( name, parent )
 {
-  this->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Material New Damage Variable" );
-
-  this->registerWrapper( viewKeyStruct::oldDamageString(), &m_oldDamage ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Material Old Damage Variable" );
-
-  this->registerWrapper( viewKeyStruct::damageGradString(), &m_damageGrad ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Material Damage Gradient" );
-
-  this->registerWrapper( viewKeyStruct::strainEnergyDensityString(), &m_strainEnergyDensity ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Strain Energy Density" );
-
-  this->registerWrapper( viewKeyStruct::volumetricStrainString(), &m_volStrain ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Volumetric strain" );
-
-  this->registerWrapper( viewKeyStruct::extDrivingForceString(), &m_extDrivingForce ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "External Driving Force" );
-
   this->registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Length scale l in the phase-field equation" );
@@ -86,11 +38,6 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   this->registerWrapper( viewKeyStruct::defaultCriticalFractureEnergyString(), &m_defaultCriticalFractureEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default critical fracture energy" );
-
-  this->registerWrapper( viewKeyStruct::criticalFractureEnergyString(), &m_criticalFractureEnergy ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Critical fracture energy" );
 
   this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -101,45 +48,57 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The lower limit of the degradation function" );
 
-  this->registerWrapper( viewKeyStruct::extDrivingForceFlagString(), &m_extDrivingForceFlag ).
-    setApplyDefaultValue( 0 ).
+  this->registerWrapper( viewKeyStruct::fractureModelTypeString(), &m_fractureModelType ).
+    setApplyDefaultValue( FractureModelType::Brittle ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Whether to have external driving force. Can be 0 or 1" );
+    setDescription( "Type of crack/fracture model. Can be Brittle, Cohesive, or Nucleation" );
+
+  this->registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
+    setApplyDefaultValue( LocalDissipationOption::Linear ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Type of local dissipation function. Must match the damage solver's "
+                    "localDissipation option. Can be Linear or Quadratic" );
 
   this->registerWrapper( viewKeyStruct::defaultTensileStrengthString(), &m_defaultTensileStrength ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default tensile strength from the uniaxial tension test" );
 
-  this->registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Tensile strength from the uniaxial tension test" );
-
-  this->registerWrapper( viewKeyStruct::defaultCompressStrengthString(), &m_defaultCompressStrength ).
+  this->registerWrapper( viewKeyStruct::defaultCompressiveStrengthString(), &m_defaultCompressiveStrength ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default compressive strength from the uniaxial compression test" );
-
-  this->registerWrapper( viewKeyStruct::compressStrengthString(), &m_compressStrength ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Compressive strength from the uniaxial compression test" );
 
   this->registerWrapper( viewKeyStruct::defaultDeltaCoefficientString(), &m_defaultDeltaCoefficient ).
     setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default coefficient in the calculation of the external driving force" );
 
-  this->registerWrapper( viewKeyStruct::deltaCoefficientString(), &m_deltaCoefficient ).
-    setApplyDefaultValue( -1.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Coefficient in the calculation of the external driving force" );
+  // fields
 
-  this->registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Biot coefficient" );
+  this->template registerField< fields::solid::damage >( &m_newDamage );
+
+  this->template registerField< fields::solid::oldDamage >( &m_oldDamage );
+
+  this->template registerField< fields::solid::damageGrad >( &m_damageGrad );
+
+  this->template registerField< fields::solid::crackDrivingForce >( &m_crackDrivingForce );
+
+  this->template registerField< fields::solid::oldCrackDrivingForce >( &m_oldCrackDrivingForce );
+
+  this->template registerField< fields::solid::volStrain >( &m_volStrain );
+
+  this->template registerField< fields::solid::extDrivingForce >( &m_extDrivingForce );
+
+  this->template registerField< fields::solid::criticalFractureEnergy >( &m_criticalFractureEnergy );
+
+  this->template registerField< fields::solid::tensileStrength >( &m_tensileStrength );
+
+  this->template registerField< fields::solid::compressiveStrength >( &m_compressiveStrength );
+
+  this->template registerField< fields::solid::deltaCoefficient >( &m_deltaCoefficient );
+
+  this->template registerField< fields::solid::biotCoefficient >( &m_biotCoefficient );
 }
 
 
@@ -148,49 +107,58 @@ void Damage< BASE >::postInputInitialization()
 {
   BASE::postInputInitialization();
 
-  GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1,
-                 BASE::getDataContext() << ": invalid external driving force flag option - must"
-                                           " be 0 or 1" );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultTensileStrength <= 0.0,
-                 BASE::getDataContext() << ": tensile strength must be input and positive when the"
-                                           " external driving force flag is turned on" );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultCompressStrength  <= 0.0,
-                 BASE::getDataContext() << ": compressive strength must be input and positive when the"
-                                           " external driving force flag is turned on" );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultDeltaCoefficient < 0.0,
-                 BASE::getDataContext() << ": delta coefficient must be input and non-negative when the"
-                                           " external driving force flag is turned on" );
-
-  // set results as array default values
-  this->template getWrapper< array1d< real64 > >( viewKeyStruct::criticalFractureEnergyString() ).
-    setApplyDefaultValue( m_defaultCriticalFractureEnergy );
-
-  this->template getWrapper< array1d< real64 > >( viewKeyStruct::tensileStrengthString() ).
-    setApplyDefaultValue( m_defaultTensileStrength );
-
-  this->template getWrapper< array1d< real64 > >( viewKeyStruct::compressStrengthString() ).
-    setApplyDefaultValue( m_defaultCompressStrength );
-
-  this->template getWrapper< array1d< real64 > >( viewKeyStruct::deltaCoefficientString() ).
-    setApplyDefaultValue( m_defaultDeltaCoefficient );
+  GEOS_ERROR_IF( m_fractureModelType != FractureModelType::Brittle && m_localDissipationOption != LocalDissipationOption::Linear,
+                 "the Cohesive and Nucleation crack models are only supported with the Linear "
+                 "local dissipation option",
+                 this->getDataContext() );
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Cohesive && m_criticalStrainEnergy <= 0.0,
+                 "criticalStrainEnergy must be positive when the Cohesive crack model is used",
+                 this->getDataContext() );
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultTensileStrength <= 0.0,
+                 "tensile strength must be input and positive when the"
+                 " Nucleation crack model is used",
+                 this->getDataContext()  );
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultCompressiveStrength  <= 0.0,
+                 "compressive strength must be input and positive when the"
+                 " Nucleation crack model is used",
+                 this->getDataContext()  );
+  GEOS_ERROR_IF( m_fractureModelType == FractureModelType::Nucleation && m_defaultDeltaCoefficient < 0.0,
+                 "delta coefficient must be input and non-negative when the"
+                 " Nucleation crack model is used",
+                 this->getDataContext()  );
 }
 
 template< typename BASE >
-void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_newDamage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldDamage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 );
-  m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
-  m_volStrain.resize( 0, numConstitutivePointsPerParentIndex );
-  m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newDamage.resize( 0, numPts );
+  m_oldDamage.resize( 0, numPts );
+  m_damageGrad.resize( 0, numPts, 3 );
+  m_crackDrivingForce.resize( 0, numPts );
+  m_oldCrackDrivingForce.resize( 0, numPts );
+  m_volStrain.resize( 0, numPts );
+  m_extDrivingForce.resize( 0, numPts );
   m_biotCoefficient.resize( parent.size() );
   m_criticalFractureEnergy.resize( parent.size() );
   m_tensileStrength.resize( parent.size() );
-  m_compressStrength.resize( parent.size() );
+  m_compressiveStrength.resize( parent.size() );
   m_deltaCoefficient.resize( parent.size() );
-  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  // apply the defaults here, after resizing: setApplyDefaultValue() in postInputInitialization()
+  // runs before the arrays exist, so it has nothing to fill in.
+  this->template getField< fields::solid::criticalFractureEnergy >().
+    setApplyDefaultValue( m_defaultCriticalFractureEnergy );
+
+  this->template getField< fields::solid::tensileStrength >().
+    setApplyDefaultValue( m_defaultTensileStrength );
+
+  this->template getField< fields::solid::compressiveStrength >().
+    setApplyDefaultValue( m_defaultCompressiveStrength );
+
+  this->template getField< fields::solid::deltaCoefficient >().
+    setApplyDefaultValue( m_defaultDeltaCoefficient );
+
+  BASE::allocateConstitutiveData( parent, numPts );
 }
 
 template< typename BASE >
@@ -203,15 +171,20 @@ void Damage< BASE >::saveConvergedState() const
 
   arrayView2d< real64 const > newDamage = m_newDamage;
   arrayView2d< real64 > oldDamage = m_oldDamage;
+  arrayView2d< real64 const > crackDrivingForce = m_crackDrivingForce;
+  arrayView2d< real64 > oldCrackDrivingForce = m_oldCrackDrivingForce;
 
   forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
       oldDamage( k, q ) = newDamage( k, q );
+      oldCrackDrivingForce( k, q ) = crackDrivingForce( k, q );
     }
   } );
 }
+
+template class Damage< ElasticIsotropic >;
 
 typedef Damage< ElasticIsotropic > DamageElasticIsotropic;
 

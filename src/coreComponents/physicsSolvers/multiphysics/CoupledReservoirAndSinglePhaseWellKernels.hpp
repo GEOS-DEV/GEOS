@@ -17,8 +17,8 @@
  * @file ThermalSinglePhaseWellKernels.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_THERMALSINGLEPHASEWELLKERNELS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_THERMALSINGLEPHASEWELLKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDSINGLEPHASEWELLKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDSINGLEPHASEWELLKERNELS_HPP
 
 
 #include "common/DataTypes.hpp"
@@ -90,6 +90,7 @@ public:
     m_perfRate( perforationData->getField< fields::well::perforationRate >() ),
     m_dPerfRate( perforationData->getField< fields::well::dPerforationRate >() ),
     m_perfWellElemIndex( perforationData->getField< fields::perforation::wellElementIndex >() ),
+    m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >() ),
     m_wellElemDofNumber( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
     m_resElemDofNumber( resDofNumber ),
     m_resElementRegion( perforationData->getField< fields::perforation::reservoirElementRegion >() ),
@@ -116,70 +117,73 @@ public:
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
 
-    // local working variables and arrays
-
-    stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
-    stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
-
-    stackArray1d< real64, 2 > localPerf( 2 );
-    stackArray2d< real64, 2 * resNumDOF * 2 > localPerfJacobian( 2, 2 * resNumDOF );
-
-
-    // get the reservoir (sub)region and element indices
-    localIndex const er = m_resElementRegion[iperf];
-    localIndex const esr = m_resElementSubRegion[iperf];
-    localIndex const ei = m_resElementIndex[iperf];
-
-    // get the well element index for this perforation
-    localIndex const iwelem = m_perfWellElemIndex[iperf];
-    globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
-    globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
-
-    // row index on reservoir side
-    eqnRowIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei] - m_rankOffset;
-    // column index on reservoir side
-    dofColIndices[TAG::RES] = resOffset;
-
-    // row index on well side
-    eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
-    // column index on well side
-    dofColIndices[TAG::WELL * resNumDOF] = wellElemOffset + WJ_COFFSET::dP;
-
-    if constexpr ( IS_THERMAL )
+    if( m_perfStatus[iperf ] )
     {
-      dofColIndices[TAG::RES * resNumDOF + 1 ] = resOffset +  1;
-      dofColIndices[TAG::WELL * resNumDOF + 1 ] = wellElemOffset + WJ_COFFSET::dT;
-    }
-    // populate local flux vector and derivatives
-    localPerf[TAG::RES] = m_dt * m_perfRate[iperf];
-    localPerf[TAG::WELL] = -localPerf[TAG::RES];
 
-    for( integer ke = 0; ke < 2; ++ke )
-    {
-      localIndex localDofIndexPres = ke * resNumDOF;
-      localPerfJacobian[TAG::RES][localDofIndexPres] = m_dt * m_dPerfRate[iperf][ke][CP_Deriv::dP];
-      localPerfJacobian[TAG::WELL][localDofIndexPres] = -localPerfJacobian[TAG::RES][localDofIndexPres];
+      // local working variables and arrays
+
+      stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
+      stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
+
+      stackArray1d< real64, 2 > localPerf( 2 );
+      stackArray2d< real64, 2 * resNumDOF * 2 > localPerfJacobian( 2, 2 * resNumDOF );
+
+
+      // get the reservoir (sub)region and element indices
+      localIndex const er = m_resElementRegion[iperf];
+      localIndex const esr = m_resElementSubRegion[iperf];
+      localIndex const ei = m_resElementIndex[iperf];
+
+      // get the well element index for this perforation
+      localIndex const iwelem = m_perfWellElemIndex[iperf];
+      globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
+      globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
+
+      // row index on reservoir side
+      eqnRowIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei] - m_rankOffset;
+      // column index on reservoir side
+      dofColIndices[TAG::RES] = resOffset;
+
+      // row index on well side
+      eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
+      // column index on well side
+      dofColIndices[TAG::WELL * resNumDOF] = wellElemOffset + WJ_COFFSET::dP;
+
       if constexpr ( IS_THERMAL )
       {
-        localIndex localDofIndexTemp  = localDofIndexPres + 1;
-        localPerfJacobian[TAG::RES ][localDofIndexTemp] = m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
-        localPerfJacobian[TAG::WELL ][localDofIndexTemp] = -m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+        dofColIndices[TAG::RES * resNumDOF + 1 ] = resOffset +  1;
+        dofColIndices[TAG::WELL * resNumDOF + 1 ] = wellElemOffset + WJ_COFFSET::dT;
       }
-    }
+      // populate local flux vector and derivatives
+      localPerf[TAG::RES] = m_dt * m_perfRate[iperf];
+      localPerf[TAG::WELL] = -localPerf[TAG::RES];
 
-    for( integer i = 0; i < localPerf.size(); ++i )
-    {
-      if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+      for( integer ke = 0; ke < 2; ++ke )
       {
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                            dofColIndices.data(),
-                                                                            localPerfJacobian[i].dataIfContiguous(),
-                                                                            2* resNumDOF );
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+        localIndex localDofIndexPres = ke * resNumDOF;
+        localPerfJacobian[TAG::RES][localDofIndexPres] = m_dt * m_dPerfRate[iperf][ke][CP_Deriv::dP];
+        localPerfJacobian[TAG::WELL][localDofIndexPres] = -localPerfJacobian[TAG::RES][localDofIndexPres];
+        if constexpr ( IS_THERMAL )
+        {
+          localIndex localDofIndexTemp  = localDofIndexPres + 1;
+          localPerfJacobian[TAG::RES ][localDofIndexTemp] = m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+          localPerfJacobian[TAG::WELL ][localDofIndexTemp] = -m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+        }
       }
-    }
-    compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
 
+      for( integer i = 0; i < localPerf.size(); ++i )
+      {
+        if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+        {
+          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                              dofColIndices.data(),
+                                                                              localPerfJacobian[i].dataIfContiguous(),
+                                                                              2* resNumDOF );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+        }
+      }
+      compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
+    }
   }
 
 
@@ -214,6 +218,7 @@ protected:
   arrayView1d< real64 const > const m_perfRate;
   arrayView3d< real64 const > const m_dPerfRate;
   arrayView1d< localIndex const > const m_perfWellElemIndex;
+  arrayView1d< integer const > const m_perfStatus;
 
   // Element region, subregion, index
   arrayView1d< globalIndex const > const m_wellElemDofNumber;
@@ -482,8 +487,236 @@ public:
   }
 };
 
+/**
+ * @class IsothermalSinglePhaseWellFluxKernel
+ * @tparam IS_THERMAL flag to include temperature derivatives
+ * @brief Define the interface for the well-only flux kernel used in the isolated well solve
+ */
+template< integer IS_THERMAL >
+class IsothermalSinglePhaseWellFluxKernel
+{
+public:
+  static constexpr integer resNumDOF = 1 + IS_THERMAL;
+
+  using WJ_COFFSET = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
+  using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
+  using TAG = singlePhaseWellKernels::SubRegionTag;
+
+  static constexpr integer numDof = WJ_COFFSET::nDer;
+  static constexpr integer numEqn = WJ_ROFFSET::nEqn - 1;
+
+  IsothermalSinglePhaseWellFluxKernel( real64 const dt,
+                                       globalIndex const rankOffset,
+                                       string const wellDofKey,
+                                       WellElementSubRegion const & subRegion,
+                                       PerforationData const * const perforationData,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs )
+    :
+    m_dt( dt ),
+    m_rankOffset( rankOffset ),
+    m_perfRate( perforationData->getField< fields::well::perforationRate >() ),
+    m_dPerfRate( perforationData->getField< fields::well::dPerforationRate >() ),
+    m_perfWellElemIndex( perforationData->getField< fields::perforation::wellElementIndex >() ),
+    m_wellElemDofNumber( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
+    m_localMatrix( localMatrix ),
+    m_localRhs( localRhs )
+  {}
+
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  inline
+  void computeFlux( localIndex const iperf,
+                    FUNC && fluxKernelOp = NoOpFunc{} ) const
+  {
+    stackArray1d< localIndex, 1 > eqnRowIndices( 1 );
+    stackArray1d< globalIndex, resNumDOF > dofColIndices( resNumDOF );
+    stackArray1d< real64, 1 > localPerf( 1 );
+    stackArray2d< real64, resNumDOF > localPerfJacobian( 1, resNumDOF );
+
+    localIndex const iwelem = m_perfWellElemIndex[iperf];
+    globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
+
+    eqnRowIndices[0] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::MASSBAL;
+    dofColIndices[0] = wellElemOffset + WJ_COFFSET::dP;
+    if constexpr ( IS_THERMAL )
+    {
+      dofColIndices[1] = wellElemOffset + WJ_COFFSET::dT;
+    }
+
+    localPerf[0] = -m_dt * m_perfRate[iperf];
+    localPerfJacobian[0][0] = -m_dt * m_dPerfRate[iperf][TAG::WELL][CP_Deriv::dP];
+    if constexpr ( IS_THERMAL )
+    {
+      localPerfJacobian[0][1] = -m_dt * m_dPerfRate[iperf][TAG::WELL][CP_Deriv::dT];
+    }
+
+    if( eqnRowIndices[0] >= 0 && eqnRowIndices[0] < m_localMatrix.numRows() )
+    {
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[0],
+                                                                          dofColIndices.data(),
+                                                                          localPerfJacobian[0].dataIfContiguous(),
+                                                                          resNumDOF );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[0]], localPerf[0] );
+    }
+
+    fluxKernelOp( wellElemOffset, iwelem, dofColIndices );
+  }
+
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElements,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+    forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
+    {
+      kernelComponent.computeFlux( ie );
+    } );
+  }
+
+protected:
+  real64 const m_dt;
+  globalIndex const m_rankOffset;
+  arrayView1d< real64 const > const m_perfRate;
+  arrayView3d< real64 const > const m_dPerfRate;
+  arrayView1d< localIndex const > const m_perfWellElemIndex;
+  arrayView1d< globalIndex const > const m_wellElemDofNumber;
+  CRSMatrixView< real64, globalIndex const > m_localMatrix;
+  arrayView1d< real64 > const m_localRhs;
+};
+
+class IsothermalSinglePhaseWellFluxKernelFactory
+{
+public:
+  template< typename POLICY >
+  static void
+  createAndLaunch( real64 const dt,
+                   globalIndex const rankOffset,
+                   string const wellDofKey,
+                   WellElementSubRegion const & subRegion,
+                   PerforationData const * const perforationData,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
+  {
+    using kernelType = IsothermalSinglePhaseWellFluxKernel< 0 >;
+    kernelType kernel( dt, rankOffset, wellDofKey, subRegion, perforationData, localMatrix, localRhs );
+    kernelType::template launch< POLICY >( perforationData->size(), kernel );
+  }
+};
+
+class ThermalSinglePhaseWellFluxKernel : public IsothermalSinglePhaseWellFluxKernel< 1 >
+{
+public:
+  static constexpr integer IS_THERMAL = 1;
+  using Base = IsothermalSinglePhaseWellFluxKernel< IS_THERMAL >;
+  static constexpr integer resNumDOF = 1 + IS_THERMAL;
+
+  using WJ_COFFSET = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
+  using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
+
+  using Base::m_dt;
+  using Base::m_localMatrix;
+  using Base::m_localRhs;
+  using Base::m_rankOffset;
+
+  ThermalSinglePhaseWellFluxKernel( integer const isProducer,
+                                    real64 const dt,
+                                    globalIndex const rankOffset,
+                                    string const wellDofKey,
+                                    WellElementSubRegion const & subRegion,
+                                    PerforationData const * const perforationData,
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    arrayView1d< real64 > const & localRhs )
+    : Base( dt,
+            rankOffset,
+            wellDofKey,
+            subRegion,
+            perforationData,
+            localMatrix,
+            localRhs ),
+    m_isProducer( isProducer ),
+    m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
+    m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >() ),
+    m_dEnergyPerfFlux( perforationData->getField< fields::well::dEnergyPerforationFlux >() )
+  {}
+
+  GEOS_HOST_DEVICE
+  inline
+  void computeFlux( localIndex const iperf ) const
+  {
+    Base::computeFlux( iperf, [&] ( globalIndex const & wellElemOffset,
+                                    localIndex const iwelem,
+                                    stackArray1d< globalIndex, resNumDOF > & dofColIndices )
+    {
+      if( !m_isProducer && m_globalWellElementIndex[iwelem] == 0 )
+      {
+        return;
+      }
+
+      localIndex const eqnRowIndex =
+        LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
+
+      stackArray2d< real64, resNumDOF > localPerfJacobian( 1, resNumDOF );
+      real64 const localPerf = -m_dt * m_energyPerfFlux[iperf];
+
+      localPerfJacobian[0][0] = -m_dt * m_dEnergyPerfFlux[iperf][singlePhaseWellKernels::SubRegionTag::WELL][CP_Deriv::dP];
+      localPerfJacobian[0][1] = -m_dt * m_dEnergyPerfFlux[iperf][singlePhaseWellKernels::SubRegionTag::WELL][CP_Deriv::dT];
+
+      if( eqnRowIndex >= 0 && eqnRowIndex < m_localMatrix.numRows() )
+      {
+        m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
+                                                                                     dofColIndices.data(),
+                                                                                     localPerfJacobian[0].dataIfContiguous(),
+                                                                                     resNumDOF );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndex], localPerf );
+      }
+    } );
+  }
+
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElements,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOS_MARK_FUNCTION;
+    forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const ie )
+    {
+      kernelComponent.computeFlux( ie );
+    } );
+  }
+
+protected:
+  integer const m_isProducer;
+  arrayView1d< globalIndex const > m_globalWellElementIndex;
+  arrayView1d< real64 const > const m_energyPerfFlux;
+  arrayView3d< real64 const > const m_dEnergyPerfFlux;
+};
+
+class ThermalSinglePhaseWellFluxKernelFactory
+{
+public:
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const isProducer,
+                   real64 const dt,
+                   globalIndex const rankOffset,
+                   string const wellDofKey,
+                   WellElementSubRegion const & subRegion,
+                   PerforationData const * const perforationData,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
+  {
+    using kernelType = ThermalSinglePhaseWellFluxKernel;
+    kernelType kernel( isProducer, dt, rankOffset, wellDofKey, subRegion, perforationData, localMatrix, localRhs );
+    kernelType::template launch< POLICY >( perforationData->size(), kernel );
+  }
+};
+
 } // end namespace coupledReservoirAndWellKernels
 
 } // end namespace geos
 
-#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_THERMALSINGLEPHASEWELLKERNELS_HPP
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDSINGLEPHASEWELLKERNELS_HPP

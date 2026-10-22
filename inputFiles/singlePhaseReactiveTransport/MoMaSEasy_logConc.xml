@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- LOG CONCENTRATIONS AT SOURCE -->
+    <FieldSpecification
+      name="log_X1_source"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-1.2039728043"/>
+
+    <FieldSpecification
+      name="log_X2_source"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-1.4203896610"/>
+
+    <FieldSpecification
+      name="log_X3_source"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-1.4203896610"/>
+
+    <FieldSpecification
+      name="log_X4_source"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="3"
+      scale="-116.6994524874"/>
+
+    <FieldSpecification
+      name="log_S_source"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="logPrimarySpeciesConcentration"
+      component="4"
+      scale="-54.1859471371"/>
+  </FieldSpecifications>
+</Problem>

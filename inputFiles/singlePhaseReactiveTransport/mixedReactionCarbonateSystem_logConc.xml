@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- LOG CONCENTRATIONS AT SOURCE -->
+    <FieldSpecification
+      name="log_H_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-19.21448423"/>
+
+    <FieldSpecification
+      name="log_HCO3_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-2.73216432"/>
+
+    <FieldSpecification
+      name="log_Ca_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-4.77653747"/>
+
+    <FieldSpecification
+      name="log_SO4_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="3"
+      scale="-14.28117504"/>
+
+    <FieldSpecification
+      name="log_Cl_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="4"
+      scale="-10.47763277"/>
+
+    <FieldSpecification
+      name="log_Mg_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="5"
+      scale="-6.43480025"/>
+    
+    <FieldSpecification
+      name="log_Na_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"
+      component="6"
+      scale="-7.15404368"/>
+  </FieldSpecifications>
+</Problem>

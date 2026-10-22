@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<Problem>
+    <Included>
+        <File name="dome_soreide_whitson_base.xml" />
+        <File name="dome_mesh_bench.xml" />
+    </Included>
+</Problem>

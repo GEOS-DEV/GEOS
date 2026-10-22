@@ -45,6 +45,7 @@ public:
   using BASE::m_discretizationName;
   using BASE::m_linearSolverParameters;
   using BASE::m_nonlinearSolverParameters;
+  using BASE::m_precond;
 
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
@@ -124,6 +125,9 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
   virtual void
   applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
@@ -174,7 +178,8 @@ public:
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                              stdMap< string, localIndex > const * const dR_dAperOffsets ) override final;
 
   /**@}*/
 

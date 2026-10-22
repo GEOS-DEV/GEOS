@@ -54,6 +54,15 @@ string GroupContext::toString() const
   return path.str();
 }
 
+ErrorContext GroupContext::getContextInfo() const
+{
+  ErrorContext ctxInfo{
+    toString(),
+    { { ErrorContext::Attribute::DataPath, GEOS_FMT( "{}/{}", m_group.getPath(), m_targetName )} }
+  };
+  return ctxInfo;
+}
+
 DataContext::ToStringInfo GroupContext::getToStringInfo() const
 { return ToStringInfo( m_targetName ); }
 

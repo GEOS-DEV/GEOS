@@ -109,7 +109,7 @@ struct ComputeTimeStep
     uxAuxView.zero();
     uyAuxView.zero();
     uzAuxView.zero();
-    forAll< EXEC_POLICY >( sizeElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( sizeElem, [=, this] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
       real64 mu = density[k]*Vs[k]*Vs[k];
@@ -204,7 +204,7 @@ struct ComputeTimeStep
       uxAuxView.zero();
       uyAuxView.zero();
       uzAuxView.zero();
-      forAll< EXEC_POLICY >( sizeElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
+      forAll< EXEC_POLICY >( sizeElem, [=, this] GEOS_HOST_DEVICE ( localIndex const k )
       {
 
         real64 mu = density[k]*Vs[k]*Vs[k];
@@ -308,7 +308,7 @@ struct ComputeTimeStep
     }
     while (counter < 10 && numberIter < nIterMax);
 
-    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
+    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", RuntimeError );
 
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
 

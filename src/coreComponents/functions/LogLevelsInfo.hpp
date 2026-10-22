@@ -31,13 +31,12 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
-struct TableDataOutput
+struct TableLogOutput
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription()
   {
-    return "Output the loaded/computed table data in the log if succinct enough,"
-           " otherwise output it in a CSV file.";
+    return "Output the loaded/computed table data in the log";
   }
 };
 

@@ -19,6 +19,8 @@
 
 #include "VTKMeshGeneratorTools.hpp"
 
+#include "LvArray/src/system.hpp"
+
 #include <vtkAppendFilter.h>
 #include <vtkDIYGhostUtilities.h>
 #include <vtkDIYUtilities.h>
@@ -33,6 +35,11 @@ vtkSmartPointer< vtkUnstructuredGrid >
 redistribute( vtkPartitionedDataSet & localParts,
               MPI_Comm mpiComm )
 {
+  // VTK's XML writer, used by DIY to serialize the exchanged grids, can
+  // evaluate empty arrays while reporting progress. Do not let those
+  // internal operations trip GEOS' floating-point exception handler.
+  LvArray::system::FloatingPointExceptionGuard guard;
+
   // The code below is modified from vtkDIYKdTreeUtilities::Exchange():
   // https://gitlab.kitware.com/vtk/vtk/-/blob/7037a148605bf9628710d8b729c22f27dd0ede93/Filters/ParallelDIY2/vtkDIYKdTreeUtilities.cxx#L289
   // We cannot call that function directly because vtkDIYKdTreeUtilities.hpp is a private header in VTK.
@@ -140,19 +147,22 @@ redistribute( vtkPartitionedDataSet & localParts,
       {
         break;
       }
+      // vtkFieldData::GetArray() returns nullptr for vtkStringArray and other
+      // non-vtkDataArray objects. Empty-rank reconstruction uses CreateArray
+      // on the stored VTK type, so the scan must use GetAbstractArray().
       for( int c = 0; c < ug->GetCellData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetCellData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetCellData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::CELL } );
       }
       for( int c = 0; c < ug->GetPointData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetPointData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetPointData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::POINT } );
       }
       for( int c = 0; c < ug->GetFieldData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetFieldData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetFieldData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::FIELD } );
       }
     }
@@ -204,7 +214,7 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
   // https://gitlab.kitware.com/vtk/vtk/-/blob/1f0e4b2d0be7cd328795131642b5bf7984f681c1/Parallel/DIY/vtkDIYGhostUtilities.txx#L300
   // It makes some simplifications (e.g. just one input dataset per rank).
 
-  using BlockType = std::map< int, vtkBoundingBox >;
+  using BlockType = stdMap< int, vtkBoundingBox >;
 
   diy::mpi::communicator comm( mpiComm );
   diy::Master master( comm, 1, -1,

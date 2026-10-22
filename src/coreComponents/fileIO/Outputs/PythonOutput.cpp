@@ -18,20 +18,6 @@
 namespace geos
 {
 
-namespace logInfo
-{
-struct PythonOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Python output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & PythonOutput::getTimerCategory() const
-{
-  static logInfo::PythonOutputTimer timer;
-  return timer;
-}
-
 REGISTER_CATALOG_ENTRY( OutputBase, PythonOutput, string const &, dataRepository::Group * const )
 
 } // namespace geos

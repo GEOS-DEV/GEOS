@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh"
+      logLevel="5"  
+      partitionRefinement="0"
+      useGlobalIds="0"
+      file="polyhedral_voronoi_lattice.vtu"/>
+  </Mesh>
+
+  <Geometry>
+      <Box
+      name="westBC"
+      xMin="{ -0.001, 0.0, 0.0}"
+      xMax="{ +0.001, 1.0, 1.0}"/>
+      <Box
+      name="eastBC"
+      xMin="{ +0.999, 0.0, 0.0}"
+      xMax="{ +1.001, 1.0, 1.0}"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ * }"
+      materialList="{rock, fluid }"/>
+  </ElementRegions>
+
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0}"> </Solvers>
+
+  <Constitutive>
+
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000.0"
+      referenceDensity="1000.0"
+      defaultViscosity="0.001"
+      referenceViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"
+      densityModelType="linear"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      scale="1.0e7"/>    
+  </FieldSpecifications>
+  
+</Problem>

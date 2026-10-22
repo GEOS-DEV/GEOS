@@ -70,7 +70,7 @@ PetscInterface::createPreconditioner( LinearSolverParameters params )
 
 std::unique_ptr< PreconditionerBase< PetscInterface > >
 PetscInterface::createPreconditioner( LinearSolverParameters params,
-                                      array1d< PetscVector > const & nearNullKernel )
+                                      arrayView1d< PetscVector const > nearNullKernel )
 {
   return std::make_unique< PetscPreconditioner >( params, nearNullKernel );
 }

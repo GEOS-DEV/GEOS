@@ -11,6 +11,7 @@ NEW_ARGS=""
 USE_PYGEOSX=1
 PYGEOSX_WARNINGS=0
 SCRIPT_DIR=$(dirname "$0")
+REAL_SCRIPT_DIR=$(dirname $(readlink "$0"))
 PYGEOSX=$SCRIPT_DIR/../lib/PYGEOSX/bin/python
 
 while [[ $# > 0 ]]
@@ -92,10 +93,10 @@ fi
 # Preprocess the xml files
 if [ "$USE_PYGEOSX" -eq "1" ]
 then
-   $PYGEOSX $SCRIPT_DIR/pygeosx_preprocess.py $INPUT_ARGS $PARAMETER_ARGS $NEW_ARGS -c $COMPILED_XML_NAME -s $SCRIPT_DIR/../../src/coreComponents/schema/schema.xsd
+   $PYGEOSX $SCRIPT_DIR/pygeosx_preprocess.py $INPUT_ARGS $PARAMETER_ARGS $NEW_ARGS -c $COMPILED_XML_NAME -s $REAL_SCRIPT_DIR/../src/coreComponents/schema/schema.xsd
 else
    # As a backup, manually call the preprocessor and then continue with GEOSX
-   $SCRIPT_DIR/preprocess_xml $INPUT_ARGS $PARAMETER_ARGS -c $COMPILED_XML_NAME -s $SCRIPT_DIR/../../src/coreComponents/schema/schema.xsd
+   $SCRIPT_DIR/preprocess_xml $INPUT_ARGS $PARAMETER_ARGS -c $COMPILED_XML_NAME -s $REAL_SCRIPT_DIR/../src/coreComponents/schema/schema.xsd
    $SCRIPT_DIR/geosx -i $COMPILED_XML_NAME $NEW_ARGS
 fi
 

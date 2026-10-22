@@ -104,11 +104,12 @@ public:
     m_rhs( inputRhs ),
     m_dt( inputDt )
   {
-    FiniteElementBase::initialize< FE_TYPE >( nodeManager,
-                                              edgeManager,
-                                              faceManager,
-                                              elementSubRegion,
-                                              m_meshData );
+
+    FE_TYPE::fillMeshData( nodeManager,
+                           edgeManager,
+                           faceManager,
+                           elementSubRegion,
+                           m_meshData );
     GEOS_UNUSED_VAR( targetRegionIndex );
   }
 
@@ -184,7 +185,7 @@ public:
               StackVariables & stack ) const
   {
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
-    localIndex numTestSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    localIndex numTestSupportPoints = FE_TYPE::getNumSupportPoints( stack.feStack );
     localIndex numTrialSupportPoints = numTestSupportPoints;
     stack.numRows = numTestSupportPoints * numDofPerTestSupportPoint;
     stack.numCols = numTrialSupportPoints * numDofPerTrialSupportPoint;

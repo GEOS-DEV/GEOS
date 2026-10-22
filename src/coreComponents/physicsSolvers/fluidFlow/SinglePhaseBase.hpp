@@ -223,7 +223,7 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void
+  virtual void
   applyDirichletBC( real64 const time_n,
                     real64 const dt,
                     DomainPartition & domain,
@@ -240,7 +240,7 @@ public:
    * @param localMatrix local system matrix
    * @param localRhs local system right-hand side vector
    */
-  void
+  virtual void
   applySourceFluxBC( real64 const time_n,
                      real64 const dt,
                      DomainPartition & domain,
@@ -266,7 +266,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) const = 0;
 
   virtual void
-  updateState ( DomainPartition & domain ) override final;
+  updateState ( DomainPartition & domain ) override;
 
   /**
    * @brief Function to update all constitutive state and dependent variables
@@ -361,8 +361,6 @@ public:
                                             DomainPartition & domain,
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
-
-  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
 
 protected:
 

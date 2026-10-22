@@ -1,0 +1,258 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      temperature="368.15"
+      useMass="1"
+      useTotalMassEquation="0"
+      targetRegions="{ region00, region01, region10, region11, region20, region21 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="10"
+        lineSearchAction="None"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8, C3D8, C3D8, C3D8, C3D8, C3D8 }"
+      xCoords="{ 0, 10, 20, 30 }"
+      yCoords="{ 0, 10, 20 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 1, 1, 1 }"
+      ny="{ 1, 1 }"
+      nz="{ 100 }"
+      cellBlockNames="{ cb00, cb01, cb10, cb11, cb20, cb21 }"/>
+  </Mesh>
+
+  <Events maxTime="15768000000">
+    <!-- output from just after initialization to 1 yr at frequency = 100 days -->
+    <PeriodicEvent name="OUTPUT.01" target="/Outputs/vtkOutput" targetExactTimestep="1" beginTime="0" endTime="31536000" timeFrequency="8640000" />
+    <!-- output from 1 10 yr at frequency = 1 yr -->
+    <PeriodicEvent name="OUTPUT.02" target="/Outputs/vtkOutput" targetExactTimestep="1" beginTime="31536000" endTime="315360000" timeFrequency="31536000" />
+    <!-- output from 10 to 500 yr at frequency = 10 -->
+    <PeriodicEvent name="OUTPUT.03" target="/Outputs/vtkOutput" targetExactTimestep="1" beginTime="315360000" endTime="15768000000" timeFrequency="315360000" />
+
+    <!-- Restart every 100 years -->
+    <PeriodicEvent name="RESTART.00" target="/Outputs/restartOutput" targetExactTimestep="1" beginTime="0" timeFrequency="3155760000" />
+
+    <!-- From 0 to 1 yr at max dt = 100 days -->
+    <PeriodicEvent name="solverApplications.01" beginTime="0" endTime="31536000" maxEventDt="8640000" target="/Solvers/compflow" />
+    <!-- From 1 to 10 yr at max dt = 1 yr -->
+    <PeriodicEvent name="solverApplications.02" beginTime="31536000" endTime="315360000" maxEventDt="31536000" target="/Solvers/compflow" />
+    <!-- From 10 to 500 yr at max dt = 10 yr -->
+    <PeriodicEvent name="solverApplications.03" beginTime="315360000" endTime="15768000000" maxEventDt="315360000" target="/Solvers/compflow" />
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="region00"
+      cellBlocks="{ cb00 }"
+      materialList="{ fluid, rock, relperm, cappres01 }" />
+    <CellElementRegion
+      name="region01"
+      cellBlocks="{ cb01 }"
+      materialList="{ fluid, rock, relperm, cappres01 }" />
+    <CellElementRegion
+      name="region10"
+      cellBlocks="{ cb10 }"
+      materialList="{ fluid, rock, relperm, cappres01 }" />
+    <CellElementRegion
+      name="region11"
+      cellBlocks="{ cb11 }"
+      materialList="{ fluid, rock, relperm, cappres00 }" />
+    <CellElementRegion
+      name="region20"
+      cellBlocks="{ cb20 }"
+      materialList="{ fluid, rock, relperm, cappres01 }" />
+    <CellElementRegion
+      name="region21"
+      cellBlocks="{ cb21 }"
+      materialList="{ fluid, rock, relperm, cappres01 }" />
+  </ElementRegions>
+
+  <Constitutive>
+    <CompositionalTwoPhaseFluidPhillipsBrine
+      name="fluid"
+      phaseNames="{ gas, water }"
+      equationsOfState="{ PengRobinson, SoreideWhitson }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 3.40809e-02, 1.80153e-02 }"
+      componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 9.00000e+06, 2.20640e+07 }"
+      componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 3.73100e+02, 6.47096e+02 }"
+      componentCriticalVolume="{ 9.86278e-05, 9.41185e-05, 9.81354e-05, 5.59480e-05 }"
+      componentAcentricFactor="{ 1.14200e-02, 2.23940e-01, 1.00500e-01, 3.44300e-01 }"
+      componentBinaryCoeff="{
+          { 0.0000, 0.0000, 0.0000, 0.4850 },
+          { 0.0000, 0.0000, 0.0000, 0.1896 },
+          { 0.0000, 0.0000, 0.0000, 0.1353 },
+          { 0.4850, 0.1896, 0.1353, 0.0000 }
+      }"
+      pressureCoordinates="{
+          1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05,
+          1.437e+06, 2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07,
+          2.066e+07, 3.521e+07, 6.000e+07
+      }"
+      temperatureCoordinates="{ 283.15, 334.15, 342.15, 346.15, 354.15 }"
+      waterCompressibility="4.1483E-10"
+      salinity="2.3"
+      stabilityTolerance="1.0e-5"
+      flashTolerance="1.0e-4"
+      stabilityThreshold="-1.0e-3" />        
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="1.1e7"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-24, 1.0e-24, 1.0e-13 }"/>
+
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.12 }"
+      phaseRelPermExponent="{ 3, 3 }"
+      phaseRelPermMaxValue="{ 0.4, 0.9 }"/>
+
+    <TableCapillaryPressure
+      name="cappres00"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="pcgw00" />
+
+    <TableCapillaryPressure
+      name="cappres01"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="pcgw01" />
+  </Constitutive>
+
+  <FieldSpecifications>
+    <HydrostaticEquilibrium
+      name="equil00"
+      objectPath="ElementRegions/region00"
+      datumElevation="25"
+      datumPressure="1.1e7"
+      elevationIncrementInHydrostaticPressureTable="0.5"
+      phaseContacts="{ 30 }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
+      temperatureVsElevationTableName="initTempTable" />
+    <HydrostaticEquilibrium
+      name="equil01"
+      objectPath="ElementRegions/region01"
+      datumElevation="30"
+      datumPressure="1.1e7"
+      elevationIncrementInHydrostaticPressureTable="0.5"
+      phaseContacts="{ 30 }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
+      temperatureVsElevationTableName="initTempTable" />
+    <HydrostaticEquilibrium
+      name="equil10"
+      objectPath="ElementRegions/region10"
+      datumElevation="75"
+      datumPressure="1.1e7"
+      elevationIncrementInHydrostaticPressureTable="0.5"
+      phaseContacts="{ 30 }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
+      temperatureVsElevationTableName="initTempTable" />
+    <HydrostaticEquilibrium
+      name="equil11"
+      objectPath="ElementRegions/region11"
+      datumElevation="25"
+      datumPressure="1.1e7"
+      elevationIncrementInHydrostaticPressureTable="5.0"
+      phaseContacts="{ 30 }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
+      temperatureVsElevationTableName="initTempTable" />
+    <HydrostaticEquilibrium
+      name="equil20"
+      objectPath="ElementRegions/region20"
+      datumElevation="75"
+      datumPressure="1.1e7"
+      elevationIncrementInHydrostaticPressureTable="0.5"
+      phaseContacts="{ -10 }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
+      temperatureVsElevationTableName="initTempTable" />
+    <HydrostaticEquilibrium
+      name="equil21"
+      objectPath="ElementRegions/region21"
+      datumElevation="25"
+      datumPressure="1.1e7"
+      elevationIncrementInHydrostaticPressureTable="0.5"
+      phaseContacts="{ 110 }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
+      temperatureVsElevationTableName="initTempTable" />
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="CH4.VD"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 0.34, 0.34 }" />
+    <TableFunction
+      name="CO2.VD"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 0.07, 0.07 }" />
+    <TableFunction
+      name="H2S.VD"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 0.04, 0.04 }" />
+    <TableFunction
+      name="H2O.VD"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 0.55, 0.55 }" />
+
+    <TableFunction
+      name="initTempTable"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 368.15, 368.15 }" />
+
+    <TableFunction
+      name="pcgw00"
+      coordinates="{ 0.12, 0.95 }"
+      values="{ 0.0, 0.0 }" />
+
+    <TableFunction
+      name="pcgw01"
+      coordinates="{ 0.12, 0.95 }"
+      values="{ 2.0e5, 0.0 }" />
+
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput" />
+    <Restart
+      name="restartOutput" />
+  </Outputs>
+
+</Problem>

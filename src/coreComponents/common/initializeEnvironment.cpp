@@ -19,7 +19,8 @@
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "common/LifoStorageCommon.hpp"
-#include "common/MemoryInfos.hpp"
+#include "logger/ErrorHandling.hpp"
+#include "logger/ExternalErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
 // TPL includes
 #include <umpire/ResourceManager.hpp>
@@ -66,6 +67,75 @@ void setupLogger()
 #else
   logger::InitializeLogger();
 #endif
+
+  { // setup error handling (using LvArray helper system functions)
+
+    ExternalErrorHandler::instance().enableStderrPipeDeviation( true );
+
+    ///// set external error handling behaviour /////
+    ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg,
+                                                           string_view detectionLocation )
+    {
+      // Filter out INFO level messages from external libraries (e.g., VTK)
+      // ( error / signal lambda would calls either an error function or an info function, depending on a filtering function )
+      if( ExternalErrorHandler::isNotAnErrorMsg( errorMsg ) )
+      {
+        // Just print the message without error formatting
+        GEOS_LOG( errorMsg );
+        return;
+      }
+      else
+      {
+        std::string const stackHistory = LvArray::system::stackTrace( true );
+        DiagnosticMsg diagnosticMsg;
+        ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                                         MsgType::Error, errorMsg,
+                                                                         ::geos::logger::internal::g_rank )
+                                               .addCallStackInfo( stackHistory )
+                                               .addDetectionLocation( detectionLocation )
+                                               .getDiagnosticMsg() );
+
+        // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
+      }
+    } );
+
+    ///// set signal handling behaviour /////
+    LvArray::system::setSignalHandling( []( int const signal )
+    {
+      // Disable signal handling to prevent catching exit signal (infinite loop)
+      LvArray::system::setSignalHandling( nullptr );
+
+      // first of all, external error can await to be output, we must output them
+      ExternalErrorHandler::instance().flush( "before signal error output" );
+
+      // error message output
+      std::string const stackHistory = LvArray::system::stackTrace( true );
+      DiagnosticMsg diagnosticMsg;
+      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                                       MsgType::ExternalError, "",
+                                                                       ::geos::logger::internal::g_rank )
+                                             .addSignal( signal )
+                                             .addCallStackInfo( stackHistory )
+                                             .getDiagnosticMsg() );
+
+      // call program termination
+      LvArray::system::callErrorHandler();
+    } );
+
+    ///// set Post-Handled Error behaviour /////
+    LvArray::system::setErrorHandler( []()
+    {
+  #if defined( GEOS_USE_MPI )
+      int mpi = 0;
+      MPI_Initialized( &mpi );
+      if( mpi )
+      {
+        MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
+      }
+  #endif
+      std::abort();
+    } );
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,24 +147,12 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLvArray()
 {
-  LvArray::system::setErrorHandler( []()
-  {
-  #if defined( GEOS_USE_MPI )
-    int mpi = 0;
-    MPI_Initialized( &mpi );
-    if( mpi )
-    {
-      MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-    }
-  #endif
-    std::abort();
-  } );
-
-  LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
-
-#if defined(GEOS_USE_FPE)
+#if defined(GEOS_USE_FPE) && !defined(GEOS_USE_HIP)
   LvArray::system::setFPE();
 #else
+  // ROCm's HSA runtime raises SIGFPE while unloading HIP when host floating
+  // point traps are enabled. Host FPE trapping is therefore not supported in
+  // HIP builds, even when GEOS_ENABLE_FPE is set.
   LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 #endif
 
@@ -136,10 +194,26 @@ void setupMPI( int argc, char * argv[] )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void finalizeMPI()
+void finalizeMPI( bool inError )
 {
-  MpiWrapper::commFree( MPI_COMM_GEOS );
-  MpiWrapper::finalize();
+  if( !inError )
+  {
+    MpiWrapper::finalize();
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupCUDA()
+{
+#if defined( GEOS_USE_CUDA ) && defined( GEOS_CUDA_STACK_SIZE )
+  size_t const stackSize = (GEOS_CUDA_STACK_SIZE) * 1024;
+  if( 0 < stackSize )
+  {
+    cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
+    GEOS_ERROR_IF( status != cudaSuccess,
+                   GEOS_FMT( "Failed to set CUDA stack size. Error {}: {}", status, cudaGetErrorString( status ) ) );
+  }
+#endif
 }
 
 #if defined( GEOS_USE_CALIPER )
@@ -149,7 +223,8 @@ void setupCaliper( cali::ConfigManager & caliperManager,
                    CommandLineOptions const & commandLineOptions )
 {
   caliperManager.add( commandLineOptions.timerOutput.c_str() );
-  GEOS_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
+  GEOS_ERROR_IF( caliperManager.error(),
+                 GEOS_FMT( "Caliper config error: {}", caliperManager.error_msg() ) );
   caliperManager.start();
 
 #if defined( GEOS_USE_ADIAK )
@@ -250,6 +325,7 @@ void finalizeCaliper()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
 {
+  setupCUDA();
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();
@@ -258,13 +334,12 @@ void setupEnvironment( int argc, char * argv[] )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void cleanupEnvironment()
+void cleanupEnvironment( bool inError )
 {
-  MemoryLogging::getInstance().memoryStatsReport();
   LvArray::system::resetSignalHandling();
   finalizeLogger();
   finalizeCaliper();
-  finalizeMPI();
+  finalizeMPI( inError );
 }
 
 } // namespace geos

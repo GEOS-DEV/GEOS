@@ -28,20 +28,6 @@ namespace geos
 
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct MemoryStatsOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "MemoryStats output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & MemoryStatsOutput::getTimerCategory() const
-{
-  static logInfo::MemoryStatsOutputTimer timer;
-  return timer;
-}
-
 MemoryStatsOutput::MemoryStatsOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),
@@ -56,15 +42,15 @@ MemoryStatsOutput::MemoryStatsOutput( string const & name,
   this->registerWrapper( viewKeysStruct::writeCSV, &m_writeCSV ).
     setApplyDefaultValue( csvOutputDefault ? 1 : 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file" );
+    setDescription( "When set to 1, write the statistics into a CSV file.\nWhen set to 0, no output" );
 }
 
 void MemoryStatsOutput::postInputInitialization()
 {
   static bool isInstanceInitialized = false;
   GEOS_ERROR_IF( isInstanceInitialized,
-                 GEOS_FMT( "{}: Multiple instances of {} are not supported, please remove this one.",
-                           getDataContext(), catalogName() ) );
+                 GEOS_FMT( "Multiple instances of {} are not supported, please remove this one.",
+                           catalogName() ), getDataContext()  );
   isInstanceInitialized = true;
 
   auto & memLogging = MemoryLogging::getInstance();

@@ -1,0 +1,138 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="multiphasePoromechanics_FaultModel_well_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <CompositionalMultiphaseReservoirPoromechanicsConformingFractures
+      name="reservoirSolver"
+      targetRegions="{ Region, Fault }"
+      initialDt="3600"
+      reservoirAndWellsSolverName="reservoirAndWellsSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="3">
+      <NonlinearSolverParameters
+        couplingType="FullyImplicit"
+        lineSearchAction="None"
+        maxTimeStepCuts="10"
+        newtonTol="1e-2"
+        newtonMaxIter="20"
+        maxAllowedResidualNorm="1e+15"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </CompositionalMultiphaseReservoirPoromechanicsConformingFractures>
+
+    <SolidMechanicsLagrangeContact
+      name="fractureMechSolver"
+      stabilizationName="TPFA_stab"
+      logLevel="1"
+      targetRegions="{ Region, Fault }"
+      discretization="FE1"/>
+
+    <CompositionalMultiphaseReservoir
+      name="reservoirAndWellsSolver"
+      flowSolverName="flowSolver"
+      wellSolverName="wellSolver"
+      targetRegions="{ Region, Fault, wellInjector }"
+      logLevel="3"/>
+
+    <CompositionalMultiphaseFVM
+      name="flowSolver"
+      logLevel="1"
+      useMass="1"
+      scalingType="Local"
+      discretization="TPFA"
+      targetRegions="{ Region, Fault }"
+      temperature="368.15"/>
+
+    <WellManager
+      name="wellSolver"
+      targetRegions="{ wellInjector }"
+      logLevel="2"
+      useMass="1">
+      <CompositionalMultiphaseWell
+        name="injectorControls"
+        type="injector"
+        useSurfaceConditions="1"
+        surfacePressure="1.01325e6"
+        surfaceTemperature="367.15"
+        control="totalVolRate"
+        enableCrossflow="0"
+        logLevel="2"
+        writeCSV="1">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="10e9"
+          referenceElevation="-2250"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="6673.48812509"
+          injectionStream="{ 1.00, 0.00 }"
+          injectionTemperature="368.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
+  </Solvers>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      useGlobalIds="1"
+      faceBlocks="{ fracture }"
+      file="../../MESH/verticalFault_ExternalMesh.vtm">
+      <InternalWell
+        name="well_injector"
+        logLevel="1"
+        wellRegionName="wellInjector"
+        wellControlsName="injectorControls"
+        polylineNodeCoords="{ { -600, -600, -2000 },
+                              { -600, -600, -2500 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="1">
+        <Perforation
+          name="injector_perf1"
+          distanceFromHead="250"/>
+      </InternalWell>
+    </VTKMesh>
+  </Mesh>
+
+  <Events
+    minTime="-1e11"
+    maxTime="111600">
+    <SoloEvent
+      name="poroelasticityPreEquilibrationStep"
+      targetTime="-1e11"
+      beginTime="-1e11"
+      target="/Tasks/poroelasticityPreEquilibrationStep"/>
+
+    <SoloEvent
+      name="outputPostEquilibrationStep1"
+      targetTime="0"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication"
+      endTime="1.0e5"
+      maxEventDt="1.0e5"
+      target="/Solvers/reservoirSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      beginTime="0.0"
+      endTime="1.0e5"
+      timeFrequency="1.0e5"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      beginTime="0.0"
+      timeFrequency="1.0e5"
+      endTime="1.0e5"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>

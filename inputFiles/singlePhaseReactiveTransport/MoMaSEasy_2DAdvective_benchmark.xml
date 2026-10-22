@@ -1,0 +1,55 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./MoMaSEasy_2D_base.xml" />
+    <File name="./MoMaSEasy_2DAdvective_base.xml" />
+    <File name="./MoMaSEasy_initialAggregate.xml" />
+    <File name="./MoMaSEasy_logConc.xml" />
+    <File name="./MoMaSEasy_initialPrimaryConc.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1e-4, 0, 0.3, 0.4, 1, 1.1, 2.1, 2.1001 }"
+      yCoords="{ 0, 0.2, 0.3, 0.4, 0.9, 1, 1.0001 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1, 30, 10, 60, 40, 100, 1 }"
+      ny="{ 20, 10, 10, 50, 10, 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-2_0_0, cb-3_0_0, cb-4_0_0, cb-5_0_0, cb-6_0_0,
+                        cb-0_1_0, cb-1_1_0, cb-2_1_0, cb-3_1_0, cb-4_1_0, cb-5_1_0, cb-6_1_0,
+                        cb-0_2_0, cb-1_2_0, cb-2_2_0, cb-3_2_0, cb-4_2_0, cb-5_2_0, cb-6_2_0,
+                        cb-0_3_0, cb-1_3_0, cb-2_3_0, cb-3_3_0, cb-4_3_0, cb-5_3_0, cb-6_3_0,
+                        cb-0_4_0, cb-1_4_0, cb-2_4_0, cb-3_4_0, cb-4_4_0, cb-5_4_0, cb-6_4_0,
+                        cb-0_5_0, cb-1_5_0, cb-2_5_0, cb-3_5_0, cb-4_5_0, cb-5_5_0, cb-6_5_0 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="sink"
+      xMin="{ 2.099, 0.199, -0.01 }"
+      xMax="{ 3.101, 0.401, 1.01 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="10">
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="200"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="1e-4"
+      target="/Solvers/SinglePhaseReactiveFlow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="2000"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+</Problem>

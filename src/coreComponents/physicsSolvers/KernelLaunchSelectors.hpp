@@ -45,7 +45,7 @@ void invokePhaseDispatchLambda ( S val, T numPhases, LAMBDA && lambda )
   }
   else
   {
-    GEOS_ERROR( "Unsupported state: " << numPhases );
+    GEOS_ERROR( GEOS_FMT( "Unsupported state: {}", numPhases ) );
   }
 }
 
@@ -64,7 +64,7 @@ void invokeThermalDispatchLambda ( S val, T isThermal, LAMBDA && lambda )
   }
   else
   {
-    GEOS_ERROR( "Unsupported state: " << isThermal );
+    GEOS_ERROR( GEOS_FMT( "Unsupported state: {}", isThermal ) );
   }
 }
 
@@ -87,7 +87,7 @@ void kernelLaunchSelectorThermalSwitch( T value, LAMBDA && lambda )
     }
     default:
     {
-      GEOS_ERROR( "Unsupported thermal state: " << value );
+      GEOS_ERROR( GEOS_FMT( "Unsupported thermal state: {}", value ) );
     }
   }
 }
@@ -126,7 +126,7 @@ void kernelLaunchSelectorCompThermSwitch( T value, bool const isThermal, LAMBDA 
     }
     default:
     {
-      GEOS_ERROR( "Unsupported number of components: " << value );
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", value ) );
     }
   }
 }
@@ -163,7 +163,7 @@ void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
       return;
     }
     default:
-    { GEOS_ERROR( "Unsupported number of components: " << value ); }
+    { GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", value ) ); }
   }
 }
 

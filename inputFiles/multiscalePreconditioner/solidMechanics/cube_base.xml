@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 100 }"
+      yCoords="{ 0, 100 }"
+      zCoords="{ 0, 100 }"
+      nx="{ 30 }"
+      ny="{ 30 }"
+      nz="{ 30 }"
+      cellBlockNames="{ hex }"/>
+  </Mesh>
+
+  <Events
+    maxTime="10.0">
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/mechSolver"/>
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ hex }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultYoungModulus="1e9"
+      defaultPoissonRatio="0.25"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+      name="x-roller"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="y-roller"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="z-roller"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+    <FieldSpecification
+      name="z-compression"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="-1.0"
+      functionName="z-comp"
+      setNames="{ zpos }"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="z-comp"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 1.0 }"
+      interpolation="linear"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="cube_mech"/>
+  </Outputs>
+</Problem>

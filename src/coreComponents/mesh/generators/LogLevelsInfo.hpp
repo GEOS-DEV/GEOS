@@ -35,17 +35,12 @@ namespace logInfo
 ///@{
 
 /// @cond DO_NOT_DOCUMENT
-struct InternalWell
+struct GenerateWell
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Output Internal well"; }
+  static constexpr std::string_view getDescription() { return "Well generation information: internal well table, perforation table"; }
 };
 
-struct PerforationTable
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Output perforation table"; }
-};
 /// @endcond
 ///@}
 

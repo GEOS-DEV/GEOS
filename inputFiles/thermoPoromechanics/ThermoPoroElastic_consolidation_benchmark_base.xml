@@ -85,6 +85,16 @@
       endTime="1e-2"
       forceDt="1e-2"
       target="/Outputs/displacementHistoryOutput"/>
+    <PeriodicEvent
+      name="stressHistoryCollection0"
+      endTime="1e-2"
+      forceDt="1e-2"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput0"
+      endTime="1e-2"
+      forceDt="1e-2"
+      target="/Outputs/stressHistoryOutput"/>
 
     <PeriodicEvent
       name="pressureHistoryCollection1"
@@ -122,118 +132,246 @@
       endTime="1"
       forceDt="0.99"
       target="/Outputs/displacementHistoryOutput"/>
-    
     <PeriodicEvent
-      name="pressureHistoryCollection2"
+      name="stressHistoryCollection1"
+      beginTime="1e-2"
+      endTime="1"
+      forceDt="0.99"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput1"
+      beginTime="1e-2"
+      endTime="1"
+      forceDt="0.99"
+      target="/Outputs/stressHistoryOutput"/>
+
+    <PeriodicEvent
+      name="pressureHistoryCollection2a"
       beginTime="1"
-      endTime="1001"
-      forceDt="2"
+      endTime="101"
+      targetExactTimestep="0"
+      timeFrequency="2"
       target="/Tasks/pressureCollection"/>
     <PeriodicEvent
-      name="pressureTimeHistoryOutput2"
+      name="pressureTimeHistoryOutput2a"
       beginTime="1"
-      endTime="1001"
-      forceDt="2"
+      endTime="101"
+      targetExactTimestep="0"
+      timeFrequency="2"
       target="/Outputs/pressureHistoryOutput"/>
     <PeriodicEvent
-      name="temperatureHistoryCollection2"
-      beginTime="1"
+      name="pressureHistoryCollection2b"
+      beginTime="101"
       endTime="1001"
-      forceDt="2"
+      targetExactTimestep="0"
+      timeFrequency="20"
+      target="/Tasks/pressureCollection"/>
+    <PeriodicEvent
+      name="pressureTimeHistoryOutput2b"
+      beginTime="101"
+      endTime="1001"
+      targetExactTimestep="0"
+      timeFrequency="20"
+      target="/Outputs/pressureHistoryOutput"/>
+    <PeriodicEvent
+      name="temperatureHistoryCollection2a"
+      beginTime="1"
+      endTime="101"
+      targetExactTimestep="0"
+      timeFrequency="2"
       target="/Tasks/temperatureCollection"/>
     <PeriodicEvent
-      name="temperatureTimeHistoryOutput2"
+      name="temperatureTimeHistoryOutput2a"
       beginTime="1"
-      endTime="1001"
-      forceDt="2"
+      endTime="101"
+      targetExactTimestep="0"
+      timeFrequency="2"
       target="/Outputs/temperatureHistoryOutput"/>
     <PeriodicEvent
-      name="displacementHistoryCollection2"
-      beginTime="1"
+      name="temperatureHistoryCollection2b"
+      beginTime="101"
       endTime="1001"
-      forceDt="2"
+      targetExactTimestep="0"
+      timeFrequency="20"
+      target="/Tasks/temperatureCollection"/>
+    <PeriodicEvent
+      name="temperatureTimeHistoryOutput2b"
+      beginTime="101"
+      endTime="1001"
+      targetExactTimestep="0"
+      timeFrequency="20"
+      target="/Outputs/temperatureHistoryOutput"/>
+    <PeriodicEvent
+      name="displacementHistoryCollection2a"
+      beginTime="1"
+      endTime="101"
+      targetExactTimestep="0"
+      timeFrequency="2"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
-      name="displacementTimeHistoryOutput2"
+      name="displacementTimeHistoryOutput2a"
       beginTime="1"
-      endTime="1001"
-      forceDt="2"
+      endTime="101"
+      targetExactTimestep="0"
+      timeFrequency="2"
       target="/Outputs/displacementHistoryOutput"/>
+    <PeriodicEvent
+      name="displacementHistoryCollection2b"
+      beginTime="101"
+      endTime="1001"
+      targetExactTimestep="0"
+      timeFrequency="20"
+      target="/Tasks/displacementCollection"/>
+    <PeriodicEvent
+      name="displacementTimeHistoryOutput2b"
+      beginTime="101"
+      endTime="1001"
+      targetExactTimestep="0"
+      timeFrequency="20"
+      target="/Outputs/displacementHistoryOutput"/>
+    <PeriodicEvent
+      name="stressHistoryCollection2a"
+      beginTime="1"
+      endTime="101"
+      targetExactTimestep="0"
+      timeFrequency="2"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput2a"
+      beginTime="1"
+      endTime="101"
+      targetExactTimestep="0"
+      timeFrequency="2"
+      target="/Outputs/stressHistoryOutput"/>
+    <PeriodicEvent
+      name="stressHistoryCollection2b"
+      beginTime="101"
+      endTime="1001"
+      targetExactTimestep="0"
+      timeFrequency="20"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput2b"
+      beginTime="101"
+      endTime="1001"
+      targetExactTimestep="0"
+      timeFrequency="20"
+      target="/Outputs/stressHistoryOutput"/>
 
     <PeriodicEvent
       name="pressureHistoryCollection3"
       beginTime="1001"
       endTime="10001"
-      forceDt="100"
+      targetExactTimestep="0"
+      timeFrequency="250"
       target="/Tasks/pressureCollection"/>
     <PeriodicEvent
       name="pressureTimeHistoryOutput3"
       beginTime="1001"
       endTime="10001"
-      forceDt="100"
+      targetExactTimestep="0"
+      timeFrequency="250"
       target="/Outputs/pressureHistoryOutput"/>
     <PeriodicEvent
       name="temperatureHistoryCollection3"
       beginTime="1001"
       endTime="10001"
-      forceDt="100"
+      targetExactTimestep="0"
+      timeFrequency="250"
       target="/Tasks/temperatureCollection"/>
     <PeriodicEvent
       name="temperatureTimeHistoryOutput3"
       beginTime="1001"
       endTime="10001"
-      forceDt="100"
+      targetExactTimestep="0"
+      timeFrequency="250"
       target="/Outputs/temperatureHistoryOutput"/>
     <PeriodicEvent
       name="displacementHistoryCollection3"
       beginTime="1001"
       endTime="10001"
-      forceDt="100"
+      targetExactTimestep="0"
+      timeFrequency="250"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
       name="displacementTimeHistoryOutput3"
       beginTime="1001"
       endTime="10001"
-      forceDt="100"
+      targetExactTimestep="0"
+      timeFrequency="250"
       target="/Outputs/displacementHistoryOutput"/>
+    <PeriodicEvent
+      name="stressHistoryCollection3"
+      beginTime="1001"
+      endTime="10001"
+      targetExactTimestep="0"
+      timeFrequency="250"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput3"
+      beginTime="1001"
+      endTime="10001"
+      targetExactTimestep="0"
+      timeFrequency="250"
+      target="/Outputs/stressHistoryOutput"/>
 
     <PeriodicEvent
       name="pressureHistoryCollection4"
       beginTime="10001"
       endTime="100001"
-      forceDt="1000"
+      targetExactTimestep="0"
+      timeFrequency="2500"
       target="/Tasks/pressureCollection"/>
     <PeriodicEvent
       name="pressureTimeHistoryOutput4"
       beginTime="10001"
       endTime="100001"
-      forceDt="1000"
+      targetExactTimestep="0"
+      timeFrequency="2500"
       target="/Outputs/pressureHistoryOutput"/>
     <PeriodicEvent
       name="temperatureHistoryCollection4"
       beginTime="10001"
       endTime="100001"
-      forceDt="1000"
+      targetExactTimestep="0"
+      timeFrequency="2500"
       target="/Tasks/temperatureCollection"/>
     <PeriodicEvent
       name="temperatureTimeHistoryOutput4"
       beginTime="10001"
       endTime="100001"
-      forceDt="1000"
+      targetExactTimestep="0"
+      timeFrequency="2500"
       target="/Outputs/temperatureHistoryOutput"/>
     <PeriodicEvent
       name="displacementHistoryCollection4"
       beginTime="10001"
       endTime="100001"
-      forceDt="1000"
+      targetExactTimestep="0"
+      timeFrequency="2500"
       target="/Tasks/displacementCollection"/>
     <PeriodicEvent
       name="displacementTimeHistoryOutput4"
       beginTime="10001"
       endTime="100001"
-      forceDt="1000"
+      targetExactTimestep="0"
+      timeFrequency="2500"
       target="/Outputs/displacementHistoryOutput"/>
-    
+    <PeriodicEvent
+      name="stressHistoryCollection4"
+      beginTime="10001"
+      endTime="100001"
+      targetExactTimestep="0"
+      timeFrequency="2500"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="stressTimeHistoryOutput4"
+      beginTime="10001"
+      endTime="100001"
+      targetExactTimestep="0"
+      timeFrequency="2500"
+      target="/Outputs/stressHistoryOutput"/>
+
     <PeriodicEvent
       name="solverApplication0"
       endTime="1e-2"

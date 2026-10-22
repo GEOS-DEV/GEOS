@@ -18,6 +18,7 @@
  */
 
 #include "OutputBase.hpp"
+#include "fileIO/LogLevelsInfo.hpp"
 #include "common/MpiWrapper.hpp"
 #include "functions/FunctionBase.hpp"
 
@@ -58,8 +59,6 @@ void OutputBase::initializePreSubGroups()
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();
 }
-
-
 
 string const & OutputBase::getOutputDirectory()
 {

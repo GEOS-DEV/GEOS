@@ -13,7 +13,6 @@
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ mesh1/Region2 }"
       >

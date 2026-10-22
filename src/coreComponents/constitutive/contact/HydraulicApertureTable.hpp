@@ -98,19 +98,12 @@ public:
   HydraulicApertureTable( string const & name,
                           Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
-  virtual ~HydraulicApertureTable() override;
-
   static string catalogName() { return "HydraulicApertureTable"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override final;
-
-
+                                         localIndex const numPts ) override final;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = HydraulicApertureTableUpdates;
@@ -124,7 +117,7 @@ public:
   /**
    * @struct Structure to hold scoped key names
    */
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  struct viewKeyStruct : public HydraulicApertureBase::viewKeyStruct
   {
     /// string/key for aperture tolerance
     static constexpr char const * apertureToleranceString() { return "apertureTolerance"; }

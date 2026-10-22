@@ -6,9 +6,7 @@
 
     <SolidMechanicsLagrangeContactBubbleStab
       name="contactSolver"
-      timeIntegrationOption="QuasiStatic"
       logLevel="2"
-      writeLinearSystem="2"
       discretization="FE1"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
@@ -64,8 +62,8 @@
 
     <Coulomb
       name="fractureMaterial"
-      cohesion="0.0"
-      frictionCoefficient="0.577350269e9"/>
+      defaultCohesion="0.0"
+      defaultFrictionCoefficient="0.577350269e9"/>
   </Constitutive>
 
   <Functions>

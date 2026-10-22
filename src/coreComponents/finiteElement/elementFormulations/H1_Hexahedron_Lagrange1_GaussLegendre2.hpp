@@ -71,34 +71,40 @@ namespace finiteElement
  *
  */
 
-class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public FiniteElementBase
+class H1_Hexahedron_Lagrange1_GaussLegendre2_impl : public FiniteElementBase_impl< 8, 6, 8 >
 {
 public:
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = LagrangeBasis1::TensorProduct3D::numSupportPoints;
+  /// Convenience type alias for the base class
+  using Base = FiniteElementBase_impl< 8, 6, 8 >;
 
-  /// The number of faces/support points for bubble functions per element.
-  constexpr static localIndex numFaces = LagrangeBasis1::TensorProduct3D::numSupportFaces;
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
 
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
+  /// Mesh data structure for the element.
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
 
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = 8;
+  /// Number of nodes in the element
+  using Base::numNodes;
 
-  /// The number of sampling points per element
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+  /// Number of quadrature points in the element
+  using Base::numQuadraturePoints;
 
-  /** @cond Doxygen_Suppress */
-  USING_FINITEELEMENTBASE
-  /** @endcond Doxygen_Suppress */
+  /// Maximum number of support points in the element
+  using Base::maxSupportPoints;
 
+  /// @cond DO_NOT_DOCUMENT
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl() = default;
+  ~H1_Hexahedron_Lagrange1_GaussLegendre2_impl() = default;
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl( H1_Hexahedron_Lagrange1_GaussLegendre2_impl const & ) = default;
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl & operator=( H1_Hexahedron_Lagrange1_GaussLegendre2_impl const & ) = default;
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl( H1_Hexahedron_Lagrange1_GaussLegendre2_impl && ) = default;
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl & operator=( H1_Hexahedron_Lagrange1_GaussLegendre2_impl && ) = default;
+  /// @endcond DO_NOT_DOCUMENT
+
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
-  virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override
-  {}
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -115,14 +121,16 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -250,6 +258,36 @@ public:
 
     calcFaceBubbleN( qCoords, N );
   }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       real64 ( &J )[3][3] );
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       StackVariables const & stack,
+                       real64 ( &J )[3][3] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -504,11 +542,11 @@ private:
 
 template< typename FUNC, typename ... PARAMS >
 GEOS_HOST_DEVICE inline void
-H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
-                                                     int const qb,
-                                                     int const qc,
-                                                     FUNC && func,
-                                                     PARAMS &&... params )
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::supportLoop( int const qa,
+                                                          int const qb,
+                                                          int const qc,
+                                                          FUNC && func,
+                                                          PARAMS &&... params )
 {
 
 /// Options for how to calculate the parent gradients.
@@ -597,14 +635,45 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 
 //*************************************************************************************************
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcJacobian( localIndex const q,
+                                                           real64 const (&X)[numNodes][3],
+                                                           real64 (& J)[3][3] )
+{
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      J[i][j] = 0;
+    }
+  }
+  int qa, qb, qc;
+  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  return detJ*weight;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcJacobian( localIndex const q,
+                                                           real64 const (&X)[numNodes][3],
+                                                           StackVariables const & GEOS_UNUSED_PARAM( stack ),
+                                                           real64 (& J)[3][3] )
+{
+  return calcJacobian( q, X, J );
+}
+
+GEOS_HOST_DEVICE
 inline
 real64
-H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
-                                                   real64 const (&X)[numNodes][3],
-                                                   real64 (& gradN)[numNodes][3] )
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcGradN( localIndex const q,
+                                                        real64 const (&X)[numNodes][3],
+                                                        real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
-
 
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -620,7 +689,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
 
 GEOS_HOST_DEVICE
 inline
-real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
+real64 H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
              StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -632,9 +701,9 @@ real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradFaceBubbleN( localIndex const q,
-                                                             real64 const (&X)[numNodes][3],
-                                                             real64 (& gradN)[numFaces][3] )
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcGradFaceBubbleN( localIndex const q,
+                                                                  real64 const (&X)[numNodes][3],
+                                                                  real64 (& gradN)[numFaces][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -673,7 +742,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradFaceBubbleN( localIndex const q,
 GEOS_HOST_DEVICE
 inline
 void
-H1_Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
   jacobianTransformation( int const qa,
                           int const qb,
                           int const qc,
@@ -712,7 +781,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 void
-H1_Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
   applyTransformationToParentGradients( int const qa,
                                         int const qb,
                                         int const qc,
@@ -745,7 +814,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
   transformedQuadratureWeight( localIndex const q,
                                real64 const (&X)[numNodes][3] )
 {
@@ -763,10 +832,10 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
 GEOS_HOST_DEVICE
 inline
-void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
-                                                                real64 const (&invJ)[3][3],
-                                                                real64 const (&var)[numNodes][3],
-                                                                real64 (& grad)[6] )
+void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::symmetricGradient( int const q,
+                                                                     real64 const (&invJ)[3][3],
+                                                                     real64 const (&var)[numNodes][3],
+                                                                     real64 (& grad)[6] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -798,10 +867,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
 
 GEOS_HOST_DEVICE
 inline
-void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
-                                                             real64 const (&invJ)[3][3],
-                                                             real64 const (&var)[6],
-                                                             real64 (& R)[numNodes][3] )
+void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::plusGradNajAij( int const q,
+                                                                  real64 const (&invJ)[3][3],
+                                                                  real64 const (&var)[6],
+                                                                  real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -833,10 +902,10 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
 
 GEOS_HOST_DEVICE
 inline
-void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
-                                                       real64 const (&invJ)[3][3],
-                                                       real64 const (&var)[numNodes][3],
-                                                       real64 (& grad)[3][3] )
+void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::gradient( int const q,
+                                                            real64 const (&invJ)[3][3],
+                                                            real64 const (&var)[numNodes][3],
+                                                            real64 (& grad)[3][3] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -867,6 +936,46 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
 #if __GNUC__
 #pragma GCC diagnostic pop
 #endif
+
+/// @copydoc H1_Hexahedron_Lagrange1_GaussLegendre2_impl
+class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public H1_Hexahedron_Lagrange1_GaussLegendre2_impl, public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
+  /// The Implementation type
+  using ImplType = H1_Hexahedron_Lagrange1_GaussLegendre2_impl;
+
+  H1_Hexahedron_Lagrange1_GaussLegendre2():
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
+  { }
+
+  GEOS_HOST_DEVICE
+  virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override final = default;
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl * getImpl()
+  {
+    return static_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_impl * >(this);
+  }
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl const * getImpl() const
+  {
+    return static_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_impl const * >(this);
+  }
+
+};
 
 #undef PARENT_GRADIENT_METHOD
 }

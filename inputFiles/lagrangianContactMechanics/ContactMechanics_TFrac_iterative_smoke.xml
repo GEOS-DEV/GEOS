@@ -1,0 +1,87 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./TFrac_smoke.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{0.0, 0.0, 0.0}">
+   <!-- SPHINX_SOLVER -->
+   <SolidMechanicsLagrangeContact
+   name="lagrangiancontact"
+   stabilizationName="TPFAstabilization"
+   logLevel="1"
+   discretization="FE1"
+   targetRegions="{ Region, Fracture }">
+   <NonlinearSolverParameters
+     newtonTol="1.0e-8"
+     logLevel="2"
+     maxNumConfigurationAttempts="10"
+     newtonMaxIter="10"
+     lineSearchAction="Require"
+     lineSearchMaxCuts="2"
+     maxTimeStepCuts="2"/>
+   <LinearSolverParameters
+     solverType="gmres"
+     preconditionerType="mgr"
+     krylovTol="1e-8"
+     logLevel="1"/>
+ </SolidMechanicsLagrangeContact>
+</Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="TPFAstabilization"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Events
+    maxTime="0.2">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      endTime="0.2"
+      forceDt="0.2"
+      target="/Solvers/lagrangiancontact"/>  
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="0.2"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+ 
+    <PeriodicEvent
+      name="tractionHistoryCollection"
+      timeFrequency="0.2"
+      target="/Tasks/tractionCollection" />
+
+    <PeriodicEvent
+      name="tractionHistoryOutput"
+      timeFrequency="0.2"
+      targetExactTimestep="0"
+      target="/Outputs/tractionOutput"/>
+
+    <PeriodicEvent
+      name="displacementHistoryCollection"
+      timeFrequency="0.2"
+      target="/Tasks/displacementJumpCollection" />
+
+    <PeriodicEvent
+      name="displacementHistoryOutput"
+      timeFrequency="0.2"
+      targetExactTimestep="0"
+      target="/Outputs/displacementOutput"/>
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.2"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>     
+  </Events>
+</Problem>

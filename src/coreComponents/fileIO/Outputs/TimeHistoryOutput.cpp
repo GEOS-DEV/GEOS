@@ -26,20 +26,6 @@ namespace geos
 {
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct TimeHistoryOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Time history output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & TimeHistoryOutput::getTimerCategory() const
-{
-  static logInfo::TimeHistoryOutputTimer timer;
-  return timer;
-}
-
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),
@@ -71,7 +57,6 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setDescription( "The current history record to be written, on restart from an earlier time allows use to remove invalid future history." );
 
   addLogLevel< logInfo::DataCollectorInitialization >();
-  addLogLevel< logInfo::OutputEvents >();
   addLogLevel< logInfo::HDF5Writing >();
 }
 
@@ -158,8 +143,13 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     }
     catch( std::exception const & e )
     {
-      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
-                                     getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) ) );
+      string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
+                                        getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) );
+      ErrorLogger::global().modifyCurrentExceptionMessage()
+        .addToMsg( errorMsg )
+        .addContextInfo( getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ).getContextInfo()
+                           .setPriority( 1 ) );
+      throw InputError( e, errorMsg );
     }
   }
 }

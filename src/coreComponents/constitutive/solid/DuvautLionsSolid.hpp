@@ -27,7 +27,7 @@
 #include "ElasticIsotropic.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "SolidModelDiscretizationOpsIsotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -86,6 +86,7 @@ public:
 
     if( m_disableInelasticity )
     {
+      UPDATE_BASE::smallStrainUpdate_ElasticOnly( k, q, timeIncrement, strainIncrement, stress, stiffness );
       return;
     }
 
@@ -149,23 +150,16 @@ public:
   using KernelWrapper = DuvautLionsSolidUpdates< typename BASE::KernelWrapper >;
 
   DuvautLionsSolid( string const & name, dataRepository::Group * const parent );
-  virtual ~DuvautLionsSolid() override = default;
 
   /**
    * @brief Catalog name
    * @return Static catalog string
    */
 
-  static string catalogName() { return string( "Visco" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "Visco" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
   real64 relaxationTime() const { return m_relaxationTime; }
-
-  virtual void postInputInitialization() override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
 
   KernelWrapper createKernelUpdates() const
   {

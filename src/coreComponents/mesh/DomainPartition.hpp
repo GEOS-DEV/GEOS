@@ -274,6 +274,21 @@ public:
   stdVector< NeighborCommunicator > const & getNeighbors() const
   { return m_neighbors; };
 
+  /**
+   * @brief Get a list of neighbor ranks.
+   * @return Container of neighbor ranks.
+   */
+  stdVector< int > getNeighborRanks() const
+  {
+    stdVector< int > ranks;
+    ranks.reserve( m_neighbors.size() );
+    for( NeighborCommunicator const & neighbor : m_neighbors )
+    {
+      ranks.push_back( neighbor.neighborRank() );
+    }
+    return ranks;
+  }
+
 private:
 
   /**

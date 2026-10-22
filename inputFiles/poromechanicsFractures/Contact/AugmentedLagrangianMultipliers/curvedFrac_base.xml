@@ -1,0 +1,152 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1.0e7"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xmin, xmax }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ ymin, ymax }"/>
+
+    <FieldSpecification
+      name="zdisplacement"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zmin }"/>
+
+    <Traction
+      name="NormalTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-7.0e+07"      
+      setNames="{ zmax }"/>  	  
+
+    <FieldSpecification 
+      name="SigmaX"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="0"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaY"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="1"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaZ"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="2"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaX_res"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="rock_stress"
+      component="0"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaY_res"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="rock_stress"
+      component="1"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaZ_res"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="rock_stress"
+      component="2"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification
+      name="reservoirPressure"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="pressure"      
+      scale="1.0e7"
+      functionName="timeFunction"/> 
+
+  </FieldSpecifications>
+
+  <Functions>    
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-3, 1.0e-3 }"/>
+
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 1.0, 3.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="vtkOutput"/>
+
+    <Restart
+      name="restarts"/>  
+  </Outputs>
+</Problem>

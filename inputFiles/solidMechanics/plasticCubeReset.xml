@@ -62,7 +62,6 @@
     gravityVector="{ 0.0, 0.0, 0.0 }">
     <SolidMechanicsLagrangianFEM
       name="solidMechanics"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ mesh/all }"
       logLevel="1"

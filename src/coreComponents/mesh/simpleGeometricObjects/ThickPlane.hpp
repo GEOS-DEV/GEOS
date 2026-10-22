@@ -34,24 +34,12 @@ class ThickPlane : public SimpleGeometricObjectBase
 public:
 
   /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
    * @brief Constructor.
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
   ThickPlane( const string & name,
               Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  virtual ~ThickPlane() override;
-
-  ///@}
 
   /**
    * @name Static Factory Catalog Functions

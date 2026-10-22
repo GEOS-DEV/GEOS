@@ -47,7 +47,11 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  virtual void postInputInitialization() override;
+
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -58,6 +62,11 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution,
                             bool const setSparsity = true ) override final;
+
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
@@ -74,6 +83,19 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  void assembleContact( real64 const time,
+                        real64 const dt,
+                        DomainPartition & domain,
+                        DofManager const & dofManager,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+
+  void assembleForceResidualPressureContribution( DomainPartition & domain,
+                                                  real64 const & dt,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs );
+
   virtual real64 calculateResidualNorm( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition const & domain,
@@ -88,22 +110,22 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override final;
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter ) override final;
 
 
   /**
    * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
    * @param meshName The mesh name.
-   * @param lambda The callback function. Take the finite element type name and
-   * the list of face element of the same type.
+   * @param lambda The callback function. Take the finite element type name and the list of face element of the same type.
    */
   template< typename LAMBDA >
   void forFiniteElementOnFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
   {
 
-    std::map< string,
-              array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
+    stdMap< string,
+            array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
@@ -120,8 +142,7 @@ public:
    * @brief Loop over the finite element type on the stick fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
    * @param meshName The mesh name.
-   * @param lambda The callback function. Take the finite element type name and
-   * the list of face element of the same type.
+   * @param lambda The callback function. Take the finite element type name and the list of face element of the same type.
    */
   template< typename LAMBDA >
   void forFiniteElementOnStickFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
@@ -129,7 +150,7 @@ public:
 
     bool const isStickState = true;
 
-    std::map< string, array1d< localIndex > > const &
+    stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
@@ -147,8 +168,7 @@ public:
    * @brief Loop over the finite element type on the slip fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
    * @param meshName The mesh name.
-   * @param lambda The callback function. Take the finite element type name and
-   * the list of face element of the same type.
+   * @param lambda The callback function. Take the finite element type name and the list of face element of the same type.
    */
   template< typename LAMBDA >
   void forFiniteElementOnSlipFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
@@ -156,7 +176,7 @@ public:
 
     bool const isStickState = false;
 
-    std::map< string, array1d< localIndex > > const &
+    stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsSlip.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
@@ -171,23 +191,20 @@ public:
   }
 
   /**
-   * @brief Create the list of finite elements of the same type
-   *   for each FaceElementSubRegion (Triangle or Quadrilateral)
-   *   and of the same fracture state (Stick or Slip).
+   * @brief Create the list of finite elements of the same type for each FaceElementSubRegion (Triangle or Quadrilateral) and of the same
+   * fracture state (Stick or Slip).
    * @param domain The physical domain object
    */
   void updateStickSlipList( DomainPartition const & domain );
 
   /**
-   * @brief Create the list of finite elements of the same type
-   *   for each FaceElementSubRegion (Triangle or Quadrilateral).
+   * @brief Create the list of finite elements of the same type for each FaceElementSubRegion (Triangle or Quadrilateral).
    * @param domain The physical domain object
    */
   void createFaceTypeList( DomainPartition const & domain );
 
   /**
-   * @brief Create the list of elements belonging to CellElementSubRegion
-   *  that are enriched with the bubble basis functions
+   * @brief Create the list of elements belonging to CellElementSubRegion that are enriched with the bubble basis functions
    * @param domain The physical domain object
    */
   void createBubbleCellList( DomainPartition & domain ) const;
@@ -195,8 +212,13 @@ public:
 private:
 
   /**
-   * @brief add the number of non-zero elements induced by the coupling between
-   *   nodal and bubble displacement.
+   * @brief Validate that tetrahedral meshes use high-order quadrature rules
+   * @param meshBodies the group containing the mesh bodies
+   */
+  void validateTetrahedralQuadrature( Group & meshBodies );
+
+  /**
+   * @brief add the number of non-zero elements induced by the coupling between nodal and bubble displacement.
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param rowLengths the array containing the number of non-zero elements for each row
@@ -217,17 +239,33 @@ private:
 
   void computeTolerances( DomainPartition & domain ) const;
 
+  /**
+   * @brief Initialize the traction field from the stress in adjacent volume elements.
+   * @param domain The physical domain object
+   *
+   * This function computes the initial traction on each fracture element by:
+   * 1. Getting the stress tensor from both adjacent volume elements (one on each side of the fracture)
+   * 2. Computing the traction vector as t = sigma * n (where n is the face normal) for each side
+   * 3. Averaging the tractions from both sides
+   * 4. Rotating the averaged traction to the local coordinate system of the fracture
+   * 5. Validating the traction against the Coulomb friction law and warning if inconsistent
+   *
+   * This initialization ensures that the ALM traction field starts with a physically consistent value rather than zero, which is important
+   * for proper convergence when the domain is under stress.
+   */
+  void initializeTractionFromAdjacentCellStress( DomainPartition & domain ) const;
+
   /// Finite element type to face element index map
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElements;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElements;
 
   /// Finite element type to face element index map (stick mode)
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
 
   /// Finite element type to face element index map (slip mode)
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
 
   /// Finite element type to finite element object map
-  std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
+  stdMap< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
@@ -256,6 +294,8 @@ private:
 
     constexpr static char const * tolTauLimitString() { return "tolTauLimit"; }
 
+    constexpr static char const * isAnisotropicString() { return "anisotropic"; }
+
   };
 
   /// Tolerance for the sliding check: the tangential traction must exceed (1 + m_slidingCheckTolerance) * t_lim to activate the sliding
@@ -283,6 +323,9 @@ private:
 
   /// Factor to adjust the tolerance for normal traction
   real64 m_tolNormalTracFac = 0.5;
+
+  /// Flag for anisotropic scaling in Tolerances and Penalties
+  int m_isAnisotropic = 1;
 
 };
 

@@ -47,7 +47,7 @@ public:
   JFunctionCapillaryPressure( std::string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   virtual void initializeRockState( arrayView2d< real64 const > const & initialPorosity,
                                     arrayView3d< real64 const > const & initialPermeability ) const override;
@@ -112,7 +112,6 @@ private:
     static constexpr char const * porosityExponentString() { return "porosityExponent"; }
     static constexpr char const * permeabilityExponentString() { return "permeabilityExponent"; }
     static constexpr char const * permeabilityDirectionString() { return "permeabilityDirection"; }
-    static constexpr char const * jFunctionWrappersString() { return "jFunctionWrappers"; }
   };
 
   /**
@@ -125,7 +124,6 @@ private:
     Y,  ///< use permy only
     Z,  ///< use permz only
   };
-
 
 private:
 

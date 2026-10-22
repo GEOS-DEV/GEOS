@@ -6,7 +6,6 @@
 
     <SolidMechanicsLagrangianFEM
       name="SolidMechSolveBody1"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{body1/body1_cer}">
@@ -17,7 +16,6 @@
     
     <SolidMechanicsLagrangianFEM
       name="SolidMechSolveBody2"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{body2/body2_cer}"

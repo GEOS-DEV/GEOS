@@ -164,7 +164,7 @@ public:
     GEOS_ERROR( "To use LifoStorage, both _SC_AVPHYS_PAGES and _SC_PAGESIZE must be defined." );
 #endif
     int numberOfBuffersToStoreOnHost = std::max( 1, std::min( ( int )( 0.01 * percent * free / bufferSize ), maxNumberOfBuffers - numberOfBuffersToStoreOnDevice ) );
-    double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 ) / MpiWrapper::nodeCommSize();
+    GEOS_MAYBE_UNUSED double freeGB = ( ( double ) free ) / ( 1024.0 * 1024.0 * 1024.0 ) / MpiWrapper::nodeCommSize();
     LIFO_LOG_RANK( " LIFO : available memory on host " << freeGB << " GB" );
     return numberOfBuffersToStoreOnHost;
   }
@@ -262,10 +262,10 @@ protected:
 
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
     GEOS_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
-                   "Could not open file "<< fileName << " for writting" );
+                   GEOS_FMT( "Could not open file '{}' for writing", fileName ) );
     wf.write( (const char *)d, m_bufferSize );
     GEOS_ERROR_IF( wf.bad() || wf.fail(),
-                   "An error occured while writting "<< fileName );
+                   GEOS_FMT( "An error occurred while writing '{}'", fileName ) );
     wf.close();
   }
 
@@ -281,7 +281,7 @@ protected:
     std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
     GEOS_ERROR_IF( !wf,
-                   "Could not open file "<< fileName << " for reading" );
+                   GEOS_FMT( "Could not open file '{}' for reading", fileName ) );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );

@@ -23,7 +23,7 @@
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/capillaryPressure/Layouts.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
 
@@ -1081,6 +1081,7 @@ public:
 
   UpwindScheme & operator=( UpwindScheme && ) = delete;
 
+  GEOS_HOST_DEVICE
   virtual ~UpwindScheme() = default;
 
   template< localIndex numComp, localIndex numFluxSupportPoints, class UPWIND >

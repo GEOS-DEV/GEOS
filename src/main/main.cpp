@@ -14,8 +14,9 @@
  */
 
 // Source includes
-#include "common/DataTypes.hpp"
-#include "common/format/Format.hpp"
+#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/Logger.hpp"
+#include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
 #include "mainInterface/initialization.hpp"
@@ -49,14 +50,16 @@ int main( int argc, char *argv[] )
       {
         state.applyInitialConditions();
         state.run();
-        LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
+        GEOS_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
       }
 
       initTime = state.getInitTime();
       runTime = state.getRunTime();
     }
 
-    basicCleanup();
+    MemoryLogging::getInstance().memoryStatsReport();
+
+    basicCleanup( false );
 
     std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
     std::chrono::system_clock::duration totalTime = endTime - startTime;
@@ -71,15 +74,24 @@ int main( int argc, char *argv[] )
   // A NotAnError is thrown if "-h" or "--help" option is used.
   catch( NotAnError const & )
   {
-    basicCleanup();
+    basicCleanup( false );
     return 0;
   }
-  catch( std::exception const & e )
-  {
-    GEOS_LOG( e.what() );
+  catch( geos::Exception & e )
+  { // GEOS generated exceptions management
+    ErrorLogger::global().flushCurrentExceptionMessage();
+    basicCleanup( true );
     LvArray::system::callErrorHandler();
-    basicCleanup();
-    std::abort();
+  }
+  catch( std::exception const & e )
+  { // native exceptions management
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
+                                           MsgType::Exception, e.what(),
+                                           ::geos::logger::internal::g_rank )
+                                           .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                                           .getDiagnosticMsg());
+    basicCleanup( true );
+    LvArray::system::callErrorHandler();
   }
   return 0;
 }

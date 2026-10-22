@@ -3,7 +3,7 @@
         "sourceDirectory": "${workspaceFolder}/src",
         "buildDirectory": "${userHome}/geos-build",
         "installPrefix": "${userHome}/geos-install",
-        "cacheInit": "/workspaces/GEOS/host-configs/environment.cmake",
+        "cacheInit": "/spack-generated.cmake",
         "configureSettings": {
             "BLT_MPI_COMMAND_APPEND": "--use-hwthread-cpus;--oversubscribe",
             "ENABLE_OPENMP": "OFF",

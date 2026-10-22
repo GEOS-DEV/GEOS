@@ -18,10 +18,10 @@
 
 #include <type_traits>
 #include <optional>
+#include <sstream>
+#include <string>
 
-#if __cplusplus < 202002L
 #define GEOS_USE_FMT
-#endif
 
 #ifdef GEOS_USE_FMT
 #ifndef FMT_HEADER_ONLY
@@ -33,9 +33,6 @@
 #include "../include/fmt/ranges.h"
 #include "../include/fmt/xchar.h"
 #define GEOS_FMT_NS fmt
-#else // use C++20's <format>
-#include <format>
-#define GEOS_FMT_NS std
 #endif
 
 #ifdef GEOS_USE_FMT
@@ -79,6 +76,12 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
  * @param msg the message format string, must be a constant expression
  */
 #define GEOS_FMT( msg, ... ) GEOS_FMT_NS::format( msg, __VA_ARGS__ )
+
+/**
+ * @brief Interpolate arguments into a run-time format string.
+ * @param msg the message format string, evaluated at run time
+ */
+#define GEOS_FMT_RUNTIME( msg, ... ) GEOS_FMT_NS::format( GEOS_FMT_NS::runtime( msg ), __VA_ARGS__ )
 
 /**
  * @brief Interpolate arguments into a message format string and write into an output iterator.
@@ -140,15 +143,31 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::forma
 /**
  * Evaluates at compile time if a fmt::formatter exists for a given type
  */
-#if __cplusplus < 202002L
 template< class T >
-static constexpr bool has_formatter_v = fmt::has_formatter< fmt::remove_cvref_t< T >, fmt::format_context >();
-#else
-template< typename T >
-concept has_formatter_v = requires ( T& v, std::format_context ctx )
+static constexpr bool has_formatter_v = fmt::is_formattable< fmt::remove_cvref_t< T > >::value;
+
+namespace geos::format
 {
-  std::formatter< std::remove_cvref_t< T > >().format( v, ctx );
-};
-#endif
+
+template< class T >
+inline std::string toStringForFmt( T const & v )
+{
+  if constexpr ( std::is_convertible_v< T, std::string > )
+  {
+    return std::string( v );
+  }
+  else if constexpr ( std::is_convertible_v< T, std::string_view > )
+  {
+    return std::string( std::string_view( v ) );
+  }
+  else
+  {
+    std::ostringstream os;
+    os << v;              // requires operator<<(ostream&, T)
+    return os.str();
+  }
+}
+
+} // namespace geos::format
 
 #endif //GEOS_COMMON_FORMAT_HPP_

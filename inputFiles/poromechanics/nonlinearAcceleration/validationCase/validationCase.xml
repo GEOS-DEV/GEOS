@@ -22,7 +22,6 @@
     <!-- SPHINX_MECHANICALSOLVER -->
     <SolidMechanicsLagrangianFEM
       name="linearElasticity"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ reservoir, extendedRegion }">

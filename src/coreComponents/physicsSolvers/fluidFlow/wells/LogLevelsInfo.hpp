@@ -36,36 +36,11 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
-struct BoundaryConditions
-{
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Information on boundary conditions"; }
-};
-
-struct SystemSolution
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Log single phase well system solution"; }
-};
-
-struct WellComponents
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Well components information"; }
-};
-
 struct WellControl
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Well control information"; }
 };
-
-struct WellValidity
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Well validity information"; }
-};
-
 
 /// @endcond
 ///@}

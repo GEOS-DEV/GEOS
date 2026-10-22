@@ -13,6 +13,10 @@ or by importing meshes from various common mesh file formats.
 This latter options allows one to work with more complex geometries,
 such as unstructured meshes comprised of a variety of element types (polyhedral elements).
 
+.. note::
+  GEOS uses a right-handed Cartesian coordinate system (X: right, Y: forward, Z: upward) that is consistently applied throughout the mesh definition and discretization processes. 
+  This convention affects mesh topology, and finite element / volume computations. 
+
 ************************
 Internal Mesh Generation
 ************************
@@ -211,6 +215,11 @@ This attribute is used to define regions in the vtu file and assign the cells to
 For now, loaded regions has the following limitations:
 - The ``regionAttribute`` can only refer to integer values (no texts),
 - Each element can belong to only one region.
+
+``VTKMesh`` redistribution (``partitionRefinement``, default 1) preserves cell,
+point, and field array metadata on every rank, including empty ranks and
+non-numeric VTK arrays such as string labels. GEOS still imports only numeric
+properties (float/double); ``regionAttribute`` values remain integers.
 
 .. figure:: mesh_multi.png
    :align: center

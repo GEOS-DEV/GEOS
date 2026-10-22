@@ -37,12 +37,16 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALMReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanicsReservoirFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp"
 
@@ -61,8 +65,9 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
 
   // Hypre's parameters to use MGR as a preconditioner
-  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
-  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
+  hypre::mgr::MGRParameters const mgrParameters = hypre::mgr::defaultMGRParameters();
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, mgrParameters.tolerance ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, mgrParameters.maxIterations ) );
 
   // Disabling Option 2 (0x2): In this context, we use MGR as a preconditioner for a Krylov method (e.g., GMRES),
   // and our interest lies in the Krylov method's convergence history, not MGR's. Hence, we turn off the second bit
@@ -186,14 +191,34 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< SinglePhasePoromechanicsConformingFractures >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM:
+    {
+      setStrategy< SinglePhasePoromechanicsConformingFracturesALM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM:
+    {
+      setStrategy< SinglePhasePoromechanicsConformingFracturesALMReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM:
     {
       setStrategy< SinglePhasePoromechanicsReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
+    {
+      setStrategy< ThermalSinglePhasePoromechanicsReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM:
     {
       setStrategy< SinglePhaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::thermalSinglePhaseReservoirFVM:
+    {
+      setStrategy< ThermalSinglePhaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM:
@@ -213,7 +238,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOS_ERROR( "Unsupported MGR strategy: " << params.mgr.strategy );
+      GEOS_ERROR( GEOS_FMT( "Unsupported MGR strategy: {}", params.mgr.strategy ) );
     }
   }
 

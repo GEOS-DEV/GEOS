@@ -27,7 +27,7 @@ using ViewKeys = CellElementRegion::viewKeyStruct;
 
 CellElementRegionSelector::CellElementRegionSelector(
   Group const & cellBlocks,
-  std::map< integer, std::set< string > > const & regionsCellBlocks )
+  stdMap< integer, std::set< string > > const & regionsCellBlocks )
 {
   // The owners lists need to be initialized so we will be able to verify later that it is not empty.
 
@@ -50,6 +50,8 @@ std::set< string >
 CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & region,
                                                   string_view matchPattern ) const
 {
+  GEOS_UNUSED_VAR( region );
+
   std::set< string > matchedCellBlocks;
   bool matching = false;
   for( auto const & [cellBlockName, owners] : m_cellBlocksOwners )
@@ -63,15 +65,14 @@ CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & regi
   }
 
   GEOS_THROW_IF( !matching,
-                 GEOS_FMT( "{}: No cellBlock name is satisfying the qualifier '{}'.\n"
+                 GEOS_FMT( "No cellBlock name is satisfying the qualifier '{}'.\n"
                            "Available cellBlock list: {{ {} }}\nAvailable region attribute list: {{ {} }}",
-                           region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
                            matchPattern,
                            stringutilities::joinLambda( m_regionAttributesOwners, ", ",
                                                         []( auto pair ) { return pair->first; } ),
                            stringutilities::joinLambda( m_cellBlocksOwners, ", ",
                                                         []( auto pair ) { return pair->first; } ) ),
-                 InputError );
+                 InputError, region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ) );
   return matchedCellBlocks;
 }
 
@@ -79,16 +80,17 @@ void
 CellElementRegionSelector::verifyRequestedCellBlocks( CellElementRegion const & region,
                                                       std::set< string > const & cellBlockNames ) const
 {
+  GEOS_UNUSED_VAR( region );
+
   for( string const & requestedCellBlockName : cellBlockNames )
   {
     // if cell block does not exist in the mesh
     GEOS_THROW_IF( m_cellBlocksOwners.count( requestedCellBlockName ) == 0,
-                   GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
-                             region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
+                   GEOS_FMT( "No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
                              requestedCellBlockName,
                              stringutilities::joinLambda( m_cellBlocksOwners, ", ",
                                                           []( auto pair ) { return pair->first; } ) ),
-                   InputError );
+                   InputError, region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ) );
   }
 }
 

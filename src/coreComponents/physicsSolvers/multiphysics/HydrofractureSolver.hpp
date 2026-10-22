@@ -102,12 +102,10 @@ public:
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override final;
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override;
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
@@ -214,9 +212,7 @@ protected:
                                                SparsityPatternView< globalIndex > const & pattern ) const;
 
 
-  void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                   DofManager const & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix );
+  void setUpDflux_dApertureMatrix( DomainPartition & domain );
 
   virtual void setMGRStrategy() override;
 
@@ -224,7 +220,7 @@ private:
 
   virtual real64 fullyCoupledSolverStep( real64 const & time_n,
                                          real64 const & dt,
-                                         int const cycleNumber,
+                                         integer const cycleNumber,
                                          DomainPartition & domain ) override final;
 
   void checkRockOnlyMatrix( dataRepository::Group & meshBodies );

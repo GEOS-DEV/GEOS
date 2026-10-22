@@ -69,12 +69,6 @@ MeshLevel & MeshBody::createShallowMeshLevel( string const & sourceLevelName,
   return rval;
 }
 
-
-void MeshBody::setGlobalLengthScale( real64 scale )
-{
-  m_globalLengthScale = scale;
-}
-
 string MeshBody::intToMeshLevelString( localIndex const meshLevel )
 {
   return GEOS_FMT( "Level{}", meshLevel );

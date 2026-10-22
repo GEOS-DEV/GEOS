@@ -23,7 +23,6 @@
 
     <SolidMechanicsLagrangeContactBubbleStab
       name="stressSolver"
-      timeIntegrationOption="QuasiStatic"
       logLevel="2"
       writeLinearSystem="0"
       discretization="FE1"

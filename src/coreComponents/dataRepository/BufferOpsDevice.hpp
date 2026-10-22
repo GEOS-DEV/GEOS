@@ -63,7 +63,8 @@ PackDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
             T const & GEOS_UNUSED_PARAM( var ),
             parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) on device but type is not packable.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -83,7 +84,8 @@ PackByIndexDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
                    T_INDICES const & GEOS_UNUSED_PARAM( indices ),
                    parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) on device but type is not packable by index.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -101,7 +103,8 @@ UnpackDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
               T & GEOS_UNUSED_PARAM( var ),
               parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) on device but type is not packable.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -123,7 +126,8 @@ UnpackByIndexDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
                      parallelDeviceEvents & GEOS_UNUSED_PARAM( events ),
                      MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) but type is not packable by index.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -161,7 +165,8 @@ PackDataDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
                 T const & GEOS_UNUSED_PARAM( var ),
                 parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) on device but type is not packable.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -181,7 +186,8 @@ PackDataByIndexDevice( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
                        T_INDICES const & GEOS_UNUSED_PARAM( indices ),
                        parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
+  GEOS_ERROR( GEOS_FMT( "Trying to pack data type ({}) on device but type is not packable by index.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -199,7 +205,8 @@ UnpackDataDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
                   T & GEOS_UNUSED_PARAM( var ),
                   parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) on device but type is not packable.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 
@@ -221,7 +228,8 @@ UnpackDataByIndexDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
                          parallelDeviceEvents & GEOS_UNUSED_PARAM( events ),
                          MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
-  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
+  GEOS_ERROR( GEOS_FMT( "Trying to unpack data type ({}) but type is not packable by index.",
+                        LvArray::system::demangleType< T >() ) );
   return 0;
 }
 

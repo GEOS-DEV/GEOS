@@ -120,13 +120,9 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  MultiPhaseVolumeWeightedThermalConductivity( string const & name, Group * const parent );
+  MultiPhaseVolumeWeightedThermalConductivity( string const & name, dataRepository::Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity,
                                          arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolumeFraction ) const override;
@@ -157,7 +153,7 @@ public:
   {
     static constexpr char const * rockThermalConductivityComponentsString() { return "rockThermalConductivityComponents"; }
     static constexpr char const * phaseThermalConductivityString() { return "phaseThermalConductivity"; }
-  } viewKeys;
+  };
 
 protected:
 

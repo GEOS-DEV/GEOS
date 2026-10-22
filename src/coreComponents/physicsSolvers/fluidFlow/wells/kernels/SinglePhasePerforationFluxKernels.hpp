@@ -109,7 +109,8 @@ public:
     m_resElementSubRegion( perforationData->getField< fields::perforation::reservoirElementSubRegion >()),
     m_resElementIndex( perforationData->getField< fields::perforation::reservoirElementIndex >()),
     m_perfRate( perforationData->getField< fields::well::perforationRate >()),
-    m_dPerfRate( perforationData->getField< fields::well::dPerforationRate >())
+    m_dPerfRate( perforationData->getField< fields::well::dPerforationRate >()),
+    m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >())
   {}
 
   template< typename FUNC = NoOpFunc >
@@ -119,22 +120,8 @@ public:
   computeFlux( localIndex const iperf, FUNC && fluxKernelOp= NoOpFunc {} ) const
   {
 
-    // get the reservoir (sub)region and element indices
-    localIndex const er  = m_resElementRegion[iperf];
-    localIndex const esr = m_resElementSubRegion[iperf];
-    localIndex const ei  = m_resElementIndex[iperf];
-
-    // get the local index of the well element
-    localIndex const iwelem = m_perfWellElemIndex[iperf];
-
     using Deriv = constitutive::singlefluid::DerivativeOffset;
     using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
-
-    // local working variables and arrays
-    real64 pressure[2]{};
-    real64 dPressure[2][DerivOffset::nDer]{};
-
-    real64 multiplier[2]{};
 
     m_perfRate[iperf] = 0.0;
     for( integer i = 0; i < 2; ++i )
@@ -144,6 +131,24 @@ public:
         m_dPerfRate[iperf][i][j] = 0.0;
       }
     }
+
+    if( !m_perfStatus[iperf] )
+    {
+      return;
+    }
+    // get the reservoir (sub)region and element indices
+    localIndex const er  = m_resElementRegion[iperf];
+    localIndex const esr = m_resElementSubRegion[iperf];
+    localIndex const ei  = m_resElementIndex[iperf];
+
+    // get the local index of the well element
+    localIndex const iwelem = m_perfWellElemIndex[iperf];
+
+    // local working variables and arrays
+    real64 pressure[2]{};
+    real64 dPressure[2][DerivOffset::nDer]{};
+
+    real64 multiplier[2]{};
 
     // 1) Reservoir side
     // get reservoir variables
@@ -286,6 +291,7 @@ protected:
   arrayView1d< localIndex const > const m_resElementIndex;
   arrayView1d< real64 > const m_perfRate;
   arrayView3d< real64 > const m_dPerfRate;
+  arrayView1d< integer > const m_perfStatus;
 
 };
 

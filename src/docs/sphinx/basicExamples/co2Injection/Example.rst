@@ -165,30 +165,15 @@ Under the **Constitutive** tag, four items can be found:
 The PVT data specified by **CO2BrinePhillipsFluid** is set to model the behavior of the CO :sub:`2`-brine system as a function of pressure, temperature, and salinity.
 We currently rely on a two-phase, two-component (CO :sub:`2` and H :sub:`2` O) model in which salinity is a constant parameter in space and in time.
 The model is described in detail in  :ref:`CO2-EOS`.
-The model definition requires three text files:
+The fluid property models (including CO :sub:`2` solubility, density, and viscosity) and their tabular bounds are defined directly via XML attributes:
 
-In *co2flash.txt*, we define the CO :sub:`2` solubility model used to compute the amount of CO :sub:`2` dissolved in the brine phase as a function of pressure (in Pascal), temperature (in Kelvin), and salinity (in units of molality):
-
-.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/co2flash.txt
-
-The first keyword is an identifier for the model type (here, a flash model). It is followed by the model name. Then, the lower, upper, and step increment values for pressure and temperature ranges are specified.
-The trailing 0 defines a zero-salinity in the model. 
-Note that the water component is not allowed to evaporate into the CO :sub:`2` -rich phase.
-
-
-The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the density and viscosity of the two phases, as follows:
-
-.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/pvtgas.txt
-
-.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/pvtliquid.txt
-
-In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
-It is followed by the model name.
-Then, the lower, upper, and step increment values for pressure and temperature ranges are specified.
-The trailing 0 for ``PhillipsBrineDensity`` and ``PhillipsBrineViscosity`` entry is the salinity of the brine, set to zero.
+The lower and upper bounds for the internal fluid property tables are defined by the ``pressureCoordinates`` (in Pascal) and ``temperatureCoordinates`` (in Kelvin) attributes. 
+The step increments used to construct these tables are provided by the ``pressureInterval`` and ``temperatureInterval`` attributes. 
+Note that in this model formulation, the water component is not allowed to evaporate into the CO :sub:`2`-rich phase.
+The salinity in this case is explicitly set to 0.
 
 .. note::
-   It is the responsibility of the user to make sure that the pressure and temperature values encountered in the simulation (in the reservoir and in the well) are within the bounds specified in the PVT files. GEOS will not throw an error if a value outside these bounds is encountered, but the (nonlinear) behavior of the simulation and the quality of the results will likely be negatively impacted.  
+   It is the responsibility of the user to make sure that the pressure and temperature values encountered in the simulation (in the reservoir and in the well) are within the bounds specified by the coordinate attributes in the XML. GEOS will not throw an error if a value outside these bounds is encountered, but the (nonlinear) behavior of the simulation and the quality of the results will likely be negatively impacted.
 
 .. _FieldSpecifications_tag_co2_field_case:
 
@@ -257,13 +242,13 @@ The simulation can be launched with 4 cores using MPI-parallelism:
 
 .. code-block:: console
 
-  mpirun -np 4 geosx -i simpleCo2InjTutorial_smoke.xml -x 1 -y 1 -z 4
+  mpirun -np 4 geosx -i simpleCo2InjTutorial_smoke.xml -x 2 -y 1 -z 2
 
 A restart from a checkpoint file `simpleCo2InjTutorial_restart_000000024.root` is always available thanks to the following command line :
 
 .. code-block:: console
 
-  mpirun -np 4 geosx -i simpleCo2InjTutorial_smoke.xml -r simpleCo2InjTutorial_restart_000000024 -x 1 -y 1 -z 4
+  mpirun -np 4 geosx -i simpleCo2InjTutorial_smoke.xml -r simpleCo2InjTutorial_restart_000000024 -x 2 -y 1 -z 2
 
 The output then shows the loading of HDF5 restart files by each core. 
 

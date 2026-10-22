@@ -39,9 +39,6 @@ FrictionBase::FrictionBase( string const & name,
     setDescription( "A threshold valued to determine whether a fracture is open or not." );
 }
 
-FrictionBase::~FrictionBase()
-{}
-
 FrictionBaseUpdates FrictionBase::createKernelWrapper() const
 {
   return FrictionBaseUpdates( m_displacementJumpThreshold );

@@ -40,7 +40,7 @@ void kernelLaunchSelectorPhaseSwitch( T value, LAMBDA && lambda )
     case 2:
     { lambda( std::integral_constant< T, 2 >() ); return; }
     default:
-    { GEOS_ERROR( "Unsupported number of phases: " << value ); }
+    { GEOS_ERROR( GEOS_FMT( "Unsupported number of phases: {}", value ) ); }
   }
 
 }

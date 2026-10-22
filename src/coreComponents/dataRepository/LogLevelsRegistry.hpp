@@ -52,7 +52,7 @@ private:
    * @brief Map for building the log level string for each wrapper.
    *        key : a logLevel condition, values : a set of description for a corresponding loglevel.
    */
-  std::map< integer, stdVector< std::string > > m_logLevelsDescriptions;
+  stdMap< integer, stdVector< std::string > > m_logLevelsDescriptions;
 
 };
 

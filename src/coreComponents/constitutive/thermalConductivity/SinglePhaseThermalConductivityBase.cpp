@@ -31,27 +31,23 @@ namespace constitutive
 SinglePhaseThermalConductivityBase::SinglePhaseThermalConductivityBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerField( fields::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
-  registerField( fields::thermalconductivity::dEffectiveConductivity_dT{}, &m_dEffectiveConductivity_dT );
+  registerField< fields::thermalconductivity::referenceThermalConductivity >( &m_referenceThermalConductivity );
+  registerField< fields::thermalconductivity::effectiveConductivity >( &m_effectiveConductivity );
+  registerField< fields::thermalconductivity::dEffectiveConductivity_dT >( &m_dEffectiveConductivity_dT );
 }
 
-void SinglePhaseThermalConductivityBase::postInputInitialization()
-{
-  ConstitutiveBase::postInputInitialization();
-
-  m_effectiveConductivity.resize( 0, 0, 3 );
-  m_dEffectiveConductivity_dT.resize( 0, 0, 3 );
-}
-
-void SinglePhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                   localIndex const numConstitutivePointsPerParentIndex )
+void SinglePhaseThermalConductivityBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
+  m_referenceThermalConductivity.resize( 0, 1, 3 );
   m_effectiveConductivity.resize( 0, 1, 3 );
   m_dEffectiveConductivity_dT.resize( 0, 1, 3 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
+
+void SinglePhaseThermalConductivityBase::initializeState() const
+{}
 
 } // namespace constitutive
 
