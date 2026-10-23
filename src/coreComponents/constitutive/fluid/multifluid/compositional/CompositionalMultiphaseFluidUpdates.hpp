@@ -370,7 +370,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
   {
     computeInternalEnergy( pressure,
                            phaseFraction,
-                           phaseMassDensity,
+                           phaseDensity,
                            phaseEnthalpy,
                            phaseInternalEnergy );
   }
