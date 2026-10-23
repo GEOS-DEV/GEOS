@@ -198,5 +198,20 @@
       fieldName="globalCompFraction"
       component="1"
       scale="0.001"/> 
-  </FieldSpecifications> 
+  </FieldSpecifications>
+
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="flowStatistics"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      computeRegionStatistics="1"/>
+  </Tasks>
+
+  <Events>
+    <PeriodicEvent
+      name="statistics"
+      timeFrequency="10.0"
+      target="/Tasks/flowStatistics"/>
+  </Events>
 </Problem>
