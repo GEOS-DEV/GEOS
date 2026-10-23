@@ -175,7 +175,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
         {} />
     </Mesh>
   )xml";
-  string const meshNode = GEOS_FMT_RUNTIME( pattern, meshFilePath, useGlobalIdsStr,
+  string const meshNode = GEOS_FMT_RUNTIME( pattern, meshFilePath, partitionRefinement, useGlobalIdsStr,
                                             scatterAttr,
                                             fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
 
