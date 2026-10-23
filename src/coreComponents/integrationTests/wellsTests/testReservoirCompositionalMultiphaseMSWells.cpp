@@ -468,6 +468,85 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells<> & solver,
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 }
 
+TEST( InitialWellState, AvailableBeforeFirstStep )
+{
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+  setupProblemFromXML( state.getProblemManager(), xmlInput );
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+  WellManager & manager = state.getProblemManager().getPhysicsSolverManager().getGroup< WellManager >( "compositionalMultiphaseWell" );
+  localIndex wells = 0;
+  manager.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                    MeshLevel & mesh,
+                                                                    string_array const & regions )
+  {
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regions, [&]( localIndex const,
+                                                                                   WellElementSubRegion const & subRegion )
+    {
+      ++wells;
+      EXPECT_TRUE( manager.getWellControls( subRegion ).getWellState() );
+      auto const & pressure = subRegion.getField< fields::well::pressure >();
+      auto const & density = subRegion.getField< fields::well::globalCompDensity >();
+      pressure.move( hostMemorySpace, false );
+      density.move( hostMemorySpace, false );
+      for( localIndex k = 0; k < subRegion.size(); ++k )
+      {
+        EXPECT_GT( pressure[k], 0.0 );
+        real64 total = 0;
+        for( localIndex c = 0; c < density.size( 1 ); ++c )
+        {
+          EXPECT_GE( density[k][c], 0.0 );
+          total += density[k][c];
+        }
+        EXPECT_GT( total, 0.0 );
+      }
+    } );
+  } );
+  EXPECT_EQ( wells, 2 );
+}
+
+TEST( InitialWellState, ClosedWellWaitsForOpening )
+{
+  string input( xmlInput );
+  string const name = "name=\"wellControls1\"";
+  input.replace( input.find( name ), name.size(), name + " statusTableName=\"closedAtStart\"" );
+  input.insert( input.find( "</Problem>" ), R"xml(
+    <Functions>
+      <TableFunction name="closedAtStart" inputVarNames="{ time }"
+        coordinates="{ 0, 1e6 }" values="{ 0, 1 }" interpolation="lower"/>
+    </Functions>
+  )xml" );
+  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
+  setupProblemFromXML( state.getProblemManager(), input.c_str() );
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+  WellManager & manager = state.getProblemManager().getPhysicsSolverManager().getGroup< WellManager >( "compositionalMultiphaseWell" );
+  manager.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                    MeshLevel & mesh,
+                                                                    string_array const & regions )
+  {
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regions, [&]( localIndex const,
+                                                                                   WellElementSubRegion const & subRegion )
+    {
+      WellControls const & controls = manager.getWellControls( subRegion );
+      if( controls.getName() == "wellControls1" )
+      {
+        EXPECT_FALSE( controls.isWellOpen() );
+        EXPECT_FALSE( controls.getWellState() );
+        auto const & pressure = subRegion.getField< fields::well::pressure >();
+        pressure.move( hostMemorySpace, false );
+        for( localIndex k = 0; k < subRegion.size(); ++k )
+        {
+          EXPECT_EQ( pressure[k], 0.0 );
+        }
+      }
+      else
+      {
+        EXPECT_TRUE( controls.isWellOpen() );
+        EXPECT_TRUE( controls.getWellState() );
+      }
+    } );
+  } );
+}
+
 class CompositionalMultiphaseReservoirSolverTest : public ::testing::Test
 {
 public:
