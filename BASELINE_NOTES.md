@@ -6,8 +6,15 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 PR #4165 (2026-10-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4165-17772-9c8a12e.tar.gz>
-=====================
 Add zero salinity, non-default compressibility pvt driver test
+
+PR #4155 (2026-10-22) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4155-17777-be35229.tar.gz>
+Add the missing restart baselines for the injection, production, and combined
+thermal compositional-well tests on one and four MPI ranks. In CI run 17777,
+all six simulations completed successfully, but their baseline checks failed
+because the reference files did not exist. The other 650 test groups passed.
+The archive preserves all existing baseline payloads and adds only these six
+test datasets.
 
 PR #3996 (2026-09-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3996-17639-718fc69.tar.gz>
 =====================
