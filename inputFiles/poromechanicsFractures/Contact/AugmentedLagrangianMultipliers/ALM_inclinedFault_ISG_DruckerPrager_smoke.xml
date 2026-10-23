@@ -181,6 +181,13 @@
 
 <!-- SPHINX_INJECTION -->
   <FieldSpecifications>
+    <FieldSpecification
+      name="prescribedFaultPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="pressure"
+      scale="35.0e6"/>
+
     <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames="{ f1_node_set }" objectPath="faceManager" scale="1" />
     <FieldSpecification name="fault" initialCondition="1" setNames="{ f1_node_set }" objectPath="faceManager" fieldName="ruptureState" scale="1" />    
    <FieldSpecification 
