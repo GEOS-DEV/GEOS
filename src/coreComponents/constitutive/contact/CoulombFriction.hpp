@@ -133,7 +133,8 @@ public:
   virtual void constraintCheck( localIndex const k,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 const > const & deltaDispJump,
-                                arraySlice1d< real64 > const & tractionVector,
+                                arraySlice1d< real64 const > const & tractionVector,
+                                real64 const trialNormalTraction,
                                 integer const fractureState,
                                 real64 const normalTractionTolerance,
                                 real64 const normalDisplacementTolerance,
@@ -564,7 +565,8 @@ GEOS_HOST_DEVICE
 inline void CoulombFrictionUpdates::constraintCheck( localIndex const k,
                                                      arraySlice1d< real64 const > const & dispJump,
                                                      arraySlice1d< real64 const > const & deltaDispJump,
-                                                     arraySlice1d< real64 > const & tractionVector,
+                                                     arraySlice1d< real64 const > const & tractionVector,
+                                                     real64 const trialNormalTraction,
                                                      integer const fractureState,
                                                      real64 const normalTractionTolerance,
                                                      real64 const normalDisplacementTolerance,
@@ -585,27 +587,36 @@ inline void CoulombFrictionUpdates::constraintCheck( localIndex const k,
                           tractionVector[2] };
   real64 const currentTau = LvArray::tensorOps::l2Norm< 2 >( tau );
 
+  // A tensile trial normal traction (updated from the current jump) detects the opening the stored
+  // traction lags behind, which would otherwise be misreported as slip
+  real64 const normalTraction = ( trialNormalTraction >= normalTractionTolerance ) ? trialNormalTraction : tractionVector[0];
+
   real64 dLimitTangentialTractionNorm_dTraction = 0.0;
-  real64 const limitTau = computeLimitTangentialTractionNorm( k, tractionVector[0],
+  real64 const limitTau = computeLimitTangentialTractionNorm( k, normalTraction,
                                                               dLimitTangentialTractionNorm_dTraction );
 
   condConv = 0;
   // Case 1: if it is open
-  if( tractionVector[0] >= normalTractionTolerance )
+  if( normalTraction >= normalTractionTolerance )
   {
     if( fractureState != FractureState::Open )
     {
       condConv = 1;
     }
-    tractionVector[0] = 0.0;
-    tractionVector[1] = 0.0;
-    tractionVector[2] = 0.0;
   }
   else
   {
-    // Case 2: compenetration
+    // Case 2: normal jump beyond tolerance on a closed element: opening (gN > 0, reported
+    // with Case 1) or compenetration (gN < 0)
     if(( LvArray::math::abs( dispJump[0] ) > normalDisplacementTolerance ) &&
        (fractureState != FractureState::Open))
+    {
+      condConv = ( dispJump[0] > 0.0 ) ? 1 : 2;
+    }
+    // Case 2bis: an open element that has closed beyond the tolerance (interpenetration) must be
+    // flagged too, otherwise the configuration is deemed converged and it can never go back to contact
+    if( fractureState == FractureState::Open &&
+        dispJump[0] < -normalDisplacementTolerance )
     {
       condConv = 2;
     }

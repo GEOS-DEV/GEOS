@@ -246,7 +246,7 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
 
   constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
   constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
-  constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
+  constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;//TODO rename temperatureTrialSpace
 
   // compute local linear momentum balance residual derivatives with respect to temperature
 

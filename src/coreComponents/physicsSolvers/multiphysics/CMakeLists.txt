@@ -40,6 +40,8 @@ set( multiPhysicsSolvers_headers
     PoromechanicsInitialization.hpp
     poromechanicsKernels/MultiphasePoromechanics.hpp
     poromechanicsKernels/MultiphasePoromechanics_impl.hpp
+    poromechanicsKernels/ConformingFracturesFluxKernelBase.hpp
+    poromechanicsKernels/FractureMatrixFluxKernels.hpp
     poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
     poromechanicsKernels/PoromechanicsBase.hpp
     poromechanicsKernels/SinglePhasePoromechanics.hpp
@@ -58,6 +60,7 @@ set( multiPhysicsSolvers_headers
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFracturesKernelBase.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
     SinglePhasePoromechanics.hpp
     SinglePhasePoromechanicsEmbeddedFractures.hpp

@@ -70,7 +70,7 @@ public:
                                            real64 const & newHydraulicAperture ) const
   {
     real64 const temperature = 0;
-    real64 const dHydraulicAperture_dNormalJump = 1.0;
+    real64 const dHydraulicAperture_dNormalJump = 1.0;//TODO: this needs to be imported not hardcoded
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
     m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
   }

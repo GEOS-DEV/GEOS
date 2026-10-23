@@ -22,6 +22,7 @@
 
 #include "SolidMechanicsConformingContactKernelsBase.hpp"
 #include "mesh/MeshFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 
 namespace geos
 {
@@ -422,6 +423,7 @@ struct ComputeTractionSimultaneousKernel
    * @param[in] traction the array containing the current traction
    * @param[in] dispJump the array containing the displacement jump
    * @param[in] deltaDispJump the array containing the delta displacement jump
+   * @param[in] fractureState the array containing the fracture state
    * @param[out] tractionNew the array containing the new traction
    */
   template< typename POLICY >
@@ -431,11 +433,20 @@ struct ComputeTractionSimultaneousKernel
           arrayView2d< real64 const > const & traction,
           arrayView2d< real64 const > const & dispJump,
           arrayView2d< real64 const > const & deltaDispJump,
+          arrayView1d< integer const > const & fractureState,
           arrayView2d< real64 > const & tractionNew )
   {
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
+      // Open elements carry no traction (as in UpdateStateKernel). Storing t + k*gN here would bias the
+      // trial traction of the next configuration check towards opening and prevent the element from closing.
+      if( fractureState[kfe] == fields::contact::FractureState::Open )
+      {
+        LvArray::tensorOps::fill< 3 >( tractionNew[kfe], 0.0 );
+        return;
+      }
+
       tractionNew[kfe][0] = traction[kfe][0] + penalty[kfe][0] * dispJump[kfe][0];
       tractionNew[kfe][1] = traction[kfe][1] + ( penalty[kfe][2] * deltaDispJump[kfe][1]+
                                                  penalty[kfe][4] * deltaDispJump[kfe][2] );

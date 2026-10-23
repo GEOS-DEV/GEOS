@@ -179,7 +179,8 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              stdMap< string, localIndex > const * const dR_dAperOffsets ) override final;
+                              localIndex const dR_dAperEnergyOffset = -1,
+                              arrayView2d< real64 > const & dFractureMatrixFlux_dNormalJump = {} ) override final;
 
   /**@}*/
 

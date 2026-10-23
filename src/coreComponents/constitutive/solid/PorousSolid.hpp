@@ -218,6 +218,66 @@ public:
     thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
   }
 
+  /**
+   * @brief Return the derivative of the total stress w.r.t. temperature at a given quadrature point,
+   *        dTotalStress/dT = -thermalExpansionCoefficient * C : I (Voigt), i.e. -3 alpha K I for an isotropic solid.
+   *        It is the derivative computeTotalStress returns (through DiscretizationOps::computeTemperatureDerivative),
+   *        for use by kernels that do not call the stress update (e.g. enrichments such as face bubbles).
+   *
+   * @param [in] k the element number
+   * @param [in] q the quadrature point index
+   * @param [out] dTotalStress_dTemperature the derivative of the total stress w.r.t. temperature (Voigt)
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void getDtotalStress_dTemperature( localIndex const k,
+                                     localIndex const q,
+                                     real64 ( & dTotalStress_dTemperature )[6] ) const
+  {
+    real64 stiffness[6][6]{};
+    m_solidUpdate.getElasticStiffness( k, q, stiffness );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    for( int i = 0; i < 6; ++i )
+    {
+      dTotalStress_dTemperature[i] = -thermalExpansionCoefficient * ( stiffness[i][0] + stiffness[i][1] + stiffness[i][2] );
+    }
+  }
+
+  /**
+   * @brief Add the volumetric strain increment of an enrichment (e.g. face bubbles), which the
+   *        nodal fixed-stress update does not see, to the mean total stress increment driving the
+   *        fixed-stress porosity update: delta sigma_m += K * delta eps_vol.
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] volumetricStrainIncrement the volumetric strain increment to account for
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void addVolumetricStrainIncrementToMeanTotalStress( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const & volumetricStrainIncrement ) const
+  {
+    m_porosityUpdate.addToMeanTotalStressIncrement( k, q, m_solidUpdate.getBulkModulus( k ) * volumetricStrainIncrement );
+  }
+
+  /**
+   * @brief Add the volumetric strain increment of an enrichment (e.g. face bubbles), which the
+   *        nodal fully-implicit update does not see, to the stored porosity:
+   *        porosity += biot * delta eps_vol. Must be called after the nodal update has set the porosity,
+   *        so that porosity_n carries the enrichment contribution to the next time step.
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] volumetricStrainIncrement the volumetric strain increment to account for
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void addVolumetricStrainIncrementToPorosity( localIndex const k,
+                                               localIndex const q,
+                                               real64 const & volumetricStrainIncrement ) const
+  {
+    m_porosityUpdate.addToPorosity( k, q, m_porosityUpdate.getBiotCoefficient( k ) * volumetricStrainIncrement );
+  }
+
 private:
 
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >::m_solidUpdate;
