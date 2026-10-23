@@ -188,28 +188,6 @@ string SinglePhaseWell::resElementDofName() const
   return SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 }
 
-void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
-                                               real64 const & GEOS_UNUSED_PARAM( dt ),
-                                               WellElementSubRegion const & subRegion )
-{
-  GEOS_UNUSED_VAR( time_n );
-  GEOS_UNUSED_VAR( subRegion );
-
-  if( useSurfaceConditions() )
-  {
-    bool const useSegmentValues = referenceReservoirRegion().empty();
-
-    static bool firstNoRefRegionMsg = true;
-    if( useSegmentValues && firstNoRefRegionMsg )
-    {
-      GEOS_WARNING( WellControls::viewKeyStruct::referenceReservoirRegionString() <<
-                    " not set: well constraint fluid property calculations will use top segement pressure and temp ",
-                    getDataContext() );
-      firstNoRefRegionMsg = false;
-    }
-  }
-}
-
 void SinglePhaseWell::initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion )
 {
 
