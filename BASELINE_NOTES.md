@@ -8,6 +8,14 @@ These notes should be in reverse-chronological order, and use the following time
 PR #4080 (2026-10-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4080-17784-dce4307.tar.gz>
 Add thermal compositional models.
 
+PR #4155 (2026-10-22) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4155-17777-be35229.tar.gz>
+Add the missing restart baselines for the injection, production, and combined
+thermal compositional-well tests on one and four MPI ranks. In CI run 17777,
+all six simulations completed successfully, but their baseline checks failed
+because the reference files did not exist. The other 650 test groups passed.
+The archive preserves all existing baseline payloads and adds only these six
+test datasets.
+
 PR #3996 (2026-09-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3996-17639-718fc69.tar.gz>
 =====================
 Switch the single-phase reactive transport solver to a molality-based primary
