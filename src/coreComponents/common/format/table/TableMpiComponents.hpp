@@ -42,26 +42,27 @@ struct TableMpiLayout
  * @brief class to format data in a formatted text format, allowing contributions from multiple
  *        MPI ranks.
  */
-class TableTextMpiOutput : public TableTextFormatter
+class TableTextMpiFormatter : public TableTextFormatter
 {
 public:
   /// base class
   using Base = TableTextFormatter;
-
+  /// Callable comparison function object used for std::sort for a TableData
+  using SortingFunc = std::function< bool (stdVector< TableData::CellData >, stdVector< TableData::CellData >) >;
   /**
    * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
    * without any column / title). Feature is not tested.
    * @param mpiLayout MPI-specific layout information (default is having contiguous ranks data).
    */
-  TableTextMpiOutput( TableMpiLayout mpiLayout = TableMpiLayout() );
+  TableTextMpiFormatter( TableMpiLayout mpiLayout = TableMpiLayout() );
 
   /**
    * @brief Construct a new TableTextMpiOutput from a tableLayout
    * @param tableLayout Contain all tableColumnData names and optionnaly the table title
    * @param mpiLayout MPI-specific layout information (default is having contiguous ranks data).
    */
-  TableTextMpiOutput( TableLayout const & tableLayout,
-                      TableMpiLayout mpiLayout = TableMpiLayout() );
+  TableTextMpiFormatter( TableLayout const & tableLayout,
+                         TableMpiLayout mpiLayout = TableMpiLayout() );
 
   /**
    * @brief Convert a data source to a table string.
@@ -69,10 +70,21 @@ public:
    * @param outputStream The target output stream for rank 0, to output the table string representation
    *                     of the TableData. Each rank contributing to the common rank 0 output stream
    *                     with their local data. It may be the log or a file stream.
-   * @note This method must be called by all MPI ranks.
+   * @note This method must be called by all MPI ranks. 
+   *       Row ordering is set with setSortingFunc().
    */
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const;
+
+  /**
+   * @brief Set the row sorting function
+   * @param func The callable comparison function object
+   * @note If no sorting function is set, rows keep their original ordering and are grouped and
+   *       ordered by MPI rank (rank 0 rows first, then rank 1, etc).
+   */
+  void setSortingFunc( SortingFunc && func )
+  { m_sortingFunctor = std::move( func ); }
+
 
 private:
 
@@ -89,6 +101,10 @@ private:
 
   TableMpiLayout m_mpiLayout;
 
+  /// The custom comparison function object for std::sort
+  /// If not set, rows are ordered by adding order, then MPI rank (rank 0 first, then rank 1, etc.).
+  std::optional< SortingFunc > m_sortingFunctor;
+
   /**
    * @brief Expend the columns width to accomodate with the content of all MPI ranks.
    *        As it is based on MPI communications, every ranks must call this method.
@@ -98,11 +114,24 @@ private:
   void stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
                               Status const & status ) const;
 
-  void outputTableDataToRank0( std::ostream & tableOutput,
-                               PreparedTableLayout const & tableLayout,
-                               CellLayoutRows const & dataCellsLayout,
-                               Status & status ) const;
+  /**
+   * @brief Gather all the TableData to the rank 0.
+   * @param localTableData The local TableData to send to rank 0;
+   */
+  TableData gatherTableDataRank0( TableData const & localTableData ) const;
 
+
+  /**
+   * @brief Gather data cell rows across all MPI ranks and output them to rank 0 in rank order.
+   * @param tableOutput The output stream to display the resulting table
+   * @param dataCellsLayout  The layout for the data cells
+   * @param tableLayout The layout of the table
+   * @param status The TableMpi status for the current rank
+   */
+  void gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
+                                            CellLayoutRows const & dataCellsLayout,
+                                            PreparedTableLayout const & tableLayout,
+                                            TableTextMpiFormatter::Status & status )const;
 };
 
 }

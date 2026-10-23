@@ -20,6 +20,8 @@
 
 #include "common/DataLayouts.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/format/table/TableMpiComponents.hpp"
+#include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -183,7 +185,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
                                           MeshLevel & meshLevel )
 {
   NodeManager & nodeManager = meshLevel.getNodeManager();
-
+  int const rankId = MpiWrapper::commRank();
   // get the offsets to construct local-to-global maps for well nodes and elements
   nodeManager.setMaxGlobalIndex();
   globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
@@ -227,6 +229,79 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
                              subRegion.getName() ),
                    getDataContext(), lineBlock.getDataContext(), subRegion.getDataContext() );
 
+  } );
+
+  forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion )
+  {
+    WellElementSubRegion const &
+    wellSubRegion = wellRegion.getSubRegion< WellElementSubRegion >( wellRegion.getSubRegionName() );
+    if( wellSubRegion.getPerforationData() != nullptr )
+    {
+      PerforationData const & perforationData = *wellSubRegion.getPerforationData();
+      arrayView1d< globalIndex const > const perfGlobalIdMap = perforationData.localToGlobalMap();
+      arrayView2d< const real64 > wsrPerfLocation = perforationData.getLocation();
+      TableData localPerfoData;
+
+      for( globalIndex iperfLocal = 0; iperfLocal < perfGlobalIdMap.size(); ++iperfLocal )
+      {
+        globalIndex const iperfGlobal = perfGlobalIdMap[iperfLocal];
+        string_view perfName = perforationData.getPerfName()[iperfLocal];
+        arraySlice1d< real64 const > location = wsrPerfLocation[iperfLocal];
+        integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
+
+        bool const localResElementFound = perforationData.hasLocalPerforationInReservoir( iperfLocal );
+        if( !localResElementFound )
+        {
+          localPerfoData.addRow( perfName, iperfGlobal, globalWellElemIndices, location,
+                                 "NONE", "NONE", "NONE", rankId );
+        }
+        else
+        {
+          integer const cellId = perforationData.getReservoirElementGlobalIndex()[iperfLocal];
+          auto const & meshElems = perforationData.getMeshElements();
+          localIndex const targetRegionIndex = meshElems.m_toElementRegion[iperfLocal];
+          localIndex const targetSubRegionIndex = meshElems.m_toElementSubRegion[iperfLocal];
+
+          ElementRegionBase const & region =
+            meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
+
+          ElementSubRegionBase const & subRegion =
+            region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
+          localPerfoData.addRow( perfName, iperfGlobal, globalWellElemIndices, location,
+                                 region.getName(), subRegion.getName(), cellId, rankId );
+        }
+      }
+
+      integer perfoDetected = MpiWrapper::max( localPerfoData.getCellsData().size() ) > 0;
+      if( perfoDetected )
+      {
+        TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
+                                                        wellRegion.getWellGeneratorName()),
+          {
+            "Perforation", "Id", "Well element", "Coordinates",
+            "Cell region", "Cell sub-region", "Cell ID", "Rank"
+          } );
+
+        TableMpiLayout mpiLayout;
+        TableTextMpiFormatter formatter = TableTextMpiFormatter( layoutPerforation, mpiLayout );
+
+        formatter.setSortingFunc(
+          []( std::vector< TableData::CellData > const & row1,
+              std::vector< TableData::CellData > const & row2 ) {
+          return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
+        } );
+
+        std::ostringstream outputStream;
+        formatter.toStream( outputStream, localPerfoData );
+
+        if( rankId == 0 )
+        {
+          TableTextFormatter const globalFormatter( layoutPerforation );
+          GEOS_LOG( outputStream.str() );
+        }
+      }
+
+    }
   } );
 
   // communicate to rebuild global node info since we modified global ordering
