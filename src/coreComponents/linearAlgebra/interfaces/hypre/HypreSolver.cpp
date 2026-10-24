@@ -30,6 +30,9 @@
 #include <HYPRE_krylov.h>
 
 #include <algorithm>
+#include <cfenv>
+
+#include "LvArray/src/system.hpp"
 
 namespace geos
 {
@@ -309,6 +312,7 @@ int HypreSolver::doSolve( HypreVector const & rhs,
   tagKrylovDofVector( *m_solver, rhs );
   tagKrylovDofVector( *m_solver, sol );
 #endif
+  LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
   HYPRE_Int const result = m_solver->solve( m_solver->ptr, matrix().unwrapped(), rhs.unwrapped(), sol.unwrapped() );
   sol.touch();
   return result;
