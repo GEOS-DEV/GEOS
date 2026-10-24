@@ -60,7 +60,7 @@ public:
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
                        integer const allowNegativePressure,
-                       compositionalMultiphaseUtilities::ScalingType const scalingType,
+                       flowSolverUtilities::ScalingType const scalingType,
                        real64 const scalingFactor,
                        arrayView1d< real64 const > const pressure,
                        arrayView1d< real64 const > const temperature,
@@ -109,7 +109,7 @@ public:
   {
     Base::computeSolutionCheck( ei, stack, [&] ()
     {
-      bool const localScaling = m_scalingType == compositionalMultiphaseUtilities::ScalingType::Local;
+      bool const localScaling = m_scalingType == flowSolverUtilities::ScalingType::Local;
       // compute the change in temperature
       real64 const newTemp = m_temperature[ei] + (localScaling ? m_temperatureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + m_temperatureOffset]);
       if( newTemp < minTemperature )
@@ -155,7 +155,7 @@ public:
   static SolutionCheckKernel::KernelStats
   createAndLaunch( integer const allowCompDensChopping,
                    integer const allowNegativePressure,
-                   compositionalMultiphaseUtilities::ScalingType const scalingType,
+                   flowSolverUtilities::ScalingType const scalingType,
                    real64 const scalingFactor,
                    arrayView1d< real64 const > const pressure,
                    arrayView1d< real64 const > const temperature,

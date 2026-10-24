@@ -38,7 +38,8 @@ struct SolutionScalingKernel
                                              globalIndex const rankOffset,
                                              arrayView1d< globalIndex const > const & dofNumber,
                                              arrayView1d< integer const > const & ghostRank,
-                                             real64 const maxAbsolutePresChange )
+                                             real64 const maxAbsolutePresChange,
+                                             arrayView1d< real64 > pressureScalingFactor )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > scalingFactor( 1.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
@@ -47,6 +48,8 @@ struct SolutionScalingKernel
     {
       if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
       {
+        pressureScalingFactor[ei] = 1.0;
+
         localIndex const lid = dofNumber[ei] - rankOffset;
 
         // compute the change in pressure
@@ -57,6 +60,7 @@ struct SolutionScalingKernel
         if( maxAbsolutePresChange > 0.0 && absPresChange > maxAbsolutePresChange )
         {
           real64 const presScalingFactor = maxAbsolutePresChange / absPresChange;
+          pressureScalingFactor[ei] = presScalingFactor;
           scalingFactor.min( presScalingFactor );
         }
       }
