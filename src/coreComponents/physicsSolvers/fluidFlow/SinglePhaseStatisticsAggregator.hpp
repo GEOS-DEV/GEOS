@@ -20,48 +20,67 @@
  * Problem : ProblemManager
  * |-> domain : DomainPartition
  *     |-> MeshBodies : Group
- *         |-> cartesianMesh : MeshBody
+ *         |-> "cartesianMesh" : MeshBody
  *             |-> meshLevels : Group
  *                 |-> Level0 : MeshLevel
+ *                 |   |-> ElementRegions : ElementRegionManager
+ *                 |   |   |-> elementRegionsGroup : Group
+ *                 |   |       |-> "Channel" : CellElementRegion
+ *                 |   |       |   |-> elementSubRegions : Group
+ *                 |   |       |       |-> "cb-0_0_0" : CellElementSubRegion
+ *                 |   |       |       |   | * pressure : Wrapper< real64 array >
+ *                 |   |       |       |   | * temperature : Wrapper< real64 array >
+ *                 |   |       |       |   |-> sets : Group
+ *                 |   |       |       |   |   | * all : Wrapper< index array >
+ *                 |   |       |       |   |   | * myBox : Wrapper< index array >
+ *                 |   |       |       |   |   [...] (other element sets)
+ *                 |   |       |       |   |
+ *                 |   |       |       |   [...] (other fields)
+ *                 |   |       |       |
+ *                 |   |       |       |-> "cb-0_0_1" : CellElementSubRegion
+ *                 |   |       |       |   | * pressure : Wrapper< real64 array >
+ *                 |   |       |       |   | * temperature : Wrapper< real64 array >
+ *                 |   |       |       |   |-> sets : Group
+ *                 |   |       |       |   |   | * all : Wrapper< index array >
+ *                 |   |       |       |   |   | * myBox : Wrapper< index array >
+ *                 |   |       |       |   |   [...] (other element sets)
+ *                 |   |       |       |   |
+ *                 |   |       |       |   [...] (other fields)
+ *                 |   |       |       |
+ *                 |   |       |       [...] (other sub-regions)
+ *                 |   |       |
+ *                 |   |       |-> "Barrier" : CellElementRegion
+ *                 |   |           |-> "cb-1_0_0" : CellElementSubRegion
+ *                 |   |           |-> "cb-1_0_1" : CellElementSubRegion
+ *                 |   |           [...] (other sub-regions)
+ *                 |   |
  *                 |   |-> nodeManager : NodeManager
  *                 |   |   |-> sets : Group
  *                 |   |       | * all : Wrapper< index array >
- *                 |   |       | * xneg : Wrapper< index array >
+ *                 |   |       | * "myBox" : Wrapper< index array >
  *                 |   |       [...] (other element sets)
- *                 |   |
- *                 |   |-> ElementRegions : ElementRegionManager
- *                 |   |   |-> Channel : CellElementRegion
- *                 |   |   |   |-> cb-0_0_0 : CellElementSubRegion
- *                 |   |   |   |   | * pressure : Wrapper< real64 array >
- *                 |   |   |   |   | * temperature : Wrapper< real64 array >
- *                 |   |   |   |   [...] (other fields)
- *                 |   |   |   |
- *                 |   |   |   |-> cb-0_0_1 : CellElementSubRegion
- *                 |   |   |   |   | * pressure : Wrapper< real64 array >
- *                 |   |   |   |   | * temperature : Wrapper< real64 array >
- *                 |   |   |   |   [...] (other fields)
- *                 |   |   |   |
- *                 |   |   |   [...] (other sub-regions)
- *                 |   |   |
- *                 |   |   |-> Barrier : CellElementRegion
- *                 |   |       |-> cb-1_0_0 : CellElementSubRegion
- *                 |   |       |-> cb-1_0_1 : CellElementSubRegion
- *                 |   |       [...] (other sub-regions)
  *                 |   |
  *                 |   [...] (other element managers)
  *          ____   |   |
  *          |      |   |-> statistics : Group (storage for all stats)
- *          |      |       |-> flowStats : Group (storage for this instance stats)
- *          |      |       |   |-> regionsStatistics : RegionStatistics (aggregate)
- *          |      |       |       |-> Channel : RegionStatistics (aggregate, mpi reduced)
- *          |      |       |       |   |-> cb-0_0_0 : RegionStatistics (compute read-back)
- *  stats   |      |       |       |   |-> cb-0_0_1 : RegionStatistics (compute read-back)
- *  data -> |      |       |       |   [...] (other sub-regions stats)
+ *          |      |       |-> "flowStats" : Group (storage for this instance stats)
+ *          |      |       |   |-> setsStatistics : RegionStatistics (selected sets aggregate, mpi reduced)
+ *          |      |       |       |-> "..." : RegionStatistics (set aggregate, mpi reduced)
+ *          |      |       |       |   |       - all requested sets
+ *          |      |       |       |   |       - "all" if no set restriction or if requested
+ *          |      |       |       |   |       - "__compound" if a compoud set is needed to compute mesh-level stats
+ *          |      |       |       |   |
+ *          |      |       |       |   |-> "Channel" : RegionStatistics (region aggregate, mpi reduced)
+ *          |      |       |       |   |   |-> "cb-0_0_0" : RegionStatistics (sub-region compute read-back)
+ *  stats   |      |       |       |   |   |-> "cb-0_0_1" : RegionStatistics (sub-region compute read-back)
+ *  data -> |      |       |       |   |   [...] (other sub-regions stats)
+ *          |      |       |       |   |
+ *          |      |       |       |   |-> "Barrier" : RegionStatistics (region aggregate, mpi reduced)
+ *          |      |       |       |       |-> cb-1_0_0 : RegionStatistics (sub-region compute read-back)
+ *          |      |       |       |       |-> cb-1_0_1 : RegionStatistics (sub-region compute read-back)
+ *          |      |       |       |       [...] (other sub-regions stats)
  *          |      |       |       |
- *          |      |       |       |-> Barrier : RegionStatistics (aggregate, mpi reduced)
- *          |      |       |           |-> cb-1_0_0 : RegionStatistics (compute read-back)
- *          |      |       |           |-> cb-1_0_1 : RegionStatistics (compute read-back)
- *          |      |       |           [...] (other sub-regions stats)
+ *          |      |       |       [...] (other set aggregates)
  *          |      |       |
  *          |___   |       [...] (other stats storages)
  *                 |
@@ -103,8 +122,8 @@ class RegionStatistics : public RegionStatisticsBase
 {
 public:
 
-  /// Time of statistics computation
-  real64 m_time;
+  /// Element Count
+  globalIndex m_elemCount;
 
   /// average region pressure (numerator value before postAggregateCompute())
   real64 m_averagePressure;
@@ -146,6 +165,7 @@ public:
    */
   RegionStatistics( string const & targetName,
                     dataRepository::Group * const parent,
+                    string_view setName,
                     bool statsOutputEnabled );
 
   RegionStatistics( RegionStatistics && ) = default;
@@ -180,14 +200,18 @@ public:
    * @brief Enable the computation of region statistics, initialize data structure to collect them.
    *        Register the resulting data wrappers so they will be targeted by TimeHistory output
    * @note Must be called in or after the "registerDataOnMesh" initialization phase
+   * @param setNames The list of mesh element sets to restrict the statistics to.
+   *                 If empty, the whole discretization is processed.
    */
-  void enableRegionStatisticsAggregation();
+  void enableRegionStatisticsAggregation( string_array const & setNames = string_array() );
 
   // template implementations
   /// @cond DO_NOT_DOCUMENT
 
   void initStats( RegionStatistics & stats, real64 time ) const;
-  void computeSubRegionRankStats( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats ) const;
+  void computeSubRegionRankStats( CellElementSubRegion & subRegion,
+                                  RegionStatistics & subRegionStats,
+                                  SetType const & targetSet ) const;
   void aggregateStats( RegionStatistics & stats, RegionStatistics const & other ) const;
   void mpiAggregateStats( RegionStatistics & stats ) const;
   void postAggregateStats( RegionStatistics & stats );
