@@ -18,6 +18,7 @@
 #define GEOS_EVENTS_EVENTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "EventBase.hpp"
 #include "common/format/LogPart.hpp"
 
@@ -182,6 +183,14 @@ ENUM_STRINGS( EventManager::TimeOutputFormat,
               "days",
               "years",
               "full" );
+
+// EventManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline EventManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< EventManager >( m_gks.eventManager ); }
+
+// EventManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline EventManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< EventManager >( m_gks.domain ); }
 
 } /* namespace geos */
 

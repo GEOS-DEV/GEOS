@@ -30,6 +30,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionBase.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/Kinematics.h"
@@ -469,7 +470,7 @@ void SolidMechanicsMPM::initializePreSubGroups()
 {
   PhysicsSolverBase::initializePreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
 
   Group & meshBodies = domain.getMeshBodies();
 
@@ -927,7 +928,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   solverProfiling( "Get spatial partition, get node and particle managers. Resize m_iComm." );
   //#######################################################################################
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getPartitionManager() );
 
   // ***** We assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();

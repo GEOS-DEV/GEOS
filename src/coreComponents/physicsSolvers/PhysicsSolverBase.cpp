@@ -20,6 +20,7 @@
 #include "codingUtilities/RTTypes.hpp"
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
@@ -158,10 +159,20 @@ void PhysicsSolverBase::postInputInitialization()
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
 
+DomainPartition & PhysicsSolverBase::getDomainPartition()
+{
+  return ProblemRepository::get( *this ).getManager< DomainPartition >();
+}
+
+DomainPartition const & PhysicsSolverBase::getDomainPartition() const
+{
+  return ProblemRepository::get( *this ).getManager< DomainPartition >();
+}
+
 void PhysicsSolverBase::initialize_postMeshGeneration()
 {
   ExecutableGroup::initialize_postMeshGeneration();
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition const & domain = getDomainPartition();
   generateMeshTargetsFromTargetRegions( domain.getMeshBodies());
 }
 

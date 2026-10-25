@@ -145,7 +145,7 @@ initializePreSubGroups()
                            this->getDataContext(), SinglePhaseBase::viewKeyStruct::isThermalString(),
                            Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
                  InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
-  DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::template getManager< DomainPartition >( *this );
 
   this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,

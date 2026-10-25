@@ -22,6 +22,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "ConstitutiveBase.hpp"
 
 namespace geos
@@ -83,8 +84,6 @@ public:
   };
 };
 
-
-
 template< typename T >
 ViewAccessor< T >
 ConstitutiveManager::getConstitutiveData( string const & name,
@@ -104,7 +103,26 @@ ConstitutiveManager::getConstitutiveData( string const & name,
   return rval;
 }
 
+} /* namespace constitutive */
+
+// ConstitutiveManager Group is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline
+constitutive::ConstitutiveManager & dataRepository::ProblemRepository::getManager()
+{
+  return getRootGroup().
+           getGroup( m_gks.domain ).
+           getGroup< constitutive::ConstitutiveManager >( m_gks.constitutiveManager );
 }
+
+// ConstitutiveManager Group is available through the ProblemRepository as a const problem-unique manager.
+template<> inline
+constitutive::ConstitutiveManager const & dataRepository::ProblemRepository::getManager() const
+{
+  return getRootGroup().
+           getGroup( m_gks.domain ).
+           getGroup< constitutive::ConstitutiveManager >( m_gks.constitutiveManager );
+}
+
 } /* namespace geos */
 
 #endif /* GEOS_CONSTITUTIVE_CONSTITUTIVEMANAGER_HPP_ */

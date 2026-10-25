@@ -77,13 +77,12 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
 
-  dataRepository::Group & commandLine =
-    problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
+  CommandLine & commandLine = problemManager.getCommandLine();
 
-  commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
+  commandLine.registerWrapper< integer >( commandLine.m_vks.xPartitionsOverride ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( problemManager.getName() );
   problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   DomainPartition & domain = problemManager.getDomainPartition();
@@ -92,7 +91,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
   constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  MeshManager & meshManager = problemManager.getMeshManager();
   meshManager.generateMeshLevels( domain );
 
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();

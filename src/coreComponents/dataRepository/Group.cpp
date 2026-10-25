@@ -21,6 +21,7 @@
 #include "common/format/table/TableLayout.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "GroupContext.hpp"
+#include "ProblemRepositoryABC.hpp"
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif
@@ -133,12 +134,7 @@ void Group::reserve( indexType const newSize )
 }
 
 string Group::getPath() const
-{
-  // In the Conduit node hierarchy everything begins with 'Problem', we should change it so that
-  // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
-  string const noProblem = getConduitNode().path().substr( stringutilities::cstrlen( dataRepository::keys::ProblemManager ) );
-  return noProblem.empty() ? "/" : noProblem;
-}
+{ return ProblemRepositoryABC::getNoProblemPath( getConduitNode().path() ); }
 
 string Group::processInputName( xmlWrapper::xmlNode const & targetNode,
                                 xmlWrapper::xmlNodePos const & targetNodePos,
