@@ -134,9 +134,9 @@ public:
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
-  void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
+  void assembleForceResidualDerivativeWrtPressureAndTemperature( DomainPartition & domain,
+                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                 arrayView1d< real64 > const & localRhs );
 
   void assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix );
@@ -178,6 +178,8 @@ public:
 
     constexpr static char const * leakoffConstString() {return "leakoffCoefficient"; }
 
+    constexpr static char const * matrixTemperatureString() {return "matrixTemperature"; }
+
     constexpr static char const * fractureCreationTimeString() {return "fractureCreationTime"; }
 
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
@@ -189,6 +191,8 @@ public:
 protected:
 
   virtual void postInputInitialization() override final;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -264,6 +268,10 @@ private:
 
   // analytical leakoff coefficient
   real64 m_leakoffCoefficient;
+
+  // constant matrix temperature, used to compute the thermal stress acting on the fracture faces when
+  // the matrix is not poroelastic
+  real64 m_matrixTemperature;
 };
 
 ENUM_STRINGS( HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > >::InitializationType,
