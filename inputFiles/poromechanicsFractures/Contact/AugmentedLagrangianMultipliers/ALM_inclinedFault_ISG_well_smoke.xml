@@ -298,13 +298,6 @@
       fieldName="rockPerm_permeability"
       scale="1.0e-13"/>
 
-   <!-- <FieldSpecification 
-      name="depletion"
-      initialCondition="0"
-      setNames="{all}"
-      objectPath="ElementRegions/Domain/96_hexahedra"
-      fieldName="pressure"      
-      scale="2.66e6"/>	  --> 	  
   </FieldSpecifications>
 <!-- SPHINX_INJECTION_END -->
 
