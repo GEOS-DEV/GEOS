@@ -8,6 +8,9 @@ These notes should be in reverse-chronological order, and use the following time
 PR #4165 (2026-10-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4165-17772-9c8a12e.tar.gz>
 Add zero salinity, non-default compressibility pvt driver test
 
+PR #4005 (2026-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4005-17824-bac337a.tar.gz>
+Added a `Group` statistics layer for sets statistics
+
 PR #4155 (2026-10-22) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4155-17777-be35229.tar.gz>
 Add the missing restart baselines for the injection, production, and combined
 thermal compositional-well tests on one and four MPI ranks. In CI run 17777,
