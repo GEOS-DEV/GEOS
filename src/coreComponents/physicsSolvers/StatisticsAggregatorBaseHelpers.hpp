@@ -42,6 +42,7 @@ namespace internal
  */
 inline bool isStatisticsRegion( ElementRegionBase const & region )
 {
+  // we only process cell and surface regions (wells are skipped)
   return dynamic_cast< CellElementRegion const * >( &region ) != nullptr ||
          dynamic_cast< SurfaceElementRegion const * >( &region ) != nullptr;
 }
@@ -171,7 +172,7 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
       {
         ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( path.m_regionNames[regionId] );
         if( internal::isStatisticsRegion( region ) )
-        { // we only process cell and surface regions (wells are skipped)
+        {
           StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
                                                                setName, m_dataOutputEnabled );
           stdMap< string, SetType > & regionSetsCompounds = meshSetsCompounds.get_inserted( region.getName() );
@@ -219,7 +220,7 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
       {
         ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( path.m_regionNames[regionId] );
         if( internal::isStatisticsRegion( region ) )
-        { // we only process cell and surface regions (wells are skipped)
+        {
           StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
                                                                setName, false );
 
