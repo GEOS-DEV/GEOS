@@ -112,6 +112,8 @@ set( ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
 # Enale caliper instrumentation
 set( ENABLE_CALIPER ON CACHE BOOL "" )
 
+set( ENABLE_HYPREDRV ON CACHE BOOL "" )
+
 # Disable doxygen. No valid libiconv available
 set( ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE )
 

@@ -345,6 +345,11 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
     m_numPhases = referenceFluid.numFluidPhases();
     m_numComponents = referenceFluid.numFluidComponents();
+    GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_MAX_FLUID_COMPONENTS,
+                          GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
+                                    "Rebuild with GEOS_MAX_FLUID_COMPONENTS >= {}.",
+                                    m_numComponents, GEOS_MAX_FLUID_COMPONENTS, m_numComponents ),
+                          InputError, getDataContext() );
     m_isThermal = referenceFluid.isThermal();
   }
 
@@ -1844,9 +1849,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 
@@ -1876,6 +1881,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       localIndex const rankOffset = dofManager.rankOffset();
 
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > elementCount( 0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
@@ -1912,7 +1918,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                            dofNumber,
                                                            rhsContributionArrayView,
                                                            localRhs,
-                                                           massProd] GEOS_HOST_DEVICE ( localIndex const a )
+                                                           massProd,
+                                                           elementCount] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -1923,6 +1930,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
         real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;   // scale the contribution by the sizeScalingFactor here!
         massProd += rhsValue;
+        elementCount += 1;
         if( useTotalMassEquation > 0 )
         {
           // for all "fluid components", we add the value to the total mass balance equation
@@ -1947,7 +1955,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         // set the new sub-region statistics for this timestep
         array1d< real64 > massProdArr{ m_numComponents };
         massProdArr[fluidComponentId] = massProd.get();
-        wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), targetSet.size() );
+        // Owned-cell count on this rank (ghosts excluded). finalizePeriod() MPI-sums it.
+        wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), elementCount.get() );
       } );
     } );
   } );
@@ -2790,6 +2799,14 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
 
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
+      // discard any warm-started state held by the fluid model (e.g. K-values
+      // used to seed the flash) so the rolled-back step does not inherit
+      // iterate-dependent state from the failed Newton attempt.
+      {
+        string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+        MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+        fluid.initializeState();
+      }
       // update all fluid properties
       updateFluidState( subRegion );
       // for thermal simulations, update solid internal energy

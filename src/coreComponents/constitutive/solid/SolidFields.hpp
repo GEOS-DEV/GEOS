@@ -126,7 +126,7 @@ DECLARE_FIELD( oldDamage,
                "oldDamage",
                array2d< real64 >,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Material old damage" );
 
@@ -150,17 +150,25 @@ DECLARE_FIELD( damageGrad,
                "damageGrad",
                array3d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_3,
                WRITE_AND_READ,
                "Material damage gradient" );
 
-DECLARE_FIELD( strainEnergyDensity,
-               "strainEnergyDensity",
+DECLARE_FIELD( crackDrivingForce,
+               "crackDrivingForce",
                array2d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Material strain energy density" );
+               "Material crack driving force" );
+
+DECLARE_FIELD( oldCrackDrivingForce,
+               "oldCrackDrivingForce",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Material crack driving force at the last converged state" );
 
 DECLARE_FIELD( volStrain,
                "volStrain",

@@ -87,7 +87,6 @@ FILEPATH_EXCLUDE_PATTERNS=(
           "MpiWrapper.cpp"
           "BufferOps_inline.hpp"
           "BufferOps.hpp"
-          "PVTPackage"
           "hdf5_interface"
 )
 

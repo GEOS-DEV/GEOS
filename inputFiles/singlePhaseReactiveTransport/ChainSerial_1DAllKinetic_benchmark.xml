@@ -5,6 +5,7 @@
     <File name="./ChainSerial_base.xml" />
     <File name="./ChainSerial_1DAllKinetic_base.xml" />
     <File name="./ChainSerial_initialAggregate.xml" />
+    <File name="./ChainSerial_initialLogConc.xml" />
     <File name="./ChainSerial_logConc.xml" />
   </Included>
 
@@ -25,17 +26,17 @@
     maxTime="400">
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="5"
+      timeFrequency="20"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="logPrimarySpeciesHistoryCollection"
-      cycleFrequency="5"
+      timeFrequency="1"
       target="/Tasks/logPrimarySpeciesCollection"/>
 
     <PeriodicEvent
       name="logPrimarySpeciesTimeHistoryOutput"
-      cycleFrequency="1"
+      timeFrequency="1"
       target="/Outputs/logPrimarySpeciesHistoryOutput"/>
 
     <PeriodicEvent
@@ -45,7 +46,7 @@
 
     <PeriodicEvent
       name="restarts"
-      cycleFrequency="500"
+      timeFrequency="100"
       target="/Outputs/restartOutput"/>
   </Events>
 

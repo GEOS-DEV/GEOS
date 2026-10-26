@@ -136,11 +136,20 @@ set( fluidFlowSolvers_headers
      wells/SinglePhaseWellFields.hpp
      wells/WellConstants.hpp
      wells/WellControls.hpp
-     wells/WellSolverBase.hpp
-     wells/WellSolverBaseFields.hpp
+     wells/WellConstraintsBase.hpp
+     wells/WellInjectionConstraint.hpp
+     wells/WellProductionConstraint.hpp
+     wells/WellBHPConstraints.hpp
+     wells/WellVolumeRateConstraint.hpp
+     wells/WellMassRateConstraint.hpp
+     wells/WellPhaseVolumeRateConstraint.hpp
+     wells/WellManager.hpp
+     wells/WellNewtonSolver.hpp
      wells/LogLevelsInfo.hpp
      wells/kernels/SinglePhaseWellKernels.hpp
      wells/kernels/CompositionalMultiphaseWellKernels.hpp
+     wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp
+     wells/kernels/SinglePhaseWellConstraintKernels.hpp
      proppantTransport/ProppantTransport.hpp
      proppantTransport/ProppantTransportFields.hpp
      proppantTransport/ProppantTransportKernels.hpp )
@@ -176,11 +185,19 @@ set( fluidFlowSolvers_sources
      wells/SinglePhaseWell.cpp
      wells/kernels/SinglePhaseWellKernels.cpp
      wells/WellControls.cpp
-     wells/WellSolverBase.cpp
+     wells/WellConstraintsBase.cpp
+     wells/WellInjectionConstraint.cpp
+     wells/WellProductionConstraint.cpp
+     wells/WellBHPConstraints.cpp
+     wells/WellVolumeRateConstraint.cpp
+     wells/WellMassRateConstraint.cpp
+     wells/WellPhaseVolumeRateConstraint.cpp
+     wells/WellManager.cpp
+     wells/WellNewtonSolver.cpp
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
-# Remove the old generator-based hybrid flux/dirichlet kernels and switch to macro approach
+# Generate compositional and hybrid kernel instantiations.
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList 
      ReactiveCompositionalMultiphaseOBLKernels.cpp.template
@@ -195,6 +212,59 @@ set( kernelTemplateFileList
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+  # Expand every component range to the build limit, keeping its lower bound.
+  string( JSON firstComponent ERROR_VARIABLE componentError
+          GET "${kernelSpecs}" ${jsonKey} combinations NCOMP 0 )
+  if( NOT componentError )
+    set( componentCounts "[]" )
+    set( componentIndex 0 )
+    set( componentLimit ${GEOS_MAX_FLUID_COMPONENTS} )
+    string( JSON componentLimitName ERROR_VARIABLE limitError GET "${kernelSpecs}" ${jsonKey} NCOMP_LIMIT )
+    if( NOT limitError )
+      set( componentLimit ${${componentLimitName}} )
+    endif()
+    foreach( component RANGE ${firstComponent} ${componentLimit} )
+      string( JSON componentCounts SET "${componentCounts}" ${componentIndex} ${component} )
+      math( EXPR componentIndex "${componentIndex} + 1" )
+    endforeach()
+    string( JSON kernelSpecs SET "${kernelSpecs}" ${jsonKey} combinations NCOMP "${componentCounts}" )
+  endif()
+  # Generate only the NAME#NCOMP#FLUID_TYPE combinations each fluid can dispatch.
+  string( JSON componentBounds ERROR_VARIABLE boundsError GET "${kernelSpecs}" ${jsonKey} NCOMP_BOUNDS )
+  if( NOT boundsError )
+    string( JSON combinations GET "${kernelSpecs}" ${jsonKey} combinations )
+    string( JSON nameCount LENGTH "${combinations}" NAME )
+    string( JSON fluidCount LENGTH "${combinations}" FLUID_TYPE )
+    math( EXPR lastName "${nameCount} - 1" )
+    math( EXPR lastFluid "${fluidCount} - 1" )
+    set( explicitCombinations "[]" )
+    set( explicitIndex 0 )
+    foreach( nameIndex RANGE ${lastName} )
+      string( JSON kernelName GET "${combinations}" NAME ${nameIndex} )
+      foreach( fluidIndex RANGE ${lastFluid} )
+        string( JSON fluidType GET "${combinations}" FLUID_TYPE ${fluidIndex} )
+        set( lowerBound ${firstComponent} )
+        set( upperBound ${componentLimit} )
+        string( JSON fluidBounds ERROR_VARIABLE fluidBoundsError GET "${componentBounds}" ${fluidType} )
+        if( NOT fluidBoundsError )
+          string( JSON lowerBound GET "${fluidBounds}" 0 )
+          string( JSON fluidMax GET "${fluidBounds}" 1 )
+          if( fluidMax LESS upperBound )
+            set( upperBound ${fluidMax} )
+          endif()
+        endif()
+        if( lowerBound LESS_EQUAL upperBound )
+          foreach( component RANGE ${lowerBound} ${upperBound} )
+            string( JSON explicitCombinations SET "${explicitCombinations}" ${explicitIndex}
+                    "\"${kernelName}#${component}#${fluidType}\"" )
+            math( EXPR explicitIndex "${explicitIndex} + 1" )
+          endforeach()
+        endif()
+      endforeach()
+    endforeach()
+    string( JSON kernelSpecs SET "${kernelSpecs}" ${jsonKey} combinations "{}" )
+    string( JSON kernelSpecs SET "${kernelSpecs}" ${jsonKey} explicit "${explicitCombinations}" )
+  endif()
   generateKernels( TEMPLATE ${kernelTemplateFile}
                    JSON kernelSpecs
                    KEY ${jsonKey}
@@ -217,6 +287,24 @@ blt_add_library( NAME       fluidFlowSolvers
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
+
+if( ENABLE_CUDA AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64" )
+  # The CUDA instantiations in this library can exceed the x86-64 small code
+  # model. Use the large host code model so nvcc-generated host stubs can
+  # address the complete shared library without truncated PC-relative
+  # relocations at link time.
+  target_compile_options( fluidFlowSolvers PRIVATE
+                          $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-mcmodel=large>
+                          $<$<COMPILE_LANGUAGE:CXX>:-mcmodel=large> )
+  if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+    # Clang's large code model emits uniquely named .ltext.* sections. GNU ld
+    # has no .ltext linker-script rule, so each name becomes an output section
+    # and overflows the 16-bit ELF section index (SHN_LORESERVE == 65280).
+    target_compile_options( fluidFlowSolvers PRIVATE
+                            $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-fno-unique-section-names>
+                            $<$<COMPILE_LANGUAGE:CXX>:-fno-unique-section-names> )
+  endif()
+endif()
 
 target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

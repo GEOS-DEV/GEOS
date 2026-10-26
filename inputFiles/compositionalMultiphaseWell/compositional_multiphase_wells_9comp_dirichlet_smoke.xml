@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Included>
+    <File name="compositional_multiphase_wells_9comp_smoke.xml"/>
+  </Included>
+  <Geometry>
+    <Box name="rightEnd" xMin="{ 4.99, -0.01, -0.01 }" xMax="{ 5.01, 1.01, 1.01 }"/>
+  </Geometry>
+  <FieldSpecifications>
+    <FieldSpecification name="boundaryPressure" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="pressure" scale="5e6"/>
+    <FieldSpecification name="boundaryTemperature" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="temperature" scale="297.15"/>
+    <FieldSpecification name="boundaryComponent0" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="0" scale="0.099"/>
+    <FieldSpecification name="boundaryComponent1" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="1" scale="0.05"/>
+    <FieldSpecification name="boundaryComponent2" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="2" scale="0.6"/>
+    <FieldSpecification name="boundaryComponent3" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="3" scale="0.001"/>
+    <FieldSpecification name="boundaryComponent4" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="4" scale="0.05"/>
+    <FieldSpecification name="boundaryComponent5" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="5" scale="0.05"/>
+    <FieldSpecification name="boundaryComponent6" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="6" scale="0.05"/>
+    <FieldSpecification name="boundaryComponent7" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="7" scale="0.05"/>
+    <FieldSpecification name="boundaryComponent8" setNames="{ rightEnd }"
+                        objectPath="faceManager" fieldName="globalCompFraction" component="8" scale="0.05"/>
+  </FieldSpecifications>
+</Problem>

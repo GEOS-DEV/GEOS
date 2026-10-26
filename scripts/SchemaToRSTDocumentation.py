@@ -56,7 +56,7 @@ def writeTableRST(type_name, file_name, title_prefix, values):
                 formatted_lines.append(multiple_row_format_b.format(d))
 
     # Build table
-    with open(file_name, 'w') as f:
+    with open(file_name, 'w', encoding="utf-8") as f:
         f.write('%s\n' % (element_header))
         f.write('=' * len(element_header) + '\n')
         f.write('\n')

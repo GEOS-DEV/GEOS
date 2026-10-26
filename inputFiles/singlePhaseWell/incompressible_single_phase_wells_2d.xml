@@ -20,33 +20,48 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region1 }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="singlePhaseWell"
       logLevel="1"
-      targetRegions="{wellRegion1, wellRegion2, wellRegion3 }">
-      <WellControls
+      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }">
+      <SinglePhaseWell
         name="wellControls1"
         type="producer"
-        control="BHP"
-        referenceElevation="0.5"
-        targetBHP="5e5"
-        targetTotalRate="1e-4"/>
-      <WellControls
+        control="BHP">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="5e5"
+          referenceElevation="0.5"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          volumeRate="1e-4"/>
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         type="producer"
-        control="BHP"
-        referenceElevation="0.5"
-        targetBHP="5e5"
-        targetTotalRate="1e-4"/>
-      <WellControls
+        control="BHP">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="5e5"
+          referenceElevation="0.5"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          volumeRate="1e-4"/>
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls3"
         type="injector"
-	initialPressureCoefficient="0.01"
-        control="totalVolRate"
-        referenceElevation="0.5"
-        targetBHP="1e7"
-        targetTotalRate="1e-6"/>
-    </SinglePhaseWell>
+        initialPressureCoefficient="0.01"
+        control="totalVolRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e7"
+          referenceElevation="0.5"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e-6"/>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>
@@ -60,7 +75,6 @@
       ny="{ 20 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }">
-
       <InternalWell
         name="well_producer1"
         wellRegionName="wellRegion1"
@@ -85,7 +99,6 @@
           distanceFromHead="8"
           transmissibility="1.02e-14"/>
       </InternalWell>
-
       <InternalWell
         name="well_producer2"
         wellRegionName="wellRegion2"
@@ -107,7 +120,6 @@
           name="producer2_perf3"
           distanceFromHead="6"/>
       </InternalWell>
-
       <InternalWell
         name="well_injector1"
         wellRegionName="wellRegion3"
@@ -151,8 +163,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        />
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

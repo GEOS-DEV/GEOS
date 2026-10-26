@@ -34,6 +34,16 @@
 #include <vtkArrayDispatch.h>
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
+#include <vtkVersionMacros.h>
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+#include <vtkCellCenters.h>
+#include <vtkDIYKdTreeUtilities.h>
+#endif
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 5, 0 )
+#include <vtkCellTypeUtilities.h>
+#else
+#include <vtkCellTypes.h>
+#endif
 #include <vtkDataArray.h>
 #include <vtkDataSetReader.h>
 #include <vtkExtractCells.h>
@@ -77,6 +87,8 @@
 #endif
 
 #include <numeric>
+#include <array>
+#include <unordered_set>
 #include <type_traits>
 
 
@@ -198,6 +210,10 @@ vtkSmartPointer< vtkDataSet >
 generateGlobalIDs( vtkSmartPointer< vtkDataSet > mesh )
 {
   GEOS_MARK_FUNCTION;
+
+  // vtkGenerateGlobalIds may trigger floating-point exceptions internally
+  // Temporarily disable FPE trapping while invoking VTK.
+  LvArray::system::FloatingPointExceptionGuard guard;
 
   vtkNew< vtkGenerateGlobalIds > generator;
   generator->SetInputDataObject( mesh );
@@ -430,17 +446,38 @@ loadMesh( Path const & filePath,
 
         // Looking for the _first_ block that matches the requested name.
         // No check is performed to validate that there is not name duplication.
+        stdVector< string > deferredBlockNames;
+        stdVector< vtkSmartPointer< vtkDataSet > > deferredMeshes;
         for( unsigned int i = 0; i < multiBlockDataSet->GetNumberOfBlocks(); ++i )
         {
-          string const dataSetName = multiBlockDataSet->GetMetaData( i )->Get( multiBlockDataSet->NAME() );
-          if( dataSetName == blockName )
+          vtkInformation * metadata = multiBlockDataSet->GetMetaData( i );
+          vtkDataObject * block = multiBlockDataSet->GetBlock( i );
+          bool const hasName = metadata != nullptr && metadata->Has( multiBlockDataSet->NAME() );
+          if( hasName )
           {
-            vtkDataObject * block = multiBlockDataSet->GetBlock( i );
-            if( block->IsA( "vtkDataSet" ) )
+            string const dataSetName = metadata->Get( multiBlockDataSet->NAME() );
+            if( dataSetName == blockName && block != nullptr && block->IsA( "vtkDataSet" ) )
             {
-              vtkSmartPointer< vtkDataSet > mesh = vtkDataSet::SafeDownCast( block );
-              return mesh;
+              return vtkDataSet::SafeDownCast( block );
             }
+            if( block == nullptr )
+            {
+              deferredBlockNames.emplace_back( dataSetName );
+            }
+          }
+          if( block != nullptr && block->IsA( "vtkDataSet" ) && !hasName )
+          {
+            deferredMeshes.emplace_back( vtkDataSet::SafeDownCast( block ) );
+          }
+        }
+
+        // VTK 9.7 stores names and external datasets in separate entries. Pair
+        // the named, empty entries with the non-empty dataset entries in order.
+        for( std::size_t i = 0; i < deferredBlockNames.size(); ++i )
+        {
+          if( deferredBlockNames[i] == blockName && i < deferredMeshes.size() )
+          {
+            return deferredMeshes[i];
           }
         }
         GEOS_ERROR( GEOS_FMT( "Could not find mesh \"{}\" in multi-block vtk file \"{}\".\n{}",
@@ -976,7 +1013,11 @@ static void classifyCellsByDimension( vtkDataSet & mesh,
   // Single pass: classify and populate
   for( vtkIdType i = 0; i < numCells; ++i )
   {
+#if VTK_VERSION_NUMBER >= VTK_VERSION_CHECK( 9, 5, 0 )
+    int const dim = vtkCellTypeUtilities::GetDimension( mesh.GetCellType( i ) );
+#else
     int const dim = vtkCellTypes::GetDimension( mesh.GetCellType( i ) );
+#endif
     if( dim == 3 )
     {
       cells3DIndices.emplace_back( i );
@@ -989,6 +1030,143 @@ static void classifyCellsByDimension( vtkDataSet & mesh,
 
   GEOS_LOG_RANK_0( GEOS_FMT( "Classified mesh: {} 3D cells, {} 2D cells (from {} total)",
                              cells3DIndices.size(), cells2DIndices.size(), numCells ) );
+}
+
+using VTKPointCoordinate = std::array< real64, 3 >;
+
+struct VTKPointCoordinateHash
+{
+  std::size_t operator()( VTKPointCoordinate const & point ) const
+  {
+    std::size_t hash = 0;
+    for( real64 const coordinate: point )
+    {
+      hash ^= std::hash< real64 >{} ( coordinate ) + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
+    }
+    return hash;
+  }
+};
+
+static VTKPointCoordinate getPointCoordinate( vtkDataSet & mesh, vtkIdType const pointId )
+{
+  double const * const point = mesh.GetPoint( pointId );
+  return { point[0], point[1], point[2] };
+}
+
+/**
+ * @brief Find 3D cells whose faces match a 2D cell geometrically.
+ *
+ * Some mesh generators keep a separate point for each side of a split
+ * interface. In that case, the point ids of an embedded 2D cell do not
+ * match the point ids of either adjacent 3D face, even though the
+ * coordinates do. This routine performs the co-location lookup through
+ * point coordinates and then verifies that all points belong to one face.
+ *
+ * @param[in] mesh Original mesh
+ * @param[in] pointIds2D Point ids of the 2D cell
+ * @param[in] meshIdxToGlobalId3D Map from 3D mesh indices to global ids
+ * @param[in] pointsByCoordinate All mesh point ids grouped by coordinates
+ * @param[in,out] pointTo3DCells Cache of 3D cells incident to a mesh point
+ * @return Global ids of geometrically matching 3D cells
+ */
+static stdVector< int64_t > find2DTo3DNeighborsByCoordinates(
+  vtkDataSet & mesh,
+  vtkIdList * pointIds2D,
+  stdUnorderedMap< vtkIdType, int64_t > const & meshIdxToGlobalId3D,
+  stdUnorderedMap< VTKPointCoordinate, stdVector< vtkIdType >, VTKPointCoordinateHash > const & pointsByCoordinate,
+  stdUnorderedMap< vtkIdType, stdVector< vtkIdType > > & pointTo3DCells )
+{
+  localIndex const numPoints = pointIds2D->GetNumberOfIds();
+
+  stdVector< VTKPointCoordinate > targetCoordinates;
+  targetCoordinates.reserve( numPoints );
+
+  stdUnorderedMap< vtkIdType, localIndex > candidateCounts;
+
+  vtkNew< vtkIdList > pointCells;
+  for( vtkIdType i = 0; i < pointIds2D->GetNumberOfIds(); ++i )
+  {
+    VTKPointCoordinate const coordinate = getPointCoordinate( mesh, pointIds2D->GetId( i ) );
+    targetCoordinates.emplace_back( coordinate );
+
+    auto const coordinateIt = pointsByCoordinate.find( coordinate );
+    if( coordinateIt == pointsByCoordinate.end() )
+    {
+      continue;
+    }
+
+    // A 3D cell can contain more than one mesh point with the same
+    // coordinate in a degenerate input. Count it only once for this 2D
+    // point when intersecting the incident-cell lists.
+    stdUnorderedMap< vtkIdType, bool > cellsAtCoordinate;
+    for( vtkIdType const meshPointId: coordinateIt->second )
+    {
+      auto pointCellsIt = pointTo3DCells.find( meshPointId );
+      if( pointCellsIt == pointTo3DCells.end() )
+      {
+        stdVector< vtkIdType > & cachedCells = pointTo3DCells.get_inserted( meshPointId );
+        pointCells->Reset();
+        mesh.GetPointCells( meshPointId, pointCells );
+        cachedCells.reserve( pointCells->GetNumberOfIds() );
+        for( vtkIdType j = 0; j < pointCells->GetNumberOfIds(); ++j )
+        {
+          vtkIdType const cellId = pointCells->GetId( j );
+          if( meshIdxToGlobalId3D.count( cellId ) > 0 )
+          {
+            cachedCells.emplace_back( cellId );
+          }
+        }
+        pointCellsIt = pointTo3DCells.find( meshPointId );
+      }
+
+      for( vtkIdType const cellId: pointCellsIt->second )
+      {
+        cellsAtCoordinate.emplace( cellId, true );
+      }
+    }
+
+    for( auto const & cell: cellsAtCoordinate )
+    {
+      ++candidateCounts.get_inserted( cell.first );
+    }
+  }
+
+  std::sort( targetCoordinates.begin(), targetCoordinates.end() );
+
+  stdVector< int64_t > neighbors;
+  for( auto const & candidate: candidateCounts )
+  {
+    if( candidate.second != numPoints )
+    {
+      continue;
+    }
+
+    vtkCell * const cell3D = mesh.GetCell( candidate.first );
+    for( localIndex faceIndex = 0; faceIndex < cell3D->GetNumberOfFaces(); ++faceIndex )
+    {
+      vtkCell * const face = cell3D->GetFace( faceIndex );
+      if( face->GetNumberOfPoints() != numPoints )
+      {
+        continue;
+      }
+
+      stdVector< VTKPointCoordinate > faceCoordinates;
+      faceCoordinates.reserve( numPoints );
+      for( vtkIdType i = 0; i < face->GetNumberOfPoints(); ++i )
+      {
+        faceCoordinates.emplace_back( getPointCoordinate( mesh, face->GetPointId( i ) ) );
+      }
+      std::sort( faceCoordinates.begin(), faceCoordinates.end() );
+
+      if( faceCoordinates == targetCoordinates )
+      {
+        neighbors.emplace_back( meshIdxToGlobalId3D.at( candidate.first ) );
+        break;
+      }
+    }
+  }
+
+  return neighbors;
 }
 
 /**
@@ -1024,6 +1202,18 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
   ArrayOfArrays< localIndex, int64_t > neighbors2Dto3D;
   neighbors2Dto3D.reserve( cells2DIndices.size() );
 
+  // Build a coordinate lookup for meshes with duplicated/collocated points.
+  // This is only needed when the input contains 2D cells; the lookup is
+  // deliberately kept local to this redistribution step.
+  stdUnorderedMap< VTKPointCoordinate, stdVector< vtkIdType >, VTKPointCoordinateHash > pointsByCoordinate;
+  pointsByCoordinate.reserve( mesh.GetNumberOfPoints() );
+  for( vtkIdType pointId = 0; pointId < mesh.GetNumberOfPoints(); ++pointId )
+  {
+    pointsByCoordinate.get_inserted( getPointCoordinate( mesh, pointId ) ).emplace_back( pointId );
+  }
+  stdUnorderedMap< vtkIdType, stdVector< vtkIdType > > pointTo3DCells;
+  pointTo3DCells.reserve( mesh.GetNumberOfPoints() );
+
   // Topology statistics
   localIndex numStandalone = 0;
   localIndex numBoundary = 0;       // 1 neighbor
@@ -1057,6 +1247,22 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
         neighbor3DGlobalIds.emplace_back( it->second );
       }
       // Non-3D neighbors (2D/1D/0D) are silently skipped
+    }
+
+    // If point ids were duplicated at a split interface, the exact lookup
+    // above can miss one or both physical neighbors. Prefer the geometric
+    // connectivity whenever it is available, and retain the exact result
+    // as a fallback for meshes whose coordinates are not bitwise identical.
+    stdVector< int64_t > coordinateNeighborGlobalIds = find2DTo3DNeighborsByCoordinates(
+      mesh,
+      pointIds2D,
+      meshIdxToGlobalId3D,
+      pointsByCoordinate,
+      pointTo3DCells );
+    if( !coordinateNeighborGlobalIds.empty() )
+    {
+      neighbor3DGlobalIds.clear();
+      neighbor3DGlobalIds.insert( 0, coordinateNeighborGlobalIds.begin(), coordinateNeighborGlobalIds.end() );
     }
 
     // Update topology statistics
@@ -1798,7 +2004,56 @@ redistributeByKdTree( vtkDataSet & mesh )
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
   rdsf->SetInputDataObject( &mesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
-  rdsf->Update();
+  vtkSmartPointer< vtkMultiProcessController > controller = getController();
+  rdsf->SetController( controller );
+#if VTK_VERSION_NUMBER == VTK_VERSION_CHECK( 9, 7, 0 )
+  // VTK 9.7 computes its cuts from dataset bounds but balances cell centers.
+  // Some valid GEOS meshes have cell centers outside those bounds, which makes
+  // VTK's DIY KdTree abort while building its local histogram. Extend VTK's
+  // normal inflated domain to include those centers before generating cuts.
+  vtkNew< vtkCellCenters > cellCenters;
+  cellCenters->SetInputData( &mesh );
+  cellCenters->Update();
+  double cellCenterBounds[6];
+  cellCenters->GetOutput()->GetBounds( cellCenterBounds );
+  vtkBoundingBox localBounds;
+  localBounds.AddBounds( mesh.GetBounds() );
+  if( localBounds.IsValid() )
+  {
+    double constexpr boundingBoxLengthTolerance = 0.01;
+    double constexpr boundingBoxInflationRatio = 0.01;
+    double const xInflate = localBounds.GetLength( 0 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 0 );
+    double const yInflate = localBounds.GetLength( 1 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 1 );
+    double const zInflate = localBounds.GetLength( 2 ) < boundingBoxLengthTolerance
+                            ? boundingBoxLengthTolerance
+                            : boundingBoxInflationRatio * localBounds.GetLength( 2 );
+    localBounds.Inflate( xInflate, yInflate, zInflate );
+  }
+  localBounds.AddBounds( cellCenterBounds );
+  double correctedBounds[6];
+  double const * correctedBoundsPtr = nullptr;
+  if( localBounds.IsValid() )
+  {
+    localBounds.GetBounds( correctedBounds );
+    correctedBoundsPtr = correctedBounds;
+  }
+  auto const cuts = vtkDIYKdTreeUtilities::GenerateCuts(
+    &mesh, MpiWrapper::commSize(), true, controller, correctedBoundsPtr );
+  rdsf->SetUseExplicitCuts( true );
+  rdsf->SetExplicitCuts( cuts );
+#endif
+  {
+    // vtkRedistributeDataSetFilter uses VTK's XML writer internally to
+    // serialize datasets exchanged by DIY. The writer may raise floating-point
+    // exceptions while calculating progress for empty arrays. These exceptions
+    // are harmless to VTK, but GEOS' enabled FPE traps turn them into SIGFPE.
+    LvArray::system::FloatingPointExceptionGuard guard;
+    rdsf->Update();
+  }
 
   vtkSmartPointer< vtkDataSet > result = vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
 
@@ -3214,6 +3469,14 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
+  GEOS_ERROR_IF( vtkArray == nullptr, "Cannot import a field from a null VTK array" );
+  GEOS_ERROR_IF( cellIds.size() > static_cast< std::size_t >( vtkArray->GetNumberOfTuples() ),
+                 GEOS_FMT( "VTK field '{}' has {} tuples, but {} cells were requested during import",
+                           vtkArray->GetName(), vtkArray->GetNumberOfTuples(), cellIds.size() ) );
+  GEOS_ERROR_IF( cellIds.size() > static_cast< std::size_t >( wrapper.size() ),
+                 GEOS_FMT( "Destination wrapper for VTK field '{}' has {} entries, but {} cells were requested during import",
+                           vtkArray->GetName(), wrapper.size(), cellIds.size() ) );
+
   using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > > >;
   types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
@@ -3246,7 +3509,12 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
 void importRegularField( vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
-  stdVector< vtkIdType > cellIds( wrapper.size() );
+  GEOS_ERROR_IF( vtkArray == nullptr, "Cannot import a field from a null VTK array" );
+
+  // The destination may contain ghost entries in addition to the local VTK cells.
+  // Import only the tuples present in the VTK array; ghost entries are populated by
+  // the subsequent field synchronization.
+  stdVector< vtkIdType > cellIds( static_cast< std::size_t >( vtkArray->GetNumberOfTuples() ) );
   std::iota( cellIds.begin(), cellIds.end(), 0 );
   return importRegularField( cellIds, vtkArray, wrapper );
 }

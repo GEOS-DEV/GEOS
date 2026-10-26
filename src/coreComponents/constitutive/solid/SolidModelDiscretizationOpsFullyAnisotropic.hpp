@@ -65,6 +65,15 @@ struct SolidModelDiscretizationOpsFullyAnisotropic : public SolidModelDiscretiza
     LvArray::tensorOps::scale< 6, 6 >( m_c, scale );
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  void computeTemperatureDerivative( real64 const thermalExpansionCoefficient, real64 ( & dStress_dT )[6] ) const
+  {
+    for( int i = 0; i < 6; ++i )
+    {
+      dStress_dT[i] = -thermalExpansionCoefficient * ( m_c[i][0] + m_c[i][1] + m_c[i][2] );
+    }
+  }
 
   real64 m_c[6][6];
 };
