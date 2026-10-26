@@ -197,7 +197,7 @@ set( fluidFlowSolvers_sources
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
-# Remove the old generator-based hybrid flux/dirichlet kernels and switch to macro approach
+# Generate compositional and hybrid kernel instantiations.
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList 
      ReactiveCompositionalMultiphaseOBLKernels.cpp.template
@@ -212,6 +212,59 @@ set( kernelTemplateFileList
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+  # Expand every component range to the build limit, keeping its lower bound.
+  string( JSON firstComponent ERROR_VARIABLE componentError
+          GET "${kernelSpecs}" ${jsonKey} combinations NCOMP 0 )
+  if( NOT componentError )
+    set( componentCounts "[]" )
+    set( componentIndex 0 )
+    set( componentLimit ${GEOS_MAX_FLUID_COMPONENTS} )
+    string( JSON componentLimitName ERROR_VARIABLE limitError GET "${kernelSpecs}" ${jsonKey} NCOMP_LIMIT )
+    if( NOT limitError )
+      set( componentLimit ${${componentLimitName}} )
+    endif()
+    foreach( component RANGE ${firstComponent} ${componentLimit} )
+      string( JSON componentCounts SET "${componentCounts}" ${componentIndex} ${component} )
+      math( EXPR componentIndex "${componentIndex} + 1" )
+    endforeach()
+    string( JSON kernelSpecs SET "${kernelSpecs}" ${jsonKey} combinations NCOMP "${componentCounts}" )
+  endif()
+  # Generate only the NAME#NCOMP#FLUID_TYPE combinations each fluid can dispatch.
+  string( JSON componentBounds ERROR_VARIABLE boundsError GET "${kernelSpecs}" ${jsonKey} NCOMP_BOUNDS )
+  if( NOT boundsError )
+    string( JSON combinations GET "${kernelSpecs}" ${jsonKey} combinations )
+    string( JSON nameCount LENGTH "${combinations}" NAME )
+    string( JSON fluidCount LENGTH "${combinations}" FLUID_TYPE )
+    math( EXPR lastName "${nameCount} - 1" )
+    math( EXPR lastFluid "${fluidCount} - 1" )
+    set( explicitCombinations "[]" )
+    set( explicitIndex 0 )
+    foreach( nameIndex RANGE ${lastName} )
+      string( JSON kernelName GET "${combinations}" NAME ${nameIndex} )
+      foreach( fluidIndex RANGE ${lastFluid} )
+        string( JSON fluidType GET "${combinations}" FLUID_TYPE ${fluidIndex} )
+        set( lowerBound ${firstComponent} )
+        set( upperBound ${componentLimit} )
+        string( JSON fluidBounds ERROR_VARIABLE fluidBoundsError GET "${componentBounds}" ${fluidType} )
+        if( NOT fluidBoundsError )
+          string( JSON lowerBound GET "${fluidBounds}" 0 )
+          string( JSON fluidMax GET "${fluidBounds}" 1 )
+          if( fluidMax LESS upperBound )
+            set( upperBound ${fluidMax} )
+          endif()
+        endif()
+        if( lowerBound LESS_EQUAL upperBound )
+          foreach( component RANGE ${lowerBound} ${upperBound} )
+            string( JSON explicitCombinations SET "${explicitCombinations}" ${explicitIndex}
+                    "\"${kernelName}#${component}#${fluidType}\"" )
+            math( EXPR explicitIndex "${explicitIndex} + 1" )
+          endforeach()
+        endif()
+      endforeach()
+    endforeach()
+    string( JSON kernelSpecs SET "${kernelSpecs}" ${jsonKey} combinations "{}" )
+    string( JSON kernelSpecs SET "${kernelSpecs}" ${jsonKey} explicit "${explicitCombinations}" )
+  endif()
   generateKernels( TEMPLATE ${kernelTemplateFile}
                    JSON kernelSpecs
                    KEY ${jsonKey}
