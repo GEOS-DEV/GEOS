@@ -9,6 +9,10 @@ PR #4169 (2026-10-23) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Fix surface generator splitting for contact mechanics case with wells
 
+PR #4005 (2026-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4005-17824-bac337a.tar.gz>
+=====================
+Added a `Group` statistics layer for sets statistics
+
 PR #4155 (2026-10-22) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4155-17777-be35229.tar.gz>
 =====================
 Add the missing restart baselines for the injection, production, and combined

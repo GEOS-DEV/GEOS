@@ -13,62 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file CompositionalMultiphaseStatistics.cpp
- * @details Region statistics data is stored as follow:
-
- * Problem : ProblemManager
- * |-> domain : DomainPartition
- *     |-> MeshBodies : Group
- *         |-> cartesianMesh : MeshBody
- *             |-> meshLevels : Group
- *                 |-> Level0 : MeshLevel
- *                 |   |-> nodeManager : NodeManager
- *                 |   |   |-> sets : Group
- *                 |   |       | * all : Wrapper< index array >
- *                 |   |       | * xneg : Wrapper< index array >
- *                 |   |       [...] (other element sets)
- *                 |   |
- *                 |   |-> ElementRegions : ElementRegionManager
- *                 |   |   |-> Channel : CellElementRegion
- *                 |   |   |   |-> cb-0_0_0 : CellElementSubRegion
- *                 |   |   |   |   | * pressure : Wrapper< real64 array >
- *                 |   |   |   |   | * temperature : Wrapper< real64 array >
- *                 |   |   |   |   [...] (other fields)
- *                 |   |   |   |
- *                 |   |   |   |-> cb-0_0_1 : CellElementSubRegion
- *                 |   |   |   |   | * pressure : Wrapper< real64 array >
- *                 |   |   |   |   | * temperature : Wrapper< real64 array >
- *                 |   |   |   |   [...] (other fields)
- *                 |   |   |   |
- *                 |   |   |   [...] (other sub-regions)
- *                 |   |   |
- *                 |   |   |-> Barrier : CellElementRegion
- *                 |   |       |-> cb-1_0_0 : CellElementSubRegion
- *                 |   |       |-> cb-1_0_1 : CellElementSubRegion
- *                 |   |       [...] (other sub-regions)
- *                 |   |
- *                 |   [...] (other element managers)
- *          ____   |   |
- *          |      |   |-> statistics : Group (storage for all stats)
- *          |      |       |-> compFlowStats : Group (storage for this instance stats)
- *          |      |       |   |-> cflStatistics : CFLStatistics
- *          |      |       |   |-> regionsStatistics : RegionStatistics (aggregate)
- *          |      |       |       |-> Channel : RegionStatistics (aggregate, mpi reduced)
- *          |      |       |       |   |-> cb-0_0_0 : RegionStatistics (compute read-back)
- *  stats   |      |       |       |   |-> cb-0_0_1 : RegionStatistics (compute read-back)
- *  data -> |      |       |       |   [...] (other sub-regions stats)
- *          |      |       |       |
- *          |      |       |       |-> Barrier : RegionStatistics (aggregate, mpi reduced)
- *          |      |       |           |-> cb-1_0_0 : RegionStatistics (compute read-back)
- *          |      |       |           |-> cb-1_0_1 : RegionStatistics (compute read-back)
- *          |      |       |           [...] (other sub-regions stats)
- *          |      |       |
- *          |___   |       [...] (other stats storages)
- *                 |
- *                 [...] (other discretizations)
- */
-
 #include "CompositionalMultiphaseStatisticsAggregator.hpp"
 
 #include "physicsSolvers/StatisticsAggregatorBaseHelpers.hpp"
@@ -88,10 +32,11 @@ namespace compositionalMultiphaseStatistics
 
 RegionStatistics::RegionStatistics( string const & name,
                                     dataRepository::Group * const parent,
-                                    bool statsOutputEnabled,
+                                    string_view setName,
+                                    bool dataOutputEnabled,
                                     integer const numPhases,
                                     integer const numComponents ):
-  RegionStatisticsBase( name, parent, statsOutputEnabled ),
+  RegionStatisticsBase( name, parent, setName, dataOutputEnabled ),
   m_phaseDynamicPoreVolume( numPhases ),
   m_phaseMass( numPhases ),
   m_trappedPhaseMass( numPhases ),
@@ -105,16 +50,19 @@ RegionStatistics::RegionStatistics( string const & name,
 
 CFLStatistics::CFLStatistics( string const & name,
                               dataRepository::Group * const parent,
-                              bool const statsOutputEnabled ):
-  RegionStatisticsBase( name, parent, statsOutputEnabled )
+                              bool const dataOutputEnabled ):
+  RegionStatisticsBase( name,
+                        parent,
+                        "", // for now, CFL numbers are not for given sets
+                        dataOutputEnabled )
 {
   // TODO : registerWrappers to store results in HDF5 (but need repairing of 1D HDF5 outputs)
 }
 
 StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
                                   dataRepository::Group & meshBodies,
-                                  bool const statsOutputEnabled ):
-  Base( ownerDataContext, meshBodies, statsOutputEnabled ),
+                                  bool const dataOutputEnabled ):
+  Base( ownerDataContext, meshBodies, dataOutputEnabled ),
   m_params()
 {}
 
@@ -127,20 +75,23 @@ void StatsAggregator::initStatisticsAggregation( CompositionalMultiphaseBase & s
   Base::initStatisticsAggregation( solver );
 }
 
-void StatsAggregator::enableRegionStatisticsAggregation()
+void StatsAggregator::enableRegionStatisticsAggregation( string_array const & setNames )
 {
   auto const registerStats = [=, this] ( Group & parent,
-                                         string const & targetName ) -> RegionStatistics &
+                                         string const & targetName,
+                                         string_view setName,
+                                         bool const dataOutputEnabled ) -> RegionStatistics &
   {
     return parent.registerGroup( targetName,
                                  std::make_unique< RegionStatistics >( targetName,
                                                                        &parent,
-                                                                       m_statsOutputEnabled,
+                                                                       setName,
+                                                                       dataOutputEnabled,
                                                                        m_numPhases,
                                                                        m_numComponents ) );
   };
 
-  Base::enableRegionStatisticsAggregation( registerStats );
+  Base::enableRegionStatisticsAggregation( registerStats, setNames );
 }
 
 void StatsAggregator::enableCFLStatistics()
@@ -157,7 +108,7 @@ void StatsAggregator::enableCFLStatistics()
     statisticsGroup.registerGroup< CFLStatistics >( cflStatsName,
                                                     std::make_unique< CFLStatistics >( cflStatsName,
                                                                                        &statisticsGroup,
-                                                                                       m_statsOutputEnabled ) );
+                                                                                       m_dataOutputEnabled ) );
   }
 
   m_cflStatsState.m_isEnabled = true;
@@ -218,6 +169,8 @@ void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) c
 {
   stats.m_time = time;
 
+  stats.m_elemCount = 0;
+
   stats.m_averagePressure = 0.0;
   stats.m_maxPressure = 0.0;
   stats.m_minPressure = LvArray::NumericLimits< real64 >::max;
@@ -244,7 +197,8 @@ void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) c
 }
 
 void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegion,
-                                                 RegionStatistics & subRegionStats ) const
+                                                 RegionStatistics & subRegionStats,
+                                                 SetType const & targetSet ) const
 {
   arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -274,7 +228,7 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
 
   isothermalCompositionalMultiphaseBaseKernels::
     StatisticsKernel::
-    launch< parallelDevicePolicy<> >( subRegion.size(),
+    launch< parallelDevicePolicy<> >( targetSet.toViewConst(),
                                       m_numComponents,
                                       m_numPhases,
                                       m_params.m_relpermThreshold,
@@ -290,6 +244,7 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                       phaseVolFrac,
                                       phaseTrappedVolFrac,
                                       phaseRelperm,
+                                      subRegionStats.m_elemCount,
                                       subRegionStats.m_minPressure,
                                       subRegionStats.m_averagePressure,
                                       subRegionStats.m_maxPressure,
@@ -309,6 +264,8 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
 void StatsAggregator::aggregateStats( RegionStatistics & stats,
                                       RegionStatistics const & other ) const
 {
+  stats.m_elemCount += other.m_elemCount;
+
   stats.m_averagePressure += other.m_averagePressure;
   stats.m_minPressure = LvArray::math::min( stats.m_minPressure, other.m_minPressure );
   stats.m_maxPressure = LvArray::math::max( stats.m_maxPressure, other.m_maxPressure );
@@ -338,6 +295,8 @@ void StatsAggregator::aggregateStats( RegionStatistics & stats,
 
 void StatsAggregator::mpiAggregateStats( RegionStatistics & stats ) const
 {
+  stats.m_elemCount = MpiWrapper::sum( stats.m_elemCount );
+
   stats.m_averagePressure = MpiWrapper::sum( stats.m_averagePressure );
   stats.m_minPressure = MpiWrapper::min( stats.m_minPressure );
   stats.m_maxPressure = MpiWrapper::max( stats.m_maxPressure );
