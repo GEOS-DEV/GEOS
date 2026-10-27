@@ -23,6 +23,7 @@
 
 #if defined(GEOS_USE_HYPRE) && !defined(GEOS_USE_CUDA) && !defined(GEOS_USE_HIP)
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
+#include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #endif
 #if defined(GEOS_USE_HIP) && defined(GEOS_USE_HYPREDRV)
@@ -263,6 +264,46 @@ TEST( HypreSolver, KeepsSetupDummyTagsAlive )
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     EXPECT_NE( output.find( "L2 norm of b0" ), std::string::npos );
+  }
+}
+
+TEST( HyprePreconditioner, IndependentAmgIluLevels )
+{
+  using AMG = LinearSolverParameters::AMG;
+  HypreMatrix matrix;
+  geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOS, 20, matrix );
+
+  for( integer const levels : { -1, 0, 1 } )
+  {
+    SCOPED_TRACE( levels );
+    LinearSolverParameters params = params_GMRES_AMG();
+    params.amg.smootherType = AMG::SmootherType::iluk;
+    params.amg.iluSmoothingLevels = levels;
+    params.amg.backgroundSmootherType = AMG::SmootherType::jacobi;
+    params.amg.coarseType = AMG::CoarseType::l1sgs;
+    HyprePreconditioner preconditioner( params );
+    preconditioner.setup( matrix );
+
+    HYPRE_Solver const amg = preconditioner.unwrapped().ptr;
+    HYPRE_Int smoothLevels = 0;
+    ASSERT_EQ( HYPRE_BoomerAMGGetSmoothNumLevels( amg, &smoothLevels ), 0 );
+    if( levels < 0 )
+    {
+      EXPECT_GT( smoothLevels, 1 );
+    }
+    else
+    {
+      EXPECT_EQ( smoothLevels, levels );
+      for( HYPRE_Int const cycle : { 1, 2 } )
+      {
+        HYPRE_Int relaxType = -1;
+        ASSERT_EQ( HYPRE_BoomerAMGGetCycleRelaxType( amg, &relaxType, cycle ), 0 );
+        EXPECT_EQ( relaxType, hypre::getAMGRelaxationType( params.amg.backgroundSmootherType ) );
+      }
+    }
+    HYPRE_Int coarseType = -1;
+    ASSERT_EQ( HYPRE_BoomerAMGGetCycleRelaxType( amg, &coarseType, 3 ), 0 );
+    EXPECT_EQ( coarseType, hypre::getAMGCoarseType( params.amg.coarseType ) );
   }
 }
 #endif

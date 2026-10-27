@@ -355,6 +355,16 @@ This section provides a brief description of the available preconditioners.
 
 * **Block**: custom preconditioner designed for a 2 x 2 block matrix.
 
+For native HYPRE AMG with ``amgSmootherType="iluk"`` or ``"ilut"``,
+``amgILUSmoothingLevels="1"`` restricts ILU to the finest level without
+truncating the hierarchy or changing the coarse solver. ``0`` disables ILU;
+the default ``-1`` preserves ILU on all eligible levels.
+``amgBackgroundSmootherType`` selects relaxation on the remaining levels:
+``jacobi``, ``l1jacobi`` (default), or ``chebyshev``. An explicit level count
+uses the native HYPRE fallback when hypredrive generates its input;
+an explicit ``hypredriveInputFile`` remains authoritative. PETSc and Trilinos
+ignore these controls.
+
 ************************
 HYPRE MGR Preconditioner
 ************************

@@ -149,7 +149,21 @@ void createAMG( LinearSolverParameters const & params,
   {
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothType( precond.ptr, 5 ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetILUType( precond.ptr, hypre::getILUType( params.amg.smootherType ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothNumLevels( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.amg.maxLevels ) ) );
+    if( params.amg.iluSmoothingLevels >= 0 )
+    {
+      // Set background relaxation without changing the coarsest-level solver.
+      HYPRE_Int const relaxType = hypre::getAMGRelaxationType( params.amg.backgroundSmootherType );
+      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( precond.ptr, relaxType, 1 ) );
+      GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( precond.ptr, relaxType, 2 ) );
+      if( params.amg.backgroundSmootherType == LinearSolverParameters::AMG::SmootherType::chebyshev &&
+          0 < params.amg.numSweeps && params.amg.numSweeps < 5 )
+      {
+        // Match the existing Chebyshev smoother's use of numSweeps as its order.
+        GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.amg.numSweeps ) ) );
+      }
+    }
+    integer const iluSmoothingLevels = params.amg.iluSmoothingLevels < 0 ? params.amg.maxLevels : params.amg.iluSmoothingLevels;
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothNumLevels( precond.ptr, LvArray::integerConversion< HYPRE_Int >( iluSmoothingLevels ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothNumSweeps( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.amg.numSweeps ) ) );
   }
   else

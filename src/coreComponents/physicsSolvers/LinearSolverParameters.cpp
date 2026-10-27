@@ -731,6 +731,16 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "AMG smoother type. Available options are: "
                     "``" + EnumStrings< LinearSolverParameters::AMG::SmootherType >::concat( "``, ``" ) + "``" );
 
+  registerWrapper( viewKeyStruct::amgILUSmoothingLevelsString(), &m_parameters.amg.iluSmoothingLevels ).
+    setApplyDefaultValue( m_parameters.amg.iluSmoothingLevels ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Hypre AMG ILU smoothing levels: -1 preserves all eligible levels; 0 disables ILU; 1 selects only the finest level without truncating the hierarchy" );
+
+  registerWrapper( viewKeyStruct::amgBackgroundSmootherString(), &m_parameters.amg.backgroundSmootherType ).
+    setApplyDefaultValue( m_parameters.amg.backgroundSmootherType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Hypre AMG ordinary smoother below explicitly selected ILU levels: jacobi, l1jacobi, or chebyshev; ignored when amgILUSmoothingLevels=-1" );
+
   registerWrapper( viewKeyStruct::amgRelaxWeight(), &m_parameters.amg.relaxWeight ).
     setApplyDefaultValue( m_parameters.amg.relaxWeight ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -872,6 +882,22 @@ void LinearSolverParametersInput::postInputInitialization()
   GEOS_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0,
                         "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::amgNumSweepsString() ) );
+  GEOS_ERROR_IF( ( m_parameters.amg.iluSmoothingLevels < -1 ) ||
+                 m_parameters.amg.iluSmoothingLevels > m_parameters.amg.maxLevels,
+                 GEOS_FMT( "amgILUSmoothingLevels must be -1 or between 0 and the AMG hierarchy maximum {}.", m_parameters.amg.maxLevels ),
+                 getWrapperDataContext( viewKeyStruct::amgILUSmoothingLevelsString() ) );
+  GEOS_ERROR_IF( m_parameters.amg.iluSmoothingLevels >= 0 &&
+                 ( m_parameters.preconditionerType != LinearSolverParameters::PreconditionerType::amg ||
+                   ( m_parameters.amg.smootherType != LinearSolverParameters::AMG::SmootherType::iluk &&
+                     m_parameters.amg.smootherType != LinearSolverParameters::AMG::SmootherType::ilut ) ),
+                 "Explicit amgILUSmoothingLevels requires preconditionerType=amg with amgSmootherType=iluk or ilut.",
+                 getWrapperDataContext( viewKeyStruct::amgILUSmoothingLevelsString() ) );
+  GEOS_ERROR_IF( m_parameters.amg.iluSmoothingLevels >= 0 &&
+                 m_parameters.amg.backgroundSmootherType != LinearSolverParameters::AMG::SmootherType::jacobi &&
+                 m_parameters.amg.backgroundSmootherType != LinearSolverParameters::AMG::SmootherType::l1jacobi &&
+                 m_parameters.amg.backgroundSmootherType != LinearSolverParameters::AMG::SmootherType::chebyshev,
+                 "amgBackgroundSmootherType must be jacobi, l1jacobi, or chebyshev when amgILUSmoothingLevels is explicit.",
+                 getWrapperDataContext( viewKeyStruct::amgBackgroundSmootherString() ) );
   GEOS_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0,
                         "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::amgThresholdString() ) );
@@ -960,6 +986,11 @@ void LinearSolverParametersInput::print() const
     tableData.addRow( "  Strength-of-connection threshold", m_parameters.amg.threshold );
     tableData.addRow( "  Apply separate component filter for multi-variable problems", m_parameters.amg.separateComponents );
     tableData.addRow( "  Near null space approximation", m_parameters.amg.nullSpaceType );
+    if( m_parameters.amg.iluSmoothingLevels >= 0 )
+    {
+      tableData.addRow( "  Finest ILU smoothing levels", m_parameters.amg.iluSmoothingLevels );
+      tableData.addRow( "  Background smoother below ILU levels", m_parameters.amg.backgroundSmootherType );
+    }
   }
   else if( m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::iluk ||
            m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::ilut )

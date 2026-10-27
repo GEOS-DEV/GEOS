@@ -374,6 +374,28 @@ TEST( HypredriveYaml, AmgIluSmootherDisablesRcm )
   EXPECT_NE( target.argument.find( "reordering: 0" ), std::string::npos );
 }
 
+TEST( HypredriveYaml, ExplicitAmgIluLevelsRequireNativeFallback )
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::iluk;
+
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+  for( integer const levels : { 0, 1, 2 } )
+  {
+    params.amg.iluSmoothingLevels = levels;
+    EXPECT_FALSE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+  }
+
+  // An explicit input file still owns all solver configuration.
+  params.hypredriveInputFile = Path( "amg.yml" );
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+  EXPECT_EQ( target.source, hypre::hypredrive::InputSource::authoritativeFile );
+  EXPECT_EQ( target.argument, "amg.yml" );
+}
+
 TEST( HypredriveYaml, MapsFGSAndBGSRelaxationNames )
 {
   LinearSolverParameters params;

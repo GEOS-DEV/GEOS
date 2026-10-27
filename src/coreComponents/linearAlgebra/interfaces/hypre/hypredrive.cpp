@@ -821,6 +821,13 @@ bool buildAMGPreconditionerYaml( LinearSolverParameters const & params,
 {
   using AMG = LinearSolverParameters::AMG;
 
+  // The generated ILU-smoother YAML does not configure background relaxation.
+  // Use native hypre for an explicit level policy rather than silently ignoring it.
+  if( params.amg.iluSmoothingLevels >= 0 )
+  {
+    return false;
+  }
+
   if( params.amg.nullSpaceType == AMG::NullSpaceType::rigidBodyModes )
   {
     return false;

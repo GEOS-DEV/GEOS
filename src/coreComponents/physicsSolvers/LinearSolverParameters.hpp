@@ -122,6 +122,10 @@ public:
     static constexpr char const * amgNumSweepsString() { return "amgNumSweeps"; }
     /// AMG smoother type key
     static constexpr char const * amgSmootherString() { return "amgSmootherType"; }
+    /// Number of finest AMG levels using ILU (-1 preserves legacy selection)
+    static constexpr char const * amgILUSmoothingLevelsString() { return "amgILUSmoothingLevels"; }
+    /// Ordinary smoother below explicitly selected ILU levels
+    static constexpr char const * amgBackgroundSmootherString() { return "amgBackgroundSmootherType"; }
     /// AMG smoother relax factor key
     static constexpr char const * amgRelaxWeight() { return "amgRelaxWeight"; }
     /// AMG coarse solver key

@@ -266,6 +266,8 @@ struct LinearSolverParameters
 #endif
 
     integer maxLevels = 20;                                         ///< Maximum number of coarsening levels
+    integer iluSmoothingLevels = -1;                                ///< Finest ILU smoothing levels (-1: all eligible levels)
+    SmootherType backgroundSmootherType = SmootherType::l1jacobi;      ///< Hypre relaxation below explicitly selected ILU levels
     integer numCycles = 1;                                          ///< Number of multigrid cycles
     CycleType cycleType = CycleType::V;                             ///< AMG cycle type
     CoarseType coarseType = CoarseType::direct;                     ///< Coarse-level solver/smoother

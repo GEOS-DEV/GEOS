@@ -2198,6 +2198,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="amgSeparateComponents" type="integer" default="0" />
 		<!--amgSmootherType => AMG smoother type. Available options are: ``default``, ``jacobi``, ``l1jacobi``, ``fgs``, ``bgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``iluk``, ``ilut``, ``ick``, ``ict``-->
 		<xsd:attribute name="amgSmootherType" type="geos_LinearSolverParameters_AMG_SmootherType" default="l1sgs" />
+		<!--amgILUSmoothingLevels => Hypre AMG ILU smoothing levels: -1 preserves all eligible levels; 0 disables ILU; 1 selects only the finest level without truncating the hierarchy-->
+		<xsd:attribute name="amgILUSmoothingLevels" type="integer" default="-1" />
+		<!--amgBackgroundSmootherType => Hypre AMG ordinary smoother below explicitly selected ILU levels: jacobi, l1jacobi, or chebyshev; ignored when amgILUSmoothingLevels=-1-->
+		<xsd:attribute name="amgBackgroundSmootherType" type="geos_LinearSolverParameters_AMG_SmootherType" default="l1jacobi" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
 		<!--chebyshevEigNumIter => Number of eigenvalue estimation CG iterations-->
