@@ -191,8 +191,8 @@ TEST( testMpiTables, testSortingMethod )
   }
 
   TableTextMpiFormatter formatter = TableTextMpiFormatter( layout, mpiLayout );
-  formatter.setSortingFunc( []( std::vector< TableData::CellData > const & row1,
-                                std::vector< TableData::CellData > const & row2 ) {
+  formatter.setSortingFunc( []( stdVector< TableData::CellData > const & row1,
+                                stdVector< TableData::CellData > const & row2 ) {
     return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
   } );
 
