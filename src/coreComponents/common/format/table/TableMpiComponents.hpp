@@ -70,7 +70,7 @@ public:
    * @param outputStream The target output stream for rank 0, to output the table string representation
    *                     of the TableData. Each rank contributing to the common rank 0 output stream
    *                     with their local data. It may be the log or a file stream.
-   * @note This method must be called by all MPI ranks. 
+   * @note This method must be called by all MPI ranks.
    *       Row ordering is set with setSortingFunc().
    */
   template< typename DATASOURCE >
@@ -131,7 +131,7 @@ private:
   void gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
                                             CellLayoutRows const & dataCellsLayout,
                                             PreparedTableLayout const & tableLayout,
-                                            TableTextMpiFormatter::Status & status )const;
+                                            TableTextMpiFormatter::Status & status ) const;
 };
 
 }
