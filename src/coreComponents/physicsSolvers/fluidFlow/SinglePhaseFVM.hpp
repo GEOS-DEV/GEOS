@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVM_HPP_
 
+#include "physicsSolvers/fluidFlow/FlowSolverUtilities.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBase.hpp"
 
@@ -51,6 +52,7 @@ public:
   // have to use this->member etc.
   using BASE::m_numDofPerCell;
   using BASE::m_isThermal;
+  using BASE::m_scalingType;
 
   /**
    * @brief main constructor for Group Objects
@@ -193,6 +195,12 @@ public:
 
   virtual void initializePreSubGroups() override;
 
+  struct viewKeyStruct : BASE::viewKeyStruct
+  {
+    // nonlinear solver parameters
+    static constexpr char const * scalingTypeString() { return "scalingType"; }
+  };
+
 private:
 
   /**
@@ -210,8 +218,6 @@ private:
                              DomainPartition & domain,
                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                              arrayView1d< real64 > const & localRhs );
-
-  // no data needed here, see SinglePhaseBase
 
 };
 
