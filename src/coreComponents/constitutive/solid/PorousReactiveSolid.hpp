@@ -31,7 +31,6 @@
 #include "constitutive/diffusion/DamageDiffusion.hpp"
 
 #include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
-#include "constitutive/fluid/singlefluid/CompressibleSinglePhaseFluid.hpp"
 
 namespace geos
 {
@@ -317,10 +316,9 @@ private:
     mechanicsStrainIncrement[5] = strainIncrement[5];
 
     // Add the contributions of pore material stress/pressure
+    // The Biot coefficient already accounts for damage: the porosity model evaluates it from the degraded bulk
+    // modulus, alpha(d) = 1 - g(d) K / K_s (see updateBiotCoefficientAndAssignModuli)
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-
-    // Degrade Biot coupling in step with the elastic stiffness degradation
-    real64 const damagedBiotCoefficient = getDegradationValue( k, q ) * biotCoefficient + ( 1.0 - getDegradationValue( k, q ) );
 
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
@@ -366,10 +364,10 @@ private:
     real64 const totalPorePressure = pressure + mineralPressure;
 
     // Add the contributions of pressure to the total stress
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -damagedBiotCoefficient * totalPorePressure );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * totalPorePressure );
 
     // Add the contributions of mineral pressure to the volumetric part of the stiffness
-    real64 const dTotalStress_dVolStrain = damagedBiotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
+    real64 const dTotalStress_dVolStrain = biotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
     if constexpr ( std::is_same_v< DiscretizationOps, SolidModelDiscretizationOpsFullyAnisotropic > )
     {
       for( int i = 0; i < 3; ++i )

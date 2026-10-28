@@ -48,11 +48,6 @@ PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::PorousReactiveSolid( st
       setInputFlag( InputFlags::REQUIRED ).
       setDescription( "Name of the diffusion constitutive model" );
   }
-  
-  this->registerWrapper( "fluidModelName", &m_fluidModelName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fluid constitutive model. Its (constant) compressibility "
-                    "is handed to the porosity model for the pore-mineral-pressure / porosity coupling." );
 }
 
 template< typename SOLID_TYPE,
@@ -63,26 +58,6 @@ void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::initializeState() 
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializeState();
 }
 
-template< typename SOLID_TYPE,
-          typename PERM_TYPE,
-          typename DIFF_TYPE >
-void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::initializePreSubGroups()
-{
-  CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializePreSubGroups();
-
-  // Read the fluid's (constant) compressibility and hand it to the porosity model, which needs the
-  // fluid bulk modulus for the pore-mineral-pressure / porosity coupling.
-  CompressibleSinglePhaseFluid const & fluid =
-    this->getParent().template getGroup< CompressibleSinglePhaseFluid >( m_fluidModelName );
-  GEOS_THROW_IF_LE_MSG( fluid.compressibility(), 0.0,
-                        GEOS_FMT( "fluid model '{}' must have a positive compressibility, "
-                                  "since the porosity model uses the fluid bulk modulus 1/compressibility",
-                                  m_fluidModelName ),
-                        InputError, this->getDataContext() );
-  BiotReactivePorosity & porosity =
-    dynamicCast< BiotReactivePorosity & >( this->getBasePorosityModel() );
-  porosity.setFluidCompressibility( fluid.compressibility() );
-}
 
 // Register all PorousReactiveSolid model types.
 typedef PorousReactiveSolid< ElasticIsotropic, ConstantPermeability > PorousReactiveElasticIsotropicConstant;

@@ -292,10 +292,13 @@ private:
     // So we ignore the derivatives wrt pressure and temperature
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
+    // anelasticStrainIncrement is the volumetric inelastic strain (mineral volume change per bulk volume)
+    real64 const anelasticNormalStrainIncrement = anelasticStrainIncrement / 3.0;
+
     real64 mechanicsStrainIncrement[6]{};
-    mechanicsStrainIncrement[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
-    mechanicsStrainIncrement[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
-    mechanicsStrainIncrement[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
+    mechanicsStrainIncrement[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticNormalStrainIncrement;
+    mechanicsStrainIncrement[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticNormalStrainIncrement;
+    mechanicsStrainIncrement[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticNormalStrainIncrement;
     mechanicsStrainIncrement[3] = strainIncrement[3];
     mechanicsStrainIncrement[4] = strainIncrement[4];
     mechanicsStrainIncrement[5] = strainIncrement[5];

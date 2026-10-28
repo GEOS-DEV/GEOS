@@ -26,15 +26,13 @@
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"
-      fluidModelName="water"/>
+      permeabilityModelName="rockPerm"/>
 
     <PorousReactiveElasticIsotropic
       name="reactiveRock"
       solidModelName="rockSolid"
       porosityModelName="rockReactivePorosity"
-      permeabilityModelName="rockPerm"
-      fluidModelName="water"/>
+      permeabilityModelName="rockPerm"/>
 
     <ElasticIsotropic
       name="rockSolid"
