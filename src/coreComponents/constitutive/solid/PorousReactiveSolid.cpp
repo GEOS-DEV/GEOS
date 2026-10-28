@@ -66,6 +66,8 @@ typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, ConstantPermeab
 typedef PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, ConstantPermeability > PorousReactiveDamageVolDevConstant;
 
 typedef PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > PorousReactiveElasticIsotropicCK;
+// Damage solid + Carman-Kozeny permeability on the transport porosity (reactive/poromechanical porosity and damage)
+typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability > PorousReactiveDamageSpectralCK;
 
 typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageDamagePermeability;
 typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageSpectralDamagePermeability;
@@ -81,6 +83,7 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageConstant, string c
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralDamagePermeability, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevDamagePermeability, string const &, Group * const )
