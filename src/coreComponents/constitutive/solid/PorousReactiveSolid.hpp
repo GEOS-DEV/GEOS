@@ -476,8 +476,6 @@ public:
    */
   virtual void initializeState() const override final;
 
-  virtual void initializePreSubGroups() override;
-
   /**
    * @brief Const/non-mutable accessor for density
    * @return Accessor
@@ -499,9 +497,6 @@ private:
   }
 
   string m_diffusionModelName;
-  /// Name of the fluid model used to read the (constant) fluid compressibility for the
-  /// pore-mineral-pressure / porosity coupling (optional; empty => fluid treated as incompressible)
-  string m_fluidModelName;
 };
 
 
