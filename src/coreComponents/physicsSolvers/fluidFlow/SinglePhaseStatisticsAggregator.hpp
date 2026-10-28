@@ -209,7 +209,7 @@ public:
   /// @cond DO_NOT_DOCUMENT
 
   void initStats( RegionStatistics & stats, real64 time ) const;
-  void computeSubRegionRankStats( CellElementSubRegion & subRegion,
+  void computeSubRegionRankStats( ElementSubRegionBase & subRegion,
                                   RegionStatistics & subRegionStats,
                                   SetType const & targetSet ) const;
   void aggregateStats( RegionStatistics & stats, RegionStatistics const & other ) const;

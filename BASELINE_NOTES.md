@@ -6,12 +6,19 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 PR #4165 (2026-10-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4165-17833-2b34841.tar.gz>
+=====================
 Add zero salinity, non-default compressibility pvt driver test
 
+PR #4164 (2026-10-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4164-17838-91151f5.tar.gz>
+=====================
+Add a `Group` statistics layer for fracture surfaces.
+
 PR #4005 (2026-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4005-17824-bac337a.tar.gz>
+=====================
 Added a `Group` statistics layer for sets statistics
 
 PR #4155 (2026-10-22) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4155-17777-be35229.tar.gz>
+=====================
 Add the missing restart baselines for the injection, production, and combined
 thermal compositional-well tests on one and four MPI ranks. In CI run 17777,
 all six simulations completed successfully, but their baseline checks failed
