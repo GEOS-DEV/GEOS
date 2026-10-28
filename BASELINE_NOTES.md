@@ -5,7 +5,7 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #4165 (2026-10-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4165-17772-9c8a12e.tar.gz>
+PR #4165 (2026-10-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4165-17833-2b34841.tar.gz>
 Add zero salinity, non-default compressibility pvt driver test
 
 PR #4005 (2026-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4005-17824-bac337a.tar.gz>
