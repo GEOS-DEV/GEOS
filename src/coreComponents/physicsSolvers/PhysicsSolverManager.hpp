@@ -42,6 +42,9 @@ public:
   R1Tensor const & gravityVector() const { return m_gravityVector; }
   R1Tensor & gravityVector()       { return m_gravityVector; }
 
+protected:
+  virtual void initializePostInitialConditionsPostSubGroups() override;
+
 private:
   PhysicsSolverManager() = delete;
 
