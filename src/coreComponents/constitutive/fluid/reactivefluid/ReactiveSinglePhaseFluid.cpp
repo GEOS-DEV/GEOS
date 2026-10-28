@@ -106,7 +106,7 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
 
     case ChemicalSystemType::serpentinization:
       m_numPrimarySpecies = 3;
-      m_numSecondarySpecies = 0;
+      m_numSecondarySpecies = 1;
       m_numKineticReactions = 3;
       break;
 
