@@ -24,12 +24,30 @@
 #include "dataRepository/DataContext.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/CellElementRegion.hpp"
-#include "mesh/CellElementSubRegion.hpp"
+#include "mesh/ElementRegionBase.hpp"
+#include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/MeshLevel.hpp"
 
 namespace geos
 {
+
+namespace internal
+{
+
+/**
+ * @return true if statistics are computed on this region: cell regions and surface (fracture) regions.
+ *         Well regions are skipped.
+ * @param region the region to test
+ */
+inline bool isStatisticsRegion( ElementRegionBase const & region )
+{
+  // we only process cell and surface regions (wells are skipped)
+  return dynamic_cast< CellElementRegion const * >( &region ) != nullptr ||
+         dynamic_cast< SurfaceElementRegion const * >( &region ) != nullptr;
+}
+
+} // namespace internal
 
 inline RegionStatisticsBase::RegionStatisticsBase( string const & targetName,
                                                    dataRepository::Group * const parent,
@@ -63,11 +81,14 @@ StatsAggregatorBase< Impl >::getMeshLevelPartialSetNames( MeshLevel const & mesh
 {
   std::set< string > foundSetNames;
 
-  mesh.getElemManager().forElementRegions< CellElementRegion >( regionNames,
+  mesh.getElemManager().forElementRegions< ElementRegionBase >( regionNames,
                                                                 [&] ( localIndex &,
-                                                                      CellElementRegion const & region )
+                                                                      ElementRegionBase const & region )
   {
-    region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion ) {
+    if( !internal::isStatisticsRegion( region ) )
+      return;
+
+    region.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase const & subRegion ) {
       dataRepository::Group const & sets = subRegion.sets();
       sets.forWrappers< SetType >( [&] ( dataRepository::Wrapper< SetType > const & set )
       {
@@ -150,14 +171,14 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
       for( size_t regionId = 0; regionId < path.m_regionNames.size(); ++regionId )
       {
         ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( path.m_regionNames[regionId] );
-        if( dynamic_cast< CellElementRegion * >(&region) != nullptr )
-        { // we only process cell regions
+        if( internal::isStatisticsRegion( region ) )
+        {
           StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
                                                                setName, m_dataOutputEnabled );
           stdMap< string, SetType > & regionSetsCompounds = meshSetsCompounds.get_inserted( region.getName() );
           regionFound = true;
 
-          region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
+          region.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
           {
             registerStatsFunc( setRegionStats, subRegion.getName(),
                                setName, false );
@@ -198,12 +219,12 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
       for( size_t regionId = 0; regionId < path.m_regionNames.size(); ++regionId )
       {
         ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( path.m_regionNames[regionId] );
-        if( dynamic_cast< CellElementRegion * >(&region) != nullptr )
-        { // we only process cell regions
+        if( internal::isStatisticsRegion( region ) )
+        {
           StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
                                                                setName, false );
 
-          region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
+          region.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
           {
             registerStatsFunc( setRegionStats, subRegion.getName(),
                                setName, false );
@@ -366,30 +387,28 @@ template< typename Impl >
 void
 StatsAggregatorBase< Impl >::forRegionStatistics( MeshLevelSet const meshSet,
                                                   StatsGroupType & setStats,
-                                                  RegionStatsFunc< CellElementRegion & > const & func ) const
+                                                  RegionStatsFunc< ElementRegionBase & > const & func ) const
 {
   ElementRegionManager & elemManager = meshSet.mesh.getElemManager();
   setStats.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & setRegionStats )
   {
     string_view regionName = setRegionStats.getTargetName();
     ElementRegionBase & region = elemManager.getRegion< ElementRegionBase >( string( regionName ) );
-    CellElementRegion * cellRegion = dynamic_cast< CellElementRegion * >(&region); // we only process cell regions
-
-    if( cellRegion != nullptr )
-      func( *cellRegion, setRegionStats );
+    if( internal::isStatisticsRegion( region ) ) // we only process cell and surface regions (wells are skipped)
+      func( region, setRegionStats );
   } );
 }
 
 template< typename Impl >
 void
-StatsAggregatorBase< Impl >::forRegionStatistics( CellElementRegion & setRegion,
+StatsAggregatorBase< Impl >::forRegionStatistics( ElementRegionBase & setRegion,
                                                   StatsGroupType & setRegionStats,
-                                                  RegionStatsFunc< CellElementSubRegion & > const & func ) const
+                                                  RegionStatsFunc< ElementSubRegionBase & > const & func ) const
 {
   setRegionStats.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & subRegionStatistics )
   {
     string_view subRegionName = subRegionStatistics.getTargetName();
-    CellElementSubRegion & subRegion = setRegion.getSubRegion< CellElementSubRegion >( string( subRegionName ) );
+    ElementSubRegionBase & subRegion = setRegion.getSubRegion< ElementSubRegionBase >( string( subRegionName ) );
 
     func( subRegion, subRegionStatistics );
   } );
@@ -436,11 +455,11 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
     {
       initStats( setStats, timeRequest );
       forRegionStatistics( meshSet, setStats,
-                           [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
+                           [&, timeRequest] ( ElementRegionBase & region, StatsGroupType & regionStats )
       {
         initStats( regionStats, timeRequest );
         forRegionStatistics( region, regionStats,
-                             [&, timeRequest] ( CellElementSubRegion & subRegion, StatsGroupType & subRegionStats )
+                             [&, timeRequest] ( ElementSubRegionBase & subRegion, StatsGroupType & subRegionStats )
         {
           initStats( subRegionStats, timeRequest );
 
@@ -457,10 +476,10 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
                          [&] ( MeshLevelSet meshSet, StatsGroupType & setStats )
     {
       forRegionStatistics( meshSet, setStats,
-                           [&] ( CellElementRegion & region, StatsGroupType & regionStats )
+                           [&] ( ElementRegionBase & region, StatsGroupType & regionStats )
       {
         forRegionStatistics( region, regionStats,
-                             [&] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
+                             [&] ( ElementSubRegionBase &, StatsGroupType & subRegionStats )
         {
           aggregateStats( regionStats, subRegionStats );
           // sub-region stats finalization is disabled, it does not seem useful

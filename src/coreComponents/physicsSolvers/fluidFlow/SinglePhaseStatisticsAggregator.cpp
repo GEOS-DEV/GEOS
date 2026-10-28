@@ -92,7 +92,7 @@ void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) c
   stats.m_totalMass = 0.0;
 }
 
-void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegion,
+void StatsAggregator::computeSubRegionRankStats( ElementSubRegionBase & subRegion,
                                                  RegionStatistics & subRegionStats,
                                                  SetType const & targetSet ) const
 {
@@ -186,7 +186,7 @@ void StatsAggregator::postAggregateStats( RegionStatistics & stats )
 {
   if( stats.m_totalUncompactedPoreVolume > 0 )
   {
-    float invTotalUncompactedPoreVolume = 1.0 / stats.m_totalUncompactedPoreVolume;
+    real64 const invTotalUncompactedPoreVolume = 1.0 / stats.m_totalUncompactedPoreVolume;
     stats.m_averagePressure *= invTotalUncompactedPoreVolume;
     stats.m_averageTemperature *= invTotalUncompactedPoreVolume;
   }
