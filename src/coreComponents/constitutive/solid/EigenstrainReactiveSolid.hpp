@@ -82,6 +82,18 @@ public:
                                         temperature, temperature_k, temperature_n,
                                         mineralReactionMolarIncrements );
 
+    updatePorosityFromDamage( k, q );
+
+    if constexpr ( !std::is_same_v< PERM_TYPE, DamagePermeability > )
+    {
+      // porosity-dependent permeability (e.g. Carman-Kozeny); no-op for constant permeability.
+      // Permeability stores a single quadrature point, so update it once per cell.
+      if( q == 0 )
+      {
+        m_permUpdate.updateFromPressureAndPorosity( k, 0, pressure, m_porosityUpdate.getPorosity( k, q ) );
+      }
+    }
+
     updateMatrixPermeability( k );
     updateMatrixDiffusivity( k );
   }
@@ -96,6 +108,7 @@ public:
     GEOS_UNUSED_VAR( temperature );
 
     m_porosityUpdate.updateFromReactions( k, q, kineticReactionMolarIncrements );
+    updatePorosityFromDamage( k, q );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
   }
@@ -107,6 +120,36 @@ public:
       return m_solidUpdate.getDamage( k, q );
     else
       return 0.0;
+  }
+
+  /**
+   * @brief Add the damage contribution phi_f + ( phi_c - phi_f ) d to the porosity (phi_f: damage-free porosity), using
+   *        the cell-averaged damage; the porosity then enters the fluid storage, a porosity-dependent permeability
+   *        (e.g. Carman-Kozeny) and the diffusive flux. No-op unless the porosity model sets crackPorosity.
+   */
+  GEOS_HOST_DEVICE
+  void updatePorosityFromDamage( localIndex const k, localIndex const q ) const
+  {
+    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > )
+    {
+      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
+
+      real64 damageAvg = 0.0;
+
+      for( localIndex i=0; i<quadSize; ++i )
+      {
+        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
+      }
+
+      damageAvg = damageAvg / quadSize;
+
+      // no-op unless the porosity model sets a crack porosity
+      m_porosityUpdate.updateFromDamage( k, q, damageAvg );
+    }
+    else
+    {
+      GEOS_UNUSED_VAR( k, q );
+    }
   }
 
   GEOS_HOST_DEVICE
@@ -156,7 +199,7 @@ public:
                                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
                                   arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const override final
   {
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    real64 const porosity = m_porosityUpdate.getIntactPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
 
     for( integer r=0; r < initialSurfaceArea.size(); ++r )

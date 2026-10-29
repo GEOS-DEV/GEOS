@@ -47,7 +47,10 @@ public:
                                arrayView1d< real64 const > const & mineralDensities,
                                arrayView1d< real64 > const & bulkModulus,
                                arrayView2d< real64 > const & meanEffectiveStressIncrement_k,
-                               integer const fixedPorosity ):
+                               integer const fixedPorosity,
+                               arrayView2d< real64 > const & intactPorosity,
+                               arrayView2d< real64 const > const & intactPorosity_n,
+                               real64 const crackPorosity ):
     PorosityBaseUpdates( newPorosity,
                          porosity_n,
                          dPorosity_dPressure,
@@ -62,7 +65,10 @@ public:
     m_mineralDensities( mineralDensities ),
     m_bulkModulus( bulkModulus ),
     m_meanEffectiveStressIncrement_k( meanEffectiveStressIncrement_k ),
-    m_fixedPorosity( fixedPorosity )
+    m_fixedPorosity( fixedPorosity ),
+    m_intactPorosity( intactPorosity ),
+    m_intactPorosity_n( intactPorosity_n ),
+    m_crackPorosity( crackPorosity )
   {}
 
   GEOS_HOST_DEVICE
@@ -100,17 +106,9 @@ public:
 
     if( !m_fixedPorosity )
     {
-      m_newPorosity[k][q] = m_porosity_n[k][q] + reactionPorosityIncrement;
-
-      if( m_newPorosity[k][q] < 0 )
-      {
-        m_newPorosity[k][q] = 0;
-      }
-      else if( m_newPorosity[k][q] > 1.0 )
-      {
-        m_newPorosity[k][q] = 1.0;
-      }
+      m_intactPorosity[k][q] = LvArray::math::min( LvArray::math::max( m_intactPorosity_n[k][q] + reactionPorosityIncrement, 0.0 ), 1.0 );
     }
+    m_newPorosity[k][q] = m_intactPorosity[k][q];
   }
 
   // this function is used in flow solver
@@ -143,19 +141,46 @@ public:
     // 2. Update the porosity due to solid deformation
     if( !m_fixedPorosity )
     {
-      m_newPorosity[k][q] = m_porosity_n[k][q]
-                            + reactionPorosityIncrement;
       // + m_meanEffectiveStressIncrement_k[k][q]/m_bulkModulus[k];
-
-      if( m_newPorosity[k][q] < 0 )
-      {
-        m_newPorosity[k][q] = 0;
-      }
-      else if( m_newPorosity[k][q] > 1.0 )
-      {
-        m_newPorosity[k][q] = 1.0;
-      }
+      m_intactPorosity[k][q] = LvArray::math::min( LvArray::math::max( m_intactPorosity_n[k][q] + reactionPorosityIncrement, 0.0 ), 1.0 );
     }
+    m_newPorosity[k][q] = m_intactPorosity[k][q];
+  }
+
+  /**
+   * @brief Add the damage contribution to the porosity: phi = max( phi_f, phi_f + ( phi_c - phi_f ) d ), with phi_f the
+   *        damage-free (reactive/poromechanical) porosity. The result is the porosity of the material, used for the fluid
+   *        storage, the permeability and the diffusive flux; phi_f is kept separately so that the damage contribution
+   *        does not accumulate in the incremental porosity update. Must be called after the porosity update.
+   *        No-op if the crack porosity phi_c is not set (phi_c <= 0).
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] damage the damage in [0, 1]
+   */
+  GEOS_HOST_DEVICE
+  void updateFromDamage( localIndex const k,
+                         localIndex const q,
+                         real64 const damage ) const
+  {
+    if( m_crackPorosity <= 0.0 )
+    {
+      return;
+    }
+    real64 const intactPorosity = m_intactPorosity[k][q];
+    real64 const damagePorosity = intactPorosity + ( m_crackPorosity - intactPorosity ) * damage;
+    // dPorosity_dPressure keeps d phi_f / dp (exact derivative ( 1 - d ) d phi_f / dp): only the Jacobian is approximate
+    if( damagePorosity > intactPorosity )
+    {
+      m_newPorosity[k][q] = damagePorosity;
+    }
+  }
+
+  /// @return the damage-free (reactive/poromechanical) porosity
+  GEOS_HOST_DEVICE
+  real64 getIntactPorosity( localIndex const k,
+                            localIndex const q ) const
+  {
+    return m_intactPorosity[k][q];
   }
 
   GEOS_HOST_DEVICE
@@ -219,6 +244,13 @@ protected:
   arrayView2d< real64 > const m_meanEffectiveStressIncrement_k;
 
   integer const m_fixedPorosity;
+
+  /// damage-free (reactive/poromechanical) porosity and its value at the previous converged step
+  arrayView2d< real64 > const m_intactPorosity;
+  arrayView2d< real64 const > const m_intactPorosity_n;
+
+  /// porosity phi_c of the fully damaged material (0 = no damage contribution)
+  real64 const m_crackPorosity;
 };
 
 
@@ -256,6 +288,9 @@ public:
     static constexpr char const * solidBulkModulusString() { return "solidBulkModulus"; }
     static constexpr char const * meanEffectiveStressIncrement_kString() { return "meanEffectiveStressIncrement_k"; }
     static constexpr char const * fixedPorosityString() { return "fixedPorosity"; }
+    static constexpr char const * intactPorosityString() { return "intactPorosity"; }
+    static constexpr char const * intactPorosity_nString() { return "intactPorosity_n"; }
+    static constexpr char const * crackPorosityString() { return "crackPorosity"; }
   } viewKeys;
 
 
@@ -281,7 +316,10 @@ public:
                           m_mineralDensities,
                           m_bulkModulus,
                           m_meanEffectiveStressIncrement_k,
-                          m_fixedPorosity );
+                          m_fixedPorosity,
+                          m_intactPorosity,
+                          m_intactPorosity_n,
+                          m_crackPorosity );
   }
 
 
@@ -304,6 +342,13 @@ protected:
   array2d< real64 > m_meanEffectiveStressIncrement_k;
 
   integer m_fixedPorosity;
+
+  /// damage-free (reactive/poromechanical) porosity, equal to the porosity without damage
+  array2d< real64 > m_intactPorosity;
+  array2d< real64 > m_intactPorosity_n;
+
+  /// porosity phi_c of the fully damaged material (0 = no damage contribution)
+  real64 m_crackPorosity;
 };
 
 

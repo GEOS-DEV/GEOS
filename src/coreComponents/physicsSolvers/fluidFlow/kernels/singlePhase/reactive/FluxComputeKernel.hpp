@@ -106,7 +106,7 @@ public:
 
   using PorosityAccessors =
     StencilMaterialAccessors< constitutive::PorosityBase,
-                              fields::porosity::referencePorosity >;
+                              fields::porosity::porosity_n >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -159,7 +159,7 @@ public:
                                                             fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
     m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
-    m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
+    m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) ),
     m_hasDiffusion( hasDiffusion ),
     m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags ),
     m_solventMassFraction( solventMassFraction )
@@ -374,16 +374,19 @@ public:
             localIndex const esr_up = sesri[k_up];
             localIndex const ei_up  = sei[k_up];
 
+            // porosity scaling the diffusive flux, at the previous converged step (includes the damage contribution)
+            real64 const porosity_up = m_porosity_n[er_up][esr_up][ei_up][0];
+
             // computation of the upwinded species flux
-            diffusionFlux[is] += m_referencePorosity[er_up][esr_up][ei_up] * speciesGrad[is];
+            diffusionFlux[is] += porosity_up * speciesGrad[is];
 
             // add contributions of the derivatives of component fractions wrt pressure/component fractions
             for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
             {
-              dDiffusionFlux_dP[ke][is] += m_referencePorosity[er_up][esr_up][ei_up] * dSpeciesGrad_i_dP[ke];
+              dDiffusionFlux_dP[ke][is] += porosity_up * dSpeciesGrad_i_dP[ke];
               for( integer js = 0; js < numSpecies; ++js )
               {
-                dDiffusionFlux_dLogConc[ke][is][js] += m_referencePorosity[er_up][esr_up][ei_up] * dSpeciesGrad_i_dLogConc[ke][js];
+                dDiffusionFlux_dLogConc[ke][is][js] += porosity_up * dSpeciesGrad_i_dLogConc[ke][js];
               }
             }
 
@@ -494,8 +497,8 @@ protected:
   ElementViewConst< arrayView3d< real64 const > > const m_diffusivity;
   ElementViewConst< arrayView3d< real64 const > > const m_dDiffusivity_dTemp;
 
-  /// View on the reference porosity
-  ElementViewConst< arrayView1d< real64 const > > const m_referencePorosity;
+  /// View on the porosity at the previous converged step, scaling the diffusive flux
+  ElementViewConst< arrayView2d< real64 const > > const m_porosity_n;
 
   /// Flag of adding the diffusion term
   integer const m_hasDiffusion;

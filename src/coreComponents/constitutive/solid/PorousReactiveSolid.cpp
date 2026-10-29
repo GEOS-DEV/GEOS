@@ -48,6 +48,7 @@ PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::PorousReactiveSolid( st
       setInputFlag( InputFlags::REQUIRED ).
       setDescription( "Name of the diffusion constitutive model" );
   }
+
 }
 
 template< typename SOLID_TYPE,
