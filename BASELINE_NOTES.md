@@ -9,6 +9,10 @@ PR #4169 (2026-10-23) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Fix surface generator splitting for contact mechanics case with wells
 
+PR #4165 (2026-10-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4165-17850-4a6ed2e.tar.gz>
+=====================
+Add zero salinity, non-default compressibility pvt driver test
+
 PR #4164 (2026-10-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4164-17838-91151f5.tar.gz>
 =====================
 Add a `Group` statistics layer for fracture surfaces.
