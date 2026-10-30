@@ -1,0 +1,133 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- AGGREGATE CONCENTRATIONS AT REACTION -->
+    <FieldSpecification
+      name="initialAggregate_H_reaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1.585e-7"/>
+
+    <FieldSpecification
+      name="initialAggregate_HCO3_reaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="8.293e-3"/>
+
+    <FieldSpecification
+      name="initialAggregate_Ca_reaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="2.171e-3"/>
+
+    <FieldSpecification
+      name="initialAggregate_SO4_reaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="3"
+      scale="1.666e-6"/>
+
+    <FieldSpecification
+      name="initialAggregate_Cl_reaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="4"
+      scale="2.821e-5"/>
+
+    <FieldSpecification
+      name="initialAggregate_Mg_reaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="5"
+      scale="1.605e-3"/>
+    
+    <FieldSpecification
+      name="initialAggregate_Na_reaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="6"
+      scale="7.817e-4"/>
+
+  <!-- AGGREGATE CONCENTRATIONS AT BARRIER -->
+    <FieldSpecification
+      name="initialAggregate_H_barrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1.585e-7"/>
+
+    <FieldSpecification
+      name="initialAggregate_HCO3_barrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="8.293e-3"/>
+
+    <FieldSpecification
+      name="initialAggregate_Ca_barrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="2.171e-3"/>
+
+    <FieldSpecification
+      name="initialAggregate_SO4_barrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="3"
+      scale="1.666e-6"/>
+
+    <FieldSpecification
+      name="initialAggregate_Cl_barrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="4"
+      scale="2.821e-5"/>
+
+    <FieldSpecification
+      name="initialAggregate_Mg_barrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="5"
+      scale="1.605e-3"/>
+    
+    <FieldSpecification
+      name="initialAggregate_Na_barrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="6"
+      scale="7.817e-4"/>
+  </FieldSpecifications>
+</Problem>

@@ -1,0 +1,98 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+    <!-- SOURCE INITIAL SURFACE AREA -->
+    <FieldSpecification
+      name="surfaceArea_Mg2SiO4_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="surfaceArea_MgCO3_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="initialSurfaceArea"
+      component="1"
+      scale="0.0"/>
+    
+    <FieldSpecification
+      name="surfaceArea_SiO2_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="initialSurfaceArea"
+      component="2"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="surfaceArea_Mg3Si2O5_OH4_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="initialSurfaceArea"
+      component="3"
+      scale="0.0"/>
+    
+    <FieldSpecification
+      name="surfaceArea_Mg_OH2_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="initialSurfaceArea"
+      component="4"
+      scale="0.0"/>
+
+    <!-- ROCK INITIAL SURFACE AREA -->
+    <FieldSpecification
+      name="surfaceArea_Mg2SiO4_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="1.3e6"/>
+
+    <FieldSpecification
+      name="surfaceArea_MgCO3_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="1"
+      scale="9e5"/>
+    
+    <FieldSpecification
+      name="surfaceArea_SiO2_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="2"
+      scale="1.3e6"/>
+
+    <FieldSpecification
+      name="surfaceArea_Mg3Si2O5_OH4_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="3"
+      scale="2.0e7"/>
+    
+    <FieldSpecification
+      name="surfaceArea_Mg_OH2_rock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="4"
+      scale="4.3e7"/>
+
+  </FieldSpecifications>
+</Problem>

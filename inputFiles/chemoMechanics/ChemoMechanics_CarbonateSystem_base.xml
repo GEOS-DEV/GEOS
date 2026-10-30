@@ -1,0 +1,167 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransportPoromechanics
+      name="chemomechSolve"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseReactiveFlow"
+      logLevel="1"
+      targetRegions="{ Reaction, Barrier }">
+      <NonlinearSolverParameters
+        newtonMaxIter="4"
+        newtonTol="1.0e-4"
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="4"
+        lineSearchMaxCuts="0"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransportPoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Reaction, Barrier }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        lineSearchAction="None"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianFEM>      
+
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Reaction, Barrier }"
+      isUpdateReactivePorosity="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        maxTimeStepCuts="5"
+        newtonMaxIter="40"
+        logLevel="2"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0.0, 1.0 }"
+      yCoords="{ 0.0, 1.0, 3.0, 4.0 }"
+      zCoords="{ 0.0, 1.0 }"
+      nx="{ 1 }"
+      ny="{ 10, 100, 10 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb-0_0_0, cb-0_1_0, cb-0_2_0 }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Barrier"
+      cellBlocks="{ cb-0_0_0, cb-0_2_0 }"
+      materialList="{ rock, water }"/>
+
+    <CellElementRegion
+      name="Reaction"
+      cellBlocks="{ cb-0_1_0 }"
+      materialList="{ reactiveRock, water }"/>
+  </ElementRegions>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressureBarrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="initialPressureReaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="fixPressureBarrier"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="fixPressureReaction"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="pressure"
+      scale="0.0"/>
+    
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos  }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos  }"/>
+
+    <FieldSpecification
+      name="surfaceAreaReaction"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reaction"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="2.4573e+04"/>
+
+    <FieldSpecification
+      name="surfaceAreaBarrier"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Barrier"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="0.0"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+</Problem>
