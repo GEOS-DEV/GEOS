@@ -371,7 +371,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
     if( logPerRegion )
     {
       m_aggregator->forRegionStatistics( meshSet, meshSetStats,
-                                         [&] ( CellElementRegion & region,
+                                         [&] ( ElementRegionBase & region,
                                                RegionStatistics & setRegionStats )
       {
         outputRegionStats( GEOS_FMT( "{} / {} / Region: '{}' ({} elements)",
@@ -450,7 +450,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
     outputRegionStats( meshSet.mesh.getName(), meshSet.setName, meshSetStats );
 
     m_aggregator->forRegionStatistics( meshSet, meshSetStats,
-                                       [&] ( CellElementRegion & region,
+                                       [&] ( ElementRegionBase & region,
                                              RegionStatistics & setRegionStats )
     {
       outputRegionStats( region.getName(), setRegionStats.getSetName(), setRegionStats );
