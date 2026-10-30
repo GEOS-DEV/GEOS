@@ -40,7 +40,8 @@ set( gtest_geosx_tests
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
      testRachfordRice.cpp
-     testTwoPhaseImmiscibleFluid.cpp )
+     testTwoPhaseImmiscibleFluid.cpp
+     testJointRoughnessCoefficient.cpp )
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
 
