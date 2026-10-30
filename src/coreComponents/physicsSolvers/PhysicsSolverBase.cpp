@@ -1524,6 +1524,10 @@ real64 PhysicsSolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSE
                              GEOS_FMT( "        {}: oscillation detected, scaling factor set to {}", getName(), scalingFactor ) );
     }
 
+    // The solution is produced on device and the history may have been captured by the
+    // detectOscillations kernel; stage both on host before the host-side append/erase.
+    localSolution.move( hostMemorySpace, false );
+    m_solutionHistory.move( hostMemorySpace, true );
     m_solutionHistory.appendArray( localSolution.begin(), localSolution.end());
     if( m_solutionHistory.size() > m_nonlinearSolverParameters.m_oscillationCheckDepth )
     {

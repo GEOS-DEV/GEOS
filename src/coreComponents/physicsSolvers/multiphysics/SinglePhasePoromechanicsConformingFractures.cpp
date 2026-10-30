@@ -102,7 +102,9 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
-    forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
+    // Capture by value: copying the views inside the host RAJA launch makes CHAI move them
+    // (and mark the matrix entries as touched) on host.
+    forAll< serialPolicy >( subRegion.size(), [=, this]( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );

@@ -547,7 +547,9 @@ protected:
         constitutive::CoupledSolidBase & solid =
           this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, solidName );
 
-        arrayView1d< const real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+        arrayView1d< real64 const > const averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+        // The average is computed on device; without unified memory the view may hold a device pointer.
+        averageMeanTotalStressIncrement_k.move( hostMemorySpace, false );
         for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size()); k++ )
         {
           averageMeanTotalStressIncrement.emplace_back( averageMeanTotalStressIncrement_k[k] );
@@ -571,11 +573,13 @@ protected:
         string const & solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
         constitutive::CoupledSolidBase & solid =
           this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, solidName );
-        auto & porosityModel = dynamic_cast< constitutive::BiotPorosity const & >( solid.getBasePorosityModel());
-        arrayView1d< real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+        arrayView1d< real64 > const averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+        // Write on host through a view moved (and touched) on host so that CHAI copies the
+        // updated values back to device before the next kernel (no unified memory).
+        averageMeanTotalStressIncrement_k.move( hostMemorySpace, true );
         for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size()); k++ )
         {
-          porosityModel.updateAverageMeanTotalStressIncrement( k, averageMeanTotalStressIncrement[i] );
+          averageMeanTotalStressIncrement_k[k] = averageMeanTotalStressIncrement[i];
           i++;
         }
       } );
