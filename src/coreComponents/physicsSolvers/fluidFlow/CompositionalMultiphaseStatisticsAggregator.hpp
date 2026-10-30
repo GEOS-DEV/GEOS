@@ -25,9 +25,9 @@
  *                 |-> Level0 : MeshLevel
  *                 |   |-> ElementRegions : ElementRegionManager
  *                 |   |   |-> elementRegionsGroup : Group
- *                 |   |       |-> "Channel" : CellElementRegion
+ *                 |   |       |-> "Channel" : ElementRegionBase
  *                 |   |       |   |-> elementSubRegions : Group
- *                 |   |       |       |-> "cb-0_0_0" : CellElementSubRegion
+ *                 |   |       |       |-> "cb-0_0_0" : ElementSubRegionBase
  *                 |   |       |       |   | * pressure : Wrapper< real64 array >
  *                 |   |       |       |   | * temperature : Wrapper< real64 array >
  *                 |   |       |       |   |-> sets : Group
@@ -37,7 +37,7 @@
  *                 |   |       |       |   |
  *                 |   |       |       |   [...] (other fields)
  *                 |   |       |       |
- *                 |   |       |       |-> "cb-0_0_1" : CellElementSubRegion
+ *                 |   |       |       |-> "cb-0_0_1" : ElementSubRegionBase
  *                 |   |       |       |   | * pressure : Wrapper< real64 array >
  *                 |   |       |       |   | * temperature : Wrapper< real64 array >
  *                 |   |       |       |   |-> sets : Group
@@ -49,9 +49,9 @@
  *                 |   |       |       |
  *                 |   |       |       [...] (other sub-regions)
  *                 |   |       |
- *                 |   |       |-> "Barrier" : CellElementRegion
- *                 |   |           |-> "cb-1_0_0" : CellElementSubRegion
- *                 |   |           |-> "cb-1_0_1" : CellElementSubRegion
+ *                 |   |       |-> "Barrier" : ElementRegionBase
+ *                 |   |           |-> "cb-1_0_0" : ElementSubRegionBase
+ *                 |   |           |-> "cb-1_0_1" : ElementSubRegionBase
  *                 |   |           [...] (other sub-regions)
  *                 |   |
  *                 |   |-> nodeManager : NodeManager
@@ -159,7 +159,7 @@ public:
 
   /// total region pore volume
   real64 m_totalPoreVolume;
-  /// total region uncompacted pore volume (not necessarily output, useful for weighting cell pressure data)
+  /// total region uncompacted pore volume (not necessarily output, useful for weighting element pressure data)
   real64 m_totalUncompactedPoreVolume;
   /// phase region dynamic pore volume
   array1d< real64 > const m_phaseDynamicPoreVolume;
@@ -311,7 +311,7 @@ public:
   /// @cond DO_NOT_DOCUMENT
 
   void initStats( RegionStatistics & stats, real64 time ) const;
-  void computeSubRegionRankStats( CellElementSubRegion & subRegion,
+  void computeSubRegionRankStats( ElementSubRegionBase & subRegion,
                                   RegionStatistics & subRegionStats,
                                   SetType const & targetSet ) const;
   void aggregateStats( RegionStatistics & stats, RegionStatistics const & other ) const;
