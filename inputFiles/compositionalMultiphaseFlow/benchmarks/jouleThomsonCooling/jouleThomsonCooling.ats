@@ -1,0 +1,17 @@
+from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+
+restartcheck_params = {}
+restartcheck_params["atol"] = 1.0E-6
+restartcheck_params["rtol"] = 1.0E-5
+
+decks = [
+    TestDeck(
+        name="jouleThomsonCooling",
+        description="Joule-Thomson Cooling (thermal, 2-phase, cooling, radial)",
+        partitions=((1, 1, 1),),
+        restart_step=243,
+        check_step=320,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+]
+
+generate_geos_tests(decks)

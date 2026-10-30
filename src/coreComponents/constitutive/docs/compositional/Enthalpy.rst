@@ -21,6 +21,9 @@ The ideal enthalpy represents the enthalpy of the mixture assuming it behaves as
 .. math::
     C_{p,i}(T) = a_{i,0} + a_{i,1}\Delta T + a_{i,2}\Delta T^2 + a_{i,3}\Delta T^3 + a_{i,4}\Delta T^4
 
+.. note::
+    The component coefficients :math:`a_{i,k}` are validated to ensure that :math:`C_{p,i}(T)>0` for T in the range :math:`[283.15, 473.15]` K (:math:`[10, 200]` °C).
+
 To find the ideal enthalpy for a component, this heat capacity is integrated with respect to temperature from the reference temperature to the current temperature, and then added to a baseline reference enthalpy :math:`H_{ref,i}`:
 
 .. math::

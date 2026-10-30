@@ -1,0 +1,131 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <PVTDriver
+      name="testThermalKValue"
+      fluid="thermalKValue"
+      feedComposition="{ 0.5, 0.5 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="40"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      output="testPVT_ThermalKValue.txt"
+      logLevel="1" />
+    <PVTDriver
+      name="testThermalFlash"
+      fluid="thermalFlash"
+      feedComposition="{ 0.15, 0.20, 0.60, 0.05 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="40"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      outputMassDensity="1"
+      output="testPVT_ThermalFlash.txt"
+      logLevel="1" />      
+  </Tasks>
+
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="eventThermalKValue"
+      target="/Tasks/testThermalKValue"/>
+
+    <SoloEvent
+      name="eventThermalFlash"
+      target="/Tasks/testThermalFlash"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>         
+  </Events>
+
+  <Constitutive>
+    <CompositionalTwoPhaseKValueThermalFluidPhillipsBrine
+      name="thermalKValue"
+      phaseNames="{ gas, water }"
+      equationsOfState="{ PengRobinson, PengRobinson }"
+      componentNames="{ CO2, H2O }"
+      componentMolarWeight="{ 4.40095e-02, 1.80153e-02 }"
+      componentCriticalPressure="{ 7.37730e+06, 2.20640e+07 }"
+      componentCriticalTemperature="{ 3.04128e+02, 6.47096e+02 }"
+      componentCriticalVolume="{ 9.41185e-05, 5.59480e-05 }"
+      componentAcentricFactor="{ 2.23940e-01, 3.44300e-01 }"
+      componentBinaryCoeff="{ { 0.0000, 0.1896 },
+                              { 0.1896, 0.0000 } }"
+      kValueTables="{ KV_CO2, KV_H2O }"
+      waterCompressibility="4.1483e-10"
+      enthalpyReferenceTemperature="273.15"
+      componentHeatCapacityCoefficients="{
+        { 3.59666873e+01, 4.80628280e-02, -3.73031024e-05, -9.46468484e-08, 3.35991776e-10 },
+        { 3.34905877e+01, 4.22591694e-03, 2.46543085e-05, -9.19526700e-09, -6.29373160e-11 }
+      }"
+      salinity="2.3" />
+
+    <CompositionalTwoPhaseThermalFluidPhillipsBrine
+      name="thermalFlash"
+      phaseNames="{ water, gas }"
+      equationsOfState="{ SoreideWhitson, PengRobinson }"
+      componentNames="{ CO2, CH4, H2O, H2S }"
+      componentMolarWeight="{ 44.0098e-3, 16.0428e-3, 18.0153e-3, 34.1e-3 }"
+      componentCriticalPressure="{ 73.773e5, 45.992e5, 220.64e5, 89.4e5 }"
+      componentCriticalTemperature="{ 304.128, 190.564, 647.096, 373.2 }"
+      componentAcentricFactor="{ 0.2239, 0.01142, 0.3443, 0.1081 }"
+      componentBinaryCoeff="{
+        { 0.0000, 0.1000, 0.1896, 0.0000 },
+        { 0.1000, 0.0000, 0.4850, 0.0000 },
+        { 0.1896, 0.4850, 0.0000, 0.0330 },
+        { 0.0000, 0.0000, 0.0330, 0.0000 }
+      }"
+      referenceEnthalpy="{
+        { 22118, 14436, 45726, 21464 },
+        { 22118, 14436, 45726, 21464 }
+      }"
+      componentHeatCapacityCoefficients="{
+        { 3.71444020e+01, 4.60789192e-02, -5.32553868e-05, 4.83611201e-08, -2.41275339e-11 },
+        { 3.57086978e+01, 3.71032324e-02, 1.41810341e-04, -3.66752876e-07, 3.30967143e-10 },
+        { 3.38062815e+01, -6.98624900e-05, 5.65227865e-05, -1.26960246e-07, 1.07944846e-10 },
+        { 3.41118658e+01, 1.17453705e-02, 2.64148956e-05, -4.81416789e-08, 3.31865027e-11 }
+      }"
+      pressureCoordinates="{ 1.0e5, 5.0e6, 1.0e7, 1.5e7, 2.0e7, 3.0e7 }"
+      temperatureCoordinates="{ 263.15, 283.15, 303.15, 323.15, 343.15, 363.15, 383.15 }"
+      salinity="0.0"/>   
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="pressureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 10e6, 10e6 }"/>
+
+    <TableFunction
+      name="temperatureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 283.15, 473.15 }"/>
+
+    <TableFunction
+      name="KV_CO2"
+      inputVarNames="{ pressure, temperature }"
+      interpolation="linear"
+      coordinateFiles="{ testPVT_data/kv_pressure.txt, testPVT_data/kv_temperature.txt }"
+      voxelFile="testPVT_data/kv_CO2.txt"/>
+
+    <TableFunction
+      name="KV_H2O"
+      inputVarNames="{ pressure, temperature }"
+      interpolation="linear"
+      coordinateFiles="{ testPVT_data/kv_pressure.txt, testPVT_data/kv_temperature.txt }"
+      voxelFile="testPVT_data/kv_H2O.txt"/>
+  </Functions>
+</Problem>

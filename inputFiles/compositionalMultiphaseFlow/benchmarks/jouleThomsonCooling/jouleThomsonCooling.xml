@@ -1,0 +1,413 @@
+<?xml version="1.0" ?>
+<!--
+     Joule-Thomson cooling during constant-rate CO2 injection into a depleted CH4 reservoir.
+     Reproduces the 5 mD case (Fig. 7) of Oldenburg (2007), Energy Conversion and Management 48, 1808-1815.
+     1D radial model (1-degree sector of a cylinder, R = 1130 m, h = 50 m), k = 5e-15 m2, porosity 0.3,
+     Tres = Tinj = 318.15 K (45 C), Pres = 50 bar, 109 radial cells.
+     All rates are scaled by 1/360 to account for the 1-degree sector.
+-->
+<Problem>
+  <Solvers>
+    <!-- SPHINX_RES_SOL -->
+    <CompositionalMultiphaseReservoir
+      name="reservoirSystem"
+      flowSolverName="compflow"
+      wellSolverName="wells"
+      logLevel="1"
+      initialDt="1.0"
+      targetRegions="{ region, injectionwell, productionwell }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="60"
+        maxTimeStepCuts="10"
+        lineSearchAction="None"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </CompositionalMultiphaseReservoir>
+    <!-- SPHINX_RES_SOL_END -->
+
+    <!-- SPHINX_FLOW_SOL -->
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ region }"
+      temperature="318.15"
+      isThermal="1"
+      useMass="1"
+      useSimpleAccumulation="0"
+      maxCompFractionChange="0.02"
+      targetRelativePressureChangeInTimeStep="0.2"
+      targetRelativeTemperatureChangeInTimeStep="0.02"
+      targetPhaseVolFractionChangeInTimeStep="0.2"/>
+    <!-- SPHINX_FLOW_SOL_END -->
+
+    <WellManager
+      name="wells"
+      targetRegions="{ injectionwell, productionwell }"
+      logLevel="1"
+      isThermal="1"
+      useMass="1">
+      <!-- SPHINX_INJ_CONTROL -->
+      <CompositionalMultiphaseWell
+        name="injControls"
+        type="injector"
+        control="massRate"
+        statusTableName="wellStatus"
+        useSurfaceConditions="1"
+        surfacePressure="101325.0"
+        surfaceTemperature="288.15"
+        enableCrossflow="0"
+        logLevel="1"
+        writeCSV="1">
+        <MaximumBHPConstraint
+          name="injMaxBHP"
+          targetBHP="3.0e7"
+          referenceElevation="25.0"/>
+        <InjectionMassRateConstraint
+          name="injRate"
+          massRate="8.33333333e-03"
+          injectionStream="{ 0.9999, 0.0001, 0.0000 }"
+          injectionTemperature="318.15"/>
+      </CompositionalMultiphaseWell>
+      <!-- SPHINX_INJ_CONTROL_END -->
+      <!-- SPHINX_PROD_CONTROL -->
+      <CompositionalMultiphaseWell
+        name="prodControls"
+        type="producer"
+        control="phaseVolRate"
+        statusTableName="wellStatus"
+        useSurfaceConditions="1"
+        surfacePressure="101325.0"
+        surfaceTemperature="288.15"
+        enableCrossflow="0"
+        logLevel="1"
+        writeCSV="1">
+        <MinimumBHPConstraint
+          name="prodMinBHP"
+          targetBHP="1.0e5"
+          referenceElevation="25.0"/>
+        <ProductionPhaseVolumeRateConstraint
+          name="prodRate"
+          phaseName="gas"
+          phaseRate="2.28872284e-03"/>
+      </CompositionalMultiphaseWell>
+      <!-- SPHINX_PROD_CONTROL_END -->
+    </WellManager>
+  </Solvers>
+
+  <!-- SPHINX_MESH -->
+  <Mesh>
+    <InternalWellbore
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      radius="{
+        0.1, 0.12, 0.141606, 0.164948, 0.190164, 0.217405, 0.246834, 0.278627, 0.312973, 0.350077, 0.390162, 0.433465,
+        0.480247, 0.530785, 0.585383, 0.644365, 0.708085, 0.776922, 0.851287, 0.931625, 1.01841, 1.11217, 1.21347,
+        1.32289, 1.4411, 1.56881, 1.70678, 1.85582, 2.01683, 2.19078, 2.3787, 2.5817, 2.80102, 3.03794, 3.2939,
+        3.57041, 3.86912, 4.19183, 4.54046, 4.91708, 5.32396, 5.7635, 6.23836, 6.75134, 7.30553, 7.90422, 8.551,
+        9.24972, 10.0046, 10.82, 11.701, 12.6527, 13.6808, 14.7915, 15.9914, 17.2877, 18.6881, 20.201, 21.8353, 23.601,
+        25.5084, 27.569, 29.7951, 32.2, 34.798, 37.6047, 40.6368, 43.9124, 47.4511, 51.274, 55.404, 59.8656, 64.6855,
+        69.8925, 75.5177, 81.5947, 88.1598, 95.2521, 102.914, 111.191, 120.133, 129.793, 140.23, 151.504, 163.683,
+        176.841, 191.056, 206.412, 223.001, 240.923, 260.284, 281.2, 303.796, 328.207, 354.578, 383.067, 413.844,
+        447.093, 483.012, 521.816, 563.736, 609.023, 657.948, 710.801, 767.899, 829.583, 896.221, 968.211, 1045.98,
+        1130
+      }"
+      nr="{
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+      }"
+      theta="{ -0.5, 0.5 }"
+      nt="{ 1 }"
+      zCoords="{ 0, 50 }"
+      nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 50.0 } }"
+      cellBlockNames="{ cb }">
+      <InternalWell
+        name="injector"
+        wellRegionName="injectionwell"
+        wellControlsName="injControls"
+        polylineNodeCoords="{ { 0.101, 0.0, 50.0 }, { 0.101, 0.0, 30.0 }, { 0.101, 0.0, 0.0 } }"
+        polylineSegmentConn="{ { 0, 1 }, { 1, 2 } }"
+        logLevel="2"
+        radius="0.02"
+        numElementsPerSegment="1">
+        <Perforation name="injPerf" distanceFromHead="25.0" transmissibility="4.211606990225749e-15"/>
+      </InternalWell>
+      <InternalWell
+        name="producer"
+        wellRegionName="productionwell"
+        wellControlsName="prodControls"
+        polylineNodeCoords="{ { 1129.5, 0.0, 50.0 }, { 1129.5, 0.0, 30.0 }, { 1129.5, 0.0, 0.0 } }"
+        polylineSegmentConn="{ { 0, 1 }, { 1, 2 } }"
+        logLevel="2"
+        radius="0.02"
+        numElementsPerSegment="1">
+        <Perforation name="prodPerf" distanceFromHead="25.0" transmissibility="1.7371254075664246e-12"/>
+      </InternalWell>
+    </InternalWellbore>
+  </Mesh>
+  <!-- SPHINX_MESH_END -->
+
+  <!-- SPHINX_EVENTS -->
+  <!-- output events are listed before the solver so that they record the state at their target time -->
+  <Events minTime="-86400" maxTime="4.738374e+08">
+    <SoloEvent name="vtk_0" targetTime="0.000000e+00" targetExactTimestep="1" target="/Outputs/vtkOutput"/>
+    <SoloEvent name="vtk_1" targetTime="8.640000e+04" targetExactTimestep="1" target="/Outputs/vtkOutput"/>
+    <SoloEvent name="vtk_2" targetTime="8.640000e+05" targetExactTimestep="1" target="/Outputs/vtkOutput"/>
+    <SoloEvent name="vtk_3" targetTime="1.728000e+06" targetExactTimestep="1" target="/Outputs/vtkOutput"/>
+    <SoloEvent name="vtk_4" targetTime="2.592000e+06" targetExactTimestep="1" target="/Outputs/vtkOutput"/>
+    <SoloEvent name="vtk_5" targetTime="7.776000e+06" targetExactTimestep="1" target="/Outputs/vtkOutput"/>
+    <SoloEvent name="vtk_6" targetTime="3.155760e+07" targetExactTimestep="1" target="/Outputs/vtkOutput"/>
+    <SoloEvent name="vtk_7" targetTime="4.733640e+08" targetExactTimestep="1" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent
+      name="solverApplications_0"
+      beginTime="0"
+      endTime="10"
+      maxEventDt="1"
+      target="/Solvers/reservoirSystem"/>
+    <PeriodicEvent
+      name="solverApplications_1"
+      beginTime="10"
+      maxEventDt="2.592e6"
+      target="/Solvers/reservoirSystem"/>
+
+    <SoloEvent name="statistics_0" targetTime="0.000000e+00" target="/Tasks/compflowStatistics"/>
+    <PeriodicEvent
+      name="statistics_1"
+      beginTime="0"
+      timeFrequency="3.155760e+07"
+      target="/Tasks/compflowStatistics"/>
+
+    <PeriodicEvent name="collectHistory_1" beginTime="82800" timeFrequency="3600" endTime="93600" targetExactTimestep="1">
+      <PeriodicEvent name="collectCellCenters" target="/Tasks/collectCellCenters"/>
+      <PeriodicEvent name="collectPressure" target="/Tasks/collectPressure"/>
+      <PeriodicEvent name="collectTemperature" target="/Tasks/collectTemperature"/>
+      <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
+    </PeriodicEvent>
+
+    <PeriodicEvent name="collectHistory_2" beginTime="860400" timeFrequency="3600" endTime="871200" targetExactTimestep="1">
+      <PeriodicEvent name="collectCellCenters" target="/Tasks/collectCellCenters"/>
+      <PeriodicEvent name="collectPressure" target="/Tasks/collectPressure"/>
+      <PeriodicEvent name="collectTemperature" target="/Tasks/collectTemperature"/>
+      <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
+    </PeriodicEvent>
+
+    <PeriodicEvent name="collectHistory_3" beginTime="1724400" timeFrequency="3600" endTime="1735200" targetExactTimestep="1">
+      <PeriodicEvent name="collectCellCenters" target="/Tasks/collectCellCenters"/>
+      <PeriodicEvent name="collectPressure" target="/Tasks/collectPressure"/>
+      <PeriodicEvent name="collectTemperature" target="/Tasks/collectTemperature"/>
+      <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
+    </PeriodicEvent>
+
+    <PeriodicEvent name="collectHistory_4" beginTime="2588400" timeFrequency="3600" endTime="2599200" targetExactTimestep="1">
+      <PeriodicEvent name="collectCellCenters" target="/Tasks/collectCellCenters"/>
+      <PeriodicEvent name="collectPressure" target="/Tasks/collectPressure"/>
+      <PeriodicEvent name="collectTemperature" target="/Tasks/collectTemperature"/>
+      <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
+    </PeriodicEvent>
+
+    <PeriodicEvent name="collectHistory_5" beginTime="7772400" timeFrequency="3600" endTime="7783200" targetExactTimestep="1">
+      <PeriodicEvent name="collectCellCenters" target="/Tasks/collectCellCenters"/>
+      <PeriodicEvent name="collectPressure" target="/Tasks/collectPressure"/>
+      <PeriodicEvent name="collectTemperature" target="/Tasks/collectTemperature"/>
+      <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
+    </PeriodicEvent>
+
+    <PeriodicEvent name="collectHistory_6" beginTime="31554000" timeFrequency="3600" endTime="31564800" targetExactTimestep="1">
+      <PeriodicEvent name="collectCellCenters" target="/Tasks/collectCellCenters"/>
+      <PeriodicEvent name="collectPressure" target="/Tasks/collectPressure"/>
+      <PeriodicEvent name="collectTemperature" target="/Tasks/collectTemperature"/>
+      <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
+    </PeriodicEvent>
+
+    <PeriodicEvent name="collectHistory_7" beginTime="473360400" timeFrequency="3600" endTime="473371200" targetExactTimestep="1">
+      <PeriodicEvent name="collectCellCenters" target="/Tasks/collectCellCenters"/>
+      <PeriodicEvent name="collectPressure" target="/Tasks/collectPressure"/>
+      <PeriodicEvent name="collectTemperature" target="/Tasks/collectTemperature"/>
+      <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
+    </PeriodicEvent>
+
+    <SoloEvent name="saveHistory" targetTime="4.733640e+08" targetExactTimestep="1" target="/Outputs/timeHistory"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="157788000"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+  <!-- SPHINX_EVENTS_END -->
+
+  <!-- SPHINX_TPFA -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_TPFA_END -->
+
+  <!-- SPHINX_REGIONS -->
+  <ElementRegions>
+    <CellElementRegion name="region" cellBlocks="{ * }" materialList="{ fluid, rock, relperm, thermalCond }"/>
+    <WellElementRegion name="injectionwell" materialList="{ fluid, relperm, thermalCond }"/>
+    <WellElementRegion name="productionwell" materialList="{ fluid, relperm, thermalCond }"/>
+  </ElementRegions>
+  <!-- SPHINX_REGIONS_END -->
+
+  <Constitutive>
+    <!-- SPHINX_FLUID -->
+    <CompositionalTwoPhaseThermalFluidPhillipsBrine
+      name="fluid"
+      phaseNames="{ water, gas }"
+      equationsOfState="{ SoreideWhitson, PengRobinson }"
+      componentNames="{ CO2, CH4, H2O }"
+      componentMolarWeight="{ 44.0098e-3, 16.0428e-3, 18.0153e-3 }"
+      componentCriticalPressure="{ 73.773e5, 45.992e5, 220.64e5 }"
+      componentCriticalTemperature="{ 304.128, 190.564, 647.096 }"
+      componentAcentricFactor="{ 0.2239, 0.01142, 0.3443 }"
+      componentBinaryCoeff="{
+        { 0.0000, 0.1000, 0.1896 },
+        { 0.1000, 0.0000, 0.4850 },
+        { 0.1896, 0.4850, 0.0000 }
+      }"
+      componentHeatCapacityCoefficients="{
+        { 3.71394332e+01, 4.58542320e-02, -4.31491615e-05, -6.10476708e-08, 3.35991776e-10 },
+        { 3.57109265e+01, 3.71107614e-02, 1.34818937e-04, -2.53121247e-07, -1.27139566e-10 },
+        { 3.35871836e+01, 4.44821701e-03, 2.36140725e-05, -1.54889986e-08, -6.29373160e-11 }
+      }"
+      pressureCoordinates="{ 1.0e5, 5.0e6, 1.0e7, 1.5e7, 2.0e7, 3.0e7 }"
+      temperatureCoordinates="{ 263.15, 283.15, 303.15, 323.15, 343.15, 363.15, 383.15 }"
+      salinity="0.0"/>
+    <!-- SPHINX_FLUID_END -->
+
+    <!-- SPHINX_ROCK -->
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+    <NullModel name="nullSolid"/>
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.3" referencePressure="5.0e6" compressibility="0.0"/>
+    <SolidInternalEnergy name="rockInternalEnergy" referenceVolumetricHeatCapacity="2.6e6" referenceTemperature="318.15" referenceInternalEnergy="0.0"/>
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 5e-15, 5e-15, 5e-15 }"/>
+    <!-- SPHINX_ROCK_END -->
+
+    <!-- SPHINX_RELPERM -->
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ water, gas }"
+      phaseMinVolumeFraction="{ 0.2, 0.01 }"
+      phaseRelPermExponent="{ 4.0, 2.0 }"
+      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+    <!-- SPHINX_RELPERM_END -->
+
+    <!-- SPHINX_THC -->
+    <MultiPhaseConstantThermalConductivity
+      name="thermalCond"
+      phaseNames="{ water, gas }"
+      thermalConductivityComponents="{ 2.51, 2.51, 2.51 }"/>
+    <!-- SPHINX_THC_END -->
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="wellStatus"
+      interpolation="lower"
+      coordinates="{ -1.0e8, 0.0, 1.0e8 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
+  </Functions>
+
+  <!-- SPHINX_INIT -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="5.0e6"/>
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="318.15"/>
+    <FieldSpecification
+      name="initialCO2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.000000"/>
+    <FieldSpecification
+      name="initialCH4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.115401"/>
+    <FieldSpecification
+      name="initialH2O"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.884599"/>
+  </FieldSpecifications>
+  <!-- SPHINX_INIT_END -->
+
+  <Tasks>
+    <CompositionalMultiphaseStatistics
+      name="compflowStatistics"
+      flowSolverName="compflow"
+      logLevel="1"
+      computeCFLNumbers="1"
+      computeRegionStatistics="1"
+      writeCSV="1"/>
+    <PackCollection
+      name="collectCellCenters"
+      disableCoordCollection="1"
+      fieldName="elementCenter"
+      objectPath="ElementRegions/region/cb"
+      setNames="{ all }"/>
+    <PackCollection
+      name="collectPressure"
+      disableCoordCollection="1"
+      fieldName="pressure"
+      objectPath="ElementRegions/region/cb"
+      setNames="{ all }"/>
+    <PackCollection
+      name="collectTemperature"
+      disableCoordCollection="1"
+      fieldName="temperature"
+      objectPath="ElementRegions/region/cb"
+      setNames="{ all }"/>
+    <PackCollection
+      name="collectMoleFractions"
+      disableCoordCollection="1"
+      fieldName="fluid_phaseCompFraction"
+      objectPath="ElementRegions/region/cb"
+      setNames="{ all }"/>
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="jouleThomsonCooling"
+      outputRegionType="cell"
+      plotLevel="3"/>
+    <Restart
+      name="restartOutput"/>
+    <TimeHistory
+      name="timeHistory"
+      filename="jouleThomsonCooling"
+      sources="{ /Tasks/collectCellCenters, /Tasks/collectPressure, /Tasks/collectTemperature, /Tasks/collectMoleFractions }"/>
+  </Outputs>
+</Problem>
