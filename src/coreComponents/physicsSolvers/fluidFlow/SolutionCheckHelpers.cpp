@@ -102,7 +102,7 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
           }
         }
 
-        TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
+        TableTextMpiFormatter const formatter = TableTextMpiFormatter( layout, mpiLayout );
         formatter.toStream( std::cout, data );
         GEOS_LOG_RANK_0( '\n' );
       }
