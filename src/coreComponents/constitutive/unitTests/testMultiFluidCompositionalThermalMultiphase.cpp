@@ -140,6 +140,68 @@ public:
     }
   }
 
+  // Checks that u = h - p/rho for every existing phase. After the update, the phase density is
+  // in units consistent with the phase enthalpy (mass or molar), whatever the formulation.
+  void testInternalEnergyConsistency( const bool useMass )
+  {
+    CompositionalMultiphaseFluid * fluid = this->getFluid( this->getFluidName() );
+
+    fluid->setMassFlag( useMass );
+
+    this->m_parent.resize( 1 );
+    fluid->allocateConstitutiveData( this->m_parent, 1 );
+
+    array2d< real64 > samples;
+    FluidData< CompositionalMultiphaseFluid, Base::numComp >::getSamples( samples );
+    integer const sampleCount = samples.size( 0 );
+
+    array2d< real64, compflow::LAYOUT_COMP > compositionArray( 1, Base::numComp );
+
+    constexpr real64 pressures[] = { 10.0e5, 50.0e5, 100.0e5, 600.0e5 };
+    constexpr real64 temperatures[] = { 15.5, 24.0, 40.0, 80.0 };
+
+    string_array const & phaseNames = fluid->phaseNames();
+    auto const fluidWrapper = fluid->createKernelWrapper();
+
+    for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
+    {
+      for( integer ic = 0; ic < Base::numComp; ++ic )
+      {
+        compositionArray( 0, ic ) = samples( sampleIndex, ic );
+      }
+      auto const compositionView = compositionArray.toViewConst();
+
+      for( real64 const pressure : pressures )
+      {
+        for( real64 const temperatureInC : temperatures )
+        {
+          real64 const temperature = units::convertCToK( temperatureInC );
+
+          forAll< serialPolicy >( 1, [fluidWrapper, pressure, temperature, compositionView] ( localIndex const k )
+          {
+            fluidWrapper.update( k, 0, pressure, temperature, compositionView[k] );
+          } );
+
+          for( integer ip = 0; ip < Base::numPhase; ++ip )
+          {
+            if( fluid->phaseFraction()( 0, 0, ip ) <= 0.0 )
+            {
+              continue;
+            }
+            real64 const phaseEnthalpy = fluid->phaseEnthalpy()( 0, 0, ip );
+            real64 const phaseDensity = fluid->phaseDensity()( 0, 0, ip );
+            real64 const phaseInternalEnergy = fluid->phaseInternalEnergy()( 0, 0, ip );
+            real64 const expectedInternalEnergy = phaseEnthalpy - pressure / phaseDensity;
+            checkRelativeError( phaseInternalEnergy, expectedInternalEnergy, relTol, absTol,
+                                GEOS_FMT( "Phase internal energy ({}) at P = {}, T = {}, z = {}",
+                                          phaseNames[ip], pressure, temperature,
+                                          Base::toString( compositionView[0].toSliceConst() ) ) );
+          }
+        }
+      }
+    }
+  }
+
   static string getFluidName();
 
 private:
@@ -491,6 +553,16 @@ TYPED_TEST( MultiThermalFluidCompositionalMultiphaseTestFixture, numericalDeriva
 TYPED_TEST( MultiThermalFluidCompositionalMultiphaseTestFixture, numericalDerivativesMass )
 {
   this->testNumericalDerivatives( true );
+}
+
+TYPED_TEST( MultiThermalFluidCompositionalMultiphaseTestFixture, internalEnergyConsistencyMolar )
+{
+  this->testInternalEnergyConsistency( false );
+}
+
+TYPED_TEST( MultiThermalFluidCompositionalMultiphaseTestFixture, internalEnergyConsistencyMass )
+{
+  this->testInternalEnergyConsistency( true );
 }
 
 } // testing

@@ -366,11 +366,14 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
   }
 
   // 5. Calculate the internal energy
+  //    The enthalpy is in J/kg if m_useMass and in J/mol otherwise. At this stage phaseDensity
+  //    is still the molar density (it is overwritten by the mass density in step 6), so the
+  //    density consistent with the enthalpy units must be selected explicitly.
   if constexpr (isThermalType())
   {
     computeInternalEnergy( pressure,
                            phaseFraction,
-                           phaseDensity,
+                           m_useMass ? phaseMassDensity : phaseDensity,
                            phaseEnthalpy,
                            phaseInternalEnergy );
   }
