@@ -74,7 +74,8 @@ void calculateBrineDensity( PTTableCoordinates const & tableCoords,
 
 void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
                                 string const & functionName,
-                                array1d< real64 > const & densities )
+                                array1d< real64 > const & densities,
+                                real64 const waterCompressibility )
 {
   // if no salinity, we fall back to the standard approach in three steps
   // 1- Get the saturation density as a function of temperature
@@ -102,9 +103,6 @@ void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
       // Step 2: get the saturation pressure
       real64 const waterSatPressure = waterSatPressureTable->evaluate( &T );
       // Step 3: get the pure water density
-      // Note: for now, we keep a constant water compressibility for consistency with the Ezrokhi model
-      // In the future, we should query the water compressibility as a function of pressure and temperature in a table
-      real64 const waterCompressibility = 4.5e-10; // Pa-1 // TODO: consolidate to a unique file as Dick started doing
       densities[j*nPressures+i] = waterSatDensity * exp( waterCompressibility * ( P - waterSatPressure ) );
     }
   }
@@ -147,7 +145,8 @@ TableFunction const * makeDensityTable( BrineFluidParameters const & brineFluidP
     {
       // the Phillips correlation is inaccurate in the absence of salinity.
       // since this is a very frequent case, we implement an alternate (more accurate) method below
-      calculatePureWaterDensity( tableCoords, functionName, densities );
+      real64 const waterCompressibility = brineFluidParameters.m_waterCompressibility;
+      calculatePureWaterDensity( tableCoords, functionName, densities, waterCompressibility );
     }
 
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );

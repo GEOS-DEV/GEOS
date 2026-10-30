@@ -20,6 +20,12 @@
 #ifndef GEOS_PHYSICSSOLVERS_KERNELLAUNCHSELECTORS_HPP
 #define GEOS_PHYSICSSOLVERS_KERNELLAUNCHSELECTORS_HPP
 
+#include "common/GeosxConfig.hpp"
+#include "common/logger/Logger.hpp"
+
+#include <type_traits>
+#include <utility>
+
 namespace geos
 {
 namespace internal
@@ -92,79 +98,46 @@ void kernelLaunchSelectorThermalSwitch( T value, LAMBDA && lambda )
   }
 }
 
+/**
+ * @brief Dispatch a runtime component count to a compile-time constant.
+ * @note Counts above GEOS_MAX_FLUID_COMPONENTS are not instantiated.
+ */
 template< typename T, typename LAMBDA >
-void kernelLaunchSelectorCompThermSwitch( T value, bool const isThermal, LAMBDA && lambda )
+void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 {
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
-
-
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
   switch( value )
   {
-    case 1:
-    {
-      invokeThermalDispatchLambda( std::integral_constant< T, 1 >(), isThermal, lambda );  return;
-    }
-    case 2:
-    {
-      invokeThermalDispatchLambda( std::integral_constant< T, 2 >(), isThermal, lambda );
-      return;
-    }
-    case 3:
-    {
-      invokeThermalDispatchLambda( std::integral_constant< T, 3 >(), isThermal, lambda );
-      return;
-    }
-    case 4:
-    {
-      invokeThermalDispatchLambda( std::integral_constant< T, 4 >(), isThermal, lambda );
-      return;
-    }
-    case 5:
-    {
-      invokeThermalDispatchLambda( std::integral_constant< T, 5 >(), isThermal, lambda );
-      return;
-    }
+    #define GEOS_DISPATCH_COMPONENT( NC ) \
+      case NC: \
+      { lambda( std::integral_constant< T, NC >() ); return; \
+      }
+    GEOS_FOR_EACH_COMPONENT( GEOS_DISPATCH_COMPONENT )
+#undef GEOS_DISPATCH_COMPONENT
     default:
     {
-      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", value ) );
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}. This build instantiates 1 through {} (GEOS_MAX_FLUID_COMPONENTS).",
+                            value, GEOS_MAX_FLUID_COMPONENTS ) );
     }
   }
 }
 
 template< typename T, typename LAMBDA >
+void kernelLaunchSelectorCompThermSwitch( T value, bool const isThermal, LAMBDA && lambda )
+{
+  kernelLaunchSelectorCompSwitch( value, [&] ( auto NC )
+  {
+    invokeThermalDispatchLambda( NC, isThermal, lambda );
+  } );
+}
+
+template< typename T, typename LAMBDA >
 void kernelLaunchSelectorCompPhaseSwitch( T value, T n_phase, LAMBDA && lambda )
 {
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: value type should be integral" );
-  switch( value )
+  kernelLaunchSelectorCompSwitch( value, [&] ( auto NC )
   {
-    case 1:
-    {
-      invokePhaseDispatchLambda( std::integral_constant< T, 1 >(), n_phase, lambda );
-      return;
-    }
-    case 2:
-    {
-      invokePhaseDispatchLambda( std::integral_constant< T, 2 >(), n_phase, lambda );
-      return;
-    }
-    case 3:
-    {
-      invokePhaseDispatchLambda( std::integral_constant< T, 3 >(), n_phase, lambda );
-      return;
-    }
-    case 4:
-    {
-      invokePhaseDispatchLambda( std::integral_constant< T, 4 >(), n_phase, lambda );
-      return;
-    }
-    case 5:
-    {
-      invokePhaseDispatchLambda( std::integral_constant< T, 5 >(), n_phase, lambda );
-      return;
-    }
-    default:
-    { GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", value ) ); }
-  }
+    invokePhaseDispatchLambda( NC, n_phase, lambda );
+  } );
 }
 
 

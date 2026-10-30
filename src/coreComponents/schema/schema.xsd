@@ -5,17 +5,17 @@
 	</xsd:annotation>
 	<xsd:simpleType name="R1Tensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*\s*,\s*){2}\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="R1Tensor32">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*\s*,\s*){2}\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*\s*,\s*){5}\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_dataRepository_PlotLevel">
@@ -30,17 +30,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*(,\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="groupName">
@@ -65,17 +65,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*(,\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
@@ -85,17 +85,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*(,\s*\{\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*(,\s*\{\s*([+-]?[\d]+\s*(,\s*[+-]?[\d]+\s*)*)?\}\s*)*\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
@@ -110,52 +110,52 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*\s*[^*?&lt;>\|:&quot;;,\s]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([^*?&lt;>\|:&quot;;,\s]+\s*(,\s*[^*?&lt;>\|:&quot;;,\s]+\s*)*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*(,\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*(,\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array4d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*,\s*)*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*\{\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*(,\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*)*\}\s*(,\s*\{\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*(,\s*\{\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*(,\s*\{\s*([+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*(,\s*[+-]?([\d]+(\.[\d]*)?|\.[\d]+)([eE][-+]?[\d]+)?\s*)*)?\}\s*)*\}\s*)*\}\s*)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string">
@@ -165,7 +165,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[^,\{\}\s]+\s*,\s*)*\s*[^,\{\}\s]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([^,\{\}\s]+\s*(,\s*[^,\{\}\s]+\s*)*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -6619,6 +6619,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
+		<!--setNames => Optional targeted mesh element set(s) for which the statistics will be restricted. A set can be be defined by a 'Geometry' component, or correspond to an imported index set of mesh elements in case of an external mesh. If empty, all mesh regions will be processed. Be aware that only the regions that are processed by the solver will be taken into account.-->
+		<xsd:attribute name="setNames" type="groupNameRef_array" default="{}" />
 		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6871,6 +6873,8 @@ Information output from lower logLevels is added with the desired log level
 1
  - Print statistics-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--setNames => Optional targeted mesh element set(s) for which the statistics will be restricted. A set can be be defined by a 'Geometry' component, or correspond to an imported index set of mesh elements in case of an external mesh. If empty, all mesh regions will be processed. Be aware that only the regions that are processed by the solver will be taken into account.-->
+		<xsd:attribute name="setNames" type="groupNameRef_array" default="{}" />
 		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -9007,8 +9011,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
-		<!--solventMassPerSolutionVolume => Mass of solvent per unit volume of solution [kg/m^3], used to convert species molality [mol/kg solvent] to molarity [mol/m^3 solution]. The default of 1000 approximates an aqueous solution by the density of pure water.-->
-		<xsd:attribute name="solventMassPerSolutionVolume" type="real64" default="1000" />
+		<!--solventMassFraction => Mass fraction of solvent in the solution [-]. Species molality [mol/kg solvent] times this fraction is the amount per kg of solution, and times the fluid density the amount per m^3 of solution. The default of 1 is a dilute aqueous solution.-->
+		<xsd:attribute name="solventMassFraction" type="real64" default="1" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
 		<xsd:attribute name="viscosibility" type="real64" default="0" />
 		<!--viscosityModelType => Type of viscosity model. Valid options:
