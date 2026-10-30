@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <Problem>
     <FieldSpecifications>
+        <!-- SPHINX_DOME_PROPERTIES_BEGIN -->
         <FieldSpecification
             name="POROSITY.SAND"
             fieldName="ROCK.POROSITY_referencePorosity"
@@ -63,5 +64,6 @@
             initialCondition="1"
             component="2"
             scale="3.1209255e-14" />
+        <!-- SPHINX_DOME_PROPERTIES_END -->
     </FieldSpecifications>
 </Problem>

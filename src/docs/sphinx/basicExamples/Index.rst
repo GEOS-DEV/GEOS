@@ -13,6 +13,8 @@ Basic Examples
 
    co2Injection/Example
 
+   depletedReservoir/Example
+
    poromechanics/Example
 
    hydraulicFracturing/Example
