@@ -144,10 +144,10 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
 
   if( !useMass )
   {
-    real64 const CO2MWInv = 1.0 / m_componentMolarWeight[m_CO2Index];
-    value *= CO2MWInv;
-    dValue[Deriv::dP] *= CO2MWInv;
-    dValue[Deriv::dT] *= CO2MWInv;
+    real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
+    value *= CO2MW;
+    dValue[Deriv::dP] *= CO2MW;
+    dValue[Deriv::dT] *= CO2MW;
   }
 }
 

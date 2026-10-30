@@ -446,7 +446,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
     computeInternalEnergy( pressure,
                            phaseFraction,
-                           phaseMassDensity,
+                           m_useMass ? phaseMassDensity : phaseDensity,
                            phaseEnthalpy,
                            phaseInternalEnergy );
   }

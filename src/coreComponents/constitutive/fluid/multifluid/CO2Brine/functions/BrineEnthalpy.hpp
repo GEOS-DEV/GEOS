@@ -174,18 +174,18 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
   }
   else
   {
-    real64 const waterMWInv = 1.0 / m_componentMolarWeight[m_waterIndex];
-    real64 const CO2MWInv   = 1.0 / m_componentMolarWeight[m_CO2Index];
+    real64 const waterMW = m_componentMolarWeight[m_waterIndex];
+    real64 const CO2MW   = m_componentMolarWeight[m_CO2Index];
 
-    value = (1.0 - C ) * CO2Enthalpy * CO2MWInv + C * brineEnthalpy * waterMWInv;
+    value = (1.0 - C ) * CO2Enthalpy * CO2MW + C * brineEnthalpy * waterMW;
 
-    dvalue_dC = brineEnthalpy * waterMWInv - CO2Enthalpy * CO2MWInv;
-    dValue[Deriv::dP] = (1.0 - C ) * CO2EnthalpyDeriv[0] * CO2MWInv
+    dvalue_dC = brineEnthalpy * waterMW - CO2Enthalpy * CO2MW;
+    dValue[Deriv::dP] = (1.0 - C ) * CO2EnthalpyDeriv[0] * CO2MW
                         + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dP];
     dValue[Deriv::dT] =
       LvArray::math::max( 0.0,
-                          (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv
-                          + C * brineEnthalpy_dTemperature * waterMWInv
+                          (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MW
+                          + C * brineEnthalpy_dTemperature * waterMW
                           + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT] );
   }
 
