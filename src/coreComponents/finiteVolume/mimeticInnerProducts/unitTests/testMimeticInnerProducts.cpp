@@ -2127,17 +2127,16 @@ static double mixedIPConsistencyError( array2d< real64, nodes::REFERENCE_POSITIO
   }
 
   // err = max | ( M NK - C )_fd |
-  double err = 0.0;
+  real64 err = 0.0;
+  LvArray::tensorOps::AikBkj< NF, 3, NF >( R, M, NK );  // R_fd = M_fk NK_kd
+  LvArray::tensorOps::subtract< NF, 3 >( R, C );        // R -= C
+
+  // err = max | R |
   for( int f = 0; f < NF; ++f )
   {
     for( int d = 0; d < 3; ++d )
     {
-      real64 s = 0.0;
-      for( int k = 0; k < NF; ++k )
-      {
-        s += M( f, k ) * NK[k][d];
-      }
-      err = std::max( err, std::abs( s - C[f][d] ) );
+      err = LvArray::math::max( err, LvArray::math::abs( R[f][d] ) );
     }
   }
   return err;
