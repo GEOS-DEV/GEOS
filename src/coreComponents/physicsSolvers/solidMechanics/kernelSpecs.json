@@ -188,6 +188,7 @@
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, ConstantPermeability >",
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >",
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability >",
+        "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability, DamageDiffusion >",
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability, DamageDiffusion >",
         "PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >"
       ],
