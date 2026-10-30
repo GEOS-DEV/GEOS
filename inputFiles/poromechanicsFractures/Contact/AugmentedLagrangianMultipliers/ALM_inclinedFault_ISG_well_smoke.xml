@@ -1,6 +1,5 @@
 <?xml version="1.0" ?>
 
-
 <Problem>
   <Included>
     <File name="ALM_inclinedFault_base.xml"/>
@@ -311,8 +310,6 @@
       <FieldApplicator
         name="faultPressureApplicator"
         fieldSpecificationNames="{ initialFaultPressure }"/>
-      <SinglePhaseReservoirPoromechanicsConformingFracturesALMInitialization name="intact_matrix_initialization" poromechanicsSolverName="poroFractureSolver" reset_displacements="1" logLevel="1"/>
-      <SinglePhaseReservoirPoromechanicsConformingFracturesALMInitialization name="fractured_matrix_initialization" poromechanicsSolverName="poroFractureSolver" reset_displacements="1" logLevel="1"/>       
         <PackCollection
             name="tractionCollection"
             objectPath="ElementRegions/Fault/faceElementSubRegion"

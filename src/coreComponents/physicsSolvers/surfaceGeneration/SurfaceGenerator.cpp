@@ -3272,9 +3272,9 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
               localIndex numCellElements = 0;
               for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
               {
-                localIndex const er  = nodeToRegionMap[nodeIndex][k];
-                localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
-                localIndex const ei  = nodeToElementMap[nodeIndex][k];
+                localIndex const er  = nodeToRegionMap[nodeID][k];
+                localIndex const esr = nodeToSubRegionMap[nodeID][k];
+                localIndex const ei  = nodeToElementMap[nodeID][k];
 
                 if( getCellSubRegion( elementManager, er, esr ) == nullptr )
                 {
