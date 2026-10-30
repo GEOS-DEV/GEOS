@@ -3288,6 +3288,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
                 averagePoissonRatio += ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
               }
 
+              GEOS_ERROR_IF( numCellElements == 0,
+                             GEOS_FMT( "node {} is not connected to any cell element, cannot compute the average elastic moduli", nodeID ),
+                             getDataContext() );
+
               averageYoungModulus /= numCellElements;
               averagePoissonRatio /= numCellElements;
 
