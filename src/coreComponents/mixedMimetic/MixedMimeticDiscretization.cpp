@@ -105,10 +105,8 @@ void MixedMimeticDiscretization::postInputInitialization()
 void MixedMimeticDiscretization::initializePostInitialConditionsPreSubGroups()
 {
   Group::initializePostInitialConditionsPreSubGroups();
-
-  std::unique_ptr< MimeticInnerProductBase > newMimeticIP = factory( m_innerProductType );
-
-  registerWrapper< MimeticInnerProductBase >( viewKeyStruct::innerProductString(), std::move( newMimeticIP ) ).
+  
+  registerWrapper< MimeticInnerProductBase >( viewKeyStruct::innerProductString(), factory( m_innerProductType )  ).
     setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
