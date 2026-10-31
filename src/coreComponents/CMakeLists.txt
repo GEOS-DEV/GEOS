@@ -11,6 +11,7 @@ set( subdirs
      mesh
      fieldSpecification
      finiteVolume
+     mixedMimetic
      linearAlgebra
      discretizationMethods
      events
