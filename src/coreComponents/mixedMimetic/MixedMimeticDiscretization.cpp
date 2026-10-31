@@ -92,7 +92,7 @@ void MixedMimeticDiscretization::postInputInitialization()
                         InputError );
 
   // with a TPFA inner product both branches of the selection coincide: the indicators are only a diagnostic
-  if( isAdaptiveConsistency() && m_innerProductType == mimeticInnerProduct::MimeticInnerProductTypeStrings::TPFA )
+  if( isAdaptiveConsistency() && isTpfaInnerProduct() )
   {
     GEOS_WARNING( GEOS_FMT( "{}: 'adaptiveConsistency' is enabled but 'innerProductType' is TPFA: the adaptation has no "
                             "effect on the discretization (both operators of the adaptive blend coincide), and "
@@ -105,8 +105,8 @@ void MixedMimeticDiscretization::postInputInitialization()
 void MixedMimeticDiscretization::initializePostInitialConditionsPreSubGroups()
 {
   Group::initializePostInitialConditionsPreSubGroups();
-  
-  registerWrapper< MimeticInnerProductBase >( viewKeyStruct::innerProductString(), factory( m_innerProductType )  ).
+
+  registerWrapper< MimeticInnerProductBase >( viewKeyStruct::innerProductString(), factory( m_innerProductType ) ).
     setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 }
 
@@ -125,40 +125,36 @@ MixedMimeticDiscretization::getCatalog()
 std::unique_ptr< MimeticInnerProductBase >
 MixedMimeticDiscretization::factory( string const & mimeticInnerProductType ) const
 {
-  std::unique_ptr< MimeticInnerProductBase > rval;
   if( mimeticInnerProductType == MimeticInnerProductTypeStrings::TPFA )
   {
-    rval = std::make_unique< TPFAInnerProduct >();
+    return std::make_unique< TPFAInnerProduct >();
   }
-  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::QuasiTPFA )
+  if( mimeticInnerProductType == MimeticInnerProductTypeStrings::QuasiTPFA )
   {
-    rval = std::make_unique< QuasiTPFAInnerProduct >();
+    return std::make_unique< QuasiTPFAInnerProduct >();
   }
-  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::Simple )
+  if( mimeticInnerProductType == MimeticInnerProductTypeStrings::Simple )
   {
-    rval = std::make_unique< SimpleInnerProduct >();
+    return std::make_unique< SimpleInnerProduct >();
   }
-  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::BdVLM )
+  if( mimeticInnerProductType == MimeticInnerProductTypeStrings::BdVLM )
   {
-    rval = std::make_unique< BdVLMInnerProduct >();
+    return std::make_unique< BdVLMInnerProduct >();
   }
-  else if( mimeticInnerProductType == MimeticInnerProductTypeStrings::RT )
+  if( mimeticInnerProductType == MimeticInnerProductTypeStrings::RT )
   {
-    rval = std::make_unique< RTInnerProduct >();
+    return std::make_unique< RTInnerProduct >();
   }
-  else
-  {
-    GEOS_ERROR( GEOS_FMT( "Key value of {} does not have an associated mimetic inner product implementing the mixed-form "
-                          "mass matrix (valid options: {}, {}, {}, {}, {}).",
-                          mimeticInnerProductType,
-                          MimeticInnerProductTypeStrings::TPFA,
-                          MimeticInnerProductTypeStrings::QuasiTPFA,
-                          MimeticInnerProductTypeStrings::Simple,
-                          MimeticInnerProductTypeStrings::BdVLM,
-                          MimeticInnerProductTypeStrings::RT ),
-                getDataContext() );
-  }
-  return rval;
+  GEOS_ERROR( GEOS_FMT( "Key value of {} does not have an associated mimetic inner product implementing the mixed-form "
+                        "mass matrix (valid options: {}, {}, {}, {}, {}).",
+                        mimeticInnerProductType,
+                        MimeticInnerProductTypeStrings::TPFA,
+                        MimeticInnerProductTypeStrings::QuasiTPFA,
+                        MimeticInnerProductTypeStrings::Simple,
+                        MimeticInnerProductTypeStrings::BdVLM,
+                        MimeticInnerProductTypeStrings::RT ),
+              getDataContext() );
+  return nullptr;
 }
 
 REGISTER_CATALOG_ENTRY( MixedMimeticDiscretization, MixedMimeticDiscretization, string const &, Group * const )

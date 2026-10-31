@@ -600,7 +600,7 @@ public:
 
     // the same one-sided conductance and floor as the diagonal entries of TPFAInnerProduct::computeM
     real64 const areaTolerance = m_lengthTolerance * m_lengthTolerance;
-    real64 const weightTolerance = 1e-30 * m_lengthTolerance;
+    real64 const weightTolerance = mimeticInnerProduct::TPFAInnerProduct::weightToleranceFactor * m_lengthTolerance;
 
     // per-side one-sided coefficients: a_K = invMob_K / t_K and gravity terms
     real64 a[2]{}, dA_dp[2]{}, grav[2]{}, dGrav_dp[2]{};

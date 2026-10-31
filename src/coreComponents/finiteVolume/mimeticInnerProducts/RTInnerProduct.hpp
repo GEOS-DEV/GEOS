@@ -174,8 +174,10 @@ RTInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_US
       A[i][j] = transMatrix[i][j];
     }
   }
+  // M is symmetric positive definite: without pivoting, every pivot is bounded below by its smallest eigenvalue
   for( localIndex k = 0; k < NF; ++k )
   {
+    GEOS_ASSERT_GT( A[k][k], 0.0 );
     real64 const invPivot = 1.0 / A[k][k];
     for( localIndex j = 0; j < NF; ++j )
     {

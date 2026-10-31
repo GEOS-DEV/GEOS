@@ -1434,6 +1434,9 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   // custom point markers use more blocks than dof fields: no field-name representation, skip the YAML
   if( strategy.m_numBlocks > LvArray::integerConversion< HYPRE_Int >( labelNames.size() ) )
   {
+    GEOS_ERROR_IF( params.mgr.strategy != LinearSolverParameters::MGR::StrategyType::singlePhaseMixedMFD,
+                   GEOS_FMT( "hypredrive: the MGR strategy {} has {} blocks for {} dof labels",
+                             params.mgr.strategy, strategy.m_numBlocks, labelNames.size() ) );
     return false;
   }
 
