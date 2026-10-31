@@ -166,10 +166,20 @@ Key points to the GEOS style are:
       code here
     }
 
-As part of the continuous integration testing, this GEOS code style is enforced via the uncrustify tool.
+As part of the continuous integration testing, this GEOS code style is enforced via the uncrustify tool
+(configured by ``src/uncrustify.cfg``).
 While quite extensive, uncrustify does not enforce every example of the preferred code style.
-In cases where uncrusitfy is unable to enforce code style, it will ignore formatting rules.
+In cases where uncrustify is unable to enforce code style, it will ignore formatting rules.
 In these cases it is acceptable to proceed with pull requests, as there is no logical recourse.
+
+You can check and apply the code style locally from your build directory, provided that CMake found
+an ``uncrustify`` executable (it is built with the third-party libraries, and its location can be forced with
+the ``UNCRUSTIFY_EXECUTABLE`` CMake variable):
+
+.. code-block:: console
+
+  make uncrustify_check   # report the files that do not follow the code style
+  make uncrustify_style   # reformat the source files in place
 
 Header Guards
 =============

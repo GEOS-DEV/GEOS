@@ -23,48 +23,68 @@ The pressure source is the lowest-left corner element, and the pressure sink sit
 At the end of this tutorial you will know:
 
   - the basic structure of XML input files used by GEOS,
-  - how to run GEOS on a simple case requiring no external input files,
-  - the basic syntax of a solver block for single-phase problems,
+  - how to run GEOS on a simple case requiring no external mesh file,
+  - how the blocks of an input file refer to each other by name,
   - how to control output and visualize results.
 
-**Input file**
+**Before you start**
+
+This tutorial assumes that you have built and installed GEOS as described in the :ref:`QuickStart`,
+and that the ``geos`` executable is on your ``PATH``
+(in a build directory that has not been installed, the same executable is ``bin/geosx``).
+All commands below are run from the root of the GEOS repository.
+
+**Input files**
 
 GEOS runs by reading user input information from one or more XML files.
-For this tutorial, we only need a single GEOS input file located at:
+This tutorial uses two files:
 
 .. code-block:: console
 
     inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
+    inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
+
+The file you run is ``3D_10x10x10_compressible_smoke.xml``. It defines the mesh and the events,
+and pulls in everything else from ``3D_10x10x10_compressible_base.xml`` through an ``Included`` block:
+
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
+  :language: xml
+  :lines: 5-7
+
+GEOS merges included files into a single input deck before running.
+This is a common pattern in ``inputFiles``: a *base* file holds the physics,
+and several small files (*smoke* tests, *benchmarks*, ...) reuse it with different meshes or run lengths.
+Paths in an ``Included`` block are relative to the including file.
 
 **Running GEOS**
 
-If our XML input file is called ``my_input.xml``, GEOS runs this file by executing:
-
 .. code-block:: console
 
-  /path/to/geosx -i /path/to/my_input.xml
+  geos -i inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
 
 The ``-i`` flag indicates the path to the XML input file.
-To get help on what other command line input flags GEOS supports, run ``geosx --help``.
+To list the other command-line options, run ``geos --help`` (see also :ref:`RunningGEOS`).
 
 **Input file structure**
 
 XML files store information in a tree-like structure using nested blocks of information called *elements*.
 In GEOS, the root of this tree structure is the element called ``Problem``.
 All elements in an XML file are defined by an opening *tag* (``<ElementName>``) and end by a corresponding closing tag (``</ElementName>``). Elements can have properties defined as *attributes* with ``key="value"`` pairs.
-A typical GEOS input file contains the following tags:
+A typical GEOS input file contains the following blocks, presented below in this order:
 
 
- #. :ref:`Solver <Solver_tag_single_phase_internal_mesh>`
- #. :ref:`Mesh <Mesh_tag_single_phase_internal_mesh>`
- #. :ref:`Geometry <Geometry_tag_single_phase_internal_mesh>`
- #. :ref:`Events <Events_tag_single_phase_internal_mesh>`
- #. :ref:`NumericalMethods <NumericalMethods_tag_single_phase_internal_mesh>`
- #. :ref:`ElementRegions <ElementRegions_tag_single_phase_internal_mesh>`
- #. :ref:`Constitutive <Constitutive_tag_single_phase_internal_mesh>`
- #. :ref:`FieldSpecifications <FieldSpecifications_tag_single_phase_internal_mesh>`
- #. :ref:`Outputs <Outputs_tag_single_phase_internal_mesh>`
+ #. :ref:`Mesh <Mesh_tag_single_phase_internal_mesh>`: the computational grid,
+ #. :ref:`Geometry <Geometry_tag_single_phase_internal_mesh>`: named subsets of the mesh,
+ #. :ref:`ElementRegions <ElementRegions_tag_single_phase_internal_mesh>`: groups of cells and the materials they contain,
+ #. :ref:`Constitutive <Constitutive_tag_single_phase_internal_mesh>`: the properties of those materials,
+ #. :ref:`NumericalMethods <NumericalMethods_tag_single_phase_internal_mesh>`: discretization schemes,
+ #. :ref:`Solvers <Solver_tag_single_phase_internal_mesh>`: the physics to solve, and where,
+ #. :ref:`FieldSpecifications <FieldSpecifications_tag_single_phase_internal_mesh>`: initial and boundary conditions,
+ #. :ref:`Events <Events_tag_single_phase_internal_mesh>`: what happens when, including the end time,
+ #. :ref:`Outputs <Outputs_tag_single_phase_internal_mesh>`: what is written to disk.
 
+Blocks refer to each other by the user-defined ``name`` of their elements.
+The order of the blocks in the file does not matter: a name can be used before the element that defines it.
 
 **XML validation tools**
 
@@ -73,92 +93,6 @@ Such tools will help you identify common issues that may occur when working with
 
 .. note::
   Common errors come from the fact that XML is case-sensitive, and all opened tags must be properly closed.
-
-
-
-.. _Solver_tag_single_phase_internal_mesh:
-
--------------------
-Single-phase solver
--------------------
-
-GEOS is a multiphysics simulator. To find the solution to different physical problems
-such as diffusion or mechanical deformation, GEOS uses one or more physics solvers.
-The ``Solvers`` tag is used to define and parameterize these solvers.
-Different combinations of solvers can be applied
-in different regions of the domain at different moments of the simulation.
-
-
-In this first example, we use one type of solver in the entire domain and
-for the entire duration of the simulation.
-The input file for this tutorial can be found in the repository at
-`inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml <https://github.com/GEOS-DEV/GEOS/blob/6dd40e776556ec1235ba183e00796f2eedc035ac/inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml>`_, which also includes
-`inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml <https://github.com/GEOS-DEV/GEOS/blob/6dd40e776556ec1235ba183e00796f2eedc035ac/inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml>`_.
-The solver we are specifying here is a single-phase flow solver.
-In GEOS, such a solver is created using a ``SinglePhaseFVM`` element.
-This type of solver is one among several cell-centered single-phase finite volume methods.
-
-
-The XML block used to define this single-phase finite volume solver is shown here:
-
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
-  :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
-
-
-Each type of solver has a specific set of parameters that are required and
-some parameters that are optional. Optional values are usually set with sensible default values.
-
-**name**
-
-First, we register a solver of type ``SinglePhaseFVM`` with a user-chosen name,
-here ``SinglePhaseFlow``. This unique user-defined name can be almost anything.
-However, some symbols are known to cause issues in names : avoid commas, slashes, curly braces.
-GEOS is case-sensitive: it makes a distinction between two ``SinglePhaseFVM`` solvers called ``mySolver`` and ``MySolver``.
-Giving elements a name is a common practice in GEOS:
-users need to give unique identifiers to objects they define.
-That name is the handle to this instance of a solver class.
-
-**logLevel**
-
-Then, we set a solver-specific level of console logging (``logLevel`` set to 1 here).
-Notice that the value (1) is between double-quotes.
-This is a general convention for all attributes:
-we write ``key="value"`` regardless of the value type (integers, strings, lists, etc.).
-
-
-For ``logLevel``, higher values lead to more console output or intermediate results saved to files.
-When debugging, higher ``logLevel`` values is often convenient.
-In production runs, you may want to suppress most console output.
-
-
-**discretization**
-
-For solvers of the ``SinglePhaseFVM`` family, one required attribute is a discretization scheme.
-Here, we use a Two-Point Flux Approximation (TPFA) finite volume discretization scheme called ``singlePhaseTPFA``.
-To know the list of admissible values of an attribute, please see `GEOS's XML schema <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/CompleteXMLSchema.html#>`_.
-This discretization type must know how to find permeability values that it uses internally to compute transmissibilities.
-The ``permeabilityNames`` attribute tells the solver the user-defined name (the *handle*)
-of the permeability values that will be defined elsewhere in the input file.
-Note that the order of attributes inside an element is not important.
-
-**fluidNames, solidNames, targetRegions**
-
-Here, we specify a collection of fluids, rocks, and
-target regions of the mesh on which the solver will apply.
-Curly brackets are used in GEOS inputs to indicate collections of values (sets or lists).
-The curly brackets used here are necessary, even if the collection contains a single value.
-Commas are used to separate members of a set.
-
-**Nested elements**
-
-Finally, note that other XML elements can be nested inside the ``Solvers`` element.
-Here, we use specific XML elements to set values for numerical tolerances.
-The solver stops when numerical residuals are smaller than
-the specified tolerances (convergence is achieved)
-or when the maximum number of iterations allowed is exceeded (convergence not achieved).
-
 
 
 
@@ -187,22 +121,22 @@ we use the internal mesh generator. We parameterize it with the **InternalMesh**
 
 **name**
 
-Just like for solvers, we register the ``InternalMesh`` element using a unique **name** attribute.
+Giving elements a ``name`` is a common practice in GEOS:
+the name is the handle that other parts of the input file use to refer to an object.
 Here the ``InternalMesh`` object is instantiated with the name ``mesh``.
+Names are case-sensitive (``mesh`` and ``Mesh`` are different), and should not contain commas, slashes or curly braces.
 
+**elementTypes, cellBlockNames**
 
-**elementTypes**
+We specify the collection of element types that this mesh contains.
+Tetrahedra, hexahedra, and wedges are examples of element types.
+Curly brackets are used in GEOS inputs to indicate collections of values (sets or lists),
+and they are required even if the collection contains a single value.
+Commas separate members of a collection.
+Our mesh has only one type of element: ``C3D8``, a hexahedral element (linear 8-node brick).
 
-
-We specify the collection of elements types that this mesh contains.
-Tetrahedra, hexahedra, and  wedges are examples of element types.
-If a mesh contains different types of elements (a hybrid mesh),
-we should indicate this here by listing all unique types of elements in curly brackets.
-Keeping things simple, our element collection has only one type of element: a ``C3D8`` type representing a hexahedral element (linear 8-node brick).
-
-A mesh can contain several geometrical types of elements.
-For numerical convenience, elements are aggregated by types into ``cellBlocks``.
-Here, we only have linear 8-node brick elements, so the entire domain is one object called ``cellBlock``.
+For numerical convenience, elements are aggregated by type into *cell blocks*.
+Here, all elements are bricks, so the entire domain is a single cell block, named ``cellBlock`` by the ``cellBlockNames`` attribute.
 
 
 **xCoords, yCoords, zCoords, nx, ny, nz**
@@ -211,6 +145,7 @@ This specifies the spatial arrangement of the mesh elements.
 The mesh defined here goes from coordinate x=0 to x=10 in the x-direction, with ``nx=10`` subdivisions along this segment.
 The same is true for the y-dimension and the z-dimension.
 Our mesh is a cube of 10x10x10=1,000 elements with a bounding box defined by corner coordinates (0,0,0) and (10,10,10).
+All lengths are in meters: GEOS uses S.I. units throughout.
 
 
 .. image:: mesh.png
@@ -225,7 +160,7 @@ Geometry
 
 The ``Geometry`` tag allows users to capture subregions of a mesh and assign them a unique name.
 Here, we name two ``Box`` elements, one for the location of the ``source`` and one for the ``sink``.
-Pressure values are assigned to these named regions elsewhere in the input file.
+Pressure values are assigned to these named regions in the ``FieldSpecifications`` block.
 
 The pressure source is the element in the (0,0,0) corner of the domain, and the sink is the element in the (10,10,10) corner.
 
@@ -246,80 +181,27 @@ The ``Box`` defined here is one of the simplest approaches.
 
 
 
-.. _Events_tag_single_phase_internal_mesh:
-
---------
-Events
---------
-
-In GEOS, we call ``Events`` anything that happens at a set time or frequency.
-Events are a central element for time-stepping in GEOS,
-and a dedicated section just for events is necessary to give them the treatment they deserve.
-
-
-For now, we focus on three simple events: the time at which we wish the simulation to end (``maxTime``),
-the times at which we want the solver to perform updates,
-and the times we wish to have simulation output values reported.
-
-
-In GEOS, all times are specified in **seconds**, so here ``maxTime=5000.0`` means that the simulation will run from time 0 to time 5,000 seconds.
-
-
-If we focus on the ``PeriodicEvent`` elements, we see :
-
- #. A **periodic solver** application: this event is named ``solverApplications``. With the attribute ``forceDt=20``, it tells the solver to compute results at 20-second time intervals. We know what this event does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we instruct GEOS to call the solver registered as ``SinglePhaseFlow``. Note the hierarchical structure of the target formulation, using '/' to indicate a specific named instance (``SinglePhaseFlow``) of an element (``Solvers``). If the solver needs to take smaller time steps, it is allowed to do so, but it will have to compute results for every 20-second increment between time zero and ``maxTime`` regardless of possible intermediate time steps.
- #. An **output event**: this event is used for reporting purposes and instructs GEOS to write out results at specific frequencies. Here, we need to see results at every 100-second increment. This event triggers a full application of solvers, even if solvers were not summoned by the previous event. In other words, an output event will force an application of solvers, possibly in addition to the periodic events requested directly.
-
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_INT_HEX_EVENTS -->
-  :end-before: <!-- SPHINX_TUT_INT_HEX_EVENTS_END -->
-
-
-
-
-.. _NumericalMethods_tag_single_phase_internal_mesh:
-
-------------------
-Numerical methods
-------------------
-
-GEOS comes with several useful numerical methods.
-In the ``Solvers`` elements, for instance, we had specified to use a two-point flux approximation
-as discretization scheme for the finite volume single-phase solver.
-Now to use this scheme, we need to supply more details in the ``NumericalMethods`` element.
-
-.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS -->
-  :end-before: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
-
-Note that in GEOS, there is a difference between physics solvers and numerical methods.
-Their parameterizations are thus independent. We can have
-multiple solvers using the same numerical scheme but with different tolerances, for instance.
-
-The available numerical methods and their options are listed in the GEOS XML schema documentation which may be found by using the search function in the documentation.
-
 .. _ElementRegions_tag_single_phase_internal_mesh:
 
 --------
 Regions
 --------
 
-In GEOS, ``ElementsRegions`` are used to attach material properties
-to regions of elements.
+In GEOS, ``ElementRegions`` are used to attach materials to groups of cells.
 Here, we use only one **CellElementRegion** to represent the entire domain (user name: ``mainRegion``).
-It contains all the blocks called ``cellBlock`` defined in the mesh section.
-We specify the materials contained in that region using a ``materialList``.
-Several materials coexist in ``cellBlock``, and we list them using their user-defined names: 
-``water`` and ``rock`` in this exemple.
-Each material is a definition of physical properties.
+``cellBlocks="{ * }"`` means that the region contains all the cell blocks defined in the mesh, here the single ``cellBlock``.
+We specify the materials contained in that region using a ``materialList``,
+listing them by their user-defined names: ``water`` and ``rock``.
+Each material is defined in the ``Constitutive`` block.
 
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
+
+The ``materialList`` is how physics solvers find the models they need:
+a solver applied to ``mainRegion`` looks in this list for a fluid model and a solid model.
 
 
 
@@ -329,15 +211,7 @@ Each material is a definition of physical properties.
 Constitutive models
 ---------------------
 
-The ``Constitutive`` element attaches physical properties to all materials contained in the domain.
-
-The physical properties of the materials
-defined as ``water``, ``rockPorosity``,  and ``rockPerm`` are provided here,
-each material being derived from a different material type:
-``CompressibleSinglePhaseFluid``
-for the water, ``PressurePorosity`` for the rock porosity, and
-``ConstantPermeability`` for rock permeability.
-The list of attributes differs between these constitutive materials.
+The ``Constitutive`` element defines the physical properties of all materials used in the domain.
 
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
@@ -345,22 +219,102 @@ The list of attributes differs between these constitutive materials.
   :start-after: <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE_END -->
 
+The two materials listed in the region are:
 
-The names ``water``, ``rockPorosity`` and ``rockPerm`` are defined by the user
-as handles to specific instances of physical materials.
+  * ``water``, a ``CompressibleSinglePhaseFluid`` with a reference density, viscosity, and compressibility,
+  * ``rock``, a ``CompressibleSolidConstantPermeability``. This is a *composite* model: it does not hold properties itself,
+    but combines three other models by name:
+
+    * ``solidModelName="nullSolid"``: the mechanical model of the rock. Mechanics is not solved here, so we use a ``NullModel``.
+    * ``porosityModelName="rockPorosity"``: a ``PressurePorosity`` model, where porosity varies with pressure through a compressibility.
+    * ``permeabilityModelName="rockPerm"``: a ``ConstantPermeability`` model with permeability components (kx, ky, kz).
+
+Only ``water`` and ``rock`` appear in the region's ``materialList``; the three sub-models are found through the ``rock`` model.
+This solid + porosity + permeability composition is used throughout GEOS flow and poromechanics examples.
+
 GEOS uses S.I. units throughout, not field units.
 Pressures, for instance, are in Pascal, not psia.
-The x- and y-permeability are set to 1.0e-12 m\ :sup:`2` corresponding to approximately to 1 Darcy.
+The x- and y-permeability are set to 1.0e-12 m\ :sup:`2`, approximately 1 Darcy.
 
 
-We have used the handles ``water``, ``rockPorosity`` and ``rockPerm`` in the input file
-in the ``ElementRegions`` section of the XML file,
-before the registration of these materials took place here, in Constitutive element.
 
-.. note::
-  This highlights an important aspect of using XML in GEOS:
-  the order in which objects are registered and used in the XML file is not important.
+.. _NumericalMethods_tag_single_phase_internal_mesh:
 
+------------------
+Numerical methods
+------------------
+
+GEOS comes with several numerical methods. The ``NumericalMethods`` block defines discretization schemes and gives them a name.
+Here we define a Two-Point Flux Approximation (TPFA) finite volume scheme named ``singlePhaseTPFA``.
+
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS -->
+  :end-before: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
+
+In GEOS, physics solvers and numerical methods are defined separately.
+Several solvers can use the same numerical scheme, with different tolerances for instance.
+See :ref:`NumericalMethodsManager` for the available schemes.
+
+
+
+.. _Solver_tag_single_phase_internal_mesh:
+
+-------------------
+Single-phase solver
+-------------------
+
+GEOS is a multiphysics simulator. To find the solution to different physical problems
+such as diffusion or mechanical deformation, GEOS uses one or more physics solvers.
+The ``Solvers`` tag is used to define and parameterize these solvers.
+Different combinations of solvers can be applied
+in different regions of the domain at different moments of the simulation.
+
+In this first example, we use one solver in the entire domain and
+for the entire duration of the simulation:
+a single-phase flow solver, created with a ``SinglePhaseFVM`` element.
+This is one among several cell-centered single-phase finite volume methods.
+
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
+  :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
+
+
+Each type of solver has a specific set of parameters that are required and
+some parameters that are optional. Optional values are usually set with sensible default values.
+
+**name**
+
+The solver is named ``SinglePhaseFlow``. The ``Events`` block uses this name to tell GEOS when to run the solver.
+
+**logLevel**
+
+``logLevel`` controls how much this solver prints to the console (here, 1).
+Notice that the value is between double-quotes:
+we write ``key="value"`` regardless of the value type (integers, strings, lists, etc.).
+Higher values lead to more console output, which is convenient when debugging.
+
+**discretization**
+
+For solvers of the ``SinglePhaseFVM`` family, a discretization scheme is required.
+Here, we use the TPFA scheme named ``singlePhaseTPFA`` in the ``NumericalMethods`` block.
+
+**targetRegions**
+
+The list of regions where the solver is applied, here ``mainRegion``.
+The solver finds its fluid and rock models through the ``materialList`` of these regions,
+so no material names are given in the solver block.
+
+**Nested elements**
+
+Other XML elements can be nested inside the solver element.
+Here, ``NonlinearSolverParameters`` sets the Newton tolerance and maximum number of iterations,
+and ``LinearSolverParameters`` selects an iterative linear solver (GMRES with an algebraic multigrid preconditioner).
+The Newton loop stops when the residual is smaller than ``newtonTol`` (convergence achieved)
+or when ``newtonMaxIter`` is exceeded (convergence not achieved, and the time step is cut).
+
+To know the list of admissible attributes of any element, see the :doc:`Datastructure Index </docs/sphinx/datastructure/CompleteXMLSchema>`.
 
 
 
@@ -370,7 +324,7 @@ before the registration of these materials took place here, in Constitutive elem
 Defining properties
 --------------------
 
-In the ``FieldSpecifications`` section, properties such as source and sink pressures are set.
+In the ``FieldSpecifications`` section, initial conditions and source and sink pressures are set.
 GEOS offers a lot of flexibility to specify field values through space and time.
 
 Spatially, in GEOS, all field specifications are associated
@@ -380,11 +334,16 @@ for instance, one can have volume property values attached to
 a subset of volume elements of the mesh,
 or surface properties attached to faces of a subset of elements.
 
-For each ``FieldSpecification``, we specify a ``name``, a ``fieldName`` (this name is used by solvers or numerical methods), an ``objectPath``, ``setNames`` and a ``scale``. The ``ObjectPath`` is important and it reflects the internal class hierarchy of the code.
-Here, for the ``fieldName`` pressure, we assign the value defined by ``scale`` (5e6 Pascal)
-to one of the ``ElementRegions`` (class) called ``mainRegions`` (instance).
-More specifically, we target the ``elementSubRegions`` called ``cellBlock``
-(this contains all the C3D8 elements, effectively all the domain). The ``setNames`` allows to use the elements defined in ``Geometry``, or use everything in the object path (using the ``all``).
+For each ``FieldSpecification``, we specify:
+
+  * a ``name``,
+  * a ``fieldName``, the field being set (here ``pressure``),
+  * an ``objectPath``, the object holding the field. ``ElementRegions/mainRegion/cellBlock`` targets the cells of the ``cellBlock`` sub-region of ``mainRegion``,
+  * ``setNames``, the subsets of that object where the value applies: the boxes defined in ``Geometry``, or ``all`` for every cell,
+  * a ``scale``, the value applied (here in Pascal).
+
+The ``initialPressure`` specification has ``initialCondition="1"``: it is applied once, at the start of the simulation, to initialize the whole domain at 5 MPa.
+The ``sourceTerm`` and ``sinkTerm`` specifications are applied at every time step, holding the source at 10 MPa and the sink at 0 MPa.
 
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
@@ -399,6 +358,34 @@ The image below shows the pressures after the very first time step, with the dom
 
 
 
+.. _Events_tag_single_phase_internal_mesh:
+
+--------
+Events
+--------
+
+In GEOS, we call ``Events`` anything that happens at a set time or frequency.
+Events drive time-stepping in GEOS; see :ref:`EventManager` for a complete description.
+
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_INT_HEX_EVENTS -->
+  :end-before: <!-- SPHINX_TUT_INT_HEX_EVENTS_END -->
+
+The ``maxTime`` attribute of ``Events`` sets the end of the simulation.
+In GEOS, all times are specified in **seconds**, so ``maxTime="5000.0"`` means that the simulation runs from time 0 to time 5,000 seconds.
+
+The two ``PeriodicEvent`` elements are:
+
+ #. A **solver event**, named ``solverApplications``. Its ``target`` attribute, ``/Solvers/SinglePhaseFlow``, points to the solver defined above:
+    the '/' separators give the path to a named instance (``SinglePhaseFlow``) inside a block (``Solvers``).
+    With ``forceDt="20.0"``, the solver advances in 20-second time steps until ``maxTime``.
+    If the solver fails to converge, it can cut the time step and take smaller sub-steps to reach the end of each 20-second interval.
+ #. An **output event**, named ``outputs``, targeting ``/Outputs/siloOutput``. It writes results every 100 seconds (``timeFrequency="100.0"``).
+    An output event does not run the solver: it writes the current state of the simulation.
+    By default, GEOS adjusts the time steps so that outputs happen exactly at the requested times.
+
+
 
 .. _Outputs_tag_single_phase_internal_mesh:
 
@@ -409,25 +396,19 @@ Output
 In order to retrieve results from a simulation,
 we need to instantiate one or multiple ``Outputs``.
 
-Here, we define a single object of type ``Silo``.
-`Silo <https://wci.llnl.gov/simulation/computer-codes/silo>`_ is a library and a format for reading and writing a wide variety of scientific data.
-Data in Silo format can be read by `VisIt <https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
-
-This ``Silo`` output object is called ``siloOutput``.
-We had referred to this object already in the ``Events`` section:
-it was the target of a periodic event named ``outputs``.
-You can verify that the Events section is using this object as a target.
-It does so by pointing to ``/Outputs/siloOutput``.
+Here, we define a single object of type ``Silo``, named ``siloOutput``.
+This is the object targeted by the ``outputs`` event above.
+`Silo <https://silo.readthedocs.io>`_ is a library and a format for scientific data,
+which can be read by `VisIt <https://visit-dav.github.io/visit-website/>`_.
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/3D_10x10x10_compressible_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_OUTPUTS_END -->
 
-
-GEOS currently supports outputs that are readable by `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_ and Kitware's Paraview, as well as other visualization tools.
-In this example, we only request a Silo format compatible with VisIt.
+To visualize results with `ParaView <https://www.paraview.org>`_ instead, use a ``VTK`` output,
+for instance ``<VTK name="vtkOutput"/>``, and set the target of the output event to ``/Outputs/vtkOutput``.
+See :doc:`/coreComponents/fileIO/doc/OutputTasks` for all output formats.
 
 
 All elements are now in place to run GEOS.
@@ -437,74 +418,22 @@ All elements are now in place to run GEOS.
 Running GEOS
 ------------------------------------
 
-The command to run GEOS is
+From the root of the repository, run:
 
-``path/to/geosx -i path/to/this/xml_file.xml``
+.. code-block:: console
 
-Note that all paths for files included in the XML file are relative to this XML file.
+  geos -i inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml
 
-While running GEOS, it logs status information on the console output with a verbosity
-that is controlled at the object level, and
-that can be changed using the ``logLevel`` flag.
+Paths to files referenced inside an XML file (included files, external meshes, tables) are relative to that XML file.
+Output files are written to the current directory, unless another directory is given with ``-o``.
 
-The first few lines appearing to the console are indicating that the XML elements are read and registered correctly:
+While running, GEOS logs status information to the console, with a verbosity controlled by the ``logLevel`` attribute of each object.
 
-.. code-block:: sh
-
-  Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
-  Adding Mesh: InternalMesh, mesh
-  Adding Geometric Object: Box, source
-  Adding Geometric Object: Box, sink
-  Adding Event: PeriodicEvent, solverApplications
-  Adding Event: PeriodicEvent, outputs
-  Adding Output: Silo, siloOutput
-  Adding Object CellElementRegion named mainRegion from ObjectManager::Catalog.
-    mainRegion/cellBlock/water is allocated with 1 quadrature points.
-    mainRegion/cellBlock/rock is allocated with 1 quadrature points.
-    mainRegion/cellBlock/rockPerm is allocated with 1 quadrature points.
-    mainRegion/cellBlock/rockPorosity is allocated with 1 quadrature points.
-    mainRegion/cellBlock/nullSolid is allocated with 1 quadrature points.
-
-
-Then, we go into the execution of the simulation itself:
-
-.. code-block:: sh
-
-  Time: 0s, dt:20s, Cycle: 0
-      Attempt:  0, NewtonIter:  0
-      ( R ) = ( 5.65e+00 ) ;
-      Attempt:  0, NewtonIter:  1
-      ( R ) = ( 2.07e-04 ) ;
-      Last LinSolve(iter,res) = (  63, 8.96e-11 ) ;
-      Attempt:  0, NewtonIter:  2
-      ( R ) = ( 9.86e-11 ) ;
-      Last LinSolve(iter,res) = (  70, 4.07e-11 ) ;
-
-
-Each time iteration at every 20s interval is logged to console, until the end of the simulation at ``maxTime=5000``:
-
-.. code-block:: sh
-
-  Time: 4980s, dt:20s, Cycle: 249
-      Attempt:  0, NewtonIter:  0
-      ( R ) = ( 4.74e-09 ) ;
-      Attempt:  0, NewtonIter:  1
-      ( R ) = ( 2.05e-14 ) ;
-      Last LinSolve(iter,res) = (  67, 5.61e-11 ) ;
-  SinglePhaseFlow: Newton solver converged in less than 4 iterations, time-step required will be doubled.
-  Cleaning up events
-  Umpire            HOST sum across ranks:   14.8 MB
-  Umpire            HOST         rank max:   14.8 MB
-  total time                         5.658s
-  initialization time                0.147s
-  run time                           3.289s
-
-
-All newton iterations are logged along with corresponding nonlinear residuals for each time iteration.
-In turn, for each newton iteration, ``LinSolve`` provides the number of linear iterations and the final residual reached by the linear solver.
-Information on run times, initialization times, and maximum amounts of
-memory (high water mark) are given at the end of the simulation, if successful.
-
+  * First, GEOS reads the input files and creates the objects they define (mesh, regions, constitutive models, solvers, events).
+  * Then, for every time step, GEOS prints a line with the current time, time step size and cycle number (``Time: ..., dt: ... s, Cycle: ...``),
+    followed by the Newton iterations of the solver, with the nonlinear residual at each iteration
+    and the number of iterations of the linear solver.
+  * At the end of a successful simulation, GEOS prints timing and memory usage information.
 
 Congratulations on completing this first run!
 
@@ -515,11 +444,10 @@ Visualization
 ------------------------------------
 
 
-Here, we have requested results to be written in Silo, a format compatible with `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_. To visualize results, open VisIt
-and directly load the database of simulation output files.
+Here, we have requested results to be written in Silo format. To visualize results, open VisIt
+and load the database of simulation output files written in the current directory.
 
-After a few time step, pressure between the source and sink are in equilibrium, as shown on the representation below.
+After a few time steps, pressure between the source and sink reaches equilibrium, as shown below.
 
 .. image:: final_pressure.png
 
@@ -538,3 +466,4 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
   - More on single-phase flow solvers, please see :ref:`SinglePhaseFlow`.
   - More on meshes, please see :ref:`Meshes`.
   - More on events, please see :ref:`EventManager`.
+  - More on running GEOS, please see :ref:`RunningGEOS`.

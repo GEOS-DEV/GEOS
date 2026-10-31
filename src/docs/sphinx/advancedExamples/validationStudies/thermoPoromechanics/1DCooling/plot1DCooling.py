@@ -10,8 +10,8 @@ of both runs. The .hdf5 files are not versioned; this script therefore depends o
 and matplotlib.
 
 To regenerate the data after a change in the cases:
-    geosx -i ThermoElastic_1DCooling_fim_smoke.xml        # in elastic/
-    geosx -i ThermoDruckerPrager_1DCooling_fim_smoke.xml  # in druckerPrager/
+    geos -i ThermoElastic_1DCooling_fim_smoke.xml        # run in an elastic/ directory
+    geos -i ThermoDruckerPrager_1DCooling_fim_smoke.xml  # run in a druckerPrager/ directory
     python3 postprocess1DCooling.py -e elastic -d druckerPrager -o <this_directory>
 """
 import os

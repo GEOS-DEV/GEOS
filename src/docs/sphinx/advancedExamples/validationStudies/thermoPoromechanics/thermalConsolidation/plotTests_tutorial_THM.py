@@ -1,19 +1,19 @@
-"""Figure de verification du cas de consolidation thermo-poro-elastique.
+"""Verification figure of the thermo-poro-elastic consolidation case.
 
-Execute par Sphinx (directive `.. plot::` de Example.rst) a chaque build de la documentation.
-Il ne lit que deux fichiers CSV versionnes a cote de lui :
+Executed by Sphinx (the `.. plot::` directive of Example.rst) on every documentation build.
+It only reads two versioned CSV files sitting next to it:
 
-    thermalConsolidation_geos.csv         resultats GEOS
-    thermalConsolidation_analytical.csv   solution analytique
+    thermalConsolidation_geos.csv         GEOS results
+    thermalConsolidation_analytical.csv   analytical solution
 
-Ces CSV sont produits hors ligne par postprocessTests_tutorial_THM.py, a partir des sorties
-TimeHistory (.hdf5) d'un run du cas benchmark. Les .hdf5 ne sont volontairement pas versionnes
-(plusieurs Mo) ; ce script n'a donc besoin ni de h5py ni de mpmath, seulement de numpy et
-matplotlib, ce qui garde le build de la doc leger et reproductible.
+These CSV files are produced offline by postprocessTests_tutorial_THM.py, from the
+TimeHistory (.hdf5) outputs of a run of the benchmark case. The .hdf5 files are deliberately
+not versioned (several MB); this script therefore needs neither h5py nor mpmath, only numpy and
+matplotlib, which keeps the documentation build light and reproducible.
 
-Pour regenerer les donnees apres une modification du cas :
-    geosx -i ThermoPoroElastic_consolidation_benchmark_fim.xml
-    python3 postprocessTests_tutorial_THM.py -o <ce_dossier>
+To regenerate the data after a change in the case:
+    geos -i ThermoPoroElastic_consolidation_benchmark_fim.xml
+    python3 postprocessTests_tutorial_THM.py -o <this_directory>
 """
 import os
 
@@ -25,7 +25,7 @@ try:
 except NameError:
     HERE = os.getcwd()
 
-# sous-echantillonnage des marqueurs GEOS (1 = tous les instants collectes)
+# sub-sampling of the GEOS markers (1 = all the collected times)
 N1 = 4
 fsize = 32
 msize = 8
@@ -39,8 +39,8 @@ def _load(name):
     path = os.path.join(HERE, name)
     if not os.path.exists(path):
         raise FileNotFoundError(
-            f"{name} introuvable dans {HERE}. Regenerez-le avec postprocessTests_tutorial_THM.py "
-            f"(voir l'en-tete de ce fichier).")
+            f"{name} not found in {HERE}. Regenerate it with postprocessTests_tutorial_THM.py "
+            f"(see the header of this file).")
     return np.genfromtxt(path, delimiter=",", names=True)
 
 
@@ -54,7 +54,7 @@ def main():
     fig, ax = plt.subplots(2, 2, figsize=(32, 18))
     cmap = plt.get_cmap("tab10")
 
-    # (axe, colonnes analytiques, colonnes GEOS, labels, titre y)
+    # (axis, analytical columns, GEOS columns, labels, y title)
     panels = [
         (ax[0, 0], ["p_zh0p0", "p_zh0p6", "p_zh0p8"], ["p_0m", "p_4p2m", "p_5p6m"],
          ["z/h = 0.0", "z/h = 0.6", "z/h = 0.8"], ["z = 0.0 m", "z = 4.2 m", "z = 5.6 m"],
@@ -83,7 +83,7 @@ def main():
         a.xaxis.set_tick_params(labelsize=fsize)
         a.yaxis.set_tick_params(labelsize=fsize)
 
-    # contrainte verticale totale : constante, egale a la charge appliquee
+    # total vertical stress: constant, equal to the applied load
     ax[1, 1].semilogx(ta, ana["syy"], 'k--', lw=lw * 0.6, alpha=0.7,
                       label='$\\sigma_{yy}$ total = -F (all z)')
     ax[1, 1].plot(tg, geos["syy_0m"][::N1], 'k+', markersize=msize, mew=mew, alpha=malpha,

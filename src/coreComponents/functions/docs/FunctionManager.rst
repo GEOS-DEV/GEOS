@@ -11,9 +11,9 @@ For example:
 
   <Functions>
     <TableFunction name="q"
-                   inputVarNames="time"
-                   coordinates="0 60 1000"
-                   values="0 1 1" />
+                   inputVarNames="{ time }"
+                   coordinates="{ 0, 60, 1000 }"
+                   values="{ 0, 1, 1 }" />
   </Functions>
   <FieldSpecifications>
     <SourceFlux name="sourceTerm"
@@ -29,8 +29,8 @@ For example:
 Function Inputs and Application
 -------------------------------------------------------------------------------
 
-The inputs to each function type are specified via the ``inputVarName`` attribute.
-These can either be the name of an array (e.g. "Pressure") or the special keyword "time" (time at the beginning of the current cycle).
+The inputs to each function type are specified via the ``inputVarNames`` attribute.
+These can either be the name of an array (e.g. "pressure" or "elementCenter") or the special keyword "time" (time at the beginning of the current cycle).
 If any of the input variables are vectors (e.g. "referencePosition"), the components will be given as function arguments in order.
 
 In the .xml file, functions are referenced by name.
@@ -41,7 +41,7 @@ Depending upon the application, the functions may be applied in one of three way
    For example, this could define the flow rate applied via a BC at a given time.
 
 2. Group application: 
-   The function is applied to a (user-specified) ManagedGroup of size N.
+   The function is applied to a (user-specified) Group of size N.
    When called, it will iterate over the inputVarNames list and build function inputs from the group's wrappers.
    The resulting value will be a wrapper of size N.
    For example, this could be used to apply a user-defined constitutive relationship or specify a complicated boundary condition.
@@ -55,7 +55,7 @@ Function Types
 -------------------------------------------------------------------------------
 
 There are three types of functions available for use: ``TableFunction``, ``SymbolicFunction``, and ``CompositeFunction``.
-**Note: the symbolic and composite function types are currently only available for x86-64 systems.** 
+**Note: the symbolic and composite function types rely on the mathpresso library, which is only available on x86-64 systems and when GEOS is built with** ``ENABLE_MATHPRESSO=ON`` **(the default).** 
 
 
 TableFunction
@@ -77,9 +77,9 @@ For example, the following function defines a simple ramp function with a rise-t
 .. code-block:: xml
 
   <TableFunction name="q"
-                 inputVarNames="time"
-                 coordinates="0 60 1000"
-                 values="0 1 1" />
+                 inputVarNames="{ time }"
+                 coordinates="{ 0, 60, 1000 }"
+                 values="{ 0, 1, 1 }" />
 
 
 ND Table
@@ -88,7 +88,7 @@ ND Table
 For ND tables, the grid coordinates and values may be defined using a set of .csv files.
 The ``coordinateFiles`` attribute specifies the file names that define the coordinates for each axis.
 The values in each coordinate file must be comma-delimited and ordered from smallest to largest.
-The dimensionality of the table is defined by the number of coordinate files (coordinateFiles="x.csv" would indicate a 1D table, coordinateFiles="x.csv y.csv z.csv t.csv" would indicate a 4D table, etc.).
+The dimensionality of the table is defined by the number of coordinate files (``coordinateFiles="{ x.csv }"`` would indicate a 1D table, ``coordinateFiles="{ x.csv, y.csv, z.csv, t.csv }"`` would indicate a 4D table, etc.).
 The ``voxelFile`` attribute specifies name of the file that defines the value of the function at each point along the grid.
 These values must be comma-delimited (line-breaks are allowed) and be specified in Fortran order, i.e., column-major order (where the index of the first dimension changes the fastest, and the index of the last dimension changes slowest).
 
@@ -97,8 +97,8 @@ The following would define a simple 2D function ``c = a + 2*b``:
 .. code-block:: xml
 
   <TableFunction name="c"
-                 inputVarNames="a b"
-                 coordinateFiles="a.csv b.csv"
+                 inputVarNames="{ a, b }"
+                 coordinateFiles="{ a.csv, b.csv }"
                  voxelFile="c.csv" />
 
 - a.csv: "0, 1"
@@ -162,7 +162,7 @@ These functions are processed using an x86-64 JIT compiler, so are nearly as eff
 
 The ``variableNames`` attribute defines a set of single-character names for the inputs to the symbolic function.
 There should be a definition for each scalar input and for each component of a vector input.
-For example if ``inputVarName="time, ReferencePosition"``, then ``variableNames="t, x, y, z"``.
+For example if ``inputVarNames="{ time, ReferencePosition }"``, then ``variableNames="{ t, x, y, z }"``.
 The ``expression`` attribute defines the symbolic expression to be executed.
 Aside from the following exceptions, the syntax mirrors python:
 
@@ -175,8 +175,8 @@ The following would define a simple 2D function ``c = a + 2*b``:
 .. code-block:: xml
 
   <SymbolicFunction name="c"
-                    inputVarNames="a b"
-                    variableNames="x y"
+                    inputVarNames="{ a, b }"
+                    variableNames="{ x, y }"
                     expression="x+(2*y)"/>
 
 
@@ -205,25 +205,17 @@ The following would define a simple 1D table function ``f(t) = 1 + t``, a 3D sym
 
   <Functions>
     <TableFunction name="f"
-                   inputVarNames="time"
-                   coordinates="0 1000"
-                   values="1 1001" />
+                   inputVarNames="{ time }"
+                   coordinates="{ 0, 1000 }"
+                   values="{ 1, 1001 }" />
 
     <SymbolicFunction name="g"
-                      inputVarNames="ReferencePosition"
-                      variableNames="x y z"
+                      inputVarNames="{ ReferencePosition }"
+                      variableNames="{ x, y, z }"
                       expression="pow(x,2)+pow(y,2)+pow(z,2)"/>
 
     <CompositeFunction name="h"
-                       inputVarNames="ignored"
-                       functionNames="f g"
-                       variableNames="x y"
+                       functionNames="{ f, g }"
+                       variableNames="{ x, y }"
                        expression="sin(x)+y"/>
-  </Events>
-
-
-
-
-
-
-
+  </Functions>
