@@ -30,8 +30,9 @@ At the end of this tutorial you will know:
 This tutorial uses an XML file containing the main input for GEOS
 and a separate file with all the mesh information.
 As we will see later, the main XML file points to the external
-mesh file with an ``include`` statement.
-The XML input file for this test case is located at:
+mesh file with the ``file`` attribute of a ``VTKMesh`` element.
+As in :ref:`TutorialSinglePhaseFlowWithInternalMesh`, the file we run (``*_smoke.xml``) includes a ``*_base.xml`` file
+that holds the physics. The XML input file for this test case is located at:
 
 .. code-block:: console
 
@@ -110,7 +111,7 @@ Importing an external mesh with VTK
 In this first part of the tutorial, we use an hexahedral mesh provided to GEOS.
 This hexahedral mesh is strictly identical to the grid used in the first tutorial (:ref:`TutorialSinglePhaseFlowWithInternalMesh`), but instead of using
 the internal grid generator GEOS, we specify it with spatial node coordinates in ``vtk`` format.
-To import external grid into GEOS, we did develop a component directly using the **vtk** library.
+GEOS reads external meshes with the **vtk** library.
 
 
 So here, our mesh consists of a simple sugar-cube stack of size 10x10x10.
@@ -160,8 +161,9 @@ on the entire domain throughout the simulation.
 To do so, we need to define a region encompassing the entire domain.
 We will name it ``Domain``, as refered to in the single-phase flow solver (in its ``targetRegions``),
 and list its constitutive models in the ``materialList``, which are ``water`` and ``rock``.
-Since we have imported a mesh with only one region, we can set ``cellBlocks`` to ``{ * }``
-(we have could also set ``cellBlocks`` to ``{ hexahedra }`` as the mesh has only hexahedral cells).
+Here, ``cellBlocks`` is set to ``{ hexahedra }``: when GEOS imports a VTK mesh, it groups cells by type
+into cell blocks named after the element type (``hexahedra``, ``tetrahedra``, ``wedges``, ``pyramids``, ...).
+Since the mesh has only hexahedral cells and a single region, ``{ * }`` (all cell blocks) would select the same cells.
 
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_base.xml
@@ -171,41 +173,34 @@ Since we have imported a mesh with only one region, we can set ``cellBlocks`` to
 
 
 .. note::
-  If you use a name that is not ``hexahedra`` or ``all`` for this attribute, or if the mesh is
-  changed and have not-hexahedral cells, GEOS will throw an error at the beginning of the
+  If you list a cell block that does not exist in the mesh (for instance ``{ hexahedra }`` on a mesh
+  that has no hexahedral cells), GEOS will throw an error at the beginning of the
   simulation. See :ref:`Meshes` for more information.
+
+Two things are new compared to the first tutorial:
+
+  * **Gravity**: the ``Solvers`` block sets ``gravityVector="{ 0.0, 0.0, -9.81 }"`` (in m/s\ :sup:`2`, also the default value),
+    so that flow solvers account for gravity.
+  * **Restart output**: a third event, ``restarts``, targets a ``Restart`` output. Restart files let you continue a simulation
+    from a saved state (see :ref:`RunningGEOS`). With ``timeFrequency="1e99"``, restart files are written only at the start and at the end of the run.
+
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_smoke.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_HEX_EVENTS -->
+  :end-before: <!-- SPHINX_TUT_EXT_HEX_EVENTS_END -->
 
 Running GEOS
 ----------------------------------------
 
-The command to run GEOS is
+From the root of the repository, run:
 
 .. code-block:: console
 
-  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_smoke.xml
+  geos -i inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_hex_gravity_smoke.xml
 
-Note that all paths for files included in the XML file are relative
-to this XML file, not to the GEOS executable.
-When running GEOS, console messages will provide indications regarding the
-status of the simulation.
-
-In our case, the first lines are:
-
-.. code-block:: console
-
-  Adding Mesh: VTKMesh, CubeHex
-  Adding Event: PeriodicEvent, solverApplications
-  Adding Event: PeriodicEvent, outputs
-  Adding Event: PeriodicEvent, restarts
-  Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
-  Adding Geometric Object: Box, left
-  Adding Output: Silo, siloOutput
-  Adding Output: Restart, restartOutput
-  Adding Object CellElementRegion named Domain from ObjectManager::Catalog.
-
-This indicates initialization of GEOS.
-The mesh preprocessing tool ``VTKMesh`` is launched next,
-with console messages as follows.
+Note that all paths for files referenced in the XML file (here, the mesh file) are relative
+to this XML file, not to the directory where GEOS is run.
+While reading the mesh, ``VTKMesh`` prints messages similar to the following:
 
 .. code-block:: console
 
@@ -218,38 +213,16 @@ with console messages as follows.
   Load balancing:  min  avg  max
   (element/rank): 1000 1000 1000
 
-Notice the specification of the number of nodes (1331), and hexahedra (1000).
-After the adjacency calculations, GEOS starts the simulation itself.
-with the time-step increments specified in the XML file.
-
-At the end of your simulation, you should see something like:
-
-.. code-block:: console
-
-  Time: 96s, dt:2s, Cycle: 48
-  Time: 98s, dt:2s, Cycle: 49
-  Cleaning up events
-  SinglePhaseFlow, number of time steps: 50
-  SinglePhaseFlow, number of successful nonlinear iterations: 50
-  SinglePhaseFlow, number of successful linear iterations: 450
-  SinglePhaseFlow, number of time step cuts: 0
-  SinglePhaseFlow, number of discarded nonlinear iterations: 0
-  SinglePhaseFlow, number of discarded linear iterations: 0
-  Umpire            HOST sum across ranks:    2.6 MB
-  Umpire            HOST         rank max:    2.6 MB
-  total time                         3.518s
-  initialization time                0.132s
-  run time                           3.076s
-
-  Process finished with exit code 0
-
-Once this is done, GEOS is finished and we can inspect the outcome.
+Notice the number of nodes (1331) and hexahedra (1000).
+GEOS then runs the simulation with the time steps specified in the XML file (50 steps of 2 seconds),
+and prints a summary of time steps and nonlinear and linear iterations at the end.
+Once this is done, we can inspect the outcome.
 
 Visualization of results in VisIt
 ----------------------------------------
 
-All results are written in a format compatible with `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
+This input file requests a ``Silo`` output, a format readable by `VisIt
+<https://visit-dav.github.io/visit-website/>`_.
 To load the results, point VisIt to the ``database`` file written in the Silo output folder.
 
 .. image:: hex_final.png
@@ -331,8 +304,7 @@ And the ``vtk`` file starts as follows (notice the tetrahedral point coordinates
    :lines: 1-20
 
 Again, the entire field is one region called ``Domain`` which contains ``water`` and ``rock``.
-Since we have imported a mesh with only one region, we can again set ``cellBlocks`` to ``{ * }``
-(we have could also set ``cellBlocks`` to ``{ tetrahedra }`` as the mesh has only tetrahedric cells).
+This time, ``cellBlocks`` is set to ``{ tetrahedra }``, the cell block holding all tetrahedral cells of the mesh.
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_tetra_gravity_base.xml
   :language: xml
@@ -343,86 +315,21 @@ Since we have imported a mesh with only one region, we can again set ``cellBlock
 Running GEOS
 -------------------------
 
-The command to run GEOS is
+From the root of the repository, run:
 
 .. code-block:: console
 
-  path/to/geosx -i ../../../../../inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_tetra_gravity_smoke.xml
+  geos -i inputFiles/singlePhaseFlow/vtk/3D_10x10x10_compressible_tetra_gravity_smoke.xml
 
-Again, all paths for files included in the XML file are relative
-to this XML file, not to the GEOS executable.
-When running GEOS, console messages will provide indications regarding the
-status of the simulation.
-In our case, the first lines are:
-
-.. code-block:: console
-
-  Adding Mesh: VTKMesh, CubeTetra
-  Adding Event: PeriodicEvent, solverApplications
-  Adding Event: PeriodicEvent, outputs
-  Adding Event: PeriodicEvent, restarts
-  Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
-  Adding Geometric Object: Box, left
-  Adding Output: Silo, siloOutput
-  Adding Output: Restart, restartOutput
-  Adding Object CellElementRegion named Domain from ObjectManager::Catalog.
-
-Followed by:
-
-.. code-block:: console
-
-  VTKMesh 'CubeTetra': reading mesh from /path/to/inputFiles/singlePhaseFlow/vtk/cube_10x10x10_tet.vtk
-  Generating global Ids from VTK mesh
-  VTKMesh 'CubeTetra': generating GEOS mesh data structure
-  Number of nodes:  366
-    Number of elems: 1153
-               C3D4: 1153
-  Load balancing:  min  avg  max
-  (element/rank): 1153 1153 1153
-  regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = CubeTetra, Level0, Domain, tetrahedra
-  CubeTetra/Level0/Domain/tetrahedra/water allocated 1 quadrature points
-  CubeTetra/Level0/Domain/tetrahedra/rock allocated 1 quadrature points
-
-We see that we have now 366 nodes and 1153 tetrahedral elements.
-And finally, when the simulation is successfully done we see:
-
-.. code-block:: console
-
-
-  Time: 0s, dt:1s, Cycle: 0
-  Time: 1s, dt:1s, Cycle: 1
-  Time: 2s, dt:1s, Cycle: 2
-  Time: 3s, dt:1s, Cycle: 3
-  Time: 4s, dt:1s, Cycle: 4
-  Time: 5s, dt:1s, Cycle: 5
-  ...
-  Time: 95s, dt:1s, Cycle: 95
-  Time: 96s, dt:1s, Cycle: 96
-  Time: 97s, dt:1s, Cycle: 97
-  Time: 98s, dt:1s, Cycle: 98
-  Time: 99s, dt:1s, Cycle: 99
-  Cleaning up events
-  SinglePhaseFlow, number of time steps: 100
-  SinglePhaseFlow, number of successful nonlinear iterations: 100
-  SinglePhaseFlow, number of successful linear iterations: 1000
-  SinglePhaseFlow, number of time step cuts: 0
-  SinglePhaseFlow, number of discarded nonlinear iterations: 0
-  SinglePhaseFlow, number of discarded linear iterations: 0
-  Umpire            HOST sum across ranks:    1.9 MB
-  Umpire            HOST         rank max:    1.9 MB
-  total time                         5.837s
-  initialization time                0.094s
-  run time                           5.432s
-
-  Process finished with exit code 0
+The mesh now has 366 nodes and 1153 tetrahedral elements (``C3D4``), as reported in the console while the mesh is read.
 
 
 Visualization of results in VisIt
 --------------------------------------
 
 
-All results are written in a format compatible with `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_ by default.
+As before, results are written in ``Silo`` format, readable by `VisIt
+<https://visit-dav.github.io/visit-website/>`_.
 If we load into VisIt the `.database` file found in the Silo folder, we observe the following results:
 
 .. image:: tetra_final.png
@@ -444,6 +351,6 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
 **For more details**
 
-  - A complete description of the Internal Mesh generator is found here :ref:`Meshes`.
+  - A complete description of the mesh options (internal and external) is found here :ref:`Meshes`.
   - ``vtk`` is extensively documented. You can start browsing `here <https://vtk.org/documentation/>`_.
   - GEOS can handle tetrahedra, hexahedra, pyramids, wedges, prisms, and any combination thereof in one mesh.

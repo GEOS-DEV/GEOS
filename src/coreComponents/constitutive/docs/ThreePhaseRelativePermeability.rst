@@ -53,8 +53,8 @@ The relative permeability constitutive model is listed in the
 The relative permeability model must be assigned a unique name via
 ``name`` attribute.
 This name is used to assign the model to regions of the physical
-domain via a ``materialList`` attribute of the ``<ElementRegion>``
-node.
+domain via a ``materialList`` attribute of the ``<CellElementRegion>``
+node (in the ``<ElementRegions>`` block).
 
 The following attributes are supported:
 

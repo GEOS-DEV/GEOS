@@ -63,7 +63,7 @@ Guidelines
 What to document
 ------------------------------------
 
-The following entities declared in project header files within `geosx` namespace require documentation:
+The following entities declared in project header files within the ``geos`` namespace require documentation:
 
 - all classes and structs, including public nested ones
 - global functions, variables and type aliases

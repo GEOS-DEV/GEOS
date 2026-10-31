@@ -21,13 +21,12 @@ Downloading the Code
 =======================================
 
 Once you have created an ``ssh-key`` and you have added it to your `Github` account you can download
-the code through SSH.  The following steps clone the repository into ``your_geosx_dir``:
+the code through SSH.  The following steps clone the repository into ``your_geos_dir``:
 
 .. code-block:: console
 
-   git clone git@github.com:GEOS-DEV/GEOS.git your_geosx_dir
-   cd your_geosx_dir
-   git lfs install
+   git clone git@github.com:GEOS-DEV/GEOS.git your_geos_dir
+   cd your_geos_dir
    git submodule init
    git submodule update
 
@@ -330,8 +329,10 @@ also add any appropriate `flags`.
    For more details, see the `Github Documentation <https://docs.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword>`_.
 
 Once you are satisfied with your work on the branch, you may promote the PR out of
-draft status, which will allow our integrated testing suite to execute on the PR branch
-to ensure all tests are passing prior to merging.
+draft status, which triggers the continuous integration builds and unit tests on the PR branch.
+The integrated tests are not run by default: add the ``ci: run integrated tests`` label to the PR
+to run them (see :ref:`IntegratedTests`). Similarly, the ``ci: run device builds`` label
+enables the CUDA and ROCm builds.
 
 .. note::
    The title of a PR has to follow the `conventional commit specification <https://www.conventionalcommits.org/en/v1.0.0/>`_.
@@ -377,8 +378,9 @@ as of git 2.15 you should be able to globally configure git to accomplish this v
    git config --global submodule.recurse true
 
 In some cases, code changes will require to rebaseline the ``Integrated Tests``.
-If that is the case, you will need to modify the ``integrated tests submodule``.
-Instructions on how to modify a submodule are presented in the following section.
+This does not involve a submodule: the baseline in use is referenced in the
+``.integrated_tests.yaml`` file at the root of the repository, and every rebaseline must be
+justified by an entry in ``BASELINE_NOTES.md``. See :ref:`IntegratedTests` for the procedure.
 
 Working on the Submodules
 =======================================
@@ -437,6 +439,6 @@ Submodule           Main branch
 ================    ================
 blt                 develop
 LvArray             develop
-integratedTests     develop
 hdf5_interface      master
+HPCReact            main
 ================    ================

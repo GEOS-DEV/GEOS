@@ -1,93 +1,74 @@
 .. _AppleMacOS:
 
-Building Apple MacOS
-====================
+Building on Apple macOS
+=======================
 
-Install homebrew
-----------------
-Taken from the [homebrew website](https://brew.sh)
-.. code-block::
+The overall process is the one described in the :ref:`QuickStart`. This page lists what is specific to macOS
+(tested on Apple Silicon with Homebrew).
+
+Install the prerequisites with Homebrew
+---------------------------------------
+
+Install `Homebrew <https://brew.sh>`_ if needed:
+
+.. code-block:: sh
 
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  (echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> ~/.zprofile
-  
-  note: this is the command for `zsh`. Other shells will require different commands. Homebrew should provide the correct command after install is complete.
-  eval "$(/opt/homebrew/bin/brew shellenv)"
 
-Install packages using homebrew
--------------------------------
+At the end of the installation, Homebrew prints the command that adds it to your shell environment
+(for ``zsh``, the default shell, it appends ``eval "$(/opt/homebrew/bin/brew shellenv)"`` to ``~/.zprofile``). Run it.
 
-.. code-block::
+Then install the build dependencies. ``bison`` and ``m4`` must be the Homebrew versions, ahead of the system ones in your ``PATH``:
 
-  brew install bison cmake gfortran git-lfs open-mpi lapack python3 ninja m4
+.. code-block:: sh
+
+  brew install bison cmake gfortran open-mpi lapack python3 ninja m4
   echo 'export PATH="/opt/homebrew/opt/bison/bin:$PATH"' >> ~/.zshrc
   echo 'export PATH="/opt/homebrew/opt/m4/bin:$PATH"' >> ~/.zshrc
-  git lfs install
 
-Clone GEOS
-----------
+The C/C++ compiler is Apple Clang from the Xcode command line tools (``xcode-select --install``).
+OpenMP is disabled with Apple Clang.
 
-.. code-block::
+Host-config
+-----------
 
-  git clone git@github.com:GEOS-DEV/GEOS.git
-  cd GEOS
-  git submodule init
-  git submodule update
-  cd ..
+Use ``host-configs/apple/macOS_arm.cmake`` (Apple Silicon) or ``host-configs/apple/macOS_x86.cmake`` (Intel).
+Both include ``macOS_base.cmake``, which assumes Homebrew is installed in ``/opt/homebrew``.
+You do not need to write your own host-config.
 
-Clone thirdPartyLibs
---------------------
+Build
+-----
 
-.. code-block::
+Clone the repositories as described in :ref:`QuickStartDownload`, then:
 
-  git clone git@github.com:GEOS-DEV/thirdPartyLibs.git
+.. code-block:: sh
+
   cd thirdPartyLibs
-  git submodule init 
-  git submodule update
-  git lfs pull
-
-
-Configure and build thirdPartyLibs
-----------------------------------
-
-.. code-block::
-
   python3 scripts/config-build.py -hc ../GEOS/host-configs/apple/macOS_arm.cmake -bt Release
-
-You will get a warning you can ignore
-
-.. code-block::
-
-  CMake Warning at /Users/settgast1/Codes/geos/GEOS/host-configs/tpls.cmake:10 (message):
-    'GEOS_TPL_DIR' does not exist.
-
-
-Continue with the build
-
-.. code-block::
-
   cd build-macOS_arm-release
   make
-
-You will get an error at the end...you can ignore it.
-
-.. code-block::
-
-  [100%] Linking CXX executable ../../../tests/blt_mpi_smoke
-  ld: warning: -commons use_dylibs is no longer supported, using error treatment instead
-  ld: file not found: @rpath/libquadmath.0.dylib for architecture arm64
-  clang: error: linker command failed with exit code 1 (use -v to see invocation)
-  make[2]: *** [tests/blt_mpi_smoke] Error 1
-  make[1]: *** [blt/tests/smoke/CMakeFiles/blt_mpi_smoke.dir/all] Error 2
-  make: *** [all] Error 2
-
-
-Build GEOS
-----------
-
-.. code-block::
 
   cd ../../GEOS
   python3 scripts/config-build.py -hc host-configs/apple/macOS_arm.cmake -bt Release --ninja
   cd build-macOS_arm-release
-  ninja geosx
+  ninja install
+
+The executable is ``GEOS/install-macOS_arm-release/bin/geos``. Continue with :ref:`QuickStartFirstRun`.
+
+Known messages during the TPL build
+-----------------------------------
+
+* While configuring the TPLs, CMake prints ``'GEOS_TPL_DIR' does not exist``.
+  This is expected: the TPLs have not been installed yet. The same message when configuring **GEOS** means the
+  TPLs were not found (check that ``thirdPartyLibs/install-macOS_arm-release`` exists).
+
+* The TPL build may end with a link error in BLT's MPI smoke test:
+
+  .. code-block:: none
+
+    ld: file not found: @rpath/libquadmath.0.dylib for architecture arm64
+    make[2]: *** [tests/blt_mpi_smoke] Error 1
+
+  This test belongs to the BLT build system and is not used by GEOS. The error can be ignored as long as
+  the libraries (``hypre``, ``vtk``, ``raja``, ...) are present in ``thirdPartyLibs/install-macOS_arm-release``;
+  if some are missing, run ``make`` again to finish the build.

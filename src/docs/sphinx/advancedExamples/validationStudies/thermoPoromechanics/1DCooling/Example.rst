@@ -167,12 +167,12 @@ branches are implemented in ``AnalyticalSol.py``, which is the reference solutio
 Running the case and post-processing
 ------------------------------------------------------------------
 
-Both cases are run independently, each in its own directory:
+Both cases are run independently, each in its own directory (the input files are located in ``inputFiles/thermoPoromechanics``):
 
 .. code-block:: console
 
-  geosx -i ThermoElastic_1DCooling_fim_smoke.xml
-  geosx -i ThermoDruckerPrager_1DCooling_fim_smoke.xml
+  geos -i ThermoElastic_1DCooling_fim_smoke.xml
+  geos -i ThermoDruckerPrager_1DCooling_fim_smoke.xml
 
 Each run writes ``stressHistory.hdf5`` and ``displacementHistory.hdf5`` through the
 ``TimeHistory`` outputs. Those files are **not** stored in the repository; the curves shown

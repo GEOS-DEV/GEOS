@@ -12,6 +12,10 @@ including
   - geothermal energy,
   - and similar systems.  
 
+Its capabilities include single-phase, multiphase and compositional flow (isothermal or thermal), wells,
+solid mechanics and poromechanics, fracture and fault mechanics (contact, embedded fractures, hydraulic fracturing),
+wave propagation and induced seismicity.
+
 A key focus of the project is achieving scalable performance on current and next-generation
 high performance computing systems.  We do this through a portable programming model and research into scalable algorithms.
 
@@ -20,10 +24,19 @@ You may want to browse our
 page for more details on the HPC, numerics,
 and applied engineering components of this effort.
 
+Getting started
+---------------
+
+GEOS is distributed as source code. To download, build and run a first simulation, follow the
+[Quick Start Guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/QuickStart.html),
+then work through the [tutorials](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/tutorials/Index.html).
+Docker images with all third-party libraries pre-built are available (see the Quick Start Guide), and
+this repository can be opened directly in a GitHub Codespace or a VS Code Dev Container.
+
 Documentation
 -------------
 
-Please visit the [Main documentation for GEOS](https://geosx-geosx.readthedocs-hosted.com/en/latest/?).
+Please visit the [Main documentation for GEOS](https://geosx-geosx.readthedocs-hosted.com/en/latest/).
 
 If you would like to contribute to GEOS, please see the [developer guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/developerGuide/Index.html)
 
@@ -45,16 +58,15 @@ and
 [acknowledgements](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/Acknowledgements.html)
 page for more details.  
 
-How does GEOS relate to the earlier GEOS code?
-------------------------------
-GEOS is the offshoot of an earlier code developed at LLNL also called GEOS.  The new
-code differs from our previous efforts in two important ways:
-  - This new code GEOS uses a fundamentally different programming model to achieve
+History
+-------
+GEOS was known as GEOSX until 2023; some file names, library names and URLs still use the old name.
+It succeeds an earlier code developed at LLNL, also called GEOS. The current code differs from that earlier effort in two important ways:
+  - It uses a fundamentally different programming model to achieve
     high performance on the complicated chip architectures common on today's
-    HPC systems.  This code is ready for exascale-class systems as they are delivered.
-  - The new code has been released as an open-source effort to encourage collaboration
-    within the research and industrial community.  See the release notes below
-    for details of the [LGPL 2.1 License](./LICENSE) that has been adopted.
+    HPC systems, including GPU-based exascale-class systems.
+  - It is developed as an open-source effort to encourage collaboration
+    within the research and industrial community, under the [LGPL 2.1 License](./LICENSE).
 
 
 Release
