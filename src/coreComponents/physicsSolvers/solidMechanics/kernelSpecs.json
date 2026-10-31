@@ -177,6 +177,7 @@
         "EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >",
         "EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >",
         "EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability >",
+        "EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability, ArchieDiffusion >",
         "EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability, DamageDiffusion >",
         "EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >",
         "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability>",
@@ -189,6 +190,7 @@
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability >",
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability >",
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability, DamageDiffusion >",
+        "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability, ArchieDiffusion >",
         "PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability, DamageDiffusion >",
         "PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion >"
       ],

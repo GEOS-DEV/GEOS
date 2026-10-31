@@ -22,6 +22,7 @@
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/diffusion/ConstantDiffusion.hpp"
+#include "constitutive/diffusion/ArchieDiffusion.hpp"
 #include "constitutive/diffusion/DamageDiffusion.hpp"
 
 namespace geos
@@ -34,14 +35,14 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( DiffusionBase const & diffusion,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ConstantDiffusion, DamageDiffusion >::execute( diffusion, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ConstantDiffusion, DamageDiffusion, ArchieDiffusion >::execute( diffusion, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( DiffusionBase & diffusion,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ConstantDiffusion, DamageDiffusion >::execute( diffusion, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ConstantDiffusion, DamageDiffusion, ArchieDiffusion >::execute( diffusion, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

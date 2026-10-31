@@ -56,6 +56,16 @@ template< typename SOLID_TYPE,
 void EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::initializeState();
+
+  if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
+  {
+    // set the diffusivity from the initial porosity and damage
+    KernelWrapper const updates = createKernelUpdates();
+    forAll< parallelDevicePolicy<> >( getPorosityModel().getPorosity().size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      updates.updateDiffusivity( k );
+    } );
+  }
 }
 
 // Register all EigenstrainReactiveSolid model types.
@@ -73,6 +83,9 @@ typedef EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKoze
 typedef EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, DamageDiffusion > EigenStrainReactiveDamageDamagePermeabilityDamageDiffusion;
 typedef EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability, DamageDiffusion > EigenStrainReactiveDamageSpectralDamagePermeabilityDamageDiffusion;
 
+// Damage solid + Carman-Kozeny permeability + Archie diffusion with a damage-dependent cementation exponent
+typedef EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability, ArchieDiffusion > EigenStrainReactiveDamageSpectralCKArchieDiffusion;
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCK, string const &, Group * const )
@@ -82,6 +95,7 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageVolDevDamageP
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageSpectralCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageDamagePermeabilityDamageDiffusion, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageSpectralDamagePermeabilityDamageDiffusion, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageSpectralCKArchieDiffusion, string const &, Group * const )
 
 
 }

@@ -99,11 +99,12 @@
   </NumericalMethods>
 
   <Constitutive>
-    <PorousReactiveDamageSpectralElasticIsotropicCarmanKozenyPermeability
+    <PorousReactiveDamageSpectralElasticIsotropicCarmanKozenyPermeabilityArchieDiffusion
       name="reactiveRock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      diffusionModelName="diffusion"/>
 
     <DamageSpectralElasticIsotropic
       name="rockSolid"
@@ -142,11 +143,15 @@
       particleDiameter="1.909e-05"
       sphericity="1.0"/>
 
-    <ConstantDiffusion
+    <!-- Archie diffusion with a damage-dependent cementation exponent: phi * D = D_w phi^m(d), m(d) = m0 - ( m0 - mc ) d.
+         D_w = 1e-7 / 0.1^3 gives phi * D = 1e-7 m2/s in the intact matrix; x600 in the fully damaged band (phi_c = 0.6) -->
+    <ArchieDiffusion
       name="diffusion"
       phaseNames="{ water }"
       defaultPhaseDiffusivityMultipliers="{ 1 }"
-      diffusivityComponents="{ 1e-06, 1e-06, 1e-06 }"/>
+      fluidDiffusivity="1e-4"
+      matrixCementationExponent="3.0"
+      fractureCementationExponent="1.0"/>
   </Constitutive>
 
   <Geometry>

@@ -41,7 +41,7 @@ struct NoDiffusion
   struct KernelWrapper
   {
     GEOS_HOST_DEVICE
-    void updateDamageDiffusivity( localIndex const, real64 const & ) const {}
+    void updateFromDamageAndPorosity( localIndex const, real64 const &, real64 const & ) const {}
   };
 
   KernelWrapper createKernelWrapper() const { return KernelWrapper{}; }

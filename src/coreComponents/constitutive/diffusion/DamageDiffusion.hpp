@@ -50,10 +50,12 @@ public:
    * @brief Update the three (possibly anisotropic) diffusivity components for element k from cell-averaged damage.
    * @param k element index
    * @param damage cell-averaged damage in [0, 1]
+   * @param porosity porosity of element k (unused)
    */
   GEOS_HOST_DEVICE
-  void updateDamageDiffusivity( localIndex const k, real64 const & damage ) const
+  void updateFromDamageAndPorosity( localIndex const k, real64 const & damage, real64 const & porosity ) const
   {
+    GEOS_UNUSED_VAR( porosity );
     for( localIndex dim = 0; dim < 3; ++dim )
     {
       m_diffusivity[k][0][dim] = m_bulkDiffusivity[k] * LvArray::math::exp( m_damageDependenceConstant[dim] * damage );

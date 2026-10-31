@@ -57,6 +57,16 @@ template< typename SOLID_TYPE,
 void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE, DIFF_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializeState();
+
+  if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
+  {
+    // set the diffusivity from the initial porosity and damage
+    KernelWrapper const updates = createKernelUpdates();
+    forAll< parallelDevicePolicy<> >( getPorosityModel().getPorosity().size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      updates.updateDiffusivity( k );
+    } );
+  }
 }
 
 
@@ -79,6 +89,8 @@ typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability, Dam
 typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability, DamageDiffusion > PorousReactiveDamageSpectralDamagePermeabilityDamageDiffusion;
 // Damage solid + Carman-Kozeny permeability + damage diffusion
 typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability, DamageDiffusion > PorousReactiveDamageSpectralCKDamageDiffusion;
+// Damage solid + Carman-Kozeny permeability + Archie diffusion with a damage-dependent cementation exponent
+typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, CarmanKozenyPermeability, ArchieDiffusion > PorousReactiveDamageSpectralCKArchieDiffusion;
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstant, string const &, Group * const )
@@ -93,6 +105,7 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevDamagePermea
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeabilityDamageDiffusion, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralDamagePermeabilityDamageDiffusion, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralCKDamageDiffusion, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralCKArchieDiffusion, string const &, Group * const )
 
 
 }

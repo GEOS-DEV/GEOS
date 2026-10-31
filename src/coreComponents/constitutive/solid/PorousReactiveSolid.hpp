@@ -28,6 +28,7 @@
 #include "constitutive/solid/SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/DamagePermeability.hpp"
+#include "constitutive/diffusion/ArchieDiffusion.hpp"
 #include "constitutive/diffusion/DamageDiffusion.hpp"
 
 #include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
@@ -96,7 +97,7 @@ public:
     }
 
     updateMatrixPermeability( k );
-    updateMatrixDiffusivity( k );
+    updateDiffusivity( k );
   }
 
   GEOS_HOST_DEVICE
@@ -112,6 +113,8 @@ public:
     updatePorosityFromDamage( k, q );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
+
+    updateDiffusivity( k );
   }
 
   /**
@@ -184,22 +187,27 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  void updateMatrixDiffusivity( localIndex const k ) const
+  void updateDiffusivity( localIndex const k ) const
   {
-    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< DIFF_TYPE, DamageDiffusion > )
+    if constexpr ( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
     {
-      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
-
+      // cell-averaged damage (0 for a solid without damage)
       real64 damageAvg = 0.0;
 
-      for( localIndex i=0; i<quadSize; ++i )
+      if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > )
       {
-        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
+        integer const quadSize = m_solidUpdate.m_newDamage[k].size();
+
+        for( localIndex i=0; i<quadSize; ++i )
+        {
+          damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
+        }
+
+        damageAvg = damageAvg / quadSize;
       }
 
-      damageAvg = damageAvg / quadSize;
-
-      m_diffUpdate.updateDamageDiffusivity( k, damageAvg );
+      // porosity at q = 0, as used by the porosity weight in the diffusive flux
+      m_diffUpdate.updateFromDamageAndPorosity( k, damageAvg, m_porosityUpdate.getPorosity( k, 0 ) );
     }
   }
 
@@ -300,18 +308,17 @@ private:
   using CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::m_porosityUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::m_permUpdate;
 
-  /// Diffusion kernel wrapper — only actively used when DIFF_TYPE == DamageDiffusion.
+  /// Diffusion kernel wrapper
   typename DIFF_TYPE::KernelWrapper m_diffUpdate;
 
   /**
    * @brief Factory that creates the diffusion kernel wrapper.
-   * For DamageDiffusion: creates a real wrapper from the model.
    * For NoDiffusion (default): returns a zero-cost no-op wrapper.
    */
   GEOS_HOST_DEVICE
   static typename DIFF_TYPE::KernelWrapper initDiffUpdate( DIFF_TYPE const * diffModel )
   {
-    if constexpr( std::is_same_v< DIFF_TYPE, DamageDiffusion > )
+    if constexpr( !std::is_same_v< DIFF_TYPE, NoDiffusion > )
     {
       GEOS_ASSERT( diffModel != nullptr );
       return diffModel->createKernelWrapper();
