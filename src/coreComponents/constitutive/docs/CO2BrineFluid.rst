@@ -8,10 +8,16 @@ CO2-brine model
 Summary
 =======
 
-The CO2-brine model implemented in GEOS includes two components (CO2 and H2O) that are transported by one or two fluid phases (the brine phase and the CO2 phase).
+The CO2-brine model implemented in GEOS has two transported components, CO2 and a component named ``water``, distributed between the brine phase and the CO2-rich phase.
+
+In the liquid phase, ``water`` represents the gas-free brine, including its dissolved salt, rather than H2O alone. Liquid component mass fractions therefore partition the total liquid mass between dissolved CO2 and brine. Salinity is prescribed as a constant parameter; NaCl is not a separately transported component.
+
+The ``componentMolarWeight`` assigned to ``water`` (usually 0.018 kg/mol) defines the conversion between this component's mass and its pseudo-molar amount. It is not a physical molecular weight of brine. Consequently, liquid component mole fractions are pseudo-mole fractions, not molecular mole fractions of CO2, H2O and NaCl.
+
+When water vaporization is enabled, the same transported component represents vaporized H2O in the CO2-rich phase. This is a two-component, fixed-salinity approximation: the model does not separately conserve H2O and NaCl or predict salinity changes caused by evaporation.
 We refer to the brine phase with the subscript :math:`\ell` and to the CO2 phase with the subscript :math:`g` (although the CO2 phase can be in a supercritical, liquid, or gas state).
 Both the water component and the CO2 component can be present in the CO2 phase as well as in the brine phase depending on the solubility model selected.
-Thus, considering the molar phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the molar mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
+Thus, considering the molar phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the total pseudo-molar amount of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
 
 .. math::
     \begin{bmatrix}
@@ -39,7 +45,13 @@ The models that are used in steps 1) and 2) are reviewed in more details below.
 Step 1: Computation of the phase fractions and phase component fractions (flash)
 ================================================================================
 
-At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine and water solubility in the gas phase as functions of pressure, temperature, and a constant salinity. Solubility is calculated and provided as moles of the component dissolved or vaporized per mass of the phase. For CO2 this will be moles of CO2 dissolved per kg of water and for water this will be moles of H2O vaporized in the CO2 phase per kg of CO2.
+At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine and water solubility in the gas phase as functions of pressure, temperature, and a constant salinity. Solubility is stored as moles of the component dissolved or vaporized per kg of the other component. The ``water`` component of these fluids is the brine, salt included: its density is the brine density, so one kg of it holds :math:`1/(1 + m M_{NaCl})` kg of H2O, where :math:`m` is the NaCl molality (mol per kg of H2O) and :math:`M_{NaCl}` the molar weight of NaCl. The solubility models return the equilibrium loading :math:`b_{CO2}` in moles of CO2 per kg of H2O; GEOS divides it by :math:`1 + m M_{NaCl}` so that the stored CO2 solubility is in moles of CO2 per kg of the water (brine) component. For a saturated liquid in two-phase equilibrium, the liquid pseudo-mole fraction :math:`y_{CO2,\ell}` produced by the flash therefore satisfies
+
+.. math::
+
+   \frac{y_{CO2,\ell}}{M_w (1 - y_{CO2,\ell})} = \frac{b_{CO2}}{1 + m M_{NaCl}},
+
+where :math:`M_w` is the ``componentMolarWeight`` of the ``water`` component. An undersaturated single-phase liquid inherits the overall composition instead, and its CO2 content per kg of brine is :math:`y_{CO2,\ell}/[M_w(1-y_{CO2,\ell})]` as for any liquid composition. The water solubility is in moles of H2O per kg of CO2.
 
 There are 3 alternatives to providing solubility data for the phase partition calculation.
 
@@ -63,13 +75,13 @@ To conclude this preprocessing step, we use the fugacity coefficient of CO2 to c
 .. math::
    \ln \frac{ y_{CO2} P }{ s_{CO2} } = \frac{\Phi_{CO2}}{RT} - \ln_{\phi}(p,T) + \sum_c 2 \lambda_c m + \sum_a 2 \lambda_a m + \sum_{a,c} \zeta_{a,c} m^2
 
-where :math:`\Phi_{CO2}` is the chemical potential of the CO2 component, :math:`R` is the gas constant, and :math:`m` is the salinity.
+where :math:`\Phi_{CO2}` is the chemical potential of the CO2 component, :math:`R` is the gas constant, and :math:`m` is the NaCl molality. The solubility :math:`s_{CO2}` is in moles of CO2 per kg of H2O and is converted to the brine basis of the water component as described above.
 The mole fraction of CO2 in the vapor phase, :math:`y_{CO2}`, is computed with equation (4) of Duan and Sun (2003).
 Note that the first, third, fourth, and fifth terms in the equation written above are approximated using equation (7) of Duan and Sun (2003) as recommended by the authors.
 
 Spycher and Pruess (2005) model
 -------------------------------
-The partitioning behavior of CO2 between aqueous and gas phases in chloride brines is computed using the model developed by Spycher and Pruess (2005), which builds upon earlier work by Spycher et al. (2003). This model accounts for both the solubility of CO2 in brine and the vaporization of H2O into the gas phase, offering a comprehensive thermodynamic treatment.
+The partitioning of CO2 between the aqueous and gas phases is computed with the procedure of Spycher et al. (2003), which accounts for both the solubility of CO2 in water and the vaporization of H2O into the gas phase. The salting-out correction of Spycher and Pruess (2005) for chloride brines is not applied in the current implementation: the solubility is that of pure water whatever the value of ``salinity``, and only the basis conversion described above depends on it.
 
 The calculation begins with the determination of equilibrium constants :math:`k_{CO2}` and :math:`k_{H2O}` at a reference pressure :math:`P_0 = 1 \, \text{bar}`. These constants are expressed as temperature-dependent correlations:
 
@@ -131,7 +143,7 @@ Tabulated solubilities
 ----------------------
 Alternatively, the user may provide solubility tables generated externally to GEOS. These must be supplied as two‑dimensional lookup tables (TableFunction) with pressure and temperature as the coordinate axes. A CO2 solubility table is required, while the water vaporization table is optional. If a water vaporization table is not provided, water vaporization is neglected (i.e., zero vaporization is assumed).
 
-For all tables, pressure must be specified in pascals (Pa), temperature in kelvin (K), and solubility as moles of solute per unit mass of solvent (mol/kg).
+For all tables, pressure must be specified in pascals (Pa), temperature in kelvin (K), and solubility as moles of solute per kg of solvent (mol/kg): moles of CO2 per kg of H2O for the CO2 table, moles of H2O per kg of CO2 for the water table. The CO2 table is converted by GEOS to the brine basis of the water component (division by :math:`1 + m M_{NaCl}`, into a derived table named after the fluid), as for the analytic models. Tables that were prepared on a per-kg-of-brine basis for a saline case must therefore be multiplied by :math:`1 + m M_{NaCl}` before being given to GEOS.
 
 Flash calculation
 -----------------
@@ -307,14 +319,15 @@ Then, in a second step, the density is modified using the method of Garcia (2001
 
    \rho_{\ell} = \rho_{\ell,table} + M_{CO2} c_{CO2} - c_{CO2} \rho_{\ell,table} V_{\phi}
 
-where :math:`M_{CO2}` is the molecular weight of CO2, :math:`c_{CO2}` is the concentration of CO2 in brine, and :math:`V_{\phi}` is the apparent molar volume of dissolved CO2.
-The CO2 concentration in brine is obtained as:
+where :math:`M_{CO2}` is the molecular weight of CO2, :math:`c_{CO2}` is the concentration of CO2 per unit volume of gas-free brine, and :math:`V_{\phi}` is the apparent molar volume of dissolved CO2.
+The CO2 concentration per unit volume of gas-free brine is
 
 .. math::
 
-   c_{CO2} = \frac{y_{CO2,\ell} \rho_{\ell,table}}{M_{H2O}(1-y_{CO2,\ell})} 
+   c_{CO2} = \frac{y_{CO2,\ell} \rho_{\ell,table}}{M_w (1-y_{CO2,\ell})}
 
-where :math:`M_{H2O}` is the molecular weight of water. 
+where :math:`M_w` is the configured ``componentMolarWeight`` of the ``water`` component and :math:`y_{CO2,\ell}` is the liquid CO2 pseudo-mole fraction. Thus :math:`y_{CO2,\ell}/[M_w(1-y_{CO2,\ell})]` is in moles of CO2 per kg of brine, not per kg of H2O, and no additional salinity conversion is applied in the density kernel. The expression for :math:`\rho_{\ell}` is the first-order form of Garcia's mixing rule; its deviation from the exact rule grows with the dissolved CO2 content and depends on the brine density and on :math:`V_{\phi}` (a few percent of the CO2 density increment for the CO2 mass fractions reached at reservoir conditions).
+
 The apparent molar volume of dissolved CO2 is computed as a function of temperature using the expression:
 
 .. math::
@@ -334,7 +347,7 @@ where the coefficients :math:`a` and :math:`b` are defined as:
    b &= \mu_{w}(T) (1.0 + 0.0816 m + 0.0122 m^2 + 0.000128 m^3) 
    
 where :math:`\mu_{w}` is the pure water viscosity computed as a function of temperature,
-and :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
+and :math:`m` is the user-defined salinity, the NaCl molality (moles of NaCl per kg of H2O).
 
 
 Brine density and viscosity using Ezrokhi correlation
@@ -394,7 +407,7 @@ To account for the presence of dissolved non-condensible gases such as carbon di
 
    H_{\text{phase}} = (1 - C) H_{\text{CO}_2} + C H_{\text{brine}}
 
-where :math:`C` is the composition fraction of the brine component. Depending on the solver configuration, this combination is performed either on a mass basis or a molar basis. If a molar basis is used, the constituent enthalpies are internally scaled by the inverse molecular weights of their respective components prior to averaging.
+where :math:`C` is the composition fraction of the water (brine) component. Depending on the solver configuration, this combination is performed either on a mass basis (specific enthalpies, J/kg, weighted by mass fractions) or a molar basis (the specific enthalpies multiplied by the molar weights of their respective components, J/mol, weighted by mole fractions).
 
 Parameters
 =========================
@@ -423,7 +436,7 @@ co2,CO2       CO2 component
 water,liquid  Water component
 ============= ===============
 
-The salinity is specified in moles per kg of brine using the ``salinity`` attribute.
+The salinity is specified as the NaCl molality, in moles of NaCl per kg of H2O, using the ``salinity`` attribute. This is the salinity variable of the Phillips et al. (1981) and Duan and Sun (2003) correlations.
 
 The solubility model is selected using the ``solubilityModel`` attribute. If the solubility is set to ``Tables`` then user defined tables should be provided using the ``solubilityTableNames`` attribute. If a single table is provided, this will be treated as the CO2 solubility table while water vaporization will be zero. It 2 tables are provided, then the second table will be treated as the water vaporization table. Both values must give the names of ``<TableFunction>`` xml elements which define lookup tables for functions of pressure and temperature.
 
@@ -497,7 +510,7 @@ Example
             temperatureCoordinates="{283.15, 393.5}"
             temperatureInterval="5"
             salinity="1.901285269"
-            ezrokhiDensityCoefficients="{0.1033, -2.2991e-5, -2.3658e-6}"
+            ezrokhiDensityCoefficients="{0.1003, -2.2991e-5, -2.3658e-6}"
             ezrokhiViscosityCoefficients="{0, 0, 0}" />
     </Constitutive>
     

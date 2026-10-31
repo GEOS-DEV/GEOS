@@ -64,6 +64,11 @@ makeSolubilityTables( string const & functionName,
 
   auto const & solubilityModel = brineFluidParameters.m_solubilityModel;
 
+  // The solubility models and user tables give mol CO2 per kg H2O, but the "water" component of the
+  // CO2-brine fluids is the brine (H2O + NaCl): the solubility is converted to mol CO2 per kg of brine
+  real64 constexpr saltMolarWeight = 58.44e-3;
+  real64 const solventPerWater = 1.0 + brineFluidParameters.m_salinity * saltMolarWeight;
+
   // Check solubility model for explicit table input
   if( solubilityModel == constitutive::PVTProps::BrineFluidParameters::SolubilityModel::Tables )
   {
@@ -91,6 +96,35 @@ makeSolubilityTables( string const & functionName,
         GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( inputTableName ),
                        GEOS_FMT( "{}: Could not find TableFunction with name {}", functionName, inputTableName ),
                        InputError );
+        if( tableIndex == 0 && brineFluidParameters.m_salinity > 0.0 )
+        {
+          // convert the user CO2 table into a derived table (the user's table may serve fluids of other salinity)
+          TableFunction const & userTable = functionManager.getGroup< TableFunction >( inputTableName );
+          string const convertedName = GEOS_FMT( "{}_{}_brineBasis", functionName, inputTableName );
+          if( !functionManager.hasGroup< TableFunction >( convertedName ) )
+          {
+            ArrayOfArraysView< real64 const > const userCoords = userTable.getCoordinates();
+            array1d< real64_array > coords( userCoords.size() );
+            for( localIndex d = 0; d < userCoords.size(); ++d )
+            {
+              coords[d].resize( userCoords.sizeOfArray( d ) );
+              for( localIndex k = 0; k < userCoords.sizeOfArray( d ); ++k )
+              {
+                coords[d][k] = userCoords[d][k];
+              }
+            }
+            real64_array convertedValues( userTable.getValues().size() );
+            for( localIndex k = 0; k < convertedValues.size(); ++k )
+            {
+              convertedValues[k] = userTable.getValues()[k] / solventPerWater;
+            }
+            TableFunction * converted = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", convertedName ) );
+            converted->setTableCoordinates( coords, { userTable.getDimUnit( 0 ), userTable.getDimUnit( 1 ) } );
+            converted->setTableValues( convertedValues, units::Solubility );
+            converted->setInterpolationMethod( userTable.getInterpolationMethod() );
+          }
+          inputTableName = convertedName;
+        }
       }
       tables[tableIndex] = makeTable( inputTableName, tableCoords, std::move ( values ), functionManager );
     }
@@ -139,6 +173,12 @@ makeSolubilityTables( string const & functionName,
       tolerance,
       co2Solubility,
       h2oSolubility );
+  }
+
+  // convert the model's mol CO2 per kg H2O to mol CO2 per kg of the water (brine) component
+  for( localIndex k = 0; k < co2Solubility.size(); ++k )
+  {
+    co2Solubility[k] /= solventPerWater;
   }
 
   // Truncate negative solubility and warn

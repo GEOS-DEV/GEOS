@@ -153,18 +153,49 @@ public:
     {
       // Unstable mixture
       // Iterative solve to converge flash
-      bool const flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
-                                                               pressure,
-                                                               temperature,
-                                                               compFraction,
-                                                               componentProperties,
-                                                               m_flashData,
-                                                               m_continuousFlashParameters.toSliceConst(),
-                                                               m_discreteFlashParameters.toSliceConst(),
-                                                               kValues,
-                                                               phaseFraction.value[m_vapourIndex],
-                                                               phaseCompFraction.value[m_liquidIndex],
-                                                               phaseCompFraction.value[m_vapourIndex] );
+      bool flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
+                                                         pressure,
+                                                         temperature,
+                                                         compFraction,
+                                                         componentProperties,
+                                                         m_flashData,
+                                                         m_continuousFlashParameters.toSliceConst(),
+                                                         m_discreteFlashParameters.toSliceConst(),
+                                                         kValues,
+                                                         phaseFraction.value[m_vapourIndex],
+                                                         phaseCompFraction.value[m_liquidIndex],
+                                                         phaseCompFraction.value[m_vapourIndex] );
+
+      // The stability test found the mixture unstable but the flash collapsed to the trivial
+      // solution: restart from the incipient phase found by the stability test
+      real64 maxLogK = 0.0;
+      for( integer ic = 0; ic < m_numComponents; ++ic )
+      {
+        maxLogK = LvArray::math::max( maxLogK, LvArray::math::abs( LvArray::math::log( kVapourLiquid[ic] ) ) );
+      }
+      if( unstableMixture && maxLogK < 1.0e-4 )
+      {
+        bool const incipientIsVapour = calculateLiTemperature( componentProperties, incipientComposition.toSliceConst() ) <
+                                       calculateLiTemperature( componentProperties, compFraction );
+        for( integer ic = 0; ic < m_numComponents; ++ic )
+        {
+          real64 const zi = LvArray::math::max( compFraction[ic], MultiFluidConstants::minForSpeciesPresence );
+          real64 const yi = LvArray::math::max( incipientComposition[ic], MultiFluidConstants::minForSpeciesPresence );
+          kVapourLiquid[ic] = incipientIsVapour ? yi / zi : zi / yi;
+        }
+        flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
+                                                      pressure,
+                                                      temperature,
+                                                      compFraction,
+                                                      componentProperties,
+                                                      m_flashData,
+                                                      m_continuousFlashParameters.toSliceConst(),
+                                                      m_discreteFlashParameters.toSliceConst(),
+                                                      kValues,
+                                                      phaseFraction.value[m_vapourIndex],
+                                                      phaseCompFraction.value[m_liquidIndex],
+                                                      phaseCompFraction.value[m_vapourIndex] );
+      }
 
 #if defined(GEOS_DEVICE_COMPILE)
       GEOS_ERROR_IF( !flashStatus,

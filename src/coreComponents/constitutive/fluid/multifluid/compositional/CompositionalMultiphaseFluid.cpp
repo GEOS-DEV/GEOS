@@ -275,7 +275,7 @@ void CompositionalMultiphaseFluid< FLASH, PHASES... >::createPhaseModels( std::i
   ((camp::get< Is >( m_phases ) =
       std::make_unique< PHASES >( GEOS_FMT( "{}_PhaseModel{}", getName(), Is + 1 ),
                                   *m_componentProperties,
-                                  Is,
+                                  m_phaseOrder[Is],   // the phase this model is applied to, not the model position
                                   *m_parameters )), ...);
 }
 
