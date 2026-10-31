@@ -4,6 +4,7 @@ message( "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}" )
 message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 
 ### OPTIONS ###
+include( ${CMAKE_CURRENT_LIST_DIR}/GeosComponentOptions.cmake )
 option( GEOS_ENABLE_FPE "Enables floating point exceptions" ON )
 option( GEOS_ENABLE_TESTS "Enables unit tests" ON )
 option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
