@@ -92,7 +92,7 @@ void MixedMimeticDiscretization::postInputInitialization()
                         InputError );
 
   // with a TPFA inner product both branches of the selection coincide: the indicators are only a diagnostic
-  if( isAdaptiveConsistency() && m_innerProductType == mimeticInnerProduct::MimeticInnerProductTypeStrings::TPFA )
+  if( isAdaptiveConsistency() && isTpfaInnerProduct() )
   {
     GEOS_WARNING( GEOS_FMT( "{}: 'adaptiveConsistency' is enabled but 'innerProductType' is TPFA: the adaptation has no "
                             "effect on the discretization (both operators of the adaptive blend coincide), and "
