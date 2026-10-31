@@ -75,6 +75,7 @@ public:
                               CellElementSubRegion const & subRegion,
                               constitutive::SingleFluidBase const & fluid,
                               constitutive::PermeabilityBase const & permeability,
+                              SortedArrayView< localIndex const > const & regionFilter,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
@@ -109,9 +110,18 @@ public:
     m_dElemDens( fluid.dDensity() ),
     m_mob( subRegion.getField< fields::flow::mobility >() ),
     m_dMob( subRegion.getField< fields::flow::dMobility >() ),
+    m_regionFilter( regionFilter ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
+
+  /// true if the k-th cell adjacent to face kf exists and belongs to a target region
+  GEOS_HOST_DEVICE
+  bool isTargetCell( localIndex const kf, integer const k ) const
+  {
+    localIndex const er = m_elemRegionList[kf][k];
+    return er >= 0 && m_elemSubRegionList[kf][k] >= 0 && m_elemList[kf][k] >= 0 && m_regionFilter.contains( er );
+  }
 
   /**
    * @struct StackVariables
@@ -132,6 +142,9 @@ public:
 
     /// 1 if the face is a domain-boundary face without a pressure boundary condition (no-flow)
     integer isNoFlowFace[NUM_FACE]{};
+
+    /// 1 if the face is a domain-boundary face with a pressure boundary condition
+    integer isPresBcFace[NUM_FACE]{};
 
     /// 1 if the face flux is condensed into a two-point expression (all-TPFA neighborhood):
     /// its closure row and its divergence contribution are assembled by the face-based kernel
@@ -202,10 +215,10 @@ public:
       stack.orientation[i] = ( myGlobalElem == m_faceOrientationCell[kf] ) ? 1.0 : -1.0;
       localFlux[i] = stack.orientation[i] * m_faceFlux[kf];
 
-      bool const valid0 = ( m_elemRegionList[kf][0] >= 0 && m_elemSubRegionList[kf][0] >= 0 && m_elemList[kf][0] >= 0 );
-      bool const valid1 = ( m_elemRegionList[kf][1] >= 0 && m_elemSubRegionList[kf][1] >= 0 && m_elemList[kf][1] >= 0 );
-      bool const onBoundary = !( valid0 && valid1 );
+      // the boundary is that of the target regions: a non-target neighbour counts as absent
+      bool const onBoundary = !( isTargetCell( kf, 0 ) && isTargetCell( kf, 1 ) );
       stack.isNoFlowFace[i] = ( onBoundary && m_isPresBcFace[kf] == 0 ) ? 1 : 0;
+      stack.isPresBcFace[i] = ( onBoundary && m_isPresBcFace[kf] == 1 ) ? 1 : 0;
       stack.isCondensedFace[i] = ( m_faceStencilLabel[kf] == 0 && stack.isNoFlowFace[i] == 0 ) ? 1 : 0;
     }
 
@@ -257,8 +270,7 @@ public:
       stack.faceResidual[i] = invMob * mDotFlux - m_elemPres[ei] + ccDens * gravCoefDif;
       stack.dFaceResidual_dPres[i] = dInvMob_dPres * mDotFlux - 1.0 + dCcDens_dPres * gravCoefDif;
 
-      bool const onBoundary = ( m_elemRegionList[kf][0] == -1 || m_elemRegionList[kf][1] == -1 );
-      if( onBoundary && m_isPresBcFace[kf] == 1 )
+      if( stack.isPresBcFace[i] == 1 )
       {
         stack.faceResidual[i] += m_bcPres[kf];
       }
@@ -412,6 +424,9 @@ protected:
   arrayView1d< real64 const > const m_mob;
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_dMob;
 
+  /// target regions of the solver
+  SortedArrayView< localIndex const > const m_regionFilter;
+
   /// View on the local CRS matrix and RHS
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
   arrayView1d< real64 > const m_localRhs;
@@ -437,6 +452,7 @@ public:
                    mimeticInnerProduct::MimeticInnerProductBase const & mimeticInnerProductBase,
                    constitutive::SingleFluidBase const & fluid,
                    constitutive::PermeabilityBase const & permeability,
+                   SortedArrayView< localIndex const > const & regionFilter,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -450,7 +466,7 @@ public:
       {
         ElementBasedAssemblyKernel< NUM_FACES, IP >
         kernel( rankOffset, lengthTolerance, elemDofKey, faceDofKey, nodeManager, faceManager,
-                subRegion, fluid, permeability, dt, localMatrix, localRhs );
+                subRegion, fluid, permeability, regionFilter, dt, localMatrix, localRhs );
         ElementBasedAssemblyKernel< NUM_FACES, IP >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     } );

@@ -139,26 +139,6 @@ void SinglePhaseMixedMFD::initializePostInitialConditionsPreSubGroups()
       m_regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
     }
 
-    // flag the faces on which a pressure boundary condition is imposed:
-    // all the remaining domain-boundary faces are treated as no-flow faces
-    FaceManager & faceManager = mesh.getFaceManager();
-    arrayView1d< integer > const isPresBcFace = faceManager.getField< flow::isBoundaryFace >();
-
-    fsManager.apply< FaceManager >( 0.0,
-                                    mesh,
-                                    flow::bcPressure::key(),
-                                    [&] ( FieldSpecification const &,
-                                          string const &,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager &,
-                                          string const & )
-    {
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-        isPresBcFace[targetSet[a]] = 1;
-      } );
-    } );
-
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
       GEOS_UNUSED_VAR( bc );
@@ -190,23 +170,24 @@ void SinglePhaseMixedMFD::computeFaceOrientation( DomainPartition & domain )
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
     ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const l2g = elemLocalToGlobal.toNestedViewConst();
     arrayView1d< globalIndex > const orientationCell = faceManager.getField< mixedMimetic::faceOrientationCell >();
+    SortedArrayView< localIndex const > const regionFilter = m_regionFilter.toViewConst();
 
-    // the owner of a face sees both of its cells; ghost faces take the owner's value through the sync
+    // the owner of a face sees both of its cells; ghost faces take the owner's value through the sync.
+    // Only target cells are considered, as in the assembly kernels; -1 marks a face with no target cell
     forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const kf )
     {
-      globalIndex gMin = -1;
+      globalIndex gMin = LvArray::NumericLimits< globalIndex >::max;
       for( localIndex k = 0; k < 2; ++k )
       {
         localIndex const er = elemRegionList[kf][k];
         localIndex const esr = elemSubRegionList[kf][k];
         localIndex const ei = elemList[kf][k];
-        if( er >= 0 && esr >= 0 && ei >= 0 )
+        if( er >= 0 && esr >= 0 && ei >= 0 && regionFilter.contains( er ) )
         {
-          globalIndex const g = l2g[er][esr][ei];
-          gMin = ( gMin < 0 || g < gMin ) ? g : gMin;
+          gMin = LvArray::math::min( gMin, l2g[er][esr][ei] );
         }
       }
-      orientationCell[kf] = gMin;
+      orientationCell[kf] = ( gMin == LvArray::NumericLimits< globalIndex >::max ) ? -1 : gMin;
     } );
 
     FieldIdentifiers fieldsToBeSync;
@@ -291,9 +272,21 @@ void SinglePhaseMixedMFD::implicitStepSetup( real64 const & time_n,
       faceManager.getField< mixedMimetic::faceMassFlux_n >();
     faceFlux_n.setValues< parallelDevicePolicy<> >( faceFlux );
   } );
+}
 
-  // evaluate the boundary face pressure values used in the constitutive rows
+void SinglePhaseMixedMFD::assembleSystem( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  // evaluate the boundary face pressure values used in the constitutive rows at the end of the attempted step
   applyFacePressureBCValues( time_n + dt, domain );
+
+  SinglePhaseBase::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 namespace
@@ -316,6 +309,11 @@ void SinglePhaseMixedMFD::applyFacePressureBCValues( real64 const time,
                                                                       MeshLevel & mesh,
                                                                       string_array const & )
   {
+    // flag the faces on which a pressure boundary condition is imposed at this time:
+    // all the remaining domain-boundary faces are treated as no-flow faces
+    arrayView1d< integer > const isPresBcFace = mesh.getFaceManager().getField< flow::isBoundaryFace >();
+    isPresBcFace.zero();
+
     fsManager.apply< FaceManager >( time,
                                     mesh,
                                     flow::bcPressure::key(),
@@ -325,6 +323,11 @@ void SinglePhaseMixedMFD::applyFacePressureBCValues( real64 const time,
                                           FaceManager & targetGroup,
                                           string const & )
     {
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      {
+        isPresBcFace[targetSet[a]] = 1;
+      } );
+
       // provide some logging at the first nonlinear iteration
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -404,6 +407,9 @@ void SinglePhaseMixedMFD::computeMgrPointMarkers( DomainPartition const & domain
   globalIndex const globalNumCondensedFaces = MpiWrapper::sum< globalIndex >( numCondensedFaces );
   GEOS_LOG_RANK_0( GEOS_FMT( "mixedMFD Flow: flux dofs {} non-condensed (saddle point), {} condensed (two-point closure)",
                              globalNumLiveFaces, globalNumCondensedFaces ) );
+  GEOS_ERROR_IF_NE_MSG( globalNumLiveFaces + globalNumCondensedFaces,
+                        dofManager.numGlobalDofs( mixedMimetic::faceMassFlux::key() ),
+                        "mixedMFD Flow: the face stencil labels do not cover every flux dof" );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -528,6 +534,7 @@ void SinglePhaseMixedMFD::assembleFluxTerms( real64 const dt,
                                                    mimeticInnerProductBase,
                                                    fluid,
                                                    permeability,
+                                                   m_regionFilter.toViewConst(),
                                                    dt,
                                                    localMatrix,
                                                    localRhs );
@@ -751,7 +758,7 @@ void SinglePhaseMixedMFD::computeResidualWeights( DomainPartition & domain,
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Face, { mixedMimetic::faceDofScale::key() } );
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
 
     FaceManager const & faceManager = mesh.getFaceManager();
     arrayView1d< globalIndex const > const faceDofNumber = faceManager.getReference< array1d< globalIndex > >( faceDofKey );

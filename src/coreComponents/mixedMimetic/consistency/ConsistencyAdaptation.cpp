@@ -124,6 +124,9 @@ localIndex ConsistencyAdaptation::applyConsistencyLayer( MeshLevel & mesh,
                                       params.lengthTolerance,
                                       projFaceFlux );
 
+  // the projection kernel moved the nested permeability view to the device: restore host-indexable views
+  permeability.move( hostMemorySpace, false );
+
   // steps 2-3: localized normalized residuals, assembled on the global face orientation
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
                                                                     [&]( localIndex const,
@@ -175,7 +178,7 @@ localIndex ConsistencyAdaptation::applyConsistencyLayer( MeshLevel & mesh,
 
   FieldIdentifiers fieldsToBeSync;
   fieldsToBeSync.addElementFields( { mixedMimetic::mfdFlag::key(), mixedMimetic::consistencyIndicator::key() }, regionNames );
-  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, neighbors, false );
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, neighbors, true );
   return numConsistent;
 }
 

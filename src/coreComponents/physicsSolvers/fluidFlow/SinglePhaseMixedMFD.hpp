@@ -91,6 +91,14 @@ public:
                bool const setSparsity = true ) override;
 
   virtual void
+  assembleSystem( real64 const time_n,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void
   applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
