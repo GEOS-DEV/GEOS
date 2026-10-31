@@ -5,6 +5,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4139 (2026-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4139-RUN-SHA.tar.gz>
+=====================
+Add the mixed mimetic discretization: new `NumericalMethods/MixedMimetic` group in every restart file and new mixed MFD tests.
+
 PR #4169 (2026-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4169-17867-5d0c7de.tar.gz>
 =====================
 Fix surface generator splitting for contact mechanics case with wells
@@ -34,10 +38,6 @@ PR #3996 (2026-09-20) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Switch the single-phase reactive transport solver to a molality-based primary
 species concentration by introducing solventMassFraction.
-
-PR #4139 (2026-09-17) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4139-RUN-SHA.tar.gz>
-=====================
-Add the mixed mimetic discretization: new `NumericalMethods/MixedMimetic` group in every restart file and new mixed MFD tests.
 
 PR #3994 (2026-09-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3994-17525-4ae3593.tar.gz>
 =====================

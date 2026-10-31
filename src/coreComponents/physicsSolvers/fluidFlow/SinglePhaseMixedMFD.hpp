@@ -179,15 +179,16 @@ public:
                                DofManager const & dofManager,
                                CRSMatrixView< real64 const, globalIndex const > const & localMatrix );
 
-private:
-
   /**
-   * @brief Populate the boundary face pressure values from the field specifications.
+   * @brief Populate the boundary face mask and pressure values from the field specifications.
    * @param[in] time the time at which the boundary values are evaluated
    * @param[in] domain the domain
+   * @note public: it contains a device lambda, which nvcc rejects in a private member function
    */
   void applyFacePressureBCValues( real64 const time,
                                   DomainPartition & domain );
+
+private:
 
   /**
    * @brief Set the orienting cell E_min of every face: sigma_{E,f} = +1 if E = E_min, -1 otherwise.
