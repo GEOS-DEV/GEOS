@@ -97,7 +97,6 @@ Option                          Default   Explanation
 ``GEOS_MAX_FLUID_COMPONENTS``   ``5``     Maximum component count instantiated in compositional flow solvers (3 to 20)
 ``GEOS_LA_INTERFACE``           ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOS_BUILD_OBJ_LIBS``         ``ON``    Use CMake Object Libraries build
-``GEOS_BUILD_SHARED_LIBS``      ``OFF``   Build ``geosx_core`` as a shared library instead of static
 ``GEOS_PARALLEL_COMPILE_JOBS``            Max. number of compile jobs (when using Ninja), in addition to ``-j`` flag
 ``GEOS_PARALLEL_LINK_JOBS``               Max. number of link jobs (when using Ninja), in addition to ``-j`` flag
 ``GEOS_INSTALL_SCHEMA``         ``ON``    Enables schema generation and installation
@@ -110,7 +109,9 @@ Physics packages
 Each family of physics solvers can be disabled to reduce build time and binary size.
 All packages are enabled by default.
 
+=================================== ====================================================================
 Option                              Package
+=================================== ====================================================================
 ``GEOS_ENABLE_FLUIDFLOW``           Single-phase, multiphase and compositional flow, wells
 ``GEOS_ENABLE_SOLIDMECHANICS``      Solid mechanics, including contact mechanics on fractures and faults
 ``GEOS_ENABLE_MULTIPHYSICS``        Coupled solvers (poromechanics, hydraulic fracturing, ...)
@@ -118,46 +119,8 @@ Option                              Package
 ``GEOS_ENABLE_WAVEPROPAGATION``     Acoustic and elastic wave propagation
 ``GEOS_ENABLE_INDUCEDSEISMICITY``   Induced seismicity
 ``GEOS_ENABLE_SIMPLEPDE``           Simple PDE solvers (Laplace, phase-field damage)
+=================================== ====================================================================
 
 .. note::
    The multiphysics package links against the fluid flow, solid mechanics, simple PDE and surface generation packages,
    so these must stay enabled when ``GEOS_ENABLE_MULTIPHYSICS`` is ``ON``.
-Compositional component limit
------------------------------
-
-Set ``GEOS_MAX_FLUID_COMPONENTS`` in the host configuration or pass, for example,
-``-DGEOS_MAX_FLUID_COMPONENTS=20`` to CMake to build compositional flow solvers for up to
-twenty components. The default of five preserves the existing solver range.
-
-To build for more components:
-
-1. Add ``set( GEOS_MAX_FLUID_COMPONENTS 20 CACHE STRING "" )`` to the host-config
-   file, or pass ``-DGEOS_MAX_FLUID_COMPONENTS=20`` on the CMake command line.
-2. Reconfigure the build directory (``cmake`` or ``config-build.py``).
-3. Rebuild GEOS.
-
-No source changes are needed. In particular, ``kernelSpecs.json`` does not have to be
-edited: each ``NCOMP`` list there gives only the lowest instantiated component count,
-and CMake extends it to ``GEOS_MAX_FLUID_COMPONENTS`` when the build is configured.
-Values must be integers from three to twenty; smaller limits reduce compilation
-work and the number of kernel instantiations. One-component kernels remain
-available at every supported setting. Three is the minimum build limit because
-black-oil fluids require three components; two-component fluid models remain
-available in every supported build. The count includes every modeled fluid
-species, including water when present.
-
-This setting controls both runtime dispatch and explicit instantiations,
-including thermal, hybrid finite-volume, aquifer, CFL and well kernels. Solvers
-reject models exceeding the configured limit during setup,
-with a message identifying the required setting. Changing the option requires
-reconfiguring and rebuilding GEOS.
-
-The constitutive fluid working arrays have capacity for at least nine components
-and grow with ``GEOS_MAX_FLUID_COMPONENTS`` above nine. Smaller builds retain existing
-nine-component standalone fluid-property calculations, such as the PVT driver.
-
-The table-based reactive OBL solver uses the smaller of the configured limit and
-seven components. Its per-thread interpolation workspace grows exponentially with
-the component count and would exceed the CUDA local-memory limit at eight, so
-increasing ``GEOS_MAX_FLUID_COMPONENTS`` above seven extends the EOS compositional
-solvers without increasing the OBL limit.
