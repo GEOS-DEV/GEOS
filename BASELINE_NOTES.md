@@ -5,7 +5,7 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #4139 (2026-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4139-RUN-SHA.tar.gz>
+PR #4139 (2026-10-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4139-17884-0f6d03e.tar.gz>
 =====================
 Add the mixed mimetic discretization: new `NumericalMethods/MixedMimetic` group in every restart file and new mixed MFD tests.
 
