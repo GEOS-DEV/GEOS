@@ -80,7 +80,7 @@ TIMES_CO2 = [
     (20.0, "end of simulation"),
 ]
 
-ROCK_COLORS = ["#00aaff", "#ff0000", "#00ff00"]   # SAND, CLAY, CAPROCK
+ROCK_COLORS = ["#00ff00", "#ff0000", "#00aaff"]   # SAND, CLAY, CAPROCK
 ROCK_NAMES = ["SAND", "CLAY", "CAPROCK"]
 CAPROCK_GRAY = "#d9d9d9"
 
