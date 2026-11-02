@@ -208,7 +208,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-r", "--reference", 
         action="store_true", 
-        help="Flag to load and show reference data from 'odenburg.json'. (Default: False)"
+        help="Flag to load and show reference data from 'oldenburg.json'. (Default: False)"
     )
 
     args = parser.parse_args()

@@ -40,6 +40,7 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
 {
   using InputFlags = dataRepository::InputFlags;
   using RestartFlags = dataRepository::RestartFlags;
+  using PlotLevel = dataRepository::PlotLevel;
 
   getWrapperBase( viewKeyStruct::componentNamesString() ).setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::componentMolarWeightString() ).setInputFlag( InputFlags::REQUIRED );
@@ -66,6 +67,17 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setDescription( "Table of binary interaction coefficients" );
 
   registerField< fields::multifluid::kValues >( &m_kValues );
+
+  if constexpr ( isThermalType() )
+  {
+    getField< fields::multifluid::phaseEnthalpy >().
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ );
+
+    getField< fields::multifluid::phaseInternalEnergy >().
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ );
+  }
 
   // Link parameters specific to each model
   m_parameters->registerParameters( this );
