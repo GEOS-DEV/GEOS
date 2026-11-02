@@ -1,0 +1,366 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="ALM_inclinedFault_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_ELEMENTREGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ 94_hexahedra, 95_hexahedra, 96_hexahedra, 97_hexahedra }"
+      materialList="{ water, porousRock }"/>
+
+    <SurfaceElementRegion
+      name="Fault"
+      faceBlock="faceElementSubRegion"
+      materialList="{ water, faultFilling, fractureContact, hApertureModel }"
+      defaultAperture="1e-3"/>
+
+    <WellElementRegion
+      name="wellRegion"
+      materialList="{ water }"/>
+  </ElementRegions>
+  <!-- SPHINX_ELEMENTREGIONS_END -->
+
+  <!-- SPHINX_MATERIAL -->
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultYoungModulus="14.95e9"
+      defaultPoissonRatio="0.15"/>
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0e6"
+      referenceDensity="1000"
+      compressibility="2.09028227021e-10"
+      referenceViscosity="0.001"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="7.12e10"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}"/>
+
+    <!-- Material inside the fault -->
+    <CompressibleSolidParallelPlatesPermeability
+      name="faultFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0e6"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <Coulomb
+      name="fractureContact"
+      defaultCohesion="0.1e6"
+      defaultFrictionCoefficient="0.5"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>
+
+    <NullModel
+      name="nullSolid"/>
+  </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
+
+<!-- SPHINX_POROMECHANICSSOLVER -->
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
+
+    <SinglePhaseReservoirPoromechanicsConformingFracturesALM
+      name="poroFractureSolver"
+      targetRegions="{ Domain, Fault }" 
+      initialDt="1"
+      reservoirAndWellsSolverName="reservoirAndWellsSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="1"
+        newtonTol="1e0"
+        newtonMaxIter="10"
+        maxAllowedResidualNorm="1e+15"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </SinglePhaseReservoirPoromechanicsConformingFracturesALM>
+
+    <SolidMechanicsAugmentedLagrangianContact
+      name="fractureMechSolver"
+      logLevel="1"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="1.0e1"
+      iterPenaltyT="1.0e1"
+      tolTauLimit="1.e-02"
+      tolJumpN="1.e-7"
+      tolJumpT="1.e-7"
+      targetRegions="{ Domain, Fault }" 
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-1"
+        logLevel="2"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </SolidMechanicsAugmentedLagrangianContact>  
+
+    <SinglePhaseReservoir
+      name="reservoirAndWellsSolver"
+      flowSolverName="singlePhaseFlowSolver"
+      wellSolverName="singlePhaseWellSolver"
+      logLevel="1"
+      targetRegions="{ Domain, Fault, wellRegion }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        maxAllowedResidualNorm="1e+15"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"
+        logLevel="1"/>
+    </SinglePhaseReservoir>
+
+    <WellManager
+      name="singlePhaseWellSolver"
+      logLevel="1"
+      targetRegions="{ wellRegion }">
+      <SinglePhaseWell
+        name="wellControls"
+        logLevel="2"
+        type="injector"
+        control="BHP">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="55.0e6"
+          referenceElevation="-3050"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e10"/>
+      </SinglePhaseWell>
+    </WellManager>
+
+    <SinglePhaseFVM 
+      name="singlePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain, Fault}" > 
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        maxAllowedResidualNorm="1e+15"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </SinglePhaseFVM>
+    <SurfaceGenerator 
+        name="SurfaceGen" 
+        targetRegions="{ Domain, Fault}" 
+        fractureRegion="Fault" 
+        initialRockToughness="1.0"
+        mpiCommOrder="1"/>
+  </Solvers>
+<!-- SPHINX_SINGLEPHASEFVM_END -->
+
+<!-- SPHINX_MESH -->
+  <Mesh>
+     <VTKMesh         
+      name="FaultModel"      
+      useGlobalIds="0"
+      nodesetNames="{ f1_node_set }" 
+      file="../../MESH/fault_contact_hex_mesh_with_node_sets.vtu"
+      regionAttribute="CellEntityIds">
+      <!-- Vertical injector perforated at mid-thickness of the reservoir block 97 (z in [-3200, -2900]
+           at x=-1000), left of the fault. y=500 is a cell-center plane (two cell layers in y). -->
+      <InternalWell
+        name="well_injector"
+        logLevel="1"
+        wellRegionName="wellRegion"
+        wellControlsName="wellControls"
+        polylineNodeCoords="{ { -1000, 500, -2500 },
+                              { -1000, 500, -3050 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="6">
+        <Perforation
+          name="injector_perf"
+          distanceFromHead="550"/>
+      </InternalWell>
+    </VTKMesh>
+  </Mesh> 
+<!-- SPHINX_MESH_END -->
+
+<!-- SPHINX_INJECTION -->
+  <FieldSpecifications>
+    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames="{ f1_node_set }" objectPath="faceManager" scale="1" />
+    <FieldSpecification name="fault" initialCondition="1" setNames="{ f1_node_set }" objectPath="faceManager" fieldName="ruptureState" scale="1" />    
+   <!-- No pressure imposed in block 97: injection is done through the well (see InternalWell) -->
+
+   <!-- Initial fault pressure. The fault elements are created by the SurfaceGenerator at t=0, after
+        initial conditions are applied, so this is applied by the faultPressureApplicator task right
+        after the fracturing step. The fault pressure then evolves freely (no Dirichlet condition). -->
+    <FieldSpecification
+      name="initialFaultPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="pressure"
+      scale="35.0e6"/>
+
+   <!-- Reservoir blocks 96 and 97 are more permeable than the over/underburden (rockPerm: 1e-18) -->
+    <FieldSpecification
+      name="reservoirPermx_96"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/96_hexahedra"
+      fieldName="rockPerm_permeability"
+      scale="1.0e-13"/>
+    <FieldSpecification
+      name="reservoirPermy_96"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/96_hexahedra"
+      fieldName="rockPerm_permeability"
+      scale="1.0e-13"/>
+    <FieldSpecification
+      name="reservoirPermz_96"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/96_hexahedra"
+      fieldName="rockPerm_permeability"
+      scale="1.0e-13"/>
+    <FieldSpecification
+      name="reservoirPermx_97"
+      initialCondition="1"
+      component="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/97_hexahedra"
+      fieldName="rockPerm_permeability"
+      scale="1.0e-13"/>
+    <FieldSpecification
+      name="reservoirPermy_97"
+      initialCondition="1"
+      component="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/97_hexahedra"
+      fieldName="rockPerm_permeability"
+      scale="1.0e-13"/>
+    <FieldSpecification
+      name="reservoirPermz_97"
+      initialCondition="1"
+      component="2"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/97_hexahedra"
+      fieldName="rockPerm_permeability"
+      scale="1.0e-13"/>
+
+  </FieldSpecifications>
+<!-- SPHINX_INJECTION_END -->
+
+    <Functions>
+        <TableFunction
+            name="apertureTable"
+            coordinates="{ -1.0e-3, 0.0 }"
+            values="{ 1.0e-3, 1.0e-3 }"/>
+    </Functions>
+
+    <Tasks>
+      <FieldApplicator
+        name="faultPressureApplicator"
+        fieldSpecificationNames="{ initialFaultPressure }"/>
+        <PackCollection
+            name="tractionCollection"
+            objectPath="ElementRegions/Fault/faceElementSubRegion"
+            fieldName="traction"/>
+
+        <PackCollection
+            name="displacementJumpCollection"
+            objectPath="ElementRegions/Fault/faceElementSubRegion"
+            fieldName="displacementJump"/>   
+    </Tasks>
+
+  <Events minTime="0.0" maxTime="2.0">
+    <SoloEvent name="fracturingStep" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/>
+
+    <SoloEvent
+      name="faultPressureInitialization"
+      target="/Tasks/faultPressureApplicator"
+      targetTime="0.0"
+      beginTime="0.0"/> 
+ 
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      target="/Solvers/poroFractureSolver"/>	   
+      
+      <PeriodicEvent
+      name="tractionCollection"      
+      target="/Tasks/tractionCollection" />
+
+    <PeriodicEvent
+      name="tractionOutput"
+      targetExactTimestep="0"
+      target="/Outputs/tractionOutput"/>
+
+    <PeriodicEvent
+      name="displacementJumpCollection"      
+      target="/Tasks/displacementJumpCollection" />
+
+    <PeriodicEvent
+      name="displacementJumpOutput"
+      targetExactTimestep="0"
+      target="/Outputs/displacementJumpOutput"/>
+
+    <PeriodicEvent
+      name="restartOutput"
+      timeFrequency="2.0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+</Problem>

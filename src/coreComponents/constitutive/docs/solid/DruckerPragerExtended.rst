@@ -10,6 +10,7 @@ Overview
 This model implements a more sophisticated version of the Drucker-Prager model (see :ref:`DruckerPrager`) allowing for both
 cohesion and friction hardening / softening. 
 We implement the specific hardening model reported in `Liu et al. (2020) <https://doi.org/10.1007/s00603-019-01992-5>`_.
+In the input file, this model is selected with the ``<ExtendedDruckerPrager>`` XML tag.
 The yield surface is given by
 
 .. math::
