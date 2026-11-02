@@ -83,9 +83,11 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
 
 void SolidMechanicsLagrangeContact::postInputInitialization()
 {
-  ContactSolverBase::postInputInitialization();
-
+  // Assign the MGR strategy before the base class checks it: the base implementation
+  // downgrades preconditionerType from `mgr` when no strategy has been set.
   setMGRStrategy();
+
+  ContactSolverBase::postInputInitialization();
 }
 
 void SolidMechanicsLagrangeContact::setMGRStrategy()

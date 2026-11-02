@@ -17,6 +17,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
+#include "common/GeosxConfig.hpp"
 #include "integrationTests/fluidFlowTests/testSingleFlowUtils.hpp"
 #include "physicsSolvers/fluidFlow/StencilDataCollection.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -31,7 +32,7 @@ CommandLineOptions g_commandLineOptions;
 
 
 /// Provide every common xml input for the transmissibility tests
-constexpr string_view xmlInputCommon =
+constexpr string_view xmlInputCommonPrefix =
   R"xml(
 <Problem>
   <Solvers gravityVector="{ 0.0, 0.0, -9.81 }">
@@ -39,6 +40,21 @@ constexpr string_view xmlInputCommon =
                     logLevel="1"
                     discretization="singlePhaseTPFA"
                     targetRegions="{Region1}">
+)xml";
+
+#if defined(GEOS_USE_HIP)
+/// SuperLU_dist is not available in the HIP TPL configuration; use the
+/// available serial direct solver for this single-rank stencil test.
+constexpr string_view xmlInputLinearSolver =
+  R"xml(
+      <LinearSolverParameters directParallel="0"/>
+)xml";
+#else
+constexpr string_view xmlInputLinearSolver = {};
+#endif
+
+constexpr string_view xmlInputCommonSuffix =
+  R"xml(
     </SinglePhaseFVM>
   </Solvers>
   <NumericalMethods>
@@ -166,7 +182,7 @@ TEST( TransmissibilityTest, stencilOutputVerificationIso )
   </Mesh>
 )xml";
   std::ostringstream xmlInput;
-  xmlInput << xmlInputCommon << meshInput << xmlInputEnd;
+  xmlInput << xmlInputCommonPrefix << xmlInputLinearSolver << xmlInputCommonSuffix << meshInput << xmlInputEnd;
 
   static TestParams constexpr params {
     { 3, 3, 3 }, // cellCount
@@ -194,7 +210,7 @@ TEST( TransmissibilityTest, StencilOutputVerificationAniso )
   </Mesh>
 )xml";
   std::ostringstream xmlInput;
-  xmlInput << xmlInputCommon << meshInput << xmlInputEnd;
+  xmlInput << xmlInputCommonPrefix << xmlInputLinearSolver << xmlInputCommonSuffix << meshInput << xmlInputEnd;
 
   static TestParams constexpr params {
     { 3, 4, 5 }, // cellCount

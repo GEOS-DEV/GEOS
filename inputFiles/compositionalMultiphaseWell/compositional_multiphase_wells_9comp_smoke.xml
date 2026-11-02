@@ -1,0 +1,286 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <CompositionalMultiphaseReservoir
+      name="reservoirSystem"
+      flowSolverName="compositionalMultiphaseFlow"
+      wellSolverName="compositionalMultiphaseWell"
+      logLevel="1"
+      targetRegions="{ Region1, wellRegion1, wellRegion2 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        lineSearchAction="None"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="iluk"
+        krylovTol="1.0e-10"/>
+    </CompositionalMultiphaseReservoir>
+
+    <CompositionalMultiphaseFVM
+      name="compositionalMultiphaseFlow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ Region1 }"
+      temperature="297.15"
+      targetFlowCFL="1"/>
+
+    <WellManager
+      name="compositionalMultiphaseWell"
+      logLevel="1"
+      targetRegions="{ wellRegion1, wellRegion2 }">
+      <CompositionalMultiphaseWell
+        name="wellControls1"
+        type="producer"
+        control="BHP">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxoilprod"
+          phaseName="oil"
+          phaseRate="1e-3"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="4e6"
+          referenceElevation="2"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
+        name="wellControls2"
+        type="injector"
+        control="totalVolRate">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e8"
+          referenceElevation="2"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e-7"
+          injectionStream="{ 0.1, 0.016666666666666667, 0.1, 0.7, 0.016666666666666667, 0.016666666666666667, 0.016666666666666667, 0.016666666666666667, 0.016666666666666667 }"
+          injectionTemperature="297.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 5 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 5 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }">
+      <InternalWell
+        name="well_producer1"
+        wellRegionName="wellRegion1"
+        wellControlsName="wellControls1"
+        polylineNodeCoords="{ { 4.5, 0, 2 },
+                              { 4.5, 0, 0.5 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="2">
+        <Perforation
+          name="producer1_perf1"
+          distanceFromHead="1.45"/>
+      </InternalWell>
+      <InternalWell
+        name="well_injector1"
+        wellRegionName="wellRegion2"
+        wellControlsName="wellControls2"
+        polylineNodeCoords="{ { 0.5, 0, 2 },
+                              { 0.5, 0, 0.5 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="3">
+        <Perforation
+          name="injector1_perf1"
+          distanceFromHead="1.45"/>
+      </InternalWell>
+    </InternalMesh>
+  </Mesh>
+
+  <Events
+    maxTime="1">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/reservoirSystem"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2.5e3"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.25e4"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ * }"
+      materialList="{ fluid1, rock, relperm }"/>
+
+    <WellElementRegion
+      name="wellRegion1"
+      materialList="{ fluid1 }"/>
+
+    <WellElementRegion
+      name="wellRegion2"
+      materialList="{ fluid1 }"/>
+  </ElementRegions>
+
+  <!-- Split C10 among six identical pseudocomponents to preserve the original fluid
+       while exercising nine-component reservoir, well and CFL kernels. -->
+  <Constitutive>
+    <CompositionalTwoPhaseFluid
+      name="fluid1"
+      phaseNames="{ oil, gas }"
+      equationsOfState="{ PengRobinson, PengRobinson }"
+      componentNames="{ N2, C10a, C20, H2O, C10b, C10c, C10d, C10e, C10f }"
+      componentCriticalPressure="{ 34e5, 25.3e5, 14.6e5, 220.5e5, 25.3e5, 25.3e5, 25.3e5, 25.3e5, 25.3e5 }"
+      componentCriticalTemperature="{ 126.2, 622.0, 782.0, 647.0, 622.0, 622.0, 622.0, 622.0, 622.0 }"
+      componentAcentricFactor="{ 0.04, 0.443, 0.816, 0.344, 0.443, 0.443, 0.443, 0.443, 0.443 }"
+      componentMolarWeight="{ 28e-3, 134e-3, 275e-3, 18e-3, 134e-3, 134e-3, 134e-3, 134e-3, 134e-3 }"
+      componentVolumeShift="{ 0, 0, 0, 0, 0, 0, 0, 0, 0 }"
+      constantPhaseViscosity="{ 1.0e-3, 1.0e-3 }" />
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ oil, gas }"
+      phaseMinVolumeFraction="{ 0.1, 0.15 }"
+      phaseRelPermExponent="{ 2.0, 2.0 }"
+      phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- Initial pressure: ~5 bar -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="pressure"
+      scale="5e6"/>
+
+    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
+    <FieldSpecification
+      name="initialComposition_N2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.099"/>
+
+    <FieldSpecification
+      name="initialComposition_C10"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="initialComposition_C20"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.6"/>
+
+    <FieldSpecification
+      name="initialComposition_H20"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="3"
+      scale="0.001"/>
+    <FieldSpecification
+      name="initialComposition_C10_4"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="4"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="initialComposition_C10_5"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="5"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="initialComposition_C10_6"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="6"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="initialComposition_C10_7"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="7"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="initialComposition_C10_8"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="8"
+      scale="0.05"/>
+
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

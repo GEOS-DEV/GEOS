@@ -231,17 +231,14 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
     MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
     m_numPhases = fluid0.numFluidPhases();
     m_numComponents = fluid0.numFluidComponents();
+    GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_MAX_FLUID_COMPONENTS,
+                          GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
+                                    "Rebuild with GEOS_MAX_FLUID_COMPONENTS >= {}.",
+                                    m_numComponents, GEOS_MAX_FLUID_COMPONENTS, m_numComponents ),
+                          InputError, getDataContext() );
   }
-  // 1 pressure + NC compositions + 1 connectionRate + temp if thermal
-  m_numDofPerWellElement = isThermal() ? m_numComponents + 3 : m_numComponents + 2;
-  // 1 pressure + NC compositions + temp if thermal
-  m_numDofPerResElement = isThermal() ? m_numComponents + 2 : m_numComponents + 1;
-
 
   WellControls::registerWellDataOnMesh( subRegion );
-
-
-
   string const & fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
@@ -1401,76 +1398,23 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
                                                    localMatrix,
                                                    localRhs );
     }
-    // get the degrees of freedom and ghosting info
-    arrayView1d< globalIndex const > const & wellElemDofNumber =
-      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
-    arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
-    arrayView1d< real64 > const mixConnRate = subRegion.getField< fields::well::connectionRate >();
-    localIndex rank_offset = dofManager.rankOffset();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      if( wellElemGhostRank[ei] < 0 )
-      {
-        if( elemStatus[ei]==WellElementSubRegion::WellElemStatus::CLOSED )
-        {
-          mixConnRate[ei] = 0.0;
-          globalIndex const dofIndex = wellElemDofNumber[ei];
-          localIndex const localRow = dofIndex - rank_offset;
-
-          real64 const unity = 1.0;
-          for( integer i=0; i < m_numDofPerWellElement; i++ )
-          {
-            globalIndex const rindex = localRow+i;
-            globalIndex const cindex =dofIndex + i;
-            localMatrix.template addToRow< serialAtomic >( rindex,
-                                                           &cindex,
-                                                           &unity,
-                                                           1 );
-            localRhs[rindex] = 0.0;
-          }
-        }
-      }
-    } );
+    shutClosedSegments( subRegion, dofManager, localMatrix, localRhs );
 
   }
   else
   {
-    arrayView1d< globalIndex const > const & wellElemDofNumber =
-      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
-
-    arrayView1d< real64 >  mixConnRate = subRegion.getField< fields::well::connectionRate >();
-    localIndex rank_offset = dofManager.rankOffset();
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      if( wellElemGhostRank[ei] < 0 )
-      {
-        mixConnRate[ei] = 0.0;
-        globalIndex const dofIndex = wellElemDofNumber[ei];
-        localIndex const localRow = dofIndex - rank_offset;
-
-        real64 const unity = 1.0;
-        for( integer i=0; i < m_numDofPerWellElement; i++ )
-        {
-          globalIndex const rindex = localRow+i;
-          globalIndex const cindex =dofIndex + i;
-          localMatrix.template addToRow< serialAtomic >( rindex,
-                                                         &cindex,
-                                                         &unity,
-                                                         1 );
-          localRhs[rindex] = 0.0;
-        }
-      }
-    } );
-    // zero out current state constraint quantities
-    getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() )=0.0;
-    getReference< array1d< real64 > >(
-      CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ).zero();
-    getReference< real64 >(
-      CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() )=0.0;
-    getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() )=0.0;
+    shutEntireWell( subRegion, dofManager, localMatrix, localRhs );
   }
+}
+
+void CompositionalMultiphaseWell::resetShutInControlState()
+{
+  getReference< real64 >( WellControls::viewKeyStruct::currentBHPString() ) = 0.0;
+  getReference< array1d< real64 > >(
+    CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ).zero();
+  getReference< real64 >(
+    CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ) = 0.0;
+  getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ) = 0.0;
 }
 
 array1d< real64 >

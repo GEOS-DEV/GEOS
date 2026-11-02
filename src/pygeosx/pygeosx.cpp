@@ -362,7 +362,7 @@ static constexpr char const * pygeosxDocString =
  * Initialize the module object for Python with the exported functions
  */
 static struct PyModuleDef pygeosxModuleFunctions = {
-  PyModuleDef_HEAD_INIT,
+  .m_base = PyModuleDef_HEAD_INIT,
   .m_name = "pygeosx",
   .m_doc = pygeosxDocString,
   .m_size = -1,

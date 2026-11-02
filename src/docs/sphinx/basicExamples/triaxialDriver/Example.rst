@@ -177,30 +177,13 @@ Once calibrated, the testing constitutive models can be easily used in full fiel
 Running  TriaxialDriver
 ---------------------------------
 
-The ``TriaxialDriver`` is launched like any other GEOS simulation by using the following command:
+The ``TriaxialDriver`` is launched like any other GEOS simulation, from the root of the repository:
 
 .. code-block:: sh
 
-  path/to/geosx -i inputFiles/constitutiveDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
+  geos -i inputFiles/constitutiveDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml
 
-
-The running log appears to the console to indicate if the case can be successfully executed or not:
- 
-.. code-block:: sh
-
-   Max threads: 32
-   MKL max threads: 16
-   GEOS version 0.2.0 (HEAD, sha1: bb16d72)
-   Adding Event: SoloEvent, triaxialDriver
-      TableFunction: strainFunction
-      TableFunction: stressFunction
-   Time: 0s, dt:1s, Cycle: 0
-   Cleaning up events
-   Umpire            HOST sum across ranks:   23.2 KB
-   Umpire            HOST         rank max:   23.2 KB
-   total time                         0.435s
-   initialization time                0.053s
-   run time                           0.004s
+The driver runs in a fraction of a second, as it only integrates the constitutive model at a single material point.
 
 
 ---------------------------------

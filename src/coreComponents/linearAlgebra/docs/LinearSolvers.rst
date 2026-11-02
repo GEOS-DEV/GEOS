@@ -32,7 +32,7 @@ Direct methods
 
 The major advantages are their reliability, robustness, and ease of use.
 However, they have large memory requirements and exhibit poor scalability.  Direct methods should be used in a prototyping stage, for example when developing a new formulation or algorithm, when the dimension of the problem, namely the size of matrix :math:`\mathsf{A}`, is small.
-Irrespective of the selected direct solver implementation, three stages can be idenitified:
+Irrespective of the selected direct solver implementation, three stages can be identified:
 
 (1) **Setup Stage**: the matrix is first analyzed and then factorized
 (#) **Solve Stage**: the solution to the linear systems involving the factorized matrix is computed
@@ -63,6 +63,15 @@ Assuming a preconditioning matrix :math:`\mathsf{M}` is available, three standar
 *******
 Summary
 *******
+
+The linear solver of each physics solver is configured with a ``LinearSolverParameters`` block, a child of the solver block.
+**The default is a direct solver** (``solverType="direct"``), which is robust but does not scale: it is only suitable
+for small problems, such as the tutorials. For larger problems, use a Krylov solver with a preconditioner adapted to the physics:
+
+* single-phase flow or solid mechanics alone: ``solverType="gmres"`` (or ``"cg"`` for symmetric problems such as elasticity) with ``preconditionerType="amg"``,
+* multiphase flow, flow with wells, poromechanics, and other coupled problems: ``solverType="fgmres"`` (or ``"gmres"``) with ``preconditionerType="mgr"``, which automatically selects a multigrid reduction strategy adapted to the solver (see :ref:`MGR`).
+
+The :ref:`BasicExamples` and :ref:`AdvancedExamples` provide many examples of such configurations.
 
 The following table summarizes the available input parameters for the linear solver.
 
@@ -118,7 +127,7 @@ In both cases, the switch is transparent to the calling physics solver.
 Authoritative YAML file
 =======================
 
-The most flexible workflow is to provide an explicit hypredrive YAML file:
+The most flexible workflow is to provide an explicit hypredrive YAML file (here, a user-provided ``flow-mgr.yml``):
 
 .. code-block:: xml
 
@@ -131,7 +140,7 @@ The most flexible workflow is to provide an explicit hypredrive YAML file:
       solverType="gmres"
       preconditionerType="mgr"
       logLevel="2"
-      hypredriveInputFile="inputFiles/linearSolvers/flow-mgr.yml"/>
+      hypredriveInputFile="flow-mgr.yml"/>
   </SinglePhasePoromechanics>
 
 When ``hypredriveInputFile`` is provided, the file is **authoritative**:
@@ -274,9 +283,8 @@ The linear-solver ``logLevel`` can be used to inspect what GEOS is passing to hy
   ``newton`` annotations inside the hypredrive adapter rather than from the generic physics
   solver layer.
 
-Numeric meanings of ``logLevel`` for hypredrive (for example ``2``, ``4``, ``48``, ``56``)
-are summarized in *Important ``logLevel`` values (hypredrive)* in the parameter table section
-above. That subsection is especially useful when validating a new solver recipe or comparing
+The numeric meanings of the hypredrive ``logLevel`` values are given in the hypredrive documentation.
+They are especially useful when validating a new solver recipe or comparing
 the generated GEOS configuration with a standalone hypredrive input file.
 
 For regression studies and side-by-side comparisons, hypredrive can be disabled at runtime by
@@ -354,6 +362,8 @@ This section provides a brief description of the available preconditioners.
   Further details can be found in `MGR documentation <https://hypre.readthedocs.io/en/latest/solvers-mgr.html>`__, also see section below.
 
 * **Block**: custom preconditioner designed for a 2 x 2 block matrix.
+
+.. _MGR:
 
 ************************
 HYPRE MGR Preconditioner

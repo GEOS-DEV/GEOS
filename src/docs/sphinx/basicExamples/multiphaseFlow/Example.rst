@@ -222,8 +222,8 @@ This step is similar to what is described in the previous examples
 (see for instance :ref:`TutorialSinglePhaseFlowWithInternalMesh`).
 
 The attribute ``name`` of the constitutive models defined here
-must be used in the **ElementRegions** and **Solvers** XML blocks to point the element
-regions and the physics solvers to their respective constitutive models.
+is used in the ``materialList`` of the **ElementRegions** XML block to attach these models to the element regions.
+The physics solvers find their constitutive models through the regions they are applied to.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
@@ -327,56 +327,17 @@ All elements are now in place to run GEOS.
 Running GEOS
 ------------------------------------
 
-The simulation can be launched with:
+The simulation can be launched from the root of the repository with:
 
 .. code-block:: console
 
-  geosx -i deadOilSpe10Layers84_85_benchmark.xml
+  geos -i inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_benchmark.xml
 
-The first few lines appearing to the console are indicating that the XML elements are read and registered correctly:
-
-.. code-block:: console
-
-  Adding Solver of type CompositionalMultiphaseFVM, named compflow
-  Adding Mesh: InternalMesh, mesh
-  Adding Geometric Object: Box, source
-  Adding Geometric Object: Box, sink1
-  Adding Geometric Object: Box, sink2
-  Adding Geometric Object: Box, sink3
-  Adding Geometric Object: Box, sink4
-  Adding Event: PeriodicEvent, outputs
-  Adding Event: PeriodicEvent, solverApplications
-  TableFunction: permxFunc
-  TableFunction: permyFunc
-  TableFunction: permzFunc
-  TableFunction: poroFunc
-  TableFunction: B_o_table
-  TableFunction: visc_o_table
-  Adding Output: VTK, vtkOutput
-  Adding Object CellElementRegion named region from ObjectManager::Catalog.
-  region/block/fluid is allocated with 1 quadrature points.
-  region/block/rock is allocated with 1 quadrature points.
-  aaregion/block/relperm is allocated with 1 quadrature points.
-			
-At this point, we are done with the case set-up and
-the code steps into the execution of the simulation itself:
-
-.. code-block:: console
-		
-  Time: 0s, dt:1000s, Cycle: 0
-
-    Attempt:  0, NewtonIter:  0
-    ( Rfluid ) = (2.28e+00) ;     ( R ) = ( 2.28e+00 ) ; 
-    Attempt:  0, NewtonIter:  1
-    ( Rfluid ) = (8.83e-03) ;     ( R ) = ( 8.83e-03 ) ; 
-    Last LinSolve(iter,res) = (   2, 2.74e-03 ) ; 
-    Attempt:  0, NewtonIter:  2
-    ( Rfluid ) = (8.86e-05) ;     ( R ) = ( 8.86e-05 ) ; 
-    Last LinSolve(iter,res) = (   2, 8.92e-03 ) ;
-    
-  compflow: Max phase CFL number: 0.00399585
-  compflow: Max component CFL number: 0.152466
-  compflow: Newton solver converged in less than 16 iterations, time-step required will be doubled.
+GEOS first reads the input files and creates the mesh, regions, constitutive models and solvers.
+It then prints, for each time step, the time and time step size, followed by the Newton iterations with the residual norm of each equation
+and the number of iterations of the linear solver.
+The flow solver also reports the maximum phase and component CFL numbers,
+and whether the time step will be increased or decreased for the next step (see :ref:`TutorialDeadOilEgg` for the time-step control parameters).
 
 ------------------------------------
 Visualization

@@ -201,7 +201,9 @@ protected:
       axisIntervalIndex = 0;
       if( axisCoordinate < axisMin )
       {
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
         printf( "Interpolation warning: axis coordinate is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+#endif
       }
     }
     else if( axisIntervalIndex > (axisPoints - 2))
@@ -209,7 +211,9 @@ protected:
       axisIntervalIndex = axisPoints - 2;
       if( axisCoordinate > axisMax )
       {
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
         printf( "Interpolation warning: axis coordinate is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+#endif
       }
     }
 

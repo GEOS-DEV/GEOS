@@ -140,17 +140,11 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
       well.registerWellDataOnMesh( subRegion );
       m_numFluidPhases = well.numFluidPhases();
       m_numFluidComponents = well.numFluidComponents();
+      m_numDofPerWellElement = well.numDofPerWellElement();
+      m_numDofPerResElement = well.numDofPerResElement();
 
     } );
   } );
-  // 1. Set key dimensions of the problem
-  // Empty check needed to avoid errors when running in schema generation mode.
-
-  // 1 pressure + NC compositions + 1 connectionRate + temp if thermal
-  m_numDofPerWellElement = isThermal() ? m_numFluidComponents + 3 : m_numFluidComponents + 2;
-  // 1 pressure + NC compositions + temp if thermal
-  m_numDofPerResElement = isThermal() ? m_numFluidComponents + 2 : m_numFluidComponents + 1;
-
 }
 
 WellControls & WellManager::getWell( WellElementSubRegion const & subRegion )

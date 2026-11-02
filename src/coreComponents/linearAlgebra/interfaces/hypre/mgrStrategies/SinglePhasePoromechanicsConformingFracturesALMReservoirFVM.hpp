@@ -132,26 +132,10 @@ public:
               HypreMGRData & mgrData )
   {
     setReduction( precond, mgrData );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCycleType( precond.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxCycle( precond.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalSmoothCycle( precond.ptr, 1 ) );
+    setMGRCycleSettings( precond.ptr );
 
     // Configure the BoomerAMG solver used as level-1 F-relaxation.
-    setDisplacementAMG( mgrData.mechSolver, mgrParams.separateComponents );
-
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.mechSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::chebyshev ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 1 ) );
-#else
-    HYPRE_Int constexpr l1SymmetricHybridGaussSeidel = 89;
-    HYPRE_Int constexpr gaussianElimination = 9;
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( mgrData.mechSolver.ptr, l1SymmetricHybridGaussSeidel, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( mgrData.mechSolver.ptr, l1SymmetricHybridGaussSeidel, 2 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( mgrData.mechSolver.ptr, gaussianElimination, 3 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.mechSolver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 0 ) );
-#endif
+    setALMReservoirDisplacementAMG( mgrData.mechSolver, mgrParams.separateComponents );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, 1 ) );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the reservoir pressure reduced system

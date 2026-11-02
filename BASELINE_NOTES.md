@@ -5,6 +5,36 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4169 (2026-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4169-17867-5d0c7de.tar.gz>
+=====================
+Fix surface generator splitting for contact mechanics case with wells
+
+PR #4165 (2026-10-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4165-17850-4a6ed2e.tar.gz>
+=====================
+Add zero salinity, non-default compressibility pvt driver test
+
+PR #4164 (2026-10-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4164-17838-91151f5.tar.gz>
+=====================
+Add a `Group` statistics layer for fracture surfaces.
+
+PR #4005 (2026-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4005-17824-bac337a.tar.gz>
+=====================
+Added a `Group` statistics layer for sets statistics
+
+PR #4155 (2026-10-22) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4155-17777-be35229.tar.gz>
+=====================
+Add the missing restart baselines for the injection, production, and combined
+thermal compositional-well tests on one and four MPI ranks. In CI run 17777,
+all six simulations completed successfully, but their baseline checks failed
+because the reference files did not exist. The other 650 test groups passed.
+The archive preserves all existing baseline payloads and adds only these six
+test datasets.
+
+PR #3996 (2026-09-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3996-17639-718fc69.tar.gz>
+=====================
+Switch the single-phase reactive transport solver to a molality-based primary
+species concentration by introducing solventMassFraction.
+
 PR #3994 (2026-09-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3994-17525-4ae3593.tar.gz>
 =====================
 Introduce mimetic inner products for saddle-point operators and align face-centroid computation with exact volume integration on planar polyhedra.
@@ -16,6 +46,12 @@ Move CO2 Brine parameters to xml
 PR #4083 (2026-09-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4083-17503-96f5eac.tar.gz>
 =====================
 Dispatch scaling wrt to fracture element type for ALM contact solver
+
+PR #4127 (2026-08-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4127-17440-e6bc364.tar.gz>
+=====================
+Refresh the integrated-test baseline after the Hypre/TPL update and the
+iterative test additions. The prior archive did not contain restart outputs
+for the iterative cases and caused ATS baseline-missing failures.
 
 PR #4096 (2026-08-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4096-17439-18734f3.tar.gz>
 =====================
@@ -36,6 +72,10 @@ Stop dumping linear systems from ATS decks (`writeLinearSystem` no longer set). 
 PR #4088 (2026-07-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4088-17188-4247846.tar.gz>
 =====================
 Fluid reset after convergence failure
+
+PR #3972 (2026-08-DD) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4108-17194-fec5349.tar.gz>
+=====================
+Add MGR tests to ATS
 
 PR #3972 (2026-07-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3972-17154-316e6d8.tar.gz>
 =====================

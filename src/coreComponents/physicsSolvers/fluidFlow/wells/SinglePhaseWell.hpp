@@ -207,13 +207,13 @@ public:
                            MeshLevel & mesh,
                            WellElementSubRegion & subRegion ) override;
 
-  virtual void applyWellBoundaryConditions ( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                             real64 const GEOS_UNUSED_PARAM( dt ),
-                                             ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
-                                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
-                                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                             arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ),
-                                             CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ) )override {};
+  virtual void applyWellBoundaryConditions( real64 const time_n,
+                                            real64 const dt,
+                                            ElementRegionManager & elemManager,
+                                            WellElementSubRegion & subRegion,
+                                            DofManager const & dofManager,
+                                            arrayView1d< real64 > const & localRhs,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix ) override;
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain,
                                             string const & meshBodyName, ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
@@ -285,18 +285,6 @@ public:
                                   WellElementSubRegion & subRegion ) override;
 
 
-  /*
-   * @brief apply a special treatment to the wells that are shut
-
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  void shutDownWell( WellElementSubRegion & subRegion,
-                     DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs );
-
   void assembleVolumeBalanceTerms( DomainPartition const & domain,
                                    DofManager const & dofManager,
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -314,6 +302,8 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   void saveState( WellElementSubRegion & subRegion );
+
+  virtual void resetShutInControlState() override;
 
   virtual void postRestartInitialization( )override;
   /// flag if negative pressure is allowed

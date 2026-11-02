@@ -52,7 +52,7 @@ In this situation, the required information must be supplied in the XML input fi
 To connect the external (XML) and internal (C++) data structures, GEOS uses an **ObjectCatalog** that maps keys (of type ``string``) to the corresponding classes (one unique key per mapped class).
 These string keys, referred to as ``catalogName`` s, are essential to transfer the information from the XML file to the factory functions in charge of object instantiation (see below).
 
-**What is a CatalogName?**
+**What is a catalogName?**
 
 The ``catalogName`` of an object is a *key* (of type ``string``) associated with this object's class.
 On the one hand, in the XML file, the key is employed by the user as an XML tag to specify the type of object (e.g., the type of solver, constitutive model, etc) to create and use during the simulation.
@@ -68,28 +68,28 @@ You can have several objects of the same class and hence the same ``catalogName`
 
 Let us consider a flow solver class derived from ``FlowSolverBase``, that itself is derived from ``PhysicsSolverBase``.
 To instantiate and use this solver, the developer needs to make the derived flow solver class reachable from the XML file, via an XML tag.
-Internally, this requires adding the derived class information to ``ObjectCatalog``, which is achieved with two main ingredients: 1) a ``CatalogName()`` method in the class that lets GEOS know *what* to search for in the internal ``ObjectCatalog`` to instantiate an object of this class, 2) a macro that specifies *where* to search in the ``ObjectCatalog``.
+Internally, this requires adding the derived class information to ``ObjectCatalog``, which is achieved with two main ingredients: 1) a ``catalogName()`` method in the class that lets GEOS know *what* to search for in the internal ``ObjectCatalog`` to instantiate an object of this class, 2) a macro that specifies *where* to search in the ``ObjectCatalog``.
 
-1. To let GEOS know what to search for in the catalog to instantiate an object of the derived class, the developer must equip the class  with a ``CatalogName()`` method that returns a ``string``.
-   In this document, we have referred to this returned ``string`` as the object's ``catalogName``, but in fact, the method ``CatalogName()`` is what matters since the ``ObjectCatalog`` contains all the ``CatalogName()`` return values.
-   Below, we illustrate this with the ``CompositionalMultiphaseFlow`` solver.
+1. To let GEOS know what to search for in the catalog to instantiate an object of the derived class, the developer must equip the class  with a ``catalogName()`` method that returns a ``string``.
+   In this document, we have referred to this returned ``string`` as the object's ``catalogName``, but in fact, the method ``catalogName()`` is what matters since the ``ObjectCatalog`` contains all the ``catalogName()`` return values.
+   Below, we illustrate this with the ``CompositionalMultiphaseFVM`` solver.
    The first code listing defines the class name, which in this case is the same as the ``catalogName`` shown in the second listing.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
-   :end-before: public:
+   :end-before: //END_SPHINX_INCLUDE_00
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
-   :end-before: virtual
+   :end-before: //END_SPHINX_INCLUDE_01
 
-*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp]*
+*[Source: src/coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp]*
 
 
 2. To let GEOS know where to search in the ``ObjectCatalog``, a macro needs to be added at the end of the .cpp file implementing the class.
-   This macro (illustrated below) must contain the type of the base class (in this case, ``PhysicsSolverBase``), and the name of the derived class (continuing with the example used above, this is ``CompositionalMultiphaseFlow``).
+   This macro (illustrated below) must contain the type of the base class (in this case, ``PhysicsSolverBase``), and the name of the derived class (continuing with the example used above, this is ``CompositionalMultiphaseFVM``).
    As a result of this construct, the ``ObjectCatalog`` is not a flat list of ``string`` s mapping the C++ classes.
    Instead, the ``ObjectCatalog`` forms a tree that reproduces locally the structure of the class diagram, from the base class to the derived classes.
 
@@ -102,7 +102,7 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
 
 
 .. highlights::
-  Summary: All GEOS objects form a filesystem-like structure. If an object needs to be accessible externally, it must be registered in the ``ObjectCatalog``. This is done by adding ``CatalogName()`` method that returns a ``string`` key to the object's class, and by adding the appropriate macro. The catalog has the same tree structure as the class diagram.
+  Summary: All GEOS objects form a filesystem-like structure. If an object needs to be accessible externally, it must be registered in the ``ObjectCatalog``. This is done by adding ``catalogName()`` method that returns a ``string`` key to the object's class, and by adding the appropriate macro. The catalog has the same tree structure as the class diagram.
 
 
 Registration: parsing XML input files to instantiate GEOS objects
@@ -131,7 +131,7 @@ Consider again that we are registering a flow solver deriving from ``FlowSolverB
 This choice of name is not recommended (we want names that reflect what the solver does!), but for this particular example, we just need to know that this name is the class name inside the C++ code.
 
 To specify parameters of this new solver from an XML file, we need to be sure that the XML tag and the ``catalogName`` of the class are identical.
-Therefore, we equip the ``CppNameOfMySolver`` class with a ``CatalogName()`` method that returns the solver ``catalogName`` (=XML name).
+Therefore, we equip the ``CppNameOfMySolver`` class with a ``catalogName()`` method that returns the solver ``catalogName`` (=XML name).
 Here, this method returns the ``string``  "XmlNameOfMySolver".
 
 We have deliberately distinguished the class name from the catalog/XML name for the sake of clarity in this example.
@@ -154,7 +154,7 @@ This is the case below for the existing ``CompositionalMultiphaseFVM`` class.
 Parsing XML and searching the ObjectCatalog in scope
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Now that we have implemented a ``CatalogName()`` method returning a specific key (of type ``string``), we can have a block in our XML input file with a tag that corresponds to the ``catalogName`` "XmlNameOfMySolver".
+Now that we have implemented a ``catalogName()`` method returning a specific key (of type ``string``), we can have a block in our XML input file with a tag that corresponds to the ``catalogName`` "XmlNameOfMySolver".
 This is how the XML block would look like.
 
 .. code-block:: xml
@@ -187,7 +187,7 @@ Now, when reading the XML file and encountering an "XmlNameOfMySolver" solver bl
 We saw that in the XML file, the new solver block appeared as child node of the XML block "Solvers".
 The internal construction mirrors this XML structure.
 Specifically, the new object of class ``CppNameOfMySolver`` is registered as a subgroup (to continue the analogy used so far, as a subfolder) of its parent ``Group``, the class ``PhysicsSolverManager`` (that has a ``catalogName`` "Solvers").
-To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is used.
+To do this, the method ``createChild`` of the ``PhysicsSolverManager`` class is used.
 
 
 .. code-block:: cpp
@@ -207,11 +207,11 @@ To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is 
 
 *[Source: src/coreComponents/physicsSolvers/PhysicsSolverManager.cpp]*
 
-In the code listing above, we see that in the ``PhysicsSolverManager`` class, the ``ObjectCatalog`` is searched to find the ``catalogName`` "CompositionalMultiphaseFlow" in the scope of the ``PhysicsSolverBase`` class.
+In the code listing above, we see that in the ``PhysicsSolverManager`` class, the ``ObjectCatalog`` is searched to find the ``catalogName`` "CompositionalMultiphaseFVM" in the scope of the ``PhysicsSolverBase`` class.
 Then, the factory function of the base class ``PhysicsSolverBase`` is called.
 The ``catalogName`` (stored in ``childKey``) is passed as an argument of the factory function to ensure that it instantiates an object of the desired derived class.
 
-As explained above, this is working because 1) the XML tag matches the ``catalogName`` of the ``CompositionalMultiphaseFlow`` class and 2) a macro is placed at the end of the .cpp file implementing the ``CompositionalMultiphaseFlow`` class to let the ``ObjectCatalog`` know that ``CompositionalMultiphaseFlow`` is a derived class of ``PhysicsSolverBase``.
+As explained above, this is working because 1) the XML tag matches the ``catalogName`` of the ``CompositionalMultiphaseFVM`` class and 2) a macro is placed at the end of the .cpp file implementing the ``CompositionalMultiphaseFVM`` class to let the ``ObjectCatalog`` know that ``CompositionalMultiphaseFVM`` is a derived class of ``PhysicsSolverBase``.
 
 Note that several instances of the same type of solver can be created, as long as they each have a different name.
 
@@ -261,10 +261,10 @@ Example: adding a new relative permeability model
 This example is taken from the class ``BrooksCoreyRelativePermeability``, derived from ``RelativePermeabilityBase``.
 
 
-Implement a ``CatalogName`` function (.hpp):
+Implement a ``catalogName`` function (.hpp):
 --------------------------------------------
 
-As explained above we add the class to the ``ObjectCatalog`` in two steps. First we implement the ``CatalogName`` function:
+As explained above we add the class to the ``ObjectCatalog`` in two steps. First we implement the ``catalogName`` function:
 
 .. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
@@ -358,7 +358,7 @@ Input Schema Generation
 
 A schema file is a useful tool for validating input .xml files and constructing user-interfaces.  Rather than manually maintaining the schema during development, GEOS is designed to automatically generate one by traversing the documentation structure.
 
-To generate the schema, run GEOS with the input, schema, and the (optional) schema_level arguments, i.e.: ``geosx -i input.xml -s schema.xsd``.  There are two ways to limit the scope of the schema:
+To generate the schema, run GEOS with the input, schema, and the (optional) schema_level arguments, i.e.: ``geos -i input.xml -s schema.xsd``.  There are two ways to limit the scope of the schema:
 
 1. Setting the verbosity flag for an object in the documentation structure.  If the schema-level argument is used, then only objects (and their children) and attributes with ``(verbosity < schema-level)`` will be output.
 
@@ -366,4 +366,4 @@ To generate the schema, run GEOS with the input, schema, and the (optional) sche
 
 To take advantage of this design it is necessary to use the automatic xml parsing approach that relies upon the documentation node.  If values are read in manually, then the schema can not be used to validate xml those inputs.
 
-Note: the lightweight xml parser that is used in GEOS cannot be used to validate inputs with the schema directly.  As such, it is necessary to use an external tool for validation, such as the geosx_tools python module.
+Note: the lightweight xml parser that is used in GEOS cannot be used to validate inputs with the schema directly.  As such, it is necessary to use an external tool for validation, such as the ``geos-xml-tools`` python package.

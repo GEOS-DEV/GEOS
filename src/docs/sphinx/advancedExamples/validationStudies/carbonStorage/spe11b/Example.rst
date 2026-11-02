@@ -352,8 +352,6 @@ and this function is mapped over the schedule of the simulation.
 To go further
 ------------------------------------------------------------------
 
-.. The more complex 3D case is presented in  :ref:`Placeholder`.
-
 **Feedback on this example**
 
 For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
