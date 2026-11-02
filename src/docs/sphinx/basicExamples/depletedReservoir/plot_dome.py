@@ -81,7 +81,7 @@ TIMES_CO2 = [
 ]
 
 ROCK_COLORS = ["#00ff00", "#ff0000", "#00aaff"]   # SAND, CLAY, CAPROCK
-ROCK_NAMES = ["SAND", "CLAY", "CAPROCK"]
+ROCK_NAMES = ["CAPROCK", "CLAY", "SAND"]
 CAPROCK_GRAY = "#d9d9d9"
 
 # Names of the datasets written by dome_vtk_to_hdf5.py (first match wins)
