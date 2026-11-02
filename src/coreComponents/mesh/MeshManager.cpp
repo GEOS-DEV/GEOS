@@ -68,7 +68,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
-    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+    SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getPartitionManager() );
 
     meshGen.generateMesh( meshBody, partition );
 

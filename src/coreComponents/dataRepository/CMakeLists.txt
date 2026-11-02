@@ -32,11 +32,12 @@ set( dataRepository_headers
      HistoryDataSpec.hpp
      InputFlags.hpp
      KeyIndexT.hpp
-     KeyNames.hpp
      LogLevelsInfo.hpp
      LogLevelsRegistry.hpp
      MappedVector.hpp
      ObjectCatalog.hpp
+     ProblemRepositoryABC.hpp
+     ProblemRepository.hpp
      ReferenceWrapper.hpp
      RestartFlags.hpp
      Utilities.hpp
@@ -57,6 +58,7 @@ set( dataRepository_sources
      ConduitRestart.cpp
      ExecutableGroup.cpp
      Group.cpp
+     ProblemRepository.cpp
      Utilities.cpp
      WrapperBase.cpp
      xmlWrapper.cpp

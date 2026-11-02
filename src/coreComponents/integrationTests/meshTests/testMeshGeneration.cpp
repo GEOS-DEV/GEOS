@@ -106,13 +106,13 @@ protected:
     xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
     ASSERT_TRUE( xmlResult );
 
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
     ProblemManager & problemManager = getGlobalState().getProblemManager();
+    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( problemManager.getName() );
     problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
     // Open mesh levels
     DomainPartition & domain = problemManager.getDomainPartition();
-    MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+    MeshManager & meshManager = problemManager.getMeshManager();
     meshManager.generateMeshLevels( domain );
 
     ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
@@ -523,7 +523,7 @@ TEST_F( MeshGenerationTest, highOrderMapsSizes )
   ProblemManager & problemManager = getGlobalState().getProblemManager();
   DomainPartition & domain = problemManager.getDomainPartition();
   MeshBody & meshBody = domain.getMeshBody( 0 );
-  MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  MeshManager & meshManager = problemManager.getMeshManager();
   meshManager.generateMeshes( domain );
   for( int order = minOrder; order < maxOrder; order++ )
   {

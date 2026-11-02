@@ -477,7 +477,9 @@ protected:
     setupProblemFromXML( state.getProblemManager(), xmlInput );
     removeFile( "obl_3comp_static.txt" );
 
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< ReactiveCompositionalMultiphaseOBL >( "compflow" );
+    solver = &state.getProblemManager().
+               getPhysicsSolverManager().
+               getGroup< ReactiveCompositionalMultiphaseOBL >( "compflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 

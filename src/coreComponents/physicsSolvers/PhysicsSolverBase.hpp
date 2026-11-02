@@ -1014,6 +1014,17 @@ public:
 
 protected:
 
+  /**
+   * @brief Get the DomainPartition from the Problem
+   * @return A reference to the DomainPartition
+   */
+  DomainPartition & getDomainPartition();
+
+  /**
+   * @copydoc getDomainPartition()
+   */
+  DomainPartition const & getDomainPartition() const;
+
   virtual void postInputInitialization() override;
 
   /**

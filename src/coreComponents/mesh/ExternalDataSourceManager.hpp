@@ -71,6 +71,14 @@ private:
 
 };
 
+// ExternalDataSourceManager is available through the ProblemRepository as a mutable problem-unique manager.
+template<> inline ExternalDataSourceManager & dataRepository::ProblemRepository::getManager()
+{ return getRootGroup().getGroup< ExternalDataSourceManager >( m_gks.externalDataSourceManager ); }
+
+// ExternalDataSourceManager is available through the ProblemRepository as a const problem-unique manager.
+template<> inline ExternalDataSourceManager const & dataRepository::ProblemRepository::getManager() const
+{ return getRootGroup().getGroup< ExternalDataSourceManager >( m_gks.externalDataSourceManager ); }
+
 } /* namespace geos */
 
 #endif /* GEOS_MESH_EXTERNALDATASOURCEMANAGER_HPP_ */

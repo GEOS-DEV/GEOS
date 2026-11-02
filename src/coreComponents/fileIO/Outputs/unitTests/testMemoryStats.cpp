@@ -17,6 +17,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "fileIO/Outputs/MemoryStatsOutput.hpp"
+#include "fileIO/Outputs/OutputManager.hpp"
 #include "codingUtilities/Parsing.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
@@ -147,7 +148,7 @@ static const string basicSimXml =
 </Problem>
   )xml";
 
-static const string memOutputPath = "/Outputs/memoryOutput";
+static const string memOutputName = "memoryOutput";
 static const string memOutputFileName = "MemoryStats_umpireStats.csv";
 
 CommandLineOptions g_commandLineOptions;
@@ -166,7 +167,7 @@ TEST( testXML, testMemoryCSVOutput )
   // do a MemoryStats test output with a dummy entry
   integer const dummyCycle = 123456;
   string const dummyCycleStr = std::to_string( dummyCycle );
-  MemoryStatsOutput & memOutput = problem.getGroupByPath< MemoryStatsOutput >( memOutputPath );
+  MemoryStatsOutput & memOutput = problem.getOutputManager().getGroup< MemoryStatsOutput >( memOutputName );
   memOutput.execute( 0.0, 0.0, dummyCycle, 0, 0.0, problem.getDomainPartition() );
 
   // read the CSV output (parseFile() will throw if no CSV is generated)

@@ -193,7 +193,7 @@ TEST( testSolverStats, testLog )
   problem.applyInitialConditions();
   problem.runSimulation();
 
-  PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
+  PhysicsSolverBase & solver = problem.getPhysicsSolverManager().getGroup< PhysicsSolverBase >( "SinglePhaseFlow" );
   assertIterationValuesEquals( solver.getIterationStats() );
 
 }
@@ -209,7 +209,7 @@ TEST( testSolverStats, testOutputFiles )
   problem.applyInitialConditions();
   problem.runSimulation();
 
-  PhysicsSolverBase & solver = problem.getGroupByPath< PhysicsSolverBase >( string( "/Solvers/SinglePhaseFlow" ) );
+  PhysicsSolverBase & solver = problem.getPhysicsSolverManager().getGroup< PhysicsSolverBase >( "SinglePhaseFlow" );
   ConvergenceStatistics const & convergenceStat = solver.getConvergenceStats();
   IterationsStatistics const & iterationStat = solver.getIterationStats();
 

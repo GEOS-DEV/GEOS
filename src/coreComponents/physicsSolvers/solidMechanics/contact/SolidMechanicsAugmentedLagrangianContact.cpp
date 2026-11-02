@@ -39,8 +39,10 @@
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMContactPorousKernelsDispatchTypeList.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "dataRepository/ProblemRepository.hpp"
 
 #include <cmath>
 #include <stdio.h>
@@ -200,7 +202,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPr
 {
   ContactSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   validateTetrahedralQuadrature( domain.getMeshBodies() );
 }
 
@@ -209,7 +211,7 @@ void SolidMechanicsAugmentedLagrangianContact::validateTetrahedralQuadrature( Gr
   string const discretizationName = getDiscretizationName();
 
   NumericalMethodsManager const & numericalMethodManager =
-    this->getGroupByPath< DomainPartition >( "/Problem/domain" ).getNumericalMethodManager();
+    ProblemRepository::getManager< NumericalMethodsManager >( *this );
   FiniteElementDiscretizationManager const & feDiscretizationManager =
     numericalMethodManager.getFiniteElementDiscretizationManager();
   FiniteElementDiscretization const & feDiscretization =
@@ -335,7 +337,7 @@ void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
 {
   ContactSolverBase::postInputInitialization();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = ProblemRepository::getManager< DomainPartition >( *this );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteElementDiscretizationManager const & feDiscretizationManager =
     numericalMethodManager.getFiniteElementDiscretizationManager();

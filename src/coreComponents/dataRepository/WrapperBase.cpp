@@ -20,6 +20,7 @@
 #include "Group.hpp"
 #include "RestartFlags.hpp"
 #include "WrapperContext.hpp"
+#include "ProblemRepositoryABC.hpp"
 
 
 namespace geos
@@ -68,10 +69,7 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
 
 string WrapperBase::getPath() const
 {
-  // In the Conduit node hierarchy everything begins with 'Problem', we should change it so that
-  // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
-  string const noProblem = m_conduitNode.path().substr( std::strlen( dataRepository::keys::ProblemManager ) - 1 );
-  return noProblem.empty() ? "/" : noProblem;
+  return ProblemRepositoryABC::getNoProblemPath( m_conduitNode.path() );
 }
 
 #if defined(USE_TOTALVIEW_OUTPUT)

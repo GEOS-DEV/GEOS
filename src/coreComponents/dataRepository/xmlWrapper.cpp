@@ -23,7 +23,6 @@
 
 #include "common/format/StringUtilities.hpp"
 #include "common/MpiWrapper.hpp"
-#include "dataRepository/KeyNames.hpp"
 
 namespace geos
 {
@@ -233,6 +232,7 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
 }
 
 string buildMultipleInputXML( string_array const & inputFileList,
+                              string const & rootNodeName,
                               string const & outputDir )
 {
   if( inputFileList.empty() )
@@ -250,7 +250,7 @@ string buildMultipleInputXML( string_array const & inputFileList,
   if( MpiWrapper::commRank() == 0 )
   {
     xmlWrapper::xmlDocument compositeTree;
-    xmlWrapper::xmlNode compositeRoot = compositeTree.appendChild( dataRepository::keys::ProblemManager );
+    xmlWrapper::xmlNode compositeRoot = compositeTree.appendChild( rootNodeName );
     xmlWrapper::xmlNode includedRoot = compositeRoot.append_child( includedListTag );
 
     for( auto & fileName: inputFileList )

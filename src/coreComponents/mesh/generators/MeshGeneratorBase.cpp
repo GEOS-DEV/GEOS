@@ -78,7 +78,8 @@ void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partiti
   MeshBody & meshBody = dynamic_cast< MeshBody & >( parent );
   if( meshBody.hasParticles() )
   {
-    ParticleBlockManager & particleBlockManager = parent.registerGroup< ParticleBlockManager >( keys::particleManager );
+    ParticleBlockManager & particleBlockManager =
+      parent.registerGroup< ParticleBlockManager >( MeshBody::groupStructKeys::particleManagerString() );
 
     MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
     ParticleManager & particleManager = meshLevel0.getParticleManager();
@@ -87,7 +88,8 @@ void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partiti
   }
   else
   {
-    CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
+    CellBlockManager & cellBlockManager =
+      parent.registerGroup< CellBlockManager >( MeshBody::groupStructKeys::cellManagerString() );
 
     fillCellBlockManager( cellBlockManager, partition );
 
