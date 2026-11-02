@@ -30,7 +30,8 @@ namespace geos
 class ContactSolverBase : public SolidMechanicsLagrangianFEM
 {
 public:
-  static constexpr bool hasContactStabilization = false;
+  /// Whether the contact is stabilized with face bubble functions, which carry their own (bubble displacement) DOFs
+  static constexpr bool hasFaceBubbles = false;
 
   ContactSolverBase( const string & name,
                      Group * const parent );
@@ -52,14 +53,14 @@ public:
   void synchronizeFractureState( DomainPartition & domain ) const;
 
   void computeFaceNodalArea( localIndex const kf0,
-                                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                                          ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                                                          ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
-                                                          arrayView2d< localIndex const > const & edgeToNodeMap,
-                                                          arrayView2d< real64 const > const faceCenters,
-                                                          arrayView2d< real64 const > const faceNormals,
-                                                          arrayView1d< real64 const > const faceAreas,
-                                                          stackArray1d< real64, FaceManager::maxFaceNodes() > & basisIntegrals ) const;
+                             arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                             ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                             ArrayOfArraysView< localIndex const > const & faceToEdgeMap,
+                             arrayView2d< localIndex const > const & edgeToNodeMap,
+                             arrayView2d< real64 const > const faceCenters,
+                             arrayView2d< real64 const > const faceNormals,
+                             arrayView1d< real64 const > const faceAreas,
+                             stackArray1d< real64, FaceManager::maxFaceNodes() > & basisIntegrals ) const;
 
   void computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                              localIndex const (&faceToNodes)[11],

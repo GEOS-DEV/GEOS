@@ -147,7 +147,6 @@ public:
   real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
   string getStabilizationName() const { return m_stabilizationName; }
-  bool hasStabilization() const { return true;}
 
 protected:
 

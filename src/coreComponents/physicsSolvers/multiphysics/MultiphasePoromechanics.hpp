@@ -101,7 +101,7 @@ public:
 
 protected:
 
-    GEOS_MGR_STRATEGY_NOT_SUPPORTED()
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
 
   /**
    * @brief Helper function to recompute the bulk density

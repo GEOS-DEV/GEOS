@@ -167,6 +167,7 @@ public:
    * @param[in] dispJump the displacement jump of the current time step
    * @param[in] deltaDispJump the delta displacement jump of the current time step
    * @param[in] tractionVector the traction vector
+   * @param[in] trialNormalTraction the normal traction updated from the current displacement jump
    * @param[in] fractureState the fracture check
    * @param[in] tolerance the tolerance
    * @param[out] condConv flag indicating the result of the check
@@ -176,7 +177,8 @@ public:
   virtual void constraintCheck( localIndex const k,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 const > const & deltaDispJump,
-                                arraySlice1d< real64 > const & tractionVector,
+                                arraySlice1d< real64 const > const & tractionVector,
+                                real64 const trialNormalTraction,
                                 integer const fractureState,
                                 real64 const normalTractionTolerance,
                                 real64 const normalDisplacementTolerance,
@@ -184,7 +186,7 @@ public:
                                 real64 const slidingCheckTolerance,
                                 integer & condConv ) const
   {
-    GEOS_UNUSED_VAR( k, dispJump, deltaDispJump, tractionVector, fractureState,
+    GEOS_UNUSED_VAR( k, dispJump, deltaDispJump, tractionVector, trialNormalTraction, fractureState,
                      normalTractionTolerance, normalDisplacementTolerance, slidingTolerance,
                      slidingCheckTolerance, condConv );
   }

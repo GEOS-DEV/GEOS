@@ -26,6 +26,7 @@
 namespace geos
 {
 
+
 template< typename FLOW_SOLVER = SinglePhaseBase >
 class SinglePhasePoromechanicsConformingFractures : public PoromechanicsConformingFractures< SinglePhasePoromechanics, FLOW_SOLVER >
 {
@@ -81,7 +82,7 @@ public:
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
-  GEOS_MGR_STRATEGY_NOT_SUPPORTED()//TODO should we keep ?
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()
 
   /**@}*/
 
@@ -94,15 +95,13 @@ protected:
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) override final;
 
-  virtual void assembleForceResidualDerivativeWrtPressure( string const & GEOS_UNUSED_PARAM(meshName),
-                                                   MeshLevel const & mesh,
-                                                   string_array const & regionNames,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs ) override final;     
+  virtual void assembleForceResidualDerivativeWrtPressure( string const & GEOS_UNUSED_PARAM( meshName ),
+                                                           MeshLevel const & mesh,
+                                                           string_array const & regionNames,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs ) override final;
 
-
-  virtual integer numFluidComponents() const override { return this->flowSolver()->numFluidComponents(); }
 
   virtual string getFlowDofKey() const override { return SinglePhaseBase::viewKeyStruct::elemDofFieldString(); }
 

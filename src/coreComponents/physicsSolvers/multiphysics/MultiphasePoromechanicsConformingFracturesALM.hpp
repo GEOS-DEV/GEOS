@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 
+#include "physicsSolvers/multiphysics/PoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 
@@ -27,16 +28,17 @@ namespace geos
 {
 
 template< typename FLOW_SOLVER = CompositionalMultiphaseBase >
-class MultiphasePoromechanicsConformingFracturesALM : public MultiphasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
+class MultiphasePoromechanicsConformingFracturesALM : public PoromechanicsConformingFractures< MultiphasePoromechanics, FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
 {
 public:
 
-  using Base = MultiphasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >;
+  using Base = PoromechanicsConformingFractures< MultiphasePoromechanics, FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_maxFaceNodes;
 
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanicsConformingFracturesALM"; }
@@ -82,98 +84,47 @@ public:
    */
   /**@{*/
 
-  virtual void setupCoupling( DomainPartition const & domain,
-                              DofManager & dofManager ) const override final;
+  GEOS_MGR_STRATEGY_NOT_SUPPORTED()//TODO: no MGR strategy exists yet for multiphase ALM
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override final;
-
-  virtual void assembleSystem( real64 const time,
-                               real64 const dt,
-                               DomainPartition & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override final;
-
-  virtual void updateState( DomainPartition & domain ) override final;
-
-  virtual void setMGRStrategy() override final
-  {
-    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
-  }
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
 
   /**@}*/
+
+protected:
+
+  virtual void initializePreSubGroups() override
+  {
+    Base::initializePreSubGroups();
+
+    GEOS_THROW_IF( this->m_isThermal || this->flowSolver()->isThermal(),
+                   GEOS_FMT( "{}: thermal coupling is not supported by {}",
+                             this->getName(), this->getCatalogName() ),
+                   InputError, this->getDataContext() );
+  }
+
+  virtual void assembleForceResidualDerivativeWrtPressure( string const & meshName,
+                                                           MeshLevel const & mesh,
+                                                           string_array const & regionNames,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs ) override final;
+
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+                                                                   MeshLevel const & mesh,
+                                                                   string_array const & regionNames,
+                                                                   DofManager const & dofManager,
+                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   arrayView1d< real64 > const & localRhs ) override final;
+
+  virtual string getFlowDofKey() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); }
 
 private:
 
   struct viewKeyStruct : public Base::viewKeyStruct
   {};
-
-  static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face
-
-  /**
-   * @Brief assemble the element-based contributions
-   * @param time_n the current time
-   * @param dt the time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localMatrix the local system matrix
-   * @param localRhs the local system right-hand side vector
-   */
-  void assembleElementBasedContributions( real64 const time_n,
-                                          real64 const dt,
-                                          DomainPartition & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs );
-
-  virtual void assembleCouplingTerms( real64 const time_n,
-                                      real64 const dt,
-                                      DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) override final;
-
-  void assembleForceResidualDerivativeWrtPressure( string const & meshName,
-                                                   MeshLevel const & mesh,
-                                                   arrayView1d< string const > const & regionNames,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
-
-  void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
-                                                           arrayView1d< string const > const & regionNames,
-                                                           DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs );
-
-  /**
-   * @Brief add the nnz induced by the flux-aperture coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param rowLenghts the nnz in each row
-   */
-  void addTransmissibilityCouplingNNZ( DomainPartition const & domain,
-                                       DofManager const & dofManager,
-                                       arrayView1d< localIndex > const & rowLengths ) const;
-
-  /**
-   * @Brief add the sparsity pattern induced by the flux-aperture coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  void addTransmissibilityCouplingPattern( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           SparsityPatternView< globalIndex > const & pattern ) const;
-
-
-  string const m_pressureKey = CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString();
 
 };
 

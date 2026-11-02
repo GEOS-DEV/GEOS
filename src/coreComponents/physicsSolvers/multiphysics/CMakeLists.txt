@@ -31,8 +31,8 @@ set( multiPhysicsSolvers_headers
     HydrofractureSolverKernels.hpp
     MultiphasePoromechanics.hpp
     OneWayCoupledFractureFlowContactMechanics.hpp
-    #MultiphasePoromechanicsConformingFractures.hpp
-    #MultiphasePoromechanicsConformingFracturesALM.hpp
+    MultiphasePoromechanicsConformingFractures.hpp
+    MultiphasePoromechanicsConformingFracturesALM.hpp
     PhaseFieldFractureSolver.hpp
     PhaseFieldPoromechanicsSolver.hpp
     PoromechanicsInitialization.hpp
@@ -40,12 +40,13 @@ set( multiPhysicsSolvers_headers
     PoromechanicsInitialization.hpp
     poromechanicsKernels/MultiphasePoromechanics.hpp
     poromechanicsKernels/MultiphasePoromechanics_impl.hpp
-    #poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
+    poromechanicsKernels/ConformingFracturesFluxKernelBase.hpp
+    poromechanicsKernels/FractureMatrixFluxKernels.hpp
+    poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp
     poromechanicsKernels/PoromechanicsBase.hpp
     poromechanicsKernels/SinglePhasePoromechanics.hpp
     poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
     poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp
-    poromechanicsKernels/SinglePhasePoromechanicsConformingFracturesALM.hpp
     poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp
     poromechanicsKernels/SinglePhasePoromechanicsDamage_impl.hpp
     poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
@@ -59,7 +60,7 @@ set( multiPhysicsSolvers_headers
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp
-    poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFracturesALM.hpp
+    poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFracturesKernelBase.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
     SinglePhasePoromechanics.hpp
     SinglePhasePoromechanicsEmbeddedFractures.hpp
@@ -76,8 +77,8 @@ set( multiPhysicsSolvers_sources
     FieldApplicator.cpp
     MultiphasePoromechanics.cpp
     OneWayCoupledFractureFlowContactMechanics.cpp
-    #MultiphasePoromechanicsConformingFractures.cpp
-    #MultiphasePoromechanicsConformingFracturesALM.cpp
+    MultiphasePoromechanicsConformingFractures.cpp
+    MultiphasePoromechanicsConformingFracturesALM.cpp
     PhaseFieldFractureSolver.cpp
     PhaseFieldPoromechanicsSolver.cpp
     PoromechanicsInitialization.cpp

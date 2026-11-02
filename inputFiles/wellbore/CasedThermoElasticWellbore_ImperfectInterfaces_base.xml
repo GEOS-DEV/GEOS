@@ -12,8 +12,8 @@
       logLevel="1"
       isThermal="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="10"
+        newtonTol="1.0e-10"
+        newtonMaxIter="25"
         maxTimeStepCuts="4"/>
       <LinearSolverParameters
         directParallel="0"
@@ -28,9 +28,9 @@
       targetRegions="{ casing, cement, rock, Fracture }"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-10"
         logLevel="2"
-        newtonMaxIter="10"/>
+        newtonMaxIter="25"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SolidMechanicsLagrangeContact>

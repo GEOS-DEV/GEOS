@@ -47,6 +47,7 @@ struct StateUpdateKernel
    * @param[out] aperture the aperture
    * @param[in] oldHydraulicAperture the old hydraulic aperture
    * @param[out] hydraulicAperture the effecture aperture
+   * @param[out] dHydraulicAperture_dNormalJump the derivative of the hydraulic aperture wrt the normal jump
    * @param[in] fractureTraction the fracture traction
    */
   template< typename POLICY, typename POROUS_WRAPPER, typename HYDRAULIC_APERTURE_WRAPPER >
@@ -62,6 +63,7 @@ struct StateUpdateKernel
           arrayView1d< real64 > const & aperture,
           arrayView1d< real64 const > const & oldHydraulicAperture,
           arrayView1d< real64 > const & hydraulicAperture,
+          arrayView1d< real64 > const & dHydraulicAperture_dNormalJump,
           arrayView2d< real64 const > const & fractureTraction,
           arrayView1d< integer > const & fractureState )
   {
@@ -71,12 +73,11 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      real64 dHydraulicAperture_dNormalJump = 0.0;
       real64 dHydraulicAperture_dNormalTraction = 0.0;
       hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
                                                                       fractureTraction[k][0],
                                                                       fractureState[k],
-                                                                      dHydraulicAperture_dNormalJump,
+                                                                      dHydraulicAperture_dNormalJump[k],
                                                                       dHydraulicAperture_dNormalTraction );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
@@ -87,7 +88,7 @@ struct StateUpdateKernel
       porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k],
                                                                             oldHydraulicAperture[k],
                                                                             hydraulicAperture[k],
-                                                                            dHydraulicAperture_dNormalJump,
+                                                                            dHydraulicAperture_dNormalJump[k],
                                                                             jump,
                                                                             traction );
 

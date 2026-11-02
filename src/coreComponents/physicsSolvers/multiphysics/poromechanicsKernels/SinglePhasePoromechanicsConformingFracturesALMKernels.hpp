@@ -295,263 +295,23 @@ using AssembleForceResidualDerivativeWrtPressureFactory =
 
 
 /**
- * @brief Kernel to assemble the Jacobian derivative dR_p/du and dR_p/db for fully implicit coupling.
- *
- * This kernel computes the derivative of the flow accumulation residual with respect to
- * nodal displacement and bubble displacement, using the properly computed Atu/Atb matrices.
- */
-template< typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-class AssembleFluidMassResidualDerivativeWrtDisplacement :
-  public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
-                                                                               FE_TYPE >
-{
-
-public:
-  /// Alias for the base class
-  using Base = solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
-                                                                                     FE_TYPE >;
-
-  /// Number of nodes per element
-  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
-
-  /// The number of displacement dofs per element.
-  static constexpr int numUdofs = Base::numUdofs;
-
-  /// The number of bubble dofs per element.
-  static constexpr int numBdofs = Base::numBdofs;
-
-  using Base::m_elemsToFaces;
-  using Base::m_faceToNodes;
-  using Base::m_X;
-  using Base::m_finiteElementSpace;
-  using Base::m_dofNumber;
-  using Base::m_bDofNumber;
-  using Base::m_dofRankOffset;
-  using Base::m_rotationMatrix;
-  using Base::m_matrix;
-  using Base::m_rhs;
-
-  /**
-   * @brief Constructor
-   */
-  AssembleFluidMassResidualDerivativeWrtDisplacement( NodeManager const & nodeManager,
-                                                      EdgeManager const & edgeManager,
-                                                      FaceManager const & faceManager,
-                                                      localIndex const targetRegionIndex,
-                                                      FaceElementSubRegion & elementSubRegion,
-                                                      FE_TYPE const & finiteElementSpace,
-                                                      CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                                      arrayView1d< globalIndex const > const uDofNumber,
-                                                      arrayView1d< globalIndex const > const bDofNumber,
-                                                      globalIndex const rankOffset,
-                                                      CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                                                      arrayView1d< real64 > const inputRhs,
-                                                      real64 const inputDt,
-                                                      arrayView1d< localIndex const > const & faceElementList,
-                                                      arrayView1d< globalIndex const > const & pressureDofNumber,
-                                                      arrayView1d< real64 const > const & density,
-                                                      arrayView1d< integer const > const & fractureState ):
-    Base( nodeManager,
-          edgeManager,
-          faceManager,
-          targetRegionIndex,
-          elementSubRegion,
-          finiteElementSpace,
-          inputConstitutiveType,
-          uDofNumber,
-          bDofNumber,
-          rankOffset,
-          inputMatrix,
-          inputRhs,
-          inputDt,
-          faceElementList ),
-    m_pressureDofNumber( pressureDofNumber ),
-    m_density( density ),
-    m_fractureState( fractureState )
-  {}
-
-  /**
-   * @copydoc finiteElement::InterfaceKernelBase::StackVariables
-   */
-  struct StackVariables : public Base::StackVariables
-  {
-public:
-
-    GEOS_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables(),
-                                       dispColIndices{},
-                                       bColIndices{},
-                                       pressureRowIndex( 0 ),
-      unitNormal{},
-      dRpdU{},
-      dRpdB{}
-    {}
-
-    /// Column indices for displacement
-    globalIndex dispColIndices[numUdofs];
-
-    /// Column indices for bubble
-    globalIndex bColIndices[numBdofs];
-
-    /// Row index for pressure equation
-    globalIndex pressureRowIndex;
-
-    /// Unit normal from rotation matrix
-    real64 unitNormal[3];
-
-    /// Jacobian dRp/dU
-    real64 dRpdU[numUdofs];
-
-    /// Jacobian dRp/dB
-    real64 dRpdB[numBdofs];
-  };
-
-  template< typename POLICY,
-            typename KERNEL_TYPE >
-  static
-  real64
-  kernelLaunch( localIndex const numElems,
-                KERNEL_TYPE const & kernelComponent )
-  {
-    return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
-  }
-
-  /**
-   * @brief Setup for each element
-   */
-  GEOS_HOST_DEVICE
-  inline
-  void setup( localIndex const k,
-              StackVariables & stack ) const
-  {
-    constexpr int shift = numNodesPerElem * 3;
-
-    int permutation[numNodesPerElem];
-    m_finiteElementSpace.getPermutation( permutation );
-
-    localIndex const kf0 = m_elemsToFaces[k][0];
-    localIndex const kf1 = m_elemsToFaces[k][1];
-
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
-    {
-      localIndex const kn0 = m_faceToNodes( kf0, a );
-      localIndex const kn1 = m_faceToNodes( kf1, a );
-      for( int i = 0; i < 3; ++i )
-      {
-        stack.dispColIndices[a * 3 + i] = m_dofNumber[kn0] + i;
-        stack.dispColIndices[shift + a * 3 + i] = m_dofNumber[kn1] + i;
-        stack.X[a][i] = m_X[m_faceToNodes( kf0, permutation[a] )][i];
-      }
-    }
-
-    for( int i = 0; i < 3; ++i )
-    {
-      stack.unitNormal[i] = m_rotationMatrix( k, i, 0 );
-    }
-
-    for( int i = 0; i < 3; ++i )
-    {
-      stack.bColIndices[i] = m_bDofNumber[kf0] + i;
-      stack.bColIndices[3 + i] = m_bDofNumber[kf1] + i;
-    }
-
-    stack.pressureRowIndex = m_pressureDofNumber[k] - m_dofRankOffset;
-  }
-
-  /**
-   * @brief Complete - compute Jacobians dRp/dU and dRp/dB
-   */
-  GEOS_HOST_DEVICE
-  inline
-  real64 complete( localIndex const k,
-                   StackVariables & stack ) const
-  {
-    // Only assemble for open fractures
-    if( m_fractureState[k] != fields::contact::FractureState::Open )
-    {
-      return 0.0;
-    }
-
-    // Compute Jacobian for pressure equation w.r.t. displacement:
-    // dR_p/du = density * unitNormal^T * Atu = density * area * dAperture/dU
-    // This is: dRpdU[j] = sum_i( unitNormal[i] * Atu[i][j] ) * density
-    // Use Ri_eq_AjiBj for transpose: R[i] = sum_j(A[j][i] * B[j])
-    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( stack.dRpdU, stack.localAtu, stack.unitNormal );
-    LvArray::tensorOps::scale< numUdofs >( stack.dRpdU, m_density[k] );
-
-    // Compute Jacobian for pressure equation w.r.t. bubble displacement:
-    // dR_p/db = density * unitNormal^T * Atb
-    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( stack.dRpdB, stack.localAtb, stack.unitNormal );
-    LvArray::tensorOps::scale< numBdofs >( stack.dRpdB, m_density[k] );
-
-    // Assemble into matrix
-    localIndex const localRow = LvArray::integerConversion< localIndex >( stack.pressureRowIndex );
-
-    if( localRow >= 0 && localRow < m_matrix.numRows() )
-    {
-      // Add dRp/dU
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                              stack.dispColIndices,
-                                                                              stack.dRpdU,
-                                                                              numUdofs );
-
-      // Add dRp/dB
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                              stack.bColIndices,
-                                                                              stack.dRpdB,
-                                                                              numBdofs );
-    }
-
-    return 0.0;
-  }
-
-protected:
-
-  /// Pressure DOF numbers
-  arrayView1d< globalIndex const > const m_pressureDofNumber;
-
-  /// Fluid density
-  arrayView1d< real64 const > const m_density;
-
-  /// Fracture state
-  arrayView1d< integer const > const m_fractureState;
-};
-
-/// Factory for AssembleFluidMassResidualDerivativeWrtDisplacement kernel
-using AssembleFluidMassResidualDerivativeWrtDisplacementFactory =
-  finiteElement::InterfaceKernelFactory< AssembleFluidMassResidualDerivativeWrtDisplacement,
-                                         arrayView1d< globalIndex const > const,
-                                         arrayView1d< globalIndex const > const,
-                                         globalIndex const,
-                                         CRSMatrixView< real64, globalIndex const > const,
-                                         arrayView1d< real64 > const,
-                                         real64 const,
-                                         arrayView1d< localIndex const > const,
-                                         arrayView1d< globalIndex const > const,
-                                         arrayView1d< real64 const > const,
-                                         arrayView1d< integer const > const >;
-
-
-/**
- * @brief Kernel to compute d(aperture)/du and d(aperture)/db for each fracture element.
+ * @brief Kernel to compute d(normalJump)/du and d(normalJump)/db for each fracture element.
  *
  * This kernel computes the derivative of aperture with respect to displacement and bubble DOFs
  * using the properly computed Atu/Atb matrices. The results are stored for later use in
  * flux derivative computation.
  *
- * d(aperture)/du = (1/area) * unitNormal^T * Atu
- * d(aperture)/db = (1/area) * unitNormal^T * Atb
+ * d(normalJump)/du = (1/area) * unitNormal^T * Atu
+ * d(normalJump)/db = (1/area) * unitNormal^T * Atb
  *
  * The Atu/Atb matrices encode the sign convention directly: face 0 gets -N*detJ
  * and face 1 gets +N*detJ. This means (1/area) * Atu^T * unitNormal already gives
- * the correct dAperture/dU matching the LM convention (negative for face 0 nodes,
+ * the correct dNormalJump/dU matching the LM convention (negative for face 0 nodes,
  * positive for face 1 nodes).
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ComputeApertureDerivatives :
+class ComputeNormalJumpDerivatives :
   public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
                                                                                FE_TYPE >
 {
@@ -584,22 +344,22 @@ public:
   /**
    * @brief Constructor
    */
-  ComputeApertureDerivatives( NodeManager const & nodeManager,
-                              EdgeManager const & edgeManager,
-                              FaceManager const & faceManager,
-                              localIndex const targetRegionIndex,
-                              FaceElementSubRegion & elementSubRegion,
-                              FE_TYPE const & finiteElementSpace,
-                              CONSTITUTIVE_TYPE & inputConstitutiveType,
-                              arrayView1d< globalIndex const > const uDofNumber,
-                              arrayView1d< globalIndex const > const bDofNumber,
-                              globalIndex const rankOffset,
-                              CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                              arrayView1d< real64 > const inputRhs,
-                              real64 const inputDt,
-                              arrayView1d< localIndex const > const & faceElementList,
-                              arrayView2d< real64 > const & dAperturedU,
-                              arrayView2d< real64 > const & dAperturedB ):
+  ComputeNormalJumpDerivatives( NodeManager const & nodeManager,
+                                EdgeManager const & edgeManager,
+                                FaceManager const & faceManager,
+                                localIndex const targetRegionIndex,
+                                FaceElementSubRegion & elementSubRegion,
+                                FE_TYPE const & finiteElementSpace,
+                                CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                arrayView1d< globalIndex const > const uDofNumber,
+                                arrayView1d< globalIndex const > const bDofNumber,
+                                globalIndex const rankOffset,
+                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                arrayView1d< real64 > const inputRhs,
+                                real64 const inputDt,
+                                arrayView1d< localIndex const > const & faceElementList,
+                                arrayView2d< real64 > const & dNormalJump_dU,
+                                arrayView2d< real64 > const & dNormalJump_dB ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -615,8 +375,8 @@ public:
           inputDt,
           faceElementList ),
     m_area( elementSubRegion.getElementArea().toViewConst() ),
-    m_dAperturedU( dAperturedU ),
-    m_dAperturedB( dAperturedB )
+    m_dNormalJump_dU( dNormalJump_dU ),
+    m_dNormalJump_dB( dNormalJump_dB )
   {}
 
   /**
@@ -630,18 +390,18 @@ public:
     StackVariables():
       Base::StackVariables(),
                                        unitNormal{},
-                                       localDAperturedU{},
-                                       localDAperturedB{}
+                                       localDNormalJump_dU{},
+                                       localDNormalJump_dB{}
     {}
 
     /// Unit normal from rotation matrix
     real64 unitNormal[3];
 
-    /// Local d(aperture)/dU
-    real64 localDAperturedU[numUdofs];
+    /// Local d(normalJump)/dU
+    real64 localDNormalJump_dU[numUdofs];
 
-    /// Local d(aperture)/dB
-    real64 localDAperturedB[numBdofs];
+    /// Local d(normalJump)/dB
+    real64 localDNormalJump_dB[numBdofs];
   };
 
   template< typename POLICY,
@@ -682,7 +442,7 @@ public:
   }
 
   /**
-   * @brief Complete - compute and store d(aperture)/dU and d(aperture)/dB
+   * @brief Complete - compute and store d(normalJump)/dU and d(normalJump)/dB
    */
   GEOS_HOST_DEVICE
   inline
@@ -691,24 +451,24 @@ public:
   {
     real64 const invArea = 1.0 / m_area[k];
 
-    // Compute d(aperture)/dU = (1/area) * unitNormal^T * Atu
-    // This gives: dAperturedU[j] = (1/area) * sum_i(unitNormal[i] * Atu[i][j])
+    // Compute d(normalJump)/dU = (1/area) * unitNormal^T * Atu
+    // This gives: dNormalJump_dU[j] = (1/area) * sum_i(unitNormal[i] * Atu[i][j])
     // Use Ri_eq_AjiBj for transpose: R[i] = sum_j(A[j][i] * B[j])
-    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( stack.localDAperturedU, stack.localAtu, stack.unitNormal );
-    LvArray::tensorOps::scale< numUdofs >( stack.localDAperturedU, invArea );
+    LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( stack.localDNormalJump_dU, stack.localAtu, stack.unitNormal );
+    LvArray::tensorOps::scale< numUdofs >( stack.localDNormalJump_dU, invArea );
 
-    // Compute d(aperture)/dB = (1/area) * unitNormal^T * Atb
-    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( stack.localDAperturedB, stack.localAtb, stack.unitNormal );
-    LvArray::tensorOps::scale< numBdofs >( stack.localDAperturedB, invArea );
+    // Compute d(normalJump)/dB = (1/area) * unitNormal^T * Atb
+    LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( stack.localDNormalJump_dB, stack.localAtb, stack.unitNormal );
+    LvArray::tensorOps::scale< numBdofs >( stack.localDNormalJump_dB, invArea );
 
     // Store the results
     for( localIndex i = 0; i < numUdofs; ++i )
     {
-      m_dAperturedU( k, i ) = stack.localDAperturedU[i];
+      m_dNormalJump_dU( k, i ) = stack.localDNormalJump_dU[i];
     }
     for( localIndex i = 0; i < numBdofs; ++i )
     {
-      m_dAperturedB( k, i ) = stack.localDAperturedB[i];
+      m_dNormalJump_dB( k, i ) = stack.localDNormalJump_dB[i];
     }
 
     return 0.0;
@@ -719,16 +479,16 @@ protected:
   /// Element area
   arrayView1d< real64 const > const m_area;
 
-  /// Storage for d(aperture)/dU
-  arrayView2d< real64 > const m_dAperturedU;
+  /// Storage for d(normalJump)/dU
+  arrayView2d< real64 > const m_dNormalJump_dU;
 
-  /// Storage for d(aperture)/dB
-  arrayView2d< real64 > const m_dAperturedB;
+  /// Storage for d(normalJump)/dB
+  arrayView2d< real64 > const m_dNormalJump_dB;
 };
 
-/// Factory for ComputeApertureDerivatives kernel
-using ComputeApertureDerivativesFactory =
-  finiteElement::InterfaceKernelFactory< ComputeApertureDerivatives,
+/// Factory for ComputeNormalJumpDerivatives kernel
+using ComputeNormalJumpDerivativesFactory =
+  finiteElement::InterfaceKernelFactory< ComputeNormalJumpDerivatives,
                                          arrayView1d< globalIndex const > const,
                                          arrayView1d< globalIndex const > const,
                                          globalIndex const,
@@ -755,6 +515,10 @@ namespace poromechanicsMatrixBubbleKernels
  * Physics:
  *   R_b = -∫ B_b^T * (biot * p * I) * detJ dΩ
  *   dR_b/dP = -∫ B_b^T * (biot * I) * detJ dΩ
+ *   dR_b/dT = -∫ B_b^T * dSigma/dT * detJ dΩ, dSigma/dT = -3 alpha K I when isotropic   (thermal only)
+ *
+ * Only its derivative w.r.t. temperature is missing, hence the dR_b/dT column below.
+ * sigma is already updated w.r.t temperature so no need for extra edition of residuals.
  *
  * where B_b is the strain-displacement matrix for bubble functions.
  */
@@ -786,6 +550,10 @@ public:
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
+  /// Offset of the temperature DOF (and energy-balance row) from the pressure DOF (and mass-balance row)
+  /// of a cell: single-phase flow packs the temperature right after the pressure (thermal only)
+  static constexpr integer temperatureDofOffset = 1;
+
   using Base::m_elemsToNodes;
   using Base::m_finiteElementSpace;
   using Base::m_constitutiveUpdate;
@@ -812,7 +580,9 @@ public:
                                arrayView1d< real64 > const inputRhs,
                                real64 const inputDt,
                                string const pressureDofKey,
-                               string const fluidModelKey ):
+                               string const fluidModelKey,
+                               integer const isThermal,
+                               integer const performStressInitialization ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -831,9 +601,20 @@ public:
     m_bubbleElems( elementSubRegion.bubbleElementsList() ),
     m_elemsToFaces( elementSubRegion.faceElementsList() ),
     m_pressure( elementSubRegion.template getField< fields::flow::pressure >().toViewConst() ),
+    m_isThermal( isThermal ),
+    m_performStressInitialization( performStressInitialization ),
     m_incrBubbleDisp( faceManager.getField< fields::contact::incrementalBubbleDisplacement >().toViewConst() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
-                      elementSubRegion.template getReference< string >( fluidModelKey ) ).density() )
+                      elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
+    m_dFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
+                       elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity() ),
+    m_fluidInternalEnergy( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
+                             elementSubRegion.template getReference< string >( fluidModelKey ) ).internalEnergy() ),
+    m_dFluidInternalEnergy( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >(
+                              elementSubRegion.template getReference< string >( fluidModelKey ) ).dInternalEnergy() ),
+    // the solid internal energy model only exists in thermal runs
+    m_rockInternalEnergy( isThermal ? inputConstitutiveType.getInternalEnergy() : arrayView2d< real64 const >() ),
+    m_dRockInternalEnergy_dTemperature( isThermal ? inputConstitutiveType.getDinternalEnergy_dTemperature() : arrayView2d< real64 const >() )
   {}
 
   //***************************************************************************
@@ -862,10 +643,12 @@ public:
       bEqnRowIndices{},
       bColIndices{},
       pColIndex( 0 ),
+      tColIndex( 0 ),
       pRowIndex( 0 ),
       localRb{},
       localdRbdP{},
-      localdRpdB{},
+      localdRbdT{},
+      localG{},
       X{ {} },
       pLocal{}
     {}
@@ -879,6 +662,9 @@ public:
     /// Column index for pressure DOF (for A_bp)
     globalIndex pColIndex;
 
+    /// Column index for temperature DOF (for A_bT, thermal only), packed right after pressure
+    globalIndex tColIndex;
+
     /// Row index (local) for pressure DOF (for A_pb)
     globalIndex pRowIndex;
 
@@ -888,8 +674,12 @@ public:
     /// C-array storage for the element local dRb/dP Jacobian.
     real64 localdRbdP[numBubbleUdofs];
 
-    /// C-array storage for the element local dRp/dB Jacobian (A_pb bulk term).
-    real64 localdRpdB[numBubbleUdofs];
+    /// C-array storage for the element local dRb/dT Jacobian (thermal only).
+    real64 localdRbdT[numBubbleUdofs];
+
+    /// C-array storage for the geometric storage vector G = int biot div(beta) (A_pb / A_Tb bulk terms,
+    /// before multiplication by the fluid-mass / energy prefactors).
+    real64 localG[numBubbleUdofs];
 
     /// local nodal coordinates
     real64 X[ numNodesPerElem ][ 3 ];
@@ -965,6 +755,7 @@ public:
     }
 
     stack.pColIndex = m_pDofNumber[k];
+    stack.tColIndex = m_pDofNumber[k] + temperatureDofOffset;
     stack.pRowIndex = m_pDofNumber[k] - m_dofRankOffset;
     stack.pLocal[0] = m_pressure( k );
   }
@@ -1015,14 +806,37 @@ public:
     LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( dRbdP_gauss, strainBubbleMatrix, biotIdentity );
     LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRbdP, dRbdP_gauss, -detJ );
 
-    // ---- A_pb^Omega : transpose Biot term for the fluid-mass equation ----
-    // The bubble mode contributes to the cell volumetric strain, hence to the
-    // fluid mass storage.  With dPorosity_dVolStrain = biot (BiotPorosity),
+    // Jacobian contribution: dR_b/dT += B_b^T * dSigma/dT * (-detJ) (thermal only), i.e. the temperature
+    // derivative of -B_b^T sigma_new, with the same dSigma/dT (-3 alpha K I when isotropic) as the bulk kernel
+    if( m_isThermal )
+    {
+      real64 dTotalStress_dTemperature[6];
+      m_constitutiveUpdate.getDtotalStress_dTemperature( k, q, dTotalStress_dTemperature );
+      real64 dRbdT_gauss[nBubbleUdof];
+      LvArray::tensorOps::Ri_eq_AjiBj< nBubbleUdof, 6 >( dRbdT_gauss, strainBubbleMatrix, dTotalStress_dTemperature );
+      LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRbdT, dRbdT_gauss, -detJ );
+    }
+
+    // ---- A_pb^Omega / A_Tb^Omega : transpose Biot term for the fluid-mass and energy equations ----
+    // The bubble mode contributes to the cell volumetric strain, hence to the fluid mass
+    // and energy storage. With dPorosity_dVolStrain = biot (BiotPorosity), and as in
+    // (Thermal)SinglePhasePoromechanics::computeFluidIncrement,
     //   dFluidMassIncrement_dVolStrainIncrement = biot * fluidDensity,
-    // so dR_p/db = fluidDensity * dR_b/dp (same geometric factor biot*div(beta),
-    // times the fluid density that puts it in mass units). We reuse dRbdP_gauss.
-    real64 const rhof = m_fluidDensity( k, 0 );
-    LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localdRpdB, dRbdP_gauss, -detJ * rhof );
+    //   dEnergyIncrement_dVolStrainIncrement    = biot * ( fluidDensity * fluidInternalEnergy - rockInternalEnergy ).
+    // Here we only accumulate the geometric factor G = int biot*div(beta) (reusing dRbdP_gauss);
+    // the prefactors are cell-wise constant and applied, with their p/T derivatives, in complete().
+    LvArray::tensorOps::scaledAdd< nBubbleUdof >( stack.localG, dRbdP_gauss, -detJ );
+
+    // Persist the bubble storage in the porosity state:
+    // The residual/Jacobian are not affected (the bulk kernel has already used its own porosity).
+    if( !m_performStressInitialization )
+    {
+      localIndex const parentFaceIndex = m_elemsToFaces[kk][1];
+      localIndex const bFace = m_elemsToFaces[kk][0];
+      real64 const bubbleVolumetricStrainIncrement =
+        solidMechanicsConformingContactKernelsHelper::computeFaceBubbleVolumetricStrain( strainBubbleMatrix, parentFaceIndex, m_incrBubbleDisp[bFace] );
+      m_constitutiveUpdate.addVolumetricStrainIncrementToPorosity( k, q, bubbleVolumetricStrainIncrement );
+    }
   }
 
   /**
@@ -1039,12 +853,14 @@ public:
     // on which the bubble function was applied.
     real64 localRb[3];
     real64 localdRbdP[3];
-    real64 localdRpdB[3];
+    real64 localdRbdT[3];
+    real64 localG[3];
     for( localIndex i = 0; i < 3; ++i )
     {
       localRb[i] = stack.localRb[parentFaceIndex*3+i];
       localdRbdP[i] = stack.localdRbdP[parentFaceIndex*3+i];
-      localdRpdB[i] = stack.localdRpdB[parentFaceIndex*3+i];
+      localdRbdT[i] = stack.localdRbdT[parentFaceIndex*3+i];
+      localG[i] = stack.localG[parentFaceIndex*3+i];
     }
 
     // ---- A_bp : bubble-momentum row (dR_b/dP) ----
@@ -1063,27 +879,88 @@ public:
                                                           &stack.pColIndex,
                                                           &localdRbdP[i],
                                                           1 );
+
+      // Add Jacobian dR_b/dT (thermal only)
+      if( m_isThermal )
+      {
+        m_matrix.template addToRow< parallelDeviceAtomic >( dof,
+                                                            &stack.tColIndex,
+                                                            &localdRbdT[i],
+                                                            1 );
+      }
     }
 
-    // ---- A_pb^Omega : fluid-mass row (dR_p/db) + storage residual ----
+    // ---- A_pb^Omega : fluid-mass row + storage residual ----
     localIndex const pRow = LvArray::integerConversion< localIndex >( stack.pRowIndex );
     if( pRow >= 0 && pRow < m_matrix.numRows() )
     {
-      // Residual: R_p += fluidDensity * biot * tr(grad beta) * delta_b (bubble storage),
-      // using the incremental bubble displacement of the bubble face.
+      using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
+
+      localIndex const k = m_bubbleElems[kk];
+
+      // g = G . delta_b, using the incremental bubble displacement of the bubble face.
       localIndex const bFace = m_elemsToFaces[kk][0];
-      real64 rp = 0.0;
+      real64 g = 0.0;
       for( localIndex i = 0; i < 3; ++i )
       {
-        rp += localdRpdB[i] * m_incrBubbleDisp[bFace][i];
+        g += localG[i] * m_incrBubbleDisp[bFace][i];
       }
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[pRow], rp );
+
+      // flow columns: pressure, then temperature (thermal only), packed contiguously
+      globalIndex const flowColIndices[2] = { stack.pColIndex, stack.tColIndex };
+      integer const numFlowCols = m_isThermal ? 2 : 1;
+
+      // Residual: R_p += fluidDensity * g (bubble storage)
+      real64 const rhof = m_fluidDensity( k, 0 );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[pRow], rhof * g );
 
       // Jacobian dR_p/db (three bubble columns of the parent face)
+      real64 dRpdB[3];
+      LvArray::tensorOps::scaledCopy< 3 >( dRpdB, localG, rhof );
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pRow,
                                                                               stack.bColIndices,
-                                                                              localdRpdB,
+                                                                              dRpdB,
                                                                               3 );
+
+      // Jacobian dR_p/dp, dR_p/dT (prefactor derivatives)
+      real64 dRpdFlow[2] = { m_dFluidDensity( k, 0, DerivOffset::dP ) * g, 0.0 };
+      if( m_isThermal )
+      {
+        dRpdFlow[1] = m_dFluidDensity( k, 0, DerivOffset::dT ) * g;
+      }
+      m_matrix.template addToRow< parallelDeviceAtomic >( pRow,
+                                                          flowColIndices,
+                                                          dRpdFlow,
+                                                          numFlowCols );
+
+      // ---- A_Tb^Omega : energy row + storage residual, temperature packed right after pressure ----
+      localIndex const tRow = pRow + temperatureDofOffset;
+      if( m_isThermal && tRow < m_matrix.numRows() )
+      {
+        real64 const uf = m_fluidInternalEnergy( k, 0 );
+        real64 const energyFactor = rhof * uf - m_rockInternalEnergy( k, 0 );
+
+        // Residual: R_T += ( fluidDensity * fluidInternalEnergy - rockInternalEnergy ) * g
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[tRow], energyFactor * g );
+
+        // Jacobian dR_T/db
+        real64 dRTdB[3];
+        LvArray::tensorOps::scaledCopy< 3 >( dRTdB, localG, energyFactor );
+        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( tRow,
+                                                                                stack.bColIndices,
+                                                                                dRTdB,
+                                                                                3 );
+
+        // Jacobian dR_T/dp, dR_T/dT (prefactor derivatives)
+        real64 const dRTdFlow[2] =
+        { ( m_dFluidDensity( k, 0, DerivOffset::dP ) * uf + rhof * m_dFluidInternalEnergy( k, 0, DerivOffset::dP ) ) * g,
+          ( m_dFluidDensity( k, 0, DerivOffset::dT ) * uf + rhof * m_dFluidInternalEnergy( k, 0, DerivOffset::dT )
+            - m_dRockInternalEnergy_dTemperature( k, 0 ) ) * g };
+        m_matrix.template addToRow< parallelDeviceAtomic >( tRow,
+                                                            flowColIndices,
+                                                            dRTdFlow,
+                                                            2 );
+      }
     }
 
     return 0.0;
@@ -1109,11 +986,32 @@ protected:
   /// The array containing the pressure of each element.
   arrayView1d< real64 const > const m_pressure;
 
+  /// Flag indicating whether the temperature DOF (and its Jacobian column) is present.
+  integer const m_isThermal;
+
+  /// Flag indicating the poromechanics stress initialization, during which the porosity is not updated.
+  integer const m_performStressInitialization;
+
   /// Incremental bubble displacement (face field) -- used for the fluid-mass storage residual.
   arrayView2d< real64 const > const m_incrBubbleDisp;
 
   /// Fluid density [elem][q].
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_fluidDensity;
+
+  /// Derivatives of fluid density wrt pressure (and temperature, thermal only) [elem][q][der].
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const m_dFluidDensity;
+
+  /// Fluid internal energy [elem][q] (used in thermal runs only).
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_fluidInternalEnergy;
+
+  /// Derivatives of fluid internal energy wrt pressure and temperature [elem][q][der] (used in thermal runs only).
+  arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const m_dFluidInternalEnergy;
+
+  /// Rock internal energy [elem][q] (thermal only, empty otherwise).
+  arrayView2d< real64 const > const m_rockInternalEnergy;
+
+  /// Derivative of rock internal energy wrt temperature [elem][q] (thermal only, empty otherwise).
+  arrayView2d< real64 const > const m_dRockInternalEnergy_dTemperature;
 
 };
 
@@ -1126,7 +1024,9 @@ using MatrixPressureBubbleFactory = finiteElement::KernelFactory< MatrixPressure
                                                                   arrayView1d< real64 > const,
                                                                   real64 const,
                                                                   string const,
-                                                                  string const >;
+                                                                  string const,
+                                                                  integer const,
+                                                                  integer const >;
 
 } // namespace poromechanicsMatrixBubbleKernels
 
