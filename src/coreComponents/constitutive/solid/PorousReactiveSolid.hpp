@@ -217,16 +217,17 @@ public:
                                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
                                   arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const override final
   {
-    real64 const damage = fmax( fmin( 1.0, getDamage( k, q ) ), 0.0 );
-    real64 const porosity = damage + ( 1 - damage ) * m_porosityUpdate.getIntactPorosity( k, q );
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
 
     for( integer r=0; r < initialSurfaceArea.size(); ++r )
     {
-      real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
-      real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
-      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
-                       * pow( porosity / initialPorosity, 2.0/3.0 );
+      // volume fraction factor dropped: surface area scales with the (damage-dependent) porosity only
+      // real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
+      // real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
+      // surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
+      //                  * pow( porosity / initialPorosity, 2.0/3.0 );
+      surfaceArea[r] = initialSurfaceArea[r] * pow( porosity / initialPorosity, 2.0/3.0 );
     }
   }
 
