@@ -9,8 +9,9 @@ independent file:
     /times/seconds        (num_times,)      output times [s]
     /times/years          (num_times,)      output times [yr]  (1 yr = 31557600 s)
     /mesh/center          (num_cells, 3)    cell centres  x, y, z   [m]
-    /mesh/region          (num_cells,)      0 = SAND, 1 = CLAY, 2 = CAPROCK ...
-                                            (attribute ``region_names`` lists the names)
+    /mesh/region          (num_cells,)      index in the alphabetically sorted region names
+                                            (0 = CAPROCK, 1 = CLAY, 2 = SAND; attribute
+                                            ``region_names`` lists the names)
     /fields/<name>        (num_times, num_cells)   one dataset per scalar field, NaN in the
                                             cells where the field does not exist
                                             (e.g. the inactive CAPROCK)
@@ -34,7 +35,8 @@ split into one dataset per component, named ``<array>_<component>``:
 
 Usage
 -----
-    python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd -o dome_results.hdf5
+    python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd                 # writes dome_soreide_whitson_bench.h5
+    python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd -o dome_results.h5
     python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd --list-fields
     python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd --times-years 0 5 8 13 15.5 18 20
     python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd --fields pressure 'phaseVolumeFraction*'
@@ -422,7 +424,7 @@ def main(arguments=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("pvd", help="GEOS VTK index file (e.g. VTK.OUTPUT.pvd)")
-    parser.add_argument("-o", "--output", default="dome_results.hdf5", 
+    parser.add_argument("-o", "--output", default="dome_soreide_whitson_bench.h5",
                         help="Output HDF5 file path (default: %(default)s)")
     parser.add_argument("--fields", nargs="+", default=list(DEFAULT_FIELDS),
                         help="array-name patterns to export; use '*' for everything "

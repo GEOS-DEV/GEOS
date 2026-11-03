@@ -5,7 +5,7 @@ Every ``plot_*`` function below creates one figure from the HDF5 file written
 by ``dome_vtk_to_hdf5.py``.  They are called by the documentation through the
 matplotlib ``plot`` directive of Sphinx, e.g.
 
-    .. plot:: ../inputFiles/.../dome/plot_dome.py plot_pressure
+    .. plot:: ../src/docs/sphinx/basicExamples/depletedReservoir/plot_dome.py plot_pressure
 
 so that no image is stored in the repository: the pictures (including the
 rock-type map of the dome) are regenerated from the simulation output every
@@ -16,8 +16,10 @@ Where things are read from
 * results   : ``dome_soreide_whitson_bench.h5`` next to this script, or the file
               given by the environment variable ``DOME_HDF5``.  It is generated
               from the GEOS VTK output by ``dome_vtk_to_hdf5.py``; see the section
-              "Generating dome_soreide_whitson_bench.h5" of that script (or run
-              ``postProcess.bash``) for the exact command;
+              "Generating dome_soreide_whitson_bench.h5" of that script for the
+              exact command;
+* well rates: ``<WELL>.CONTROL.csv`` next to this script (written by GEOS with
+              ``writeCSV="1"``);
 * wells     : ``dome_mesh_bench.xml`` (``InternalWell`` polylines);
 * schedule  : ``dome_soreide_whitson_base.xml`` (the three ``*.RATE`` tables)
               and the gas-water contact (``phaseContacts``).
@@ -28,7 +30,7 @@ figures consistent with the input if the example is modified.
 Stand-alone use
 ---------------
     python plot_dome.py                       # write every figure as a PNG
-    python plot_dome.py plot_pressure --hdf5 run/dome_results.hdf5 --outdir figs
+    python plot_dome.py plot_pressure --hdf5 run/dome_results.h5 --outdir figs
 """
 import argparse
 import csv
@@ -83,7 +85,7 @@ TIMES_CO2 = [
     (20.0, "end of simulation"),
 ]
 
-ROCK_COLORS = ["#00ff00", "#ff0000", "#00aaff"]   # SAND, CLAY, CAPROCK
+ROCK_COLORS = ["#00ff00", "#ff0000", "#00aaff"]   # CAPROCK, CLAY, SAND (region index 0, 1, 2)
 ROCK_NAMES = ["CAPROCK", "CLAY", "SAND"]
 CAPROCK_GRAY = "#d9d9d9"
 
@@ -548,7 +550,7 @@ def plot_gas_saturation():
 
 def plot_co2_fraction():
     """
-    CO2 global mole fraction during and after the gas injection.
+    CO2 mole fraction in the gas phase during and after the gas injection.
 
     Returns:
         matplotlib.figure.Figure: The generated figure.

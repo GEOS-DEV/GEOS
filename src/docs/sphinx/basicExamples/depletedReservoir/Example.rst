@@ -28,13 +28,13 @@ Brief case description
 
 The reservoir is a dome. A sand body of good quality forms the base and the core of the structure, a clay layer of poorer quality covers it, and a caprock closes the top. The clay is thick on the flanks and thins out over the crest, where the sand comes close to the caprock. The figure below shows the rock types in the vertical section that contains the wells.
 
- .. plot:: ../src/docs/sphinx/basicExamples/depletedReservoir/plot_dome.py plot_rock_types
+.. plot:: ../src/docs/sphinx/basicExamples/depletedReservoir/plot_dome.py plot_rock_types
     :align: center
     :caption: Rock types of the dome, in the vertical x-z section that contains the wells. The dashed line is the gas-water contact, the triangles are the wells.
 
 **Operations**
 
-The model starts from in hydrodynamic equilibrium, with the gas-water contact at -4400 m. The field is then operated in four successive stages, summarized in the table below and in the first figure of the Results section.
+The model starts in capillary-gravity equilibrium, with the gas-water contact at -4400 m. The field is then operated in four successive stages, summarized in the table below and in the first figure of the Results section.
 
 .. list-table:: Operating schedule
     :widths: 10 10 12 12 56
@@ -135,7 +135,7 @@ The case is split in several XML files that are assembled with the ``Included`` 
       - Everything except the mesh, with the equation-of-state fluid model (Peng-Robinson and S\ |oslash|\ reide-Whitson)
     * - ``dome_kvalue_base.xml``
       - Same as above, with the fluid model based on tabulated K-values (the tables are read from the ``tables`` directory)
-    * - ``dome_mesh_bench.xml``, 
+    * - ``dome_mesh_bench.xml``
       - Mesh file and well trajectories
     * - ``dome_properties.xml``
       - Porosity and permeability of every rock type
@@ -167,14 +167,23 @@ The injectors are at the bottom of the left flank, in the sand and below the gas
 ------------------------------------------------------------------------
 Regions and rock properties
 ------------------------------------------------------------------------
-There are 3 reservoir regions defined by 3 ``CellElementRegion`` tags in the input file. The rock is a compressible porous medium (``PressurePorosity``) with a constant permeability. The values given in the model are default values: the porosity and the permeability of every region are overwritten cell by cell by the ``FieldSpecification`` tags of ``dome_properties.xml``, which scale the reference porosity and the three permeability components of each rock type:
+
+The mesh has three cell blocks, one per rock type, which are mapped to three ``CellElementRegion`` tags. The ``CAPROCK`` region only carries the rock model and is not listed in the ``targetRegions`` of the flow solver, so it is part of the mesh but not of the flow problem. Each well is attached to a ``WellElementRegion``:
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_DOME_ELEMENT_REGIONS_BEGIN -->
+    :end-before: <!-- SPHINX_DOME_ELEMENT_REGIONS_END -->
+    :dedent: 2
+
+The rock is a compressible porous medium (``PressurePorosity``) with a constant permeability. The values given in the model are default values: the porosity and the permeability of every region are overwritten cell by cell by the ``FieldSpecification`` tags of ``dome_properties.xml``, which scale the reference porosity and the three permeability components of each rock type:
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_base.xml
     :language: xml
     :start-after: <!-- SPHINX_DOME_ROCK_BEGIN -->
     :end-before: <!-- SPHINX_DOME_ROCK_END -->
     :dedent: 4
-    :emphasize-lines: 7,8
+    :emphasize-lines: 6,12
 
 The sand is about ten times more permeable than the clay, and in both rocks the vertical permeability is ten times smaller than the horizontal one, which makes the layering a strong control of the vertical migration of the gas.
 
@@ -229,7 +238,15 @@ In the K-value variant, the fluid block is replaced by ``CompositionalTwoPhaseKV
     :start-after: <!-- SPHINX_DOME_FLUID_BEGIN -->
     :end-before: <!-- SPHINX_DOME_FLUID_END -->
     :dedent: 4
-    :emphasize-lines: 4,15,17
+    :emphasize-lines: 1,15
+
+Each K-value table is a function of pressure and temperature, read from the files of the ``tables`` directory:
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/dome_kvalue_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_DOME_KVALUE_TABLES_BEGIN -->
+    :end-before: <!-- SPHINX_DOME_KVALUE_TABLES_END -->
+    :dedent: 4
 
 A K-value flash is simpler than a flash based on an equation of state. Its drawback is that the :math:`K_i` do not depend on the composition. It is a good choice when the compositions stay in a range for which the tables are representative, and the comparison of the two models on the same case is one of the purposes of this example.
 
@@ -300,6 +317,12 @@ The initial state is not uniform: the pressure, the composition and the phase sa
 - **Composition.** The overall composition is given as a function of elevation by one table per component, linearly interpolated between -5000 m and -4000 m. The lower part of the column is water-rich and the upper part is gas-rich, with a methane fraction that increases with elevation and a small amount of H2S. These tables represent the hydrocarbons that remain after the production.
 - **Temperature.** A constant table, equal to the temperature of the flow solver.
 
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_DOME_INIT_TABLES_BEGIN -->
+    :end-before: <!-- SPHINX_DOME_INIT_TABLES_END -->
+    :dedent: 4
+
 For instance, the tables give at the contact (-4400 m) the overall mole fractions 0.52 for CH4, 0.03 for H2S and 0.45 for H2O, with no CO2. The number of increments in the table of hydrostatic pressure is controlled by ``elevationIncrementInHydrostaticPressureTable``, here 1 m.
 
 **Boundary conditions**
@@ -333,15 +356,35 @@ The water injector injects pure water, the gas injector injects a mixture of 85 
       - ``control="phaseVolRate"`` for the ``gas`` phase with ``ProductionPhaseVolumeRateConstraint``
       - Production at the target gas rate of the table ``PRODUCER.RATE``. The BHP must remain above 1 MPa
 
+The gas injector and the producer are defined as follows. The water injector differs from the gas injector only by its rate table and its injection stream.
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_DOME_WELL_GAS_INJECTOR_BEGIN -->
+    :end-before: <!-- SPHINX_DOME_WELL_GAS_INJECTOR_END -->
+    :dedent: 6
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_DOME_WELL_PRODUCER_BEGIN -->
+    :end-before: <!-- SPHINX_DOME_WELL_PRODUCER_END -->
+    :dedent: 6
+
 The BHP constraints are safeguards. When the reservoir cannot deliver or accept the target rate within the pressure limit of the well, the rate cannot be honoured, and the pressure limit becomes the active constraint. The pressure at the well cells shown in the Results section is a useful indicator of the proximity to these limits.
 
 **Schedule**
 
 The target rates are given by three tables of the time (in seconds), which are piecewise constant (``interpolation="lower"``): the value at a given time is the value of the last coordinate that is not greater than this time. The first coordinate of each table, -31557600 s (one year before the start), only defines the value of the rate before the first event, which is zero.
 
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_DOME_SCHEDULE_TABLES_BEGIN -->
+    :end-before: <!-- SPHINX_DOME_SCHEDULE_TABLES_END -->
+    :dedent: 4
+
 The coordinates are multiples of one year (31557600 s). Reading the tables in years gives the schedule of the first table of this page:
 
-- the producer table, ``{-1, 0, 5, 8}`` years with the values ``{0, 15, 15, 0}``, gives a production of 15 m\ :sup:`3`/s between 0 and 8 years. 
+- the producer table, ``{-1, 0, 5, 8}`` years with the values ``{0, 15, 15, 0}``, gives a production of 15 m\ :sup:`3`/s between 0 and 8 years;
 - the water injector table, ``{-1, 5, 8, 100}`` years with the values ``{0, 0.2, 0, 0}``, gives an injection of 0.2 m\ :sup:`3`/s between 5 and 8 years;
 - the gas injector table, ``{-1, 13, 18}`` years with the values ``{0, 20, 0}``, gives an injection of 20 m\ :sup:`3`/s between 13 and 18 years.
 
@@ -356,6 +399,14 @@ The simulation covers 20 years. The ``maxTime`` of the events is slightly larger
 - **Solver applications.** The coupled solver is applied by three periodic events, which differ by the maximum time step (``maxEventDt``). The maximum time step is 100 days (8640000 s) before 5 years and after 5 years and 10 days. Between 5 years and 5 years and 10 days, it is limited to 1 day (86400 s), in order to handle the sudden start of the water injection. In all the cases, the actual time step is chosen by the solver from the convergence of the Newton method, and it is truncated in order to reach the output times.
 - **Outputs.** The VTK output is written every half year (15778800 s), and ``targetExactTimestep="1"`` forces the time steps to end exactly at the output times. Restart files are written every 50 cycles.
 - **Statistics.** The ``CompositionalMultiphaseStatistics`` task is executed every year (31557600 s). With ``computeRegionStatistics="1"`` and ``writeCSV="1"``, it writes the average pressure and the mass of every phase and component in each region. These files give the mass balance of the injected CO2, which is not available from the maps of the Results section.
+
+The events are defined as follows:
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/dome_soreide_whitson_base.xml
+    :language: xml
+    :start-after: <!-- SPHINX_DOME_EVENTS_BEGIN -->
+    :end-before: <!-- SPHINX_DOME_EVENTS_END -->
+    :dedent: 2
 
 The output and the statistics tasks are defined in the following blocks:
 
@@ -377,7 +428,7 @@ The output and the statistics tasks are defined in the following blocks:
 Post-processing and reporting
 ------------------------------------------------------------------------
 
-The VTK output of *GEOS* is a ``.pvd`` index file that points to one ``.vtm`` file per output time, each one being split in one ``.vtu`` file per region and per MPI rank. A couple of scripts are included for post-processing this data into and hdf5 format that can then be used to generate the images in this documentation. The scripts are:
+The VTK output of *GEOS* is a ``.pvd`` index file that points to one ``.vtm`` file per output time, each one being split in one ``.vtu`` file per region and per MPI rank. Two scripts are provided to convert this output into a single HDF5 file and to generate the figures of this page from it:
 
 .. code-block:: console
 
@@ -388,7 +439,15 @@ The VTK output of *GEOS* is a ``.pvd`` index file that points to one ``.vtm`` fi
 
 .. code-block:: console
 
-  python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd -o dome_results.hdf5
+  python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd -o dome_results.h5
+
+The file used for this page, ``dome_soreide_whitson_bench.h5``, only keeps the fields and times shown in the figures; the exact command is given in the header of ``dome_vtk_to_hdf5.py``. The well histories are read from the CSV files written by the wells (``writeCSV="1"``), and the rock types, wells, schedule and saturation functions are read directly from the input files. The figures are then generated with
+
+.. code-block:: console
+
+  python plot_dome.py --hdf5 dome_results.h5 --outdir figures
+
+which writes one PNG file per figure. The well CSV files are expected next to ``plot_dome.py``.
 
 
 ------------------------------------------------------------------------
@@ -399,7 +458,7 @@ Results
 
 The wells do not follow the target rates of the schedule for most of the simulation. The three figures below show, for each well, the bottom-hole pressure (BHP, black, left axis) and the surface rates actually obtained (colored, right axes). When the reservoir cannot deliver or accept the target rate within the BHP limit of a well, the limit becomes the active constraint and the rate is a result of the simulation, not an input.
 
-**Producer.** The producer starts at the target gas rate of 15 m\ :sup:`3`/s, with a BHP that falls from about 24 MPa. The BHP reaches the lower limit of 1 MPa after about two years, and stays there until the well is closed at 8 years. From that moment the well is controlled by the pressure limit, and the gas rate decays progressively (about 1 m\ :sup:`3`/s after five years, and close to zero after six years). The gas produced over the eight years is therefore only a fraction (roughly a third) of what the target would give. A small water rate is produced during the first 3.6 years. It is followed by a period without water, and then by a sharp increase of the water rate from about 6 years until the closure, while the gas rate is already negligible. This is consistent with the arrival of the injected water at the producer.
+**Producer.** The producer starts at the target gas rate of 15 m\ :sup:`3`/s, with a BHP that falls from about 24 MPa. The BHP reaches the lower limit of 1 MPa after about two years, and stays there until the well is closed at 8 years. From that moment the well is controlled by the pressure limit, and the gas rate decays progressively (about 1 m\ :sup:`3`/s at 4 years, 0.7 m\ :sup:`3`/s at 5 years, and close to zero after 6.5 years). The gas produced over the eight years is therefore only a fraction (roughly a third) of what the target would give. A small water rate is produced during the first 3.7 years. It is followed by a period without water, and then by a sharp increase of the water rate from about 6 years until the closure, while the gas rate is already negligible. This is consistent with the arrival of the injected water at the producer.
 
 .. plot:: ../src/docs/sphinx/basicExamples/depletedReservoir/plot_dome.py plot_well_producer
     :align: center
