@@ -52,9 +52,9 @@ plt.rcParams.update({'font.size': 16})
 # --------------------------------------------------------------------------
 geos_directory = "."
 if "sphinx" in sys.modules:
-    geos_directory = ""
-data_directory = os.path.normpath(os.path.abspath(os.path.join(geos_directory, "")))
-case_directory = os.path.normpath(os.path.abspath(os.path.join(geos_directory, "../")))
+    geos_directory = "../../../../.."
+data_directory = os.path.normpath(os.path.abspath(os.path.join(geos_directory, "src/docs/sphinx/basicExamples/depletedReservoir")))
+case_directory = os.path.normpath(os.path.abspath(os.path.join(geos_directory, "inputFiles/compositionalMultiphaseWell")))
 
 # --------------------------------------------------------------------------
 # User settings
