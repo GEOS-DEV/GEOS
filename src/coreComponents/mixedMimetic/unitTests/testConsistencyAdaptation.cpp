@@ -15,6 +15,7 @@
 
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
@@ -168,6 +169,20 @@ public:
     r.numDegenerate = MpiWrapper::sum( r.numDegenerate );
     r.numPrescribedDegenerate = MpiWrapper::sum( r.numPrescribedDegenerate );
     r.numConsistentFinal = MpiWrapper::sum( r.numConsistentFinal );
+
+    // The device must see the final host-side prescription and degeneracy changes,
+    // including on repeated classifications. Check before any host-side test reads.
+    RAJA::ReduceSum< parallelDeviceReduce, localIndex > numDeviceMfd( 0 );
+    elemManager().forElementSubRegions< ElementSubRegionBase >( m_regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const mfdFlag = subRegion.getField< fields::mixedMimetic::mfdFlag >();
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      forAll< geos::parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        numDeviceMfd += ( ghostRank[ei] < 0 && mfdFlag[ei] == 1 ) ? 1 : 0;
+      } );
+    } );
+    EXPECT_EQ( MpiWrapper::sum( numDeviceMfd.get() ), r.numConsistentFinal );
     return r;
   }
 
@@ -179,6 +194,8 @@ public:
     {
       arrayView1d< integer const > const mfdFlag = subRegion.getField< fields::mixedMimetic::mfdFlag >();
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      mfdFlag.move( hostMemorySpace, false );
+      ghostRank.move( hostMemorySpace, false );
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         count += ( ghostRank[ei] < 0 && mfdFlag[ei] == value ) ? 1 : 0;
@@ -195,6 +212,8 @@ public:
     {
       arrayView1d< real64 const > const indicator = subRegion.getField< fields::mixedMimetic::degeneracyIndicator >();
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      indicator.move( hostMemorySpace, false );
+      ghostRank.move( hostMemorySpace, false );
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
         count += ( ghostRank[ei] < 0 && indicator[ei] < percent ) ? 1 : 0;
@@ -214,6 +233,15 @@ public:
     arrayView1d< integer const > const ghostRank = faceManager.ghostRank();
     ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const mfdFlag =
       elemManager().constructArrayViewAccessor< integer, 1 >( fields::mixedMimetic::mfdFlag::key() );
+
+    // Classification ends with a device kernel. Check its results, not stale host copies.
+    elemRegionList.move( hostMemorySpace, false );
+    elemSubRegionList.move( hostMemorySpace, false );
+    elemList.move( hostMemorySpace, false );
+    label.move( hostMemorySpace, false );
+    ghostRank.move( hostMemorySpace, false );
+    mfdFlag.toNestedViewConst().move( hostMemorySpace, false );
+    m_regionFilter.move( hostMemorySpace, false );
 
     localIndex count = 0;
     for( localIndex kf = 0; kf < faceManager.size(); ++kf )
@@ -268,6 +296,7 @@ TEST( ConsistencyAdaptation, ConsistencyLayer_CartesianHexahedra )
   EXPECT_EQ( test.countFlag( 1 ), 40 );
   FaceManager const & faceManager = test.mesh().getFaceManager();
   arrayView1d< integer const > const label = faceManager.getField< fields::mixedMimetic::faceStencilLabel >();
+  label.move( hostMemorySpace, false );
   for( localIndex kf = 0; kf < faceManager.size(); ++kf )
   {
     EXPECT_EQ( label[kf], 0 );
@@ -288,6 +317,7 @@ TEST( ConsistencyAdaptation, ConsistencyLayer_Tetrahedra )
   EXPECT_EQ( test.checkFaceLabels(), MpiWrapper::sum( [&]
   {
     arrayView1d< integer const > const ghostRank = test.mesh().getFaceManager().ghostRank();
+    ghostRank.move( hostMemorySpace, false );
     localIndex owned = 0;
     for( localIndex kf = 0; kf < ghostRank.size(); ++kf )
     {
