@@ -1,4 +1,4 @@
-"""
+r"""
 Convert the GEOS VTK output of the dome example into a single HDF5 file.
 
 GEOS writes one ``.vtm`` per output time (plus a ``.pvd`` index) and, inside
@@ -14,6 +14,11 @@ independent file:
     /fields/<name>        (num_times, num_cells)   one dataset per scalar field, NaN in the
                                             cells where the field does not exist
                                             (e.g. the inactive CAPROCK)
+                                            With --field-times a dataset only stores some
+                                            times; its attribute ``time_index`` gives the
+                                            matching rows of /times.
+                                            With --round the attribute ``precision`` gives
+                                            the (lossy) precision applied.
 
 Field names
 -----------
@@ -27,12 +32,37 @@ split into one dataset per component, named ``<array>_<component>``:
     it does not, they are rebuilt from ``--phases`` according
     to the number of components of the array.
 
-    Usage
+Usage
 -----
     python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd -o dome_results.hdf5
     python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd --list-fields
     python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd --times-years 0 5 8 13 15.5 18 20
     python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd --fields pressure 'phaseVolumeFraction*'
+
+Generating dome_soreide_whitson_bench.h5 (the file read by plot_dome.py)
+-------------------------------------------------------------------------
+1. Run the dome example with GEOS; it writes ``<case>/VTK.OUTPUT.pvd``.
+2. Run (replace ``VTK.OUTPUT.pvd`` with its path if needed)::
+
+    python dome_vtk_to_hdf5.py VTK.OUTPUT.pvd -o dome_soreide_whitson_bench.h5 \
+        --fields pressure phaseVolumeFraction globalCompFraction phaseCompFraction \
+        --keep pressure phaseVolumeFraction_gas globalCompFraction_CH4 'phaseCompFraction_gas/CO2' \
+        --times-years 0 5 8 13 13.5 15.5 18 20 \
+        --field-times pressure=0,5,8,13,15.5,18,20 phaseVolumeFraction_gas=0,5,8,13,15.5,18,20 \
+                      globalCompFraction_CH4=0,5,8,13,15.5,18,20 'phaseCompFraction_gas/CO2=13.5,15.5,18,20' \
+        --round pressure=bits12 phaseVolumeFraction_gas=1e-4 globalCompFraction_CH4=1e-4 \
+                'phaseCompFraction_gas/CO2=1e-4'
+
+   * ``--fields`` / ``--keep``: only the four datasets used by the figures;
+   * ``--times-years``: the times shown in plot_dome.py (``TIMES_ALL`` and ``TIMES_CO2``);
+   * ``--field-times``: each field only at the times it is plotted (lossless);
+   * ``--round``: LOSSY precision reduction (pressure: relative error < 2**-12,
+     fractions: absolute error <= 5e-5), invisible in the figures.  Drop this
+     option to keep the full float32 precision (about 3.5 MB instead of 1 MB).
+
+   If a figure is added or its times change in plot_dome.py, update ``--keep``,
+   ``--times-years`` and ``--field-times`` accordingly.
+3. Copy the file next to plot_dome.py, or point ``DOME_HDF5`` (or ``--hdf5``) to it.
 
 Requirements: numpy, h5py, vtk (``pip install numpy h5py vtk``).
 """
@@ -321,6 +351,64 @@ def select_times(available_steps, requested_years):
     return sorted(picked_steps, key=lambda step: step[0])
 
 
+def parse_field_options(entries, convert):
+    """
+    Parse ``PATTERN=VALUE`` entries into a list of (glob pattern, converted value).
+    """
+    options = []
+    for entry in entries or []:
+        pattern, separator, value = entry.rpartition("=")
+        if not separator or not pattern:
+            sys.exit(f"invalid option '{entry}': expected PATTERN=VALUE")
+        try:
+            options.append((pattern, convert(value)))
+        except ValueError as error:
+            sys.exit(f"invalid option '{entry}': {error}")
+    return options
+
+
+def match_field_option(field_name, options):
+    """
+    Return the value of the first option whose pattern matches the field name, or None.
+    """
+    for pattern, value in options:
+        if fnmatch.fnmatchcase(field_name, pattern):
+            return value
+    return None
+
+
+def parse_precision(spec):
+    """
+    Validate a precision spec: ``bitsN`` (keep N float32 mantissa bits) or a rounding step.
+    """
+    if spec.startswith("bits"):
+        bits = int(spec[4:])
+        if not 1 <= bits <= 23:
+            raise ValueError("number of mantissa bits must be in [1, 23]")
+    elif float(spec) <= 0.0:
+        raise ValueError("rounding step must be positive")
+    return spec
+
+
+def reduce_precision(values, spec):
+    """
+    Lossy precision reduction that makes the data compress much better.
+
+    ``bitsN`` keeps N mantissa bits (relative error < 2**-N); a number rounds the
+    values to a multiple of that step (absolute error <= step / 2).  NaN is kept.
+    """
+    values = numpy.asarray(values, dtype=numpy.float32)
+    if spec is None:
+        return values
+    if spec.startswith("bits"):
+        mask = numpy.uint32((0xFFFFFFFF << (23 - int(spec[4:]))) & 0xFFFFFFFF)
+        reduced = (values.view(numpy.uint32) & mask).view(numpy.float32)
+    else:
+        step = float(spec)
+        reduced = (numpy.round(values / step) * step).astype(numpy.float32)
+    return numpy.where(numpy.isnan(values), numpy.float32(numpy.nan), reduced)
+
+
 def main(arguments=None):
     """
     Main entry point for the script.
@@ -343,9 +431,22 @@ def main(arguments=None):
                         help="Phase names for multi-component labeling (default: %(default)s)")
     parser.add_argument("--times-years", nargs="+", type=float, default=None,
                         help="only export the outputs closest to these times [yr]")
+    parser.add_argument("--keep", nargs="+", default=None,
+                        help="only store the datasets whose final name matches one of these "
+                             "glob patterns (e.g. pressure 'phaseCompFraction_gas/CO2')")
+    parser.add_argument("--field-times", nargs="+", default=None, metavar="PATTERN=T1,T2,...",
+                        help="only store the outputs closest to these times [yr] for the matching "
+                             "datasets (e.g. 'phaseCompFraction_gas/CO2=13.5,15.5,18,20')")
+    parser.add_argument("--round", nargs="+", default=None, metavar="PATTERN=SPEC",
+                        help="LOSSY: reduce the precision of the matching datasets; SPEC is bitsN "
+                             "(keep N mantissa bits) or a rounding step (e.g. pressure=bits12 "
+                             "'phaseVolumeFraction_gas=1e-4')")
     parser.add_argument("--list-fields", action="store_true",
                         help="print the arrays found in the first output and exit")
     parsed_args = parser.parse_args(arguments)
+    field_time_options = parse_field_options(
+        parsed_args.field_times, lambda value: [float(year) for year in value.split(",")])
+    round_options = parse_field_options(parsed_args.round, parse_precision)
 
     simulation_steps = select_times(read_pvd(parsed_args.pvd), parsed_args.times_years)
     if not simulation_steps:
@@ -369,12 +470,30 @@ def main(arguments=None):
 
     import h5py
     extracted_field_names = sorted(initial_fields)
+    if parsed_args.keep:
+        extracted_field_names = [name for name in extracted_field_names
+                                 if any(fnmatch.fnmatchcase(name, pattern) for pattern in parsed_args.keep)]
     if not extracted_field_names:
         sys.exit("none of the requested fields was found; try --list-fields")
         
     num_times = len(simulation_steps)
     num_cells = len(initial_centers)
-    
+    times_in_years = numpy.array([step[0] for step in simulation_steps]) / SECONDS_PER_YEAR
+
+    # Map: field -> {index in /times: row in the field dataset}
+    field_rows = {}
+    for field_name in extracted_field_names:
+        requested_years = match_field_option(field_name, field_time_options)
+        if requested_years is None:
+            field_rows[field_name] = {index: index for index in range(num_times)}
+            continue
+        time_indices = sorted({int(numpy.argmin(numpy.abs(times_in_years - year))) for year in requested_years})
+        for year in requested_years:
+            if numpy.min(numpy.abs(times_in_years - year)) > 0.26:
+                print(f"warning: {field_name}: no exported output within 0.25 yr of {year} yr", file=sys.stderr)
+        field_rows[field_name] = {index: row for row, index in enumerate(time_indices)}
+    precisions = {name: match_field_option(name, round_options) for name in extracted_field_names}
+
     with h5py.File(parsed_args.output, "w") as hdf5_file:
         hdf5_file.attrs["title"] = "GEOS dome example - CO2 injection into a depleted reservoir"
         hdf5_file.attrs["created"] = datetime.datetime.now().isoformat(timespec="seconds")
@@ -394,16 +513,25 @@ def main(arguments=None):
         mesh_group.attrs["region_names"] = list(regions)
         
         fields_group = hdf5_file.create_group("fields")
-        field_datasets = {
-            field_name: fields_group.create_dataset(field_name, shape=(num_times, num_cells), dtype="f4",
-                                                    chunks=(1, num_cells), compression="gzip",
-                                                    compression_opts=4, shuffle=True,
-                                                    fillvalue=numpy.nan)
-            for field_name in extracted_field_names
-        }
-        
+        field_datasets = {}
         for field_name in extracted_field_names:
-            field_datasets[field_name][0, :] = initial_fields[field_name]
+            dataset = fields_group.create_dataset(field_name, shape=(len(field_rows[field_name]), num_cells),
+                                                  dtype="f4", chunks=(1, num_cells), compression="gzip",
+                                                  compression_opts=4, shuffle=True, fillvalue=numpy.nan)
+            if len(field_rows[field_name]) != num_times:
+                dataset.attrs["time_index"] = numpy.array(sorted(field_rows[field_name]), dtype=numpy.int32)
+            if precisions[field_name] is not None:
+                dataset.attrs["precision"] = precisions[field_name]
+            field_datasets[field_name] = dataset
+
+        def write_fields(time_index, step_fields):
+            for field_name in extracted_field_names:
+                row = field_rows[field_name].get(time_index)
+                if row is not None and field_name in step_fields:
+                    field_datasets[field_name][row, :] = reduce_precision(step_fields[field_name],
+                                                                          precisions[field_name])
+
+        write_fields(0, initial_fields)
 
         for time_index in range(1, num_times):
             print(f"  [{time_index + 1:3d}/{num_times}] t = {simulation_steps[time_index][0] / SECONDS_PER_YEAR:7.2f} yr",
@@ -415,11 +543,9 @@ def main(arguments=None):
             if len(step_centers) != num_cells or not numpy.allclose(step_centers, initial_centers, atol=1e-6):
                 sys.exit(f"cell layout of {simulation_steps[time_index][1]} differs from the first "
                          "output; the mesh must be fixed in time")
-                         
-            for field_name in extracted_field_names:
-                if field_name in step_fields:
-                    field_datasets[field_name][time_index, :] = step_fields[field_name]
-                    
+
+            write_fields(time_index, step_fields)
+
     print(f"wrote {parsed_args.output}: {num_times} times, {num_cells} cells, {len(extracted_field_names)} fields")
     return 0
 

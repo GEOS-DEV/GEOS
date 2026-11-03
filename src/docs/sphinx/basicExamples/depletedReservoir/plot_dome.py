@@ -13,8 +13,11 @@ time the documentation is built.
 
 Where things are read from
 --------------------------
-* results   : ``dome_results.hdf5`` next to this script, or the file given by
-              the environment variable ``DOME_HDF5``;
+* results   : ``dome_soreide_whitson_bench.h5`` next to this script, or the file
+              given by the environment variable ``DOME_HDF5``.  It is generated
+              from the GEOS VTK output by ``dome_vtk_to_hdf5.py``; see the section
+              "Generating dome_soreide_whitson_bench.h5" of that script (or run
+              ``postProcess.bash``) for the exact command;
 * wells     : ``dome_mesh_bench.xml`` (``InternalWell`` polylines);
 * schedule  : ``dome_soreide_whitson_base.xml`` (the three ``*.RATE`` tables)
               and the gas-water contact (``phaseContacts``).
@@ -49,9 +52,9 @@ plt.rcParams.update({'font.size': 16})
 # --------------------------------------------------------------------------
 geos_directory = "."
 if "sphinx" in sys.modules:
-    geos_directory = "../../../../.."
-data_directory = os.path.normpath(os.path.abspath(os.path.join(geos_directory, "src/docs/sphinx/basicExamples/depletedReservoir")))
-case_directory = os.path.normpath(os.path.abspath(os.path.join(geos_directory, "inputFiles/compositionalMultiphaseWell")))
+    geos_directory = ""
+data_directory = os.path.normpath(os.path.abspath(os.path.join(geos_directory, "")))
+case_directory = os.path.normpath(os.path.abspath(os.path.join(geos_directory, "../")))
 
 # --------------------------------------------------------------------------
 # User settings
@@ -347,7 +350,14 @@ class Results:
         Returns:
             numpy.ndarray: 2D array of the requested field.
         """
-        return self.map_to_grid(self.get_dataset(field_key)[time_index, :].astype(float))
+        data_set = self.get_dataset(field_key)
+        row = time_index
+        if "time_index" in data_set.attrs:                  # field stored only at some times
+            stored_indices = list(data_set.attrs["time_index"])
+            if time_index not in stored_indices:
+                raise KeyError(f"{field_key} is not stored at t = {self.time_years[time_index]:g} yr")
+            row = stored_indices.index(time_index)
+        return self.map_to_grid(data_set[row, :].astype(float))
 
     def get_region_2d(self):
         """
