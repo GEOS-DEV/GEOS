@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+
+<!-- Consistent inner product in every cell (the mass matrix of the RT[0] element on this mesh). GMRES with the MGR
+     strategy of the thermal mixed system. -->
+
+<Problem>
+  <Included>
+    <File name="./thermalConduction_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseMixedMFD
+      name="flow"
+      logLevel="1"
+      isThermal="1"
+      discretization="mixedMFD"
+      temperature="350.0"
+      targetRegions="{ domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-10"
+        logLevel="1"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="mixedMFD"
+        innerProductType="RT"
+        adaptiveConsistency="1"
+        consistencyTolerance="1.0e-20"
+        nominalGradient="{ 1.0, 1.0, 1.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+</Problem>
