@@ -285,7 +285,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
       {
         nbPartitions *= this->m_Partitions( i );
       }
-      GEOS_ERROR_IF_NE_MSG( nbPartitions, m_size, GEOS_FMT( partitionsLogMessage, m_size, nbPartitions )  );
+      GEOS_ERROR_IF_NE_MSG( nbPartitions, m_size, GEOS_FMT_RUNTIME( partitionsLogMessage, m_size, nbPartitions )  );
     }
 
     //get communicator, rank, and coordinates

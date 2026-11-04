@@ -42,7 +42,7 @@ void MultiscalePreconditioner< LAI >::printLevelInfo() const
   constexpr char const headFormat[] = "{:>2}  {:>10}  {:>12}  {:>7}  {:>7}  {:>7}\n";
 
   std::ostringstream os;
-  string const header = GEOS_FMT( headFormat, "L", "rows", "entries", "sparse", "nnz/row", "ratio" );
+  string const header = GEOS_FMT_RUNTIME( headFormat, "L", "rows", "entries", "sparse", "nnz/row", "ratio" );
   os << "\nOperators:\n" << header;
   os << string( header.length() - 1, '=' ) << "\n";
 
@@ -56,7 +56,7 @@ void MultiscalePreconditioner< LAI >::printLevelInfo() const
     globalIndex const nrow = level.matrix->numGlobalRows();
     globalIndex const nnz = level.matrix->numGlobalNonzeros();
     globalIndex const prevNrow = levelIndex > 0 ? m_levels[levelIndex-1].matrix->numGlobalRows() : nrow;
-    os << GEOS_FMT( lineFormat, levelIndex, nrow, nnz, real64( nnz ) / ( nrow * nrow ), real64( nnz ) / nrow, real64( prevNrow ) / nrow );
+    os << GEOS_FMT_RUNTIME( lineFormat, levelIndex, nrow, nnz, real64( nnz ) / ( nrow * nrow ), real64( nnz ) / nrow, real64( prevNrow ) / nrow );
 
     totalNumRows += nrow;
     totalNumNonzeros += nnz;
@@ -70,9 +70,9 @@ void MultiscalePreconditioner< LAI >::printLevelInfo() const
   Matrix const & fineMat = *m_levels[0].matrix;
   constexpr char const compFormat[] = "  {:>8} = {:>6.4f}\n";
   os << "\nComplexities:\n";
-  os << GEOS_FMT( compFormat, "grid", real64( totalNumRows ) / fineMat.numGlobalRows() );
-  os << GEOS_FMT( compFormat, "operator", real64( totalNumNonzeros ) / fineMat.numGlobalNonzeros() );
-  os << GEOS_FMT( compFormat, "memory", real64( totalMemory ) / fineMat.numGlobalNonzeros() );
+  os << GEOS_FMT_RUNTIME( compFormat, "grid", real64( totalNumRows ) / fineMat.numGlobalRows() );
+  os << GEOS_FMT_RUNTIME( compFormat, "operator", real64( totalNumNonzeros ) / fineMat.numGlobalNonzeros() );
+  os << GEOS_FMT_RUNTIME( compFormat, "memory", real64( totalMemory ) / fineMat.numGlobalNonzeros() );
 
   GEOS_LOG_RANK_0( os.str() );
 }

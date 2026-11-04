@@ -197,6 +197,16 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
                                   m_maxCompFracChange ),
                         InputError, getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
 
+  GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_OBL_COMPONENT_CAP,
+                        GEOS_FMT( "OBL table interpolation supports at most {} components.", GEOS_OBL_COMPONENT_CAP ),
+                        InputError, getWrapperDataContext( viewKeyStruct::numComponentsString() ) );
+
+  GEOS_THROW_IF_GT_MSG( m_numComponents, MAX_NUM_COMPONENTS,
+                        GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
+                                  "Rebuild with GEOS_MAX_FLUID_COMPONENTS >= {}.",
+                                  m_numComponents, MAX_NUM_COMPONENTS, m_numComponents ),
+                        InputError, getWrapperDataContext( viewKeyStruct::numComponentsString() ) );
+
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
 
   // Equations: [NC] Molar mass balance, ([1] energy balance if enabled)
@@ -820,9 +830,9 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 
@@ -1094,9 +1104,9 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 
@@ -1140,9 +1150,9 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 

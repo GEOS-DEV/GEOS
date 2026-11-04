@@ -102,8 +102,11 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt"/>
+      pressureCoordinates="{6.6e6, 4e7}"
+      pressureInterval="1e6"
+      temperatureCoordinates="{302.0, 312.0}"
+      temperatureInterval="5"
+      salinity="1.901285269" />
     <!-- SPHINX_FLUID_END -->          
     
     <CompressibleSolidConstantPermeability

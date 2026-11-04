@@ -4,7 +4,7 @@
 ====================================================================
 
 For development purposes, you may want to use the publicly available docker images instead of compiling them yourself.
-While this is possible and this page will help you in through this journey, please note that *this is not officially supported by the GEOS team that reserves the right to modify its workflow or delete elements on which you may have build your own workflow*.
+While this is possible and this page will help you through this journey, please note that *this is not officially supported by the GEOS team that reserves the right to modify its workflow or delete elements on which you may have built your own workflow*.
 
 There are multiple options to use the exposed docker images.
 
@@ -14,7 +14,8 @@ There are multiple options to use the exposed docker images.
   Install your favorite development inside the image (be mindful of X display issues), connect to the running container and start hacking!
 - It is also possible to develop directly in the cloud using `GitHub codespaces <https://docs.github.com/en/codespaces>`_.
   This product will let you buy a machine in the cloud with an environment already configured to build and run ``geos``.
-  The submodules are automatically cloned (except for the ``integratedTests`` which you may need to ``init`` yourself if you really need them, see `.devcontainer/postCreateCommand.sh <https://github.com/GEOS-DEV/GEOS/blob/develop/.devcontainer/postCreateCommand.sh>`_).
+  The submodules are automatically cloned (see `.devcontainer/postCreateCommand.sh <https://github.com/GEOS-DEV/GEOS/blob/develop/.devcontainer/postCreateCommand.sh>`_).
+  The TPL image version used by the codespace is defined by ``GEOS_TPL_TAG`` in `.devcontainer/devcontainer.json <https://github.com/GEOS-DEV/GEOS/blob/develop/.devcontainer/devcontainer.json>`_.
   You do not need to run the ``scripts/config-build.py`` scripts since ``cmake`` and ``vscode`` are already configured.
   Last, run ``cmake`` through the ``vscode`` interface and start hacking!
 
@@ -28,20 +29,21 @@ Once you've installed docker, you must select from our `docker registry <https:/
 - Our containers are built with a relative CPU agnosticism (still ``x86_64``), so you should be fine.
 - Our GPU containers are built for a dedicated ``compute capability`` that may not match yours. Please dive into our configuration files and refer to the `official nvidia page <https://developer.nvidia.com/cuda-gpus>`_ to see what matches your needs.
 - There may be risks of kernel inconsistency between the container and the host, but if you have relatively modern systems (and/or if you do not interact directly with the kernel like ``perf``) it should be fine.
-- You may have noticed that our docker containers are tagged like ``224-965``. Please refer to :ref:`Continuous_Integration_process` for further information.
+- You may have noticed that our docker containers are tagged like ``364-1112``. Please refer to :ref:`Continuous_Integration_process` for further information.
 
 Now that you've selected your target environment, you must be aware that just running a TPL docker image is not enough to let you develop.
 You'll have to add extra tools.
 
 The following `example` is for our ``ubuntu`` flavors.
+The tag shown below is only an example: use the current one, which is the ``GEOS_TPL_TAG`` value in ``.devcontainer/devcontainer.json`` (also used by the CI in ``.github/workflows/ci_tests.yml``).
 You'll notice the arguments ``IMG``, ``VERSION``, ``ORG``.
 While surely overkill for most cases, if you develop in GEOS on a regular basis you'll appreciate being able to switch containers easily.
-For example, simply create the image ``remote-dev-ubuntu20.04-gcc9:224-965`` by running
+For example, simply create the image ``remote-dev-ubuntu24.04-gcc13:364-1112`` by running
 
 .. code-block:: console
 
-    export VERSION=224-965
-    export IMG=ubuntu20.04-gcc9
+    export VERSION=364-1112
+    export IMG=ubuntu24.04-gcc13
     export REMOTE_DEV_IMG=remote-dev-${IMG}
     docker build --build-arg ORG=geosx --build-arg IMG=${IMG} --build-arg VERSION=${VERSION} -t ${REMOTE_DEV_IMG}:${VERSION} -f /path/to/Dockerfile .
 
@@ -57,7 +59,7 @@ I like to do
 
     docker run --cap-add=SYS_PTRACE -d --name ${REMOTE_DEV_IMG}-${VERSION} -p 64000:22 -p 11111:11111 -p 64010-64020:64010-64020 ${REMOTE_DEV_IMG}:${VERSION}
 
-that creates the container ``remote-dev-ubuntu20.04-gcc9-224-965``, running instance of ``remote-dev-ubuntu20.04-gcc9:224-965``.
+that creates the container ``remote-dev-ubuntu24.04-gcc13-364-1112``, running instance of ``remote-dev-ubuntu24.04-gcc13:364-1112``.
 
 - Note that you'll have to access your remote development instance though port ``64000`` (forwarded to standard port ``22`` by docker).
 - Additional port ``11111`` and ports from ``64010`` to ``64020`` will be open if you need them (remote `paraview connection <https://docs.paraview.org/en/latest/ReferenceManual/parallelDataVisualization.html>`_ , multiple instances of `gdbserver <https://sourceware.org/gdb/current/onlinedocs/gdb.html/Server.html>`_, ...).

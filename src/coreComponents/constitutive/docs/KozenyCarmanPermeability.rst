@@ -9,6 +9,8 @@ Kozeny-Carman Permeability Model
 Overview
 ======================
 
+In the input file, this model is selected with the ``<CarmanKozenyPermeability>`` XML tag.
+
 In the Kozeny-Carman model (see `ref`_), the permeability of a porous medium
 is governed by several key parameters, including porosity, grain size, and grain shape:
 

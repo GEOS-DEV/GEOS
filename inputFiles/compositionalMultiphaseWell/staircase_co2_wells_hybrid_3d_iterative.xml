@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./staircase_co2_wells_hybrid_3d_base.xml"/>
+  </Included>
+
+  <Solvers>
+    <CompositionalMultiphaseReservoir
+      name="reservoirSystem"
+      flowSolverName="compositionalMultiphaseFlow"
+      wellSolverName="compositionalMultiphaseWell"
+      logLevel="1"
+      initialDt="5e2"
+      targetRegions="{ Channel, wellRegion1, wellRegion2 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </CompositionalMultiphaseReservoir>
+
+    <CompositionalMultiphaseHybridFVM
+      name="compositionalMultiphaseFlow"
+      logLevel="1"
+      discretization="fluidHM"
+      targetRegions="{ Channel }"
+      temperature="368.15"
+      targetRelativePressureChangeInTimeStep="1"
+      targetPhaseVolFractionChangeInTimeStep="1"
+      maxCompFractionChange="0.2"
+      maxRelativePressureChange="0.2"
+      useMass="1"/>
+
+    <WellManager
+      name="compositionalMultiphaseWell"
+      logLevel="1"
+      targetRegions="{ wellRegion1, wellRegion2 }"
+      useMass="1">
+      <CompositionalMultiphaseWell
+        name="wellControls1"
+        type="producer"
+        control="BHP"
+        maxRelativePressureChange="0.2"
+        maxCompFractionChange="0.2">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxwaterprod"
+          phaseName="water"
+          phaseRate="1e-7"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="2e6"
+          referenceElevation="12"/>
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
+        name="wellControls2"
+        type="injector"
+        control="totalVolRate"
+        maxRelativePressureChange="0.2"
+        maxCompFractionChange="0.2">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="2e7"
+          referenceElevation="12"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="totalRateTable"
+          injectionStream="{ 0.995, 0.005 }"
+          injectionTemperature="368.15"/>
+      </CompositionalMultiphaseWell>
+    </WellManager>
+  </Solvers>
+
+</Problem>
