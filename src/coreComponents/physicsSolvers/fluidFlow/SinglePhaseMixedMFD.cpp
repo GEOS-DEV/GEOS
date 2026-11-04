@@ -444,11 +444,8 @@ void SinglePhaseMixedMFD::applyFaceBoundaryValues( real64 const time,
   stdVector< string > keys = { flow::bcPressure::key(), mixedMimetic::bcMassFlux::key() };
   if( m_isThermal )
   {
-    for( string const & key : { flow::bcTemperature::key(), mixedMimetic::bcHeatFlux::key(), mixedMimetic::bcHeatTransferCoefficient::key(),
-                                mixedMimetic::bcAmbientTemperature::key(), mixedMimetic::bcEnthalpy::key() } )
-    {
-      keys.push_back( key );
-    }
+    keys.insert( keys.end(), { flow::bcTemperature::key(), mixedMimetic::bcHeatFlux::key(), mixedMimetic::bcHeatTransferCoefficient::key(),
+                               mixedMimetic::bcAmbientTemperature::key(), mixedMimetic::bcEnthalpy::key() } );
   }
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
