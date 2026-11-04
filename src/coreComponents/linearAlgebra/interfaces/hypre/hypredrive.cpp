@@ -797,6 +797,29 @@ void appendSolverYaml( std::ostringstream & stream,
   }
 }
 
+void appendGeneralYaml( std::ostringstream & stream )
+{
+  // Keep hypredrive's process-wide HYPRE settings identical to the settings
+  // established by HypreInterface::initialize() for the legacy solver.  In
+  // particular, hypredrive defaults both GPU sparse kernels to the vendor
+  // implementation, while GEOS deliberately selects backend-specific vendor
+  // settings for the legacy path.
+  appendLine( stream, 0, "general:" );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  appendLine( stream, 1, "exec_policy: device" );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+  appendLine( stream, 1, "use_vendor_spmv: off" );
+#else
+  appendLine( stream, 1, "use_vendor_spmv: on" );
+#endif
+  appendLine( stream, 1, "use_vendor_spgemm: off" );
+#else
+  appendLine( stream, 1, "exec_policy: host" );
+  appendLine( stream, 1, "use_vendor_spmv: off" );
+  appendLine( stream, 1, "use_vendor_spgemm: off" );
+#endif
+}
+
 bool buildAMGPreconditionerYaml( LinearSolverParameters const & params,
                                  std::string & yaml )
 {
@@ -861,6 +884,14 @@ bool buildAMGPreconditionerYaml( LinearSolverParameters const & params,
   else
   {
     char const * const relaxType = getGeneratedAMGRelaxationName( params.amg.smootherType );
+
+    // HYPRE_BoomerAMGCreate defaults to Schwarz (6) with no extra smoother
+    // levels. HypreDrive defaults its smoother to ILU (5), so make the
+    // generated configuration explicit to keep both interfaces equivalent.
+    appendLine( stream, 2, "smoother:" );
+    appendLine( stream, 3, "type: schwarz" );
+    appendLine( stream, 3, "num_levels: 0" );
+    appendLine( stream, 3, "num_sweeps: 1" );
 
     appendLine( stream, 2, "relaxation:" );
     // Hypre's legacy AMG setup initializes all relaxation slots from the
@@ -1406,6 +1437,9 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   // custom point markers use more blocks than dof fields: no field-name representation, skip the YAML
   if( strategy.m_numBlocks > LvArray::integerConversion< HYPRE_Int >( labelNames.size() ) )
   {
+    GEOS_ERROR_IF( params.mgr.strategy != LinearSolverParameters::MGR::StrategyType::singlePhaseMixedMFD,
+                   GEOS_FMT( "hypredrive: the MGR strategy {} has {} blocks for {} dof labels",
+                             params.mgr.strategy, strategy.m_numBlocks, labelNames.size() ) );
     return false;
   }
 
@@ -1597,6 +1631,7 @@ bool buildGeneratedInputArgsParseTarget( LinearSolverParameters const & params,
   }
 
   std::ostringstream stream;
+  appendGeneralYaml( stream );
   if( !linearSystemYaml.empty() )
   {
     stream << linearSystemYaml;

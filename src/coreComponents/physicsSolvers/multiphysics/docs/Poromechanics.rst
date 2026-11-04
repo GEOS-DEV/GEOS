@@ -44,15 +44,14 @@ Parameters
 
 The poroelasticity model is implemented as a main solver listed in
 ``<Solvers>`` block of the input XML file that calls both SolidMechanicsLagrangianFEM and SinglePhaseFlow solvers.
-In the main solver, it requires the specification of solidSolverName, flowSolverName, and couplingTypeOption.
+In the main solver, it requires the specification of ``solidSolverName`` and ``flowSolverName``, the names of the two single-physics solvers it couples.
+The coupling scheme (fully implicit or sequential) is selected with the ``couplingType`` attribute of the ``NonlinearSolverParameters`` sub-block (see :ref:`SolutionStrategy`).
 
 The following attributes are supported:
 
 .. include:: /docs/sphinx/datastructure/SinglePhasePoromechanics.rst
 
-* ``couplingTypeOption``: defines the coupling scheme.
-
-The solid constitutive model used here is PoroLinearElasticIsotropic, which derives from ElasticIsotropic and includes an additional parameter: Biot's coefficient. The fluid constitutive model is the same as SinglePhaseFlow solver. For the parameter setup of each individual solver, please refer to the guideline of the specific solver.
+The solid constitutive model used here is ``PorousElasticIsotropic``, which combines an ``ElasticIsotropic`` solid model with a ``BiotPorosity`` porosity model (which carries the grain bulk modulus, from which Biot's coefficient is computed) and a permeability model. The fluid constitutive model is the same as SinglePhaseFlow solver. For the parameter setup of each individual solver, please refer to the guideline of the specific solver.
 
 An example of a valid XML block for the constitutive model is given here:
 

@@ -74,11 +74,15 @@ ConsistencyAdaptation::Report ConsistencyAdaptation::classify( MeshLevel & mesh,
     arrayView1d< integer const > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
     arrayView1d< integer const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+    arrayView1d< globalIndex const > const localToGlobal = subRegion.localToGlobalMap();
+    mfdFlag.move( hostMemorySpace, false );
+    ghostRank.move( hostMemorySpace, false );
+    localToGlobal.move( hostMemorySpace, false );
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
       GEOS_ERROR_IF( prescribed[ei] >= 0 && mfdFlag[ei] != prescribed[ei],
                      GEOS_FMT( "ConsistencyAdaptation: the prescription of cell {} of {} was altered by the layers",
-                               subRegion.localToGlobalMap()[ei], subRegion.getName() ) );
+                               localToGlobal[ei], subRegion.getName() ) );
       report.numConsistentFinal += ( ghostRank[ei] < 0 && mfdFlag[ei] == 1 ) ? 1 : 0;
     }
   } );
@@ -123,6 +127,9 @@ localIndex ConsistencyAdaptation::applyConsistencyLayer( MeshLevel & mesh,
                                       gradient,
                                       params.lengthTolerance,
                                       projFaceFlux );
+
+  // the projection kernel moved the nested permeability view to the device: restore host-indexable views
+  permeability.move( hostMemorySpace, false );
 
   // steps 2-3: localized normalized residuals, assembled on the global face orientation
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
@@ -175,7 +182,7 @@ localIndex ConsistencyAdaptation::applyConsistencyLayer( MeshLevel & mesh,
 
   FieldIdentifiers fieldsToBeSync;
   fieldsToBeSync.addElementFields( { mixedMimetic::mfdFlag::key(), mixedMimetic::consistencyIndicator::key() }, regionNames );
-  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, neighbors, false );
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, neighbors, true );
   return numConsistent;
 }
 
@@ -183,6 +190,15 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyPrescription( Me
                                                                               string_array const & regionNames,
                                                                               stdVector< NeighborCommunicator > & neighbors )
 {
+  // Initial conditions may have written prescriptions on the device. Host packing and
+  // the plain host loops below need coherent host data, even when there are no neighbors.
+  mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                      [&]( localIndex const,
+                                                                           ElementSubRegionBase & subRegion )
+  {
+    subRegion.getField< mixedMimetic::prescribedMfdFlag >().move( hostMemorySpace );
+  } );
+
   FieldIdentifiers prescribedToBeSync;
   prescribedToBeSync.addElementFields( { mixedMimetic::prescribedMfdFlag::key() }, regionNames );
   CommunicationTools::getInstance().synchronizeFields( prescribedToBeSync, mesh, neighbors, false );
@@ -194,12 +210,14 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyPrescription( Me
                                                                            ElementSubRegionBase & subRegion )
   {
     arrayView1d< integer const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
+    arrayView1d< globalIndex const > const localToGlobal = subRegion.localToGlobalMap();
+    localToGlobal.move( hostMemorySpace, false );
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
       if( prescribed[ei] < -1 || prescribed[ei] > 1 )
       {
         GEOS_LOG_RANK( GEOS_FMT( "{}: prescribedMfdFlag = {} on cell {} is not one of -1 (free), 0 (diagonal product), 1 (consistent product)",
-                                 subRegion.getName(), prescribed[ei], subRegion.localToGlobalMap()[ei] ) );
+                                 subRegion.getName(), prescribed[ei], localToGlobal[ei] ) );
         ++numInvalid;
       }
     }
@@ -217,6 +235,9 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyPrescription( Me
     arrayView1d< integer const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
     arrayView1d< integer > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+    ghostRank.move( hostMemorySpace, false );
+    // Touch the host copy: the later device face-label kernel must see these writes.
+    mfdFlag.move( hostMemorySpace );
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
       if( prescribed[ei] < 0 )
@@ -247,6 +268,11 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyDegeneracyLayer(
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
     elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
 
+  nodeToRegion.move( hostMemorySpace, false );
+  nodeToSubRegion.move( hostMemorySpace, false );
+  nodeToElem.move( hostMemorySpace, false );
+  elemVolume.toNestedViewConst().move( hostMemorySpace, false );
+
   localIndex numDegenerate = 0;
   localIndex numPrescribedDegenerate = 0;
   elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -260,6 +286,12 @@ std::pair< localIndex, localIndex > ConsistencyAdaptation::applyDegeneracyLayer(
     arrayView1d< integer > const mfdFlag = subRegion.getField< mixedMimetic::mfdFlag >();
     arrayView1d< integer const > const prescribed = subRegion.getField< mixedMimetic::prescribedMfdFlag >();
     localIndex const numNodes = subRegion.numNodesPerElement();
+
+    elemToNodes.move( hostMemorySpace, false );
+    volume.move( hostMemorySpace, false );
+    ghostRank.move( hostMemorySpace, false );
+    indicator.move( hostMemorySpace );
+    mfdFlag.move( hostMemorySpace );
 
     // the node star of a cell: every cell sharing a vertex with it, counted once
     stdVector< std::array< localIndex, 3 > > star;

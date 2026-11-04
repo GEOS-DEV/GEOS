@@ -95,9 +95,12 @@ The following attributes are supported:
 In particular:
 
 * ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolume`)
-* ``fluidName`` must point to a single phase fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
-* ``solidName`` must point to a solid mechanics model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``targetRegions`` is used to specify the regions on which the solver is applied
+
+The solver does not reference constitutive models directly. Instead, each target region lists its models in the
+``materialList`` attribute of its ``CellElementRegion`` (see :ref:`Constitutive`): this list must contain a single phase
+fluid model (e.g. ``CompressibleSinglePhaseFluid``) and a solid model that bundles the porosity and permeability models
+(e.g. ``CompressibleSolidConstantPermeability``, which combines a ``NullModel`` solid with porosity and permeability models).
 
 Primary solution field label is ``pressure``.
 Initial conditions must be prescribed on this field in every region, and boundary conditions

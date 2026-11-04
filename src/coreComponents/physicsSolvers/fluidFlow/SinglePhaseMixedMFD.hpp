@@ -91,6 +91,14 @@ public:
                bool const setSparsity = true ) override;
 
   virtual void
+  assembleSystem( real64 const time_n,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void
   applyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition & domain,
@@ -160,32 +168,27 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-private:
+  /**
+   * @brief Compute the residual-norm weights w_i = max_j |A_ij| s_j, s_j the characteristic scale of unknown j.
+   * @param domain the domain
+   * @param dofManager the dof manager
+   * @param localMatrix the assembled local matrix
+   * @note public: it contains device lambdas, which nvcc rejects in a private member function
+   */
+  void computeResidualWeights( DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64 const, globalIndex const > const & localMatrix );
 
   /**
-   * @brief Evaluate the face specifications at the given time and fill the condition (type, g, alpha) of every
-   *        operator on every face.
+   * @brief Populate the boundary face mask and pressure values from the field specifications.
    * @param[in] time the time at which the boundary values are evaluated
    * @param[in] domain the domain
+   * @note public: it contains a device lambda, which nvcc rejects in a private member function
    */
-  void applyFaceBoundaryValues( real64 const time,
-                                DomainPartition & domain );
+  void applyFacePressureBCValues( real64 const time,
+                                  DomainPartition & domain );
 
-  /// number of cell dof components: pressure, and temperature and enthalpy when thermal
-  integer numCellDofComponents() const { return m_isThermal ? 3 : 1; }
-
-  /**
-   * @brief Define the type of the boundary condition of every operator on every face from the field
-   *        specifications (Dirichlet, Neumann or Robin), and the faces with a prescribed inflow enthalpy.
-   * @param domain the domain
-   */
-  void markBoundaryFaces( DomainPartition & domain );
-
-  /**
-   * @brief Initialize the enthalpy unknown from the fluid model, h = h_eos( p, T ).
-   * @param domain the domain
-   */
-  void initializeEnthalpy( DomainPartition & domain );
+private:
 
   /**
    * @brief Set the orienting cell E_min of every face: sigma_{E,f} = +1 if E = E_min, -1 otherwise.
@@ -216,28 +219,6 @@ private:
    */
   void computeGhostDofs( DomainPartition const & domain,
                          DofManager const & dofManager );
-
-  /**
-   * @brief Subtract h_K times the mass row from the energy row of every cell.
-   * @param domain the domain
-   * @param dofManager the dof manager
-   * @param localMatrix the system matrix
-   * @param localRhs the system right-hand side
-   */
-  void removeEnthalpyReference( DomainPartition & domain,
-                                DofManager const & dofManager,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs ) const;
-
-  /**
-   * @brief Compute the residual-norm weights w_i = max_j |A_ij| s_j, s_j the characteristic scale of unknown j.
-   * @param domain the domain
-   * @param dofManager the dof manager
-   * @param localMatrix the assembled local matrix
-   */
-  void computeResidualWeights( DomainPartition & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64 const, globalIndex const > const & localMatrix );
 
   /// relative tolerance used in the mass matrix computations
   real64 m_areaRelTol;

@@ -34,6 +34,7 @@
 #include <vtkArrayDispatch.h>
 
 #include <cmath>
+#include <limits>
 #include <type_traits>
 #include <vtkBoundingBox.h>
 #include <vtkCellData.h>
@@ -3503,11 +3504,12 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
         {
           using DstType = std::remove_reference_t< decltype( val ) >;
           auto const src = data.Get( cellIdx, componentIdx++ );
-          // an integer field only accepts whole numbers from a floating point array
+          // an integer field only accepts whole numbers of its range [lowest, -lowest) from a floating point array
           if constexpr ( std::is_integral< DstType >::value && std::is_floating_point< decltype( src ) >::value )
           {
-            GEOS_THROW_IF( !std::isfinite( src ) || std::fabs( src - std::round( src ) ) > 0.0,
-                           GEOS_FMT( "Field '{}' targets an integer field but holds the non-integer value {} at cell {}",
+            auto const lowest = static_cast< std::remove_cv_t< decltype( src ) > >( std::numeric_limits< DstType >::lowest() );
+            GEOS_THROW_IF( !std::isfinite( src ) || std::fabs( src - std::round( src ) ) > 0.0 || src < lowest || src >= -lowest,
+                           GEOS_FMT( "Field '{}' targets an integer field but holds the non-integer or out-of-range value {} at cell {}",
                                      vtkArray->GetName(), src, cellIdx ),
                            InputError );
           }

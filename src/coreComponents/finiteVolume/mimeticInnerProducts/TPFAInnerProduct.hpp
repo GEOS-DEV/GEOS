@@ -36,6 +36,9 @@ class TPFAInnerProduct : public MimeticInnerProductBase
 {
 public:
 
+  /// floor of the one-sided conductance, relative to the length tolerance
+  static constexpr real64 weightToleranceFactor = 1e-30;
+
   /**
    * @brief In a given element, recompute the transmissibility matrix in a cell using TPFA.
    * @param[in] nodePosition the position of the nodes
@@ -155,7 +158,7 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
   GEOS_UNUSED_VAR( elemVolume );
 
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
-  real64 const weightTolerance = 1e-30 * lengthTolerance;
+  real64 const weightTolerance = weightToleranceFactor * lengthTolerance;
 
   // we are ready to compute the transmissibility matrix
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -195,7 +198,7 @@ TPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION
   GEOS_UNUSED_VAR( elemVolume );
 
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
-  real64 const weightTolerance = 1e-30 * lengthTolerance;
+  real64 const weightTolerance = weightToleranceFactor * lengthTolerance;
 
   // initialize M to zero
   LvArray::tensorOps::fill< NF, NF >( M, 0.0 );
