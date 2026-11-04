@@ -93,13 +93,6 @@ CPTI is supported for native triangles/tetrahedra, with corner weights $1/3$ or 
 barycentric gradients computed from current integration geometry. CPTI uses
 uniform diameter clipping rather than the box feasibility cap; see
 Section~\ref{subsec:cpti-cpdi2-placeholders}. CPDI requires parallelograms/boxes, while PFW cuts
-support point types 0/1 or CPTI type 3. A simplex requesting VP-Hencky F selection
-uses the isotropic-polar reset algorithm. Warped CPDI2, plane stress and axisymmetry remain future work.
+support point types 0/1 or CPTI type 3. A simplex requesting VP-Hencky F selection uses the isotropic-polar reset algorithm. Native axisymmetric mechanics use the same quad/triangle material geometry with full-ring measures; see Section~\ref{sec:axisymmetric}. Warped CPDI2 and plane stress remain unimplemented.
 
-Standalone tests exercise production geometry, subdivision, and CPDI kernel
-bodies with CPU adapters. Splitting tests cover unequal child fractions,
-surface-force transfer, constitutive history, melt state, and both reset policies. Full-writer checks include independent processes with explicitly
-emulated collectives. A full GEOS build, real MPI migration/restart, GPU execution,
-and coupled CZ regression remain integration checks. See
-\path{UNIFIED_PARTICLE_GEOMETRY.md} and the complete
-\path{examples/unifiedGeometry/pfw_input_unified_geometry.py} input.
+Standalone tests exercise production geometry, subdivision, and CPDI mapping bodies with CPU adapters. Splitting tests cover unequal child fractions, surface-force transfer, constitutive history, melt state, and both reset policies. Full-writer checks include independent processes with explicitly emulated collectives. A full GEOS build, real MPI migration/restart, GPU execution, and coupled CZ regression remain integration checks. The complete input is in \path{examples/unifiedGeometry/pfw_input_unified_geometry.py}; verification limitations are stated here rather than in a separate feature note.

@@ -116,3 +116,27 @@ The parent suite wrappers are \path{examples/runExamplesSuite}, \path{verificati
 \end{lstlisting}
 
 Reports are written to \path{<run-root>/<suite-name>/suite_report.md} and \path{suite_report.json}.  The source archive also includes generated PDF reports linked in Chapter~\ref{ch:linked-reports}.
+
+Use repeatable fnmatch-style filters to select or omit cases. Template inputs
+containing \texttt{XXXX}, \texttt{YYYY}, or \texttt{ZZZZ} are skipped unless
+\texttt{--include-templates} is supplied after the input has been made concrete.
+
+\begin{lstlisting}[language=bash,caption={Selecting suite cases and running one problem.}]
+./verification/runVerificationSuite run --only 'Ftable/*' --only 'stressControl/*'
+./verification/runVerificationSuite run --exclude 'expandingRing/*' --exclude 'expandingBar/*'
+
+cd verification/Ftable
+./runProblem preflight
+./runProblem run --run-root /p/lustre1/$USER/geos-mpm-suite-runs \
+  --geos-path "$GEOS_EXECUTABLE" --bank "$GEOS_BANK" --submit
+./runProblem status --run-root /p/lustre1/$USER/geos-mpm-suite-runs
+\end{lstlisting}
+
+A per-problem \texttt{runProblem} wrapper discovers direct
+\texttt{pfw\_input\_*.py} files in that directory; parent suite wrappers discover
+recursively. Use the parent wrapper for cross-directory selection and the
+per-problem wrapper for a focused case directory. The optional
+\texttt{--auto-restart} submission mode is Slurm-oriented; it is not submitted
+on the Flux path. Restart discovery selects the newest valid directory/root
+pair within the first populated cycle-number width, but does not validate the
+checkpoint contents.

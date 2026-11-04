@@ -89,12 +89,7 @@ owned wrapper subobjects. This assumes these objects represent intended
 extrusions. Material/group/velocity attributes remain on the original objects.
 The disk frame matches the positive-z legacy cylinder frame.
 
-Tilted cylinders, oblique caps, spheres, STL/general 3D objects, and transforms
-mixing XY with z retain existing cross-section sampling. They require deliberate
-section geometry; projecting an arbitrary 3D normal alone is not an exact
-section algorithm. See \path{PFW_2D_OBJECTS.md} for the example audit and the
-legacy adaptation contract. The copper-foam, packed-bed and polygon examples
-retain their native XY objects; disk examples now use the new constructor.
+Tilted cylinders, oblique caps, spheres, STL/general 3D objects, and transforms mixing XY with z retain existing cross-section sampling. They require deliberate section geometry; projecting an arbitrary 3D normal alone is not an exact section algorithm. The copper-foam, packed-bed and polygon examples retain their native XY objects; disk examples use the native constructor. Object flags select eligible in-plane boundaries: disk/annulus flags are outer then inner, while rectangle flags follow x-min, y-min, x-max, y-max. The legacy adapter assumes a simple z-axis extrusion; use an explicit section object for finite slices or general 3D shapes.
 
 \subsection{Input, output and restart contract}
 Native inputs need no z bounds or nK. The example
@@ -133,7 +128,4 @@ ranks. Camera tests mock the VisIt API.
 
 These checks do not replace the target GEOS build, actual MPI migration and
 restart, GPU execution, coupled contact/CZ mechanics, or
-Silo/VTK readback in VisIt. The delivery validation report lists exact local
-results. Axisymmetric single-field mechanics are described in
-Section~\ref{sec:axisymmetric}; its remaining extensions, plane stress, CPDI2
-and cohesive-particle subdivision remain separate work. See \path{TRUE_2D_PLAN.md} for target acceptance cases.
+Silo/VTK readback in VisIt. The delivery validation report records local results. Axisymmetric single-field mechanics and its implemented extensions are described in Section~\ref{sec:axisymmetric}. Active cohesive particles remain excluded from runtime subdivision because their cached anchors, interface forces and history require a separate transfer method. Plane stress and warped CPDI2 remain unimplemented. Native plane-strain examples and the axisymmetric examples provide the corresponding target acceptance cases.

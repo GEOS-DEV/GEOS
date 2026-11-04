@@ -375,7 +375,7 @@ PFW object \texttt{particleType=3} divides each Cartesian piece into six tets
 in 3D or two triangles in 2D. Native cut simplices are emitted directly. For mixed CPDI bulk/CPTI surface domains,
 use object type 2, \texttt{surfaceRefinementMethod='simplex'},
 \texttt{simplexParticleType=3}, and \texttt{particleGeometry='fromRefinement'}.
-The \texttt{hexTet} surface-refinement preset selects this same combination. The override applies only to emitted cut pieces. Each material's XML includes
+In 3D, the named \texttt{hexTet} surface-refinement preset selects this same combination. Native 2D uses \texttt{surfaceRefinementMethod='simplex'} with the same cut-only type override to produce CPTI triangles. The override applies only to emitted cut pieces. Each material's XML includes
 the required CPDI and CPTI subregions. Existing PFW inputs retain their defaults.
 
 CPTI children use the geometry-aware longest-edge splitter and retain type 3.
@@ -383,8 +383,7 @@ Explicit \mpmcode{subdivideParticles=1} or the independent oversized split polic
 enables splitting; automatic mode remains specific to CPDI boxes. Both
 \texttt{FOnly} and \texttt{FAndGeometry} apply without extra state. A simplex
 requesting VP-Hencky F selection retains the existing isotropic-polar fallback.
-Cohesive particles remain excluded from splitting. Axisymmetry and plane
-stress remain outside this patch; PlaneStrain uses the native triangle kernel.
+Cohesive particles remain excluded from splitting. PlaneStrain uses the native triangle kernel. Axisymmetric CPDI/CPTI mapping uses the same meridional geometry with radius-weighted operators and hoop terms, as described in Section~\ref{sec:axisymmetric}.
 
 \paragraph{CPDI2.}
 Second-order CPDI generalizes the original CPDI parallelogram/parallelepiped representation to more flexible quadrilateral or hexahedral particle domains and supports enrichment for weak discontinuities at material interfaces \cite{sadeghirad2013cpdi2}.  In the code snapshot reviewed for this manual, the \texttt{CPDI2} generator branch is a placeholder.  Completing it would require storage for the full convected hexahedral geometry, generalized corner or quadrature-gradient weights, robust coalescing for larger supports, and consistency tests against the published CPDI2 patch and interface examples.

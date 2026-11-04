@@ -115,14 +115,7 @@ finds material. The level remains a per-direction factor with default 1; the
 preset does not silently increase it. Runtime shape evolution, splitting,
 geometry resets and integration scaling retain their existing behavior.
 
-PFW declares matching CPDI/CPTI subregions for the materials, including a
-possibly empty CPTI subregion when all cuts fall back. This is initialization
-of independent particle domains, not a conforming shared-vertex mesh or runtime
-conversion of newly exposed hex surfaces. Curvature and coarse resolution can
-cause fallback and geometric volume error. Local planes do not guarantee a
-globally continuous surface. See \path{HEX_BULK_TET_SURFACE_PLAN.md} and
-\path{examples/hexBulkTetSurface/pfw_input_hex_bulk_tet_surface.py} for the full
-plan, example and target integration checks.
+PFW declares matching CPDI/CPTI subregions for the materials, including a possibly empty CPTI subregion when all cuts fall back. This is initialization of independent particle domains, not a conforming shared-vertex mesh or runtime conversion of newly exposed hex surfaces. Curvature and coarse resolution can cause fallback and geometric volume error. Local planes do not guarantee a globally continuous surface. The named \texttt{hexTet} preset is the 3D CPDI-hex/CPTI-tet workflow; native 2D uses \texttt{simplex} with \texttt{simplexParticleType=3} to produce CPDI parallelogram bulk and CPTI surface triangles. See \path{examples/hexBulkTetSurface/pfw_input_hex_bulk_tet_surface.py} and \path{examples/true2D/pfw_input_true_2d.py} for runnable inputs.
 
 \subsection{Rank slicing, diagnostics, and verification}
 Each non-Flux writer rank owns a half-open interval of coarse x rows and queries one read-only halo row on each side. Only owned parents emit particles; children retain parent ownership. Ranks with no owned rows still participate in metadata and diagnostic collectives. The serial-only Flux generation path is unchanged.
@@ -145,4 +138,4 @@ particle arrays or completed-file parsing are added. Volume sums may differ by
 summation roundoff across ranks even when particle bytes are identical.
 
 
-The repository includes geometry/ownership unit tests, a complete writer regression, and standalone C++ geometry tests. The writer regression can use real MPI or explicitly selected file-backed emulation; emulation verifies independent-process writer logic, not MPI transport or cluster performance. See \path{SURFACE_REFINEMENT.md} and \path{UNIFIED_PARTICLE_GEOMETRY.md} for commands and remaining full-solver integration checks.
+The repository includes geometry/ownership unit tests, a complete writer regression, and standalone C++ geometry tests. The writer regression can use real MPI or explicitly selected file-backed emulation; emulation verifies independent-process writer logic, not MPI transport or cluster performance. These tests establish preprocessing and geometry behavior, not full-solver accuracy; target GEOS mechanics, real MPI migration/restart, and GPU execution remain separate acceptance checks.

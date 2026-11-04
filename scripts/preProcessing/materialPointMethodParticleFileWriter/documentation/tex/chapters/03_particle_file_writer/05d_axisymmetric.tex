@@ -297,8 +297,7 @@ moments, hoop work, hydrostatic radial equilibrium, near-axis restriction and
 split conservation. Complete writer checks cover both ordinary and curved
 refined geometry at 1, 3 and 7 explicitly emulated ranks. These checks do not
 replace the target GEOS build, actual MPI migration/restart, GPU execution or
-output readback. See \path{AXISYMMETRIC_PLAN.md} for exact limits, local results,
-and the remaining polymer CZ, traction and verification stages.
+output readback. The supported/deferred feature boundary is summarized in this section: finite-thickness polymer CZ and generic exterior-only traction integration remain deferred.
 
 \path{examples/axisymmetricJacketedSample} adds a 20-mm-diameter, 20-mm-long
 compliant sample between 2-mm steel plates inside a 1-mm rubber jacket.
@@ -394,8 +393,7 @@ body. The first pair initially moves away from the midplane. There is no
 applied tensile end traction, new damage-evolution law, explicit internal
 normal, or CZ activation. Select with \mpmcode{AXIS\_DFG\_CASE}; use
 \mpmcode{AXIS\_DFG\_UPDATE=FMPM} for FMPM(2), otherwise FLIP. Particle checks,
-runner and tracer postprocessing are included. See \path{AXISYMMETRIC_DFG.md}
-for the standalone kernel and writer checks and the remaining target tests.
+runner and tracer postprocessing are included. The prescribed damage band exercises the existing separability criterion; it does not introduce a new fracture law. Standalone kernel and writer checks do not replace target GEOS dynamics, real MPI/restart or GPU tests.
 
 \subsection{Prescribed axisymmetric cohesive interfaces}
 Use exactly two contact groups, 0 and 1, and disable DFG. A
@@ -466,7 +464,7 @@ also compiles the reference event and scheduler/handler excerpts to check
 adaptive timesteps, dependency delays and restart-wrapper state. Writer tests
 exercise FLIP/FMPM with one and three emulated ranks. Full GEOS dynamics,
 actual MPI/restart and GPU execution remain target tests. See
-\path{AXISYMMETRIC_CZ.md} for the precise validation scope.
+The standalone adapter checks described above are not a substitute for full GEOS dynamics, real MPI/restart or GPU validation.
 
 
 \subsection{Reconstructed surfaces, nodal area and surface tension}

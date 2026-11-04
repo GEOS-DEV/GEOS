@@ -8,7 +8,7 @@
 \index{GEOS-MPM!applications}
 \index{GEOS!main repository}
 \index{GEOS!documentation}
-\index{GEOS-MPM!lightweight branch}
+\index{GEOS-MPM!MPM-focused branch}
 
 The Material Point Method (MPM) is a hybrid Eulerian--Lagrangian discretization for continuum mechanics.  Material is represented by Lagrangian particles that carry mass, position, volume, velocity, stress, deformation gradient, damage, temperature, and other history-dependent internal variables.  A background grid is used only as a computational scratchpad for the momentum balance.  In a typical explicit step, particle mass, momentum, stress divergence, and body forces are mapped to grid nodes; nodal accelerations and velocities are advanced subject to contact and boundary conditions; particle kinematics and material state are updated; and the grid is reset before the next step.  This organization retains the history-tracking advantages of a Lagrangian method while avoiding the mesh entanglement that limits conventional finite elements in very large deformation, evolving contact, fracture, fragmentation, and granular-flow problems.
 
@@ -20,7 +20,7 @@ The Material Point Method (MPM) is a hybrid Eulerian--Lagrangian discretization 
 \section*{Relationship to the main GEOS project}
 \phantomsection
 \addcontentsline{toc}{section}{Relationship to the main GEOS project}
-The main GEOS open-source project is hosted at the GEOS-DEV repository, \url{https://github.com/GEOS-DEV/GEOS}, and its public user/developer documentation is available through the GEOS documentation site, \url{https://geosx-geosx.readthedocs-hosted.com/en/latest/}.  GEOS-MPM is developed in the same software ecosystem, but this manual is written for the MPM-focused branch rather than for the current public release/develop branch of the main GEOS project.  At the time this manual was prepared, the main GEOS release and develop branches contain only an early MPM solver snapshot relative to the code documented here.
+The main GEOS open-source project is hosted at the GEOS-DEV repository, \url{https://github.com/GEOS-DEV/GEOS}, and its public user/developer documentation is available through the GEOS documentation site, \url{https://geosx-geosx.readthedocs-hosted.com/en/latest/}.  GEOS-MPM is developed in the same software ecosystem, but this manual documents the MPM-focused branch and its PFW workflows rather than the general-purpose public GEOS release. Solver attributes, particle-file schema, and supported combinations in this manual are specific to the documented MPM branch snapshot.
 
 The MPM branch intentionally reuses the pieces of GEOS that are valuable for large-deformation particle mechanics: the XML/object catalog and data-repository model, the GEOS internal Cartesian mesh generator, MPI domain decomposition and ghosting infrastructure, event scheduling, restart/output utilities, constitutive-model registration, unit/integrated-test conventions, and the CMake-based build system.  Conversely, a lightweight MPM build does not need many finite-element, finite-volume, reservoir-flow, well, compositional-fluid, and solver-stack components required by the GEOS flow, fracture, and poromechanics applications.  This branch is therefore maintained to support MPM-specific build tools that remove third-party libraries not required by MPM, while also providing detailed MPM and ParticleFileWriter documentation that would be too specialized for most finite-element/finite-volume GEOS users.
 
