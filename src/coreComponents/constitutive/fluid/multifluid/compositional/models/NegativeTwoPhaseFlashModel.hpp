@@ -92,25 +92,7 @@ public:
     bool const needInitialisation = (pureComponent < 0) && hasZero( m_numComponents, kVapourLiquid.toSliceConst() );
     if( needInitialisation )
     {
-      if( m_flashData.liquidEos == EquationOfStateType::SoreideWhitson )
-      {
-        // Initialise the trial compositions using SW uniform values
-        KValueInitialization::computeSoreideWhitsonKvalue( m_numComponents,
-                                                           pressure,
-                                                           temperature,
-                                                           componentProperties,
-                                                           compFraction,
-                                                           kVapourLiquid );
-      }
-      else
-      {
-        // Initialise the trial compositions using Wilson k-Values
-        KValueInitialization::computeWilsonGasLiquidKvalue( m_numComponents,
-                                                            pressure,
-                                                            temperature,
-                                                            componentProperties,
-                                                            kVapourLiquid );
-      }
+      initialiseKValues( componentProperties, pressure, temperature, compFraction, kVapourLiquid );
     }
 
     integer const stabilityIterations = m_discreteFlashParameters[FlashParameters::STABILITY_MAX_ITERATIONS];
@@ -183,6 +165,25 @@ public:
           real64 const yi = LvArray::math::max( incipientComposition[ic], MultiFluidConstants::minForSpeciesPresence );
           kVapourLiquid[ic] = incipientIsVapour ? yi / zi : zi / yi;
         }
+        flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
+                                                      pressure,
+                                                      temperature,
+                                                      compFraction,
+                                                      componentProperties,
+                                                      m_flashData,
+                                                      m_continuousFlashParameters.toSliceConst(),
+                                                      m_discreteFlashParameters.toSliceConst(),
+                                                      kValues,
+                                                      phaseFraction.value[m_vapourIndex],
+                                                      phaseCompFraction.value[m_liquidIndex],
+                                                      phaseCompFraction.value[m_vapourIndex] );
+      }
+
+      // The stored k-values carry the history of the cell and can be a poor starting point for the
+      // current state: restart from freshly initialised k-values
+      if( !flashStatus )
+      {
+        initialiseKValues( componentProperties, pressure, temperature, compFraction, kVapourLiquid );
         flashStatus = NegativeTwoPhaseFlash::compute( m_numComponents,
                                                       pressure,
                                                       temperature,
@@ -319,6 +320,35 @@ public:
       sumVzt += Vz * criticalTemperature[ic];
     }
     return sumVzt / sumVz;
+  }
+
+  template< int USD1, int USD2 >
+  GEOS_HOST_DEVICE
+  void initialiseKValues( ComponentProperties::KernelWrapper const & componentProperties,
+                          real64 const & pressure,
+                          real64 const & temperature,
+                          arraySlice1d< real64 const, USD1 > const & compFraction,
+                          arraySlice1d< real64, USD2 > const & kVapourLiquid ) const
+  {
+    if( m_flashData.liquidEos == EquationOfStateType::SoreideWhitson )
+    {
+      // Initialise the trial compositions using SW uniform values
+      KValueInitialization::computeSoreideWhitsonKvalue( m_numComponents,
+                                                         pressure,
+                                                         temperature,
+                                                         componentProperties,
+                                                         compFraction,
+                                                         kVapourLiquid );
+    }
+    else
+    {
+      // Initialise the trial compositions using Wilson k-Values
+      KValueInitialization::computeWilsonGasLiquidKvalue( m_numComponents,
+                                                          pressure,
+                                                          temperature,
+                                                          componentProperties,
+                                                          kVapourLiquid );
+    }
   }
 
 private:
