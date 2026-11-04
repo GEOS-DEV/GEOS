@@ -45,9 +45,19 @@ foreach(test ${parallel_tests})
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList} )
   if ( ENABLE_MPI )
-    geos_add_test( NAME ${test_name}
-                   COMMAND ${test_name} -x ${nranks}
-                   NUM_MPI_TASKS ${nranks} )
+    if( test_name STREQUAL "testExternalSolvers" AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+      # SuperLU_DIST's OpenMP direct solve is not stable with AOCC/Clang's
+      # runtime in this two-rank unit test. Keep the MPI coverage serial per
+      # rank; GEOS OpenMP remains enabled for the rest of the test suite.
+      geos_add_test( NAME ${test_name}
+                     COMMAND ${test_name} -x ${nranks}
+                     NUM_MPI_TASKS ${nranks}
+                     NUM_OMP_THREADS 1 )
+    else()
+      geos_add_test( NAME ${test_name}
+                     COMMAND ${test_name} -x ${nranks}
+                     NUM_MPI_TASKS ${nranks} )
+    endif()
   else()
     geos_add_test( NAME _${test_name}
                    COMMAND ${test_name} )

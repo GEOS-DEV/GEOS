@@ -265,7 +265,6 @@ jobs:
   run_integrated_tests:
     needs:
       - is_not_draft_pull_request
-      - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
@@ -283,7 +282,7 @@ jobs:
       RUNS_ON: streak2-32core
       NPROC: 32
       DOCKER_RUN_ARGS: "--cpus=32 --memory=256g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
-      REQUIRED_LABEL: "ci: run integrated tests"
+      REQUIRED_LABEL: ""
       LOCAL_BASELINE_DIR: /home/geos-data/baselines
       HOST_CONFIG: /spack-generated.cmake
 

@@ -37,27 +37,7 @@ namespace isothermalCompositionalMultiphaseBaseKernels
 namespace internal
 {
 
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
-
-  switch( value )
-  {
-    case 1:
-    { lambda( std::integral_constant< T, 1 >() ); return; }
-    case 2:
-    { lambda( std::integral_constant< T, 2 >() ); return; }
-    case 3:
-    { lambda( std::integral_constant< T, 3 >() ); return; }
-    case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return; }
-    case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return; }
-    default:
-    { GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", value ) ); }
-  }
-}
+using geos::internal::kernelLaunchSelectorCompSwitch;
 
 } // namespace internal
 
