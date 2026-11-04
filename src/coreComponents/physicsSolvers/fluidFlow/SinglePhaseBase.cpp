@@ -1336,12 +1336,12 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
                                                                        m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
                                                                        pressureScalingFactor, temperatureScalingFactor );
 
-        scalingFactor = std::min( scalingFactor, std::get< 0 >( subRegionData ) );
-        maxDeltaPres  = std::max( maxDeltaPres, std::get< 1 >( subRegionData ) );
-        maxDeltaTemp  = std::max( maxDeltaTemp, std::get< 2 >( subRegionData ) );
+        scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        maxDeltaPres  = std::max( maxDeltaPres, subRegionData.maxDeltaPres );
+        maxDeltaTemp  = std::max( maxDeltaTemp, subRegionData.maxDeltaTemp );
 
-        minPresScalingFactor = std::min( minPresScalingFactor, std::get< 3 >( subRegionData ) );
-        minTempScalingFactor = std::min( minTempScalingFactor, std::get< 4 >( subRegionData ) );
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.minPresScalingFactor );
+        minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.minTempScalingFactor );
       } );
     } );
   }
@@ -1368,9 +1368,9 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
                                      launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
                                                                        m_maxAbsolutePresChange, pressureScalingFactor );
 
-        scalingFactor = std::min( scalingFactor, subRegionData.first );
-        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.first );
-        maxDeltaPres  = std::max( maxDeltaPres, subRegionData.second );
+        scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.minPresScalingFactor );
+        maxDeltaPres  = std::max( maxDeltaPres, subRegionData.maxDeltaPres );
       } );
     } );
   }

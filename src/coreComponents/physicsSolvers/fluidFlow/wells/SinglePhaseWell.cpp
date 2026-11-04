@@ -979,11 +979,11 @@ SinglePhaseWell::scalingForLocalSystemSolution( WellElementSubRegion & subRegion
                                                                    m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
                                                                    pressureScalingFactor, temperatureScalingFactor );
 
-    scalingFactor = std::get< 0 >( subRegionData );
-    maxDeltaPres = std::get< 1 >( subRegionData );
-    maxDeltaTemp = std::get< 2 >( subRegionData );
-    minPresScalingFactor = std::get< 3 >( subRegionData );
-    minTempScalingFactor = std::get< 4 >( subRegionData );
+    scalingFactor = subRegionData.scalingFactor;
+    maxDeltaPres = subRegionData.maxDeltaPres;
+    maxDeltaTemp = subRegionData.maxDeltaTemp;
+    minPresScalingFactor = subRegionData.minPresScalingFactor;
+    minTempScalingFactor = subRegionData.minTempScalingFactor;
   }
   else
   {
@@ -992,9 +992,9 @@ SinglePhaseWell::scalingForLocalSystemSolution( WellElementSubRegion & subRegion
                                  launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
                                                                    m_maxAbsolutePresChange, pressureScalingFactor );
 
-    scalingFactor = subRegionData.first;
-    maxDeltaPres = subRegionData.second;
-    minPresScalingFactor = subRegionData.first;
+    scalingFactor = subRegionData.scalingFactor;
+    maxDeltaPres = subRegionData.maxDeltaPres;
+    minPresScalingFactor = subRegionData.minPresScalingFactor;
   }
 
   return scalingFactor;

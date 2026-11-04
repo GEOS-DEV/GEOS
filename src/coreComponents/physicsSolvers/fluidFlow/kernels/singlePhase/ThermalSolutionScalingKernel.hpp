@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
 
 namespace geos
 {
@@ -34,15 +35,16 @@ namespace thermalSinglePhaseBaseKernels
 struct SolutionScalingKernel
 {
   template< typename POLICY >
-  static std::tuple< real64, real64, real64, real64, real64 >  launch( arrayView1d< real64 const > const & localSolution,
-                                                                       globalIndex const rankOffset,
-                                                                       globalIndex const temperatureOffset,
-                                                                       arrayView1d< globalIndex const > const & dofNumber,
-                                                                       arrayView1d< integer const > const & ghostRank,
-                                                                       real64 const maxAbsolutePresChange,
-                                                                       real64 const maxAbsoluteTempChange,
-                                                                       arrayView1d< real64 > pressureScalingFactor,
-                                                                       arrayView1d< real64 > temperatureScalingFactor )
+  static singlePhaseBaseKernels::SolutionScalingData
+  launch( arrayView1d< real64 const > const & localSolution,
+          globalIndex const rankOffset,
+          globalIndex const temperatureOffset,
+          arrayView1d< globalIndex const > const & dofNumber,
+          arrayView1d< integer const > const & ghostRank,
+          real64 const maxAbsolutePresChange,
+          real64 const maxAbsoluteTempChange,
+          arrayView1d< real64 > pressureScalingFactor,
+          arrayView1d< real64 > temperatureScalingFactor )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > scalingFactor( 1.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
@@ -91,7 +93,13 @@ struct SolutionScalingKernel
 
     } );
 
-    return { scalingFactor.get(), maxDeltaPres.get(), maxDeltaTemp.get(), localMinPresScalingFactor.get(), localMinTempScalingFactor.get() };
+    singlePhaseBaseKernels::SolutionScalingData scalingData;
+    scalingData.scalingFactor = scalingFactor.get();
+    scalingData.maxDeltaPres = maxDeltaPres.get();
+    scalingData.maxDeltaTemp = maxDeltaTemp.get();
+    scalingData.minPresScalingFactor = localMinPresScalingFactor.get();
+    scalingData.minTempScalingFactor = localMinTempScalingFactor.get();
+    return scalingData;
   }
 
 };
