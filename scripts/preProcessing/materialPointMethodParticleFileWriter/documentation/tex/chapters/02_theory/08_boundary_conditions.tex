@@ -1,7 +1,17 @@
 % !TeX root = ../../../geos_mpm_manual.tex
+
 \section{Boundary conditions, prescribed deformation, and stress control}
 \label{sec:bc-internals}
 \index{boundary conditions}
+
+The Cartesian formulas below retain their existing implementation. For native
+axisymmetry, Section~\ref{sec:axisymmetric-grid-driving} specifies the radial/axial
+wall controls, full-ring stress normalization, inactive third grid coordinate
+and axis restrictions. Axisymmetric Moving walls also impose a fixed zero
+normal velocity when no loading is active. Axisymmetric Contact walls use
+impulse-limited meridional friction only while approaching an intersecting wall;
+the Cartesian friction expressions below are not used for those walls.
+
 \index{Ftable}
 \index{stress control}
 \index{reactionHistory}

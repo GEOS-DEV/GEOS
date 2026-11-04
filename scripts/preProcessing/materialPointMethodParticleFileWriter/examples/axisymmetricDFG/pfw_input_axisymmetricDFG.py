@@ -32,6 +32,7 @@ pfw = dict(
                                     'gridMaxDamage', 'gridDamageGradient',
                                     'gridSurfaceNormal', 'gridContactForce'],
 )
+
 pfw['runDebug'] = True
 # DFG selects side*numberOfGroups+group. Its existing damage and quality
 # criteria decide whether same-group fields tie or can separate/contact.

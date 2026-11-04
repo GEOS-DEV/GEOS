@@ -33,7 +33,9 @@ if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
         SolidMechanicsMPM.hpp
         MPMMappingKernels.hpp
         MPMGeometryMeasures.hpp
+        MPMAxisymmetricSurfaces.hpp
         MPMDamageGradient.hpp
+        MPMSurfaceDetection.hpp
         MPMSolverFields.hpp
         kernels/ExplicitMPM.hpp )
 

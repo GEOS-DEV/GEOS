@@ -17,6 +17,7 @@
  */
 
 #include "ConfiningPressureMPMEvent.hpp"
+#include <cmath>
 
 namespace geos
 {
@@ -36,11 +37,11 @@ ConfiningPressureMPMEvent::ConfiningPressureMPMEvent( const string & name,
 {
   registerWrapper( viewKeyStruct::confiningPressureBoxMinString(), &m_confiningPressureBoxMin ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Min corner of box defining confining pressure region. Required unless confiningPressureSphereRadius is positive." );
+    setDescription( "Minimum corner of the pressure-free box (three entries; Axisymmetric uses r,y and ignores z). Required for box mode." );
 
   registerWrapper( viewKeyStruct::confiningPressureBoxMaxString(), &m_confiningPressureBoxMax ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Max corner of box defining confining pressure region. Required unless confiningPressureSphereRadius is positive." );
+    setDescription( "Maximum corner of the pressure-free box (three entries; Axisymmetric uses r,y and ignores z). Required for box mode." );
 
   registerWrapper( viewKeyStruct::confiningPressureSphereRadiusString(), &m_confiningPressureSphereRadius ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -53,7 +54,7 @@ ConfiningPressureMPMEvent::ConfiningPressureMPMEvent( const string & name,
   registerWrapper( viewKeyStruct::uniformPressureString(), &m_uniformPressure ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_uniformPressure ).
-    setDescription( "Apply pressure everywhere (0/1), without box or sphere exclusion. Required for Axisymmetric." );
+    setDescription( "Apply pressure everywhere (0/1), without box or sphere exclusion. Axisymmetric also supports box and sphere modes." );
 
   registerWrapper( viewKeyStruct::startPressureString(), &m_startPressure ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -76,7 +77,7 @@ void ConfiningPressureMPMEvent::postInputInitialization()
 {
   MPMEventBase::postInputInitialization();
 
-  GEOS_ERROR_IF( m_confiningPressureSphereRadius < 0.0,
+  GEOS_ERROR_IF( !std::isfinite(m_confiningPressureSphereRadius) || m_confiningPressureSphereRadius < 0.0,
                  "confiningPressureSphereRadius must be non-negative." );
 
   GEOS_ERROR_IF( m_uniformPressure < 0 || m_uniformPressure > 1,
@@ -98,6 +99,15 @@ void ConfiningPressureMPMEvent::postInputInitialization()
                  "confiningPressureBoxMin must be of length 3 when confiningPressureSphereRadius is not positive." );
   GEOS_ERROR_IF( !m_uniformPressure && !useSphere && m_confiningPressureBoxMax.size() != 3,
                  "confiningPressureBoxMax must be of length 3 when confiningPressureSphereRadius is not positive." );
+
+  GEOS_ERROR_IF( !std::isfinite(m_startPressure) || !std::isfinite(m_endPressure),
+                 "Confining pressure endpoints must be finite" );
+  GEOS_ERROR_IF( m_interpType < 0 || m_interpType > 2, "Pressure interpType must be 0, 1 or 2" );
+  if( hasBoxMin && hasBoxMax )
+    for( int d=0; d<3; ++d )
+      GEOS_ERROR_IF( !std::isfinite(m_confiningPressureBoxMin[d]) || !std::isfinite(m_confiningPressureBoxMax[d]) ||
+                     m_confiningPressureBoxMin[d] > m_confiningPressureBoxMax[d],
+                     "Confining pressure box corners must be finite and ordered (min <= max)" );
 
   GEOS_LOG_RANK_0( "ConfiningPressureEvent: " <<
                    "Start time=" << m_startTime << ", " <<

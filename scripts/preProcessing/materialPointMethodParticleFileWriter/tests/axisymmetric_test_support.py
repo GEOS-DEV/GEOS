@@ -22,8 +22,9 @@ def program_prefix():
     prefix+='enum class ParticleType {SinglePoint,CPDI,SinglePointBSpline,CPTI};\n'
     prefix+=source[start:end]
     prefix+='struct Kernel {\n bool m_axisymmetric=false;\n int m_cpdiDomainScaling=0;\n double m_neighborRadius=1.1,m_hEl[3]={1,1,1};\n'
+    prefix+=' double m_xGlobalMin[3]={0,0,0},m_xGlobalMax[3]={6,6,6}; int m_boundaryConditionTypes[6]={1,0,0,0,0,0};\n'
     prefix+=' mpm::CPDIDomainScalingTypeOption m_cpdiDomainScalingType=mpm::CPDIDomainScalingTypeOption::VPHencky;\n'
-    for name in ('projectIntegrationGeometry','projectCPTIIntegrationGeometry'):
+    for name in ('projectIntegrationGeometry','projectCPTIIntegrationGeometry','prepareIntegrationGeometry'):
         prefix+='template<int DIM=3>\n'+function('int SolidMechanicsMPM::'+name+'(')+'\n'
     prefix+='template<int DIM,class NODES,class VALUES,class GRADIENTS>\n'
     prefix+=function('bool SolidMechanicsMPM::computeParticleMapping(')+'\n};\n'

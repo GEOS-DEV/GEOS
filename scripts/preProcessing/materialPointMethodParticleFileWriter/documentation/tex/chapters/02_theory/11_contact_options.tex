@@ -162,6 +162,10 @@ with a separate mass-like normalization stored in \mpmcode{gridSurfaceFieldMass}
 \index{computeParticleSurfaceNormalsAndPositions}
 \index{normalAndPositionMethod}
 
+The Cartesian reconstruction is described below. Axisymmetric reconstruction
+uses the shared geometric projection, ring-volume inverse and particle-relative
+offset gather in Section~\ref{sec:axisymmetric-surfaces}.
+
 The option \mpmcode{computeParticleSurfaceNormalsAndPositions} invokes a one-time reconstruction pass before the particle-to-grid stage of the step in which the flag is seen.  The pass first scatters temporary mass, volume, and the raw normal in Eq.~\eqref{eq:contact-normal-scatter}.  It then branches on \mpmcode{normalAndPositionMethod}:
 \begin{description}
   \item[\mpmcode{DFGAndVolumeIntegration}.] The normalized DFG or volume-gradient normal is kept as the grid-based normal.  The grid-based surface position is recovered by matching the mapped nodal field volume to the volume of a weighted half-space, as described in Section~\ref{subsec:volume-method-contact-position}.

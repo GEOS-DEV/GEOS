@@ -34,15 +34,14 @@ for change in (dict(group=-1), dict(group=.5), dict(group=100),
         pass
     else:
         raise AssertionError('Unsupported particle accepted: '+repr(change))
-for change in (dict(overlapCorrection='NormalForce'),
-               dict(computeParticleSurfaceNormalsAndPositions=1), dict(computeNodalArea=1)):
+for change in (dict(overlapCorrection='NormalForce'),):
     try:
         axis.validate_options(dict(xmin=0, xmax=2, **change))
     except ValueError:
         pass
     else:
         raise AssertionError('Unsupported option accepted: '+repr(change))
-axis.validate_options(dict(xmin=0, xmax=2, enableContact=1))
+axis.validate_options(dict(xmin=0, xmax=2, enableContact=1, computeParticleSurfaceNormalsAndPositions=1, computeNodalArea=1))
 axis.validate_options(dict(xmin=0, xmax=2, enableContact=1, damageFieldPartitioning=1))
 print('Contact-group and unsupported-feature validation passed.', flush=True)
 
@@ -57,6 +56,10 @@ for update in ('FLIP', 'FMPM'):
             'geosPath="/bin/true"\npfwPath='+repr(str(base))+'\ndefaultBank="test"\n')
         subprocess.run([sys.executable, str(case/'caseSettings.py'), '--write', 'case.json'],
                        cwd=folder, env=env, check=True)
+        for dependency in case.glob('*.py'):
+            (folder/dependency.name).write_bytes(dependency.read_bytes())
+        input_source = (case/'pfw_input_axisymmetricContact.py').read_text()
+        (folder/'pfw_input_axisymmetricContact.py').write_text('import sys\nsys.path.insert(0,'+repr(str(case))+')\n'+input_source+"\npfw['mSubmitJobs']=False\n")
         logs = []
         jobs = []
         try:
@@ -65,7 +68,7 @@ for update in ('FLIP', 'FMPM'):
                 logs.append(log)
                 jobs.append(subprocess.Popen([
                     sys.executable, str(base/'tests/_collective_test_worker.py'),
-                    str(base/'particleFileWriter.py'), str(case/'pfw_input_axisymmetricContact.py'),
+                    str(base/'particleFileWriter.py'), str(folder/'pfw_input_axisymmetricContact.py'),
                     str(rank), str(size), str(folder/'collectives')],
                     cwd=folder, env=env, stdout=log, stderr=subprocess.STDOUT))
             for job in jobs:

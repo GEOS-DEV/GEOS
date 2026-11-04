@@ -39,6 +39,57 @@ GEOS_HOST_DEVICE inline bool cellCoordinate( real64 const u, int const first,
   return true;
 }
 
+/** Local indices of fixed physical symmetry faces; -1 leaves a face open.
+ * These are global-domain faces expressed in this patch's index space, never
+ * MPI partition boundaries. The normal grid buffer layer remains allocated.
+ */
+struct CubicBoundary
+{
+  int lower[3] = { -1, -1, -1 };
+  int upper[3] = { -1, -1, -1 };
+};
+
+/** Eliminate an exterior control value by linear continuation from the two
+ * adjacent physical controls: u[-1] = 2*u[0] - u[1] (and its right analogue).
+ * Apply the identical combination to the basis and its derivatives BEFORE
+ * tensor products or particle/grid transfers. This is a one-sided boundary
+ * basis, not a post-transfer ghost-velocity override.
+ *
+ * On the first cell s in [0,1], the three physical weights are
+ * (1-s+s^3/6, s-s^3/3, s^3/6). They are nonnegative, sum to one, reproduce
+ * linear fields using the actual grid coordinates, and join the interior
+ * cubic basis with C2 continuity. At the boundary only its own basis is one,
+ * so the existing normal Dirichlet constraint acts on the interpolated field.
+ * The closure sets the one-sided second normal derivative to zero. It does
+ * not impose zero slope on free tangential components or add spline DOFs.
+ */
+GEOS_HOST_DEVICE inline void closeCubicBoundary( bool const lower, bool const upper,
+                                                 real64 const s, real64 const invH,
+                                                 real64 (&weight)[4], real64 (&derivative)[4] )
+{
+  // Evaluate the combined polynomials directly. Subtracting two O(1) cardinal
+  // weights would lose the O(r/h) radial weight for particles very near r=0.
+  if( lower && upper )
+  {
+    weight[0] = 0.0; weight[1] = 1-s; weight[2] = s; weight[3] = 0.0;
+    derivative[0] = 0.0; derivative[1] = -invH; derivative[2] = invH; derivative[3] = 0.0;
+  }
+  else if( lower )
+  {
+    real64 const s2 = s*s, s3 = s2*s;
+    weight[0] = 0.0; weight[1] = 1-s+s3/6; weight[2] = s-s3/3; weight[3] = s3/6;
+    derivative[0] = 0.0; derivative[1] = (-1+s2/2)*invH;
+    derivative[2] = (1-s2)*invH; derivative[3] = (s2/2)*invH;
+  }
+  else if( upper )
+  {
+    real64 const t = 1-s, t2 = t*t, t3 = t2*t;
+    weight[0] = t3/6; weight[1] = t-t3/3; weight[2] = 1-t+t3/6; weight[3] = 0.0;
+    derivative[0] = (-t2/2)*invH; derivative[1] = (-1+t2)*invH;
+    derivative[2] = (1-t2/2)*invH; derivative[3] = 0.0;
+  }
+}
+
 /** Tensor-product Q1 or cubic B-spline support: 4/8 or 16/64 entries.
  * Local arrays and loops use DIM. The shared framework output gradient keeps
  * three components, with an explicitly zero inactive z component in 2D.
@@ -47,11 +98,13 @@ template< int DIM, bool CUBIC, class POINT, class MAP, class NODES, class VALUES
 GEOS_HOST_DEVICE bool point( POINT const & position, MAP const & map,
                             real64 const (&origin)[3], real64 const (&spacing)[3],
                             localIndex const (&cells)[3], NODES && nodes,
-                            VALUES && values, GRADIENTS && gradients )
+                            VALUES && values, GRADIENTS && gradients,
+                            CubicBoundary const & boundary = CubicBoundary{} )
 {
   constexpr int WIDTH = CUBIC ? 4 : 2;
   constexpr int COUNT = CUBIC ? (1 << (2*DIM)) : (1 << DIM);
   int base[DIM];
+  bool closed = false;
   real64 weight[DIM][WIDTH], derivative[DIM][WIDTH];
   for( int d=0; d<DIM; ++d )
   {
@@ -69,6 +122,17 @@ GEOS_HOST_DEVICE bool point( POINT const & position, MAP const & map,
       weight[d][2]=(-3*s3+3*s2+3*s+1)/6; weight[d][3]=s3/6;
       derivative[d][0]=-0.5*t*t*invH; derivative[d][1]=(1.5*s2-2*s)*invH;
       derivative[d][2]=(-1.5*s2+s+0.5)*invH; derivative[d][3]=0.5*s2*invH;
+      bool const lower = cell == boundary.lower[d];
+      bool const upper = cell+1 == boundary.upper[d];
+      if( lower || upper )
+      {
+        closed = true;
+        // Subtract the physical cell origin before scaling. At the axis this
+        // preserves tiny positive radii lost by (r-ghostOrigin)/h - cell.
+        s = ( position[d] - ( origin[d] + cell*spacing[d] ) ) * invH;
+        s = s < 0.0 ? 0.0 : ( s > 1.0 ? 1.0 : s );
+        closeCubicBoundary( lower, upper, s, invH, weight[d], derivative[d] );
+      }
     }
     else
     {
@@ -77,6 +141,7 @@ GEOS_HOST_DEVICE bool point( POINT const & position, MAP const & map,
     }
   }
   real64 sum=0, gradientSum[DIM]={};
+  int largest = 0;
   for( int n=0; n<COUNT; ++n )
   {
     int digit[DIM], index[3]={}, remaining=n;
@@ -87,16 +152,24 @@ GEOS_HOST_DEVICE bool point( POINT const & position, MAP const & map,
     nodes[n]=map[index[0]][index[1]][index[2]];
     real64 value=1;
     for( int d=0; d<DIM; ++d ) value*=weight[d][digit[d]];
-    values[n]=n==COUNT-1 ? 1-sum : value;
+    values[n]=!closed && n==COUNT-1 ? 1-sum : value;
+    if( values[n] > values[largest] ) largest = n;
     sum+=values[n];
     if constexpr( DIM==2 ) gradients[n][2]=0;
     for( int d=0; d<DIM; ++d )
     {
       real64 gradient=derivative[d][digit[d]];
       for( int k=0; k<DIM; ++k ) if(k!=d) gradient*=weight[k][digit[k]];
-      gradients[n][d]=n==COUNT-1 ? -gradientSum[d] : gradient;
+      gradients[n][d]=!closed && n==COUNT-1 ? -gradientSum[d] : gradient;
       gradientSum[d]+=gradients[n][d];
     }
+  }
+  if( closed )
+  {
+    // Preserve small near-axis weights and exactly zero exterior weights.
+    // Put rounding closure into the largest entry, not the last stencil node.
+    values[largest] += 1-sum;
+    for( int d=0; d<DIM; ++d ) gradients[largest][d] -= gradientSum[d];
   }
   return true;
 }

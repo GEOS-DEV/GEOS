@@ -1,7 +1,8 @@
 """Compile production background-pressure and 2D force bodies with CPU adapters.
 
-Checks full-ring boundary resultants and cancellation at bonded CPDI/CPTI
-interfaces. This standalone test does not build GEOS or test restart I/O.
+Checks spatial selectors, simultaneous inner/outer full-ring pressure loads,
+and cancellation at bonded CPDI/CPTI interfaces. Does not build GEOS or test
+restart I/O.
 """
 from pathlib import Path
 import subprocess
@@ -56,6 +57,10 @@ std::array<double,2> mappedForce(NodeManager const& nodes,int mappedNode,double 
   return {internalForce0,internalForce1};
 }
 bool near(double a,double b) {return std::abs(a-b)<2.e-10*std::max({1.,std::abs(a),std::abs(b)});}
+void clearStress(NodeManager& nodes) {
+  // Production grid initialization does this before every background update.
+  for(auto& row:nodes.stress) for(double& value:row)value=0;
+}
 int main() {
   NodeManager nodes;
   int map[9][9][9],cells[3]={8,8,0};
@@ -101,18 +106,93 @@ int main() {
   assert(near(outer,-7*axisymmetric::twoPi*4*4));
   assert(near(top,-7*.5*axisymmetric::twoPi*16));assert(near(bottom,-top));
   assert(near(work,-3*7*volume));
-  // Existing Cartesian box and sphere modes retain their selection behavior.
+  // Independent inner/outer pressures on an annulus, CPDI bulk / CPTI skin.
   pressure.m_uniformConfiningPressure=0;
-  bool rejected=false;try {pressure.updateGridBackgroundStress(nodes);}catch(std::runtime_error const&){rejected=true;}
-  assert(rejected);pressure.m_axisymmetric=false;
-  for(auto& row:nodes.stress) for(double& value:row)value=0;
+  pressure.m_enableBoreholePressure=1;pressure.m_boreholeRadius=1.25;
+  for(int d=0;d<3;++d)pressure.m_boreholeStress[d]=-11;
+  pressure.m_confiningPressureBoxMin[0]=-99;pressure.m_confiningPressureBoxMin[1]=-99;
+  pressure.m_confiningPressureBoxMax[0]=3.75;pressure.m_confiningPressureBoxMax[1]=99;
+  // z bounds intentionally exclude every node: axisymmetric boxes ignore z.
+  pressure.m_confiningPressureBoxMin[2]=8;pressure.m_confiningPressureBoxMax[2]=9;
+  clearStress(nodes);pressure.updateGridBackgroundStress(nodes);
+  for(auto const& row:nodes.stress) assert(near(row[0],row[2])); // hoop pressure retained
+  double annulusForces[9][9][2]={},radialWork=0;
+  for(int i=1;i<4;++i) for(int j=0;j<4;++j) for(int tri=0;tri<(i==3?2:1);++tri) {
+    double center[3]={i+.5,j+.5,0},g[3][3]={{1,0,0},{0,1,0},{0,0,1}},area=1;
+    ParticleType type=ParticleType::CPDI;
+    if(i==3) {
+      type=ParticleType::CPTI;area=.5;
+      if(tri==0) {center[0]=i+2./3;center[1]=j+1./3;g[1][0]=1;}
+      else {center[0]=i+1./3;center[1]=j+2./3;g[0][1]=1;}
+    }
+    double V=axisymmetric::volume(area,center[0]);
+    int mapped[16];double w[16],grad[16][3];
+    assert(mapping.computeParticleMapping<2>(type,center,g,map,origin,h,cells,mapped,w,grad));
+    for(int a=0;a<(type==ParticleType::CPTI?12:16);++a) {
+      auto f=mappedForce(nodes,mapped[a],V,grad[a],0);
+      int ni=mapped[a]/81,nj=(mapped[a]/9)%9;
+      annulusForces[ni][nj][0]+=f[0];annulusForces[ni][nj][1]+=f[1];
+      radialWork+=f[0]*nodes.xyz[mapped[a]][0];
+    }
+  }
+  double inner=0;outer=0;
+  for(int j=0;j<9;++j) {inner+=annulusForces[2][j][0];outer+=annulusForces[5][j][0];}
+  assert(near(inner,11*axisymmetric::twoPi*1*4));
+  assert(near(outer,-7*axisymmetric::twoPi*4*4));
+  for(int i=3;i<5;++i) for(int j=0;j<9;++j)assert(near(annulusForces[i][j][0],0));
+  assert(near(radialWork,axisymmetric::twoPi*4*(11-7*16)));
+
+  // Borehole selector is independent of axial y and excludes its cutoff.
+  pressure.m_enableConfiningPressure=0;pressure.m_boreholeRadius=2;
+  clearStress(nodes);pressure.updateGridBackgroundStress(nodes);
+  assert(near(nodes.stress[map[2][8][0]][0],-11)); // r=1, y=7
+  assert(near(nodes.stress[map[0][8][0]][0],-11)); // reflected buffer r=-1
+  assert(near(nodes.stress[map[3][1][0]][0],0));   // r=2 exactly
+  // Selection is recomputed from current coordinates, not cached grid indices.
+  nodes.xyz[map[2][8][0]][0]=2.5;
+  clearStress(nodes);pressure.updateGridBackgroundStress(nodes);
+  assert(near(nodes.stress[map[2][8][0]][0],0));nodes.xyz[map[2][8][0]][0]=1;
+  // Finite axial box bounds can also load end surfaces. At a corner equality
+  // is inside. Confinement overwrites the borehole in an overlap.
+  pressure.m_enableConfiningPressure=1;
+  pressure.m_confiningPressureBoxMin[0]=0;pressure.m_confiningPressureBoxMin[1]=0;
+  pressure.m_confiningPressureBoxMax[0]=3;pressure.m_confiningPressureBoxMax[1]=3;
+  clearStress(nodes);pressure.updateGridBackgroundStress(nodes);
+  assert(near(nodes.stress[map[2][8][0]][0],-7));
+  assert(near(nodes.stress[map[2][2][0]][0],-11));
+  assert(near(nodes.stress[map[4][4][0]][0],0));
+  pressure.m_uniformConfiningPressure=1;
+  clearStress(nodes);pressure.updateGridBackgroundStress(nodes);
+  assert(near(nodes.stress[map[2][2][0]][0],-7));
+  // Origin-centered sphere in the meridional plane, ignoring geometric z.
+  pressure.m_uniformConfiningPressure=0;pressure.m_enableBoreholePressure=0;
+  pressure.m_confiningPressureSphereRadius=2;
+  nodes.xyz[map[2][2][0]][2]=10;
+  clearStress(nodes);pressure.updateGridBackgroundStress(nodes);
+  assert(near(nodes.stress[map[2][2][0]][0],0));
+  assert(near(nodes.stress[map[3][1][0]][0],0));
+  assert(near(nodes.stress[map[2][3][0]][0],-7));
+
+  // Cartesian borehole, box and sphere selectors retain their behavior.
+  pressure.m_axisymmetric=false;pressure.m_enableBoreholePressure=1;pressure.m_enableConfiningPressure=0;
+  clearStress(nodes);pressure.updateGridBackgroundStress(nodes);
+  assert(near(nodes.stress[map[2][8][0]][0],0));
+  assert(near(nodes.stress[map[2][2][0]][0],-11));
+  pressure.m_enableBoreholePressure=0;pressure.m_enableConfiningPressure=1;
+  pressure.m_confiningPressureSphereRadius=0;
+  pressure.m_confiningPressureBoxMin[0]=1;pressure.m_confiningPressureBoxMin[1]=1;
+  pressure.m_confiningPressureBoxMin[2]=-1;pressure.m_confiningPressureBoxMax[2]=1;
+  clearStress(nodes);
   pressure.updateGridBackgroundStress(nodes);
   assert(near(nodes.stress[map[3][3][0]][0],0));assert(near(nodes.stress[map[1][1][0]][0],-7));
   pressure.m_confiningPressureSphereRadius=2;
   for(auto& row:nodes.stress) for(double& value:row)value=0;
   pressure.updateGridBackgroundStress(nodes);
   assert(near(nodes.stress[map[1][1][0]][0],0));assert(near(nodes.stress[map[4][4][0]][0],-7));
-  std::cout<<"Production uniform pressure, bonded CPDI/CPTI cancellation, cylindrical resultants, pressure work and Cartesian selections passed.\n";
+  assert(near(nodes.stress[map[2][2][0]][0],0)); // Cartesian 2D sphere ignores z
+  pressure.m_numDims=3;clearStress(nodes);pressure.updateGridBackgroundStress(nodes);
+  assert(near(nodes.stress[map[2][2][0]][0],-7)); // Cartesian 3D sphere includes z
+  std::cout<<"Production pressure selectors, hoop balance, CPDI/CPTI inner/outer resultants, pressure work and Cartesian selections passed.\n";
 }
 '''
 with tempfile.TemporaryDirectory(prefix='geos-axis-pressure-') as folder:

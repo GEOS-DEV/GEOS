@@ -44,11 +44,12 @@ for event_switch in (None,0,'0',2):
     else: raise AssertionError(('Disabled CZ activation accepted',event_switch))
 for change in (dict(materialPropertyString='<SurfaceInformedPolymerCohesiveZone name="law"/>'),
                dict(materialPropertyString='<PolymerCohesiveZone name="law"/>'),
-               dict(particleFileFields=[]),
-               dict(mpmEventsString='<ReferenceCohesiveZones computeNormalsAndPositions="1"/>')):
+               dict(particleFileFields=[])):
     try: axis.validate_options(dict(options,**change))
     except ValueError: pass
     else: raise AssertionError(change)
+axis.validate_options(dict(options,mpmEventsString='<ReferenceCohesiveZones computeNormalsAndPositions="1"/>'))
+axis.validate_particle([2,0,0],dict(data,surfaceNormal=[0,0,0]),(3,np.eye(2)),reconstruct_surfaces=True)
 print('Axisymmetric CZ input validation passed.',flush=True)
 
 for mode in ('elastic','debond'):
@@ -60,12 +61,16 @@ for mode in ('elastic','debond'):
             env=dict(os.environ,AXIS_CZ_CASE=mode,AXIS_CZ_UPDATE=update,OPENBLAS_NUM_THREADS='1',OMP_NUM_THREADS='1')
             (folder/f'userDefs_{getpass.getuser()}.py').write_text('geosPath="/bin/true"\npfwPath='+repr(str(base))+'\ndefaultBank="test"\n')
             subprocess.run([sys.executable,str(case/'caseSettings.py'),'--write','case.json'],cwd=folder,env=env,check=True)
+            for dependency in case.glob('*.py'):
+                (folder/dependency.name).write_bytes(dependency.read_bytes())
+            input_source = (case/'pfw_input_axisymmetricCZ.py').read_text()
+            (folder/'pfw_input_axisymmetricCZ.py').write_text('import sys\nsys.path.insert(0,'+repr(str(case))+')\n'+input_source+"\npfw['mSubmitJobs']=False\n")
             logs=[];jobs=[]
             try:
                 for rank in range(size):
                     log=(folder/f'rank{rank}.log').open('w');logs.append(log)
                     jobs.append(subprocess.Popen([sys.executable,str(base/'tests/_collective_test_worker.py'),
-                        str(base/'particleFileWriter.py'),str(case/'pfw_input_axisymmetricCZ.py'),str(rank),str(size),str(folder/'collectives')],
+                        str(base/'particleFileWriter.py'),str(folder/'pfw_input_axisymmetricCZ.py'),str(rank),str(size),str(folder/'collectives')],
                         cwd=folder,env=env,stdout=log,stderr=subprocess.STDOUT))
                 for job in jobs:
                     if job.wait(timeout=120): raise RuntimeError('Writer failed: '+str(folder))

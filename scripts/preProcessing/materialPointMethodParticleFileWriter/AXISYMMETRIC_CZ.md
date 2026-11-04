@@ -13,13 +13,13 @@ restart field recording whether that event has already applied its reference.
 - `UncoupledCohesiveZone`, `CoupledCohesiveZone`, `BicrystalCohesiveZone`.
   These are traction-separation laws. Use material symmetry compatible with
   axisymmetry; arbitrary anisotropic crystal orientations can break it.
-- Explicit `SurfaceNormal` and `SurfacePosition`, `SurfaceFlag=3` on the
+- Explicit or reconstructed `SurfaceNormal` and `SurfacePosition`, `SurfaceFlag=3` on the
   interface, and matching `CZTag` / `CohesiveZoneRegion tag`.
 - Set `useEvents=1` on the solver so `ReferenceCohesiveZones` activates the
   interface. With the default zero, the event never executes; surface flags
   and tags alone do not establish a bond. Its displacement options
   `Nodal`, `TypeA` and `TypeB` retain their meanings; `computeNormalsAndPositions`
-  must be zero. `TypeB` intersects a normal ray with the actual unscaled
+  may be one to reconstruct before activation (see `AXISYMMETRIC_SURFACES.md`). `TypeB` intersects a normal ray with the actual unscaled
   material shape, so it also works for a triangle.
 - `preventCZInterpenetration=1` lets ordinary contact supply compression while
   the CZ supplies opening and shear forces. Once all cached CZ nodes of a
@@ -34,8 +34,9 @@ multiple field pairs or intersecting interfaces are not introduced here.
 rejected in axisymmetry. Their finite-layer reconstruction needs in-surface
 hoop stretch as a constitutive input; multiplying force by ring area does not
 supply that strain or its constitutive coupling. That is the next CZ stage.
-DFG, active-CZ subdivision, swirl, Weibull/localized hoop fracture and
-solver-reconstructed surfaces remain outside this patch.
+Combining CZ with DFG, active-CZ subdivision, swirl and Weibull/localized hoop
+fracture remain outside this extension. Reconstructed surfaces are supported
+by the later `AXISYMMETRIC_SURFACES.md` extension.
 
 ## One-time reference activation
 

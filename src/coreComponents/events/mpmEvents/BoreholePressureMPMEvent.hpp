@@ -27,7 +27,8 @@ namespace geos
 /**
  * @class BoreholePressureMPMEvent
  *
- * This class implements a virtual fluid boundary condition for a region in the X-Y plane defined by a borehole radius.
+ * This class implements virtual fluid pressure inside a Cartesian z-aligned cylinder,
+ * or inside r < boreholeRadius about the y revolution axis in Axisymmetric.
  */
 class BoreholePressureMPMEvent : public MPMEventBase
 {

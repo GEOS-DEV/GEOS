@@ -372,6 +372,7 @@ source_inventory=[
     {'component':'MPM solver','path':'src/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsMPM.[ch]pp'},
     {'component':'Dimension-specialized MPM mapping','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMMappingKernels.hpp'},
     {'component':'Native interface measures','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMGeometryMeasures.hpp'},
+    {'component':'Axisymmetric surfaces','path':'src/coreComponents/physicsSolvers/solidMechanics/MPMAxisymmetricSurfaces.hpp'},
     {'component':'Axisymmetric ring measures','path':'src/coreComponents/mesh/AxisymmetricGeometry.hpp'},
     {'component':'MPM unified geometry','path':'src/coreComponents/mesh/ParticleGeometry.hpp'},
     {'component':'MPM particle subdivision','path':'src/coreComponents/mesh/ParticleSubdivision.hpp'},
@@ -413,6 +414,7 @@ data={
 fingerprint_paths=[
  'src/coreComponents/physicsSolvers/solidMechanics/MPMMappingKernels.hpp',
  'src/coreComponents/physicsSolvers/solidMechanics/MPMGeometryMeasures.hpp',
+ 'src/coreComponents/physicsSolvers/solidMechanics/MPMAxisymmetricSurfaces.hpp',
  'src/coreComponents/mesh/generators/InternalMeshGenerator.cpp',
  'src/coreComponents/mesh/mpiCommunications/SpatialPartition.cpp',
  'src/coreComponents/fileIO/silo/SiloFile.cpp',

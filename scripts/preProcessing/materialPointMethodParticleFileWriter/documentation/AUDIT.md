@@ -1,3 +1,17 @@
+# Axisymmetric surface extension (2026-10-23)
+
+The pressure-regions baseline now supports reconstructed particle normals and
+positions, per-step full-ring nodal areas and cylindrical diffuse surface stress.
+The surface projection integrates geometric Q1 over quad/triangle cells; it is
+independent of the mechanical interpolation. The manual covers volume inversion,
+meridional logistic weights, particle-relative plane gathers, hoop stress, the
+material/void normalization and validation limits. PFW admits the controls and
+CZ reconstruction requests; the generated metadata includes the new helper.
+
+Standalone production-kernel/excerpt tests use strict warnings and ASan/UBSan;
+full PFW examples use 1/3 emulated ranks. These are not full GEOS build/dynamics,
+real MPI/restart or GPU acceptance tests. See AXISYMMETRIC_SURFACES.md.
+
 # Native Cartesian 2D update (2026-10-21)
 
 The true-2D patch adds native XY mesh/partition topology, compact 2x2 G/G0,

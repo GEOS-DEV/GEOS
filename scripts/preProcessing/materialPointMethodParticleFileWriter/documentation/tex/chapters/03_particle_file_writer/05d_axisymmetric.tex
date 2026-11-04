@@ -35,7 +35,7 @@ The radius-weighted operators are
 \]
 CPDI/CPTI integrate the material-domain interpolant of the grid basis. The
 otherwise inactive third mapping-gradient slot stores $T_I$, not a z
-spatial derivative. Point Q1 uses $T_I=N_I/r_p$. CPDI has four corners;
+spatial derivative. Point Q1 and cubic B-spline use $T_I=N_I/r_p$. CPDI has four corners;
 CPTI has three. The cylindrical force and hoop kinematics are
 \begin{align*}
  f_{Ir}&=-V_p(\sigma_{rr}G_{Ir}+\sigma_{ry}G_{Iy}+\sigma_{\theta\theta}T_I),\\
@@ -48,29 +48,165 @@ Material symmetries/orientations must be compatible with no swirl.
 
 Temporary integration geometry is uniformly shrunk about its center if a
 corner would pass below $r=0$. Stored material geometry, mass and physical
-volume are unchanged. A center reaching $r\leq0$ is an error. Splitting uses
+volume are unchanged. Mapping, scaling diagnostics and out-of-range cleanup
+use the same temporary geometry, including the axis fit; an un-fitted
+stored corner below the mesh buffer is not a reason to delete a valid particle.
+A center reaching $r\leq0$ is an error. Splitting uses
 area fraction times $r_{\mathrm{child}}/r_{\mathrm{parent}}$ for extensive
 state, with a weighted-mean correction for optional affine child velocities.
 This conserves momentum, but resolving the velocity gradient can add resolved
 kinetic energy, as in the existing splitter. Automatic resets preserve hoop
 stretch and use $J/F_{\theta\theta}$ for planar geometry projection.
 
+\subsection{B-spline interpolation at the axis}
+Select \mpmcode{particleType=1}. On the first radial cell, write $s=r/h_r$.
+The weights at $r=0,h_r,2h_r$ are
+\[
+ N_0=1-s+s^3/6,\qquad N_1=s-s^3/3,\qquad N_2=s^3/6.
+\]
+All exterior radial weights and derivatives are zero. This replaces the
+exterior cardinal control value by $u_{-1}=2u_0-u_1$ in the basis itself.
+The resulting weights are nonnegative, sum to one, reproduce linear fields
+using physical grid coordinates, and meet the interior cubic basis with
+$C^2$ continuity. Their analytic derivatives enter the same cached and
+on-demand mapping routine. Small positive radii are evaluated directly from
+the physical cell origin; no minimum-radius cutoff is introduced.
+The hoop operator is $T_I=N_I/r_p$. With the existing radial constraint
+$v_r(0)=0$, $v_r/r$ approaches the one-sided radial derivative at the axis.
+
+This is a one-sided boundary basis, not an even/odd ghost-field extension.
+It imposes zero second radial derivative of the represented field at the
+boundary; it does not impose zero axial-velocity slope there. Boundary
+accuracy for curved radial profiles must be checked by mesh refinement.
+The change applies only at a physical revolution axis. Annular inner
+boundaries, other grid faces, Cartesian F-table boundaries and internal MPI
+partition faces keep their original cardinal basis and boundary handling.
+No new input switch, particle geometry data or restart fields are added.
+
+The F-table path uses the same linear continuation relation on constrained
+velocity components after mapping. Substituting it into the basis changes
+mass and force assembly as well, and applies a common basis to both velocity
+components. Thus the two complete algorithms are not claimed equivalent.
+Generalizing this basis to moving/contact/F-table boundaries is separate work.
+The existing minimum-grid-size and single-partition periodic B-spline
+restrictions remain. B-spline particles tagged for CZ are rejected because
+the cohesive area/reference-support operator still assumes Q1 nodal hats;
+ordinary contact and untagged bulk particles do not require that operator.
+
+\subsection{Geometric surface detection}
+For \mpmcode{surfaceDetection=1}, the neighbor-centroid test uses meridional
+area $A_q=V_q/(2\pi r_q)$ and images at $(-r_q,y_q)$ when inside the existing
+kernel support. Full-ring volume would displace the centroid outward even
+in a uniformly filled section. Axis images avoid classifying the revolution
+axis as a material free surface. No extra particle search or physical mass
+is introduced: any contributing image has its real sample in the same
+neighbor list. The existing $0.08$ times neighbor-radius threshold and
+surface-flag convention are retained. Empty support does not assign a new
+surface flag. Other geometric surfaces remain detectable; this change does
+itself reconstruct normals or positions. The separate controls below provide
+those fields and full-ring nodal-area output.
+Existing flags are not automatically cleared on restart.
+
+\subsection{Grid walls, prescribed radial stretch and normal stress control}
+\label{sec:axisymmetric-grid-driving}
+Axisymmetric grid faces are ordered $r-,r+,y-,y+$. Boundary types are
+\mpmcode{0=Outflow}, \mpmcode{1=Symmetry}, \mpmcode{2=Moving}, and
+\mpmcode{3=Contact}. A physical $r=0$ face is always Symmetry, including
+BC-table transitions. A radial wall at positive radius represents a cylinder;
+an axial wall represents an annular or circular platen.
+
+Enable \mpmcode{prescribedBoundaryFTable=1} and supply
+\mpmcode{fTable} rows \mpmcode{[time,Frr,Fyy,1]} to prescribe the two grid
+stretches. The time interpolation choices remain Linear, Cosine and Smoothstep.
+The first stretches are one; subsequent prescribed stretches must be positive.
+Grid coordinates use the finite ratio $F_{n+1}/F_n$ while wall velocity uses
+the existing endpoint rate $L=\dot F/F$ at the endpoint wall position.
+The radial map is about $r=0$; both faces of an annulus share the same radial
+scale. Axial scaling is about $y=0$. Independent wall translations, shear of
+the grid and swirl are not introduced.
+
+The third entry of \mpmcode{domainF}, \mpmcode{fTable}, and the history column
+\mpmcode{F22} describes an inactive grid coordinate and remains one. It is
+not particle $F_{\theta\theta}$. Particle hoop rate remains $v_r/r$, and
+hoop stretch is advanced by the existing particle constitutive kinematics.
+The grid volume scales as $F_{rr}^{2}F_{yy}$. A fixed Symmetry face away from
+the origin is incompatible with driving that direction; use Moving or Contact.
+Moving walls impose their normal velocity bilaterally. Contact walls apply a
+compressive normal impulse only when the mapped surface intersects the wall
+and approaches it relative to its prescribed velocity. With no explicit
+surface position, the existing mapped center-of-volume gap estimate is used.
+Axisymmetric wall friction opposes the single meridional slip component and
+is capped by $\mu$ times the actual normal impulse; it cannot reverse slip or
+act on a separated wall. This is an inelastic normal wall law; no restitution
+extension is added. Full-ring mass already supplies the circumference factor.
+
+Set \mpmcode{stressControl=[1,0,0]} for radial control, or
+\mpmcode{[0,1,0]} for axial control; both components may be controlled.
+\mpmcode{stressTable} rows are \mpmcode{[time,sigma\_rr,sigma\_yy,unused]}.
+Compression is negative. Each controlled component measures
+\[
+ \overline{\sigma}_{ii}^{\rm domain}
+  =\frac{\sum_p V_p\sigma_{ii,p}}
+  {\pi(R_{\rm out}^2-R_{\rm in}^2)H},\qquad i=r,y.
+\]
+The denominator includes void. Radial feedback is $\sigma_{rr}$ alone,
+not outer-wall pressure and not $\sigma_{rr}+\sigma_{\theta\theta}$, which
+would be conjugate to uniform radial scaling in a work calculation.
+A control entry of one overrides that direction's F-table column. Entry two
+retains the existing one-sided limit on prescribed loading. The legacy PID
+controller and \mpmcode{stressControlAdaptiveSeek=1} are supported; adaptive
+seek still requires control entries zero or one. Controller rate caps use
+absolute wall distance from the scaling origin, including annular grids.
+At least one Moving or Contact face is required in each driven direction.
+Axially periodic domains may remain periodic when axial wall driving is off.
+
+\mpmcode{prescribedBcTable=1} supports rows
+\mpmcode{[time,r-,r+,y-,y+]}; seven-column padded rows are also accepted.
+Tables start at zero, increase in time and retain type one at a physical
+axis. Their first row supplies the initial types. A wall may be released to
+Outflow after its prescribed F ramp ends, provided stress control in that
+direction is off. Constant transverse velocities remain available on Moving faces when
+compatible with no swirl and axis regularity. Existing cyclic transverse slots
+are unchanged: the axial component on a radial face is slot zero, and the
+radial component on an axial face is slot one. The latter must be zero when
+the cap includes $r=0$.
+
+Moving walls support FLIP/PIC/XPIC/FMPM; Contact walls support FLIP/PIC/XPIC.
+FMPM contact-wall increments remain unsupported. The separate
+\mpmcode{prescribedFTable} periodic affine-bulk path and the
+\mpmcode{DeformationUpdate} event remain blocked. No new B-spline boundary
+basis is introduced here: the physical axis keeps its one-sided basis and
+other walls retain their existing constrained-velocity continuation.
+
+Face reactions are full-ring scalar component sums. Cylindrical wall area is
+$2\pi R H$, and platen area is $\pi(R_{\rm out}^2-R_{\rm in}^2)$; neither
+requires a fictitious thickness. \mpmcode{boxAverageHistory} reports material
+volume-averaged stress, so multiply it by selected material volume divided by
+the full domain volume before comparing it with the controller target.
+\mpmcode{examples/axisymmetricGridDriving} provides prescribed-stretch,
+radial-stress and mixed-control modes, a runner and a history post-processor.
+Tests compile production table/grid/wall/controller code through CPU adapters
+and execute full PFW generation with emulated collectives. A complete GEOS
+build, real MPI/restart execution and dynamics convergence remain run-time
+validation tasks.
+
 \subsection{Supported scope and deferred integrations}
 The implementation supports ordinary contact between separate body groups,
-Q1 point, CPDI and CPTI particles, fixed Outflow/Symmetry boundaries, and
+Q1 point, cubic B-spline, CPDI and CPTI particles, meridional grid walls, and
 compatible body-force, initial-velocity and material initialization.
 It supports DFG contact-surface insertion. It explicitly rejects finite-thickness
-polymer CZ, surface tension, reconstructed surfaces/nodal areas,
-SPH/overlap corrections, crack-tip detection, profileHistory slice normalization,
-B-splines, prescribed BC/F tables
-and stress-controlled domain motion. PFW rejects surface traction generation;
+polymer CZ, SPH/overlap corrections, crack-tip detection, profileHistory slice normalization,
+CZ-tagged B-spline particles and periodic affine-bulk driving.
+BC tables, boundary F tables and radial/axial normal stress control are supported
+as described below. PFW rejects surface traction generation;
 direct GEOS particle tractions are interpreted as already integrated full-ring
-forces. The uniform-confinement follow-up supports
-\mpmcode{ConfiningPressure} with \mpmcode{uniformPressure=1} and no box/sphere
-exclusion. Its background stress includes the hoop component; pressure is
-retained after the event and across restart. Spatially restricted pressure
-remains unsupported. Most geometry-changing/healing events are rejected. The prescribed-interface
-\mpmcode{ReferenceCohesiveZones} event is supported with explicit surface data.
+forces. \mpmcode{ConfiningPressure} supports uniform, box and sphere modes;
+\mpmcode{BoreholePressure} selects $r<r_0$ independently of axial position.
+Their background stresses include the hoop component; pressure is retained
+after the event and across restart. Most geometry-changing/healing events are rejected. The prescribed-interface
+\mpmcode{ReferenceCohesiveZones} event is supported with explicit or reconstructed surface data.
+\mpmcode{FrictionCoefficientSwap} is also supported: scalar/table coefficients
+are updated by its existing one-shot handler, with no geometry-dependent change.
 
 Built-in area-only Weibull objects are rejected: a statistical cell needs
 $2\pi\int_A r\,dA$, before minimum-volume clamping. A custom wrapper can
@@ -85,14 +221,78 @@ Reaction-history length\_z is zero; do not use Cartesian thickness-based
 force-to-pressure conversions.
 No automatic revolved output mesh is generated. ParticleColor is retained.
 
+\subsection{Pressure regions and traction interpretation}
+Pressure events select grid nodes in current physical coordinates. Cutoffs
+are fixed in space and do not track material boundaries. With $x=r$, $y$
+axial and positive compressive pressure $p$, the selections are:
+\begin{center}
+\begin{tabular}{ll}
+Event/mode & Selected nodes \\
+\hline
+\texttt{BoreholePressure} & $r^2<r_0^2$, independent of $y$ \\
+Confinement, sphere & $r^2+y^2>R^2$ \\
+Confinement, box & outside $[r_{\min},r_{\max}]\times[y_{\min},y_{\max}]$ \\
+Confinement, uniform & every node
+\end{tabular}
+\end{center}
+The sphere is centered at the origin and revolves about $y$. Box XML retains
+three entries per corner, but z is ignored. Boundary equalities are inside
+the pressure-free region. Confinement overwrites borehole pressure if both
+select a node. Each kind has one stored region; successive events of the same
+kind replace that shared region rather than adding another load.
+
+For a hollow cylinder with inner/outer radii $a,b$, choose
+$a<r_0<r_1<b$ with margins appropriate to boundary support and deformation.
+Use \mpmcode{boreholeRadius}=$r_0$ and a box whose maximum radial entry is
+$r_1$; its minimum radial and both axial bounds must extend beyond the entire
+grid, including buffers, to select only $r>r_1$. For example, a 10--20 mm
+annulus in a millimetre-scale grid can use:
+\begin{lstlisting}[language=XML]
+<BoreholePressure name="innerPressure" startTime="0" endTime="0.005"
+  boreholeRadius="0.0105" startPressure="0" endPressure="100000" interpType="2"/>
+<ConfiningPressure name="outerPressure" startTime="0" endTime="0.005"
+  confiningPressureBoxMin="{-1,-1,0}" confiningPressureBoxMax="{0.0195,1,0}"
+  startPressure="0" endPressure="20000" interpType="2"/>
+\end{lstlisting}
+Put these in PFW's \mpmcode{mpmEventsString} with \mpmcode{useEvents=1}.
+For spherical exclusion, replace the box corners with
+\mpmcode{confiningPressureSphereRadius}. Uniform mode instead sets
+\mpmcode{uniformPressure=1} and omits all exclusion geometry.
+
+The cylindrical weak form uses $\boldsymbol\sigma^{\rm bg}=-p\mathbf I$,
+including hoop pressure. Volumes already contain $2\pi r$; do not multiply
+the prescribed pressure by circumference. No surface flags, reconstructed
+normals or particle traction records are needed. The spatial mask can load
+any free/interface boundary represented by its selected support, including
+end-face bands and cracks. It is not a named external-surface selector.
+
+Axisymmetric ramps assign the exact \mpmcode{endPressure} on the step reaching
+their end, then hold it. Zero-duration events assign their end pressure.
+The general event scheduler and Cartesian sampling convention are unchanged.
+Both pressure states are saved for restart; completed events remain completed.
+Direct GEOS particle tractions are already integrated full-ring forces;
+generic PFW per-area traction integration remains unsupported.
+
+\path{examples/axisymmetricPressureRegions} supplies the annular example.
+
+Set \mpmcode{AXIS\_PRESSURE\_CASE=sphere} for the spherical variant.
+Both have a runner and history comparison against small-strain static
+references. Production-excerpt tests check region
+selection, overlap precedence, inner/outer full-ring resultants, pressure work,
+hoop balance, input validation and ramp holds. Full writer runs compare output
+at 1/3 emulated ranks. Full GEOS dynamics and restart remain target checks.
+
 \subsection{Example, validation and remaining work}
 \path{examples/axisymmetricCylinder} supplies a CPDI core with CPTI outer
 annulus and radial contraction pulse. Its radius-1, length-1 cylinder has
 volume $\pi$ and mass $1000\pi$. It is a smoke test, not a validated dynamics
 benchmark. The runner generates inputs and optionally runs a selected GEOS
 executable; its particle check verifies geometry and full-ring volume.
+Set \mpmcode{AXIS\_CYLINDER\_INTERPOLATION=bspline} for the same material and
+pulse with point B-splines, and \mpmcode{AXIS\_CYLINDER\_UPDATE=FMPM} for FMPM(2).
+The default mixed CPDI/CPTI case remains available for comparison.
 
-Standalone checks cover 1800 production axisymmetric mappings, cylindrical
+Standalone checks cover 2400 production axisymmetric mappings, cylindrical
 moments, hoop work, hydrostatic radial equilibrium, near-axis restriction and
 split conservation. Complete writer checks cover both ordinary and curved
 refined geometry at 1, 3 and 7 explicitly emulated ranks. These checks do not
@@ -131,14 +331,15 @@ The same assembled normals serve ordinary and FMPM contact.
 
 Explicit PFW surface positions can be used with
 \mpmcode{useSurfacePositionForContact=1}; otherwise the existing approximate
-centre-of-mass gap criterion applies. Solver-reconstructed surface positions,
-overlap correction, nodal areas and moving walls remain
+centre-of-mass gap criterion applies. Reconstructed surfaces and nodal areas
+are supported as described in Section~\ref{sec:axisymmetric-surfaces}; moving
+walls use Section~\ref{sec:axisymmetric-grid-driving}. Overlap correction remains
 unsupported. Contact and slip have only radial and axial components.
 
 \path{examples/axisymmetricContact} supplies two elastic cylinders with separate
 contact groups and mixed CPDI/CPTI particles. Each has radius 10 mm and length
 8 mm; they approach at $\pm1$ m/s across a 2-mm gap. The example includes input
-checks, a runner and history plots. \mpmcode{AXIS_CONTACT_UPDATE=FMPM} selects
+checks, a runner and history plots. \mpmcode{AXIS\_CONTACT\_UPDATE=FMPM} selects
 FMPM(2); the default is FLIP. Standalone tests check normal cancellation and
 orientation on axial, cylindrical and inclined interfaces, axis behavior,
 friction limits, separation, momentum exchange and contact dissipation. Writer
@@ -147,8 +348,9 @@ validation remain target-machine tasks.
 
 The uniform pressure bath used in the bonded jacketed example can also load
 newly exposed internal surfaces if the materials are separated into contact
-groups. A sealed jacket with internal separation needs exterior-only pressure
-loading, which remains a separate integration task.
+groups. A spatial exclusion can protect internal gaps only while their nodal
+support remains outside the selected pressure region. General exterior-only
+loading for a deforming sealed jacket remains a separate integration task.
 
 
 \subsection{Axisymmetric DFG contact-surface insertion}
@@ -177,8 +379,8 @@ weights. No additional circumference factor enters the contact law.
 
 The existing separability criterion decides whether same-group fields remain
 tied or can open and recontact. Its development is separate from this
-axisymmetric adaptation. Solver-reconstructed surface positions remain
-unsupported; a newly inserted DFG surface can use the existing approximate
+axisymmetric adaptation. Surface reconstruction can be requested separately;
+a newly inserted DFG surface without reconstructed data uses the approximate
 centre-of-mass gap criterion with \mpmcode{useSurfacePositionForContact=0}.
 The current partition uses one reference direction per grid node and two
 slots per group; this patch does not add unresolved crack-junction topology.
@@ -190,8 +392,8 @@ cylinder, the same cylinder with a prescribed damaged central band, three
 approaching contact groups, and the three groups with damage in the central
 body. The first pair initially moves away from the midplane. There is no
 applied tensile end traction, new damage-evolution law, explicit internal
-normal, or CZ activation. Select with \mpmcode{AXIS_DFG_CASE}; use
-\mpmcode{AXIS_DFG_UPDATE=FMPM} for FMPM(2), otherwise FLIP. Particle checks,
+normal, or CZ activation. Select with \mpmcode{AXIS\_DFG\_CASE}; use
+\mpmcode{AXIS\_DFG\_UPDATE=FMPM} for FMPM(2), otherwise FLIP. Particle checks,
 runner and tracer postprocessing are included. See \path{AXISYMMETRIC_DFG.md}
 for the standalone kernel and writer checks and the remaining target tests.
 
@@ -200,9 +402,11 @@ Use exactly two contact groups, 0 and 1, and disable DFG. A
 \mpmcode{CohesiveZoneRegion} selects particles through its tag; surface
 particles use \mpmcode{SurfaceFlag=3}. PFW must include ContactGroup, CZTag,
 SurfaceFlag, SurfaceNormal and SurfacePosition columns. The surface vectors
-are meridional and the normal is nonzero. Set \mpmcode{useEvents=1} on the
+are meridional. Supply a nonzero normal or request reconstruction before
+activation (Section~\ref{sec:axisymmetric-surfaces}). Set \mpmcode{useEvents=1} on the
 solver and activate the region with
-\mpmcode{ReferenceCohesiveZones}, using \mpmcode{computeNormalsAndPositions=0}.
+\mpmcode{ReferenceCohesiveZones}, using \mpmcode{computeNormalsAndPositions=0} for explicit geometry or one
+for solver reconstruction.
 The event dispatcher defaults to disabled; declaring the event and marking
 surface candidates alone does not set active particle cohesive flags.
 Each reference event requests initialization once, using an internal
@@ -263,3 +467,87 @@ adaptive timesteps, dependency delays and restart-wrapper state. Writer tests
 exercise FLIP/FMPM with one and three emulated ranks. Full GEOS dynamics,
 actual MPI/restart and GPU execution remain target tests. See
 \path{AXISYMMETRIC_CZ.md} for the precise validation scope.
+
+
+\subsection{Reconstructed surfaces, nodal area and surface tension}
+\label{sec:axisymmetric-surfaces}
+\mpmcode{computeParticleSurfaceNormalsAndPositions=1} requests a one-time
+pass before mechanical P2G. It updates Surface/Cohesive/DamagedCohesive particles;
+use PFW flags or \mpmcode{surfaceDetection=1}. Existing nonzero normals are
+preserved unless \mpmcode{overwriteExistingNormalsAndPositions=1}; active
+CZ reference geometry is always retained. The existing inverse-F/cofactor
+transforms update reference offsets and normals.
+
+All mechanical interpolation types share a transient geometric Q1 projection
+from current unified quad/triangle geometry. It splits polygons at grid cells
+and integrates $2\pi rN_I$ exactly on each piece, using existing temporary
+integration-domain scaling/axis fitting. Mechanical CPTI interpolation is not
+used for this auxiliary volume: it would give a different capacity from Q1
+near boundaries. Out-of-local-grid glyphs use a Q1 point fallback.
+The new \mpmcode{gridSurfaceMaterialVolume} is transient nodal state, not a
+new particle geometry representation. Owned particles scatter once; shared
+sums and owner-to-ghost reconstructed planes are synchronized.
+
+The normal integral is $\sum_p V_p(G_{Ir}+T_I,G_{Iy},0)$.
+\mpmcode{DFGAndVolumeIntegration} uses this direction.
+\mpmcode{LogisticRegression} refines it using the dominant neighboring field,
+meridional area weights $V_p/(2\pi r_p)$, dimensionless coordinates and axis
+images. Free surfaces and failed fits use the volume-gradient normal. Each
+field's own volume determines its offset, so a gap is retained. Neither field
+partitioning nor separability criteria change.
+
+For a unit normal $\boldsymbol n$ and node-relative offset $d$, solve
+\[
+ V_I=\int_{\boldsymbol n\cdot(\boldsymbol x-\boldsymbol x_I)\le d}
+       2\pi rN_I\,dA,\qquad
+ A_I=\int_{\boldsymbol n\cdot(\boldsymbol x-\boldsymbol x_I)=d}
+       2\pi rN_I\,ds.
+\]
+Both use Q1 support clipped at $r=0$ and physical Symmetry faces. A through-node
+plane is not generally half-full near the axis. The line integral is exact
+for the reconstructed local plane; curvature/corners remain approximation
+errors. The axis has zero physical area. Convert each nodal plane to a
+particle-relative normal distance before averaging, to avoid the
+radius-weighted interpolation-centroid bias.
+
+\mpmcode{computeNodalArea=1} repeats grid reconstruction each step without
+repeatedly replacing particle reference surfaces. \mpmcode{gridSurfaceArea}
+contains full-ring area per field; the field-0 log is globally summed over
+owned nodes. A shared interface occurs separately in both fields.
+The \mpmcode{ReferenceCohesiveZones} event accepts
+\mpmcode{computeNormalsAndPositions=1}. A region reconstruction request is
+scheduled before that enabled region initializes, using the solver method.
+PFW permits zero initial CZ normals with a reconstruction request; retain the
+normal/position columns and arrange reconstruction by interface activation.
+Existing two-group CZ and CZ-tagged B-spline restrictions remain.
+
+Enable \mpmcode{enableSurfaceTension=1} and provide
+\mpmcode{surfaceTensionPairs=[[A,B,gamma],...]} in PFW; $B=-1$ means void.
+Coefficients are constant force/length, with ContactGroup indices. Void color
+is geometric field volume divided by Q1 ring support volume; pair color is
+$V_A/(V_A+V_B)$ on each existing DFG side. B-spline color gathers use even
+reflection at symmetry faces. The mechanical gradients retain the particle's
+actual interpolation. With $\boldsymbol n=\nabla c/|\nabla c|$,
+\[
+ \boldsymbol\tau=\gamma|\nabla c|(\boldsymbol I-\boldsymbol n\otimes\boldsymbol n),
+ \quad f_{Ir}=-V_p(\tau_{rr}G_{Ir}+\tau_{ry}G_{Iy}+\tau_{\theta\theta}T_I),
+ \quad f_{Iy}=-V_p(\tau_{ry}G_{Ir}+\tau_{yy}G_{Iy}).
+\]
+The hoop stress supplies circumferential curvature; the third mapping slot
+is never a color-gradient component. Axisymmetric material/void stress is
+multiplied by two because only the material half of the diffuse layer is
+sampled. Material/material layers sample both sides without this multiplier.
+Full-ring volume already contains the circumference factor. The existing
+capillary timestep limit applies; no surface flags or reconstruction switch
+are required for capillary force alone. Cartesian force formulas are retained.
+
+This diffuse formulation is not exactly balanced against initialized Laplace
+pressure. Check residual velocities and pressure/area under refinement; no
+prescribed contact-angle or Marangoni model is introduced. Severe domain
+scaling, corners and under-resolved multiple surfaces reduce accuracy.
+\path{examples/axisymmetricSurfaces} supplies cylinder/sphere smoke cases,
+CPDI/CPTI/B-spline comparisons and a volume/area report. The cylinder references
+are $V=\pi$, $A=2\pi$, $p=0.01$; the sphere references are $V=4\pi/3$,
+$A=4\pi$, $p=0.02$, with $R=H=1$ and $\gamma=0.01$.
+Standalone production-kernel tests and 1/3-rank emulated writer checks do not
+replace full GEOS dynamics, MPI/restart or GPU validation.

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run in a fresh output directory with the usual site userDefs.
+set -euo pipefail
+case_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+pfw_root=$(cd "$case_dir/../.." && pwd)
+python_cmd=${PFW_PYTHON:-python3}
+cp -- "$case_dir/pfw_input_axisymmetricSurfaces.py" ./pfw_input_case.py
+"$python_cmd" "$pfw_root/particleFileWriter.py" pfw_input_case.py
+if [[ ${1:-} == --generate-only ]]; then exit 0; fi
+: "${GEOS_EXECUTABLE:?Set GEOS_EXECUTABLE or use --generate-only}"
+"$GEOS_EXECUTABLE" -i mpm_case.xml 2>&1 | tee geos.log
+"$python_cmd" "$case_dir/postProcess.py"

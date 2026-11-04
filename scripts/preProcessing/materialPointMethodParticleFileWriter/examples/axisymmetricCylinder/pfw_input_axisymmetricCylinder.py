@@ -3,6 +3,7 @@
 Coordinates are (r, axial position); physical radius=1, length=1, density=1000.
 No contact, external tractions, stochastic strength or moving-grid controls.
 """
+import os
 import pfw_geometryObjects as geom
 
 pfw=dict(
@@ -28,3 +29,18 @@ class CylinderPiece(geom.box):
 
 pfw['objects']=[CylinderPiece('core',[0.,0.],[0.6,1.],dim=2,mat=0,group=0,particleType=2),
                 CylinderPiece('skin',[0.6,0.],[1.,1.],dim=2,mat=0,group=0,particleType=3)]
+
+# Select a B-spline comparison without changing the material or initial pulse.
+# The axis basis is one-sided; other grid faces retain their existing treatment.
+interpolation = os.environ.get('AXIS_CYLINDER_INTERPOLATION', 'mixed')
+if interpolation not in ('mixed', 'bspline'):
+    raise ValueError('AXIS_CYLINDER_INTERPOLATION must be mixed or bspline')
+if interpolation == 'bspline':
+    for obj in pfw['objects']:
+        obj.particleType = 1
+update = os.environ.get('AXIS_CYLINDER_UPDATE', 'FLIP')
+if update not in ('FLIP', 'FMPM'):
+    raise ValueError('AXIS_CYLINDER_UPDATE must be FLIP or FMPM')
+pfw['updateMethod'] = update
+if update == 'FMPM':
+    pfw['updateOrder'] = 2

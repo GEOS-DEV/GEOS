@@ -17,6 +17,7 @@
  */
 
 #include "BoreholePressureMPMEvent.hpp"
+#include <cmath>
 
 namespace geos
 {
@@ -33,15 +34,15 @@ BoreholePressureMPMEvent::BoreholePressureMPMEvent( const string & name,
 {
   registerWrapper( viewKeyStruct::boreholeRadiusString(), &m_boreholeRadius ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Starting temperature to ramp from" );
+    setDescription( "Positive pressure-region cutoff radius: sqrt(x*x+y*y) in Cartesian, r in Axisymmetric (independent of axial y)" );
 
   registerWrapper( viewKeyStruct::startPressureString(), &m_startPressure ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Starting temperature to ramp from" );
+    setDescription( "Starting pressure to ramp from" );
 
   registerWrapper( viewKeyStruct::endPressureString(), &m_endPressure ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "End temperature to ramp to" );
+    setDescription( "End pressure to ramp to" );
 
   registerWrapper( viewKeyStruct::interpTypeString(), &m_interpType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -56,7 +57,11 @@ void BoreholePressureMPMEvent::postInputInitialization()
 {
   MPMEventBase::postInputInitialization();
 
-  GEOS_ERROR_IF( m_boreholeRadius < 0.0, "Borehole radius must be positive!" );
+  GEOS_ERROR_IF( !std::isfinite(m_boreholeRadius) || m_boreholeRadius <= 0.0,
+                 "Borehole radius must be finite and positive" );
+  GEOS_ERROR_IF( !std::isfinite(m_startPressure) || !std::isfinite(m_endPressure),
+                 "Borehole pressure endpoints must be finite" );
+  GEOS_ERROR_IF( m_interpType < 0 || m_interpType > 2, "Pressure interpType must be 0, 1 or 2" );
 }
 
 REGISTER_CATALOG_ENTRY( MPMEventBase, BoreholePressureMPMEvent, string const &, Group * const )

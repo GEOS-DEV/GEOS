@@ -1073,8 +1073,9 @@ legacyPlaneStrain = bool(pfw.get('planeStrain', 0))
 formulationInput = pfw.get('formulation', 'PlaneStrain' if legacyPlaneStrain else 'Cartesian3D')
 axisymmetric = formulationInput == 'Axisymmetric'
 if axisymmetric:
-  from pfw_axisymmetric import validate_options, ring_volume, bind_objects, validate_particle
+  from pfw_axisymmetric import validate_options, ring_volume, bind_objects, validate_particle, reconstructs_surfaces
   validate_options(pfw)
+  axisymmetricReconstructSurfaces = reconstructs_surfaces(pfw)
 if formulationInput not in ('Cartesian3D', 'PlaneStrain', 'Axisymmetric'):
   raise ValueError("formulation must be Cartesian3D, PlaneStrain or Axisymmetric")
 if 'planeStrain' in pfw and legacyPlaneStrain != (formulationInput == 'PlaneStrain'):
@@ -1801,7 +1802,7 @@ if generateParticleFile:
     if data['particleType'] == 2 and geometry[0] != (3 if planeStrain else 0):
       raise ValueError("CPDI requires box geometry; set simplexParticleType=3 for CPTI cut tets")
     if axisymmetric:
-      validate_particle(particlePosition, data, geometry)
+      validate_particle(particlePosition, data, geometry, axisymmetricReconstructSurfaces)
     measureScale = 2*math.pi*particlePosition[0] if axisymmetric else planeStrainThickness
     pString += delim + geometry_columns(geometry, physical_particle_volume(particlePosition,(dxr,dyr,dzr)), delim, thickness=measureScale)
     return pString +'\n'

@@ -135,11 +135,11 @@ if event active:
 \paragraph{Inputs.}
 \begin{description}[leftmargin=*,style=nextline]
 \item[\textbf{Required.}] \texttt{startTime}; \texttt{boreholeRadius}; \texttt{startPressure}; \texttt{endPressure}.
-\item[\textbf{Optional.}] \texttt{endTime}; \texttt{interpType}, with options \texttt{0} linear, \texttt{1} cosine, and \texttt{2} smoothstep.  The default is the event's initialized interpolation type, which is cosine in the current source.  The radius must be non-negative.
+\item[\textbf{Optional.}] \texttt{endTime}; \texttt{interpType}, with options \texttt{0} linear, \texttt{1} cosine, and \texttt{2} smoothstep.  The default is cosine. The radius must be finite and strictly positive; pressure endpoints must be finite.
 \end{description}
 
 \paragraph{Algorithm.}
-\mpmcode{BoreholePressure} imposes a virtual fluid pressure in void space inside an infinite cylinder aligned with the $z$ axis and centered at the origin in the $x$-$y$ plane.  At every active step, the event evaluates
+\mpmcode{BoreholePressure} imposes a virtual fluid pressure in void space inside an infinite cylinder. In Cartesian formulations it is aligned with $z$, centered at the origin in the $x$-$y$ plane. In axisymmetry, $x=r$ and the cylinder revolves about $y$: the selection is $r^2<R_b^2$, independent of axial position. At every active step, the event evaluates
 \begin{equation}
   p_b(t^n)=I(t^n;t_s,t_e,p_s,p_e),
 \end{equation}
@@ -151,7 +151,7 @@ During the grid-background-stress update, every grid node satisfying
 \begin{equation}
   X_I^2+Y_I^2 < R_b^2
 \end{equation}
-receives this background stress.  The internal-force projection then uses the background-stress-corrected stress.  In abstract notation,
+receives this background stress in Cartesian formulations; axisymmetry uses $r_I^2<R_b^2$ instead. The internal-force projection then uses the background-stress-corrected stress. In Cartesian notation,
 \begin{equation}
   \mathbf{f}^{\mathrm{int}}_I
   = -\sum_p V_p\left(\boldsymbol{\sigma}_p-\boldsymbol{\sigma}^{\mathrm{bg}}_I-p_{\mathrm{sup},p}\mathbf{I}\right)\nabla N_I(\mathbf{x}_p),
@@ -167,12 +167,13 @@ if event active:
   solver.boreholeStress = [-p, -p, -p, 0, 0, 0]
 
 for grid node I:
-  if X[I]^2 + Y[I]^2 < boreholeRadius^2:
+  radiusSquared = X[I]^2 if axisymmetric else X[I]^2 + Y[I]^2
+  if radiusSquared < boreholeRadius^2:
     gridBackgroundStress[I] = solver.boreholeStress
 \end{lstlisting}
 
 \paragraph{Implementation note.}
-The current event does not reset the borehole-pressure flag or stress after \texttt{endTime}; after the event window closes, the most recently assigned background stress remains in the solver state unless a later event or solver initialization changes it.
+The event does not reset its flag or pressure after \texttt{endTime}. The radius, enable flag and stress are saved for restart, preserving held loads from completed events. Axisymmetric pressure handlers use the exact \mpmcode{endPressure} on the step reaching the ramp end (and for zero-duration steps); other active steps retain start-of-step sampling. This is local to pressure handlers; the event scheduler is unchanged. In axisymmetry the weak-form radial force also includes the hoop background stress and uses full-ring volume; see Section~\ref{sec:axisymmetric}.
 
 \subsection{\mpmcode{ReferenceCohesiveZones}}
 \label{sec:event-cohesivezone}
@@ -222,7 +223,7 @@ The event selects and initializes regions; the constitutive law supplies $\mathc
 \end{description}
 
 \paragraph{Algorithm.}
-\mpmcode{uniformPressure=1} applies a virtual hydrostatic pressure at every grid node and must omit box/sphere exclusions. This is the supported axisymmetric pressure mode; the cylindrical force includes the hoop pressure term and uses full-ring particle volumes. Otherwise, \mpmcode{ConfiningPressure} applies pressure to grid nodes outside either a user-specified axis-aligned box or, when \mpmcode{confiningPressureSphereRadius} is positive, an origin-centered spherical region.  Let $\mathbf{X}^{\min}$ and $\mathbf{X}^{\max}$ denote the two box corners and let $R_c$ denote the spherical radius.  During each active event step, the pressure
+\mpmcode{uniformPressure=1} applies a virtual hydrostatic pressure at every grid node and must omit box/sphere exclusions. Uniform, box and sphere modes all support axisymmetry; the cylindrical force includes hoop pressure and uses full-ring particle volumes. Otherwise, \mpmcode{ConfiningPressure} applies pressure to grid nodes outside either a user-specified axis-aligned box or, when \mpmcode{confiningPressureSphereRadius} is positive, an origin-centered spherical region. Let $\mathbf{X}^{\min}$ and $\mathbf{X}^{\max}$ denote the two box corners and let $R_c$ denote the spherical radius. During each active event step, the pressure
 \begin{equation}
   p_c(t^n)=I(t^n;t_s,t_e,p_s,p_e)
 \end{equation}
@@ -235,7 +236,7 @@ A grid node is assigned this stress if any coordinate lies outside the box,
   X_{I,j}<X^{\min}_j\quad \text{or}\quad X_{I,j}>X^{\max}_j
   \quad \text{for at least one } j\in\{1,2,3\}.
 \end{equation}
-A positive radius takes precedence over the box; zero selects the box and negative radii are rejected. In plane strain the radial test uses x/y (a circle), and in 3D it uses x/y/z (a sphere). Nodes exactly on the radial boundary are excluded by the strict inequality:
+Axisymmetric boxes test only the first two coordinates $(r,y)$; z entries remain required placeholders in the three-entry XML corners. A positive radius takes precedence over the box; zero selects the box and negative radii are rejected. In plane strain the radial test uses x/y (a circle); in axisymmetry it uses $r^2+y^2$ (a physical sphere after revolution about y); in 3D it uses x/y/z. Nodes exactly on the radial boundary are excluded by the strict inequality:
 \begin{equation}
   \sqrt{\sum_{j=1}^{d} X_{I,j}^2} > R_c,\qquad d=2\ \text{or}\ 3.
 \end{equation}
@@ -257,13 +258,14 @@ for grid node I:
   elif sphereRadius > 0:
     apply = norm(X[I, active_dimensions]) > sphereRadius
   else:
-    apply = any_coordinate_outside_box(X[I], boxMin, boxMax)
+    boxDims = 2 if axisymmetric else 3
+    apply = any_coordinate_outside_box(X[I, :boxDims], boxMin, boxMax)
   if apply:
     gridBackgroundStress[I] = solver.confiningStress
 \end{lstlisting}
 
 \paragraph{Implementation note.}
-The event completion pass marks the event complete after its active interval. The final evaluated pressure remains applied until another pressure event changes it. The enable flag, exclusion geometry, uniform flag and confining stress are saved in restart state, so a completed ramp does not lose its held load on restart.
+The event completion pass marks the event complete after its active interval. The final evaluated pressure remains applied until another event of the same kind changes it. Axisymmetric handlers assign the exact final pressure as described for BoreholePressure. The enable flag, exclusion geometry, uniform flag and confining stress are saved in restart state, so a completed ramp does not lose its held load on restart. Confinement overrides borehole pressure wherever their masks overlap. Selectors use current grid coordinates with fixed spatial cutoffs and can load any boundary in selected nodal support, including internal surfaces. For radial outer pressure alone, extend both axial box bounds and the minimum radial bound beyond the entire grid, including buffers.
 
 \subsection{\texttt{CrystalHeal}}
 \label{subsec:event-crystal-heal}

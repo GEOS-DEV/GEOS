@@ -39,6 +39,7 @@
 
 namespace geos
 {
+namespace axisymmetricSurface { struct Support; }
 
 class SpatialPartition;
 class SetInitialTemperatureAndPressureMPMEvent;
@@ -199,6 +200,7 @@ public:
     static constexpr char const * gridExternalForceString() { return "gridExternalForce"; }
     static constexpr char const * gridMassString() { return "gridMass"; }
     static constexpr char const * gridMaterialVolumeString() { return "gridMaterialVolume"; }
+    static constexpr char const * gridSurfaceMaterialVolumeString() { return "gridSurfaceMaterialVolume"; }
     static constexpr char const * gridMomentumString() { return "gridMomentum"; }
     static constexpr char const * gridPrincipalExplicitSurfaceNormalString() { return "gridPrincipalExplicitSurfaceNormal"; }
     static constexpr char const * gridSurfaceAreaString() { return "gridSurfaceArea"; }
@@ -862,7 +864,20 @@ public:
                        );
 
   void computeParticleSurfaceNormalsAndPositions( ParticleManager & particleManager,
-                                                  NodeManager & nodeManager );
+                                                  NodeManager & nodeManager,
+                                                  DomainPartition & domain,
+                                                  MeshLevel & mesh );
+
+  /// Q1 geometric color projection, independent of the mechanical interpolation.
+  void projectAxisymmetricSurfaceGeometry( ParticleManager & particleManager,
+                                           NodeManager & nodeManager, DomainPartition & domain,
+                                           MeshLevel & mesh, bool const computeNormals );
+  void reconstructAxisymmetricGridSurfaces( ParticleManager & particleManager, NodeManager & nodeManager );
+  axisymmetricSurface::Support axisymmetricSurfaceSupport(
+    arraySlice1d< real64 const, nodes::REFERENCE_POSITION_USD - 1 > const position ) const;
+  localIndex axisymmetricSurfaceColorNode(
+    localIndex const node,
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const position ) const;
 
   void computePairwiseLogisticRegressionSurfaceNormalsAndPositions( ParticleManager & particleManager,
                                                                     NodeManager & nodeManager );
@@ -1042,6 +1057,12 @@ public:
     arraySlice2d< real64 const > const geometry, real64 (&projected)[3][3] ) const;
 
   // Return status bits: changed=1, relaxed integration measure=2, invalid=4.
+  // Shared by mapping, scaling diagnostics and out-of-range cleanup.
+  template< int DIM >
+  GEOS_HOST_DEVICE int prepareIntegrationGeometry(
+    ParticleType const type, arraySlice1d< real64 const > const center,
+    arraySlice2d< real64 const > const geometry, real64 (&integration)[3][3] ) const;
+
   // No per-particle integration matrix is stored or checkpointed.
   template< int DIM, class NODES, class VALUES, class GRADIENTS >
   GEOS_HOST_DEVICE bool computeParticleMapping(
@@ -1312,6 +1333,8 @@ protected:
   string_array m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;
   real64 m_polymerCZThickness;
+  /// Check wall/axis compatibility after the physical mesh bounds are known.
+  void validateAxisymmetricBoundaryControls() const;
   int m_prescribedBcTable;
   int m_prescribedBoundaryFTable;
   array2d< real64 > m_prescribedBoundaryTransverseVelocities; // 2 in-plane directions * 6 faces

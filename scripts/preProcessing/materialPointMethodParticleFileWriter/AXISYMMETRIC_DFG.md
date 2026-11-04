@@ -49,7 +49,7 @@ Damage evolution must respect axisymmetry: transverse, cylindrical or inclined
 meridional cracks can revolve into valid surfaces; localized longitudinal
 hoop fractures cannot. Weibull remains deferred.
 
-Solver-reconstructed surface positions/nodal areas, SPH and overlap corrections
+SPH and overlap corrections
 remain unsupported. For damage-created surfaces without supplied positions,
 use `useSurfacePositionForContact=0` and the existing approximate gap criterion.
 
@@ -97,3 +97,6 @@ A full GEOS build and dynamics run, actual MPI migration/synchronization,
 restart, GPU execution and output readback are target-machine acceptance
 steps. These lightweight checks do not establish dynamics accuracy or
 convergence. The patch updates manual LaTeX, not a generated manual PDF.
+
+Reconstructed surfaces and full-ring nodal-area diagnostics are now supported;
+see `AXISYMMETRIC_SURFACES.md`. The DFG partition and separability criteria are unchanged.

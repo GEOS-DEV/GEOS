@@ -188,6 +188,29 @@ void mappedInterfaces() {
     if(orientation<2) for(int j=1;j<=5;++j) for(int field=0;field<2;++field)
       assert(std::abs(normals[1][j][field][0])<1.e-12);
   }
+  // B-spline support through the axis: integrate an axial interface exactly
+  // with two-point Gauss samples in each cell. Contact uses the production
+  // normal-contribution expression above, including the hoop correction.
+  {
+    double normals[9][9][2][3]={};
+    for(int i=0;i<6;++i) for(int j=0;j<6;++j) for(int sr : {-1,1}) for(int sy : {-1,1}) {
+      double center[3]={i+.5+sr/(2*std::sqrt(3.)),j+.5+sy/(2*std::sqrt(3.)),0};
+      double g[3][3]={{.1,0,0},{0,.1,0},{0,0,1}};
+      int mapped[16];double values[16],grad[16][3];
+      assert(mapper.computeParticleMapping<2>(ParticleType::SinglePointBSpline,center,g,map,origin,h,cells,mapped,values,grad));
+      int const field=j<3?0:1;
+      for(int a=0;a<16;++a) {
+        auto n=normalContribution(true,axisymmetric::volume(.25,center[0]),grad[a]);
+        for(int d=0;d<3;++d) normals[mapped[a]/81][(mapped[a]/9)%9][field][d]+=n[d];
+      }
+    }
+    for(int i=1;i<=5;++i) {
+      close(normals[i][4][0][0],0);close(normals[i][4][1][0],0);
+      assert(normals[i][4][0][1]>0 && normals[i][4][1][1]<0);
+      close(normals[i][4][0][1],-normals[i][4][1][1]);
+    }
+    std::cout<<"B-spline axial contact through the axis: opposing normals, no radial interior bias.\n";
+  }
   // Cartesian assembly is untouched, and the hoop slot is never a 2D normal.
   double gradient[3]={2,-3,7};
   auto cartesian=normalContribution(false,5,gradient),axis=normalContribution(true,5,gradient);

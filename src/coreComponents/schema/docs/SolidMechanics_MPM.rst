@@ -96,11 +96,11 @@ shown verbatim. Inherited attributes are not repeated.
    * - computeNodalArea
      - OPTIONAL / int
      - 0
-     - Option to compute nodal area from grid surface normals and positions (results may be inaccurate if implicit surface normals and positiosn are used)
+     - Compute nodal area from local surface planes; Axisymmetric reconstructs each step and reports full-ring area. Curved and unresolved surfaces remain approximate.
    * - computeParticleSurfaceNormalsAndPositions
      - OPTIONAL / int
      - 0
-     - Flag to compute particle surface normals and positions
+     - One-shot reconstruction of flagged particle surfaces before P2G. Axisymmetric uses ring-volume geometry and preserves active CZ references.
    * - computeSPHJacobian
      - OPTIONAL / int
      - 0

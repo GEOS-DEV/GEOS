@@ -8,7 +8,7 @@ int main()
   {int n=(i*9+j)*9+k;map[i][j][k]=n;xyz[n][0]=i-1;xyz[n][1]=j-1;xyz[n][2]=0;}
   std::mt19937 rng(1486);std::uniform_real_distribution<double> jitter(-.15,.15);
   int checked=0;
-  for(auto type : {ParticleType::SinglePoint,ParticleType::CPDI,ParticleType::CPTI})
+  for(auto type : {ParticleType::SinglePoint,ParticleType::SinglePointBSpline,ParticleType::CPDI,ParticleType::CPTI})
   for(int mode=0;mode<3;++mode) for(int trial=0;trial<200;++trial)
   {
     Kernel kernel;kernel.m_axisymmetric=true;kernel.m_cpdiDomainScaling=mode>0;
