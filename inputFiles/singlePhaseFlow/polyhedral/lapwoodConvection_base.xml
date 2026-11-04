@@ -3,12 +3,16 @@
 <!-- Onset of convection in a porous layer heated from below: Lapwood (1948), section 6, both boundaries impervious
      and perfectly conducting. The conductive state T = 320 - 0.2 z is stable up to
 
-       Ra = rho g alpha k dT h / ( mu kappa ) = 4 pi^2,    kappa = lambda / ( rho c_f ),
+       Ra = rho g alpha k dT h / ( mu kappa ) = 4 pi^2,    kappa = lambda / ( rho c_f ).
 
-     and the critical mode sin( pi z / h ) cos( pi x / h ) fits the domain [0,2h] x [0,h] with impervious, insulated side
-     walls. Seeded with that mode, the disturbance evolves as exp( n t ),
+     A disturbance sin( pi z / h ) cos( l x ) cos( m y ) of horizontal wavenumber a^2 = h^2 ( l^2 + m^2 ) evolves as
+     exp( n t ),
 
-       n = kappa ( Ra - 4 pi^2 ) / ( 2 h^2 sigma ),    sigma = ( rho c )_medium / ( rho c )_fluid.
+       n = kappa ( Ra a^2 / ( a^2 + pi^2 ) - ( a^2 + pi^2 ) ) / ( sigma h^2 ),    sigma = ( rho c )_medium / ( rho c )_fluid,
+
+     and is marginal at Ra = ( a^2 + pi^2 )^2 / a^2, minimal ( 4 pi^2 ) for a = pi. In the domain [0,2h] x [0,2h] x [0,h]
+     with impervious, insulated side walls the seeded mode is l = m = pi / h, a^2 = 2 pi^2: marginal at
+     Ra = 4.5 pi^2 = 44.41. The rolls l = pi / h, m = 0 are the critical modes of this domain.
 
      Data: h = 100 m, dT = 20 K, alpha dT = 4.0e-3 (Boussinesq regime), kappa = 5.0e-7 m2/s, sigma = 0.6, so that
      Ra = 7.848e12 k. The variants set the permeability k and the events. -->
@@ -43,7 +47,7 @@
         name="mixedMFD"
         innerProductType="RT"
         adaptiveConsistency="1"
-        consistencyTolerance="1.e-12"
+        consistencyTolerance="1.e+12"
         nominalGradient="{ 1.0, 1.0, 1.0 }"/>
     </MixedMimetic>
   </NumericalMethods>
@@ -53,13 +57,13 @@
   <Mesh>
     <InternalMesh
       name="mesh"
-      elementTypes="{ C3D4 }"
+      elementTypes="{ C3D8 }"
       xCoords="{ 0, 200 }"
-      yCoords="{ 0, 2.5 }"
+      yCoords="{ 0, 200 }"
       zCoords="{ 0, 100 }"
-      nx="{ 120 }"
-      ny="{ 1 }"
-      nz="{ 60 }"
+      nx="{ 60 }"
+      ny="{ 30 }"
+      nz="{ 30 }"
       cellBlockNames="{ block }"/>
   </Mesh>
 
@@ -67,18 +71,18 @@
     <Box
       name="bottom"
       xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 200.01, 2.51, 0.01 }"/>
+      xMax="{ 200.01, 200.01, 0.01 }"/>
 
     <Box
       name="top"
       xMin="{ -0.01, -0.01, 99.99 }"
-      xMax="{ 200.01, 2.51, 100.01 }"/>
+      xMax="{ 200.01, 200.01, 100.01 }"/>
 
-    <!-- tetrahedra at mid-height, at the maximum of the initial perturbation -->
+    <!-- cell at mid-height, at the maximum of the initial perturbation -->
     <Box
       name="probe"
       xMin="{ -0.01, -0.01, 49.99 }"
-      xMax="{ 2.51, 2.51, 52.51 }"/>
+      xMax="{ 3.34, 6.67, 53.34 }"/>
   </Geometry>
 
   <ElementRegions>
@@ -137,7 +141,7 @@
       referenceTemperature="310.0"/>
   </Constitutive>
 
-  <!-- initial state tabulated every metre over the whole domain, independent of the mesh -->
+  <!-- initial state tabulated over the whole domain, independent of the mesh -->
   <Functions>
     <!-- 1.0e7 + rho g ( h - z ) -->
     <TableFunction
@@ -146,12 +150,12 @@
       coordinateFiles="{ lapwoodConvection_tables/xMid.geos, lapwoodConvection_tables/y.geos, lapwoodConvection_tables/z.geos }"
       voxelFile="lapwoodConvection_tables/pressure.geos"/>
 
-    <!-- 320 - 0.2 z + 0.01 sin( pi z / h ) cos( pi x / h ) -->
+    <!-- 320 - 0.2 z + 0.01 sin( pi z / h ) cos( pi x / h ) cos( pi y / h ), tabulated every 5 m -->
     <TableFunction
       name="disturbedTemperature"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ lapwoodConvection_tables/x.geos, lapwoodConvection_tables/y.geos, lapwoodConvection_tables/z.geos }"
-      voxelFile="lapwoodConvection_tables/temperature.geos"/>
+      coordinateFiles="{ lapwoodConvection_tables/x3D.geos, lapwoodConvection_tables/y3D.geos, lapwoodConvection_tables/z3D.geos }"
+      voxelFile="lapwoodConvection_tables/temperature3D.geos"/>
   </Functions>
 
   <FieldSpecifications>

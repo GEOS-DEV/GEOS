@@ -24,7 +24,15 @@ decks = [
     TestDeck(
         name="lapwoodConvection_Ra50_smoke",
         description=
-        'Thermal mixed MFD single phase flow test (onset of natural convection in a porous layer, tetrahedral mesh, consistent inner product, GMRES with the thermal MGR strategy)',
+        'Thermal mixed MFD single phase flow test (onset of natural convection in a porous layer, 3D hexahedral mesh, two-point product selected in every cell, GMRES with the thermal MGR strategy)',
+        partitions=((1, 1, 1), (2, 1, 1), (2, 1, 2)),
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="lapwoodConvection_simplex_Ra50_smoke",
+        description=
+        'Thermal mixed MFD single phase flow test (onset of natural convection in a porous layer, tetrahedral mesh, consistent inner product in every cell, GMRES with the thermal MGR strategy)',
         partitions=((1, 1, 1), (2, 1, 1), (2, 1, 2)),
         restart_step=5,
         check_step=10,

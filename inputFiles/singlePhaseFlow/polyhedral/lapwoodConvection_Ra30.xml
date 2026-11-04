@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 
-<!-- Ra = 30, below the threshold: the disturbance decays, n = -3.95e-10 1/s -->
+<!-- Ra = 30, below the threshold 4.5 pi^2 of the seeded mode: the disturbance decays, n = -8.01e-10 1/s -->
 
 <Problem>
   <Included>

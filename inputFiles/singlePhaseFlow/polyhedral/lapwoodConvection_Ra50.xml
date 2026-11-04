@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 
-<!-- Ra = 50, above the threshold: the disturbance grows, n = 4.38e-10 1/s, until steady convection sets in -->
+<!-- Ra = 50, above the threshold 4.5 pi^2 of the seeded mode: the disturbance grows, n = 3.10e-10 1/s -->
 
 <Problem>
   <Included>
