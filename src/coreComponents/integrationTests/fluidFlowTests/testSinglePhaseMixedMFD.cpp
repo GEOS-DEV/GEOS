@@ -449,6 +449,8 @@ TEST( SinglePhaseMixedMFDBoundary, descriptors )
   using namespace geos::mixedMimeticBoundary;
 
   MixedMFDProblem problem( { true, "0.1", 350.0, true } );
+  // the descriptors are evaluated at assembly time from the specifications active at that time
+  problem.solver().applyFaceBoundaryValues( 0.0, problem.domain() );
   FaceManager & faces = problem.faceManager();
   arrayView2d< real64 const > const center = faces.faceCenter();
   arrayView2d< localIndex const > const elemList = faces.elementList();
