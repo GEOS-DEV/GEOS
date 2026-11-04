@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
 
+#include "physicsSolvers/KernelLaunchSelectors.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -77,21 +78,20 @@ template< bool ENABLE_ENERGY, integer NUM_PHASES, typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T numComps, LAMBDA && lambda )
 {
   static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
-
   switch( numComps )
   {
-    case 1:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 1 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
-    case 2:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 2 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
-    case 3:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 3 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
-    case 4:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 4 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
-    case 5:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 5 >(), std::integral_constant< bool, ENABLE_ENERGY >()); return; }
+    #define GEOS_DISPATCH_OBL_COMPONENT( NC ) \
+      case NC: \
+      { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, NC >(), \
+                std::integral_constant< bool, ENABLE_ENERGY >() ); return; \
+      }
+    GEOS_FOR_EACH_OBL_COMPONENT( GEOS_DISPATCH_OBL_COMPONENT )
+#undef GEOS_DISPATCH_OBL_COMPONENT
     default:
-    { GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", numComps ) ); }
+    {
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of OBL components: {}. This build instantiates 1 through {}.",
+                            numComps, GEOS_MAX_OBL_COMPONENTS ) );
+    }
   }
 }
 

@@ -176,12 +176,13 @@ public:
             ghostRank,
             minNormalizer ),
     m_numPhases( fluid.numFluidPhases()),
+    m_targetPhaseIndex( wellControls.isProducer() ? wellControls.getConstraintPhaseIndex() : -1 ),
     m_dt( dt ),
     m_isLocallyOwned( subRegion.isLocallyOwned() ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
-    m_targetBHP( std::numeric_limits< real64 >::max() ),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() ),
@@ -190,6 +191,15 @@ public:
   {
     const WellConstraintBase * currentConstraint = wellControls.getCurrentConstraint();
     ConstraintTypeId currentControl = wellControls.getControl();
+    // Note this assumes that there is only one rate constraint
+    // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
+    // This is one of the reasons for restricting  constraint type for a production well
+    // Another pr will remove fix this (so the cause for difference results is isolated to one change)
+    auto const * rateConstraint = wellControls.getRateConstraints().front();
+    if( rateConstraint != nullptr )
+    {
+      m_constraintValue = rateConstraint->getConstraintValue( time );
+    }
     if( currentControl == ConstraintTypeId::BHP )
     {
       m_targetBHP = currentConstraint->getConstraintValue( time );
@@ -197,10 +207,6 @@ public:
     else
     {
       m_constraintValue = currentConstraint->getConstraintValue( time );
-      if( currentControl == ConstraintTypeId::PHASEVOLRATE )
-      {
-        m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
-      }
     }
   }
 

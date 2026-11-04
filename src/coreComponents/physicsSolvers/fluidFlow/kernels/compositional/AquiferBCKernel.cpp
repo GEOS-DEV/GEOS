@@ -254,13 +254,9 @@ AquiferBCKernel::
                   real64 const timeAtBeginningOfStep, \
                   real64 const dt, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
-                  arrayView1d< real64 > const & localRhs )
+                  arrayView1d< real64 > const & localRhs );
 
-INST_AquiferBCKernel( 1 );
-INST_AquiferBCKernel( 2 );
-INST_AquiferBCKernel( 3 );
-INST_AquiferBCKernel( 4 );
-INST_AquiferBCKernel( 5 );
+GEOS_FOR_EACH_COMPONENT( INST_AquiferBCKernel )
 
 #undef INST_AquiferBCKernel
 
