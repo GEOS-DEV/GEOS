@@ -590,6 +590,7 @@ protected:
 
         // notify the solver statistics counter that this is a time step cut
         getIterationStats().updateTimeStepCut();
+        getIterationStats().writeIterationStatsToTable();
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->getIterationStats().updateTimeStepCut();
