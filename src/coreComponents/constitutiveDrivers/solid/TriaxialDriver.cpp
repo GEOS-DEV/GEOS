@@ -19,19 +19,22 @@
 
 #include "TriaxialDriver.hpp"
 #include "constitutiveDrivers/LogLevelsInfo.hpp"
-
+#include "constitutive/solid/SolidBase.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geos
 {
+
 using namespace dataRepository;
 using namespace constitutive;
 
-
 TriaxialDriver::TriaxialDriver( const string & name,
                                 Group * const parent ):
-  TaskBase( name, parent )
+  ConstitutiveDriver( name, parent )
 {
-
   registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -39,7 +42,7 @@ TriaxialDriver::TriaxialDriver( const string & name,
 
   registerWrapper( viewKeyStruct::modeString(), &m_mode ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Test mode [stressControl, strainControl, mixedControl]" );
+    setDescription( "Test mode. Valid options:\n* " + EnumStrings< Mode >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::axialFunctionString(), &m_axialFunctionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -55,31 +58,11 @@ TriaxialDriver::TriaxialDriver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Initial stress (scalar used to set an isotropic stress state)" );
 
-  registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Number of load steps to take" );
-
-  registerWrapper( viewKeyStruct::outputString(), &m_outputFile ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( "none" ).
-    setDescription( "Output file" );
-
-  registerWrapper( viewKeyStruct::baselineString(), &m_baselineFile ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( "none" ).
-    setDescription( "Baseline file" );
-
   addLogLevel< logInfo::LogOutput >();
 }
 
-
-TriaxialDriver::~TriaxialDriver()
-{}
-
-
 void TriaxialDriver::postInputInitialization()
 {
-
   // initialize table functions
 
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -90,24 +73,20 @@ void TriaxialDriver::postInputInitialization()
   axialFunction.initializeFunction();
   radialFunction.initializeFunction();
 
-  // determine time increment
+  // determine the number of columns
+  string_array columnNames;
+  getColumnNames( columnNames );
+  integer const numCols = static_cast< integer >(columnNames.size());
 
+  // determine time increment
   ArrayOfArraysView< real64 > coordinates = axialFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
   real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
-  real64 const dt = (maxTime-minTime) / m_numSteps;
 
-  // resize data arrays
+  // Allocate the data
+  allocateTable( numCols, minTime, maxTime );
 
-  integer const length = m_numSteps+1;
-  m_table.resize( length, m_numColumns );
-
-  // set time column
-
-  for( integer n=0; n<length; ++n )
-  {
-    m_table( n, TIME ) = minTime + n*dt;
-  }
+  integer const numRows = m_table.size( 0 );
 
   // initial stress is always isotropic
 
@@ -120,7 +99,7 @@ void TriaxialDriver::postInputInitialization()
   //   strainControl ... specified axial and radial strain
   //   stressControl ... specified axial and radial stress
 
-  for( integer n=0; n<length; ++n )
+  for( integer n=0; n<numRows; ++n )
   {
     real64 axi = axialFunction.evaluate( &m_table( n, TIME ) );
     real64 rad = radialFunction.evaluate( &m_table( n, TIME ) );
@@ -164,7 +143,7 @@ template< typename SOLID_TYPE >
 void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > const & table )
 {
   typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
-  localIndex const numSteps = m_numSteps;
+  integer const numRows = m_table.size( 0 );
 
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOS_HOST_DEVICE ( integer const ei )
   {
@@ -173,7 +152,7 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
     real64 strainIncrement[6] = {};
     real64 stiffness[6][6] = {{}};
 
-    for( integer n = 1; n <= numSteps; ++n )
+    for( integer n = 1; n < numRows; ++n )
     {
       strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
       strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
@@ -307,7 +286,6 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 
     for( integer n = 1; n <= numSteps; ++n )
     {
-      //   std::cout<<"time step="<<n<<std::endl;
       strainIncrement[0] = 0;
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
@@ -326,8 +304,6 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
         resid[1] = scale * (stress[1]-table( n, SIG1 ));
 
         norm = sqrt( resid[0]*resid[0] + resid[1]*resid[1] );
-        //  std::cout<<"k= "<<k<<std::endl;
-        // std::cout<<"norm ="<<norm<<std::endl;
 
         if( k == 0 )
         {
@@ -346,7 +322,6 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
           strainIncrement[0] += deltaStrainIncrement[0];
           strainIncrement[1] += deltaStrainIncrement[1];
           strainIncrement[2]  = strainIncrement[1];
-          //  std::cout<<"k="<<k<<" , cuts="<<cuts<<std::endl;
         }
         else // newton update
         {
@@ -369,8 +344,8 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 
       updates.saveConvergedState ( ei, 0 );
 
-      table( n, EPS0 ) = table( n-1, EPS0 )+strainIncrement[0];
-      table( n, EPS1 ) = table( n-1, EPS1 )+strainIncrement[1];
+      table( n, EPS0 ) = table( n-1, EPS0 ) + strainIncrement[0];
+      table( n, EPS1 ) = table( n-1, EPS1 ) + strainIncrement[1];
       table( n, EPS2 ) = table( n, EPS1 );
 
       table( n, ITER ) = k;
@@ -385,23 +360,12 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 }
 
 
-bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
-                              real64 const GEOS_UNUSED_PARAM( dt ),
-                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                              integer const GEOS_UNUSED_PARAM( eventCounter ),
-                              real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                              DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+bool TriaxialDriver::execute()
 {
-  // this code only makes sense in serial
-
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", geos::RuntimeError );
-
   // get the solid out of the constitutive manager.
   // for the moment it is of type SolidBase.
 
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
-
-  SolidBase & baseSolid = constitutiveManager.getGroup< SolidBase >( m_solidMaterialName );
+  SolidBase & baseSolid = getSolid();
 
   // depending on logLevel, print some useful info
 
@@ -413,8 +377,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Radial Control .... " << m_radialFunctionName );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Initial Stress .... " << m_initialStress );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps ............. " << m_numSteps );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ............ " << m_outputFile );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Baseline .......... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ............ " << (m_outputFile.empty() ? "<none>" : m_outputFile) );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -460,26 +423,23 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     }
   } );
 
-  // move table back to host for output
-  m_table.move( hostMemorySpace );
-
-  validateResults();
-
-  if( m_outputFile != "none" )
-  {
-    outputResults();
-  }
-
-  if( m_baselineFile != "none" )
-  {
-    compareWithBaseline();
-  }
-
   return false;
 }
 
+void TriaxialDriver::getColumnNames( string_array & columnNames ) const
+{
+  columnNames.emplace_back( "time" );
+  columnNames.emplace_back( "strain,axial" );
+  columnNames.emplace_back( "strain,radial_1" );
+  columnNames.emplace_back( "strain,radial_2" );
+  columnNames.emplace_back( "stress,axial" );
+  columnNames.emplace_back( "stress,radial_1" );
+  columnNames.emplace_back( "stress,radial_2" );
+  columnNames.emplace_back( "newton_iter" );
+  columnNames.emplace_back( "residual_norm" );
+}
 
-void TriaxialDriver::validateResults()
+bool TriaxialDriver::validateResults()
 {
   for( integer n=0; n<m_numSteps; ++n )
   {
@@ -495,99 +455,17 @@ void TriaxialDriver::validateResults()
       }
     }
   }
+  return true;
 }
 
-
-void TriaxialDriver::outputResults()
+SolidBase & TriaxialDriver::getSolid()
 {
-  // TODO: improve file path output to grab command line -o directory
-  //       for the moment, we just use the specified m_outputFile directly
-
-  FILE * fp = fopen( m_outputFile.c_str(), "w" );
-
-  /*
-     string const outputDir = OutputBase::getOutputDirectory();
-     string const outputPath = joinPath( outputDir, m_outputFile );
-     FILE * fp = fopen( outputPath.c_str(), "w" );
-   */
-
-  fprintf( fp, "# column 1 = time\n" );
-  fprintf( fp, "# column 2 = axial_strain\n" );
-  fprintf( fp, "# column 3 = radial_strain_1\n" );
-  fprintf( fp, "# column 4 = radial_strain_2\n" );
-  fprintf( fp, "# column 5 = axial_stress\n" );
-  fprintf( fp, "# column 6 = radial_stress_1\n" );
-  fprintf( fp, "# column 7 = radial_stress_2\n" );
-  fprintf( fp, "# column 8 = newton_iter\n" );
-  fprintf( fp, "# column 9 = residual_norm\n" );
-
-  for( integer n=0; n<=m_numSteps; ++n )
-  {
-    for( integer col=0; col<m_numColumns; ++col )
-    {
-      fprintf( fp, "%.4e ", m_table( n, col ) );
-    }
-    fprintf( fp, "\n" );
-  }
-  fclose( fp );
+  return getConstitutiveManager().getGroup< SolidBase >( m_solidMaterialName );
 }
 
-
-void TriaxialDriver::compareWithBaseline()
+SolidBase const & TriaxialDriver::getSolid() const
 {
-  // open baseline file
-
-  std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(),
-                 GEOS_FMT( "Can't seem to open the baseline file {}", m_baselineFile ),
-                 InputError );
-
-  // discard file header
-
-  string line;
-  for( integer row=0; row < m_numColumns; ++row )
-  {
-    getline( file, line );
-  }
-
-  // read data block.  we assume the file size is consistent with m_table,
-  // but check for a premature end-of-file. we then compare results value by value.
-  // we ignore the newton iteration and residual columns, as those may be platform
-  // specific.
-
-  real64 value;
-  real64 error;
-
-  for( integer row=0; row < m_table.size( 0 ); ++row )
-  {
-    for( integer col=0; col < m_table.size( 1 ); ++col )
-    {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", geos::RuntimeError );
-      file >> value;
-
-      if( col < ITER ) // only compare "real" data columns
-      {
-        error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-        GEOS_THROW_IF( error > m_baselineTol,
-                       GEOS_FMT( "Results do not match baseline at data row {} (row {} with header) and column {}",
-                                 row + 1,
-                                 row + 10,
-                                 col + 1 ),
-                       geos::RuntimeError );
-      }
-    }
-  }
-
-  // check we actually reached the end of the baseline file
-
-  file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", geos::RuntimeError );
-
-  // success
-
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ........ Internal results consistent with baseline." );
-
-  file.close();
+  return getConstitutiveManager().getGroup< SolidBase >( m_solidMaterialName );
 }
 
 

@@ -13,239 +13,98 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_RELPERMDRIVERRUNTEST_HPP_
-#define GEOS_RELPERMDRIVERRUNTEST_HPP_
+#ifndef GEOS_CONSTITUTIVEDRIVERS_RELATIVEPERMEABILITY_RELPERMDRIVERRUNTEST_HPP
+#define GEOS_CONSTITUTIVEDRIVERS_RELATIVEPERMEABILITY_RELPERMDRIVERRUNTEST_HPP
 
 #include "constitutiveDrivers/relativePermeability/RelpermDriver.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
-#include "constitutive/relativePermeability/Layouts.hpp"
 #include "constitutive/relativePermeability/KilloughHysteresis.hpp"
-
+#include "common/DataLayouts.hpp"
 
 namespace geos
 {
 
-//specific to Hysteresis
-template< typename RELPERM_TYPE >
-std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis,
-                                RELPERM_TYPE >::value, void >
-RelpermDriver::runTest( RELPERM_TYPE & relperm,
-                        const arrayView2d< real64 > & table )
-{
-  // get number of phases and components
-  integer const numPhases = relperm.numFluidPhases();
-
-  // create kernel wrapper
-
-  typename constitutive::TableRelativePermeabilityHysteresis::KernelWrapper const kernelWrapper = relperm.createKernelWrapper();
-
-  // set saturation to user specified feed
-  // it is more convenient to provide input in molar, so perform molar to mass conversion here
-
-  array2d< real64, compflow::LAYOUT_PHASE > saturationValues;
-  if( numPhases > 2 )
-  {
-    saturationValues.resize( ( m_numSteps + 1 ) * ( m_numSteps + 1 ), numPhases );
-  }
-  else
-  {
-    saturationValues.resize( m_numSteps + 1, numPhases );
-  }
-  using PT = typename RELPERM_TYPE::PhaseType;
-  integer const ipWater = relperm.getPhaseOrder()[PT::WATER];
-  integer const ipOil = relperm.getPhaseOrder()[PT::OIL];
-  integer const ipGas = relperm.getPhaseOrder()[PT::GAS];
-  localIndex offset = std::max( std::max( ipOil, ipWater ), std::max( ipOil, ipGas ) ) + 1;
-
-  integer ipWetting = -1, ipNonWetting = -1;
-  std::tie( ipWetting, ipNonWetting ) = relperm.wettingAndNonWettingPhaseIndices();
-
-  for( integer n = 0; n < table.size( 0 ); ++n )
-  {
-    if( m_numPhases > 2 )
-    {
-      saturationValues[n][ipWater] = table( n, ipWater + 1 );
-      saturationValues[n][ipOil] = table( n, ipOil + 1 );
-      saturationValues[n][ipGas] = table( n, ipGas + 1 );
-    }
-    else//two-phase
-    {
-      if( ipWater < 0 )
-      {
-        saturationValues[n][ipOil] = table( n, ipOil + 1 );
-        saturationValues[n][ipGas] = table( n, ipGas + 1 );
-      }
-      else if( ipGas < 0 )
-      {
-        saturationValues[n][ipWater] = table( n, ipWater + 1 );
-        saturationValues[n][ipOil] = table( n, ipOil + 1 );
-      }
-      else if( ipOil < 0 )
-      {
-        saturationValues[n][ipWater] = table( n, ipWater + 1 );
-        saturationValues[n][ipGas] = table( n, ipGas + 1 );
-      }
-    }
-  }
-
-
-  arrayView2d< real64 const, compflow::USD_PHASE > const saturation = saturationValues.toViewConst();
-
-  auto const & phaseHasHysteresis = relperm.template getReference< array1d< integer > >( constitutive::TableRelativePermeabilityHysteresis::viewKeyStruct::phaseHasHysteresisString());
-
-  arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMaxHistoricalVolFraction >().reference();
-  arrayView2d< real64, compflow::USD_PHASE >  phaseMinHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMinHistoricalVolFraction >().reference();
-
-//  arrayView1d< real64 > const drainagePhaseMinVolFraction = relperm.template getReference< array1d< real64 > >(
-//    constitutive::TableRelativePermeabilityHysteresis::viewKeyStruct::drainagePhaseMinVolumeFractionString());
-//  arrayView1d< real64 > const drainagePhaseMaxVolFraction = relperm.template getReference< array1d< real64 > >(
-//    constitutive::TableRelativePermeabilityHysteresis::viewKeyStruct::drainagePhaseMaxVolumeFractionString());
-  constitutive::KilloughHysteresis::HysteresisCurve const wettingCurve = relperm.template getReference< constitutive::KilloughHysteresis::HysteresisCurve >(
-    constitutive::TableRelativePermeabilityHysteresis::viewKeyStruct::wettingCurveString());
-
-  constitutive::KilloughHysteresis::HysteresisCurve const nonWettingCurve = relperm.template getReference< constitutive::KilloughHysteresis::HysteresisCurve >(
-    constitutive::TableRelativePermeabilityHysteresis::viewKeyStruct::nonWettingCurveString());
-  //setting for drainage
-  {
-    if( phaseHasHysteresis[ipNonWetting] )
-    {
-      phaseMaxHistoricalVolFraction[0][ipNonWetting] = nonWettingCurve.m_extremumPhaseVolFraction;
-      GEOS_LOG( GEOS_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
-    }
-    if( phaseHasHysteresis[ipWetting] )
-    {
-      phaseMinHistoricalVolFraction[0][ipWetting] = wettingCurve.m_extremumPhaseVolFraction;
-      GEOS_LOG( GEOS_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
-    }
-  }
-
-
-
-  forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
-                                    [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOS_HOST_DEVICE ( integer const n )
-  {
-    // nw phase set max to snw_max to get the imbibition bounding curve
-    kernelWrapper.update( 0, 0, saturation[n] );
-    for( integer p = 0; p < numPhases; ++p )
-    {
-      table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
-    }
-  } );
-
-  //loop in charge of hysteresis values
-  offset += numPhases;
-
-//setting for imbibition
-  {
-    if( phaseHasHysteresis[ipNonWetting] )
-    {
-
-      phaseMaxHistoricalVolFraction[0][ipNonWetting] = nonWettingCurve.m_criticalDrainagePhaseVolFraction;
-      GEOS_LOG( GEOS_FMT( "New max non-wetting phase historical phase volume fraction: {}", phaseMaxHistoricalVolFraction[0][ipNonWetting] ) );
-    }
-    if( phaseHasHysteresis[ipWetting] )
-    {
-      phaseMinHistoricalVolFraction[0][ipWetting] = wettingCurve.m_criticalDrainagePhaseVolFraction;
-      GEOS_LOG( GEOS_FMT( "New min wetting phase historical phase volume fraction: {}", phaseMinHistoricalVolFraction[0][ipWetting] ) );
-    }
-  }
-
-
-
-  forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
-                                    [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOS_HOST_DEVICE ( integer const n )
-  {
-    // nw phase set max to snw_max to get the imbibition bounding curve
-
-    kernelWrapper.update( 0, 0, saturation[n] );
-    for( integer p = 0; p < numPhases; ++p )
-    {
-      table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
-    }
-  } );
-
-
-}
+// Hysteresis traits
+template< typename RELPERM_TYPE, typename = void >
+struct HasHysteresis : std::false_type {};
 
 template< typename RELPERM_TYPE >
-std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-RelpermDriver::runTest( RELPERM_TYPE & relperm,
-                        const arrayView2d< real64 > & table )
-{
-  // get number of phases and components
+struct HasHysteresis< RELPERM_TYPE, std::void_t< decltype(RELPERM_TYPE::viewKeyStruct::phaseHasHysteresisString()) > > : std::true_type {};
 
+template< typename RELPERM_TYPE >
+void
+RelpermDriver::runTest( RELPERM_TYPE & relperm, const arrayView2d< real64 > & table )
+{
+  // Get the number of phases
   integer const numPhases = relperm.numFluidPhases();
 
-  // create kernel wrapper
-
+  // Create the kernel wrapper
   typename RELPERM_TYPE::KernelWrapper const kernelWrapper = relperm.createKernelWrapper();
 
-  // set saturation to user specified feed
-  // it is more convenient to provide input in molar, so perform molar to mass conversion here
+  // Offset for saturations in table
+  constexpr integer SATURATION = 1;
 
-  array2d< real64, compflow::LAYOUT_PHASE > saturationValues;
-  if( numPhases > 2 )
+  // Offset for relative permeability data
+  integer RELPERM = SATURATION + numPhases;
+
+  // Number of "cells"
+  integer const numRows = m_table.size( 0 );
+
+  // If we have hysteresis, we need to populate the historical saturations
+  if constexpr (HasHysteresis< RELPERM_TYPE >::value)
   {
-    saturationValues.resize(( m_numSteps + 1 ) * ( m_numSteps + 1 ), numPhases );
-  }
-  else
-  {
-    saturationValues.resize( m_numSteps + 1, numPhases );
-  }
-  using PT = typename RELPERM_TYPE::PhaseType;
-  integer const ipWater = relperm.getPhaseOrder()[PT::WATER];
-  integer const ipOil = relperm.getPhaseOrder()[PT::OIL];
-  integer const ipGas = relperm.getPhaseOrder()[PT::GAS];
-  const localIndex offset = std::max( std::max( ipOil, ipWater ), std::max( ipOil, ipGas ) ) + 1;
+    // Shift the relative permeability offset
+    RELPERM += numPhases;
 
-  for( integer n = 0; n < table.size( 0 ); ++n )
-  {
+    // Offset for the historical saturations
+    integer const OFFSET = SATURATION + numPhases;
 
+    integer ipWetting, ipNonWetting;
+    std::tie( ipWetting, ipNonWetting ) = relperm.wettingAndNonWettingPhaseIndices();
 
-    if( m_numPhases > 2 )
+    // For the wetting phase, we need the minimum saturation
+    // For the non-wetting phase, we need the maximum saturation
+    real64 maxNonWetting = 0.0;
+    real64 minWetting = 1.0;
+
+    arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMaxHistoricalVolFraction >().reference();
+    arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMinHistoricalVolFraction >().reference();
+
+    for( integer step = 0; step < numRows; ++step )
     {
-      saturationValues[n][ipWater] = table( n, ipWater + 1 );
-      saturationValues[n][ipOil] = table( n, ipOil + 1 );
-      saturationValues[n][ipGas] = table( n, ipGas + 1 );
-    }
-    else//two-phase
-    {
-      if( ipWater < 0 )
-      {
-        saturationValues[n][ipOil] = table( n, ipOil + 1 );
-        saturationValues[n][ipGas] = table( n, ipGas + 1 );
-      }
-      else if( ipGas < 0 )
-      {
-        saturationValues[n][ipWater] = table( n, ipWater + 1 );
-        saturationValues[n][ipOil] = table( n, ipOil + 1 );
-      }
-    }
+      real64 const sw = table( step, SATURATION + ipWetting );
+      real64 const snw = table( step, SATURATION + ipNonWetting );
 
+      minWetting = LvArray::math::min( minWetting, sw );
+      maxNonWetting = LvArray::math::max( maxNonWetting, snw );
+
+      phaseMinHistoricalVolFraction( step, ipWetting ) = minWetting;
+      phaseMaxHistoricalVolFraction( step, ipNonWetting ) = maxNonWetting;
+
+      table( step, OFFSET + ipWetting ) = minWetting;
+      table( step, OFFSET + ipNonWetting ) = maxNonWetting;
+    }
   }
 
-  arrayView2d< real64 const, compflow::USD_PHASE > const saturation = saturationValues.toViewConst();
-
-  // perform relperm update using table (Swet,Snonwet) and save resulting total density, etc.
-  // note: column indexing should be kept consistent with output file header below.
-
-  forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
-                                    [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOS_HOST_DEVICE ( integer const n )
+  forAll< parallelDevicePolicy<> >( numRows,
+                                    [numPhases, kernelWrapper, table,
+                                     RELPERM] GEOS_HOST_DEVICE ( integer const n )
   {
-    kernelWrapper.update( 0, 0, saturation[n] );
+    StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, compflow::LAYOUT_PHASE > saturation( 1, numPhases );
+
     for( integer p = 0; p < numPhases; ++p )
     {
-      table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
+      saturation[0][p] = table( n, SATURATION + p );
+    }
+    kernelWrapper.update( n, 0, saturation[0] );
+    for( integer p = 0; p < numPhases; ++p )
+    {
+      table( n, RELPERM + p ) = kernelWrapper.relperm()( n, 0, p );
     }
   } );
+}
 
 }
 
-
-}
-
-
-#endif //GEOS_RELPERMDRIVERRUNTEST_HPP_
+#endif //GEOS_CONSTITUTIVEDRIVERS_RELATIVEPERMEABILITY_RELPERMDRIVERRUNTEST_HPP

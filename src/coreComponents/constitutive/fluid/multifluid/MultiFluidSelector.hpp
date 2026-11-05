@@ -42,16 +42,12 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid,
-// Including these in a CUDA build will lead to compiler segfault.
-// Need to split compilation units for all the options
-#if !defined(GEOS_DEVICE_COMPILE)
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
                                CompositionalTwoPhasePhillipsBrine,
                                CompositionalKValuePhillipsBrine,
                                CompositionalKValueLohrenzBrayClarkViscosity,
-#endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
@@ -66,16 +62,12 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid,
-// Including these in a CUDA build will lead to compiler segfault.
-// Need to split compilation units for all the options"
-#if !defined(GEOS_DEVICE_COMPILE)
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
                                CompositionalTwoPhasePhillipsBrine,
                                CompositionalKValuePhillipsBrine,
                                CompositionalKValueLohrenzBrayClarkViscosity,
-#endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
@@ -125,9 +117,12 @@ void constitutiveComponentUpdatePassThru( constitutive::MultiFluidBase & fluidBa
   {
     using FluidType = TYPEOFREF( fluid );
     static_assert( FluidType::min_n_components <= FluidType::max_n_components );
-    using Components = typename types::IntegerSequence< FluidType::min_n_components, FluidType::max_n_components >::type;
+    integer constexpr maxComponents = std::min( FluidType::max_n_components, GEOS_MAX_FLUID_COMPONENTS );
+    static_assert( FluidType::min_n_components <= maxComponents,
+                   "GEOS_MAX_FLUID_COMPONENTS must cover the minimum component count of every supported fluid type" );
     if constexpr (!THERMAL || FluidType::isThermalType())
     {
+      using Components = typename types::IntegerSequence< FluidType::min_n_components, maxComponents >::type;
       detail::ComponentSelector< Components >::execute( numComps, fluid, std::forward< LAMBDA >( lambda ));
     }
     else

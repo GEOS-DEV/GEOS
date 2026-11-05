@@ -118,8 +118,8 @@ localIndex SemistructuredPartitioner::generate( MeshLevel const & mesh,
   // Special treatment for ranks that don't have a piece of the mesh
   if( numCells == 0 )
   {
-    loZIndex = 0;
-    hiZIndex = -1;
+    loZIndex.reset( 0 );
+    hiZIndex.reset( -1 );
   }
 
   integer const numCellsZ = hiZIndex - loZIndex + 1;

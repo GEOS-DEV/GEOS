@@ -963,12 +963,12 @@ When modifying performance-critical code (kernels, assembly loops, solvers...):
   .. code-block:: bash
 
       # Profile before changes
-      geos -i test_case.xml --caliper-output=baseline.cali
+      geos -i test_case.xml -t "spot(output=baseline.cali)"
       
       # Make code changes
       
       # Profile after changes
-      geos -i test_case.xml --caliper-output=modified.cali
+      geos -i test_case.xml -t "spot(output=modified.cali)"
       
       # Compare results
       cali-query -q "SELECT time.duration WHERE annotation='myKernel'" baseline.cali

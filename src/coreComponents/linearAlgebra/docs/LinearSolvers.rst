@@ -32,7 +32,7 @@ Direct methods
 
 The major advantages are their reliability, robustness, and ease of use.
 However, they have large memory requirements and exhibit poor scalability.  Direct methods should be used in a prototyping stage, for example when developing a new formulation or algorithm, when the dimension of the problem, namely the size of matrix :math:`\mathsf{A}`, is small.
-Irrespective of the selected direct solver implementation, three stages can be idenitified:
+Irrespective of the selected direct solver implementation, three stages can be identified:
 
 (1) **Setup Stage**: the matrix is first analyzed and then factorized
 (#) **Solve Stage**: the solution to the linear systems involving the factorized matrix is computed
@@ -64,6 +64,15 @@ Assuming a preconditioning matrix :math:`\mathsf{M}` is available, three standar
 Summary
 *******
 
+The linear solver of each physics solver is configured with a ``LinearSolverParameters`` block, a child of the solver block.
+**The default is a direct solver** (``solverType="direct"``), which is robust but does not scale: it is only suitable
+for small problems, such as the tutorials. For larger problems, use a Krylov solver with a preconditioner adapted to the physics:
+
+* single-phase flow or solid mechanics alone: ``solverType="gmres"`` (or ``"cg"`` for symmetric problems such as elasticity) with ``preconditionerType="amg"``,
+* multiphase flow, flow with wells, poromechanics, and other coupled problems: ``solverType="fgmres"`` (or ``"gmres"``) with ``preconditionerType="mgr"``, which automatically selects a multigrid reduction strategy adapted to the solver (see :ref:`MGR`).
+
+The :ref:`BasicExamples` and :ref:`AdvancedExamples` provide many examples of such configurations.
+
 The following table summarizes the available input parameters for the linear solver.
 
 .. include:: /docs/sphinx/datastructure/LinearSolverParameters.rst
@@ -90,11 +99,12 @@ vector ownership, and all higher-level GEOS solver logic remain unchanged.
 Build requirements
 ==================
 
-This feature is optional. It is available only when GEOS is configured with:
+hypredrive is enabled by default whenever GEOS is configured with ``ENABLE_HYPRE=ON``.
+CMake then requires a valid hypredrive installation, located either through ``HYPREDRV_DIR``
+or at ``${GEOS_TPL_DIR}/hypredrive``. If that installation cannot be found, configuration
+fails and asks you to update the TPL bundle.
 
-* ``ENABLE_HYPRE=ON``,
-* ``ENABLE_HYPREDRV=ON``,
-* ``HYPREDRV_DIR`` pointing to a hypredrive installation or package configuration directory.
+To build with HYPRE but without hypredrive, pass ``-DENABLE_HYPREDRV=OFF``.
 
 If GEOS is built without hypredrive support, setting ``hypredriveInputFile`` in the XML input
 is an error.
@@ -117,7 +127,7 @@ In both cases, the switch is transparent to the calling physics solver.
 Authoritative YAML file
 =======================
 
-The most flexible workflow is to provide an explicit hypredrive YAML file:
+The most flexible workflow is to provide an explicit hypredrive YAML file (here, a user-provided ``flow-mgr.yml``):
 
 .. code-block:: xml
 
@@ -130,7 +140,7 @@ The most flexible workflow is to provide an explicit hypredrive YAML file:
       solverType="gmres"
       preconditionerType="mgr"
       logLevel="2"
-      hypredriveInputFile="inputFiles/linearSolvers/flow-mgr.yml"/>
+      hypredriveInputFile="flow-mgr.yml"/>
   </SinglePhasePoromechanics>
 
 When ``hypredriveInputFile`` is provided, the file is **authoritative**:
@@ -273,9 +283,8 @@ The linear-solver ``logLevel`` can be used to inspect what GEOS is passing to hy
   ``newton`` annotations inside the hypredrive adapter rather than from the generic physics
   solver layer.
 
-Numeric meanings of ``logLevel`` for hypredrive (for example ``2``, ``4``, ``48``, ``56``)
-are summarized in *Important ``logLevel`` values (hypredrive)* in the parameter table section
-above. That subsection is especially useful when validating a new solver recipe or comparing
+The numeric meanings of the hypredrive ``logLevel`` values are given in the hypredrive documentation.
+They are especially useful when validating a new solver recipe or comparing
 the generated GEOS configuration with a standalone hypredrive input file.
 
 For regression studies and side-by-side comparisons, hypredrive can be disabled at runtime by
@@ -287,6 +296,22 @@ setting the environment variable:
 
 When this variable is set, GEOS bypasses hypredrive and uses the legacy HYPRE implementation even
 if GEOS was built with hypredrive support.
+
+When hypredrive is active but the input generation fails for the current linear-solver
+configuration (for example a preconditioner option with no hypredrive equivalent), GEOS falls
+back to the legacy HYPRE implementation and logs a rank-0 warning (once per solver)::
+
+  Warning: <solverName>: hypredrive input generation failed for the current linear-solver
+  configuration; falling back to the legacy hypre solver
+
+The presence of the hypredrive YAML dump (and the absence of this warning) in a log is
+therefore the positive confirmation that a solve was actually executed through hypredrive.
+
+Regression testing of the hypredrive path uses the integrated-test suite: dedicated ``_iterative``
+smoke decks run hypre MGR configurations that are automatically routed through hypredrive on
+hypredrive-enabled builds, against restart baselines generated by builds without hypredrive.
+See the *Hypredrive equivalence tests* section of the integrated-tests developer
+documentation for details.
 
 ***************************
 Preconditioner descriptions
@@ -303,16 +328,19 @@ This section provides a brief description of the available preconditioners.
   - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__PointRelaxation.html>`__.
 
 * **ILUK**: incomplete LU factorization with fill level k of the original matrix: :math:`\mathsf{M}^{-1} = \mathsf{U}^{-1} \mathsf{L}^{-1}`.
+  GEOS always disables hypre's reverse Cuthill-McKee (RCM) reordering on ILU
+  (``HYPRE_ILUSetLocalReordering(..., 0)`` / YAML ``reordering: 0``), including
+  when ILU is used as a BoomerAMG extra smoother.
   Further details can be found in:
 
-  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-hypre-ilu.html>`__,
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-ilu.html>`__,
   - `PETSc documentation <https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCILU.html>`__,
   - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__ILU.html>`__.
 
 * **ILUT**: a dual threshold incomplete LU factorization: :math:`\mathsf{M}^{-1} = \mathsf{U}^{-1} \mathsf{L}^{-1}`.
   Further details can be found in:
 
-  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-hypre-ilu.html>`__,
+  - `HYPRE documentation <https://hypre.readthedocs.io/en/latest/solvers-ilu.html>`__,
   - not yet available through PETSc interface,
   - `Trilinos documentation <https://docs.trilinos.org/dev/packages/ifpack/doc/html/classIfpack__ILUT.html>`__.
 
@@ -334,6 +362,8 @@ This section provides a brief description of the available preconditioners.
   Further details can be found in `MGR documentation <https://hypre.readthedocs.io/en/latest/solvers-mgr.html>`__, also see section below.
 
 * **Block**: custom preconditioner designed for a 2 x 2 block matrix.
+
+.. _MGR:
 
 ************************
 HYPRE MGR Preconditioner

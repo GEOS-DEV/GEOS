@@ -38,8 +38,11 @@ Mass conservation for component :math:`c` is expressed as:
 where :math:`\phi` is the porosity of the medium,
 :math:`S_{\ell}` is the saturation of phase :math:`\ell`, :math:`y_{c \ell}`
 is the mass fraction of component :math:`c` in phase :math:`\ell`,
-:math:`\rho_{\ell}` is the phase density, and :math:`t` is time. We note that the
-formulation currently implemented in GEOS is isothermal.
+:math:`\rho_{\ell}` is the phase density, and :math:`t` is time. The equations above describe the isothermal
+formulation, which is the default. A non-isothermal formulation, which adds an energy balance
+equation and temperature as a primary variable, is enabled with ``isThermal="1"``; it requires
+thermal fluid and solid models (e.g. ``CO2BrinePhillipsThermalFluid``, a solid with a
+``solidInternalEnergyModelName``, and a thermal conductivity model).
 
 Darcy's Law
 ~~~~~~~~~~~

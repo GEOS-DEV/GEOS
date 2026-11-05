@@ -195,7 +195,7 @@ TEST( FixedSizeDequeTest, emplace_and_pop_front_cuda )
     for( int i = 0; i < elemCnt; i++ )
       array[i] = i + j *maxArray;
     camp::resources::Event e = deque.emplace_front( array.toSliceConst() );
-    stream.wait_for( &e );
+    stream.wait_for( e );
     if( j+1 < maxArray )
     {
       EXPECT_EQ( false, deque.empty());

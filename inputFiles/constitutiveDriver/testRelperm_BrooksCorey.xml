@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="testBrooksCoreyBaker"
+      relperm="brooksCoreyBaker"
+      steps="65"
+      phaseNames="{ gas, water }"
+      saturationControls="{ THREE.PHASE.SATURATION.0, THREE.PHASE.SATURATION.1 }"
+      output="testRelperm_BrooksCorey_Baker.txt"
+      logLevel="1" />  
+
+    <RelpermDriver
+      name="testBrooksCoreyStone2"
+      relperm="brooksCoreyStone2"
+      steps="65"
+      phaseNames="{ oil, water }"
+      saturationControls="{ THREE.PHASE.SATURATION.1, THREE.PHASE.SATURATION.0 }"
+      output="testRelperm_BrooksCorey_Stone2.txt"
+      logLevel="1" />  
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent name="event_testBrooksCoreyBaker" target="/Tasks/testBrooksCoreyBaker" />
+    <SoloEvent name="event_testBrooksCoreyStone2" target="/Tasks/testBrooksCoreyStone2" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />        
+  </Events>
+
+  <Constitutive>
+    <BrooksCoreyBakerRelativePermeability
+      name="brooksCoreyBaker"
+      phaseNames="{ oil, gas, water}"
+      phaseMinVolumeFraction="{ 0.1, 0.05, 0.2 }"
+      waterOilRelPermExponent="{ 2.0, 2.0 }"
+      waterOilRelPermMaxValue="{ 1.0, 1.0 }"
+      gasOilRelPermExponent="{ 2.0, 2.0 }"
+      gasOilRelPermMaxValue="{ 0.8, 0.4 }"/>
+
+    <BrooksCoreyStone2RelativePermeability
+      name="brooksCoreyStone2"
+      phaseNames="{ oil, gas, water }"
+      phaseMinVolumeFraction="{ 0.1, 0.05, 0.2}"
+      waterOilRelPermExponent="{ 2.0, 2.0}"
+      gasOilRelPermExponent="{ 2.0, 2.0 }"
+      waterOilRelPermMaxValue="{ 1.0, 1.0 }"
+      gasOilRelPermMaxValue="{ 0.8, 0.4 }"/>
+  </Constitutive>
+
+  <Included>
+    <File name="testRelperm_data/relperm_tables.xml" />
+  </Included>
+</Problem>

@@ -316,6 +316,8 @@ computeMixtureCoefficients( integer const numComps,
   {
     LvArray::forValuesInSlice( stack.daMixture, setZero );
     LvArray::forValuesInSlice( stack.dbMixture, setZero );
+    LvArray::forValuesInSlice( stack.ddaMixture, setZero );
+
     for( integer ic = 0; ic < numComps; ++ic )
     {
       for( integer jc = 0; jc < numComps; ++jc )
@@ -323,16 +325,32 @@ computeMixtureCoefficients( integer const numComps,
         real64 const sqrt_aiaj = LvArray::math::sqrt( stack.aic[ic] * stack.aic[jc] );
         real64 const kij_term = 1.0 - kij( ic, jc );
         real64 const aij = kij_term * sqrt_aiaj;
-        real64 const coeff = 0.5 * kij_term / sqrt_aiaj;
 
-        real64 const daij_dT = coeff * (stack.aic[jc] * stack.daic_dt[ic] + stack.aic[ic] * stack.daic_dt[jc]);
+        real64 const f_T = 0.5 / sqrt_aiaj * (stack.aic[jc] * stack.daic_dt[ic] + stack.aic[ic] * stack.daic_dt[jc]);
+        real64 const f_P = 0.5 / sqrt_aiaj * (stack.aic[jc] * stack.daic_dp[ic] + stack.aic[ic] * stack.daic_dp[jc]);
 
-        real64 const daij_dP = coeff * (stack.aic[jc] * stack.daic_dp[ic] + stack.aic[ic] * stack.daic_dp[jc]);
+        real64 const daij_dT = kij_term * f_T;
+        real64 const daij_dP = kij_term * f_P;
 
         stack.daMixture[Deriv::dP] += composition[ic] * composition[jc] * daij_dP;
         stack.daMixture[Deriv::dT] += composition[ic] * composition[jc] * daij_dT;
         stack.daMixture[Deriv::dC+ic] += composition[jc] * aij;
         stack.daMixture[Deriv::dC+jc] += composition[ic] * aij;
+
+        // Computation for ddaMixture (Derivatives of daMixture[Deriv::dT] wrt to all variables)
+        stack.ddaMixture[Deriv::dC+ic] += composition[jc] * daij_dT;
+        stack.ddaMixture[Deriv::dC+jc] += composition[ic] * daij_dT;
+
+        real64 const d2aij_dTdP = kij_term * (f_T * f_P / sqrt_aiaj);
+        stack.ddaMixture[Deriv::dP] += composition[ic] * composition[jc] * d2aij_dTdP;
+
+        real64 const f_TT = 0.5 / sqrt_aiaj * (
+          stack.aic[jc] * stack.d2aic_dt2[ic] +
+          2.0 * stack.daic_dt[ic] * stack.daic_dt[jc] +
+          stack.aic[ic] * stack.d2aic_dt2[jc]
+          ) - f_T * f_T / sqrt_aiaj;
+        real64 const d2aij_dT2 = kij_term * f_TT;
+        stack.ddaMixture[Deriv::dT] += composition[ic] * composition[jc] * d2aij_dT2;
       }
       stack.dbMixture[Deriv::dP] += composition[ic] * stack.dbic_dp[ic];
       stack.dbMixture[Deriv::dT] += composition[ic] * stack.dbic_dt[ic];
@@ -347,6 +365,16 @@ computeMixtureCoefficients( integer const numComps,
           real64 const sqrt_aiaj = LvArray::math::sqrt( stack.aic[ic] * stack.aic[jc] );
           real64 const dkij_term_dT = -stack.dkij_dT( ic, jc );
           stack.daMixture[Deriv::dT] += composition[ic] * composition[jc] * dkij_term_dT * sqrt_aiaj;
+
+          // Updating ddaMixture for the temperature-dependent BICs part
+          stack.ddaMixture[Deriv::dC+ic] += composition[jc] * dkij_term_dT * sqrt_aiaj;
+          stack.ddaMixture[Deriv::dC+jc] += composition[ic] * dkij_term_dT * sqrt_aiaj;
+
+          real64 const f_P = 0.5 / sqrt_aiaj * (stack.aic[jc] * stack.daic_dp[ic] + stack.aic[ic] * stack.daic_dp[jc]);
+          stack.ddaMixture[Deriv::dP] += composition[ic] * composition[jc] * dkij_term_dT * f_P;
+
+          real64 const f_T = 0.5 / sqrt_aiaj * (stack.aic[jc] * stack.daic_dt[ic] + stack.aic[ic] * stack.daic_dt[jc]);
+          stack.ddaMixture[Deriv::dT] += composition[ic] * composition[jc] * 2.0 * dkij_term_dT * f_T;
         }
       }
     }
@@ -605,6 +633,91 @@ computeLogFugacityCoefficients( integer const numComps,
   {
     GEOS_UNUSED_VAR( compressibilityFactorDerivs );
     GEOS_UNUSED_VAR( logFugacityCoefficientDerivs );
+  }
+}
+
+template< typename EOS_TYPE >
+template< integer USD, bool DERIVATIVES >
+GEOS_HOST_DEVICE
+void
+CubicEOSPhaseModel< EOS_TYPE >::
+computeEnthalpy( integer const numComps,
+                 real64 const & pressure,
+                 real64 const & temperature,
+                 arraySlice1d< real64 const, USD > const & composition,
+                 ComponentProperties::KernelWrapper const & componentProperties,
+                 StackVariables< true > const & data,
+                 real64 & enthalpy,
+                 StackDerivativeType< 1, DERIVATIVES > const & enthalpyDerivs,
+                 SelectedRoot const selectedRoot )
+{
+  GEOS_UNUSED_VAR( pressure );
+  GEOS_UNUSED_VAR( componentProperties );
+
+  real64 Z = 0.0;
+  auto const & compressibilityDerivs = enthalpyDerivs;
+
+  // Dynamically resolve compressibility derivative generation based on the DERIVATIVES boolean flag
+  computeCompressibilityFactor< USD, DERIVATIVES >( numComps,
+                                                    composition,
+                                                    data,
+                                                    Z,
+                                                    compressibilityDerivs,
+                                                    selectedRoot );
+
+  real64 const A = data.aMixture;
+  real64 const B = data.bMixture;
+  real64 const dA_dT = data.daMixture[Deriv::dT];
+
+  // M represents generalized term inside the logarithm coefficient bracket: A + T * (dA/dT)
+  real64 const M = A + temperature * dA_dT;
+
+  real64 const expE = ( Z + EOS_TYPE::delta1 * B ) / ( Z + EOS_TYPE::delta2 * B );
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_ERROR_IF( expE < MultiFluidConstants::epsilon,
+                 "Cubic EOS Enthalpy failed: exp(E) is below epsilon." );
+#else
+  GEOS_ERROR_IF( expE < MultiFluidConstants::epsilon,
+                 GEOS_FMT( "Cubic EOS Enthalpy failed with exp(E)={}", expE ) );
+#endif
+  real64 const E = log( expE );
+  real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * B );
+
+  // Dimensionless enthalpy departure: H_dep / RT = Z - 1.0 + (A + T*A_T) * G * E
+  real64 const dimensionlessEnthalpy = Z - 1.0 + M * G * E;
+
+  // Return scaled dimensional enthalpy H_dep = R * T * (H_dep / RT)
+  real64 const RT = constants::gasConstant * temperature;
+  enthalpy = RT * dimensionlessEnthalpy;
+
+  if constexpr ( DERIVATIVES )
+  {
+    integer const numDofs = numComps + 2;
+    for( integer idof = 0; idof < numDofs; ++idof )
+    {
+      real64 const dZ = compressibilityDerivs[idof];
+      real64 const dA = data.daMixture[idof];
+      real64 const dB = data.dbMixture[idof];
+      real64 const ddA = data.ddaMixture[idof];
+
+      // Derivatives of M using standard product rules
+      real64 dM = dA + temperature * ddA;
+      if( idof == Deriv::dT )
+      {
+        dM += dA_dT;
+      }
+
+      real64 const dE = ( dZ + EOS_TYPE::delta1 * dB ) / ( Z + EOS_TYPE::delta1 * B ) -
+                        ( dZ + EOS_TYPE::delta2 * dB ) / ( Z + EOS_TYPE::delta2 * B );
+
+      real64 const dG = -G * dB / B;
+
+      real64 const dDimensionlessEnthalpy = dZ + ( dM * G * E + M * dG * E + M * G * dE );
+
+      // Apply product rule to dimensional scaling: d(RT * H_dimless)
+      enthalpyDerivs[idof] = RT * dDimensionlessEnthalpy;
+    }
+    enthalpyDerivs[Deriv::dT] += constants::gasConstant * dimensionlessEnthalpy;
   }
 }
 

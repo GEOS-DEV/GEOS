@@ -200,7 +200,7 @@ real64 helmholtzCO2Enthalpy( real64 const & T,
 
 
 
-TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
+TableFunction const * makeCO2EnthalpyTable( constitutive::PVTProps::BrineFluidParameters const & brineFluidParameters,
                                             string const & functionName,
                                             FunctionManager & functionManager )
 {
@@ -218,21 +218,9 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
   {
     // initialize the (p,T) coordinates
     PTTableCoordinates tableCoords;
-    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+    constitutive::PVTProps::BrineFluidParameters::initializePropertyTable( brineFluidParameters, tableCoords );
 
-    real64 tolerance = 1e-10;
-
-    try
-    {
-      if( inputParams.size() >= 10 )
-      {
-        tolerance = stod( inputParams[9] );
-      }
-    }
-    catch( const std::invalid_argument & e )
-    {
-      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-    }
+    real64 const tolerance = brineFluidParameters.m_tolerance;
 
     array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
     array1d< real64 > enthalpies( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -254,7 +242,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 } // namespace
 
 CO2Enthalpy::CO2Enthalpy( string const & name,
-                          string_array const & inputParams,
+                          BrineFluidParameters const & brineFluidParameters,
                           string_array const & componentNames,
                           array1d< real64 > const & componentMolarWeight,
                           TableFunction::OutputOptions const pvtOutputOpts ):
@@ -265,7 +253,7 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
-  m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_CO2EnthalpyTable = makeCO2EnthalpyTable( brineFluidParameters, m_functionName, FunctionManager::getInstance() );
 
   m_CO2EnthalpyTable->outputTableData( pvtOutputOpts );
 }

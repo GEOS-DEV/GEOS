@@ -9,7 +9,11 @@ In addition to the integrated tests which track code correctness we have a suite
 Running the benchmarks
 ----------------------
 
-Because performance is system specific we currently only support running the benchmarks on the LLNL machines Quartz and Lassen. If you are on either of these machines the script ``benchmarks/runBenchmarks.py`` can be used to run the benchmarks.
+Because performance is system specific, the script ``benchmarks/runBenchmarks.py`` only knows how to submit jobs on the LLNL machines Quartz and Lassen and on the OLCF machine Crusher (see ``getMachine`` in the script).
+
+.. warning::
+  These machines have been retired, and the ``benchmarks`` directory currently contains only the ``runBenchmarks.py`` and ``compareBenchmarks.py`` scripts, without any linked input file.
+  This infrastructure is therefore not usable as is: running it on another machine requires adding a machine definition to ``runBenchmarks.py`` and linking benchmark input files into ``benchmarks`` (see `Adding a benchmark problem`_).
 
 ::
 
@@ -49,7 +53,7 @@ A group of benchmarks is specified with a standard GEOS input XML file with an e
    :start-after: <Problem>
    :end-before: <Solvers>
 
-*[Source: benchmarks/SSLE-small.xml]*
+*[Source: inputFiles/solidMechanics/benchmarks/SSLE-io.xml]*
 
 The ``Benchmarks`` block consists of a block for each machine the benchmarks are to run on. Currently the only options are ``quartz``, ``lassen``, and ``crusher``.
 
@@ -79,15 +83,15 @@ Note that specifying a time limit for each benchmark family can greatly decrease
 Adding a benchmark problem
 ---------------------------
 
-To add a new group of benchmarks you need to create an XML input file describing the problem to be run. Then you need to add the ``Benchmarks`` block described above which specifies the specific benchmarks. Finally add a symbolic link to the input file in ``benchmarks`` and run the benchmarks to make sure everything works as expected.
+To add a new group of benchmarks you need to create an XML input file describing the problem to be run. Then you need to add the ``Benchmarks`` block described above which specifies the specific benchmarks. Finally add a symbolic link to the input file in the top-level ``benchmarks`` directory (the script runs every ``.xml`` file it finds there) and run the benchmarks to make sure everything works as expected.
 
 
 Viewing the results
 -------------------
 
-Each night the NightlyTests_ repository runs the benchmarks on both Quartz and Lassen, the ``timingFiles`` directory contains all of the resulting caliper output files. If you're on LC then these files are duplicated at ``/usr/gapps/GEOSX/timingFiles/`` and if you have LC access you can view them in Spot_. You can also open these files in Python and analyse them (See :ref:`opening-spot-caliper-files-in-python`).
+The NightlyTests_ repository used to run the benchmarks every night on both Quartz and Lassen; its ``timingFiles`` directory contains all of the resulting caliper output files. If you're on LC then these files are duplicated at ``/usr/gapps/GEOSX/timingFiles/`` and if you have LC access you can view them in Spot_. You can also open these files in Python and analyse them (See :ref:`opening-spot-caliper-files-in-python`).
 
-If you want to run the benchmarks on your local branch and compare the results with develop you can use the ``benchmarks/compareBenchmarks.py`` python script. This requires that you run the benchmarks on your branch and on develop. It will print out a table with the initialization time speed up and run time speed up, so a run speed up of of 2x means your branch runs twice as fast as develop where as a initialization speed up of 0.5x means the set up takes twice as long.
+If you want to run the benchmarks on your local branch and compare the results with develop you can use the ``benchmarks/compareBenchmarks.py`` python script. This requires that you run the benchmarks on your branch and on develop. It will print out a table with the initialization time speed up and run time speed up, so a run speed up of 2x means your branch runs twice as fast as develop where as a initialization speed up of 0.5x means the set up takes twice as long.
 
 .. note::
   A future version of the script will be able to pull timing results straight from the ``.cali`` files so that if you have access to the NightlyTests_ timing files you won't need to run the benchmarks on develop. Furthermore it will be able to provide more detailed information than just initialization and run times.

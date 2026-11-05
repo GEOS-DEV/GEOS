@@ -14,7 +14,7 @@
  */
 
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
 #include <gtest/gtest.h>
 
 using namespace geos;
@@ -34,7 +34,7 @@ TEST( WellControlsEnums, Type )
 
 TEST( WellControlsEnums, Control )
 {
-  using EnumType = WellControls::Control;
+  using EnumType = ConstraintTypeId;
 
   ASSERT_EQ( "BHP", toString( EnumType::BHP ) );
   ASSERT_EQ( "phaseVolRate", toString( EnumType::PHASEVOLRATE ) );

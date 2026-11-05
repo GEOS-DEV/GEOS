@@ -39,7 +39,7 @@ static localIndex getFaceNodesHex( localIndex const faceNum,
                                    arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
                                    Span< localIndex > const faceNodes )
 {
-  GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Hexahedron", faceNum ) );
+  GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT_RUNTIME( nodeCountError, "Hexahedron", faceNum ) );
   switch( faceNum )
   {
     case 0:
@@ -92,7 +92,7 @@ static localIndex getFaceNodesHex( localIndex const faceNum,
     }
     default:
     {
-      GEOS_ERROR( GEOS_FMT( faceIndexError, "Hexahedron", faceNum ) );
+      GEOS_ERROR( GEOS_FMT_RUNTIME( faceIndexError, "Hexahedron", faceNum ) );
     }
   }
   return 4;
@@ -106,7 +106,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
   {
     case 0:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT_RUNTIME( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[1];
       faceNodes[2] = elemNodes[5];
@@ -115,7 +115,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 1:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT_RUNTIME( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[2];
       faceNodes[2] = elemNodes[3];
@@ -124,7 +124,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 2:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT_RUNTIME( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[2];
@@ -132,7 +132,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 3:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT_RUNTIME( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[1];
       faceNodes[1] = elemNodes[3];
       faceNodes[2] = elemNodes[5];
@@ -140,7 +140,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 4:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT_RUNTIME( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[2];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[5];
@@ -149,7 +149,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     default:
     {
-      GEOS_ERROR( GEOS_FMT( faceIndexError, "Wedge", faceNum ) );
+      GEOS_ERROR( GEOS_FMT_RUNTIME( faceIndexError, "Wedge", faceNum ) );
       return 0;
     }
   }
@@ -159,7 +159,7 @@ static localIndex getFaceNodesTet( localIndex const faceNum,
                                    arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
                                    Span< localIndex > const faceNodes )
 {
-  GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Tetrahedron", faceNum ) );
+  GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT_RUNTIME( nodeCountError, "Tetrahedron", faceNum ) );
   switch( faceNum )
   {
     case 0:
@@ -192,7 +192,7 @@ static localIndex getFaceNodesTet( localIndex const faceNum,
     }
     default:
     {
-      GEOS_ERROR( GEOS_FMT( faceIndexError, "Tetrahedron", faceNum ) );
+      GEOS_ERROR( GEOS_FMT_RUNTIME( faceIndexError, "Tetrahedron", faceNum ) );
     }
   }
   return 3;
@@ -206,7 +206,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
   {
     case 0:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT_RUNTIME( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[1];
       faceNodes[2] = elemNodes[4];
@@ -214,7 +214,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 1:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT_RUNTIME( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[2];
       faceNodes[2] = elemNodes[3];
@@ -223,7 +223,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 2:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT_RUNTIME( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[2];
@@ -231,7 +231,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 3:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT_RUNTIME( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[1];
       faceNodes[1] = elemNodes[3];
       faceNodes[2] = elemNodes[4];
@@ -239,7 +239,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 4:
     {
-      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT_RUNTIME( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[2];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[3];
@@ -247,7 +247,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     default:
     {
-      GEOS_ERROR( GEOS_FMT( faceIndexError, "Pyramid", faceNum ) );
+      GEOS_ERROR( GEOS_FMT_RUNTIME( faceIndexError, "Pyramid", faceNum ) );
       return 0;
     }
   }

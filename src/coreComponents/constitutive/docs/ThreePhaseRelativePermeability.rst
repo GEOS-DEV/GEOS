@@ -37,12 +37,13 @@ by `Baker <http://dx.doi.org/10.2118/17369-MS>`__. Specifically, we compute:
 This procedure provides a simple but effective formula avoiding
 the problems associated with the other interpolation methods (negative values).
 
-Another option can be triggered using `threePhaseInterpolator` to set interpolation model to be STONEII described by:
+Another option can be triggered using `threePhaseInterpolator` to set interpolation model to be ``StoneII`` described by:
 
 .. math::
-    k_ro = k_rocw ((k_row/k_rocw + k_rw)(k_rog/k_rocw + k_rg) - k_rw - k_rg)
+    k_{ro,wog}(S_w,S_g) = k_{ro,cw} ( (\frac{k_{r,ow}}{k_{ro,cw}} + k_{r,w}) (\frac{k_{r,og}}{k_{ro,cw}} + k_{r,g}) - k_{r,w} - k_{r,g} )
 
-...
+
+using :math:`k_{ro,cw}` as the relative permeability for oil at connate water saturation.
 
 Parameters
 ======================
@@ -52,8 +53,8 @@ The relative permeability constitutive model is listed in the
 The relative permeability model must be assigned a unique name via
 ``name`` attribute.
 This name is used to assign the model to regions of the physical
-domain via a ``materialList`` attribute of the ``<ElementRegion>``
-node.
+domain via a ``materialList`` attribute of the ``<CellElementRegion>``
+node (in the ``<ElementRegions>`` block).
 
 The following attributes are supported:
 

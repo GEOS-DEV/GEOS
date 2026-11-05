@@ -84,8 +84,7 @@ public:
     setMechanicsFSolver( precond, mgrData, mgrParams.separateComponents );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
-    setPressureAMG( mgrData.coarseSolver );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMinCoarseSize( mgrData.coarseSolver.ptr, 1000 ) );
+    setPressureAMG( mgrData.coarseSolver, hydrofractureMinCoarseSize );
   }
 };
 

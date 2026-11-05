@@ -34,6 +34,16 @@ DamageVolDev< BASE >::DamageVolDev( string const & name, Group * const parent ):
   Damage< BASE >( name, parent )
 {}
 
+template< typename BASE >
+void DamageVolDev< BASE >::postInputInitialization()
+{
+  Damage< BASE >::postInputInitialization();
+
+  GEOS_ERROR_IF( this->getFractureModelType() == FractureModelType::Nucleation,
+                 "the Nucleation crack model is not supported with the Vol-dev split",
+                 this->getDataContext() );
+}
+
 typedef DamageVolDev< ElasticIsotropic > DamageVolDevElasticIsotropic;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageVolDevElasticIsotropic, string const &, Group * const )

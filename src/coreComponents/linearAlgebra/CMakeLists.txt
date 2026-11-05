@@ -73,6 +73,7 @@ set( linearAlgebra_headers
      utilities/ComponentMask.hpp
      utilities/InverseNormalOperator.hpp
      utilities/LAIHelperFunctions.hpp
+     utilities/SparsityPatternUtilities.hpp
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
@@ -110,9 +111,11 @@ set( linearAlgebra_sources
 set( dependencyList ${parallelDeps} mesh denseLinearAlgebra finiteVolume )
 set( tplDependencyList "" )
 
-list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
-list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
-list( APPEND tplDependencyList suitesparse )
+if( ENABLE_SUITESPARSE )
+    list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
+    list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
+    list( APPEND tplDependencyList suitesparse )
+endif()
 
 if( ENABLE_SUPERLU_DIST )
       list( APPEND linearAlgebra_headers interfaces/direct/SuperLUDist.hpp )
@@ -168,6 +171,8 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp
+          interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALMReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
@@ -188,7 +193,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreUtils.cpp
           interfaces/hypre/HypreVector.cpp )
 
-    list( APPEND tplDependencyList hypre umpire )
+    list( APPEND tplDependencyList hypre umpire::umpire )
 
     if( ENABLE_HYPREDRV )
         list( APPEND linearAlgebra_headers
@@ -248,6 +253,14 @@ blt_add_library( NAME       linearAlgebra
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
+# Keep MPI as a public CMake target dependency.  The legacy BLT `mpi` target
+# can flatten FindMPI's libraries while constructing dependent link lines,
+# separating libmpicxx and libmpi under linkers using --as-needed.  Consumers
+# of linearAlgebra must receive the complete MPI C++ link interface directly.
+if( ENABLE_MPI AND TARGET MPI::MPI_CXX )
+  target_link_libraries( linearAlgebra PUBLIC MPI::MPI_CXX )
+endif()
+
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
 install( TARGETS linearAlgebra LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
@@ -256,4 +269,3 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
   add_subdirectory( utilities/unitTests )
 endif( )
-

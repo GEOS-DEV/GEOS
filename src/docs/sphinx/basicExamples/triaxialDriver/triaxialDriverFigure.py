@@ -182,7 +182,7 @@ def main():
     # File path
     outputDir = args.outputDir
     geosDir = args.geosDir
-    xmlFilePath = geosDir + "/inputFiles/triaxialDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml"
+    xmlFilePath = geosDir + "/inputFiles/constitutiveDriver/triaxialDriver_ExtendedDruckerPrager_basicExample.xml"
 
     # Extract info from XML
     mechanicalParameters = getMechanicalParametersFromXML(xmlFilePath)

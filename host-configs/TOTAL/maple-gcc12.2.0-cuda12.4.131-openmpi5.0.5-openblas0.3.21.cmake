@@ -36,6 +36,7 @@ set( ENABLE_CUDA ON CACHE BOOL "" )
 #########################################################################
 # Set HYPRE to use CUDA
 set( ENABLE_HYPRE_DEVICE "CUDA" CACHE PATH "" FORCE )
+set( ENABLE_HYPREDRV ON CACHE BOOL "" )
 
 add_third_party_libraries()
 

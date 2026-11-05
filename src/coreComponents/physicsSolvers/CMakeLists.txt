@@ -29,7 +29,9 @@ set( physicsSolversBase_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverBase.hpp
      PhysicsSolverBaseKernels.hpp
-     SolverStatistics.hpp )
+     SolverStatistics.hpp
+     StatisticsAggregatorBase.hpp
+     StatisticsAggregatorBaseHelpers.hpp )
 #
 # Specify solver sources
 #
