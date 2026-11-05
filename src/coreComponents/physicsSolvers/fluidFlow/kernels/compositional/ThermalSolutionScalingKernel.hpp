@@ -134,7 +134,7 @@ public:
 
       // compute temperature scaling factor
       real64 tempScalingFactor = 1.0;
-      // when enabled, absolute change scaling has a priority over relative change
+      // the stricter of the absolute and relative change limits is applied
       if( m_maxAbsoluteTempChange > 0.0 ) // maxAbsoluteTempChange <= 0.0 means that absolute scaling is disabled
       {
         if( absTempChange > m_maxAbsoluteTempChange )
@@ -142,12 +142,12 @@ public:
           tempScalingFactor = m_maxAbsoluteTempChange / absTempChange;
         }
       }
-      else if( temp > eps )
+      if( temp > eps )
       {
         real64 const relativeTempChange = absTempChange / temp;
         if( relativeTempChange > m_maxRelativeTempChange )
         {
-          tempScalingFactor = m_maxRelativeTempChange / relativeTempChange;
+          tempScalingFactor = LvArray::math::min( tempScalingFactor, m_maxRelativeTempChange / relativeTempChange );
         }
       }
       m_temperatureScalingFactor[ei] = tempScalingFactor;
