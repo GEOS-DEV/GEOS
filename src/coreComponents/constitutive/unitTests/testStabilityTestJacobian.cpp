@@ -18,9 +18,11 @@
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/KValueInitialization.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/Utilities.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
 
+using namespace geos::constitutive;
 using namespace geos::constitutive::compositional;
 
 namespace geos
@@ -28,16 +30,26 @@ namespace geos
 namespace testing
 {
 
-template< int NC >
+template< integer NC >
 struct FluidData
 {};
 
 template<>
 struct FluidData< 2 >
 {
+  static constexpr real64 e = 1.0e-8;
+
+  static constexpr std::array< real64, 8 > testCompositions = {
+    0.5, 0.5,
+    0.0, 1.0,
+    e, 1.0-e,
+    1.0-e, e
+  };
+
   static std::unique_ptr< TestFluid< 2 > > createFluid()
   {
     auto fluid = TestFluid< 2 >::create( {Fluid::CO2, Fluid::C5H12} );
+    fluid->setBinaryCoefficients( Feed< 1 >{0.025} );
     return fluid;
   }
 };
@@ -45,13 +57,25 @@ struct FluidData< 2 >
 template<>
 struct FluidData< 4 >
 {
+  static constexpr real64 e = 1.0e-7;
+
+  static constexpr std::array< real64, 16 > testCompositions = {
+    0.3, 0.2, 0.2, 0.3,
+    0.0, 0.0, 0.0, 1.0,
+    0.0, 0.5, 0.0, 0.5,
+    e, e, 0.0, 1.0-2*e
+  };
+
   static std::unique_ptr< TestFluid< 4 > > createFluid()
   {
-    return TestFluid< 4 >::create( {Fluid::N2, Fluid::CH4, Fluid::CO2, Fluid::H2O} );
+    auto fluid = TestFluid< 4 >::create( {Fluid::CH4, Fluid::CO2, Fluid::H2S, Fluid::H2O} );
+    const std::array< real64 const, 6 > bics = { 0.0, 0.0, 0.0, 0.4850, 0.1896, 0.1353 };
+    fluid->setBinaryCoefficients( bics );
+    return fluid;
   }
 };
 
-template< int NC >
+template< integer NC >
 using FlashData = std::tuple<
   real64 const,       // pressure
   real64 const,       // temperature
@@ -59,13 +83,13 @@ using FlashData = std::tuple<
   real64 const        // power to raise k-values
   >;
 
-template< int NC, EquationOfStateType EOS_TYPE >
+template< integer NC, EquationOfStateType EOS_TYPE >
 class StabilityTestJacobianTestFixture :  public ::testing::TestWithParam< FlashData< NC > >
 {
   static constexpr real64 relTol = 1.0e-5;
   static constexpr real64 absTol = 1.0e-7;
-  static constexpr int numComps = NC;
-  static constexpr int numDofs = NC + 2;
+  static constexpr integer numComps = NC;
+  static constexpr integer numDofs = NC + 2;
   using Deriv = geos::constitutive::multifluid::DerivativeOffset;
 public:
   StabilityTestJacobianTestFixture()
@@ -78,11 +102,18 @@ public:
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
-    EquationOfStateType const equationOfState = EOS_TYPE;
+    EquationOfStateType constexpr equationOfState = EOS_TYPE;
 
     constitutive::compositional::FlashData flashData;
     flashData.liquidEos = equationOfState;
-    flashData.vapourEos = equationOfState;
+    if constexpr (equationOfState == EquationOfStateType::SoreideWhitson)
+    {
+      flashData.vapourEos = EquationOfStateType::PengRobinson;
+    }
+    else
+    {
+      flashData.vapourEos = equationOfState;
+    }
 
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
@@ -120,11 +151,24 @@ public:
     calculatePresentComponents( numComps, composition.toSliceConst(), nonZeroComponents );
     auto presentComponents = nonZeroComponents.toSliceConst();
 
-    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
-                                                        pressure,
-                                                        temperature,
-                                                        componentProperties,
-                                                        kValues );
+    if constexpr (equationOfState == EquationOfStateType::SoreideWhitson)
+    {
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          pressure,
+                                                          temperature,
+                                                          componentProperties,
+                                                          kValues );
+    }
+    else
+    {
+      KValueInitialization::computeSoreideWhitsonKvalue( numComps,
+                                                         pressure,
+                                                         temperature,
+                                                         componentProperties,
+                                                         composition.toSliceConst(),
+                                                         kValues );
+    }
+
     for( integer const ic: presentComponents )
     {
       real64 const logK = LvArray::math::log( kValues[ic] );
@@ -148,16 +192,7 @@ public:
                                                  residual,
                                                  jacobian );
 
-    std::cout << "RESIDUAL " << std::scientific << std::setprecision( 5 ) << residual << "\n";
-    std::cout << "RESIDUAL " << std::scientific << std::setprecision( 5 ) << displacedResidual << "\n";
-    std::cout << "JACOBIAN\n";
-    for( integer kc = 0; kc < numComps; ++kc )
-    {
-      std::cout << "  " << jacobian[kc] << "\n";
-    }
-    std::cout << "=============================================\n";
-
-    // k-value derivatives
+    // composition derivatives
     // Derivatives are wrt to log(Y)
     real64 constexpr deltaLogY = 1.0e-3;
     for( integer kc = 0; kc < numComps; ++kc )
@@ -168,7 +203,7 @@ public:
         [&]( real64 const dY, auto & values )
       {
         LvArray::forValuesInSlice( displacedResidual, setZero );
-        real64 const kvOld = logTestComposition[kc];
+        real64 const logYOld = logTestComposition[kc];
         logTestComposition[kc] += dY;
         StabilityTest::calculateResidual( numComps,
                                           presentComponents,
@@ -186,7 +221,7 @@ public:
         {
           values[ic] = displacedResidual[ic];
         }
-        logTestComposition[kc] = kvOld;
+        logTestComposition[kc] = logYOld;
       } );
     }
   }
@@ -196,46 +231,60 @@ protected:
 };
 
 using PengRobinson4 = StabilityTestJacobianTestFixture< 4, EquationOfStateType::PengRobinson >;
-//using SoreideWhitson4 = StabilityTestJacobianTestFixture< 4, EquationOfStateType::SoreideWhitson >;
+using SoreideWhitson4 = StabilityTestJacobianTestFixture< 4, EquationOfStateType::SoreideWhitson >;
+using SoaveRedlichKwong2 = StabilityTestJacobianTestFixture< 2, EquationOfStateType::SoaveRedlichKwong >;
 
 TEST_P( PengRobinson4, testJacobian )
 {
   testJacobian( GetParam() );
 }
 
-//TEST_P( SoreideWhitson4, testJacobian )
-//{
-//  testJacobian( GetParam() );
-//}
+TEST_P( SoreideWhitson4, testJacobian )
+{
+  testJacobian( GetParam() );
+}
+
+TEST_P( SoaveRedlichKwong2, testJacobian )
+{
+  testJacobian( GetParam() );
+}
 
 //-------------------------------------------------------------------------------
 // Data
 //-------------------------------------------------------------------------------
 
-/* UNCRUSTIFY-OFF */
+template< integer NC >
+stdVector< FlashData< NC > > generateData()
+{
+  constexpr integer dataSize = static_cast< integer >(FluidData< NC >::testCompositions.size());
+  integer constexpr numSamples =  dataSize / NC;
+  static_assert( numSamples * NC == dataSize );
 
-INSTANTIATE_TEST_SUITE_P(StabilityTestJacobian, PengRobinson4,
-  ::testing::ValuesIn<FlashData< 4 >>({
-    {1.0e+07, 193.15, {0.3, 0.2, 0.2, 0.3},  0.0}
-//    {1.0e+07, 193.15, {0.3, 0.2, 0.2, 0.3},  1.0},
-//    {1.0e+07, 193.15, {0.3, 0.2, 0.2, 0.3}, -1.0},
-//    {1.0e+07, 193.15, {0.0, 0.2, 0.0, 0.8}, -1.0}
-  })
-);
+  stdVector< FlashData< NC > > data;
+  for( integer sampleIndex = 0; sampleIndex < numSamples; sampleIndex++ )
+  {
+    Feed< NC > sample;
+    for( integer ic = 0; ic < NC; ic++ )
+    {
+      sample[ic] = FluidData< NC >::testCompositions[sampleIndex*NC + ic];
+    }
+    for( real64 const p : {1.0, 50.0, 100.0, 500.0} ) // Pressure in bars
+    {
+      for( real64 const t : {10.0, 25.0, 80.0, 150.0} ) // Temperature in C
+      {
+        for( real64 const a : {-1.0, 0.0, 1.0} )
+        {
+          data.emplace_back( 1.0e5*p, t + 273.15, sample, a );
+        }
+      }
+    }
+  }
+  return data;
+}
 
-/*
-INSTANTIATE_TEST_SUITE_P(StabilityTestJacobian, SoreideWhitson4,
-  ::testing::ValuesIn<FlashData< 4 >>({
-    {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 0.0},
-    {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 0.5},
-    {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 1.0},
-    {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 0.998},
-    {1.00000e+06, 193.15, {0.0, 0.0, 0.0, 1.0}, 1.002}
-  })
-);
-*/
-
-/* UNCRUSTIFY-ON */
+INSTANTIATE_TEST_SUITE_P( StabilityTestJacobian, PengRobinson4, ::testing::ValuesIn( generateData< 4 >()) );
+INSTANTIATE_TEST_SUITE_P( StabilityTestJacobian, SoreideWhitson4, ::testing::ValuesIn( generateData< 4 >()) );
+INSTANTIATE_TEST_SUITE_P( StabilityTestJacobian, SoaveRedlichKwong2, ::testing::ValuesIn( generateData< 2 >()) );
 
 } // testing
 } // geos

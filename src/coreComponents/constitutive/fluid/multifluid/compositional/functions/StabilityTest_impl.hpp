@@ -72,8 +72,6 @@ bool StabilityTest::compute( integer const numComps,
   real64 const stabilityTolerance = continuousFlashParameters[FlashParameters::STABILITY_TOLERANCE];
   real64 const stabilitySSITolerance = continuousFlashParameters[FlashParameters::SSI_TOLERANCE];
 
-  integer const numConfigSteps = flashData.liquidEos == flashData.vapourEos ? 1 : 2;
-
   // Initialise by assuming a stable mixture
   unstableMixture = false;
 
@@ -81,12 +79,23 @@ bool StabilityTest::compute( integer const numComps,
   bool allConverged = true;
 
   // Measure of distance to trivial solution
-  real64 maxDistanceToTrivialSolution = 0.0;
+  real64 maxDistanceToTrivialSolution = -LvArray::NumericLimits< real64 >::max;
+  auto const storeIncipientComposition = [&]( EquationOfStateType const eos )
+  {
+    incipientEquationOfState = eos;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      incipientComposition[ic] = testComposition[ic];
+    }
+  };
+
+  // If the 2 EOS are not the same, we will do 2 passes swapping the 2 EOS if required
+  integer const numConfigSteps = flashData.liquidEos == flashData.vapourEos ? 1 : 2;
 
   for( integer configStep = 0; configStep < numConfigSteps; ++configStep )
   {
     EquationOfStateType const sampleEos = (configStep == 0) ? flashData.liquidEos : flashData.vapourEos;
-    EquationOfStateType const incipientEos = sampleEos;
+    EquationOfStateType const incipientEos = (configStep == 0) ? flashData.vapourEos : flashData.liquidEos;
 
     real64 tpd = 0.0;
 
@@ -110,13 +119,14 @@ bool StabilityTest::compute( integer const numComps,
                        logFugacity,
                        hyperplane );
 
-    for( real64 const alpha : { 1.0, -1.0, 0.0 } )
+    for( int const alpha : { 1, -1, 0 } )
     {
-      if( LvArray::math::abs( alpha ) < MultiFluidConstants::epsilon )
+      // If alpha is zero then it means we want to test a constant composition
+      if( alpha == 0 )
       {
         for( integer const ic : presentComponents )
         {
-          logTestComposition[ic] = 1.0;
+          logTestComposition[ic] = 0.0;
         }
       }
       else
@@ -124,7 +134,7 @@ bool StabilityTest::compute( integer const numComps,
         for( integer const ic : presentComponents )
         {
           real64 const logK = LvArray::math::log( kValues[ic] );
-          logTestComposition[ic] = LvArray::math::log( composition[ic] ) + alpha * logK;
+          logTestComposition[ic] = LvArray::math::log( composition[ic] ) + (1.0/alpha) * logK;
         }
       }
 
@@ -167,7 +177,7 @@ bool StabilityTest::compute( integer const numComps,
       }
 
       // Start with Newton iterations
-      for(iterationCount++; (!converged) && (iterationCount < maxIterations); ++iterationCount )
+      for( iterationCount++; (!converged) && (iterationCount < maxIterations); ++iterationCount )
       {
         for( integer const ic : presentComponents )
         {
@@ -187,6 +197,8 @@ bool StabilityTest::compute( integer const numComps,
                                                      derivatives.toSlice(),
                                                      residual,
                                                      jacobian.toSlice() );
+
+        // Ensure that the Jacobian is well formed for the absent components
         for( integer const ic : absentComponents )
         {
           jacobian( ic, ic ) = 1.0;
@@ -203,25 +215,12 @@ bool StabilityTest::compute( integer const numComps,
       }
 
       allConverged = allConverged && converged;
-
       // Calculate the tangent-plane-distance (TPD) and distance to the trivial solution
       real64 distance = 0.0;
       for( integer const ic : presentComponents )
       {
         real64 const dZ = testComposition[ic] - composition[ic];
         distance += (dZ*dZ);
-      }
-
-      // The incipient phase composition is the converged test composition that is furthest away from the
-      // given sample composition
-      if( maxDistanceToTrivialSolution < distance )
-      {
-        maxDistanceToTrivialSolution = distance;
-        incipientEquationOfState = incipientEos;
-        for( integer ic = 0; ic < numComps; ++ic )
-        {
-          incipientComposition[ic] = testComposition[ic];
-        }
       }
 
       // The mixture is unstable if either the TPD is negative or if the TPD is zero but the incipient composition
@@ -235,9 +234,16 @@ bool StabilityTest::compute( integer const numComps,
       {
         unstableMixture = true;
       }
+
       if( unstableMixture )
       {
+        storeIncipientComposition( incipientEos );
         return true;
+      }
+      else if( maxDistanceToTrivialSolution < distance )
+      {
+        maxDistanceToTrivialSolution = distance;
+        storeIncipientComposition( incipientEos );
       }
     }
   }
@@ -264,19 +270,46 @@ void StabilityTest::computeDerivatives( integer const numComps,
 
   integer const numDofs = 2 + numComps;
 
-  StackArray< real64, 1, maxNumComps > logFugacity( numComps );
+  StackArray< real64, 2, 3*maxNumComps > workSpace( 3, numComps );
+  arraySlice1d< real64 > logFugacitySample = workSpace[0];
+  arraySlice1d< real64 > logFugacityIncipient = workSpace[1];
+  arraySlice1d< real64 > normalisedComposition = workSpace[2];
+  StackArray< real64, 2, maxNumRows * maxNumRows, MatrixLayout::COL_MAJOR_PERM > A( numComps + 1, numComps + 1 );
+  StackArray< real64, 2, maxNumRows * maxNumDofs, MatrixLayout::COL_MAJOR_PERM > X( numComps + 1, numDofs );
+
   auto const & logFugacityIncipientDerivs = incipientCompositionDerivs;
   auto const & logFugacitySampleDerivs = compositionDerivs;
 
+  // Normalise the composition vector
+  copyComposition( numComps, composition, normalisedComposition );
+  real64 const totalAmount = normalizeComposition( numComps, normalisedComposition );
+  real64 const invTotalAmount = totalAmount < MultiFluidConstants::epsilon ? 0.0 : 1.0 / totalAmount;
   FugacityCalculator::computeLogFugacityDerivatives( numComps,
                                                      pressure,
                                                      temperature,
-                                                     composition,
+                                                     normalisedComposition.toSliceConst(),
                                                      componentProperties,
                                                      sampleEquationOfState,
                                                      flashData,
-                                                     logFugacity.toSlice(),
+                                                     logFugacitySample,
                                                      logFugacitySampleDerivs );
+
+  // Include the normalisation in the composition derivatives (chain rule):
+  //   dx_j/dz_k = (delta_jk - x_j) / sum(z)
+  //   dlnphi_i/dz_k = ( dlnphi_i/dx_k - sum_j( dlnphi_i/dx_j x_j ) ) / sum(z)
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 weightedSum = 0.0;
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      weightedSum += logFugacitySampleDerivs( ic, Deriv::dC+jc ) * normalisedComposition[jc];
+    }
+    for( integer kc = 0; kc < numComps; ++kc )
+    {
+      logFugacitySampleDerivs( ic, Deriv::dC+kc ) = (logFugacitySampleDerivs( ic, Deriv::dC+kc ) - weightedSum) * invTotalAmount;
+    }
+  }
+
   FugacityCalculator::computeLogFugacityDerivatives( numComps,
                                                      pressure,
                                                      temperature,
@@ -284,11 +317,12 @@ void StabilityTest::computeDerivatives( integer const numComps,
                                                      componentProperties,
                                                      incipientEquationOfState,
                                                      flashData,
-                                                     logFugacity.toSlice(),
+                                                     logFugacityIncipient,
                                                      logFugacityIncipientDerivs );
 
-  StackArray< real64, 2, maxNumRows * maxNumRows, MatrixLayout::COL_MAJOR_PERM > A( numComps + 1, numComps + 1 );
-  StackArray< real64, 2, maxNumRows * maxNumDofs, MatrixLayout::COL_MAJOR_PERM > X( numComps + 1, numDofs );
+  integer const refComp = getReferenceComponent( numComps, incipientComposition );
+  real64 const logRatioRef = refComp < 0 ? 0.0 : logFugacitySample[refComp] - logFugacityIncipient[refComp];
+  real64 const yOverZRef   = refComp < 0 ? 0.0 : incipientComposition[refComp] / composition[refComp];
 
   for( integer ic = 0; ic < numComps; ++ic )
   {
@@ -316,9 +350,15 @@ void StabilityTest::computeDerivatives( integer const numComps,
       integer const idof = Deriv::dC + jc;
       X( ic, idof ) = yi*logFugacitySampleDerivs( ic, idof );
     }
-    if( MultiFluidConstants::epsilon < composition[ic] )
+    if( MultiFluidConstants::minForSpeciesPresence < composition[ic] )
     {
       X( ic, Deriv::dC+ic ) += yi/composition[ic];
+    }
+    else
+    {
+      // Absent component: y_k = r_k z_k  =>  dy_k/dz_k = r_k  (one-sided derivative at z_k = 0)
+      real64 const logRatio = logFugacitySample[ic] - logFugacityIncipient[ic];
+      X( ic, Deriv::dC+ic ) = yOverZRef * LvArray::math::exp( logRatio - logRatioRef );
     }
   }
   for( integer idof = 0; idof < numDofs; ++idof )

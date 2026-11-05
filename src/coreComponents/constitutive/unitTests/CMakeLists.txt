@@ -40,6 +40,7 @@ set( gtest_geosx_tests
      testSoreideWhitsonFlash.cpp
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
+     testStabilityTestDerivatives.cpp
      testStabilityTestJacobian.cpp
      testRachfordRice.cpp
      testTwoPhaseImmiscibleFluid.cpp )

@@ -21,6 +21,7 @@
 #include "ComponentProperties.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -70,7 +71,7 @@ void FlashParameters::registerParametersImpl( MultiFluidBase * fluid )
   fluid->registerWrapper( viewKeyStruct::stabilityMaxIterationsString(), &m_discreteParameters[STABILITY_MAX_ITERATIONS] ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDefaultValue( m_discreteParameters[STABILITY_MAX_ITERATIONS] ).
-    setDescription( "The maximum number of successive substitution iterations used during the stability test. "
+    setDescription( "The maximum number of iterations used during the stability test. "
                     "A zero or negative value skips the stability test" );
 
   fluid->registerWrapper( viewKeyStruct::flashMaxIterationsString(), &m_discreteParameters[FLASH_MAX_ITERATIONS] ).
@@ -135,6 +136,24 @@ void FlashParameters::postInputInitializationImpl( MultiFluidBase const * fluid,
   // SSI tolerance should be positive
   real64 const ssiTolerance = m_continuousParameters[SSI_TOLERANCE];
   checkLowerBound( ssiTolerance, epsilon, viewKeyStruct::ssiToleranceString() );
+
+  // If the SSI tolerance is lower than the stability tolerance then it will be ignored for stability
+  if( ssiTolerance < stabilityTolerance )
+  {
+    GEOS_WARNING_IF( MpiWrapper::commRank() == 0,
+                     GEOS_FMT( "The SSI tolerance {} is less than the stability tolerance {}. "
+                               "The SSI tolerance will be ignored for stability calculations.",
+                               ssiTolerance, stabilityTolerance ));
+  }
+
+  // If the SSI tolerance is lower than the flash tolerance then it will be ignored for flash
+  if( ssiTolerance < flashTolerance )
+  {
+    GEOS_WARNING_IF( MpiWrapper::commRank() == 0,
+                     GEOS_FMT( "The SSI tolerance {} is less than the flash tolerance {}. "
+                               "The SSI tolerance will be ignored for flash calculations.",
+                               ssiTolerance, flashTolerance ));
+  }
 
   // Max number of flash iterations should be at least 1
   integer const flashMaxIterations = m_discreteParameters[FLASH_MAX_ITERATIONS];

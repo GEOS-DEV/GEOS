@@ -81,6 +81,7 @@ public:
 
     auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
     auto const * flashParameters = parameters->get< FlashParameters >();
+    flashParameters->m_discreteParameters[FlashParameters::STABILITY_MAX_ITERATIONS] = 20;
 
     bool const stabilityStatus = StabilityTest::compute( numComps,
                                                          pressure,
