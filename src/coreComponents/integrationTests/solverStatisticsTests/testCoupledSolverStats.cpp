@@ -1,5 +1,19 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
 #include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
-#include "integrationTests/testingUtilities/TestingTasks.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
@@ -7,6 +21,7 @@
 #include "common/Path.hpp"
 
 #include <gtest/gtest.h>
+#include <filesystem>
 #include <fstream>
 
 using namespace geos;
@@ -54,6 +69,14 @@ string statsFilePath( string_view solverName, string_view suffix )
   return joinPath( OutputBase::getOutputDirectory(),
                    "convergence",
                    GEOS_FMT( "{}_{}.csv", solverName, suffix ) );
+}
+
+void expectSingleHeaderCSV( string const & path, string_view headerToken, integer const minDataRows )
+{
+  CSVStats const stats = inspectCSV( path, headerToken );
+  EXPECT_TRUE( stats.exists ) << path;
+  EXPECT_EQ( stats.headerCount, 1 ) << path;
+  EXPECT_GE( stats.dataRowCount, minDataRows ) << path;
 }
 
 //////////////////////////////// Input deck ////////////////////////////////
@@ -169,12 +192,27 @@ static void runScenario( Params const & p )
 {
   SCOPED_TRACE( GEOS_FMT( "{}_{}", p.couplingType, p.csvMode ) );
 
+  // the serial and parallel variants of this test may run concurrently: keep their output files apart
+  string const suffix = GEOS_FMT( "{}_np{}", p.suffix, MpiWrapper::commSize() );
+  stdVector< string > const solverNames = { "poroSolve" + suffix, "flowSolve" + suffix, "lagsolve" + suffix };
+
+  // remove files left over by a previous run, so that the checks below only see this run's output
+  if( MpiWrapper::commRank() == 0 )
+  {
+    for( string const & solverName : solverNames )
+    {
+      std::filesystem::remove( statsFilePath( solverName, "iterations" ) );
+      std::filesystem::remove( statsFilePath( solverName, "convergence" ) );
+    }
+  }
+  MpiWrapper::barrier();
+
   // Sequential coupling forbids line search; use "None" there.
   string const lineSearchAction = ( p.couplingType == "Sequential" ) ? "None" : "Attempt";
 
   string xmlInput = replaceAll( xmlTemplate, "@COUPLING_TYPE@", p.couplingType );
   xmlInput = replaceAll( xmlInput, "@CSV_MODE@", p.csvMode );
-  xmlInput = replaceAll( xmlInput, "@SUFFIX@", p.suffix );
+  xmlInput = replaceAll( xmlInput, "@SUFFIX@", suffix );
   xmlInput = replaceAll( xmlInput, "@LINE_SEARCH_ACTION@", lineSearchAction );
 
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
@@ -187,31 +225,37 @@ static void runScenario( Params const & p )
   if( MpiWrapper::commRank() != 0 )
     return;
 
-  string const coupledCsv = statsFilePath( "poroSolve" + p.suffix, "iterations" );
-  string const flowCsv    = statsFilePath( "flowSolve" + p.suffix, "iterations" );
-  string const mechCsv    = statsFilePath( "lagsolve" + p.suffix, "iterations" );
-  string_view const headerToken = "Number of time steps";
+  string_view const iterationHeaderToken = "Number of time steps";
+  string_view const convergenceHeaderToken = "Cycle number";
+  string const & coupledName = solverNames[0];
 
-  // 1) Coupled solver CSV: exists, exactly ONE header, and data rows.
-  CSVStats const coupled = inspectCSV( coupledCsv, headerToken );
-  EXPECT_TRUE( coupled.exists );
-  EXPECT_EQ( coupled.headerCount, 1 );
-  EXPECT_GE( coupled.dataRowCount, 2 );     // one row per (sub)step, 2 forced steps
+  // 1) Coupled solver CSVs: exist, exactly ONE header (a single rank writes), and data rows.
+  expectSingleHeaderCSV( statsFilePath( coupledName, "iterations" ), iterationHeaderToken, 2 ); // 2 forced steps
+  // Without subcycling, the Sequential scheme does a single pass and computes no outer-loop residual.
+  if( p.couplingType == "FullyImplicit" )
+  {
+    expectSingleHeaderCSV( statsFilePath( coupledName, "convergence" ), convergenceHeaderToken, 2 );
+  }
 
   // 2) Sub-solver CSVs: in Sequential mode the sub-solvers iterate on their own,
-  //    so their iteration files must contain data.
+  //    so their iteration and convergence files must contain data.
   if( p.couplingType == "Sequential" )
   {
-    for( string const & path : { flowCsv, mechCsv } )
+    for( string const & solverName : { solverNames[1], solverNames[2] } )
     {
-      CSVStats const sub = inspectCSV( path, headerToken );
-      EXPECT_TRUE( sub.exists ) << path;
-      EXPECT_EQ( sub.headerCount, 1 ) << path;
-      EXPECT_GE( sub.dataRowCount, 2 ) << path;
+      expectSingleHeaderCSV( statsFilePath( solverName, "iterations" ), iterationHeaderToken, 2 );
+      expectSingleHeaderCSV( statsFilePath( solverName, "convergence" ), convergenceHeaderToken, 2 );
     }
   }
   // In FullyImplicit mode sub-solvers take no independent time steps,
-  // so writeIterationStatsToTable() early-returns: no rows expected.
+  // so writeIterationStatsToTable() early-returns: no iteration file expected.
+  else
+  {
+    for( string const & solverName : { solverNames[1], solverNames[2] } )
+    {
+      EXPECT_FALSE( inspectCSV( statsFilePath( solverName, "iterations" ), iterationHeaderToken ).exists ) << solverName;
+    }
+  }
 }
 
 TEST( CoupledSolverStatisticsCSVTest, checkCSVOutput )
