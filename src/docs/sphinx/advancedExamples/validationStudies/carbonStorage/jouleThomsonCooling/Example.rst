@@ -350,11 +350,11 @@ The simulation covers 15 years. The events are defined in the ``Events`` block, 
 Post-processing and reporting
 ------------------------------------------------------------------------
 
-The results of the simulation can be post-processed and visualized using scripts and data located next to the input file at
+The results of the simulation can be post-processed and visualized using scripts and data located next to this documentation page at
 
 .. code-block:: console
 
-  inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling
+  src/docs/sphinx/advancedExamples/validationStudies/carbonStorage/jouleThomsonCooling
 
 The profiles of the CO2 mass fraction in the gas phase, of the pressure and of the temperature along the radial direction are post-processed with the Python script ``plot_joule_thomson_profile.py``. It reads the time history written by the ``timeHistory`` output (``jouleThomsonCooling.hdf5``), selects the output times of the simulation (1, 10, 20, 30 and 90 days, 1 year and 15 years), and plots the profiles of the first row of the wedge on a logarithmic radial axis from 0.1 to 1000 m. For the temperature, the script also overlays the points digitized from Figure 7 of `(Oldenburg, 2007) <https://doi.org/10.1016/j.enconman.2007.01.010>`__ (``oldenburg.json``), shown as dots with the same color as the corresponding *GEOS* curve.
 
@@ -374,7 +374,7 @@ The CO2 mass fraction in the gas phase is the quantity that locates the injected
 .. note::
   The front is sharp, with a transition from 1 to 0 over a factor of about 1.5 in radius. In the absence of molecular diffusion and dispersion in the *GEOS* model, this width is controlled by the numerical dispersion of the scheme and by the mesh size, and the paper, which includes molecular diffusion, can be expected to show a somewhat wider transition. The CO2 profile is important for the interpretation of the two other profiles, since the viscosity and the density of the gas change across the front.
 
-.. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/plot_joule_thomson_profile.py plot_co2_fraction
+.. plot:: docs/sphinx/advancedExamples/validationStudies/carbonStorage/jouleThomsonCooling/plot_joule_thomson_profile.py plot_co2_fraction
     :align: center
     :caption: Radial profiles of the CO2 mass fraction in the gas phase at the output times. The sharp front moves from about 9 m (1 day) to 550-600 m (15 years).
 
@@ -386,7 +386,7 @@ The pressure perturbation travels much faster than the CO2 front, since it propa
 
 At the outer boundary, the pressure first decreases slightly below the initial value (about 49.7 bar after 1 year) because of the production, before the pressure wave of the injector arrives. It then increases to about 53 bar after 15 years: the system is closed and the injected mass (3 kg/s) is larger than the produced mass (0.56 kg/s), so that the average pressure of the reservoir increases. The pressure at the well is far below the 300 bar limit of the injector, which confirms that the injection stays at a constant rate.
 
-.. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/plot_joule_thomson_profile.py plot_pressure
+.. plot:: docs/sphinx/advancedExamples/validationStudies/carbonStorage/jouleThomsonCooling/plot_joule_thomson_profile.py plot_pressure
     :align: center
     :caption: Radial profiles of the pressure at the output times. The pressure is highest at the injector (about 72 bar after 15 years) and tends to the initial value of 50 bar far from the well at early times.
 
@@ -398,7 +398,7 @@ The cold region is much smaller than the region invaded by the CO2: after 15 yea
 
 The magnitude of the minimum temperature is larger than a simple estimate based on the JT coefficient at the initial conditions. The pressure difference between the well and the location of the minimum at 15 years is about 10 bar (72 bar at the well, 61-62 bar at 30-40 m), so that a cooling of 14 \ |degree|\ C requires an apparent JT coefficient of at least 1.4 K/bar, larger than the 0.9 K/bar of CO2 at 45 \ |degree|\ C and 50 bar. This is consistent with the strong increase of :math:`\mu_{JT}` when CO2 approaches its critical point (31 \ |degree|\ C and 73.8 bar), which is the case in the cold region, and it means that the cooling is sensitive to the thermodynamic model.
 
-.. plot:: ../inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling/plot_joule_thomson_profile.py plot_temperature
+.. plot:: docs/sphinx/advancedExamples/validationStudies/carbonStorage/jouleThomsonCooling/plot_joule_thomson_profile.py plot_temperature
     :align: center
     :caption: Radial profiles of the temperature at the output times (lines: *GEOS*; dots: results of Figure 7 of Oldenburg (2007), digitized). There is no reference curve for 1 day. The minimum temperature after 15 years (about 31 \ |degree|\ C at 30-40 m) is reproduced, while *GEOS* is warmer than the paper close to the well (r < 10 m).
 

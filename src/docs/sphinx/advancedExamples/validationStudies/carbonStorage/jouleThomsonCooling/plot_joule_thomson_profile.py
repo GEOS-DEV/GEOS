@@ -154,10 +154,9 @@ def plot_profile_data(item: str, data: dict, selected_times: dict, reference: di
     plt.show(block=True)
 
 def plot_property(property: str, reference: bool = False):
-    # Set the directory containing the data
-    geos_directory = '../../../..'
-    data_directory = os.path.join(geos_directory, "inputFiles/compositionalMultiphaseFlow/benchmarks/jouleThomsonCooling")
-    data_directory = os.path.normpath(data_directory)
+    # The data files are located next to this script
+    # (the Sphinx plot directive runs the script from its own directory and does not define __file__)
+    data_directory = os.path.dirname(os.path.abspath(__file__)) if '__file__' in globals() else os.getcwd()
 
     # Get target times and extract simulation data
     selected_times = get_selected_times()
