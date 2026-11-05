@@ -10,7 +10,7 @@ Summary
 
 The CO2-brine model implemented in GEOS has two transported components, CO2 and a component named ``water``, distributed between the brine phase and the CO2-rich phase.
 
-In the liquid phase, ``water`` represents the gas-free brine, including its dissolved salt, rather than H2O alone. Liquid component mass fractions therefore partition the total liquid mass between dissolved CO2 and brine. Salinity is prescribed as a constant parameter; NaCl is not a separately transported component.
+In the liquid phase, ``water`` represents the brine, including its dissolved salt, rather than H2O alone. Liquid component mass fractions therefore partition the total liquid mass between dissolved CO2 and brine. Salinity is prescribed as a constant parameter; NaCl is not a separately transported component.
 
 The ``componentMolarWeight`` assigned to ``water`` (usually 0.018 kg/mol) defines the conversion between this component's mass and its pseudo-molar amount. It is not a physical molecular weight of brine. Consequently, liquid component mole fractions are pseudo-mole fractions, not molecular mole fractions of CO2, H2O and NaCl.
 
