@@ -79,20 +79,12 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
     vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
 
     // Assign phase compositions
-    for( integer ic = 0; ic < numComps; ++ic )
+    // Absent components are excluded from the Rachford-Rice solve and their k-values are never updated,
+    // so a negative vapour fraction can sit on their pole 1/(1-K): leave them at their initial feed value
+    for( integer const ic : presentComponents )
     {
       liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kVapourLiquid[ic] - 1.0 ) );
       vapourComposition[ic] = kVapourLiquid[ic] * liquidComposition[ic];
-    }
-    // Absent components are excluded from the Rachford-Rice solve and their k-values are never updated,
-    // so a negative vapour fraction can sit on their pole 1/(1-K): keep them at the feed value
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      if( composition[ic] <= MultiFluidConstants::minForSpeciesPresence )
-      {
-        liquidComposition[ic] = composition[ic];
-        vapourComposition[ic] = composition[ic];
-      }
     }
 
     normalizeComposition( numComps, liquidComposition );
