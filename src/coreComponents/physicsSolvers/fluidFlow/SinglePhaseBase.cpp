@@ -1305,6 +1305,14 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  // In a coupled run the coupled solver's NonlinearSolverParameters overwrite the flow subsolver,
+  // so the lineSearchAction / scalingType compatibility is checked here at run time.
+  // A better fix is to check it at input time in CoupledSolver.
+  GEOS_ERROR_IF( m_scalingType == flowSolverUtilities::ScalingType::Local &&
+                 m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None,
+                 "line search is not supported for scalingType = Local; set lineSearchAction to None, including in the coupled solver",
+                 getDataContext() );
+
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
   real64 maxDeltaPres = 0.0;
