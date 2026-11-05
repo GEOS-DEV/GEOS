@@ -651,6 +651,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                      createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                                                 m_maxAbsolutePresChange,
                                                                                 m_maxRelativeTempChange,
+                                                                                m_maxAbsoluteTempChange,
                                                                                 m_maxCompFracChange,
                                                                                 m_maxRelativeCompDensChange,
                                                                                 pressure,

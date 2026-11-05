@@ -47,6 +47,7 @@ public:
    * @param[in] maxRelativePresChange the max allowed relative pressure change
    * @param[in] maxAbsolutePresChange the max allowed absolute pressure change
    * @param[in] maxRelativeTempChange the max allowed relative temperature change
+   * @param[in] maxAbsoluteTempChange the max allowed absolute temperature change
    * @param[in] maxCompFracChange the max allowed comp fraction change
    * @param[in] maxRelativeCompDensChange the max allowed comp density change
    * @param[in] rankOffset the rank offset
@@ -64,6 +65,7 @@ public:
   SolutionScalingKernel( real64 const maxRelativePresChange,
                          real64 const maxAbsolutePresChange,
                          real64 const maxRelativeTempChange,
+                         real64 const maxAbsoluteTempChange,
                          real64 const maxCompFracChange,
                          real64 const maxRelativeCompDensChange,
                          globalIndex const rankOffset,
@@ -92,6 +94,7 @@ public:
             pressureScalingFactor,
             compDensScalingFactor ),
     m_maxRelativeTempChange( maxRelativeTempChange ),
+    m_maxAbsoluteTempChange( maxAbsoluteTempChange ),
     m_temperature( temperature ),
     m_temperatureScalingFactor( temperatureScalingFactor ),
     m_temperatureOffset( temperatureOffset )
@@ -129,24 +132,32 @@ public:
         stack.localMaxDeltaTemp = absTempChange;
       }
 
-      m_temperatureScalingFactor[ei] = 1.0;
-
-      if( temp > eps )
+      // compute temperature scaling factor
+      real64 tempScalingFactor = 1.0;
+      // when enabled, absolute change scaling has a priority over relative change
+      if( m_maxAbsoluteTempChange > 0.0 ) // maxAbsoluteTempChange <= 0.0 means that absolute scaling is disabled
+      {
+        if( absTempChange > m_maxAbsoluteTempChange )
+        {
+          tempScalingFactor = m_maxAbsoluteTempChange / absTempChange;
+        }
+      }
+      else if( temp > eps )
       {
         real64 const relativeTempChange = absTempChange / temp;
         if( relativeTempChange > m_maxRelativeTempChange )
         {
-          real64 const tempScalingFactor = m_maxRelativeTempChange / relativeTempChange;
-          m_temperatureScalingFactor[ei] = tempScalingFactor;
-          if( stack.localMinVal > tempScalingFactor )
-          {
-            stack.localMinVal = tempScalingFactor;
-          }
-          if( stack.localMinTempScalingFactor > tempScalingFactor )
-          {
-            stack.localMinTempScalingFactor = tempScalingFactor;
-          }
+          tempScalingFactor = m_maxRelativeTempChange / relativeTempChange;
         }
+      }
+      m_temperatureScalingFactor[ei] = tempScalingFactor;
+      if( stack.localMinVal > tempScalingFactor )
+      {
+        stack.localMinVal = tempScalingFactor;
+      }
+      if( stack.localMinTempScalingFactor > tempScalingFactor )
+      {
+        stack.localMinTempScalingFactor = tempScalingFactor;
       }
     } );
   }
@@ -155,6 +166,7 @@ protected:
 
   /// Max allowed changes in primary variables
   real64 const m_maxRelativeTempChange;
+  real64 const m_maxAbsoluteTempChange;
 
   /// View on the primary variables
   arrayView1d< real64 const > const m_temperature;
@@ -179,6 +191,7 @@ public:
    * @param[in] maxRelativePresChange the max allowed relative pressure change
    * @param[in] maxAbsolutePresChange the max allowed absolute pressure change
    * @param[in] maxRelativeTempChange the max allowed relative temperature change
+   * @param[in] maxAbsoluteTempChange the max allowed absolute temperature change
    * @param[in] maxCompFracChange the max allowed comp fraction change
    * @param[in] maxRelativeCompdensChange the max allowed relative component density change
    * @param[in] rankOffset the rank offset
@@ -192,6 +205,7 @@ public:
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxAbsolutePresChange,
                    real64 const maxRelativeTempChange,
+                   real64 const maxAbsoluteTempChange,
                    real64 const maxCompFracChange,
                    real64 const maxRelativeCompDensChange,
                    arrayView1d< real64 const > const pressure,
@@ -207,7 +221,7 @@ public:
                    arrayView1d< real64 const > const localSolution,
                    integer const temperatureOffset )
   {
-    SolutionScalingKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxRelativeTempChange,
+    SolutionScalingKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxRelativeTempChange, maxAbsoluteTempChange,
                                   maxCompFracChange, maxRelativeCompDensChange,
                                   rankOffset, numComp, dofKey, subRegion, localSolution,
                                   pressure, temperature, compDens, pressureScalingFactor,

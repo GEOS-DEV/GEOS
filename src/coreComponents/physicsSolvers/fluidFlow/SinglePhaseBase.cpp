@@ -1336,7 +1336,10 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
                                                                        m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
                                                                        pressureScalingFactor, temperatureScalingFactor );
 
-        scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        if( m_scalingType == flowSolverUtilities::ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        }
         maxDeltaPres  = std::max( maxDeltaPres, subRegionData.maxDeltaPres );
         maxDeltaTemp  = std::max( maxDeltaTemp, subRegionData.maxDeltaTemp );
 
@@ -1368,7 +1371,10 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
                                      launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
                                                                        m_maxAbsolutePresChange, pressureScalingFactor );
 
-        scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        if( m_scalingType == flowSolverUtilities::ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        }
         minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.minPresScalingFactor );
         maxDeltaPres  = std::max( maxDeltaPres, subRegionData.maxDeltaPres );
       } );
