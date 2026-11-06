@@ -39,6 +39,7 @@ set( fluidFlowSolvers_headers
      SinglePhaseStatisticsTask.hpp
      SinglePhaseFVM.hpp
      SinglePhaseHybridFVM.hpp
+     SinglePhaseMixedMFD.hpp
      SinglePhaseProppantBase.hpp
      StencilAccessors.hpp
      SolutionCheckHelpers.hpp
@@ -59,6 +60,7 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/MobilityKernel.hpp
      kernels/singlePhase/ResidualNormKernel.hpp
      kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
+     kernels/singlePhase/SinglePhaseMixedMFDKernels.hpp
      kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp
      kernels/singlePhase/SolutionCheckKernel.hpp
      kernels/singlePhase/SolutionScalingKernel.hpp
@@ -169,6 +171,7 @@ set( fluidFlowSolvers_sources
      SinglePhaseStatisticsTask.cpp
      SinglePhaseFVM.cpp
      SinglePhaseHybridFVM.cpp
+     SinglePhaseMixedMFD.cpp
      SinglePhaseProppantBase.cpp
      SinglePhaseReactiveTransport.cpp
      SourceFluxStatistics.cpp
