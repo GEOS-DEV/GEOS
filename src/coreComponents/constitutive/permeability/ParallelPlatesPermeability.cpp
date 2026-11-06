@@ -40,6 +40,13 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
     setSizedFromParent( 0 ).
     setDescription( "Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. " );
 
+  // JRC is valid for values between 0 and 20, but we will limit the range to 1-20 to avoid divsion by 0.
+  registerWrapper( viewKeyStruct::jointRoughnessCoefficientString(), &m_jointRoughnessCoefficient ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Default value of the joint roughness coefficient." );
+
   registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
@@ -59,6 +66,16 @@ void ParallelPlatesPermeability::postInputInitialization()
   if( m_transversalPermeability > -1 )
   {
     m_updateTransversalComponent = false;
+  }
+
+  // if the JRC value is not -1 (the flag for not using it), then check for validity.
+  GEOS_LOG_RANK_0(std::abs( m_jointRoughnessCoefficient + 1.0));
+  if( std::abs( m_jointRoughnessCoefficient + 1.0) > 1e-10 ) 
+  {
+    GEOS_THROW_IF( m_jointRoughnessCoefficient < 0 || m_jointRoughnessCoefficient > 20,
+                  GEOS_FMT( "Joint Roughness Coefficient must be between 0 and 20. Provided value: {}",
+                            m_jointRoughnessCoefficient ),
+                  InputError, getDataContext() );
   }
 }
 
