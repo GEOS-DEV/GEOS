@@ -40,7 +40,7 @@
         "CompositionalKValueLohrenzBrayClarkViscosity",
         "CompositionalThermalTwoPhaseLohrenzBrayClarkViscosity",
         "CompositionalThermalTwoPhasePhillipsBrine",
-        "CompositionalThermalKValuePhillipsBrine",    
+        "CompositionalThermalKValuePhillipsBrine",
         "CompositionalThreePhaseLohrenzBrayClarkViscosity",
         "CompositionalTwoPhaseConstantViscosity",
         "CompositionalTwoPhaseLohrenzBrayClarkViscosity",
