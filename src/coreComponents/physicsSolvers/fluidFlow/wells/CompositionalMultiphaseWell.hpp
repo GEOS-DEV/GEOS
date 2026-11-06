@@ -400,9 +400,9 @@ protected:
    * @param subRegion the well subRegion
    * @param elemManager the element manager
    */
-  virtual void validateWellConstraints( real64 const & time_n,
-                                        real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) override;
+  void validateWellConstraints( real64 const & time_n,
+                                real64 const & dt,
+                                WellElementSubRegion const & subRegion ) override;
 
   /**
    * @brief Create well separator
