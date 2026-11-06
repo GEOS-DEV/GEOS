@@ -36,6 +36,13 @@ DamageSpectral< BASE >::DamageSpectral( string const & name, Group * const paren
   // Preserve historical behavior: DamageSpectral defaults to the Cohesive degradation function.
   this->template getWrapper< FractureModelType >( Damage< BASE >::viewKeyStruct::fractureModelTypeString() ).
     setApplyDefaultValue( FractureModelType::Cohesive );
+
+  this->registerWrapper( viewKeyStruct::hybridSplitString(), &m_hybridSplit ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for the hybrid split (Ambati et al. 2015). 1: the spectral split gives only the tensile crack "
+                    "driving force, while stress and stiffness are degraded isotropically, g(d) C : eps. This keeps "
+                    "tension-driven fracture with a linear, exact stress tangent. 0: full spectral split of the stress." );
 }
 
 template< typename BASE >

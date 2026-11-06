@@ -1,0 +1,120 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransportPoromechanics
+      name="chemomechSolve"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseReactiveFlow"
+      initialDt="1e-8"
+      logLevel="1"
+      targetRegions="{ Source, Rock  }">
+      <NonlinearSolverParameters
+        newtonMaxIter="10"
+        newtonTol="1.0e-4"
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"
+        lineSearchMaxCuts="0"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransportPoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Source, Rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </SolidMechanicsLagrangianFEM> 
+
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Source, Rock }"
+      isUpdateReactivePorosity="1"
+      logLevel="2">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Constitutive>
+    <PorousReactiveElasticIsotropic
+      name="reactiveRock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="0"
+      defaultBulkModulus="6.6667e9"
+      defaultShearModulus="4.0e9"/>
+
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      viscosibility="0.0"
+      chemicalSystemType="ultramafic"/>
+
+    <BiotReactivePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      defaultInitialVolumeFractions="{ 0.1, 0.1, 0.1, 0.1, 0.1 }"
+      molarWeights="{ 0.140693, 0.084314, 0.060084, 0.277112, 0.058320 }"
+      mineralDensities="{ 3212.9, 3009.28, 2648.27, 2554.03, 2367.84 }"
+      defaultGrainBulkModulus="1e20"
+      defaultMineralBulkModulus="20e11"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 3.0e-10, 3.0e-10, 3.0e-10 }"/>
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>
+  </Constitutive>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

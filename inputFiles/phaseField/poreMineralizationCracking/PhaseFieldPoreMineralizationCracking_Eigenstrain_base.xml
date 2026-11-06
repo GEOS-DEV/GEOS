@@ -1,0 +1,179 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransportPhaseFieldPoromech
+      name="pfchemoporomechSolve"
+      poromechanicsSolverName="chemomechSolve"
+      damageSolverName="damageSolve"
+      logLevel="1"
+      initialDt="1e-8"
+      targetRegions="{ Rock }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        maxSubSteps="500"
+        lineSearchAction="None"/>
+    </SinglePhaseReactiveTransportPhaseFieldPoromech>
+
+    <SinglePhaseReactiveTransportPoromechanics
+      name="chemomechSolve"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseReactiveFlow"
+      logLevel="1"
+      targetRegions="{ Rock }">
+      <NonlinearSolverParameters
+        newtonMaxIter="10"
+        newtonTol="1.0e-3"
+        couplingType="Sequential"
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"
+        lineSearchMaxCuts="0"/>
+    </SinglePhaseReactiveTransportPoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1e-3"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Rock }"
+      isUpdateReactivePorosity="1"
+      allowNegativePressure="1"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        maxTimeStepCuts="8"
+        maxSubSteps="2000"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        maxAllowedResidualNorm="1e10"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1e-3"/>
+    </SinglePhaseReactiveTransport>
+
+    <PhaseFieldDamageFEM
+      name="damageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      irreversibilityFlag="1"
+      damageUpperBound="0.99"
+      logLevel="1"
+      targetRegions="{ Rock }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Constitutive>
+    <!-- Eigenstrain method: mineral precipitation imposes a stress-free volumetric
+         (anelastic) strain increment = Σ_r Δn_r · M_r / ρ_r directly on the solid,
+         which generates stress. This replaces the Biot pore-filling effective-stress
+         coupling of the PorousReactiveDamage* model, so a plain ReactivePorosity
+         (no Biot grain/mineral bulk moduli) is used instead of BiotReactivePorosity.
+         The damage phase field, damage permeability, and damage diffusion are kept. -->
+    <EigenStrainReactiveDamageSpectralElasticIsotropicCarmanKozenyPermeability
+      name="reactiveRock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <DamageSpectralElasticIsotropic
+      name="rockSolid"
+      defaultDensity="0.0"
+      defaultBulkModulus="6.6667e9"
+      defaultShearModulus="1e+11"
+      lengthScale="0.002"
+      defaultCriticalFractureEnergy="0.3"
+      criticalStrainEnergy="0.0"
+      degradationLowerLimit="1e-4"
+      fractureModelType="Brittle"
+      localDissipationOption="Linear"
+      hybridSplit="1"/>
+
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      viscosibility="0.0"
+      chemicalSystemType="kineticCarbonate"/>
+
+    <ReactivePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      crackPorosity="0.6"
+      defaultInitialVolumeFractions="{ 0.02 }"
+      molarWeights="{ 0.10009 }"
+      mineralDensities="{ 2710.0 }"/>
+
+    <CarmanKozenyPermeability
+      name="rockPerm"
+      particleDiameter="1.909e-05"
+      sphericity="1.0"/>
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 1e-06, 1e-06, 1e-06 }"/>
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="source1"
+      xMin="{ -10.0, -10.0, -10.0 }"
+      xMax="{ 10.0, 1e-6, 10.0 }"/>
+
+    <Box
+      name="source2"
+      xMin="{ -10.0, 0.19999, -10.0 }"
+      xMax="{ 10.0, 10.0, 10.0 }"/>
+
+    <Box
+      name="bulk"
+      xMin="{ -10.0, -1e-6, -10.0 }"
+      xMax="{ 10.0, 0.2001, 10.0 }"/>
+  </Geometry>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

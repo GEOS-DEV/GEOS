@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+    <!-- <FieldSpecification
+      name="surfaceArea_CaCO3_bulk"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      functionName="surfaceAreaFunction"
+      component="0"
+      scale="10.0"/> -->
+
+    <FieldSpecification
+      name="surfaceArea_CaCO3_bulk"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="0.1"/>
+
+    <!-- Zero surface area at inlet source: no reactions in fluid reservoir element -->
+    <FieldSpecification
+      name="surfaceArea_CaCO3_source"
+      initialCondition="1"
+      setNames="{ source1 }"
+      objectPath="ElementRegions/Rock"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="0.0"/>
+  </FieldSpecifications>
+
+</Problem>

@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+    <!-- BULK -->
+    <FieldSpecification
+      name="initialAggregate_H_bulk"
+      initialCondition="1"
+      setNames="{ bulk }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1.00000e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_Ca_bulk"
+      initialCondition="1"
+      setNames="{ bulk }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="7e-4"/>
+
+    <FieldSpecification
+      name="initialAggregate_HCO3_bulk"
+      initialCondition="1"
+      setNames="{ bulk }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="7e-4"/>
+
+    <!-- SOURCE -->
+    <FieldSpecification
+      name="initialAggregate_H_source"
+      initialCondition="1"
+      setNames="{ source1 }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1.00000e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_Ca_source"
+      initialCondition="1"
+      setNames="{ source1 }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="7e-4"/>
+
+    <FieldSpecification
+      name="initialAggregate_HCO3_source"
+      initialCondition="1"
+      setNames="{ source1 }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="5e-2"/>
+  </FieldSpecifications>
+</Problem>

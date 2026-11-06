@@ -1,0 +1,215 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PhaseFieldPoreMineralizationCracking_Eigenstrain_base.xml" />
+    <File name="./ChemoMechanicsCarbonate_PoreMineralization_surfaceArea.xml" />
+    <File name="./ChemoMechanicsCarbonate_PoreMineralization_initialAggregate.xml" />
+    <File name="./ChemoMechanicsCarbonate_PoreMineralization_initialPrimaryConc.xml" />
+    <File name="./ChemoMechanicsCarbonate_PoreMineralization_logConc.xml" />
+  </Included>
+
+  <!-- Uniform 1 mm grid (h = lengthScale/2), 1000 x 200 bulk elements plus
+       one 0.1 mm element row at each of the bottom (source) and top (sink) edges: 202,000 elements total -->
+  <Mesh>
+      <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0.0, 1.0 }"
+      yCoords="{ -0.0001, 0.0, 0.2, 0.2001 }"
+      zCoords="{ 0.0, 0.005 }"
+      nx="{ 1000 }"
+      ny="{ 1, 200, 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ cb }"
+      materialList="{ water, reactiveRock, diffusion }"/>
+  </ElementRegions>
+
+  <Events
+    maxTime="1e5">
+    <!-- <PeriodicEvent
+      name="outputs1"
+      beginTime="0.0"
+      cycleFrequency="10"
+      target="/Outputs/vtkOutput"/> -->
+
+    <PeriodicEvent
+      name="outputs1"
+      beginTime="0.0"
+      endTime="10.0"
+      timeFrequency="0.5"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs2"
+      beginTime="10.0"
+      endTime="100"
+      timeFrequency="5.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs3"
+      beginTime="100.0"
+      endTime="1000.0"
+      timeFrequency="50.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs4"
+      beginTime="1000.0"
+      endTime="5e4"
+      timeFrequency="100.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs5"
+      beginTime="5e4"
+      timeFrequency="400.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications0"
+      beginTime="0.0"
+      endTime="1.0"
+      maxEventDt="0.01"
+      target="/Solvers/pfchemoporomechSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="1.0"
+      endTime="10.0"
+      maxEventDt="0.1"
+      target="/Solvers/pfchemoporomechSolve"/>
+
+    <!-- Da_time = kf·SA·dt/φ = 31·dt; AMG needs Da<~3 (dt<0.1s), ilut handles larger Da.
+         Keep dt≤1s while reaction is most active (t=10-1000s), then relax as Q/K→1. -->
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="10.0"
+      endTime="100.0"
+      maxEventDt="1.0"
+      target="/Solvers/pfchemoporomechSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications3"
+      beginTime="100.0"
+      endTime="1000.0"
+      maxEventDt="10.0"
+      target="/Solvers/pfchemoporomechSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications4"
+      beginTime="1000.0"
+      endTime="5e4"
+      maxEventDt="10.0"
+      target="/Solvers/pfchemoporomechSolve"/>
+
+    <PeriodicEvent
+      name="solverApplications5"
+      beginTime="5e4"
+      maxEventDt="50.0"
+      target="/Solvers/pfchemoporomechSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="1000"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <!-- Heterogeneous Gc: weak spots on the source boundary (Gc_min = 0.01 at the spot centers, Gaussian falloff)
+       imprinted on a correlated background between 0.1 and 20, read from the voxel table in ./gcField.
+       Spot locations, Gc levels, sigma, and RNG seed are set in generate_gc_field.py (defaults). -->
+  <Functions>
+    <TableFunction
+      name="gcFieldFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ gcField/x.csv, gcField/y.csv, gcField/z.csv }"
+      voxelFile="gcField/gc.csv"
+      interpolation="linear"/>
+  </Functions>
+
+  <FieldSpecifications>
+    <FieldSpecification
+       name="GcRock"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Rock"
+       fieldName="rockSolid_criticalFractureEnergy"
+       functionName="gcFieldFunction"
+       scale="1.0"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ zneg, zpos }"/>
+
+    <!-- <FieldSpecification
+      name="PorosityRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      functionName="surfaceAreaFunction"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/> -->
+
+    <FieldSpecification
+      name="PorosityRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="initialPressureRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="pressure"
+      scale="1e-4"/>
+
+    <FieldSpecification
+      name="inletPressureSource"
+      setNames="{ source1 }"
+      objectPath="ElementRegions/Rock"
+      fieldName="pressure"
+      scale="5e3"/>
+
+    <FieldSpecification
+      name="bcPressure"
+      setNames="{ ypos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1e-4"/>
+
+    <!-- <FieldSpecification
+      name="fixPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="pressure"
+      scale="1e-4"/> -->
+  </FieldSpecifications>
+
+</Problem>

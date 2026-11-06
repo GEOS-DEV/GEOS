@@ -141,7 +141,7 @@ public:
                                     real64 ( &elasticStrainInc )[6] ) const override final;
 
   GEOS_HOST_DEVICE
-  virtual real64 getBulkModulus( localIndex const k ) const override final
+  virtual real64 getBulkModulus( localIndex const k ) const override
   {
     return m_bulkModulus[k];
   }

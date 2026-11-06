@@ -87,7 +87,7 @@ public:
   using Base::m_sesri;
   using Base::m_sei;
   using Base::m_primarySpeciesMobileAggregateConc;
-  using Base::m_referencePorosity;
+  using Base::m_porosity_n;
   using Base::m_mobilePrimarySpeciesFlags;
   using Base::m_solventMassFraction;
 
@@ -502,7 +502,7 @@ public:
         localIndex const esr_up = sesri[k_up];
         localIndex const ei_up  = sei[k_up];
 
-        dDiffusionFlux_dT[ke] += m_referencePorosity[er_up][esr_up][ei_up] * dSpeciesGrad_dT[ke];
+        dDiffusionFlux_dT[ke] += m_porosity_n[er_up][esr_up][ei_up][0] * dSpeciesGrad_dT[ke];
       }
 
       // populate local Jacobian
