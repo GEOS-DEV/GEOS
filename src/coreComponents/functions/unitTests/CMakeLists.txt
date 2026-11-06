@@ -1,6 +1,7 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testFunctions.cpp )
+     testFunctions.cpp
+     testHDF5Utils.cpp )
 
 
 set( dependencyList ${parallelDeps} gtest functions )
