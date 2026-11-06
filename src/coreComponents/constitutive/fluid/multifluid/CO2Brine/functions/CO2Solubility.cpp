@@ -99,6 +99,7 @@ makeSolubilityTables( string const & functionName,
         if( tableIndex == 0 && brineFluidParameters.m_salinity > 0.0 )
         {
           // convert the user CO2 table into a derived table (the user's table may serve fluids of other salinity)
+          functionManager.getGroup< TableFunction >( inputTableName ).initializeFunction();
           TableFunction const & userTable = functionManager.getGroup< TableFunction >( inputTableName );
           string const convertedName = GEOS_FMT( "{}_{}_brineBasis", functionName, inputTableName );
           if( !functionManager.hasGroup< TableFunction >( convertedName ) )
