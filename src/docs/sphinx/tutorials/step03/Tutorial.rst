@@ -12,10 +12,11 @@ In this tutorial, we set up a simple field case for single-phase flow simulation
 
 At the end of this tutorial you will know:
 
-  - how to import external mesh information and properties,
+  - how to import an external mesh with several regions,
+  - how to import spatially varying properties from voxel tables (``TableFunction``),
   - how to run a specific solver (here, flow) in a specific region only,
   - the basic method of using boxes to set up boundary conditions,
-  - how to use *TableFunction* to import fields varying in time and/or space,
+  - how to use *TableFunction* to impose values varying in time,
   - how to control output frequency and export results for visualization.
 
 
@@ -50,7 +51,7 @@ the supported mesh file format). Each tetrahedron is associated to a unique tag.
 
 The XML file considered here follows the typical structure of the GEOS input files:
 
- #. :ref:`Solver <Solver_tag_field_case>`
+ #. :ref:`Solvers <Solver_tag_field_case>`
  #. :ref:`Mesh <Mesh_tag_field_case>`
  #. :ref:`Geometry <Geometry_tag_field_case>`
  #. :ref:`Events <Events_tag_field_case>`
@@ -141,9 +142,11 @@ and specify when outputs must be triggered.
 The **Events** tag is associated with the ``maxTime`` keyword defining the maximum time.
 If this time is ever reached or exceeded, the simulation ends.
 
-Two ``PeriodicEvent`` are defined.
-- The first one, ``solverApplications``, is associated with the solver. The  ``forceDt`` keyword means that there will always be time-steps of 10e6 seconds.
-- The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 10e6 seconds.
+Three ``PeriodicEvent`` are defined:
+
+- ``solverApplications`` is associated with the solver. The ``forceDt`` keyword means that there will always be time-steps of 10e6 seconds.
+- ``outputs`` is associated with the VTK output. The ``timeFrequency`` keyword means that it will be executed every 10e6 seconds.
+- ``restarts`` writes restart files every 10e6 seconds (see :ref:`RunningGEOS`).
 
 
 .. _NumericalMethods_tag_field_case:
@@ -169,9 +172,10 @@ Regions
 Assuming that the overburden and the underburden are impermeable,
 and flow only takes place in the reservoir, we need to define regions.
 
-We need to define all the ``CellElementRegions`` according to the ``attribute`` values of the VTK file
-(which are respectively ``1``, ``2`` and ``3`` for each region). As mentioned above, the solvers is only
-applied on the reservoir layer, (on region ``2``). In this case, the **ElementRegions** tag is :
+When GEOS imports a VTK mesh with an ``attribute`` cell field, cells are grouped into cell blocks named after the
+``attribute`` values (here ``1``, ``2`` and ``3``). We define two ``CellElementRegion``:
+``Reservoir``, containing cell block ``2``, and ``Burden``, containing cell blocks ``1`` and ``3``.
+As mentioned above, the solver is only applied on the ``Reservoir`` region. In this case, the **ElementRegions** tag is:
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
@@ -225,7 +229,7 @@ You may note :
 
  - All static parameters and initial value fields must have ``initialCondition`` field set to ``1``.
  - The ``objectPath`` refers to the ``ElementRegion`` in which the field has its value,
- - The ``setName`` field points to the box previously defined to apply the fields,
+ - The ``setNames`` field points to the boxes previously defined to apply the fields,
  - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field registered in GEOS. This value has to be set according to the expected input fields of each solver.
 
 .. _Outputs_tag_field_case:
@@ -281,33 +285,16 @@ The simulation can be launched with:
 
 .. code-block:: console
 
-  geosx -i FieldCaseTutorial3_smoke.xml
+  geos -i inputFiles/singlePhaseFlow/FieldCaseTutorial3_smoke.xml
 
-One can notice the correct load of the field function among the starting output messages
-
-.. code-block:: console
-
-        Adding Mesh: VTKMesh, SyntheticMesh
-        Adding Event: PeriodicEvent, solverApplications
-        Adding Event: PeriodicEvent, outputs
-        Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
-        Adding Geometric Object: Box, all
-        Adding Geometric Object: Box, source
-        Adding Geometric Object: Box, sink
-        Adding Output: VTK, reservoir_with_properties
-           TableFunction: timeInj
-           TableFunction: initialPressureFunc
-           TableFunction: permxFunc
-           TableFunction: permyFunc
-           TableFunction: permzFunc
-        Adding Object CellElementRegion named Reservoir from ObjectManager::Catalog.
-        Adding Object CellElementRegion named Burden from ObjectManager::Catalog.
+As for all input files, the mesh file and the voxel tables are found relative to the XML file, so the command can be run from any directory.
 
 ------------------------------------
 Visualization of results
 ------------------------------------
 
-We can open the file `syntheticReservoirVizFile.pvd` with Paraview to visualize the simulation
+The VTK output is named after the output object, ``reservoir_with_properties``.
+We can open the file ``reservoir_with_properties.pvd``, written in the directory where GEOS was run, with Paraview to visualize the simulation
 results. In the event block, we have asked for the output to be generated at regular
 intervals throughout the simulation, we can thus visualize the pressure
 distribution at different simulation times, showing the variation in the injection control.
@@ -331,3 +318,4 @@ the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
   - More on meshes, please see :ref:`Meshes`.
   - More on events, please see :ref:`EventManager`.
+  - More on functions, please see :ref:`FunctionManager`.

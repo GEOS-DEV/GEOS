@@ -2,13 +2,13 @@
 GEOS Documentation
 ########################
 
-GEOS is a code framework focused on enabling streamlined development of
-physics simulations on high performance computing platforms.  Our documentation
-is organized into several separate guides, given that different users will have
+GEOS is a simulation framework for modeling coupled flow, transport and geomechanics
+in the subsurface, designed for high performance computing platforms from laptops to GPU-based supercomputers.
+Our documentation is organized into several separate guides, given that different users will have
 different needs.
 
 We recommend all users begin with the Quick Start guide, which
-will walk you through downloading and compiling the code.  Application focused
+will walk you through downloading and compiling the code and running a first simulation.  Application focused
 users may then want to explore our Tutorials, which provide an introduction to the
 basic capabilities of the code.  More detailed descriptions of these capabilities can
 then be found in the User Guide.
@@ -35,7 +35,7 @@ you have suggestions for improving the guides below, please post an issue on our
         Quick Start Guide
         ^^^^^^^^^^^^^^^^^^^
 
-        New to GEOS?  We will walk you through downloading the source, compiling the code, and testing the installation.
+        New to GEOS?  We will walk you through downloading the source, compiling the code, and running a first simulation.
 
         +++
 
