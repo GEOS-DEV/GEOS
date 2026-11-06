@@ -55,3 +55,26 @@ The following table outlines the available compositional fluid models (specified
        * Phase split method: K-Value Flash.
        * Phase density models: Phillips brine density model; Compositional density.
        * Phase viscosity models: Phillips brine viscosity model; Lohrenz-Bray-Clark viscosity.
+
+   * - ``CompositionalTwoPhaseThermalFluidLohrenzBrayClark`` :ref:`XML_CompositionalTwoPhaseThermalFluidLohrenzBrayClark`
+
+       * Number of phases: 2.
+       * Possible applications: Non-isothermal miscible gas injection and thermal recovery processes involving drastic composition changes.
+       * Phase split method: Negative Two-Phase Flash.
+       * Phase density models: Compositional density.
+       * Phase viscosity models: Lohrenz-Bray-Clark viscosity.
+
+   * - ``CompositionalTwoPhaseThermalFluidPhillipsBrine`` :ref:`XML_CompositionalTwoPhaseThermalFluidPhillipsBrine`
+
+       * Number of phases: 2.
+       * Possible applications: Non-isothermal carbon sequestration (CO2-brine systems) or geothermal processes.
+       * Phase split method: Negative Two-Phase Flash.
+       * Phase density models: Phillips brine density model for the aqueous phase; Compositional density for the gas phase.
+       * Phase viscosity models: Phillips brine viscosity model for the aqueous phase; Lohrenz-Bray-Clark viscosity for the gas phase.
+
+   * - ``CompositionalTwoPhaseKValueThermalFluidPhillipsBrine`` :ref:`XML_CompositionalTwoPhaseKValueThermalFluidPhillipsBrine`
+
+       * Number of phases: 2.
+       * Possible applications: Non-isothermal saline aquifers and CO2 sequestration with stable compositions where pre-tabulated K-values are sufficient.
+       * Phase split method: K-Value Flash.
+       * Phase density models: Phillips brine density model; Compositional density.           

@@ -196,12 +196,12 @@ TEST_F( HeatCapacityCoefficientsTestFixture, testHeatCapacityCoefficients )
   setValues( {1.0, 0.0, 0.0, 0.0, 0.0} );
   EXPECT_NO_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ) );
 
-  setValues( {9.7529018563e+00, -1.7379753331e-01, 1.3828200497e-03, -4.4470070713e-06, 4.3687436501e-09} );
+  setValues( {9.7529018563e+00, -1.7379753331e-01, 1.3828200497e-03, -4.4470070713e-06, -2.35e-08} );
   EXPECT_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ), InputError );
   setValues( {1.0, 0.0, 0.0, 0.0, 0.0} );
   EXPECT_NO_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ) );
 
-  setValues( {8.440483444351720e-02, -8.156515860472481e-04, 2.921178619177309e-06, -4.649781358999949e-09, 2.775470116151693e-12} );
+  setValues( {8.440483444351720e-02, -8.156515860472481e-04, 2.921178619177309e-06, -4.649781358999949e-09, -3.597e-10} );
   EXPECT_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ), InputError );
   setValues( {1.0, 0.0, 0.0, 0.0, 0.0} );
   EXPECT_NO_THROW( m_parameters->postInputInitialization( m_fluid.get(), componentProperties ) );
