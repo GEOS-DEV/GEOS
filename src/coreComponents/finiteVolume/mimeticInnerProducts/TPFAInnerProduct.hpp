@@ -36,6 +36,9 @@ class TPFAInnerProduct : public MimeticInnerProductBase
 {
 public:
 
+  /// floor of the one-sided conductance, relative to the length tolerance
+  static constexpr real64 weightToleranceFactor = 1e-30;
+
   /**
    * @brief In a given element, recompute the transmissibility matrix in a cell using TPFA.
    * @param[in] nodePosition the position of the nodes
@@ -84,8 +87,6 @@ public:
             real64 const & lengthTolerance,
             arraySlice2d< real64 > const & M );
 
-private:
-
   /**
    * @brief Compute the one-sided (half) TPFA transmissibility of a local face, k_n A / d.
    * @param[in] nodePosition the position of the nodes
@@ -123,7 +124,21 @@ private:
     // TPFA assumes diagonal K
     LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
 
-    return LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea / c2fDistance;
+    // Two-point conductance t = (A/d) c.(K n) with c the unit cell-to-face direction: it is the
+    // exact flux of a linear pressure iff K n is parallel to c (K-orthogonality) and it is a valid
+    // (positive) conductance only while c.(K n) > 0. On a K-obtuse face, c.(K n) <= 0, the same
+    // fallback as the finite-volume TPFA (CellElementStencilTPFAWrapper::computeWeights, "correct
+    // negative weight issue arising from non-K-orthogonal grids") replaces K n by K c: the
+    // conductance the face would have if it were K-orthogonal, c.(K c) > 0 for SPD K, so the
+    // product stays positive definite at the price of consistency, which the indicator measures.
+    real64 halfTrans = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
+    if( halfTrans < 0.0 )
+    {
+      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, cellToFaceVec );
+      halfTrans = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
+    }
+
+    return halfTrans * faceArea / c2fDistance;
   }
 };
 
@@ -143,7 +158,7 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
   GEOS_UNUSED_VAR( elemVolume );
 
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
-  real64 const weightTolerance = 1e-30 * lengthTolerance;
+  real64 const weightTolerance = weightToleranceFactor * lengthTolerance;
 
   // we are ready to compute the transmissibility matrix
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -183,7 +198,7 @@ TPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION
   GEOS_UNUSED_VAR( elemVolume );
 
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
-  real64 const weightTolerance = 1e-30 * lengthTolerance;
+  real64 const weightTolerance = weightToleranceFactor * lengthTolerance;
 
   // initialize M to zero
   LvArray::tensorOps::fill< NF, NF >( M, 0.0 );
@@ -199,7 +214,6 @@ TPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION
     M[ifaceLoc][ifaceLoc] = 1.0 / LvArray::math::abs( Tii );
   }
 }
-
 
 } // end namespace mimeticInnerProduct
 

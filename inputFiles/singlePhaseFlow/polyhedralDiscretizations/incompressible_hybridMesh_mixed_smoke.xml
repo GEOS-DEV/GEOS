@@ -1,0 +1,36 @@
+<?xml version="1.0" ?>
+
+<!-- Adaptive mixed MFD, direct solver. The consistency layer keeps TPFA on the hexahedra and selects the consistent RT
+     product on the pyramids and the tetrahedra; the log reports the count and the number of condensed fluxes. -->
+
+<Problem>
+  <Included>
+    <File name="./incompressible_hybridMesh_mixed_base.xml"/>
+  </Included>
+
+  <Solvers>
+    <SinglePhaseMixedMFD
+      name="mixedMFDFlow"
+      logLevel="1"
+      discretization="mixedMFD"
+      targetRegions="{ domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <!-- a cell uses the consistent product when its consistencyIndicator exceeds consistencyTolerance -->
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="mixedMFD"
+        innerProductType="RT"
+        adaptiveConsistency="1"
+        consistencyTolerance="0.1"
+        nominalGradient="{ 1.0, 1.0, 1.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+</Problem>
