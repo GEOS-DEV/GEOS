@@ -79,7 +79,7 @@ static const string solverCSVOutput =
             name="SinglePhaseFlow"
             discretization="singlePhaseTPFA"
             targetRegions="{ Channel }"
-            writeStatistics="convergence" >
+            writeStatistics="all" >
             <NonlinearSolverParameters
                 newtonTol="1.0e-6"
                 newtonMaxIter="8"/>
@@ -284,6 +284,7 @@ TEST( testSolverStats, testOutputFiles )
 
   EXPECT_EQ( csvLines2[0], "Cycle number,time_n (s),dt (s),iteration,R,Rflow" );
 
+  ASSERT_TRUE( std::remove( iterationStat.getFilename().c_str() ) == 0 );
   ASSERT_TRUE( std::remove( convergenceStat.getFilename().c_str() ) == 0 );
 }
 

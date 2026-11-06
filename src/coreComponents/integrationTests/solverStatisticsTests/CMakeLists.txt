@@ -1,6 +1,7 @@
 # Specify list of tests
 set( solverStatisticsTests_sources
-      testSolverStats.cpp )
+      testSolverStats.cpp
+      testCoupledSolverStats.cpp )
 
 set( dependencyList mainInterface  gtest ${parallelDeps} )
 
@@ -16,3 +17,11 @@ foreach(test ${solverStatisticsTests_sources})
                    COMMAND ${test_name} )
 
 endforeach()
+
+# Check that only one rank writes the statistics CSV files
+if( ENABLE_MPI )
+    set( nranks 2 )
+    geos_add_test( NAME testCoupledSolverStats_mpi
+                   COMMAND testCoupledSolverStats
+                   NUM_MPI_TASKS ${nranks} )
+endif()
