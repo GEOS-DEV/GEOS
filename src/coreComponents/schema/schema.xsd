@@ -3329,6 +3329,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density in a Newton iteration-->
@@ -3356,7 +3358,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--scalingType => Solution scaling type.Valid options:
 * Global
 * Local-->
-		<xsd:attribute name="scalingType" type="geos_compositionalMultiphaseUtilities_ScalingType" default="Global" />
+		<xsd:attribute name="scalingType" type="geos_flowSolverUtilities_ScalingType" default="Global" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
 		<!--targetCompFracChangeInTimeStep => Target change in component fraction in a time step-->
@@ -3409,7 +3411,7 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:pattern value=".*[\[\]`$].*|ArithmeticAverage|PhasePresence" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="geos_compositionalMultiphaseUtilities_ScalingType">
+	<xsd:simpleType name="geos_flowSolverUtilities_ScalingType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Global|Local" />
 		</xsd:restriction>
@@ -3450,6 +3452,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density in a Newton iteration-->
@@ -4168,6 +4172,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
@@ -4743,6 +4749,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxProppantConcentration => Maximum proppant concentration-->
 		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
@@ -4807,6 +4815,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
@@ -4918,10 +4928,16 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialTemperatureChange" type="real64" default="0.1" />
+		<!--scalingType => Solution scaling type.Valid options:
+* Global
+* Local-->
+		<xsd:attribute name="scalingType" type="geos_flowSolverUtilities_ScalingType" default="Global" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
@@ -4973,6 +4989,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
@@ -5381,10 +5399,16 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialTemperatureChange" type="real64" default="0.1" />
+		<!--scalingType => Solution scaling type.Valid options:
+* Global
+* Local-->
+		<xsd:attribute name="scalingType" type="geos_flowSolverUtilities_ScalingType" default="Global" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
@@ -5442,6 +5466,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
@@ -6308,6 +6334,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density between two Newton iterations-->
@@ -6558,6 +6586,10 @@ Information output from lower logLevels is added with the desired log level
 1
  - Well control information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--referenceReservoirRegion => Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.
 Frequency of pressure update is set in SinglePhase/CompositionalMultiphaseStatistics definition.
 Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint propertiesNote the event associated with the statists task must be entered before the solver event.

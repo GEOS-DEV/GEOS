@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
 
 namespace geos
@@ -46,19 +47,23 @@ struct SolutionCheckKernel
                              arrayView1d< globalIndex const > const & dofNumber,
                              arrayView1d< integer const > const & ghostRank,
                              arrayView1d< real64 const > const & pres,
+                             flowSolverUtilities::ScalingType const scalingType,
                              real64 const scalingFactor,
+                             arrayView1d< real64 const > const & perElementScaling,
                              ElementsReporterCollector const & negPressureIds )
   {
     using reducePolicy = ReducePolicy< POLICY >;
     using atomicPolicy = AtomicPolicy< POLICY >;
     RAJA::ReduceMin< reducePolicy, real64 > minNegPres( 0.0 );
 
+    bool const localScaling = scalingType == flowSolverUtilities::ScalingType::Local;
+
     forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
       {
         localIndex const lid = dofNumber[ei] - rankOffset;
-        real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
+        real64 const newPres = pres[ei] + ( localScaling ? perElementScaling[ei] : scalingFactor ) * localSolution[lid];
 
         if( newPres <= 0.0 )
         {
