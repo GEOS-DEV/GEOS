@@ -39,6 +39,25 @@ GEOS_FORCE_INLINE
 static void setZero( real64 & value ){ value = 0.0; }
 
 /**
+ * @brief Compies a composition from one array to another
+ * @param[in] numComps number of components
+ * @param[in] inputComposition input composition to be copied
+ * @param[out] outputComposition output composition to be copied into
+ */
+template< integer USD1, integer USD2 >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static void copyComposition( integer const numComps,
+                             arraySlice1d< real64 const, USD1 > const & inputComposition,
+                             arraySlice1d< real64, USD2 > const & outputComposition )
+{
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    outputComposition[ic] = inputComposition[ic];
+  }
+}
+
+/**
  * @brief Normalise a composition in place to ensure that the components add up to unity
  * @param[in] numComps number of components
  * @param[in/out] composition composition to be normalized
@@ -61,6 +80,31 @@ static real64 normalizeComposition( integer const numComps,
     composition[ic] *= oneOverTotalMoles;
   }
   return totalMoles;
+}
+
+/**
+ * @brief Find the reference component - the index of the component with the largest composition
+ * @param[in] numComps number of components
+ * @param[in] composition composition to be assessed
+ * @return the index of the component with the largest composition
+ */
+template< integer USD >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static integer getReferenceComponent( integer const numComps,
+                                      arraySlice1d< real64 const, USD > const & composition )
+{
+  real64 maxComposition = -LvArray::NumericLimits< real64 >::max;
+  integer refComponent = -1;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    if( maxComposition < composition[ic] )
+    {
+      refComponent = ic;
+      maxComposition = composition[ic];
+    }
+  }
+  return refComponent;
 }
 
 /**
@@ -114,6 +158,34 @@ static integer calculatePresentComponents( integer const numComps,
 }
 
 /**
+ * @brief Calculate which components are absent.
+ * @details Creates a list of indices whose components have zero mole fraction.
+ * @param[in] numComps number of components
+ * @param[in] composition the composition of the fluid
+ * @param[out] absentComponents the list of absent components
+ * @return the number of absent components
+ */
+template< integer USD, typename ARRAY >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static integer calculateAbsentComponents( integer const numComps,
+                                          arraySlice1d< real64 const, USD > const & composition,
+                                          ARRAY & absentComponents )
+{
+  // Check for machine-zero feed values
+  integer absentCount = 0;
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    if( composition[ic] < MultiFluidConstants::minForSpeciesPresence )
+    {
+      absentComponents[absentCount++] = ic;
+    }
+  }
+  absentComponents.resize( absentCount );
+  return absentCount;
+}
+
+/**
  * @brief Determines whether a given composition represents a pure or nearly pure mixture.
  *
  * This function checks the mole fractions in a composition array to determine if the mixture
@@ -157,15 +229,15 @@ static bool checkPureMixture( integer const numComps,
 }
 
 /**
- * @brief Solve the lineat system for the derivatives of the flash
+ * @brief Solve the linear system for the derivatives of the flash
  * @param[in/out] A the coefficient matrix. Destroyed after call
  * @param[in/out] X the rhs and solution
  * @return @c true if the problem is well solved @c false otherwise
  */
-template< int USD >
+template< int USD, typename RHS_TYPE >
 GEOS_HOST_DEVICE
 static bool solveLinearSystem( arraySlice2d< real64, USD > const & A,
-                               arraySlice2d< real64, USD > const & X )
+                               RHS_TYPE const & X )
 {
 #if defined(GEOS_DEVICE_COMPILE)
   return denseLinearAlgebra::solveGaussianElimination( A, X );

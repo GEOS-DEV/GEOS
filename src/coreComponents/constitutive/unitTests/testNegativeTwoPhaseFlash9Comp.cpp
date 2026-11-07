@@ -90,6 +90,7 @@ public:
 
     auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
     auto const * flashParameters = parameters->get< FlashParameters >();
+    flashParameters->m_discreteParameters[FlashParameters::FLASH_MAX_ITERATIONS] = 100;
 
     bool status = NegativeTwoPhaseFlash::compute(
       numComps,
