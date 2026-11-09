@@ -202,7 +202,7 @@
       waterCompressibility="4.1483E-10"
       salinity="2.3"
       stabilityTolerance="1.0e-5"
-      flashTolerance="1.0e-3"
+      flashTolerance="1.0e-4"
       stabilityThreshold="-1.0e-3"/>
     <!-- SPHINX_DOME_FLUID_END -->
 
