@@ -20,7 +20,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive;

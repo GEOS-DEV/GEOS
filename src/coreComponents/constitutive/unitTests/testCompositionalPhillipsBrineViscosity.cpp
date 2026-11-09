@@ -18,7 +18,7 @@
 #include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 #include "functions/FunctionManager.hpp"
 
@@ -46,6 +46,7 @@ class PhillipsBrineViscosityTestFixture : public TestFluidFixture< FLUID, Viscos
   using Base::relTol;
   using Base::absTol;
   using typename Base::Deriv;
+
 public:
   PhillipsBrineViscosityTestFixture()
     : m_parent( "parent", m_node )

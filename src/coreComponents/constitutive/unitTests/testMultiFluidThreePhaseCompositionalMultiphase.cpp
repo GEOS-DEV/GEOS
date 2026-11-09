@@ -32,7 +32,7 @@ namespace testing
 
 template< typename TEST_TYPE >
 class MultiFluidCompositionalMultiphaseTestFixture : public FluidModelTest< CompositionalThreePhaseLohrenzBrayClarkViscosity,
-                                                                               getNumberOfComponents< std::tuple_element_t< 1, TEST_TYPE >::value >, 3 >
+                                                                            getNumberOfComponents< std::tuple_element_t< 1, TEST_TYPE >::value >, 3 >
 {
 public:
   static constexpr EquationOfStateType EquationOfState = std::tuple_element_t< 0, TEST_TYPE >::value;

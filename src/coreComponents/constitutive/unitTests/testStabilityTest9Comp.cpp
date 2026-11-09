@@ -18,7 +18,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive;

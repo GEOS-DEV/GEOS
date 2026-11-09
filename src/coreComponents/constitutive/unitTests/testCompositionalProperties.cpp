@@ -16,7 +16,7 @@
 // Source includes
 #include "constitutive/fluid/multifluid/compositional/functions/CompositionalProperties.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive::compositional;
@@ -43,6 +43,7 @@ public:
   using Base::relTol;
   using Base::absTol;
   using typename Base::Deriv;
+
 public:
   ~TestDataTestFixture() = default;
 

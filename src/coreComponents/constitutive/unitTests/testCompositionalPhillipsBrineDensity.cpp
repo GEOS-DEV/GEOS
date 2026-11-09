@@ -19,7 +19,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp"
 
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/PhysicsConstants.hpp"
@@ -49,6 +49,7 @@ class CompositionalPhillipsBrineDensityTestFixture : public TestFluidFixture< FL
   using Base::relTol;
   using Base::absTol;
   using typename Base::Deriv;
+
 public:
   CompositionalPhillipsBrineDensityTestFixture()
     : m_parent( "parent", m_node )

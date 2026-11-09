@@ -18,7 +18,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "constitutive/unitTests/TestFluidUtilities.hpp"
 
 #include "functions/FunctionManager.hpp"
@@ -70,6 +70,7 @@ class KValueFlashTestFixture : public TestFluidFixture< FLUID, FlashDataType< nu
   using FlashModelParamType = KValueFlashParameters< numPhases >;
   using PhasePropSlice = typename FlashModelType::KernelWrapper::PhaseProp::SliceType;
   using PhaseCompSlice = typename FlashModelType::KernelWrapper::PhaseComp::SliceType;
+
 public:
   KValueFlashTestFixture();
   ~KValueFlashTestFixture() override;

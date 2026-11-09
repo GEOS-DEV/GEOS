@@ -15,7 +15,7 @@
 
 // Source includes
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 using namespace geos;

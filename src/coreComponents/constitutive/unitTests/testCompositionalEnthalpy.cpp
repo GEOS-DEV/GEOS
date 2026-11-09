@@ -19,7 +19,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.hpp"
 
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive::compositional;

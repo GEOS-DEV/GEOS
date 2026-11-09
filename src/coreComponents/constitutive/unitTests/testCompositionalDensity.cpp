@@ -42,6 +42,7 @@ class CompositionalDensityTestFixture : public TestFluidFixture< FLUID, DensityD
   using Base::relTol;
   using Base::absTol;
   using typename Base::Deriv;
+
 public:
   CompositionalDensityTestFixture()
   {

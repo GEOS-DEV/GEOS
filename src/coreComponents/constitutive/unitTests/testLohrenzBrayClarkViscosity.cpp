@@ -18,7 +18,7 @@
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/CriticalVolume.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive::compositional;
@@ -44,6 +44,7 @@ class LohrenzBrayClarkViscosityTestFixture : public TestFluidFixture< FLUID, Vis
   using Base::relTol;
   using Base::absTol;
   using typename Base::Deriv;
+
 public:
   LohrenzBrayClarkViscosityTestFixture()
   {

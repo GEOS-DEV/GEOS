@@ -15,7 +15,7 @@
 
 // Source includes
 #include "constitutive/fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 namespace geos
@@ -47,6 +47,7 @@ public:
   using EOS = SoreideWhitsonEOSPhaseModel< EOS_TYPE >;
   using CubicModel = typename EOS::CubicModel;
   using Deriv = typename EOS::Deriv;
+
 public:
   ~SoreideWhitsonEOSPhaseModelTestFixture() = default;
 

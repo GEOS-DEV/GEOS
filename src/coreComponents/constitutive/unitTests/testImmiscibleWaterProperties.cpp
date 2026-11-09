@@ -18,7 +18,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp"
-#include "TestFluidFixture.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive::compositional;
