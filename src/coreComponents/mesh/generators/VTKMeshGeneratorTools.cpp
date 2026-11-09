@@ -147,19 +147,22 @@ redistribute( vtkPartitionedDataSet & localParts,
       {
         break;
       }
+      // vtkFieldData::GetArray() returns nullptr for vtkStringArray and other
+      // non-vtkDataArray objects. Empty-rank reconstruction uses CreateArray
+      // on the stored VTK type, so the scan must use GetAbstractArray().
       for( int c = 0; c < ug->GetCellData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetCellData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetCellData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::CELL } );
       }
       for( int c = 0; c < ug->GetPointData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetPointData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetPointData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::POINT } );
       }
       for( int c = 0; c < ug->GetFieldData()->GetNumberOfArrays(); ++c )
       {
-        auto array = ug->GetFieldData()->GetArray( c );
+        vtkAbstractArray * array = ug->GetFieldData()->GetAbstractArray( c );
         fieldMetaInfo.insert( { array->GetName(), array->GetNumberOfComponents(), array->GetDataType(), FieldMetaInfo::Location::FIELD } );
       }
     }

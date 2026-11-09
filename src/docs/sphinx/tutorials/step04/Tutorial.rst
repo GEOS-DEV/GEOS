@@ -21,14 +21,15 @@ At the end of this tutorial, you will know:
 
 **Input file**
 
-This tutorial uses no external input files and everything required is
-contained within a single GEOS input file.
-The xml input file for this test case is located at:
+This tutorial uses no external mesh file. As in the previous tutorials, the physics is defined in a *base* file,
+which is included by the file you run:
 
 .. code-block:: console
 
   inputFiles/solidMechanics/beamBending_base.xml
   inputFiles/solidMechanics/beamBending_benchmark.xml
+
+A lighter version of the case, ``beamBending_smoke.xml``, includes the same base file; the finite element discretization shown below is taken from it.
 
 ------------------------------------
 Discretized computational domain
@@ -66,8 +67,9 @@ Solid mechanics solver
 The solid mechanics solver is based on the small strain Lagrangian finite element formulation.
 The problem is run as ``QuasiStatic`` without considering the beam inertial. The computational
 domain is discretized by ``FE1``,
-which is defined in the ``NumericalMethods`` block. The material is designated as
-``shale``, whose properties are defined in the
+which is defined in the ``NumericalMethods`` block. The solver is applied to the region ``Region2``.
+As in the flow tutorials, the solver does not name a material: it uses the solid model listed in the
+``materialList`` of ``Region2`` (here ``shale``), whose properties are defined in the
 ``Constitutive`` block.
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_benchmark.xml
@@ -90,9 +92,7 @@ compatible with the first order interpolation functions.
 ------------------------------------
 Constitutive model
 ------------------------------------
-Recall that in the ``SolidMechanicsLagrangianFEM`` block,
-``shale`` is designated as the material in the computational domain. Here, the material
-is defined as linear isotropic.
+The material ``shale``, listed in the ``materialList`` of ``Region2``, is defined here as linear isotropic elastic.
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_base.xml
   :language: xml
@@ -103,17 +103,19 @@ is defined as linear isotropic.
 Boundary conditions
 ------------------------------------
 As aforementioned, the beam is fixed on one end, and subjects to surface traction on
-the other end. These boundary conditions are set up through the ``FieldSpecifications`` block.
-Here, ``nodeManager`` and
-``faceManager``
-in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively.
-Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively. And the non-zero values given by
-``Scale`` indicate the magnitude of the loading. Some shorthands, such as
-``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain.
-For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while
-``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthands include ``ypos``, ``yneg``,
-``zpos``, and ``zneg``. Particularly, the time-dependent loading applied at the beam tip is defined through a function with
-the name ``timeFunction``.
+the other end. These boundary conditions are set up through the ``FieldSpecifications`` block:
+
+  * The fixed end uses ``FieldSpecification`` elements on the ``totalDisplacement`` field, with ``objectPath="nodeManager"``:
+    the displacement is imposed at the mesh nodes.
+    Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively, and ``scale`` gives the imposed value (here zero).
+  * The loaded end uses a ``Traction`` element, with ``objectPath="faceManager"``: the traction is applied on mesh faces.
+    Its magnitude is given by ``scale`` (1 MPa), its direction by ``direction`` (here, the y-direction),
+    and its time variation by the function named ``timeFunction`` (see below).
+
+The sets ``xneg`` and ``xpos`` designate the nodes (and faces) on the left-most and right-most boundaries of the domain in the x-direction.
+Similar sets ``yneg``, ``ypos``, ``zneg``, and ``zpos`` exist for the other directions.
+These six sets are created automatically by the ``InternalMesh`` generator; with an external mesh, boundary sets must be defined
+in the mesh file or with a ``Geometry`` block.
 
 .. literalinclude:: ../../../../../inputFiles/solidMechanics/beamBending_base.xml
   :language: xml
@@ -146,6 +148,17 @@ the time increment ``forceDt`` is set as 1.0s.
 ------------------------------------
 Result
 ------------------------------------
+To run the case, from the root of the repository:
+
+.. code-block:: console
+
+  geos -i inputFiles/solidMechanics/beamBending_benchmark.xml
+
+The input file writes the deformed mesh in ``Silo`` format, and a ``TimeHistory`` output (``displacement_history.hdf5``)
+with the displacement along a line of nodes (the ``trace`` box), collected by a ``PackCollection`` task.
+The analytical solution for the deflection of a cantilever beam, used by the GEOS test suite to check this case,
+is implemented in ``inputFiles/solidMechanics/beamBending_curve.py``.
+
 The deformed beam is shown as following (notice that the displacement is visually magnified):
 
 .. image:: final_beam_bending.png
@@ -166,3 +179,9 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
   - More on meshes, please see :ref:`Meshes`.
   - More on events, please see :ref:`EventManager`.
+  - More on running GEOS (in parallel, restarting), please see :ref:`RunningGEOS`.
+
+**Next steps**
+
+You now know the basic building blocks of a GEOS input file.
+The :ref:`BasicExamples` show complete problems organized by physical process (multiphase flow, wells, CO\ :sub:`2` injection, poromechanics, hydraulic fracturing).

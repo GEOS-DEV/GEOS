@@ -491,6 +491,94 @@ bool solveGaussianElimination( MATRIX_TYPE & A, SOL_TYPE && X )
 } // details namespace
 
 /**
+ * @brief Solves a dynamically sized dense linear system using Gaussian elimination.
+ *
+ * This function solves the system `A * X = B`, where `A` is a square matrix and `X`
+ * contains the right-hand sides on input and the solutions on output. Both `A` and
+ * `X` are modified in place.
+ *
+ * @tparam MATRIX_TYPE The type of the dense matrix `A`.
+ * @tparam SOL_TYPE The type of the right-hand-side and solution matrix `X`.
+ * @param[in,out] A The square coefficient matrix.
+ * @param[in,out] X The right-hand-side and solution matrix.
+ * @return `true` if the system was successfully solved; `false` if the matrix is singular.
+ */
+template< typename MATRIX_TYPE,
+          typename SOL_TYPE >
+GEOS_HOST_DEVICE
+inline
+bool solveGaussianElimination( MATRIX_TYPE & A, SOL_TYPE && X )
+{
+  integer const N = LvArray::integerConversion< integer >( A.size( 0 ) );
+  integer const M = LvArray::integerConversion< integer >( X.size( 1 ) );
+
+  for( integer i = 0; i < N; ++i )
+  {
+    integer pivot = i;
+    real64 maxPivot = LvArray::math::abs( A[i][i] );
+    for( integer k = i + 1; k < N; ++k )
+    {
+      real64 const candidate = LvArray::math::abs( A[k][i] );
+      if( candidate > maxPivot )
+      {
+        pivot = k;
+        maxPivot = candidate;
+      }
+    }
+
+    if( maxPivot < details::singularMatrixTolerance )
+    {
+      return false;
+    }
+
+    if( pivot != i )
+    {
+      for( integer j = i; j < N; ++j )
+      {
+        real64 const value = A[i][j];
+        A[i][j] = A[pivot][j];
+        A[pivot][j] = value;
+      }
+      for( integer j = 0; j < M; ++j )
+      {
+        real64 const value = X[i][j];
+        X[i][j] = X[pivot][j];
+        X[pivot][j] = value;
+      }
+    }
+
+    for( integer k = i + 1; k < N; ++k )
+    {
+      real64 const scaling = A[k][i] / A[i][i];
+      for( integer j = i; j < N; ++j )
+      {
+        A[k][j] -= scaling * A[i][j];
+      }
+      for( integer j = 0; j < M; ++j )
+      {
+        X[k][j] -= scaling * X[i][j];
+      }
+    }
+  }
+
+  for( integer i = N - 1; i >= 0; --i )
+  {
+    real64 const inverseDiagonal = 1.0 / A[i][i];
+    for( integer j = 0; j < M; ++j )
+    {
+      real64 value = X[i][j];
+      for( integer k = i + 1; k < N; ++k )
+      {
+        value -= A[i][k] * X[k][j];
+      }
+      X[i][j] = value * inverseDiagonal;
+    }
+  }
+
+  return true;
+}
+
+/**
  * @brief Solves a linear system using the most appropriate method based on the size of the system.
  *
  * This function determines the appropriate method for solving a linear system `Ax = b` based on
