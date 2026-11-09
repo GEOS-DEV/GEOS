@@ -18,7 +18,7 @@
 #include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp"
-#include "TestFluid.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 #include "functions/FunctionManager.hpp"
 
@@ -31,49 +31,24 @@ namespace geos
 namespace testing
 {
 
-template< int NC >
-using ViscosityData = std::tuple<
-  real64 const,             // pressure
-  real64 const,             // temperature
-  Feed< NC > const,         // phase composition
-  real64 const              // expected viscosity
-  >;
-
-template< int NC >
-struct FluidData {};
-
-template<>
-struct FluidData< 2 >
+template< integer NC >
+struct ViscosityData : public TestDataBase< NC >
 {
-  static std::unique_ptr< TestFluid< 2 > > createFluid()
-  {
-    auto fluid = TestFluid< 2 >::create( {Fluid::H2O, Fluid::CO2} );
-    return fluid;
-  }
+  real64 expectedViscosity; ///< Expected viscosity
 };
 
-template<>
-struct FluidData< 4 >
+template< TestFluidName FLUID, int SALINITY = 0 >
+class PhillipsBrineViscosityTestFixture : public TestFluidFixture< FLUID, ViscosityData >
 {
-  static std::unique_ptr< TestFluid< 4 > > createFluid()
-  {
-    auto fluid = TestFluid< 4 >::create( {Fluid::H2O, Fluid::CO2, Fluid::CH4, Fluid::C5H12} );
-    return fluid;
-  }
-};
-
-template< int NC, int SALINITY = 0 >
-class PhillipsBrineViscosityTestFixture :  public ::testing::TestWithParam< ViscosityData< NC > >
-{
-  static constexpr real64 relTol = 1.0e-5;
-  static constexpr real64 absTol = 1.0e-7;
-  static constexpr int numComps = NC;
-  static constexpr int numDofs = NC + 2;
-  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
+  using Base = TestFluidFixture< FLUID, ViscosityData >;
+  using Base::numComps;
+  using Base::numDofs;
+  using Base::relTol;
+  using Base::absTol;
+  using typename Base::Deriv;
 public:
   PhillipsBrineViscosityTestFixture()
-    : m_parent( "parent", m_node ),
-    m_fluid( FluidData< NC >::createFluid() )
+    : m_parent( "parent", m_node )
   {
     m_functionManager = std::make_unique< FunctionManager >( "FunctionManager", &m_parent );
 
@@ -93,19 +68,19 @@ public:
 
   ~PhillipsBrineViscosityTestFixture() = default;
 
-  void testViscosity( ViscosityData< NC > const & data )
+  void testViscosity( ViscosityData< numComps > const & data )
   {
-    real64 const pressure = std::get< 0 >( data );
-    real64 const temperature = std::get< 1 >( data );
+    real64 const pressure = data.pressure;
+    real64 const temperature = data.temperature;
     stackArray1d< real64, numComps > phaseComposition;
-    TestFluid< NC >::createArray( phaseComposition, std::get< 2 >( data ));
-    real64 const expectedViscosity = std::get< 3 >( data );
+    TestFluid< numComps >::createArray( phaseComposition, data.composition );
+    real64 const expectedViscosity = data.expectedViscosity;
 
     real64 const massDensity = 1000.0;
     real64 viscosity = 0.0;
     stackArray1d< real64, numDofs > tempDerivs( numDofs );
 
-    auto componentProperties = m_fluid->createKernelWrapper();
+    auto componentProperties = this->m_fluid->createKernelWrapper();
     auto viscosityKernelWrapper = m_viscosity->createKernelWrapper();
 
     viscosityKernelWrapper.compute( componentProperties,
@@ -121,77 +96,40 @@ public:
     checkRelativeError( viscosity, expectedViscosity, relTol, absTol );
   }
 
-  void testViscosityDerivatives( ViscosityData< NC > const & data )
+  void testViscosityDerivatives( ViscosityData< numComps > const & data )
   {
-    real64 const pressure = std::get< 0 >( data );
-    real64 const temperature = std::get< 1 >( data );
     stackArray1d< real64, numComps > phaseComposition;
-    TestFluid< NC >::createArray( phaseComposition, std::get< 2 >( data ));
+    TestFluid< numComps >::createArray( phaseComposition, data.composition );
 
-    auto componentProperties = m_fluid->createKernelWrapper();
+    auto componentProperties = this->m_fluid->createKernelWrapper();
     auto viscosityKernelWrapper = m_viscosity->createKernelWrapper();
 
+    // The mass density is fixed, so its derivatives are zero
     real64 const massDensity = 1000.0;
-    real64 viscosity = 0.0;
     stackArray1d< real64, numDofs > massDensityDerivs( numDofs );
-    stackArray1d< real64, numDofs > viscosityDerivs( numDofs );
     LvArray::forValuesInSlice( massDensityDerivs.toSlice(), []( real64 & a ){ a = 0.0; } );
 
+    real64 viscosity = 0.0;
+    stackArray2d< real64, numDofs > derivatives( 1, numDofs );
     viscosityKernelWrapper.compute( componentProperties,
-                                    pressure,
-                                    temperature,
+                                    data.pressure,
+                                    data.temperature,
                                     phaseComposition.toSliceConst(),
                                     massDensity,
                                     massDensityDerivs.toSliceConst(),
                                     viscosity,
-                                    viscosityDerivs.toSlice(),
+                                    derivatives[0],
                                     false );
 
-    auto calculateViscosity = [&]( real64 const p, real64 const t, auto const & zmf ) -> real64 {
-      real64 phaseViscosity = 0.0;
-      stackArray1d< real64, numDofs > tempDerivs( numDofs );
-      viscosityKernelWrapper.compute( componentProperties, p, t, zmf.toSliceConst(),
-                                      massDensity, tempDerivs.toSliceConst(), phaseViscosity, tempDerivs.toSlice(), false );
-      return phaseViscosity;
-    };
-
-    // Viscosity values are very small so we will inflate the values to avoid false positives due
+    // Viscosity values are very small so they are inflated to avoid false positives due
     // to the absolute value check
-    real64 constexpr scale = 1.0e6;
-
-    // Compare against numerical derivatives
-    // -- Pressure derivative
-    real64 const dp = 1.0e-4 * pressure;
-    internal::testNumericalDerivative(
-      pressure, dp, scale*viscosityDerivs[Deriv::dP],
-      [&]( real64 const p ) -> real64 {
-      return scale*calculateViscosity( p, temperature, phaseComposition );
-    } );
-
-    // -- Temperature derivative
-    real64 const dT = 1.0e-6 * temperature;
-    internal::testNumericalDerivative(
-      temperature, dT, scale*viscosityDerivs[Deriv::dT],
-      [&]( real64 const t ) -> real64 {
-      return scale*calculateViscosity( pressure, t, phaseComposition );
-    } );
-
-    // -- Composition derivatives derivative
-    real64 const dz = 1.0e-7;
-    for( integer ic = 0; ic < 1; ++ic )
+    stackArray1d< real64, numDofs > tempDerivs( numDofs );
+    Base::template checkNumericalDerivatives< 1 >( data, derivatives.toSliceConst(),
+                                                   [&]( real64 const p, real64 const t, auto const & z, auto & values )
     {
-      internal::testNumericalDerivative(
-        0.0, dz, scale*viscosityDerivs[Deriv::dC + ic],
-        [&]( real64 const z ) -> real64 {
-        stackArray1d< real64, numComps > zmf( numComps );
-        for( integer jc = 0; jc < numComps; ++jc )
-        {
-          zmf[jc] = phaseComposition[jc];
-        }
-        zmf[ic] += z;
-        return scale*calculateViscosity( pressure, temperature, zmf );
-      } );
-    }
+      viscosityKernelWrapper.compute( componentProperties, p, t, z,
+                                      massDensity, massDensityDerivs.toSliceConst(), values[0], tempDerivs.toSlice(), false );
+    }, {}, { 1.0e6 } );
   }
 
 private:
@@ -212,13 +150,12 @@ protected:
   conduit::Node m_node;
   dataRepository::Group m_parent;
   std::unique_ptr< FunctionManager > m_functionManager{};
-  std::unique_ptr< TestFluid< NC > > m_fluid{};
   std::unique_ptr< PhillipsBrineViscosity > m_viscosity{};
   std::unique_ptr< ModelParameters > m_parameters{};
 };
 
-using PhillipsBrineViscosity4 = PhillipsBrineViscosityTestFixture< 4 >;
-using PhillipsBrineViscosity2_100K = PhillipsBrineViscosityTestFixture< 2, 100000 >;
+using PhillipsBrineViscosity4 = PhillipsBrineViscosityTestFixture< TestFluidName::EnhancedOilRecovery >;
+using PhillipsBrineViscosity2_100K = PhillipsBrineViscosityTestFixture< TestFluidName::CarbonStorage, 100000 >;
 
 TEST_P( PhillipsBrineViscosity4, testViscosity )
 {
@@ -250,42 +187,42 @@ INSTANTIATE_TEST_SUITE_P(
   PhillipsBrineViscosity,
   PhillipsBrineViscosity4,
   ::testing::ValuesIn({
-    ViscosityData<4>{ 1.0e+07, 288.15, {1.0000, 0.0000, 0.0000, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {1.0000, 0.0000, 0.0000, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {1.0000, 0.0000, 0.0000, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {1.0000, 0.0000, 0.0000, 0.0000}, 2.822282e-04 },
-    ViscosityData<4>{ 1.0e+07, 288.15, {0.9990, 0.0000, 0.0010, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {0.9990, 0.0000, 0.0010, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {0.9990, 0.0000, 0.0010, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {0.9990, 0.0000, 0.0010, 0.0000}, 2.822282e-04 },
-    ViscosityData<4>{ 1.0e+07, 288.15, {0.9900, 0.0000, 0.0100, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {0.9900, 0.0000, 0.0100, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {0.9900, 0.0000, 0.0100, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {0.9900, 0.0000, 0.0100, 0.0000}, 2.822282e-04 },
-    ViscosityData<4>{ 1.0e+07, 288.15, {0.9990, 0.0010, 0.0000, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {0.9990, 0.0010, 0.0000, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {0.9990, 0.0010, 0.0000, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {0.9990, 0.0010, 0.0000, 0.0000}, 2.822282e-04 },
-    ViscosityData<4>{ 1.0e+07, 288.15, {0.9980, 0.0010, 0.0010, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {0.9980, 0.0010, 0.0010, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {0.9980, 0.0010, 0.0010, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {0.9980, 0.0010, 0.0010, 0.0000}, 2.822282e-04 },
-    ViscosityData<4>{ 1.0e+07, 288.15, {0.9890, 0.0010, 0.0100, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {0.9890, 0.0010, 0.0100, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {0.9890, 0.0010, 0.0100, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {0.9890, 0.0010, 0.0100, 0.0000}, 2.822282e-04 },
-    ViscosityData<4>{ 1.0e+07, 288.15, {0.9900, 0.0100, 0.0000, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {0.9900, 0.0100, 0.0000, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {0.9900, 0.0100, 0.0000, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {0.9900, 0.0100, 0.0000, 0.0000}, 2.822282e-04 },
-    ViscosityData<4>{ 1.0e+07, 288.15, {0.9890, 0.0100, 0.0010, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {0.9890, 0.0100, 0.0010, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {0.9890, 0.0100, 0.0010, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {0.9890, 0.0100, 0.0010, 0.0000}, 2.822282e-04 },
-    ViscosityData<4>{ 1.0e+07, 288.15, {0.9800, 0.0100, 0.0100, 0.0000}, 1.153800e-03 },
-    ViscosityData<4>{ 1.0e+07, 293.15, {0.9800, 0.0100, 0.0100, 0.0000}, 1.012544e-03 },
-    ViscosityData<4>{ 1.0e+07, 353.15, {0.9800, 0.0100, 0.0100, 0.0000}, 3.552664e-04 },
-    ViscosityData<4>{ 1.0e+07, 373.15, {0.9800, 0.0100, 0.0100, 0.0000}, 2.822282e-04 }
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0000, 1.0000, 0.0000, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0000, 1.0000, 0.0000, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0000, 1.0000, 0.0000, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0000, 1.0000, 0.0000, 0.0000}}, 2.822282e-04},
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0000, 0.9990, 0.0010, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0000, 0.9990, 0.0010, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0000, 0.9990, 0.0010, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0000, 0.9990, 0.0010, 0.0000}}, 2.822282e-04},
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0000, 0.9900, 0.0100, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0000, 0.9900, 0.0100, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0000, 0.9900, 0.0100, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0000, 0.9900, 0.0100, 0.0000}}, 2.822282e-04},
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0010, 0.9990, 0.0000, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0010, 0.9990, 0.0000, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0010, 0.9990, 0.0000, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0010, 0.9990, 0.0000, 0.0000}}, 2.822282e-04},
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0010, 0.9980, 0.0010, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0010, 0.9980, 0.0010, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0010, 0.9980, 0.0010, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0010, 0.9980, 0.0010, 0.0000}}, 2.822282e-04},
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0010, 0.9890, 0.0100, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0010, 0.9890, 0.0100, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0010, 0.9890, 0.0100, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0010, 0.9890, 0.0100, 0.0000}}, 2.822282e-04},
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0100, 0.9900, 0.0000, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0100, 0.9900, 0.0000, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0100, 0.9900, 0.0000, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0100, 0.9900, 0.0000, 0.0000}}, 2.822282e-04},
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0100, 0.9890, 0.0010, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0100, 0.9890, 0.0010, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0100, 0.9890, 0.0010, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0100, 0.9890, 0.0010, 0.0000}}, 2.822282e-04},
+    ViscosityData<4>{{1.0e+07, 288.15, {0.0100, 0.9800, 0.0100, 0.0000}}, 1.153800e-03},
+    ViscosityData<4>{{1.0e+07, 293.15, {0.0100, 0.9800, 0.0100, 0.0000}}, 1.012544e-03},
+    ViscosityData<4>{{1.0e+07, 353.15, {0.0100, 0.9800, 0.0100, 0.0000}}, 3.552664e-04},
+    ViscosityData<4>{{1.0e+07, 373.15, {0.0100, 0.9800, 0.0100, 0.0000}}, 2.822282e-04}
   })
 );
 
@@ -293,18 +230,18 @@ INSTANTIATE_TEST_SUITE_P(
   PhillipsBrineViscosity,
   PhillipsBrineViscosity2_100K,
   ::testing::ValuesIn({
-    ViscosityData<2>{ 1.0e+07, 288.15, {1.0000, 0.0000}, 1.364366e-03 },
-    ViscosityData<2>{ 1.0e+07, 293.15, {1.0000, 0.0000}, 1.199555e-03 },
-    ViscosityData<2>{ 1.0e+07, 353.15, {1.0000, 0.0000}, 4.302578e-04 },
-    ViscosityData<2>{ 1.0e+07, 373.15, {1.0000, 0.0000}, 3.442847e-04 },
-    ViscosityData<2>{ 1.0e+07, 288.15, {0.9990, 0.0010}, 1.364366e-03 },
-    ViscosityData<2>{ 1.0e+07, 293.15, {0.9990, 0.0010}, 1.199555e-03 },
-    ViscosityData<2>{ 1.0e+07, 353.15, {0.9990, 0.0010}, 4.302578e-04 },
-    ViscosityData<2>{ 1.0e+07, 373.15, {0.9990, 0.0010}, 3.442847e-04 },
-    ViscosityData<2>{ 1.0e+07, 288.15, {0.9900, 0.0100}, 1.364366e-03 },
-    ViscosityData<2>{ 1.0e+07, 293.15, {0.9900, 0.0100}, 1.199555e-03 },
-    ViscosityData<2>{ 1.0e+07, 353.15, {0.9900, 0.0100}, 4.302578e-04 },
-    ViscosityData<2>{ 1.0e+07, 373.15, {0.9900, 0.0100}, 3.442847e-04 }
+    ViscosityData<2>{{1.0e+07, 288.15, {1.0000, 0.0000}}, 1.364366e-03},
+    ViscosityData<2>{{1.0e+07, 293.15, {1.0000, 0.0000}}, 1.199555e-03},
+    ViscosityData<2>{{1.0e+07, 353.15, {1.0000, 0.0000}}, 4.302578e-04},
+    ViscosityData<2>{{1.0e+07, 373.15, {1.0000, 0.0000}}, 3.442847e-04},
+    ViscosityData<2>{{1.0e+07, 288.15, {0.9990, 0.0010}}, 1.364366e-03},
+    ViscosityData<2>{{1.0e+07, 293.15, {0.9990, 0.0010}}, 1.199555e-03},
+    ViscosityData<2>{{1.0e+07, 353.15, {0.9990, 0.0010}}, 4.302578e-04},
+    ViscosityData<2>{{1.0e+07, 373.15, {0.9990, 0.0010}}, 3.442847e-04},
+    ViscosityData<2>{{1.0e+07, 288.15, {0.9900, 0.0100}}, 1.364366e-03},
+    ViscosityData<2>{{1.0e+07, 293.15, {0.9900, 0.0100}}, 1.199555e-03},
+    ViscosityData<2>{{1.0e+07, 353.15, {0.9900, 0.0100}}, 4.302578e-04},
+    ViscosityData<2>{{1.0e+07, 373.15, {0.9900, 0.0100}}, 3.442847e-04}
   })
 );
 

@@ -15,7 +15,7 @@
 
 // Source includes
 #include "constitutive/fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp"
-#include "TestFluid.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 
 namespace geos
@@ -27,82 +27,27 @@ using namespace constitutive::compositional;
 namespace testing
 {
 
-template< int NC >
-struct FluidData {};
-
-template<>
-struct FluidData< 2 >
+template< integer NC >
+struct TestData : public TestDataBase< NC >
 {
-  static std::unique_ptr< TestFluid< 2 > > create()
-  {
-    return TestFluid< 2 >::create( {Fluid::H2O, Fluid::C10H22} );
-  }
-
-  static std::array< Feed< 2 >, 3 > constexpr feeds = {
-    Feed< 2 >{0.995, 0.005},
-    Feed< 2 >{1.000, 0.000},
-    Feed< 2 >{0.002, 0.998}
-  };
+  real64 salinity;        ///< Salinity
+  real64 expectedZFactor; ///< Expected compressibility factor
 };
 
-template<>
-struct FluidData< 3 >
-{
-  static std::unique_ptr< TestFluid< 3 > > create()
-  {
-    return TestFluid< 3 >::create( {Fluid::H2O, Fluid::H2S, Fluid::H2} );
-  }
-
-  static std::array< Feed< 3 >, 3 > constexpr feeds = {
-    Feed< 3 >{0.995, 0.000, 0.005},
-    Feed< 3 >{0.990, 0.005, 0.005},
-    Feed< 3 >{0.970, 0.025, 0.005}
-  };
-};
-
-template<>
-struct FluidData< 4 >
-{
-  static std::unique_ptr< TestFluid< 4 > > create()
-  {
-    auto fluid = TestFluid< 4 >::create( {Fluid::N2, Fluid::CH4, Fluid::CO2, Fluid::H2O} );
-    fluid->setBinaryCoefficients( Feed< 6 >{ 0.0, 0.0, 0.0, 0.4778, 0.4850, 0.1896 } );
-    return fluid;
-  }
-
-  static std::array< Feed< 4 >, 4 > constexpr feeds = {
-    Feed< 4 >{0.030933, 0.319683, 0.637861, 0.011523},
-    Feed< 4 >{0.000000, 0.349686, 0.637891, 0.012423},
-    Feed< 4 >{0.000000, 0.349686, 0.650314, 0.000000},
-    Feed< 4 >{0.000000, 0.000000, 0.000000, 1.000000}
-  };
-};
-
-template< int NC >
-using TestData = std::tuple<
-  real64 const,         // Pressure
-  real64 const,         // Temperature
-  real64 const,         // Salinity
-  Feed< NC > const,     // Input composition
-  real64 const          // Expected compressibility
-  >;
-
-template< integer NC, typename EOS_TYPE >
-class SoreideWhitsonEOSPhaseModelTestFixture : public ::testing::TestWithParam< TestData< NC > >
+template< TestFluidName FLUID, typename EOS_TYPE >
+class SoreideWhitsonEOSPhaseModelTestFixture : public TestFluidFixture< FLUID, TestData >
 {
 public:
-  static constexpr integer numComps = NC;
-  static constexpr integer numDofs = NC + 2;
+  using Base = TestFluidFixture< FLUID, TestData >;
+  using Base::numComps;
+  using Base::numDofs;
+  using Base::relTol;
   static constexpr real64 absTol = 1.0e-4;
-  static constexpr real64 relTol = 1.0e-5;
-  using ParamType = TestData< NC >;
+  using ParamType = TestData< numComps >;
   using EOS = SoreideWhitsonEOSPhaseModel< EOS_TYPE >;
   using CubicModel = typename EOS::CubicModel;
   using Deriv = typename EOS::Deriv;
 public:
-  SoreideWhitsonEOSPhaseModelTestFixture():
-    m_fluid( FluidData< NC >::create() )
-  {}
   ~SoreideWhitsonEOSPhaseModelTestFixture() = default;
 
   void testPureCoefficients( ParamType const & testData );
@@ -113,19 +58,16 @@ public:
   void testCompressibilityFactorValue( ParamType const & testData );
   void testLogFugacityCoefficients( ParamType const & testData );
   void testEnthalpy( ParamType const & testData );
-
-protected:
-  std::unique_ptr< TestFluid< NC > > m_fluid{};
 };
 
-template< integer NC, typename EOS_TYPE >
+template< TestFluidName FLUID, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< FLUID, EOS_TYPE >::testPureCoefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
-  real64 const pressure = std::get< 0 >( testData );
-  real64 const temperature = std::get< 1 >( testData );
-  real64 const salinity = std::get< 2 >( testData );
+  real64 const pressure = testData.pressure;
+  real64 const temperature = testData.temperature;
+  real64 const salinity = testData.salinity;
 
   typename EOS::template StackVariables< true > stack( numComps );
   EOS::initialiseStack( numComps,
@@ -177,14 +119,14 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testPureCoefficients( Pa
   }, absTol, relTol );
 }
 
-template< integer NC, typename EOS_TYPE >
+template< TestFluidName FLUID, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< FLUID, EOS_TYPE >::testBinaryInteractionCoefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
-  real64 const pressure = std::get< 0 >( testData );
-  real64 const temperature = std::get< 1 >( testData );
-  real64 const salinity = std::get< 2 >( testData );
+  real64 const pressure = testData.pressure;
+  real64 const temperature = testData.temperature;
+  real64 const salinity = testData.salinity;
 
   // Test symmetry
   for( integer ic = 0; ic < numComps; ++ic )
@@ -252,16 +194,16 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testBinaryInteractionCoe
   }
 }
 
-template< integer NC, typename EOS_TYPE >
+template< TestFluidName FLUID, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< FLUID, EOS_TYPE >::testMixtureCoefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
-  real64 const pressure = std::get< 0 >( testData );
-  real64 const temperature = std::get< 1 >( testData );
-  real64 const salinity = std::get< 2 >( testData );
+  real64 const pressure = testData.pressure;
+  real64 const temperature = testData.temperature;
+  real64 const salinity = testData.salinity;
   stackArray1d< real64, numComps > composition;
-  TestFluid< numComps >::createArray( composition, std::get< 3 >( testData ));
+  TestFluid< numComps >::createArray( composition, testData.composition );
 
   typename EOS::template StackVariables< true > stack( numComps );
   EOS::initialiseStack( numComps,
@@ -327,16 +269,16 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testMixtureCoefficients(
   }
 }
 
-template< integer NC, typename EOS_TYPE >
+template< TestFluidName FLUID, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testATemperatureCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< FLUID, EOS_TYPE >::testATemperatureCoefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
-  real64 const pressure = std::get< 0 >( testData );
-  real64 const temperature = std::get< 1 >( testData );
-  real64 const salinity = std::get< 2 >( testData );
+  real64 const pressure = testData.pressure;
+  real64 const temperature = testData.temperature;
+  real64 const salinity = testData.salinity;
   stackArray1d< real64, numComps > composition;
-  TestFluid< numComps >::createArray( composition, std::get< 3 >( testData ));
+  TestFluid< numComps >::createArray( composition, testData.composition );
 
   typename EOS::template StackVariables< true > stack( numComps );
 
@@ -399,16 +341,16 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testATemperatureCoeffici
   }
 }
 
-template< integer NC, typename EOS_TYPE >
+template< TestFluidName FLUID, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFactor( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< FLUID, EOS_TYPE >::testCompressibilityFactor( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
-  real64 const pressure = std::get< 0 >( testData );
-  real64 const temperature = std::get< 1 >( testData );
-  real64 const salinity = std::get< 2 >( testData );
+  real64 const pressure = testData.pressure;
+  real64 const temperature = testData.temperature;
+  real64 const salinity = testData.salinity;
   stackArray1d< real64, numComps > composition;
-  TestFluid< numComps >::createArray( composition, std::get< 3 >( testData ));
+  TestFluid< numComps >::createArray( composition, testData.composition );
 
   real64 compressibilityFactor = 0.0;
   stackArray1d< real64, numDofs > compressibilityFactorDerivs( numDofs );
@@ -458,17 +400,17 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFacto
   }
 }
 
-template< integer NC, typename EOS_TYPE >
+template< TestFluidName FLUID, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFactorValue( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< FLUID, EOS_TYPE >::testCompressibilityFactorValue( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
-  real64 const pressure = std::get< 0 >( testData );
-  real64 const temperature = std::get< 1 >( testData );
-  real64 const salinity = std::get< 2 >( testData );
+  real64 const pressure = testData.pressure;
+  real64 const temperature = testData.temperature;
+  real64 const salinity = testData.salinity;
   stackArray1d< real64, numComps > composition;
-  TestFluid< numComps >::createArray( composition, std::get< 3 >( testData ));
-  real64 const expectedZFactor = std::get< 4 >( testData );
+  TestFluid< numComps >::createArray( composition, testData.composition );
+  real64 const expectedZFactor = testData.expectedZFactor;
 
   real64 zFactor = 0.0;
   EOS::computeCompressibilityFactor( numComps,
@@ -481,16 +423,16 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testCompressibilityFacto
   checkRelativeError( zFactor, expectedZFactor, relTol, absTol );
 }
 
-template< integer NC, typename EOS_TYPE >
+template< TestFluidName FLUID, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficients( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< FLUID, EOS_TYPE >::testLogFugacityCoefficients( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
-  real64 const pressure = std::get< 0 >( testData );
-  real64 const temperature = std::get< 1 >( testData );
-  real64 const salinity = std::get< 2 >( testData );
+  real64 const pressure = testData.pressure;
+  real64 const temperature = testData.temperature;
+  real64 const salinity = testData.salinity;
   StackArray< real64, 1, numComps > composition;
-  TestFluid< NC >::createArray( composition, std::get< 3 >( testData ));
+  TestFluid< numComps >::createArray( composition, testData.composition );
 
   StackArray< real64, 1, numComps > logFugacityCoefficients( numComps );
   StackArray< real64, 2, numComps *numDofs > logFugacityCoefficientDerivs( numComps, numDofs );
@@ -572,16 +514,16 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testLogFugacityCoefficie
   }
 }
 
-template< integer NC, typename EOS_TYPE >
+template< TestFluidName FLUID, typename EOS_TYPE >
 void
-SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testEnthalpy( ParamType const & testData )
+SoreideWhitsonEOSPhaseModelTestFixture< FLUID, EOS_TYPE >::testEnthalpy( ParamType const & testData )
 {
   auto componentProperties = this->m_fluid->createKernelWrapper();
-  real64 const pressure = std::get< 0 >( testData );
-  real64 const temperature = std::get< 1 >( testData );
-  real64 const salinity = std::get< 2 >( testData );
+  real64 const pressure = testData.pressure;
+  real64 const temperature = testData.temperature;
+  real64 const salinity = testData.salinity;
   StackArray< real64, 1, numComps > composition;
-  TestFluid< NC >::createArray( composition, std::get< 3 >( testData ));
+  TestFluid< numComps >::createArray( composition, testData.composition );
 
   constexpr real64 enthalpyScale = 5.0e-4;
 
@@ -679,9 +621,9 @@ SoreideWhitsonEOSPhaseModelTestFixture< NC, EOS_TYPE >::testEnthalpy( ParamType 
   }
 }
 
-using PengRobinson2 = SoreideWhitsonEOSPhaseModelTestFixture< 2, PengRobinsonEOS >;
-using PengRobinson4 = SoreideWhitsonEOSPhaseModelTestFixture< 4, PengRobinsonEOS >;
-using SoaveRedlichKwong3 = SoreideWhitsonEOSPhaseModelTestFixture< 3, SoaveRedlichKwongEOS >;
+using PengRobinson2 = SoreideWhitsonEOSPhaseModelTestFixture< TestFluidName::OilWater, PengRobinsonEOS >;
+using PengRobinson4 = SoreideWhitsonEOSPhaseModelTestFixture< TestFluidName::AquiferGasStorage, PengRobinsonEOS >;
+using SoaveRedlichKwong3 = SoreideWhitsonEOSPhaseModelTestFixture< TestFluidName::HydrogenStorage, SoaveRedlichKwongEOS >;
 
 TEST_P( PengRobinson2, testSWModel )
 {
@@ -722,136 +664,136 @@ TEST_P( SoaveRedlichKwong3, testSWModel )
 
 INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSPhaseModelTest, PengRobinson2,
   ::testing::ValuesIn<TestData< 2 >>({
-    {1.00e+05, 297.15, 0.0, {0.995000, 0.005000}, 0.00090026},
-    {1.00e+05, 297.15, 1.7, {0.995000, 0.005000}, 0.00089960},
-    {1.00e+05, 363.00, 0.0, {0.995000, 0.005000}, 0.00077645},
-    {1.00e+05, 363.00, 1.7, {0.995000, 0.005000}, 0.00077531},
-    {1.84e+06, 297.15, 0.0, {0.995000, 0.005000}, 0.01656101},
-    {1.84e+06, 297.15, 1.7, {0.995000, 0.005000}, 0.01654886},
-    {1.84e+06, 363.00, 0.0, {0.995000, 0.005000}, 0.01428025},
-    {1.84e+06, 363.00, 1.7, {0.995000, 0.005000}, 0.01425936},
-    {1.84e+08, 297.15, 0.0, {0.995000, 0.005000}, 1.62425580},
-    {1.84e+08, 297.15, 1.7, {0.995000, 0.005000}, 1.62345870},
-    {1.84e+08, 363.00, 0.0, {0.995000, 0.005000}, 1.37947706},
-    {1.84e+08, 363.00, 1.7, {0.995000, 0.005000}, 1.37827630},
-    {1.00e+05, 297.15, 0.0, {1.000000, 0.000000}, 0.00085955},
-    {1.00e+05, 297.15, 1.7, {1.000000, 0.000000}, 0.00085886},
-    {1.00e+05, 363.00, 0.0, {1.000000, 0.000000}, 0.00073994},
-    {1.00e+05, 363.00, 1.7, {1.000000, 0.000000}, 0.00073876},
-    {1.84e+06, 297.15, 0.0, {1.000000, 0.000000}, 0.01581228},
-    {1.84e+06, 297.15, 1.7, {1.000000, 0.000000}, 0.01579967},
-    {1.84e+06, 363.00, 0.0, {1.000000, 0.000000}, 0.01360943},
-    {1.84e+06, 363.00, 1.7, {1.000000, 0.000000}, 0.01358772},
-    {1.84e+08, 297.15, 0.0, {1.000000, 0.000000}, 1.55295404},
-    {1.84e+08, 297.15, 1.7, {1.000000, 0.000000}, 1.55210598},
-    {1.84e+08, 363.00, 0.0, {1.000000, 0.000000}, 1.31823992},
-    {1.84e+08, 363.00, 1.7, {1.000000, 0.000000}, 1.31694721},
-    {1.00e+05, 297.15, 0.0, {0.002000, 0.998000}, 0.00856008},
-    {1.00e+05, 297.15, 1.7, {0.002000, 0.998000}, 0.00856009},
-    {1.00e+05, 363.00, 0.0, {0.002000, 0.998000}, 0.00738480},
-    {1.00e+05, 363.00, 1.7, {0.002000, 0.998000}, 0.00738484},
-    {1.84e+06, 297.15, 0.0, {0.002000, 0.998000}, 0.15720092},
-    {1.84e+06, 297.15, 1.7, {0.002000, 0.998000}, 0.15720122},
-    {1.84e+06, 363.00, 0.0, {0.002000, 0.998000}, 0.13535973},
-    {1.84e+06, 363.00, 1.7, {0.002000, 0.998000}, 0.13536038},
-    {1.84e+08, 297.15, 0.0, {0.002000, 0.998000}, 14.71187824},
-    {1.84e+08, 297.15, 1.7, {0.002000, 0.998000}, 14.71188210},
-    {1.84e+08, 363.00, 0.0, {0.002000, 0.998000}, 12.18401104},
-    {1.84e+08, 363.00, 1.7, {0.002000, 0.998000}, 12.18401699}
+    {{1.00e+05, 297.15, {0.995000, 0.005000}}, 0.0,  0.00090026},
+    {{1.00e+05, 297.15, {0.995000, 0.005000}}, 1.7,  0.00089960},
+    {{1.00e+05, 363.00, {0.995000, 0.005000}}, 0.0,  0.00077645},
+    {{1.00e+05, 363.00, {0.995000, 0.005000}}, 1.7,  0.00077531},
+    {{1.84e+06, 297.15, {0.995000, 0.005000}}, 0.0,  0.01656101},
+    {{1.84e+06, 297.15, {0.995000, 0.005000}}, 1.7,  0.01654886},
+    {{1.84e+06, 363.00, {0.995000, 0.005000}}, 0.0,  0.01428025},
+    {{1.84e+06, 363.00, {0.995000, 0.005000}}, 1.7,  0.01425936},
+    {{1.84e+08, 297.15, {0.995000, 0.005000}}, 0.0,  1.62425580},
+    {{1.84e+08, 297.15, {0.995000, 0.005000}}, 1.7,  1.62345870},
+    {{1.84e+08, 363.00, {0.995000, 0.005000}}, 0.0,  1.37947706},
+    {{1.84e+08, 363.00, {0.995000, 0.005000}}, 1.7,  1.37827630},
+    {{1.00e+05, 297.15, {1.000000, 0.000000}}, 0.0,  0.00085955},
+    {{1.00e+05, 297.15, {1.000000, 0.000000}}, 1.7,  0.00085886},
+    {{1.00e+05, 363.00, {1.000000, 0.000000}}, 0.0,  0.00073994},
+    {{1.00e+05, 363.00, {1.000000, 0.000000}}, 1.7,  0.00073876},
+    {{1.84e+06, 297.15, {1.000000, 0.000000}}, 0.0,  0.01581228},
+    {{1.84e+06, 297.15, {1.000000, 0.000000}}, 1.7,  0.01579967},
+    {{1.84e+06, 363.00, {1.000000, 0.000000}}, 0.0,  0.01360943},
+    {{1.84e+06, 363.00, {1.000000, 0.000000}}, 1.7,  0.01358772},
+    {{1.84e+08, 297.15, {1.000000, 0.000000}}, 0.0,  1.55295404},
+    {{1.84e+08, 297.15, {1.000000, 0.000000}}, 1.7,  1.55210598},
+    {{1.84e+08, 363.00, {1.000000, 0.000000}}, 0.0,  1.31823992},
+    {{1.84e+08, 363.00, {1.000000, 0.000000}}, 1.7,  1.31694721},
+    {{1.00e+05, 297.15, {0.002000, 0.998000}}, 0.0,  0.00856008},
+    {{1.00e+05, 297.15, {0.002000, 0.998000}}, 1.7,  0.00856009},
+    {{1.00e+05, 363.00, {0.002000, 0.998000}}, 0.0,  0.00738480},
+    {{1.00e+05, 363.00, {0.002000, 0.998000}}, 1.7,  0.00738484},
+    {{1.84e+06, 297.15, {0.002000, 0.998000}}, 0.0,  0.15720092},
+    {{1.84e+06, 297.15, {0.002000, 0.998000}}, 1.7,  0.15720122},
+    {{1.84e+06, 363.00, {0.002000, 0.998000}}, 0.0,  0.13535973},
+    {{1.84e+06, 363.00, {0.002000, 0.998000}}, 1.7,  0.13536038},
+    {{1.84e+08, 297.15, {0.002000, 0.998000}}, 0.0, 14.71187824},
+    {{1.84e+08, 297.15, {0.002000, 0.998000}}, 1.7, 14.71188210},
+    {{1.84e+08, 363.00, {0.002000, 0.998000}}, 0.0, 12.18401104},
+    {{1.84e+08, 363.00, {0.002000, 0.998000}}, 1.7, 12.18401699}
   })
 );
 
 INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSPhaseModelTest, PengRobinson4,
   ::testing::ValuesIn<TestData< 4 >>({
-    {1.00e+05, 297.15, 0.0, {0.030933, 0.319683, 0.637861, 0.011523}, 0.99572092},
-    {1.00e+05, 297.15, 1.7, {0.030933, 0.319683, 0.637861, 0.011523}, 0.99572434},
-    {1.00e+05, 363.00, 0.0, {0.030933, 0.319683, 0.637861, 0.011523}, 0.99778476},
-    {1.00e+05, 363.00, 1.7, {0.030933, 0.319683, 0.637861, 0.011523}, 0.99778741},
-    {1.84e+06, 297.15, 0.0, {0.030933, 0.319683, 0.637861, 0.011523}, 0.91930630},
-    {1.84e+06, 297.15, 1.7, {0.030933, 0.319683, 0.637861, 0.011523}, 0.91937745},
-    {1.84e+06, 363.00, 0.0, {0.030933, 0.319683, 0.637861, 0.011523}, 0.95971259},
-    {1.84e+06, 363.00, 1.7, {0.030933, 0.319683, 0.637861, 0.011523}, 0.95976376},
-    {1.84e+08, 297.15, 0.0, {0.030933, 0.319683, 0.637861, 0.011523}, 2.53720258},
-    {1.84e+08, 297.15, 1.7, {0.030933, 0.319683, 0.637861, 0.011523}, 2.53739289},
-    {1.84e+08, 363.00, 0.0, {0.030933, 0.319683, 0.637861, 0.011523}, 2.24823017},
-    {1.84e+08, 363.00, 1.7, {0.030933, 0.319683, 0.637861, 0.011523}, 2.24847504},
-    {1.00e+05, 297.15, 0.0, {0.000000, 0.349686, 0.637891, 0.012423}, 0.99562285},
-    {1.00e+05, 297.15, 1.7, {0.000000, 0.349686, 0.637891, 0.012423}, 0.99562638},
-    {1.00e+05, 363.00, 0.0, {0.000000, 0.349686, 0.637891, 0.012423}, 0.99772526},
-    {1.00e+05, 363.00, 1.7, {0.000000, 0.349686, 0.637891, 0.012423}, 0.99772807},
-    {1.84e+06, 297.15, 0.0, {0.000000, 0.349686, 0.637891, 0.012423}, 0.91728093},
-    {1.84e+06, 297.15, 1.7, {0.000000, 0.349686, 0.637891, 0.012423}, 0.91735461},
-    {1.84e+06, 363.00, 0.0, {0.000000, 0.349686, 0.637891, 0.012423}, 0.95857373},
-    {1.84e+06, 363.00, 1.7, {0.000000, 0.349686, 0.637891, 0.012423}, 0.95862796},
-    {1.84e+08, 297.15, 0.0, {0.000000, 0.349686, 0.637891, 0.012423}, 2.53887060},
-    {1.84e+08, 297.15, 1.7, {0.000000, 0.349686, 0.637891, 0.012423}, 2.53906366},
-    {1.84e+08, 363.00, 0.0, {0.000000, 0.349686, 0.637891, 0.012423}, 2.24859657},
-    {1.84e+08, 363.00, 1.7, {0.000000, 0.349686, 0.637891, 0.012423}, 2.24885192},
-    {1.00e+05, 297.15, 0.0, {0.000000, 0.349686, 0.650314, 0.000000}, 0.99574609},
-    {1.00e+05, 297.15, 1.7, {0.000000, 0.349686, 0.650314, 0.000000}, 0.99574609},
-    {1.00e+05, 363.00, 0.0, {0.000000, 0.349686, 0.650314, 0.000000}, 0.99778787},
-    {1.00e+05, 363.00, 1.7, {0.000000, 0.349686, 0.650314, 0.000000}, 0.99778787},
-    {1.84e+06, 297.15, 0.0, {0.000000, 0.349686, 0.650314, 0.000000}, 0.91986981},
-    {1.84e+06, 297.15, 1.7, {0.000000, 0.349686, 0.650314, 0.000000}, 0.91986981},
-    {1.84e+06, 363.00, 0.0, {0.000000, 0.349686, 0.650314, 0.000000}, 0.95979173},
-    {1.84e+06, 363.00, 1.7, {0.000000, 0.349686, 0.650314, 0.000000}, 0.95979173},
-    {1.84e+08, 297.15, 0.0, {0.000000, 0.349686, 0.650314, 0.000000}, 2.55428138},
-    {1.84e+08, 297.15, 1.7, {0.000000, 0.349686, 0.650314, 0.000000}, 2.55428138},
-    {1.84e+08, 363.00, 0.0, {0.000000, 0.349686, 0.650314, 0.000000}, 2.26138556},
-    {1.84e+08, 363.00, 1.7, {0.000000, 0.349686, 0.650314, 0.000000}, 2.26138556},
-    {1.00e+05, 297.15, 0.0, {0.000000, 0.000000, 0.000000, 1.000000}, 0.00085955},
-    {1.00e+05, 297.15, 1.7, {0.000000, 0.000000, 0.000000, 1.000000}, 0.00085886},
-    {1.00e+05, 363.00, 0.0, {0.000000, 0.000000, 0.000000, 1.000000}, 0.00073994},
-    {1.00e+05, 363.00, 1.7, {0.000000, 0.000000, 0.000000, 1.000000}, 0.00073876},
-    {1.84e+06, 297.15, 0.0, {0.000000, 0.000000, 0.000000, 1.000000}, 0.01581228},
-    {1.84e+06, 297.15, 1.7, {0.000000, 0.000000, 0.000000, 1.000000}, 0.01579967},
-    {1.84e+06, 363.00, 0.0, {0.000000, 0.000000, 0.000000, 1.000000}, 0.01360943},
-    {1.84e+06, 363.00, 1.7, {0.000000, 0.000000, 0.000000, 1.000000}, 0.01358772},
-    {1.84e+08, 297.15, 0.0, {0.000000, 0.000000, 0.000000, 1.000000}, 1.55295404},
-    {1.84e+08, 297.15, 1.7, {0.000000, 0.000000, 0.000000, 1.000000}, 1.55210598},
-    {1.84e+08, 363.00, 0.0, {0.000000, 0.000000, 0.000000, 1.000000}, 1.31823992},
-    {1.84e+08, 363.00, 1.7, {0.000000, 0.000000, 0.000000, 1.000000}, 1.31694721}
+    {{1.00e+05, 297.15, {0.030933, 0.319683, 0.637861, 0.011523}}, 0.0, 0.99572092},
+    {{1.00e+05, 297.15, {0.030933, 0.319683, 0.637861, 0.011523}}, 1.7, 0.99572434},
+    {{1.00e+05, 363.00, {0.030933, 0.319683, 0.637861, 0.011523}}, 0.0, 0.99778476},
+    {{1.00e+05, 363.00, {0.030933, 0.319683, 0.637861, 0.011523}}, 1.7, 0.99778741},
+    {{1.84e+06, 297.15, {0.030933, 0.319683, 0.637861, 0.011523}}, 0.0, 0.91930630},
+    {{1.84e+06, 297.15, {0.030933, 0.319683, 0.637861, 0.011523}}, 1.7, 0.91937745},
+    {{1.84e+06, 363.00, {0.030933, 0.319683, 0.637861, 0.011523}}, 0.0, 0.95971259},
+    {{1.84e+06, 363.00, {0.030933, 0.319683, 0.637861, 0.011523}}, 1.7, 0.95976376},
+    {{1.84e+08, 297.15, {0.030933, 0.319683, 0.637861, 0.011523}}, 0.0, 2.53720258},
+    {{1.84e+08, 297.15, {0.030933, 0.319683, 0.637861, 0.011523}}, 1.7, 2.53739289},
+    {{1.84e+08, 363.00, {0.030933, 0.319683, 0.637861, 0.011523}}, 0.0, 2.24823017},
+    {{1.84e+08, 363.00, {0.030933, 0.319683, 0.637861, 0.011523}}, 1.7, 2.24847504},
+    {{1.00e+05, 297.15, {0.000000, 0.349686, 0.637891, 0.012423}}, 0.0, 0.99562285},
+    {{1.00e+05, 297.15, {0.000000, 0.349686, 0.637891, 0.012423}}, 1.7, 0.99562638},
+    {{1.00e+05, 363.00, {0.000000, 0.349686, 0.637891, 0.012423}}, 0.0, 0.99772526},
+    {{1.00e+05, 363.00, {0.000000, 0.349686, 0.637891, 0.012423}}, 1.7, 0.99772807},
+    {{1.84e+06, 297.15, {0.000000, 0.349686, 0.637891, 0.012423}}, 0.0, 0.91728093},
+    {{1.84e+06, 297.15, {0.000000, 0.349686, 0.637891, 0.012423}}, 1.7, 0.91735461},
+    {{1.84e+06, 363.00, {0.000000, 0.349686, 0.637891, 0.012423}}, 0.0, 0.95857373},
+    {{1.84e+06, 363.00, {0.000000, 0.349686, 0.637891, 0.012423}}, 1.7, 0.95862796},
+    {{1.84e+08, 297.15, {0.000000, 0.349686, 0.637891, 0.012423}}, 0.0, 2.53887060},
+    {{1.84e+08, 297.15, {0.000000, 0.349686, 0.637891, 0.012423}}, 1.7, 2.53906366},
+    {{1.84e+08, 363.00, {0.000000, 0.349686, 0.637891, 0.012423}}, 0.0, 2.24859657},
+    {{1.84e+08, 363.00, {0.000000, 0.349686, 0.637891, 0.012423}}, 1.7, 2.24885192},
+    {{1.00e+05, 297.15, {0.000000, 0.349686, 0.650314, 0.000000}}, 0.0, 0.99574609},
+    {{1.00e+05, 297.15, {0.000000, 0.349686, 0.650314, 0.000000}}, 1.7, 0.99574609},
+    {{1.00e+05, 363.00, {0.000000, 0.349686, 0.650314, 0.000000}}, 0.0, 0.99778787},
+    {{1.00e+05, 363.00, {0.000000, 0.349686, 0.650314, 0.000000}}, 1.7, 0.99778787},
+    {{1.84e+06, 297.15, {0.000000, 0.349686, 0.650314, 0.000000}}, 0.0, 0.91986981},
+    {{1.84e+06, 297.15, {0.000000, 0.349686, 0.650314, 0.000000}}, 1.7, 0.91986981},
+    {{1.84e+06, 363.00, {0.000000, 0.349686, 0.650314, 0.000000}}, 0.0, 0.95979173},
+    {{1.84e+06, 363.00, {0.000000, 0.349686, 0.650314, 0.000000}}, 1.7, 0.95979173},
+    {{1.84e+08, 297.15, {0.000000, 0.349686, 0.650314, 0.000000}}, 0.0, 2.55428138},
+    {{1.84e+08, 297.15, {0.000000, 0.349686, 0.650314, 0.000000}}, 1.7, 2.55428138},
+    {{1.84e+08, 363.00, {0.000000, 0.349686, 0.650314, 0.000000}}, 0.0, 2.26138556},
+    {{1.84e+08, 363.00, {0.000000, 0.349686, 0.650314, 0.000000}}, 1.7, 2.26138556},
+    {{1.00e+05, 297.15, {0.000000, 0.000000, 0.000000, 1.000000}}, 0.0, 0.00085955},
+    {{1.00e+05, 297.15, {0.000000, 0.000000, 0.000000, 1.000000}}, 1.7, 0.00085886},
+    {{1.00e+05, 363.00, {0.000000, 0.000000, 0.000000, 1.000000}}, 0.0, 0.00073994},
+    {{1.00e+05, 363.00, {0.000000, 0.000000, 0.000000, 1.000000}}, 1.7, 0.00073876},
+    {{1.84e+06, 297.15, {0.000000, 0.000000, 0.000000, 1.000000}}, 0.0, 0.01581228},
+    {{1.84e+06, 297.15, {0.000000, 0.000000, 0.000000, 1.000000}}, 1.7, 0.01579967},
+    {{1.84e+06, 363.00, {0.000000, 0.000000, 0.000000, 1.000000}}, 0.0, 0.01360943},
+    {{1.84e+06, 363.00, {0.000000, 0.000000, 0.000000, 1.000000}}, 1.7, 0.01358772},
+    {{1.84e+08, 297.15, {0.000000, 0.000000, 0.000000, 1.000000}}, 0.0, 1.55295404},
+    {{1.84e+08, 297.15, {0.000000, 0.000000, 0.000000, 1.000000}}, 1.7, 1.55210598},
+    {{1.84e+08, 363.00, {0.000000, 0.000000, 0.000000, 1.000000}}, 0.0, 1.31823992},
+    {{1.84e+08, 363.00, {0.000000, 0.000000, 0.000000, 1.000000}}, 1.7, 1.31694721}
   })
 );
 
 INSTANTIATE_TEST_SUITE_P( SoreideWhitsonEOSPhaseModelTest, SoaveRedlichKwong3,
   ::testing::ValuesIn<TestData< 3 >>({
-    {1.00e+05, 297.15, 0.0, {0.995000, 0.000000, 0.005000}, 0.00097447},
-    {1.00e+05, 297.15, 1.7, {0.995000, 0.000000, 0.005000}, 0.00097360},
-    {1.00e+05, 363.00, 0.0, {0.995000, 0.000000, 0.005000}, 0.99162416},
-    {1.00e+05, 363.00, 1.7, {0.995000, 0.000000, 0.005000}, 0.99155411},
-    {1.84e+06, 297.15, 0.0, {0.995000, 0.000000, 0.005000}, 0.01792455},
-    {1.84e+06, 297.15, 1.7, {0.995000, 0.000000, 0.005000}, 0.01790864},
-    {1.84e+06, 363.00, 0.0, {0.995000, 0.000000, 0.005000}, 0.01552264},
-    {1.84e+06, 363.00, 1.7, {0.995000, 0.000000, 0.005000}, 0.01549547},
-    {1.84e+08, 297.15, 0.0, {0.995000, 0.000000, 0.005000}, 1.74740244},
-    {1.84e+08, 297.15, 1.7, {0.995000, 0.000000, 0.005000}, 1.74642816},
-    {1.84e+08, 363.00, 0.0, {0.995000, 0.000000, 0.005000}, 1.48626001},
-    {1.84e+08, 363.00, 1.7, {0.995000, 0.000000, 0.005000}, 1.48481033},
-    {1.00e+05, 297.15, 0.0, {0.990000, 0.005000, 0.005000}, 0.00097714},
-    {1.00e+05, 297.15, 1.7, {0.990000, 0.005000, 0.005000}, 0.00097626},
-    {1.00e+05, 363.00, 0.0, {0.990000, 0.005000, 0.005000}, 0.99165029},
-    {1.00e+05, 363.00, 1.7, {0.990000, 0.005000, 0.005000}, 0.99158070},
-    {1.84e+06, 297.15, 0.0, {0.990000, 0.005000, 0.005000}, 0.01797356},
-    {1.84e+06, 297.15, 1.7, {0.990000, 0.005000, 0.005000}, 0.01795757},
-    {1.84e+06, 363.00, 0.0, {0.990000, 0.005000, 0.005000}, 0.01557193},
-    {1.84e+06, 363.00, 1.7, {0.990000, 0.005000, 0.005000}, 0.01554458},
-    {1.84e+08, 297.15, 0.0, {0.990000, 0.005000, 0.005000}, 1.75167280},
-    {1.84e+08, 297.15, 1.7, {0.990000, 0.005000, 0.005000}, 1.75069753},
-    {1.84e+08, 363.00, 0.0, {0.990000, 0.005000, 0.005000}, 1.49014828},
-    {1.84e+08, 363.00, 1.7, {0.990000, 0.005000, 0.005000}, 1.48869666},
-    {1.00e+05, 297.15, 0.0, {0.970000, 0.025000, 0.005000}, 0.00098788},
-    {1.00e+05, 297.15, 1.7, {0.970000, 0.025000, 0.005000}, 0.00098699},
-    {1.00e+05, 363.00, 0.0, {0.970000, 0.025000, 0.005000}, 0.99175435},
-    {1.00e+05, 363.00, 1.7, {0.970000, 0.025000, 0.005000}, 0.99168656},
-    {1.84e+06, 297.15, 0.0, {0.970000, 0.025000, 0.005000}, 0.01817086},
-    {1.84e+06, 297.15, 1.7, {0.970000, 0.025000, 0.005000}, 0.01815457},
-    {1.84e+06, 363.00, 0.0, {0.970000, 0.025000, 0.005000}, 0.01577122},
-    {1.84e+06, 363.00, 1.7, {0.970000, 0.025000, 0.005000}, 0.01574312},
-    {1.84e+08, 297.15, 0.0, {0.970000, 0.025000, 0.005000}, 1.76879530},
-    {1.84e+08, 297.15, 1.7, {0.970000, 0.025000, 0.005000}, 1.76781650},
-    {1.84e+08, 363.00, 0.0, {0.970000, 0.025000, 0.005000}, 1.50574959},
-    {1.84e+08, 363.00, 1.7, {0.970000, 0.025000, 0.005000}, 1.50429088}
+    {{1.00e+05, 297.15, {0.995000, 0.000000, 0.005000}}, 0.0, 0.00097447},
+    {{1.00e+05, 297.15, {0.995000, 0.000000, 0.005000}}, 1.7, 0.00097360},
+    {{1.00e+05, 363.00, {0.995000, 0.000000, 0.005000}}, 0.0, 0.99162416},
+    {{1.00e+05, 363.00, {0.995000, 0.000000, 0.005000}}, 1.7, 0.99155411},
+    {{1.84e+06, 297.15, {0.995000, 0.000000, 0.005000}}, 0.0, 0.01792455},
+    {{1.84e+06, 297.15, {0.995000, 0.000000, 0.005000}}, 1.7, 0.01790864},
+    {{1.84e+06, 363.00, {0.995000, 0.000000, 0.005000}}, 0.0, 0.01552264},
+    {{1.84e+06, 363.00, {0.995000, 0.000000, 0.005000}}, 1.7, 0.01549547},
+    {{1.84e+08, 297.15, {0.995000, 0.000000, 0.005000}}, 0.0, 1.74740244},
+    {{1.84e+08, 297.15, {0.995000, 0.000000, 0.005000}}, 1.7, 1.74642816},
+    {{1.84e+08, 363.00, {0.995000, 0.000000, 0.005000}}, 0.0, 1.48626001},
+    {{1.84e+08, 363.00, {0.995000, 0.000000, 0.005000}}, 1.7, 1.48481033},
+    {{1.00e+05, 297.15, {0.990000, 0.005000, 0.005000}}, 0.0, 0.00097714},
+    {{1.00e+05, 297.15, {0.990000, 0.005000, 0.005000}}, 1.7, 0.00097626},
+    {{1.00e+05, 363.00, {0.990000, 0.005000, 0.005000}}, 0.0, 0.99165029},
+    {{1.00e+05, 363.00, {0.990000, 0.005000, 0.005000}}, 1.7, 0.99158070},
+    {{1.84e+06, 297.15, {0.990000, 0.005000, 0.005000}}, 0.0, 0.01797356},
+    {{1.84e+06, 297.15, {0.990000, 0.005000, 0.005000}}, 1.7, 0.01795757},
+    {{1.84e+06, 363.00, {0.990000, 0.005000, 0.005000}}, 0.0, 0.01557193},
+    {{1.84e+06, 363.00, {0.990000, 0.005000, 0.005000}}, 1.7, 0.01554458},
+    {{1.84e+08, 297.15, {0.990000, 0.005000, 0.005000}}, 0.0, 1.75167280},
+    {{1.84e+08, 297.15, {0.990000, 0.005000, 0.005000}}, 1.7, 1.75069753},
+    {{1.84e+08, 363.00, {0.990000, 0.005000, 0.005000}}, 0.0, 1.49014828},
+    {{1.84e+08, 363.00, {0.990000, 0.005000, 0.005000}}, 1.7, 1.48869666},
+    {{1.00e+05, 297.15, {0.970000, 0.025000, 0.005000}}, 0.0, 0.00098788},
+    {{1.00e+05, 297.15, {0.970000, 0.025000, 0.005000}}, 1.7, 0.00098699},
+    {{1.00e+05, 363.00, {0.970000, 0.025000, 0.005000}}, 0.0, 0.99175435},
+    {{1.00e+05, 363.00, {0.970000, 0.025000, 0.005000}}, 1.7, 0.99168656},
+    {{1.84e+06, 297.15, {0.970000, 0.025000, 0.005000}}, 0.0, 0.01817086},
+    {{1.84e+06, 297.15, {0.970000, 0.025000, 0.005000}}, 1.7, 0.01815457},
+    {{1.84e+06, 363.00, {0.970000, 0.025000, 0.005000}}, 0.0, 0.01577122},
+    {{1.84e+06, 363.00, {0.970000, 0.025000, 0.005000}}, 1.7, 0.01574312},
+    {{1.84e+08, 297.15, {0.970000, 0.025000, 0.005000}}, 0.0, 1.76879530},
+    {{1.84e+08, 297.15, {0.970000, 0.025000, 0.005000}}, 1.7, 1.76781650},
+    {{1.84e+08, 363.00, {0.970000, 0.025000, 0.005000}}, 0.0, 1.50574959},
+    {{1.84e+08, 363.00, {0.970000, 0.025000, 0.005000}}, 1.7, 1.50429088}
   })
 );
 

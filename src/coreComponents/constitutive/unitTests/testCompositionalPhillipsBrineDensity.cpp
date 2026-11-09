@@ -19,7 +19,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp"
 
-#include "TestFluid.hpp"
+#include "TestFluidFixture.hpp"
 #include "TestFluidUtilities.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/PhysicsConstants.hpp"
@@ -33,39 +33,25 @@ namespace geos
 namespace testing
 {
 
-template< int NC >
-using DensityData = std::tuple<
-  real64 const,       // pressure
-  real64 const,       // temperature
-  Feed< NC > const,   // phase composition
-  real64 const,       // expected molar density
-  real64 const        // expected mass density
-  >;
-
-template< int NC >
-struct FluidData {};
-
-template<>
-struct FluidData< 4 >
+template< integer NC >
+struct DensityData : public TestDataBase< NC >
 {
-  static std::unique_ptr< TestFluid< 4 > > createFluid()
-  {
-    return TestFluid< 4 >::create( {Fluid::CO2, Fluid::H2O, Fluid::CH4, Fluid::N2} );
-  }
+  real64 expectedMolarDensity; ///< Expected molar density
+  real64 expectedMassDensity;  ///< Expected mass density
 };
 
-template< int NC, EquationOfStateType EOS_TYPE, int SALINITY = 0 >
-class CompositionalPhillipsBrineDensityTestFixture :  public ::testing::TestWithParam< DensityData< NC > >
+template< TestFluidName FLUID, EquationOfStateType EOS_TYPE, int SALINITY = 0 >
+class CompositionalPhillipsBrineDensityTestFixture : public TestFluidFixture< FLUID, DensityData >
 {
-  static constexpr real64 relTol = 1.0e-5;
-  static constexpr real64 absTol = 1.0e-7;
-  static constexpr int numComps = NC;
-  static constexpr int numDofs = NC + 2;
-  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
+  using Base = TestFluidFixture< FLUID, DensityData >;
+  using Base::numComps;
+  using Base::numDofs;
+  using Base::relTol;
+  using Base::absTol;
+  using typename Base::Deriv;
 public:
   CompositionalPhillipsBrineDensityTestFixture()
-    : m_parent( "parent", m_node ),
-    m_fluid( FluidData< NC >::createFluid() )
+    : m_parent( "parent", m_node )
   {
     m_functionManager = std::make_unique< FunctionManager >( "FunctionManager", &m_parent );
     ComponentProperties const & componentProperties = this->m_fluid->getComponentProperties();
@@ -89,16 +75,16 @@ public:
 
   ~CompositionalPhillipsBrineDensityTestFixture() = default;
 
-  void testDensityValues( DensityData< NC > const & data )
+  void testDensityValues( DensityData< numComps > const & data )
   {
-    real64 const pressure = std::get< 0 >( data );
-    real64 const temperature = std::get< 1 >( data );
+    real64 const pressure = data.pressure;
+    real64 const temperature = data.temperature;
     stackArray1d< real64, numComps > phaseComposition;
-    TestFluid< NC >::createArray( phaseComposition, std::get< 2 >( data ));
-    real64 const expectedMolarDensity = std::get< 3 >( data );
-    real64 const expectedMassDensity = std::get< 4 >( data );
+    TestFluid< numComps >::createArray( phaseComposition, data.composition );
+    real64 const expectedMolarDensity = data.expectedMolarDensity;
+    real64 const expectedMassDensity = data.expectedMassDensity;
 
-    auto componentProperties = m_fluid->createKernelWrapper();
+    auto componentProperties = this->m_fluid->createKernelWrapper();
     auto kernelWrapper = m_density->createKernelWrapper();
 
     real64 molarDensity = 0.0;
@@ -118,98 +104,38 @@ public:
     checkRelativeError( massDensity, expectedMassDensity, relTol, absTol );
   }
 
-  void testDensityDerivatives( DensityData< NC > const & data )
+  void testDensityDerivatives( DensityData< numComps > const & data )
   {
-    real64 const pressure = std::get< 0 >( data );
-    real64 const temperature = std::get< 1 >( data );
     stackArray1d< real64, numComps > phaseComposition;
-    TestFluid< NC >::createArray( phaseComposition, std::get< 2 >( data ));
+    TestFluid< numComps >::createArray( phaseComposition, data.composition );
 
-    auto componentProperties = m_fluid->createKernelWrapper();
+    auto componentProperties = this->m_fluid->createKernelWrapper();
     auto kernelWrapper = m_density->createKernelWrapper();
 
+    // Values: molar density and mass density
     real64 molarDensity = 0.0;
     real64 massDensity = 0.0;
-    stackArray2d< real64, 3*numDofs > derivSpace( 3, numDofs );
-    arraySlice1d< real64 > molarDensityDerivs = derivSpace[0];
-    arraySlice1d< real64 > massDensityDerivs = derivSpace[1];
-    arraySlice1d< real64 > tempDerivs = derivSpace[2];
-
-    integer constexpr numValues = 2;
-    stackArray1d< real64, numValues > derivatives( numValues );
-
+    stackArray2d< real64, 2*numDofs > derivatives( 2, numDofs );
     kernelWrapper.compute( componentProperties,
-                           pressure,
-                           temperature,
+                           data.pressure,
+                           data.temperature,
                            phaseComposition.toSliceConst(),
                            molarDensity,
-                           molarDensityDerivs,
+                           derivatives[0],
                            massDensity,
-                           massDensityDerivs,
+                           derivatives[1],
                            false );
 
-    auto const concactDerivatives = [&]( integer const idof ){
-      derivatives[0] = molarDensityDerivs[idof];
-      derivatives[1] = massDensityDerivs[idof];
-    };
+    DerivativeCheckSettings settings;
+    settings.compositionStep = 1.0e-6;
 
-    // Compare against numerical derivatives
-    // -- Pressure derivative
-    concactDerivatives( Deriv::dP );
-    real64 const dp = 1.0e-4 * pressure;
-    internal::testNumericalDerivative< numValues >(
-      pressure, dp, derivatives.toSliceConst(),
-      [&]( real64 const p, auto & values ){
-      kernelWrapper.compute( componentProperties,
-                             p,
-                             temperature,
-                             phaseComposition.toSliceConst(),
-                             values[0],
-                             tempDerivs,
-                             values[1],
-                             tempDerivs,
-                             false );
-    } );
-
-    // -- Temperature derivative
-    concactDerivatives( Deriv::dT );
-    real64 const dT = 1.0e-6 * temperature;
-    internal::testNumericalDerivative< numValues >(
-      temperature, dT, derivatives.toSliceConst(),
-      [&]( real64 const t, auto & values ){
-      kernelWrapper.compute( componentProperties,
-                             pressure,
-                             t,
-                             phaseComposition.toSliceConst(),
-                             values[0],
-                             tempDerivs,
-                             values[1],
-                             tempDerivs,
-                             false );
-    } );
-
-    // -- Composition derivatives
-    real64 constexpr dz = 1.0e-6;
-    for( integer ic = 0; ic < numComps; ++ic )
+    stackArray1d< real64, numDofs > tempDerivs( numDofs );
+    Base::template checkNumericalDerivatives< 2 >( data, derivatives.toSliceConst(),
+                                                   [&]( real64 const p, real64 const t, auto const & z, auto & values )
     {
-      concactDerivatives( Deriv::dC + ic );
-      internal::testNumericalDerivative< numValues >(
-        0.0, dz, derivatives.toSliceConst(),
-        [&]( real64 const z, auto & values ){
-        real64 const z_old = phaseComposition[ic];
-        phaseComposition[ic] += z;
-        kernelWrapper.compute( componentProperties,
-                               pressure,
-                               temperature,
-                               phaseComposition.toSliceConst(),
-                               values[0],
-                               tempDerivs,
-                               values[1],
-                               tempDerivs,
-                               false );
-        phaseComposition[ic] = z_old;
-      } );
-    }
+      kernelWrapper.compute( componentProperties, p, t, z,
+                             values[0], tempDerivs.toSlice(), values[1], tempDerivs.toSlice(), false );
+    }, settings );
   }
 
 private:
@@ -245,12 +171,11 @@ protected:
   dataRepository::Group m_parent;
   std::unique_ptr< FunctionManager > m_functionManager{};
   std::unique_ptr< PhillipsBrineDensity > m_density{};
-  std::unique_ptr< TestFluid< NC > > m_fluid{};
   std::unique_ptr< ModelParameters > m_parameters{};
 };
 
-using PengRobinson = CompositionalPhillipsBrineDensityTestFixture< 4, EquationOfStateType::PengRobinson >;
-using PengRobinson100K = CompositionalPhillipsBrineDensityTestFixture< 4, EquationOfStateType::PengRobinson, 100000 >;
+using PengRobinson = CompositionalPhillipsBrineDensityTestFixture< TestFluidName::EnhancedOilRecovery, EquationOfStateType::PengRobinson >;
+using PengRobinson100K = CompositionalPhillipsBrineDensityTestFixture< TestFluidName::EnhancedOilRecovery, EquationOfStateType::PengRobinson, 100000 >;
 
 TEST_P( PengRobinson, testDensityValues )
 {
@@ -280,35 +205,35 @@ INSTANTIATE_TEST_SUITE_P(
   CompositionalPhillipsBrineDensityTest, PengRobinson,
   ::testing::ValuesIn<DensityData<4>>( {
     // Pure water: Mass density compared against CO2-Brine implementation
-    {1.0e+05, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.54535e+04, 9.99012e+02},
-    {1.0e+06, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.54760e+04, 9.99416e+02},
-    {5.0e+07, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.67127e+04, 1.02170e+03},
-    {1.0e+05, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.54060e+04, 9.98155e+02},
-    {1.0e+06, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.54284e+04, 9.98559e+02},
-    {5.0e+07, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.66641e+04, 1.02082e+03},
-    {1.0e+05, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.27942e+04, 9.51104e+02}, // Undersaturated value
-    {1.0e+06, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.32161e+04, 9.58703e+02},
-    {5.0e+07, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.44023e+04, 9.80073e+02},
+    {{1.0e+05, 288.15, {0.000, 1.000, 0.000, 0.000}}, 5.54535e+04, 9.99012e+02},
+    {{1.0e+06, 288.15, {0.000, 1.000, 0.000, 0.000}}, 5.54760e+04, 9.99416e+02},
+    {{5.0e+07, 288.15, {0.000, 1.000, 0.000, 0.000}}, 5.67127e+04, 1.02170e+03},
+    {{1.0e+05, 293.15, {0.000, 1.000, 0.000, 0.000}}, 5.54060e+04, 9.98155e+02},
+    {{1.0e+06, 293.15, {0.000, 1.000, 0.000, 0.000}}, 5.54284e+04, 9.98559e+02},
+    {{5.0e+07, 293.15, {0.000, 1.000, 0.000, 0.000}}, 5.66641e+04, 1.02082e+03},
+    {{1.0e+05, 373.15, {0.000, 1.000, 0.000, 0.000}}, 5.27942e+04, 9.51104e+02}, // Undersaturated value
+    {{1.0e+06, 373.15, {0.000, 1.000, 0.000, 0.000}}, 5.32161e+04, 9.58703e+02},
+    {{5.0e+07, 373.15, {0.000, 1.000, 0.000, 0.000}}, 5.44023e+04, 9.80073e+02},
     // Mixtures
-    {1.0e+05, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.47680e+04, 9.96421e+02},
-    {1.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.47901e+04, 9.96823e+02},
-    {5.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.48884e+04, 9.98612e+02},
-    {5.0e+07, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.60057e+04, 1.01894e+03},
-    {1.0e+08, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.72714e+04, 1.04197e+03},
-    {1.0e+05, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.47161e+04, 9.95478e+02},
-    {1.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.47382e+04, 9.95880e+02},
-    {5.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.48365e+04, 9.97668e+02},
-    {5.0e+07, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.59534e+04, 1.01799e+03},
-    {1.0e+08, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.72186e+04, 1.04101e+03},
-    {1.0e+05, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.32132e+04, 9.68133e+02},
-    {1.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.32349e+04, 9.68529e+02},
-    {5.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.33318e+04, 9.70291e+02},
-    {5.0e+07, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.44300e+04, 9.90271e+02},
-    {1.0e+08, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.56708e+04, 1.01285e+03},
-    {1.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.24773e+04, 9.54746e+02},
-    {5.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.25735e+04, 9.56495e+02},
-    {5.0e+07, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.36623e+04, 9.76304e+02},
-    {1.0e+08, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.48905e+04, 9.98651e+02}
+    {{1.0e+05, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.47680e+04, 9.96421e+02},
+    {{1.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.47901e+04, 9.96823e+02},
+    {{5.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.48884e+04, 9.98612e+02},
+    {{5.0e+07, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.60057e+04, 1.01894e+03},
+    {{1.0e+08, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.72714e+04, 1.04197e+03},
+    {{1.0e+05, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.47161e+04, 9.95478e+02},
+    {{1.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.47382e+04, 9.95880e+02},
+    {{5.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.48365e+04, 9.97668e+02},
+    {{5.0e+07, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.59534e+04, 1.01799e+03},
+    {{1.0e+08, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.72186e+04, 1.04101e+03},
+    {{1.0e+05, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.32132e+04, 9.68133e+02},
+    {{1.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.32349e+04, 9.68529e+02},
+    {{5.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.33318e+04, 9.70291e+02},
+    {{5.0e+07, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.44300e+04, 9.90271e+02},
+    {{1.0e+08, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.56708e+04, 1.01285e+03},
+    {{1.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}}, 5.24773e+04, 9.54746e+02},
+    {{5.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}}, 5.25735e+04, 9.56495e+02},
+    {{5.0e+07, 373.15, {0.003, 0.995, 0.005, 0.002}}, 5.36623e+04, 9.76304e+02},
+    {{1.0e+08, 373.15, {0.003, 0.995, 0.005, 0.002}}, 5.48905e+04, 9.98651e+02}
   } )
 );
 
@@ -316,35 +241,35 @@ INSTANTIATE_TEST_SUITE_P(
   CompositionalPhillipsBrineDensityTest, PengRobinson100K,
   ::testing::ValuesIn<DensityData<4>>( {
     // Pure water: Mass density compared against CO2-Brine implementation
-    {1.0e+05, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.48086e+04, 1.06077e+03},
-    {1.0e+06, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.48338e+04, 1.06126e+03},
-    {5.0e+07, 288.15, {0.000, 1.000, 0.000, 0.000}, 5.62320e+04, 1.08832e+03},
-    {1.0e+05, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.46460e+04, 1.05762e+03},
-    {1.0e+06, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.46712e+04, 1.05811e+03},
-    {5.0e+07, 293.15, {0.000, 1.000, 0.000, 0.000}, 5.60644e+04, 1.08507e+03},
-    {1.0e+05, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.15482e+04, 9.97667e+02}, // Undersaturated value
-    {1.0e+06, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.19585e+04, 1.00561e+03},
-    {5.0e+07, 373.15, {0.000, 1.000, 0.000, 0.000}, 5.34541e+04, 1.03456e+03},
+    {{1.0e+05, 288.15, {0.000, 1.000, 0.000, 0.000}}, 5.48086e+04, 1.06077e+03},
+    {{1.0e+06, 288.15, {0.000, 1.000, 0.000, 0.000}}, 5.48338e+04, 1.06126e+03},
+    {{5.0e+07, 288.15, {0.000, 1.000, 0.000, 0.000}}, 5.62320e+04, 1.08832e+03},
+    {{1.0e+05, 293.15, {0.000, 1.000, 0.000, 0.000}}, 5.46460e+04, 1.05762e+03},
+    {{1.0e+06, 293.15, {0.000, 1.000, 0.000, 0.000}}, 5.46712e+04, 1.05811e+03},
+    {{5.0e+07, 293.15, {0.000, 1.000, 0.000, 0.000}}, 5.60644e+04, 1.08507e+03},
+    {{1.0e+05, 373.15, {0.000, 1.000, 0.000, 0.000}}, 5.15482e+04, 9.97667e+02}, // Undersaturated value
+    {{1.0e+06, 373.15, {0.000, 1.000, 0.000, 0.000}}, 5.19585e+04, 1.00561e+03},
+    {{5.0e+07, 373.15, {0.000, 1.000, 0.000, 0.000}}, 5.34541e+04, 1.03456e+03},
     // Mixtures
-    {1.0e+05, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.41419e+04, 1.05715e+03},
-    {1.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.41667e+04, 1.05764e+03},
-    {5.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.42769e+04, 1.05979e+03},
-    {5.0e+07, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.55392e+04, 1.08443e+03},
-    {1.0e+08, 288.15, {0.003, 0.995, 0.005, 0.002}, 5.70554e+04, 1.11404e+03},
-    {1.0e+05, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.39785e+04, 1.05396e+03},
-    {1.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.40033e+04, 1.05445e+03},
-    {5.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.41136e+04, 1.05660e+03},
-    {5.0e+07, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.53715e+04, 1.08116e+03},
-    {1.0e+08, 293.15, {0.003, 0.995, 0.005, 0.002}, 5.68715e+04, 1.11045e+03},
-    {1.0e+05, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.19577e+04, 1.01450e+03},
-    {1.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.19848e+04, 1.01503e+03},
-    {5.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.21047e+04, 1.01737e+03},
-    {5.0e+07, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.34075e+04, 1.04281e+03},
-    {1.0e+08, 353.15, {0.003, 0.995, 0.005, 0.002}, 5.48204e+04, 1.07040e+03},
-    {1.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.12601e+04, 1.00088e+03},
-    {5.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.13866e+04, 1.00335e+03},
-    {5.0e+07, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.27441e+04, 1.02986e+03},
-    {1.0e+08, 373.15, {0.003, 0.995, 0.005, 0.002}, 5.41722e+04, 1.05774e+03}    
+    {{1.0e+05, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.41419e+04, 1.05715e+03},
+    {{1.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.41667e+04, 1.05764e+03},
+    {{5.0e+06, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.42769e+04, 1.05979e+03},
+    {{5.0e+07, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.55392e+04, 1.08443e+03},
+    {{1.0e+08, 288.15, {0.003, 0.995, 0.005, 0.002}}, 5.70554e+04, 1.11404e+03},
+    {{1.0e+05, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.39785e+04, 1.05396e+03},
+    {{1.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.40033e+04, 1.05445e+03},
+    {{5.0e+06, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.41136e+04, 1.05660e+03},
+    {{5.0e+07, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.53715e+04, 1.08116e+03},
+    {{1.0e+08, 293.15, {0.003, 0.995, 0.005, 0.002}}, 5.68715e+04, 1.11045e+03},
+    {{1.0e+05, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.19577e+04, 1.01450e+03},
+    {{1.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.19848e+04, 1.01503e+03},
+    {{5.0e+06, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.21047e+04, 1.01737e+03},
+    {{5.0e+07, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.34075e+04, 1.04281e+03},
+    {{1.0e+08, 353.15, {0.003, 0.995, 0.005, 0.002}}, 5.48204e+04, 1.07040e+03},
+    {{1.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}}, 5.12601e+04, 1.00088e+03},
+    {{5.0e+06, 373.15, {0.003, 0.995, 0.005, 0.002}}, 5.13866e+04, 1.00335e+03},
+    {{5.0e+07, 373.15, {0.003, 0.995, 0.005, 0.002}}, 5.27441e+04, 1.02986e+03},
+    {{1.0e+08, 373.15, {0.003, 0.995, 0.005, 0.002}}, 5.41722e+04, 1.05774e+03}
   } )
 );
 
