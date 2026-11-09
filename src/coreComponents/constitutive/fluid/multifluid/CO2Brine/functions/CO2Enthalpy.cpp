@@ -180,13 +180,15 @@ real64 helmholtzCO2Enthalpy( real64 const & T,
 
   }
 
+  // exponents a_i of Span & Wagner (1996) Table 31 for the non-analytic terms
+  static const real64 aExp[3] = {3.5, 3.5, 3.0};
   for( localIndex i=39; i<42; i++ )
   {
 
     theta = (1.0 - rt) + Ai[i] * pow( pow( rd - 1.0, 2.0 ), (1.0 / (2.0 * betai[i])));
-    delta = pow( theta, 2.0 ) + Bi[i] * pow( rd - 1.0, 2.0*alphai[i] );
+    delta = pow( theta, 2.0 ) + Bi[i] * pow( pow( rd - 1.0, 2.0 ), aExp[i-39] );
     R = exp( -Ci[i] * pow( rd - 1.0, 2.0 ) - Di[i] * pow( rt - 1.0, 2.0 ));
-    deltard = (rd - 1.0) * (Ai[i] * theta * 2.0 / betai[i] * pow( pow( rd - 1.0, 2.0 ), 0.5 / betai[i] - 1.0 ) + 2.0 * Bi[i] * alphai[i] * pow( pow( rd - 1.0, 2.0 ), alphai[i] - 1.0 ));
+    deltard = (rd - 1.0) * (Ai[i] * theta * 2.0 / betai[i] * pow( pow( rd - 1.0, 2.0 ), 0.5 / betai[i] - 1.0 ) + 2.0 * Bi[i] * aExp[i-39] * pow( pow( rd - 1.0, 2.0 ), aExp[i-39] - 1.0 ));
 
     phird += ni[i] * (pow( delta, bi[i] ) * (R + rd *(-2.0 *Ci[i] * (rd - 1.0) * R)) + bi[i] * pow( delta, bi[i] - 1.0 ) * deltard * rd * R);
 
