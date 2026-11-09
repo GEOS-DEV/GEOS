@@ -49,6 +49,13 @@ struct FlashData : public TestDataBase< NC >
   Feed< numTestComps *numPhases > expectedPhaseCompositions; ///< Expected phase compositions of the test components
 };
 
+template< integer numPhases, integer NC >
+std::ostream & operator<<( std::ostream & os, FlashData< numPhases, NC > const & data )
+{
+  return TestDataPrinter( os, data ).output( data.expectedPhaseFractions )
+                                    .output( data.expectedPhaseCompositions );
+}
+
 /// Adaptor to use FlashData with a fixed number of phases as a fixture parameter type
 template< integer numPhases >
 struct FlashDataType

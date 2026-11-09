@@ -37,6 +37,12 @@ struct ViscosityData : public TestDataBase< NC >
   real64 expectedViscosity; ///< Expected viscosity
 };
 
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, ViscosityData< NC > const & data )
+{
+  return TestDataPrinter( os, data ).output( data.expectedViscosity );
+}
+
 template< TestFluidName FLUID, int SALINITY = 0 >
 class PhillipsBrineViscosityTestFixture : public TestFluidFixture< FLUID, ViscosityData >
 {

@@ -38,6 +38,15 @@ struct NegativeFlashData : public TestDataBase< NC >
   Feed< 2 > expectedVapourComposition; ///< Expected vapour composition (2 selected components)
 };
 
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, NegativeFlashData< NC > const & data )
+{
+  return TestDataPrinter( os, data ).value( data.expectedStatus )
+                                    .output( data.expectedVapourFraction )
+                                    .output( data.expectedLiquidComposition )
+                                    .output( data.expectedVapourComposition );
+}
+
 using FlashData = NegativeFlashData< numComps >;
 
 template< EquationOfStateType EOS_TYPE >

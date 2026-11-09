@@ -53,6 +53,131 @@ struct TestDataBase
 };
 
 /**
+ * @brief Writes the fields of a test data point as a comma separated list of numbers
+ * @details Used to implement the stream operators of @c TestDataBase and the types derived from it,
+ *          which gtest uses to print the parameters of a test. Each kind of value has a fixed format:
+ *          pressure "%.2e", temperature "%.2f", composition "%.6f" and outputs "%.7e". Booleans are
+ *          padded so that the fields that follow them line up in a column. Arrays are printed in braces.
+ * @code
+ *   template< integer NC >
+ *   std::ostream & operator<<( std::ostream & os, DensityData< NC > const & data )
+ *   {
+ *     return TestDataPrinter( os, data ).output( data.expectedMolarDensity ).output( data.expectedMassDensity );
+ *   }
+ * @endcode
+ */
+class TestDataPrinter
+{
+public:
+  /// Start printing with the common fields: pressure, temperature and composition
+  template< integer NC >
+  TestDataPrinter( std::ostream & os, TestDataBase< NC > const & data ):
+    m_os( os )
+  {
+    pressure( data.pressure );
+    temperature( data.temperature );
+    composition( data.composition );
+  }
+
+  /// Print a pressure
+  TestDataPrinter & pressure( real64 const value )
+  {
+    return field( GEOS_FMT( "{:.2e}", value ) );
+  }
+
+  /// Print a temperature
+  TestDataPrinter & temperature( real64 const value )
+  {
+    return field( GEOS_FMT( "{:.2f}", value ) );
+  }
+
+  /**
+   * @brief Print a composition (mole fractions)
+   * @note The size of a @c std::array is a @c std::size_t, which cannot be deduced as an @c integer,
+   *       so the array type is the parameter and its size is taken from @c std::tuple_size.
+   *       This also restricts the template to arrays.
+   */
+  template< typename ARRAY, integer N = static_cast< integer >( std::tuple_size< ARRAY >::value ) >
+  TestDataPrinter & composition( ARRAY const & values )
+  {
+    return field( formatArray< N >( values, []( real64 const v ){ return GEOS_FMT( "{:.6f}", v ); } ) );
+  }
+
+  /// Print an output (expected) value
+  TestDataPrinter & output( real64 const value )
+  {
+    return field( formatOutput( value ) );
+  }
+
+  /// Print an array of output (expected) values
+  template< typename ARRAY, integer N = static_cast< integer >( std::tuple_size< ARRAY >::value ) >
+  TestDataPrinter & output( ARRAY const & values )
+  {
+    return field( formatArray< N >( values, &formatOutput ) );
+  }
+
+  /// Print an integer value, such as a phase index, an option or a status
+  TestDataPrinter & value( integer const number )
+  {
+    return field( GEOS_FMT( "{}", number ) );
+  }
+
+  /// Print a boolean; the following field is aligned for both values ("true,  " and "false, ")
+  TestDataPrinter & flag( bool const value )
+  {
+    field( value ? "true" : "false" );
+    m_padding = value ? 1 : 0;
+    return *this;
+  }
+
+  /// The stream being written to
+  operator std::ostream &() const
+  {
+    return m_os;
+  }
+
+private:
+  static string formatOutput( real64 const value )
+  {
+    return GEOS_FMT( "{:.7e}", value );
+  }
+
+  template< integer N, typename ARRAY, typename FORMAT >
+  static string formatArray( ARRAY const & values, FORMAT && format )
+  {
+    string text = "{";
+    for( integer i = 0; i < N; ++i )
+    {
+      text += ( 0 < i ? ", " : "" ) + format( values[i] );
+    }
+    return text + "}";
+  }
+
+  TestDataPrinter & field( string const & text )
+  {
+    if( m_started )
+    {
+      m_os << "," << string( 1 + m_padding, ' ' );
+    }
+    m_os << text;
+    m_started = true;
+    m_padding = 0;
+    return *this;
+  }
+
+  std::ostream & m_os;
+  bool m_started{ false };
+  integer m_padding{ 0 };
+};
+
+/// Print the common fields of a test data point
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, TestDataBase< NC > const & data )
+{
+  return TestDataPrinter( os, data );
+}
+
+/**
  * @brief Step sizes, scaling and tolerances for the numerical derivative checks
  * @details Default construct and change the fields that differ, e.g.
  * @code

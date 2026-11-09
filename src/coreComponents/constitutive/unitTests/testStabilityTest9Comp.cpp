@@ -39,6 +39,13 @@ struct StabilityTestData : public TestDataBase< NC >
   real64 expectedTargetFraction; ///< Expected mole fraction of targetComponent in the incipient phase
 };
 
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, StabilityTestData< NC > const & data )
+{
+  return TestDataPrinter( os, data ).flag( data.expectedUnstable )
+                                    .output( data.expectedTargetFraction );
+}
+
 using StabilityData = StabilityTestData< numComps >;
 
 template< EquationOfStateType EOS_TYPE >

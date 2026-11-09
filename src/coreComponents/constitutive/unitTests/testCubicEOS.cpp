@@ -33,6 +33,12 @@ struct TestData : public TestDataBase< NC >
   real64 expectedZFactor; ///< Expected compressibility factor
 };
 
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, TestData< NC > const & data )
+{
+  return TestDataPrinter( os, data ).output( data.expectedZFactor );
+}
+
 template< TestFluidName FLUID, typename EOS_TYPE >
 class CubicEOSPhaseModelTestFixture : public TestFluidFixture< FLUID, TestData >
 {

@@ -43,6 +43,15 @@ struct FlashData : public TestDataBase< NC >
   Feed< numTestComps > expectedVapourComposition; ///< Expected vapour mole fractions of the test components
 };
 
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, FlashData< NC > const & data )
+{
+  return TestDataPrinter( os, data ).output( data.expectedLiquidFraction )
+                                    .output( data.expectedVapourFraction )
+                                    .output( data.expectedLiquidComposition )
+                                    .output( data.expectedVapourComposition );
+}
+
 // Components for which phase compositions are checked
 template< TestFluidName FLUID >
 constexpr std::array< integer, numTestComps > testComponents{};

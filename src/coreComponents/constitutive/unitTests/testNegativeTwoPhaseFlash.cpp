@@ -35,6 +35,14 @@ struct FlashData : public TestDataBase< NC >
   Feed< NC > expectedVapourComposition; ///< Expected vapour composition
 };
 
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, FlashData< NC > const & data )
+{
+  return TestDataPrinter( os, data ).output( data.expectedVapourFraction )
+                                    .output( data.expectedLiquidComposition )
+                                    .output( data.expectedVapourComposition );
+}
+
 template< TestFluidName FLUID, EquationOfStateType EOS_TYPE >
 class NegativeTwoPhaseFlashTestFixture : public TestFluidFixture< FLUID, FlashData >
 {

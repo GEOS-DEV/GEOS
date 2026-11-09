@@ -37,6 +37,14 @@ struct EnthalpyData : public TestDataBase< NC >
   real64 expectedJouleThomson; ///< Expected Joule-Thomson coefficient (K/Pa)
 };
 
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, EnthalpyData< NC > const & data )
+{
+  return TestDataPrinter( os, data ).value( data.phase )
+                                    .output( data.expectedEnthalpy )
+                                    .output( data.expectedJouleThomson );
+}
+
 /**
  * @brief Populate the heat capacity coefficients for a list of components
  * @param coefficients the coefficients object to populate

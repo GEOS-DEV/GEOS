@@ -33,6 +33,13 @@ struct TestData : public TestDataBase< NC >
   real64 expectedMassDensity;  ///< Expected mass density
 };
 
+template< integer NC >
+std::ostream & operator<<( std::ostream & os, TestData< NC > const & data )
+{
+  return TestDataPrinter( os, data ).output( data.expectedMolarDensity )
+                                    .output( data.expectedMassDensity );
+}
+
 template< typename EOS_TYPE, TestFluidName FLUID >
 class TestDataTestFixture : public TestFluidFixture< FLUID, TestData >
 {
