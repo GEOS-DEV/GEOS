@@ -259,6 +259,248 @@ GEOS_HOST_DEVICE inline real64 axisymmetricNodalVolume( real64 const hx,
   return hy * axisymmetricLineArea( hx, hy, rI, normal, position );
 }
 
+
+/**
+ * @brief Integrate a 3D Q1 nodal hat over its intersection with a plane.
+ *
+ * The plane n.(x-position)=0 cuts the nodal support box [-hx,hx] x
+ * [-hy,hy] x [-hz,hz]. Intersect its 12 edges using the segment parameter
+ * t in [0,1], deduplicate shared-vertex hits, and sort the resulting
+ * convex polygon about its centroid (which lies inside the cut).
+ *
+ * Q1 is the product of three piecewise-linear hats. Clip the polygon at
+ * x=0, y=0, and z=0, giving regions with a single cubic polynomial.
+ * Fan-triangulate each region and use a six-point degree-four triangle
+ * rule with the physical Jacobian |(b-a) x (c-a)|. The rule's weights
+ * sum to 1/2, so the result is physical area, not reference area.
+ * The quadrature is exact on nondegenerate planar cuts up to roundoff.
+ *
+ * The plane normal need not be unit length. No allocation, sorting library,
+ * or global geometry search is needed, so this routine can run on device.
+ * This is an idealized plane-area operator, independent of how the
+ * particle surface was detected or which mechanical shape functions map it.
+ *
+ * @return Integral of N_I dA, or zero if the plane misses the support.
+ */
+template< class EXTENTS, class NORMAL, class POSITION >
+GEOS_HOST_DEVICE real64 nodalPlaneArea3D( EXTENTS const & h,
+                                         NORMAL const & normal,
+                                         POSITION const & position )
+{
+  for( int d = 0; d < 3; ++d )
+  {
+    if( !(h[d] > 0.0 && h[d] < DBL_MAX) ) return 0.0;
+  }
+
+  real64 const normalLength = ::sqrt( normal[0] * normal[0] + normal[1] * normal[1] +
+                                      normal[2] * normal[2] );
+  if( !(normalLength > 0.0 && normalLength < DBL_MAX) ) return 0.0;
+
+  real64 const corners[8][3] = {
+    {-h[0],-h[1],-h[2]}, {h[0],-h[1],-h[2]},
+    { h[0], h[1],-h[2]}, {-h[0],h[1],-h[2]},
+    {-h[0],-h[1], h[2]}, {h[0],-h[1], h[2]},
+    { h[0], h[1], h[2]}, {-h[0],h[1],h[2]}
+  };
+  int const edges[12][2] = {
+    {0,1}, {1,2}, {2,3}, {3,0}, {4,5}, {5,6},
+    {6,7}, {7,4}, {0,4}, {1,5}, {2,6}, {3,7}
+  };
+
+  real64 const maxH = ::fmax(h[0], ::fmax(h[1], h[2]));
+  real64 const coordinateTol = 64.0 * DBL_EPSILON * maxH;
+  real64 const signedTol = coordinateTol * normalLength;
+  real64 const distanceTol2 = coordinateTol * coordinateTol;
+  real64 signedDistance[8];
+  for( int k = 0; k < 8; ++k )
+  {
+    signedDistance[k] = 0.0;
+    for( int d = 0; d < 3; ++d )
+      signedDistance[k] += normal[d] * (corners[k][d] - position[d]);
+  }
+
+  // Every accepted point belongs to the finite support box. A plane through
+  // a box vertex/edge is seen by several edges but must contribute once.
+  real64 vertices[12][3] = {};
+  int count = 0;
+  for( int edge = 0; edge < 12; ++edge )
+  {
+    int const a = edges[edge][0], b = edges[edge][1];
+    real64 const sa = signedDistance[a], sb = signedDistance[b];
+    real64 parameters[2] = {};
+    int nParameters = 0;
+    if( ::fabs(sa) <= signedTol ) parameters[nParameters++] = 0.0;
+    if( ::fabs(sb) <= signedTol ) parameters[nParameters++] = 1.0;
+    if( (sa < -signedTol && sb > signedTol) || (sa > signedTol && sb < -signedTol) )
+      parameters[nParameters++] = sa / (sa-sb);
+
+    for( int q = 0; q < nParameters; ++q )
+    {
+      real64 const t = parameters[q];
+      real64 candidate[3];
+      for( int d = 0; d < 3; ++d )
+        candidate[d] = corners[a][d] + t * (corners[b][d] - corners[a][d]);
+
+      bool duplicate = false;
+      for( int k = 0; k < count; ++k )
+      {
+        real64 squared = 0.0;
+        for( int d = 0; d < 3; ++d )
+          squared += (candidate[d] - vertices[k][d]) * (candidate[d] - vertices[k][d]);
+        if( squared <= distanceTol2 ) { duplicate = true; break; }
+      }
+      if( !duplicate && count < 12 )
+      {
+        for( int d = 0; d < 3; ++d ) vertices[count][d] = candidate[d];
+        ++count;
+      }
+    }
+  }
+  if( count < 3 ) return 0.0;
+
+  // The arithmetic mean of a convex polygon's vertices is an interior
+  // point. Use it only to sort polar angles; unlike the source surface
+  // position, it cannot lie outside a valid support intersection.
+  real64 center[3] = {};
+  for( int k = 0; k < count; ++k )
+    for( int d = 0; d < 3; ++d ) center[d] += vertices[k][d] / count;
+  real64 tangent[3];
+  for( int d = 0; d < 3; ++d ) tangent[d] = vertices[0][d] - center[d];
+  real64 bitangent[3] = {
+    normal[1]*tangent[2] - normal[2]*tangent[1],
+    normal[2]*tangent[0] - normal[0]*tangent[2],
+    normal[0]*tangent[1] - normal[1]*tangent[0]
+  };
+  real64 records[12][4];
+  for( int k = 0; k < count; ++k )
+  {
+    real64 u = 0.0, v = 0.0;
+    for( int d = 0; d < 3; ++d )
+    {
+      real64 const delta = vertices[k][d] - center[d];
+      u += delta * tangent[d];
+      v += delta * bitangent[d];
+    }
+    records[k][0] = ::atan2(v, u);
+    for( int d = 0; d < 3; ++d ) records[k][d+1] = vertices[k][d];
+  }
+  // Direct real-valued comparisons avoid truncating angular differences to
+  // int (the old qsort comparator) and work in host/device builds.
+  for( int k = 1; k < count; ++k )
+  {
+    real64 current[4];
+    for( int d = 0; d < 4; ++d ) current[d] = records[k][d];
+    int j = k;
+    while( j > 0 && records[j-1][0] > current[0] )
+    {
+      for( int d = 0; d < 4; ++d ) records[j][d] = records[j-1][d];
+      --j;
+    }
+    for( int d = 0; d < 4; ++d ) records[j][d] = current[d];
+  }
+
+  // Positive degree-four rule on the reference triangle. The weights
+  // already sum to 1/2; no additional reference-area factor is needed.
+  constexpr real64 barycentric[6][2] = {
+    {0.445948490915965, 0.445948490915965},
+    {0.445948490915965, 0.108103018168070},
+    {0.108103018168070, 0.445948490915965},
+    {0.091576213509771, 0.091576213509771},
+    {0.091576213509771, 0.816847572980459},
+    {0.816847572980459, 0.091576213509771}
+  };
+  constexpr real64 quadratureWeight[6] = {
+    0.111690794839005, 0.111690794839005, 0.111690794839005,
+    0.054975871827661, 0.054975871827661, 0.054975871827661
+  };
+
+  // A planar cut can coincide exactly with one of the Q1 knot planes.
+  // In that case both half-space clips would contain the SAME 2D patch;
+  // assign it to one side only to avoid double counting its area.
+  bool knotPlane[3] = {};
+  for( int d = 0; d < 3; ++d )
+  {
+    knotPlane[d] = true;
+    for( int k = 0; k < count; ++k )
+      if( ::fabs(records[k][d+1]) > coordinateTol ) knotPlane[d] = false;
+  }
+
+  real64 area = 0.0;
+  for( int octant = 0; octant < 8; ++octant )
+  {
+    bool repeatedKnotPlane = false;
+    for( int d = 0; d < 3; ++d )
+      repeatedKnotPlane |= knotPlane[d] && (octant & (1 << d));
+    if( repeatedKnotPlane ) continue;
+
+    // Clip the original planar polygon at each Q1 knot plane. Within a
+    // surviving octant N_I is a cubic polynomial in planar coordinates.
+    real64 polygon[16][3] = {};
+    int size = count;
+    for( int k = 0; k < count; ++k )
+      for( int d = 0; d < 3; ++d ) polygon[k][d] = records[k][d+1];
+    for( int d = 0; d < 3 && size >= 3; ++d )
+    {
+      real64 clipped[16][3] = {};
+      int newSize = 0;
+      real64 const sign = (octant & (1 << d)) ? 1.0 : -1.0;
+      for( int k = 0; k < size; ++k )
+      {
+        int const next = (k+1)%size;
+        real64 const a = sign*polygon[k][d], b = sign*polygon[next][d];
+        if( a >= 0.0 && newSize < 16 )
+        {
+          for( int j = 0; j < 3; ++j ) clipped[newSize][j] = polygon[k][j];
+          ++newSize;
+        }
+        if( (a < 0.0 && b > 0.0) || (a > 0.0 && b < 0.0) )
+        {
+          real64 const t = a / (a-b);
+          if( newSize < 16 )
+          {
+            for( int j = 0; j < 3; ++j )
+              clipped[newSize][j] = polygon[k][j] + t*(polygon[next][j]-polygon[k][j]);
+            ++newSize;
+          }
+        }
+      }
+      size = newSize;
+      for( int k = 0; k < size; ++k )
+        for( int j = 0; j < 3; ++j ) polygon[k][j] = clipped[k][j];
+    }
+
+    for( int k = 1; k+1 < size; ++k )
+    {
+      real64 const * a = polygon[0];
+      real64 const * b = polygon[k];
+      real64 const * c = polygon[k+1];
+      real64 const u[3] = { b[0]-a[0], b[1]-a[1], b[2]-a[2] };
+      real64 const v[3] = { c[0]-a[0], c[1]-a[1], c[2]-a[2] };
+      real64 const cross[3] = {
+        u[1]*v[2]-u[2]*v[1],
+        u[2]*v[0]-u[0]*v[2],
+        u[0]*v[1]-u[1]*v[0]
+      };
+      real64 const jacobian = ::sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]);
+      if( !(jacobian > 0.0) ) continue;
+
+      for( int q = 0; q < 6; ++q )
+      {
+        real64 const eta = barycentric[q][0], xi = barycentric[q][1];
+        real64 const w = 1.0-eta-xi;
+        real64 shape = 1.0;
+        for( int d = 0; d < 3; ++d )
+        {
+          real64 const x = eta*a[d] + xi*b[d] + w*c[d];
+          shape *= 1.0-::fabs(x)/h[d];
+        }
+        area += jacobian * quadratureWeight[q] * shape;
+      }
+    }
+  }
+  return ::fmax(0.0, area);
+}
+
 } // namespace mpmMeasures
 } // namespace geos
 

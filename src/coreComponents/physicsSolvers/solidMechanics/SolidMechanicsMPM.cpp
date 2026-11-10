@@ -79,6 +79,44 @@ using namespace constitutive;
 namespace
 {
 
+/**
+ * @brief Normalize a nodal contact-pair normal after enforcing native 2D geometry.
+ *
+ * Contact-normal arbitration can produce a near-zero difference even when
+ * each field has a valid normal. Try the selected normal, then A's outward
+ * normal, then the negative of B's outward normal. Reapply the 2D projection
+ * before testing every candidate. If all candidates are degenerate, the
+ * caller must skip this pair rather than divide by zero or generate NaNs.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool normalizePairContactNormal( real64 (&nAB)[3],
+                                 real64 const (&nA)[3],
+                                 real64 const (&nB)[3],
+                                 int const planeStrain )
+{
+  for( int trial = 0; trial < 3; ++trial )
+  {
+    if( trial == 1 )
+    {
+      LvArray::tensorOps::copy< 3 >( nAB, nA );
+    }
+    else if( trial == 2 )
+    {
+      LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1.0 );
+    }
+    if( planeStrain == 1 ) nAB[2] = 0.0;
+
+    real64 const norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
+    if( norm > 1.0e-20 && norm < DBL_MAX )
+    {
+      LvArray::tensorOps::scale< 3 >( nAB, 1.0/norm );
+      return true;
+    }
+  }
+  return false;
+}
+
 constexpr real64 explicitSurfaceNormalTolerance = 1.0e-12;
 constexpr real64 explicitSurfaceNormalNormSquaredTolerance =
   explicitSurfaceNormalTolerance * explicitSurfaceNormalTolerance;
@@ -1221,8 +1259,8 @@ real64 particleDomainMaximumFeasibleMeasure( int const numDims,
  * its mean e_bar, the target is
  *   e_k(new) = targetMeanLogStretch + beta * (e_k - e_bar).
  * beta=1 retains the original *deviatoric* log stretches; beta=0 gives equal
- * principal stretches. The symmetric left multiplier changes generator
- * lengths/shear without introducing an additional spatial rotation.
+ * principal stretches. The symmetric left multiplier adjusts generator
+ * stretch and shear in the existing spatial orientation.
  *
  * This is a temporary integration-domain operation. It does not alter the
  * particle's stored constitutive F, reference geometry or physical volume.
@@ -1264,9 +1302,8 @@ void buildVPHenckyParticleDomain( real64 const ( &inputRVectors )[3][3],
       LvArray::math::exp( retainedLogStretch - principalLogStretch[k] );
   }
 
-  // Reassemble the positive symmetric multiplier Q diag(scale_k) Q^T in
-  // generator-index space. This shares the eigendirections of G*G^T, so the
-  // current spatial orientation is not replaced by an axis-aligned box.
+  // Reassemble the positive symmetric multiplier Q diag(scale_k) Q^T
+  // in generator-index space, preserving the current spatial orientation.
   real64 generatorTransform[3][3] = {};
   for( int a = 0; a < numDims; ++a )
   {
@@ -1297,8 +1334,8 @@ void buildVPHenckyParticleDomain( real64 const ( &inputRVectors )[3][3],
 
   // Floating-point eigensolve/multiplication can perturb det(G_new) even
   // though sum_k e_k(new) sets the requested measure exactly in theory.
-  // Multiplying every active generator by (target/current)^(1/DIM) removes
-  // that drift without changing the aspect ratios chosen by beta.
+  // Uniform rescaling by (target/current)^(1/DIM) restores the target measure
+  // while preserving the beta-selected aspect ratios.
   real64 const targetMeasure =
     LvArray::math::exp( static_cast< real64 >( numDims ) *
                         targetMeanLogStretch );
@@ -1333,8 +1370,12 @@ void buildVPHenckyParticleDomain( real64 const ( &inputRVectors )[3][3],
  *   requested-measure feasibility, deliberate measure relaxation, selected
  *   beta and final diameter. Check valid before using output: rejected
  *   candidates can have been written before a failure is detected.
- * @note This routine projects candidate generators only; updating F, G0 or
- *   physical particle volume belongs to its caller, not this function.
+ * @note The caller applies any associated updates to F, G0 and physical
+ *   particle volume after accepting the projected generators.
+ * @warning Bisection assumes the maximum domain diagonal crosses the bound
+ *   monotonically as deviatoric Hencky strain is reduced toward isotropy.
+ *   Highly sheared/nearly singular domains need independent feasibility and
+ *   convergence checks before this is relied upon as a general projection.
  */
 template< typename INPUT_R_VECTORS,
           typename OUTPUT_R_VECTORS >
@@ -1908,8 +1949,7 @@ void quickSortIterative( localIndex (& arr)[64], localIndex (& arr2)[64], localI
  * @brief Constructs the MPM solver and registers configuration/restart data.
  *
  * Initializes defaults for geometry, contact, boundary and constitutive updates, material events,
- * outputs and performance controls. Registers the corresponding wrapper values without modifying
- * XML keys or live descriptions.
+ * outputs and performance controls. Registers the corresponding configuration and restart wrappers.
  */
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
@@ -3488,9 +3528,8 @@ void SolidMechanicsMPM::processInputFileRecursive( xmlWrapper::xmlDocument & xml
  * particle vectors/tensors, with axisymmetric hoop strain derived from radial
  * kinematics instead of a third grid-velocity degree of freedom.
  *
- * Boundary/control arrays are padded and validated here. Later step code
- * consumes canonical direction/variable lists and preallocated stress-control
- * history instead of reinterpreting raw XML every cycle.
+ * Boundary/control arrays are padded and validated here. Subsequent steps
+ * use canonical direction/variable lists and preallocated stress-control history.
  */
 void SolidMechanicsMPM::postInputInitialization()
 {
@@ -3574,10 +3613,8 @@ void SolidMechanicsMPM::postInputInitialization()
     m_computeSPHJacobian = 1;
   }
 
-  // This is a feature dependency, not a request to rebuild neighbors at
-  // every step. Damage-field partition, surface detection, SPH Jacobians,
-  // L-bar, and directional overlap require particle neighborhoods.
-  // Activate neighbor list if necessary
+  // Damage-field partitioning, surface detection, SPH Jacobians, L-bar
+  // and directional overlap all require particle neighborhoods.
   if( m_damageFieldPartitioning == 1 ||
       m_surfaceDetection == 1 ||
       m_computeSPHJacobian > 0 ||
@@ -3593,11 +3630,8 @@ void SolidMechanicsMPM::postInputInitialization()
   m_planeStrain = m_formulation != "Cartesian3D" ? 1 : 0;
   m_numDims = m_planeStrain ? 2 : 3;
 
-  // Boundary arrays retain six slots for common downstream indexing;
-  // native 2D input may supply just four physical faces. Inactive slots
-  // are never a request for a third spatial grid direction.
-  // Native input has four geometric sides. Shared boundary bookkeeping keeps
-  // six slots, with empty/inactive z slots; no z mesh or boundary is created.
+  // Native 2D has four physical faces. Shared boundary bookkeeping retains
+  // six slots with inactive z-face entries for consistent downstream indexing.
   if( m_numDims==2)
   {
     auto padSides = [](auto & sides, auto const inactive)
@@ -4101,10 +4135,10 @@ void SolidMechanicsMPM::postInputInitialization()
 /**
  * @brief Registers the particle and grid wrappers consumed by the MPM solver.
  *
- * Registration determines field existence, component extents, restart and
- * plotting metadata; it does not initialize particle physical states or
- * size velocity-field-dependent grid arrays. Particle subregions first
- * acquire constitutive names; then all required particle wrappers are
+ * Registration establishes field existence, component extents, restart
+ * and plotting metadata. Subsequent initialization establishes physical
+ * state and sizes velocity-field-dependent grid arrays. Particle subregions
+ * first acquire constitutive names; then all required particle wrappers are
  * registered, including variable-length mapped-stencil storage based on
  * the geometry-aware mappedNodeCapacity(m_numDims). Grid-only mesh bodies
  * instead register nodal fields and boundary/buffer set containers.
@@ -4268,10 +4302,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
           subRegion.registerField< particleHeatCapacity >( getName() );
         }
 
-        // The explicit output allowlist, when supplied, overrides each
-        // field's default plot level without changing field allocation,
-        // restart behavior or availability to numerical kernels.
-        // Adjust plotting levels for particle fields to match those specified in plottable fields
+        // The explicit output allowlist overrides the default plotting
+        // level of each selected particle field.
         if( m_plottableFieldsSorted.size() > 0 )
         {
           stdVector< string > const wrapperNames = subRegion.getWrappersNames();
@@ -5874,8 +5906,8 @@ void SolidMechanicsMPM::dumpModelDataToFile( ParticleManager & particleManager, 
 /**
  * @brief Writes particle kinematics and stress for debugging.
  *
- * Includes volume, reference volume, deformation gradient, velocity gradient, F dot, stress and
- * damage; diagnostic output is not a restart representation.
+ * Includes volume, reference volume, deformation gradient, velocity gradient,
+ * F dot, stress and damage diagnostics.
  */
 void SolidMechanicsMPM::dumpParticleDataToFile(ParticleManager & particleManager, int const cycleNumber, std::string label)
 {
@@ -7151,8 +7183,8 @@ void SolidMechanicsMPM::resizeGridAndCleanParticlesForExplicitStep( real64 const
 /**
  * @brief Records named solver stages for logging and optional profiling.
  *
- * Depending on the overload, records a stage label with or without already available managers.
- * Momentum-balance logging remains a separately controlled operation.
+ * Each overload writes the stage label and, when enabled, records an
+ * MPI-synchronized profiling time.
  */
 void SolidMechanicsMPM::logAndProfile( std::string const & label )
 {
@@ -7175,8 +7207,8 @@ void SolidMechanicsMPM::logAndProfile( std::string const & label )
 /**
  * @brief Records named solver stages for logging and optional profiling.
  *
- * Depending on the overload, records a stage label with or without already available managers.
- * Momentum-balance logging remains a separately controlled operation.
+ * Each overload writes the stage label and, when enabled, records an
+ * MPI-synchronized profiling time.
  */
 void SolidMechanicsMPM::logAndProfile( std::string const & label,
                                        ParticleManager & particleManager,
@@ -7558,6 +7590,11 @@ void SolidMechanicsMPM::syncGridFieldsForExplicitStep( DomainPartition & domain,
  *
  * Axisymmetric surface reconstruction uses ring-weighted Q1 geometry independent of the mechanical
  * particle interpolation. The capillary force is assembled only after ordinary P2G reduction.
+ * @warning Axisymmetric surface tension is implemented (including the hoop
+ *   stress-divergence term), but the ring-weighted geometric color is
+ *   differentiated using the mechanical effective stencil. Verify radial
+ *   force balance and Laplace pressure for cylinders/spheres, especially
+ *   material/void pairs, before treating this as a validated option.
  */
 void SolidMechanicsMPM::computeAndSyncSurfaceTensionForcesForExplicitStep( ParticleManager & particleManager,
                                                                            DomainPartition & domain,
@@ -7964,8 +8001,7 @@ real64 SolidMechanicsMPM::kernel( real64 const & r ) // distance from particle t
  * Production log level 1 records only the end-of-step momentum ledger;
  * log levels 2+ also allow intermediate stages. This overload uses the
  * current gridVelocity field as its diagnostic nodal velocity. The second
- * overload accepts a trial or other explicitly selected nodal velocity
- * without changing the particle or grid state.
+ * overload accepts a trial or other explicitly selected nodal velocity.
  */
 void SolidMechanicsMPM::logMomentumSum( std::string const & label,  // For tagging code location of output
                                         ParticleManager & particleManager,
@@ -8181,9 +8217,8 @@ void SolidMechanicsMPM::logMomentumSum( std::string const & label,  // For taggi
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
       real64 const mass = gridMass[g][fieldIndex];
-      // The force/momentum split follows the strict mass > smallMass test.
-      // The gridActive mask is checked independently, so disagreement can
-      // reveal stale or inconsistent activation rather than being hidden.
+      // The force/momentum split uses mass > smallMass. Comparing this
+      // threshold with gridActive identifies inconsistent activation.
       bool const massThresholded = mass > m_smallMass;
       bool const activeMask = gridActive[g][fieldIndex] > 0.5;
 
@@ -11378,10 +11413,9 @@ void SolidMechanicsMPM::setInitialTemperatureAndPressure( ParticleManager & part
  *
  * Actions include particle material swaps, damage/surface healing, reset
  * or rebasing of particle geometry, pressure/temperature histories, domain
- * deformation controls and cohesive-region activation. Most actions mutate
- * particle or solver state; this routine does not itself rebuild mappings,
- * global contact normals, or constitutive kernels. Subsequent phases of
- * explicitStep observe the new state and rebuild appropriate topology.
+ * deformation controls and cohesive-region activation. Subsequent
+ * explicit-step phases consume the updated state and rebuild the relevant
+ * mapping and contact topology.
  */
 void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                        const real64 time_n,
@@ -11495,9 +11529,8 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       m_computeCZInterfacesFromDamage = 1;
     }
 
-    // Borehole pressure is stored as a load parameter and interpolated
-    // over the active interval. The boundary-force routine consumes it
-    // later; this event does not apply nodal forces directly.
+    // Borehole pressure is stored as a load parameter, interpolated
+    // over the active interval, and consumed by the boundary-force routine.
     if( event.getCatalogName() == "BoreholePressure" )
     {
       BoreholePressureMPMEvent & boreholePressureEvent = dynamicCast< BoreholePressureMPMEvent & >( event );
@@ -12166,8 +12199,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       } );
     }
 
-    // Change the configured pair/friction state used by subsequent nodal
-    // contact without changing existing particle material assignment.
+    // Update the configured friction state used by subsequent nodal contact.
     if( event.getCatalogName() == "FrictionCoefficientSwap" )
     {
       GEOS_LOG_RANK_0( "Performing friction coefficient swap" );
@@ -13130,8 +13162,8 @@ bool SolidMechanicsMPM::subdivideParticles(
 
     // Correct extensive and center-relative data after every copy has finished.
     // SurfaceTraction is an integrated FORCE in grid assembly; partition both
-    // current and constitutive-reference values. A child inherits the parent's
-    // approximate surface point, not a newly inferred internal/exterior facet.
+    // current and constitutive-reference values. Each child inherits
+    // the parent's approximate surface point.
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     arrayView3d< real64 const > const particleVelocityGradient =
       subRegion.getField< fields::mpm::particleVelocityGradient >();
@@ -13971,7 +14003,7 @@ binCount.move( hostMemorySpace, true );
 /**
  * @brief Reorders or bins particle references to accelerate neighborhood searches.
  *
- * Supports efficient sparse neighbor construction without altering particle constitutive fields.
+ * Organizes particle references for sparse neighbor-list construction.
  */
 void SolidMechanicsMPM::optimizeBinSort( ParticleManager & particleManager )
 {
@@ -14435,7 +14467,7 @@ int SolidMechanicsMPM::projectIntegrationGeometry(
  * @param[in] geometry Native triangle/tetrahedron edge generators.
  * @param[out] projected Temporarily clipped simplex generators.
  * @return Status bitmask: 1 scaled; 2 measure relaxed; 4 invalid.
- * @note CPTI scales isotropically, rather than using the CPDI VPHencky deviatoric projection.
+ * @note CPTI uses isotropic temporary scaling of the simplex generators.
  */
 template< int DIM >
 GEOS_HOST_DEVICE
@@ -15043,6 +15075,11 @@ bool SolidMechanicsMPM::flagParticlesWithBadMappingArraysAndCompactActiveOrdinal
  * particle field storage or the values of the delete flags.
  *
  * @warning Do not rebuild activeParticleIndices() before calling this helper.
+ * @warning Retained neighbor triplets are not filtered by their TARGET
+ *   particle's delete flag. If a newly rejected particle occurs in another
+ *   kept owner's list, subsequent damage/surface kernels can still sample
+ *   its stored state during the current step. Rebuild/filter that relation
+ *   before use if zero-contribution deletion is required immediately.
  */
 void SolidMechanicsMPM::compactActiveOrdinalMappingArrays( localIndex const subRegionIndex,
                                                            ParticleSubRegion & subRegion,
@@ -16140,8 +16177,7 @@ axisymmetricSurface::Support SolidMechanicsMPM::axisymmetricSurfaceSupport(
 /**
  * @brief Maps reflected meridional positions to a valid geometric-color node.
  *
- * Reflection is used only by surface/color geometry; it does not add a third mechanical grid
- * direction.
+ * Reflected meridional positions use the geometric-color node mapping.
  */
 localIndex SolidMechanicsMPM::axisymmetricSurfaceColorNode(
   localIndex const node,
@@ -16346,7 +16382,7 @@ void SolidMechanicsMPM::reconstructAxisymmetricGridSurfaces(
       n[0]/=norm; n[1]/=norm;
       // In LR mode choose the other field with the largest nonzero nodal
       // material volume. The two labels provide signed samples for fitting
-      // a separating curve, not additional mechanical contact groups.
+      // a separating curve.
       int other = -1;
       if( useLR ) for( int candidate = 0; candidate<m_numVelocityFields; ++candidate )
         if( candidate!=field && volumes[g][candidate]>1.e-12*capacity &&
@@ -16949,7 +16985,6 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
  * Both 3D area quadrature methods use the locally fitted plane; native 2D
  * uses a line integral and axisymmetry integrates the swept ring area.
  *
- * This is an initialization pass, not the per-step cohesive-law update.
  * The cohesive field data are indexed by globally ordered CZ node, whereas
  * m_mappedNodes and m_shapeFunctionValues are indexed by active ordinal pp.
  */
@@ -17818,258 +17853,19 @@ real64 SolidMechanicsMPM::bruteForceNodalAreaIntegration( real64 const (&hEl)[3]
 }
 
 /**
- * @brief Computes the intersection of a line and plane when nonparallel.
+ * @brief Integrates a 3D cohesive interface plane against a Q1 nodal hat.
  *
- * Returns the intersection parameter and point for surface geometry calculations.
- */
-GEOS_HOST_DEVICE
-bool computeLinePlaneIntersection( real64 (& plane_origin)[3],
-                                   real64 (& plane_normal)[3],
-                                   real64 (& origin)[3],
-                                   real64 (& ray)[3],
-                                   real64 (& intersection)[3],
-                                   real64 & distToPlane )
-{
-  LvArray::tensorOps::fill< 3 >( intersection, DBL_MAX );
-  distToPlane = DBL_MAX; // Parametric parameter
-
-  // Check if line and plane are parallel (e.g. no intersection)
-  // Tensor equation: denom = dot(plane_normal, ray).
-  real64 const denom = LvArray::tensorOps::AiBi< 3 >( plane_normal, ray );
-
-  if( LvArray::math::abs( denom ) < 1e-14 )
-  {
-    return false;
-  }
-
-  real64 diff[3] = {};
-  // Tensor equations:
-  //   diff = plane_origin - origin.
-  //   distToPlane = dot(diff, plane_normal) / denom.
-  //   intersection = origin + distToPlane * ray.
-  LvArray::tensorOps::copy< 3 >( diff, plane_origin );
-  LvArray::tensorOps::subtract< 3 >( diff, origin );
-  distToPlane = LvArray::tensorOps::AiBi< 3 >( diff, plane_normal ) / denom;
-  LvArray::tensorOps::copy< 3 >( intersection, origin );
-  LvArray::tensorOps::scaledAdd< 3 >( intersection, ray, distToPlane );
-  return true;
-
-}
-
-// Gaussian quadrature for mesh nodal area integration
-// 1-point quadrature
-real64 tri1_coords[1][2] = {
-    {1.0/3.0, 1.0/3.0}
-};
-real64 tri1_weights[1] = {
-    0.5
-};
-
-// 3-point quadrature
-real64 tri2_coords[3][2] = {
-    {1.0/6.0, 1.0/6.0},
-    {2.0/3.0, 1.0/6.0},
-    {1.0/6.0, 2.0/3.0}
-};
-real64 tri2_weights[3] = {
-    1.0/6.0,
-    1.0/6.0,
-    1.0/6.0
-};
-
-// 4-point quadrature
-real64 tri3_coords[4][2] = {
-    {1.0/3.0, 1.0/3.0},
-    {0.6, 0.2},
-    {0.2, 0.6},
-    {0.2, 0.2}
-};
-real64 tri3_weights[4] = {
-    -27.0/96.0,
-    25.0/96.0,
-    25.0/96.0,
-    25.0/96.0
-};
-
-// 6-point quadrature
-real64 tri4_coords[6][2] = {
-    {0.445948490915965, 0.445948490915965},
-    {0.445948490915965, 0.108103018168070},
-    {0.108103018168070, 0.445948490915965},
-    {0.091576213509771, 0.091576213509771},
-    {0.091576213509771, 0.816847572980459},
-    {0.816847572980459, 0.091576213509771}
-};
-real64 tri4_weights[6] = {
-    0.111690794839005 * 0.5,
-    0.111690794839005 * 0.5,
-    0.111690794839005 * 0.5,
-    0.054975871827661 * 0.5,
-    0.054975871827661 * 0.5,
-    0.054975871827661 * 0.5
-};
-
-// 7-point quadrature
-real64 tri5_coords[7][2] = {
-    {1.0/3.0, 1.0/3.0},
-    {0.059715871789770, 0.470142064105115},
-    {0.470142064105115, 0.059715871789770},
-    {0.470142064105115, 0.470142064105115},
-    {0.797426985353087, 0.101286507323456},
-    {0.101286507323456, 0.797426985353087},
-    {0.101286507323456, 0.101286507323456}
-};
-real64 tri5_weights[7] = {
-    0.225 * 0.5,
-    0.132394152788506 * 0.5,
-    0.132394152788506 * 0.5,
-    0.132394152788506 * 0.5,
-    0.125939180544827 * 0.5,
-    0.125939180544827 * 0.5,
-    0.125939180544827 * 0.5
-};
-
-// 12-point quadrature
-real64 tri6_coords[12][2] = {
-    {0.873821971016996, 0.063089014491502},
-    {0.063089014491502, 0.873821971016996},
-    {0.063089014491502, 0.063089014491502},
-    {0.501426509658179, 0.249286745170910},
-    {0.249286745170910, 0.501426509658179},
-    {0.249286745170910, 0.249286745170910},
-    {0.636502499121399, 0.310352451033785},
-    {0.636502499121399, 0.053145049844816},
-    {0.310352451033785, 0.636502499121399},
-    {0.310352451033785, 0.053145049844816},
-    {0.053145049844816, 0.636502499121399},
-    {0.053145049844816, 0.310352451033785}
-};
-real64 tri6_weights[12] = {
-    0.050844906370207 * 0.5,
-    0.050844906370207 * 0.5,
-    0.050844906370207 * 0.5,
-    0.116786275726379 * 0.5,
-    0.116786275726379 * 0.5,
-    0.116786275726379 * 0.5,
-    0.082851075618374 * 0.5,
-    0.082851075618374 * 0.5,
-    0.082851075618374 * 0.5,
-    0.082851075618374 * 0.5,
-    0.082851075618374 * 0.5,
-    0.082851075618374 * 0.5
-};
-
-// 13-point quadrature
-real64 tri7_coords[13][2] = {
-    {1.0/3.0, 1.0/3.0},
-    {0.479308067841920, 0.260345966079040},
-    {0.260345966079040, 0.479308067841920},
-    {0.260345966079040, 0.260345966079040},
-    {0.869739794195568, 0.065130102902216},
-    {0.065130102902216, 0.869739794195568},
-    {0.065130102902216, 0.065130102902216},
-    {0.638444188569809, 0.312865496004875},
-    {0.638444188569809, 0.048690315425316},
-    {0.312865496004875, 0.638444188569809},
-    {0.312865496004875, 0.048690315425316},
-    {0.048690315425316, 0.638444188569809},
-    {0.048690315425316, 0.312865496004875}
-};
-real64 tri7_weights[13] = {
-    -0.149570044467670 * 0.5,
-    0.175615257433208 * 0.5,
-    0.175615257433208 * 0.5,
-    0.175615257433208 * 0.5,
-    0.053347235608839 * 0.5,
-    0.053347235608839 * 0.5,
-    0.053347235608839 * 0.5,
-    0.077113760890257 * 0.5,
-    0.077113760890257 * 0.5,
-    0.077113760890257 * 0.5,
-    0.077113760890257 * 0.5,
-    0.077113760890257 * 0.5,
-    0.077113760890257 * 0.5
-};
-
-// 16-point quadrature
-real64 tri8_coords[16][2] = {
-    {0.333333333333333, 0.333333333333333},
-    {0.081414823414554, 0.459292588292723},
-    {0.459292588292723, 0.081414823414554},
-    {0.459292588292723, 0.459292588292723},
-    {0.658861384496480, 0.170569307601996},
-    {0.170569307601996, 0.658861384496480},
-    {0.170569307601996, 0.170569307601996},
-    {0.898905543365938, 0.050547228317031},
-    {0.050547228317031, 0.898905543365938},
-    {0.050547228317031, 0.050547228317031},
-    {0.008394777409958, 0.263112829634638},
-    {0.263112829634638, 0.008394777409958},
-    {0.263112829634638, 0.728492392955404},
-    {0.728492392955404, 0.263112829634638},
-    {0.728492392955404, 0.008394777409958},
-    {0.008394777409958, 0.728492392955404}
-};
-real64 tri8_weights[16] = {
-    0.144315607677787 * 0.5,
-    0.095091634267285 * 0.5,
-    0.095091634267285 * 0.5,
-    0.095091634267285 * 0.5,
-    0.103217370534718 * 0.5,
-    0.103217370534718 * 0.5,
-    0.103217370534718 * 0.5,
-    0.032458497623198 * 0.5,
-    0.032458497623198 * 0.5,
-    0.032458497623198 * 0.5,
-    0.027230314174435 * 0.5,
-    0.027230314174435 * 0.5,
-    0.027230314174435 * 0.5,
-    0.027230314174435 * 0.5,
-    0.027230314174435 * 0.5,
-    0.027230314174435 * 0.5
-};
-
-/**
- * @brief Compares surface-intersection angle records for sorting.
+ * Native 2D delegates to the exact thickness-weighted line-area integral.
+ * Native 3D uses the geometry-only nodalPlaneArea3D operator: clip the
+ * plane to nodal support, sort the convex intersection, split at the Q1
+ * knot planes, and integrate cubic pieces with their physical Jacobian.
+ * This replaces the old qsort/fan quadrature, whose comparator, segment
+ * bounds, fan origin, reference-area weights, and physical Jacobian were
+ * mutually inconsistent. No particle-neighborhood data is needed for an
+ * idealized planar cut; it remains in the interface for compatibility.
  *
- * A source TODO questions this comparator; verify numerical ordering and its expected qsort
- * contract before relying on results.
- */
-int compareAngles(const void *a, const void *b) {
-    const real64 *A = (const real64 *)a;
-    const real64 *B = (const real64 *)b;
-    return A[0] - B[0];
-
-    // // BUFGIX: Is this unsafe, would it be better as:
-    // int compareAngles( const void * a, const void * b )
-    // {
-    //   real64 const A = static_cast< real64 const * >( a )[0];
-    //   real64 const B = static_cast< real64 const * >( b )[0];
-    //   return ( A > B ) - ( A < B );
-    // }
-}
-
-/**
- * @brief Integrates a nodal shape function over an idealized surface cut.
- *
- * In native 2D, delegate to mpmMeasures::lineArea using the configured
- * plane-strain thickness. In 3D, clip a plane (surfacePosition,
- * surfaceNormal) against the node's tent-function support cuboid
- * [-h_x,h_x] x [-h_y,h_y] x [-h_z,h_z]. Collect edge intersections,
- * sort their angular coordinates around the plane normal, and fan the
- * polygon from surfacePosition. On each triangle evaluate
- *   N_g(x) = product_d (1 - |x_d|/h_d)
- * at the selected reference-triangle Gauss points, summing weight*N_g.
- *
- * The 3D result depends on nodal support and the idealized plane; the
- * neighbor-list and CPDI-geometry arguments are unused in this branch.
- * The quadrature does not multiply by a physical triangle-area Jacobian.
- * The intersection test compares the line helper's ray parameter against
- * edge length. The resulting measure, clipping and degenerate-cut behavior
- * are limitations of the implemented calculation, not validations of it.
- *
- * @pre surfaceNormal is normalized and surfacePosition is consistent
- * with the local nodal support coordinates; these are not enforced here.
+ * numSurfaceIntegrationPoints controls the separate brute-force method;
+ * the corrected mesh method uses a fixed exact degree-four rule.
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -18084,282 +17880,20 @@ real64 SolidMechanicsMPM::meshNodalAreaIntegration( real64 const (&hEl)[3],
                                                     arraySlice1d< real64 const > const surfaceNormal,
                                                     arraySlice1d< real64 const > const surfacePosition )
 {
-  // The 2D branch integrates the interface segment directly and
-  // converts line measure to an area using plane-strain thickness;
-  // no 3D cube clipping or triangle quadrature is performed.
-  if( m_numDims==2) return mpmMeasures::lineArea(hEl[0], hEl[1], m_planeStrainThickness, surfaceNormal, surfacePosition);
+  GEOS_UNUSED_VAR( numSurfaceIntegrationPoints );
+  GEOS_UNUSED_VAR( numNeighbors );
+  GEOS_UNUSED_VAR( neighborRegions );
+  GEOS_UNUSED_VAR( neighborSubRegions );
+  GEOS_UNUSED_VAR( neighborIndices );
+  GEOS_UNUSED_VAR( particleCenter );
+  GEOS_UNUSED_VAR( particleGeometryCurrent );
 
-  // Compute intersections of idealized nodal surface plane with domain of support for surronding grid cells
-
-  real64 dx = hEl[0];
-  real64 dy = hEl[1];
-  real64 dz = hEl[2];
-
-  // Assumes surface normal is normalized
-  real64 n[3] = {};
-  // Tensor equation: n = surfaceNormal.
-  LvArray::tensorOps::copy< 3 >( n, surfaceNormal );
-  real64 surfPos[3] = {};
-  // Tensor equation: surfPos = surfacePosition.
-  LvArray::tensorOps::copy< 3 >( surfPos, surfacePosition );
-
-  // Vertices of cuboidal domain of for nodal shape functions
-  // A Cartesian linear basis has support over +/- one cell width
-  // in every axis relative to its node. These are SUPPORT vertices,
-  // not vertices of an actual physical particle domain.
-  real64 support_vertices[8][3] = {
-                                    {-dx, -dy, -dz}, // 0
-                                    { dx, -dy, -dz}, // 1
-                                    { dx,  dy, -dz}, // 2
-                                    {-dx,  dy, -dz}, // 3
-                                    {-dx, -dy,  dz}, // 4
-                                    { dx, -dy,  dz}, // 5
-                                    { dx,  dy,  dz}, // 6
-                                    {-dx,  dy,  dz}  // 7
-                                  };
-
-  // Vertex indices for each edge of domain
-  int support_edges[12][3] = {
-                                // Bottom edges
-                                {0, 1},
-                                {1, 2},
-                                {2, 3},
-                                {3, 0},
-
-                                // Middle edges
-                                {0, 4},
-                                {1, 5},
-                                {2, 6},
-                                {3, 7},
-
-                                // Top edges
-                                {4, 5},
-                                {5, 6},
-                                {6, 7},
-                                {7, 4}
-                              };
-
-  int numIntersections = 0;
-  // Intersect the 12 cuboid edges with the infinite plane. The
-  // helper returns both intersection coordinates and a ray multiplier;
-  // only points passing the caller's existing range test are retained.
-  real64 intersections[12][3] = {};
-  for( int i = 0; i < 12; ++i )
+  if( m_numDims == 2 )
   {
-    int pi = support_edges[i][0];
-    int pj = support_edges[i][1];
-
-    real64 edgeOrigin[3] = {};
-    // Tensor equation: edgeOrigin = support_vertices[pi].
-    LvArray::tensorOps::copy< 3 >( edgeOrigin, support_vertices[pi] );
-
-    real64 edgeDir[3] = {};
-    // Tensor equation: edgeDir = support_vertices[pj] - edgeOrigin.
-    LvArray::tensorOps::copy< 3 >( edgeDir, support_vertices[pj] );
-    LvArray::tensorOps::subtract< 3 >( edgeDir, edgeOrigin );
-
-    real64 intersection[3] = {};
-    real64 distToIntersection = DBL_MAX;
-    bool result = computeLinePlaneIntersection( surfPos,
-                                                n,
-                                                edgeOrigin,
-                                                edgeDir,
-                                                intersection,
-                                                distToIntersection );
-    if( result )
-    {
-      // Check if intersection is within start and end point of domain edge
-      // Tensor equation: edgeLen = ||edgeDir||.
-      // The helper forms intersection = edgeOrigin + t*edgeDir,
-      // where t is a dimensionless edge multiplier. This routine
-      // currently tests t <= ||edgeDir|| (not t <= 1); preserve that
-      // implemented acceptance rule pending independent geometric review.
-      real64 edgeLen = LvArray::tensorOps::l2Norm< 3 >( edgeDir );    // should this be if( 0.0 <= distToPlane && distToPlane <= 1.0 ) ?
-      if( 0.0 <= distToIntersection && distToIntersection <= edgeLen )
-      {
-        // Tensor equation: intersections[numIntersections] = intersection.
-        LvArray::tensorOps::copy< 3 >( intersections[numIntersections], intersection );
-        ++numIntersections;
-      }
-    }
+    return mpmMeasures::lineArea( hEl[0], hEl[1], m_planeStrainThickness,
+                                  surfaceNormal, surfacePosition );
   }
-
-  // Zero accepted edge intersections is an error. Other degenerate
-  // cases (vertex duplicates, fewer than three unique points, or
-  // coincident fan center) are not specifically filtered here.
-  GEOS_ERROR_IF( numIntersections == 0, "Got zero intersections for mesh nodal area integration! Should be between 3-6");
-
-  // Sort intersections by angle around normal
-  // Arbitrarily use first intersection in list as angle = 0
-  // Use the first intersection as angular zero. Each direction is
-  // measured from surfacePosition, not from the global origin; atan2
-  // of oriented cross/dot products orders points about the plane normal.
-  real64 v00[3] = {};
-  // Tensor equation: v00 = intersections[0] - surfPos / ||intersections[0] - surfPos||.
-  LvArray::tensorOps::copy< 3 >( v00, intersections[0] );
-  // BUGFIX: The angle basis uses intersection - surfacePosition;
-  // the distinction is essential when the cut plane is offset.
-  LvArray::tensorOps::subtract< 3 >( v00, surfPos );
-  LvArray::tensorOps::normalize< 3 >( v00 );
-
-  // Store [angle,x,y,z]. Non-intersecting slots get angle DBL_MAX so
-  // they should sort after the valid angular samples. The current
-  // qsort comparator is used as written; it is not replaced here.
-  real64 angles[12][4] = {}; // Initialize all to 0
-  for( int i = 0; i < 12; ++i )
-  {
-    if( i < numIntersections )
-    {
-      real64 v11[3] = {};
-      // Tensor equation: v11 = intersections[i] - surfPos / ||intersections[i] - surfPos||.
-      LvArray::tensorOps::copy< 3 >( v11, intersections[i] );
-      // BUGFIX: Every angle direction uses the same fan reference point.
-      LvArray::tensorOps::subtract< 3 >( v11, surfPos );
-      LvArray::tensorOps::normalize< 3 >( v11 );
-
-      real64 cross[3] = {};
-      // Tensor equations:
-      //   cross = cross(v00, v11).
-      //   dot_cross = dot(cross, n).
-      //   dot = dot(v00, v11).
-      LvArray::tensorOps::crossProduct( cross, v00, v11 );
-      real64 dot_cross = LvArray::tensorOps::AiBi< 3 >( cross, n );
-      real64 dot = LvArray::tensorOps::AiBi< 3 >( v00, v11 );
-      angles[i][0] = LvArray::math::atan2( dot_cross, dot );
-      angles[i][1] = intersections[i][0];
-      angles[i][2] = intersections[i][1];
-      angles[i][3] = intersections[i][2];
-      continue;
-    }
-
-    angles[i][0] = DBL_MAX;
-  }
-
-  // Quick sort of intersection vertices using angles
-  // The angle ordering is intended to assemble a polygon boundary
-  // before fan triangulation. Retain the developer's marker at the call;
-  // this pass does not assume it handles arbitrary floating differences.
-  qsort( angles, 12, sizeof(real64) * 4, compareAngles ); // TODO: check this!
-
-  // Copy over sorted intersections
-  for( int i = 0; i < 12; ++i )
-  {
-    intersections[i][0] = angles[i][1];
-    intersections[i][1] = angles[i][2];
-    intersections[i][2] = angles[i][3];
-  }
-
-  // Each adjacent ordered pair and surfacePosition define a fan
-  // triangle. The numerical integral below weights the nodal basis
-  // over the reference triangle without a physical area determinant.
-  // Perform integration using triangular mesh around plane origin
-  real64 nodalArea = 0.0;
-
-  // TODO: eventually these should use ones built into GEOS
-  int numGaussPoints = 1;
-  real64 (* gaussCoords)[2] = nullptr;
-  real64* gaussWeights = nullptr;
-  // Orders 1..8 select fixed triangular rules (1..16 points).
-  // Higher-order rules may contain negative weights; order zero or an
-  // unsupported order causes GEOS_ERROR rather than defaulting.
-  switch( numSurfaceIntegrationPoints )
-  {
-    case 1:
-      numGaussPoints = 1;
-      gaussCoords = tri1_coords;
-      gaussWeights = tri1_weights;
-      break;
-    case 2:
-      numGaussPoints = 3;
-      gaussCoords = tri2_coords;
-      gaussWeights = tri2_weights;
-      break;
-    case 3:
-      numGaussPoints = 4;
-      gaussCoords = tri3_coords;
-      gaussWeights = tri3_weights;
-      break;
-    case 4:
-      numGaussPoints = 6;
-      gaussCoords = tri4_coords;
-      gaussWeights = tri4_weights;
-      break;
-    case 5:
-      numGaussPoints = 7;
-      gaussCoords = tri5_coords;
-      gaussWeights = tri5_weights;
-      break;
-    case 6:
-      numGaussPoints = 12;
-      gaussCoords = tri6_coords;
-      gaussWeights = tri6_weights;
-      break;
-    case 7:
-      numGaussPoints = 13;
-      gaussCoords = tri7_coords;
-      gaussWeights = tri7_weights;
-      break;
-    case 8:
-      numGaussPoints = 16;
-      gaussCoords = tri8_coords;
-      gaussWeights = tri8_weights;
-      break;
-    default:
-      GEOS_ERROR( "Unrecognized gaussian quadrature integration order! (Max order = 8)" );
-      break;
-  }
-
-  // There are the same number of mesh triangles as intersections
-  for( int i = 0; i < numIntersections; ++i )
-  {
-    real64 v0[3] = {};
-    // Tensor equation: v0 = intersections[i].
-    LvArray::tensorOps::copy< 3 >( v0, intersections[i] );
-    real64 v1[3] = {};
-    // Tensor equation: v1 = intersections[(i+1) % numIntersections].
-    LvArray::tensorOps::copy< 3 >( v1, intersections[(i+1) % numIntersections] );
-    real64 v2[3] = {};
-    // Tensor equation: v2 = surfPos.
-    LvArray::tensorOps::copy< 3 >( v2, surfPos );
-
-    // Sum over natural coordinates and gaussian weights
-    for( int j = 0; j < numGaussPoints; ++j )
-    {
-      // For each gauss point check if ray projected along play normal intersects with domain of CPDI particle
-      real64 w = gaussWeights[j]; // Gauss point weight
-      real64 eta = gaussCoords[j][0]; // Gauss point natural coordinate 1
-      real64 xi = gaussCoords[j][1]; // Gauss point natural coordinate 2
-
-      // Map barycentric reference coordinates to a location in the
-      // fan triangle: p = eta*v0 + xi*v1 + (1-eta-xi)*v2.
-      // The code evaluates only this location and basis function; it
-      // does not scale by ||(v0-v2) x (v1-v2)||.
-      real64 p[3] = {}; // Gauss point
-      // Tensor equation: p = p + eta * v0 + xi * v1 + 1.0-eta-xi * v2.
-      LvArray::tensorOps::scaledAdd< 3 >( p, v0, eta );
-      LvArray::tensorOps::scaledAdd< 3 >( p, v1, xi );
-      LvArray::tensorOps::scaledAdd< 3 >( p, v2, 1.0-eta-xi );
-
-      nodalArea += w * ( 1.0 - LvArray::math::abs( p[0] / hEl[0] ) ) *
-                       ( 1.0 - LvArray::math::abs( p[1] / hEl[1] ) ) *
-                       ( 1.0 - LvArray::math::abs( p[2] / hEl[2] ) );
-
-      // TODO: Verify that surface quadrature includes the physical area Jacobian,
-      // rather than only normalized cut-cell interpolation weights.
-      // These inputs remain in the interface but do not influence
-      // the implemented 3D result: it uses only the nodal support,
-      // reconstructed plane, and chosen triangular quadrature rule.
-      GEOS_UNUSED_VAR( numNeighbors );
-      GEOS_UNUSED_VAR( neighborRegions );
-      GEOS_UNUSED_VAR( neighborSubRegions );
-      GEOS_UNUSED_VAR( neighborIndices );
-      GEOS_UNUSED_VAR( particleCenter );
-      GEOS_UNUSED_VAR( particleGeometryCurrent );
-
-    }
-  }
-
-  return nodalArea;
+  return mpmMeasures::nodalPlaneArea3D( hEl, surfaceNormal, surfacePosition );
 }
 
 // Cross product of OA and OB vectors
@@ -18878,7 +18412,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     // The kernel owns the cohesive separation law, damage evolution,
     // field-A/field-B traction sign convention, and optional compressive
     // interpenetration correction. This outer routine supplies geometry,
-    // kinematic moments and time increment; it does not replicate the law.
+    // kinematic moments and the time increment to the kernel.
     // New cohesive zone dispatch for traction update
     ConstitutivePassThruCohesiveZone< CohesiveZoneBase >::execute( cohesiveZone, [&]( auto& castedCohesiveZone )
     {
@@ -19641,19 +19175,18 @@ void SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce( real64 const time_
  * @brief Writes prescribed virtual-fluid background stresses onto grid nodes.
  *
  * Populate the gridBackgroundStress tensor field using spatial selectors
- * at reference nodal positions, without reconstructing wetted surfaces.
- * Borehole pressure writes within a cylinder; confinement writes either
+ * at reference nodal positions. Borehole pressure writes within a cylinder;
+ * confinement writes either
  * everywhere (uniform) or outside a radius or box. Since confinement is
  * processed second, its selected nodes overwrite borehole values. Values
- * are six-component stress vectors used in subsequent grid force assembly;
- * this routine does not itself compute particle contact or pressure forces.
+ * are six-component stress vectors used in subsequent grid force assembly.
  * The field is expected to have been cleared during grid initialization;
  * nodes outside all selectors are not modified here.
  */
 void SolidMechanicsMPM::updateGridBackgroundStress( NodeManager & nodeManager )
 {
-  // Virtual fluid stress loads particle boundaries without reconstructing
-  // surface facets. The grid-wide initialization clears this field each step;
+  // Virtual-fluid loading uses grid stress selected by nodal position.
+  // Grid-wide initialization clears this field each step;
   // selectors below use the current grid coordinates and fixed spatial cutoffs.
   //
   // Cartesian boreholes are z-aligned cylinders: x*x+y*y < r0*r0.
@@ -20109,8 +19642,8 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
       // -----------------------------------------------------------------------
       // Particle-only quantities.
       //
-      // These values do not depend on the mapped node, so they are loaded or
-      // computed once per particle instead of once per particle-node pair.
+      // Load or compute these quantities once per particle, then reuse
+      // them for all of its mapped nodes.
       // -----------------------------------------------------------------------
 
       real64 const pMass =
@@ -20428,9 +19961,9 @@ localIndex const mappedNode =
         // The volume-weighted mapping-normal quality tensor accumulates
         // V_p*N_Ip * (nhat tensor nhat), with entry order
         // [xx, yy, zz, xy, xz, yz]. Opposite normals add constructively
-        // because the dyad is insensitive to sign. This tensor tracks the
-        // *orientation* reliability of a DFG field, not its stress state;
-        // it is intentionally omitted when no usable mapping normal exists.
+        // because the dyad is insensitive to sign. The tensor measures
+        // the normal-orientation reliability of a DFG field. Accumulate it
+        // only when a usable mapping normal exists.
         if( hasMappingNormal )
         {
           real64 const normalTensorWeight =
@@ -21200,8 +20733,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
  * flags or non-negligible cohesive force. Otherwise a nonzero contact force
  * identifies contact. A single output record is stored per *field*, not per
  * pair: cohesive (1) outranks contact (2), and later pairs can replace equal-
- * priority records. The values are post-interaction diagnostic projections;
- * this routine does not apply a mechanical force or solve a contact system.
+ * priority records. The values are post-interaction diagnostic projections.
  *
  * The normal is oriented outward from A where possible. Reported normal
  * forces use opposite signs for A and B to compare their outward tractions;
@@ -21423,8 +20955,7 @@ void SolidMechanicsMPM::updateInterfaceMechanismDiagnostics( NodeManager & nodeM
           LvArray::math::max( 0.0, LvArray::tensorOps::l2NormSquared< 3 >( displacementJump ) - displacementNormal * displacementNormal ) );
 
         // Each field receives at most one diagnostic tuple. The B update
-        // below uses the same jump values and separately checks its priority;
-        // it is not a second pairwise mechanical interaction.
+        // uses the same jump values and independently checks its priority.
         int const currentPriorityA =
           gridInterfaceMechanism[g][A] == 1 ? 3 :
           gridInterfaceMechanism[g][A] == 2 ? 2 :
@@ -21945,39 +21476,14 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
               break;
           }
 
-          // Normalize AFTER selection. If it nearly cancels, use n_A as a
-          // fallback; the current implementation does not check a second
-          // near-zero norm before dividing. Plane strain removes the third
-          // component and requires the norm to be recomputed. This is an
-          // assumption to validate, not a new numerical safeguard.
-          // Make sure the surface normal is a well-defined unit vector, consistent with plane strain assumption.
-          // Tensor equation: norm = ||nAB||.
-          real64 norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
-          bool recomputeNormal = false;
-          if( norm < 1e-20 )
+          // The chosen normal may vanish by cancellation, or lose its
+          // only component when projected into the meridional/2D plane.
+          // Apply the same robust fallback in force and FMPM impulse paths;
+          // skip an irresolvable pair instead of producing nonfinite forces.
+          if( !normalizePairContactNormal( nAB, nA, nB, planeStrain ) )
           {
-            // If normals are randomly defined as in the case of a fully damaged region, just default to normal A
-            // since the two fields should not be separable
-            // Tensor equation: nAB = nA.
-            LvArray::tensorOps::copy< 3 >( nAB, nA );
-            recomputeNormal = true;
+            continue;
           }
-          if( planeStrain == 1)
-          {
-            // Enforce plane strain
-            nAB[2] = 0.0;
-            recomputeNormal = true;
-          }
-          if( recomputeNormal)
-          {
-            // Tensor equation: norm = ||nAB||.
-            norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
-          }
-
-          // Normalize the effective surface normal
-          // Tensor equations:
-          //   nAB = 1 / norm * (nAB).
-          LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
 
           // The force-form pair kernel converts trial momentum to a force
           // using dt and applies the configured gap, overlap and friction
@@ -22378,43 +21884,17 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
               break;
           }
 
-          // Make sure the surface normal is a well-defined unit vector, consistent with plane strain assumption.
-          // Tensor equation: norm = ||nAB||.
-          real64 norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
-          bool recomputeNormal = false;
-          // Degenerate averaged normals revert to nA. The subsequent
-          // projection removes the third component in 2D, and the code
-          // normalizes using the resulting length; no extra failure
-          // branch exists if the fallback is itself degenerate.
-          if( norm < 1e-20 )
+          // FMPM's Net impulse target uses the same orientation and
+          // degeneracy rules as the ordinary force-form contact operator.
+          // If no in-plane normal survives, omit this pair's impulse.
+          if( !normalizePairContactNormal( nAB, nA, nB, planeStrain ) )
           {
-            // If normals are randomly defined as in the case of a fully damaged region, just default to normal A
-            // since the two fields should not be separable
-            // Tensor equation: nAB = nA.
-            LvArray::tensorOps::copy< 3 >( nAB, nA );
-            recomputeNormal = true;
+            continue;
           }
-          if( planeStrain == 1)
-          {
-            // Enforce plane strain
-            nAB[2] = 0.0;
-            recomputeNormal = true;
-          }
-          if( recomputeNormal)
-          {
-            // Tensor equation: norm = ||nAB||.
-            norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
-          }
-
-          // Normalize the effective surface normal
-          // Tensor equations:
-          //   nAB = 1 / norm * (nAB).
-          LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
 
           // This local kernel receives trial velocities U and matching
-          // nodal momenta m*U, NOT the already contacted seed velocities.
-          // It appends the requested pair impulse to J_target; the FMPM
-          // caller applies J_target - J_net as a higher-order correction.
+          // nodal momenta m*U, not the already contacted seed velocities.
+          // It adds the target pair impulse; the caller applies J_target-J_net.
           computePairwiseNodalContactImpulse( contactGapCorrection,
                                               overlapCorrection,
                                             overlapThreshold1,
@@ -22692,6 +22172,10 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & numContactGro
  * allowance per missing surface. The caller must supply positive masses,
  * spacings and timestep, and a normalized A-to-B contact normal. Only the
  * NormalForce overlap option is active inside this impulse implementation.
+ * @warning This helper does not independently force the cohesive tangential
+ *   friction coefficient to zero. The FMPM Net caller supplies mu=0 for
+ *   cohesive pairs with interpenetration prevention; preserve that contract
+ *   if this helper gains additional call sites.
  */
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -23542,7 +23026,7 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt,
  * rate commands so outer-boundary movement does not exceed a CFL-length per
  * step. Only directions with m_stressControl==1 receive the feedback rate;
  * mode 2 is a unilateral sign restriction on an otherwise prescribed rate.
- * This controls m_domainL, not particle stress or nodal velocity directly.
+ * The controller updates the prescribed domain strain-rate tensor m_domainL.
  */
 void SolidMechanicsMPM::stressControl( real64 dt,
                                        ParticleManager & particleManager,
@@ -23782,6 +23266,11 @@ void SolidMechanicsMPM::stressControl( real64 dt,
  * instantaneous/filtered mismatch freezes tangent learning and reduces gain.
  * The final commanded diagonal m_domainL is rate-, increment-, rate-change-
  * and boundary-CFL-limited. No change is made to particle stress here.
+ *
+ * @warning Jamming/unreachable decisions, tangent fits and re-engagement
+ *   rates are heuristic stress-control policies.
+ *   Their behavior during unloading, reloading and nonmonotonic compaction
+ *   should be checked against the intended load path before production use.
  */
 void SolidMechanicsMPM::adaptiveSeekStressControl( const real64 dt,
                                                    real64 const (& targetStress)[3],
@@ -25200,6 +24689,10 @@ void SolidMechanicsMPM::initializeProfileFiles()
  * Here sliceVolume is the rectangular cross-section times bin spacing,
  * including in axisymmetric mode; no radius-dependent annular denominator
  * is constructed by this routine. Empty mass/volume bins produce zero.
+ * @warning Axisymmetric axial profiles (direction=1) require the full-ring
+ *   cross section pi*(rmax^2-rmin^2), not the Cartesian extrusion below.
+ *   Radial profiles require separate annular bin measures; neither is
+ *   presently normalized by physical axisymmetric slice volume.
  */
 void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
                                                  real64 const time,
@@ -25282,9 +24775,8 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
     profileGridMomentumGlobal[i] = 0.0;
   }
 
-  // Some constitutive fields are only accessed when requested; this avoids
-  // introducing an unnecessary dependency for a diagnostic that does not
-  // require them. The output vocabulary is restricted to canonical names.
+  // Fetch constitutive fields only when the corresponding profile
+  // variables are requested. Output variables use canonical names.
   bool const needInternalEnergy =
     std::find( m_profileVariables.begin(), m_profileVariables.end(), string( "internalEnergy" ) ) != m_profileVariables.end();
   bool const needSupplementalPressure =
@@ -25292,9 +24784,8 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
 
   real64 const coordinateTolerance = 1.0e-8 * LvArray::math::max( LvArray::math::abs( profileLength ), m_hEl[direction] );
 
-  // CSV binning and accumulating happen on the host. Synchronize the nodal
-  // data but do not alter it; grids already contain separate contact/DFG
-  // fields that must all contribute to the total projected velocity.
+  // Transfer nodal data to the host for CSV binning. All contact/DFG
+  // fields contribute to the total projected velocity.
   nodeManager.getWrapperBase( viewKeyStruct::gridMassString() ).move( hostMemorySpace, true );
   nodeManager.getWrapperBase( viewKeyStruct::gridMaterialVolumeString() ).move( hostMemorySpace, true );
   nodeManager.getWrapperBase( viewKeyStruct::gridMomentumString() ).move( hostMemorySpace, true );
@@ -25617,7 +25108,6 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
 
   // One rank appends each variable's row at end-of-step time (time+dt).
   // initializeProfileFiles wrote bin center/node coordinates in the header.
-  // The ignored cycleNumber does not enter this CSV or its bin arithmetic.
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     for( int variableIndex = 0; variableIndex < numVariables; ++variableIndex )
@@ -25824,7 +25314,7 @@ void SolidMechanicsMPM::initializeTracerFiles( ParticleManager & particleManager
  * If an ID appears on more than one rank or subregion, its samples are
  * averaged by found count; this is not an owner-rank election. Missing IDs
  * output NaN for every spatial/field column but retain the timestamp.
- * Values are instantaneous particle properties, not shape-averaged fields.
+ * Output values are instantaneous particle properties.
  */
 void SolidMechanicsMPM::computeAndWriteTracers( int const cycleNumber,
                                                 real64 const time,
@@ -25909,8 +25399,8 @@ void SolidMechanicsMPM::computeAndWriteTracers( int const cycleNumber,
     for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
     {
       localIndex const p = activeParticleIndices[pp];
-      // Follow the ID rather than the original coordinate, allowing
-      // migration and large displacement without nearest-neighbor jumps.
+      // Match persistent particle IDs to follow particle migration
+      // and large displacements.
       auto const iter = tracerIndicesByParticleID.find( particleID[p] );
       if( iter == tracerIndicesByParticleID.end() )
       {
@@ -26419,8 +25909,8 @@ void SolidMechanicsMPM::computeSphF( ParticleManager & particleManager )
 /**
  * @brief Dispatches the selected PIC, FLIP, XPIC or FMPM update.
  *
- * Uses configured cached/on-the-fly mapping without changing each particle's physical material
- * geometry policy.
+ * Uses the configured precomputed or on-demand mapping for each selected
+ * particle velocity-update method.
  */
 void SolidMechanicsMPM::gridToParticle( real64 dt,
                                         ParticleManager & particleManager,
@@ -26807,8 +26297,8 @@ void SolidMechanicsMPM::performFLIPUpdate( real64 dt,
  * incrementing its previous value.
  *
  * An optional volume-overlap correction modifies the diagonal velocity
- * gradient using summed nodal material volume; it does not directly change
- * particle velocity. In axisymmetric 2D, gradient slot 2 contributes the
+ * gradient using summed nodal material volume. In axisymmetric 2D,
+ * gradient slot 2 contributes the
  * radial-velocity hoop term L_22, not an out-of-plane Cartesian derivative.
  */
 void SolidMechanicsMPM::performPICUpdate( real64 dt,
@@ -26942,7 +26432,6 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
         localIndex const numberOfMappedNodes = numberOfMappedNodesPerParticle;
         localIndex const pGroup = particleGroup[p];
 
-        // PIC does not retain the old velocity as a FLIP increment would.
         // Reconstruct both v_p and L_p from this step's nodal velocity field.
         LvArray::tensorOps::fill< 3 >( particleVelocity[p], 0.0 );
         LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
@@ -27059,6 +26548,10 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
  * gridVelocity, with an additional radial/hoop contribution in axisymmetry.
  * @note The dV-series arrays remain allocated and transferred, but their seed
  * is currently zero; see the preserved XXX below.
+ * @warning The particle velocity is XPIC-corrected, but its gradient is
+ *   reconstructed from ordinary gridVelocity rather than the corrected
+ *   velocity series. This is an existing scheme choice; check deformation
+ *   and energy convergence before attempting to change it.
  */
 void SolidMechanicsMPM::performXPICUpdate( real64 dt,
                                            ParticleManager & particleManager,
@@ -27174,9 +26667,8 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 #ifdef GEOS_USE_DEVICE
   if( usePrecomputedGridToParticleMapping )
   {
-    // The raw precomputed maps are reused by every recursive projection and by the
-    // final particle update. Establish device residency once instead of issuing
-    // memory-manager moves inside every XPIC order.
+    // Stage raw precomputed maps in device memory once for reuse by
+    // all XPIC projections and the final particle update.
     localIndex mapSubRegionIndex = 0;
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & )
     {
@@ -27905,9 +27397,8 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 #ifdef GEOS_USE_DEVICE
   if( usePrecomputedGridToParticleMapping )
   {
-    // The raw precomputed maps are reused by every recursive projection and by the
-    // final particle update. Establish device residency once instead of issuing
-    // memory-manager moves inside every FMPM order.
+    // Stage raw precomputed maps in device memory once for reuse by
+    // all FMPM orders and the final particle update.
     localIndex mapSubRegionIndex = 0;
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & )
     {
@@ -29061,7 +28552,39 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           }
           else
           {
-            // Untested!
+            // WARNING: This optional, untested incremental transport is not
+            // kinematically consistent with the reference-vector update above.
+            // The quantities being incremented (surface position, normal and
+            // traction) are already stored in the CURRENT configuration:
+            //
+            // 1. The dF used below is dt*F_{n+1}, rather than a spatial
+            //    deformation increment. It updates the surface position as
+            //      s_{n+1} = (I + dt*F_{n+1}) s_n,
+            //    so even F=I with FDot=0 changes s. Substituting dt*FDot
+            //    alone would not resolve this: FDot maps reference vectors,
+            //    whereas s_n is already spatial.
+            //
+            // 2. The cofactor calculation below produces dt*d(cof F)/dt,
+            //    the increment of a REFERENCE-to-current area transformation.
+            //    Applying that increment directly to the current normal and
+            //    traction is not the incremental transport of those vectors.
+            //
+            // 3. Material directions are overwritten with dF (fibers) or
+            //    dcofF (other directions) acting on REFERENCE directions.
+            //    These are increments, not full transformed bases. In
+            //    particular, FDot=0 makes dcofF=0 and zeroes a non-fiber
+            //    direction rather than preserving its orientation.
+            //
+            // A consistent spatial position update would use
+            //   A = F_{n+1} * inverse(F_n),   s_{n+1} = A * s_n.
+            // Oriented area vectors would use cof(A), with the existing
+            // surface-normal normalization and traction conventions reviewed
+            // separately. Reconstructing all attributes directly from the
+            // reference state (the default branch) avoids accumulated errors.
+            // Before enabling this path, re-derive all three transports and
+            // verify consistency with FDot, geometry resets, and material
+            // direction updates. No correction is applied here.
+            //
             // Compute derivative of deformation gradient cofactor
             real64 invF[3][3] = {};
             // Tensor equation: invF = inv(particleDeformationGradient[p]).
@@ -29100,15 +28623,16 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
             LvArray::tensorOps::scaledCopy< 3, 3 >( dcofF, out, dt );
 
             real64 dF[3][3] = {};
-            // Tensor equation: dF = dt * particleDeformationGradient[p].
+            // Tensor equation (as currently implemented): dF = dt * F.
+            // This is the invalid increment described in the warning above.
             LvArray::tensorOps::scaledCopy< 3, 3 >( dF, particleDeformationGradient[p], dt );  // BUGFIX: possibly this should be particleFDot[p]
 
             // Update quantities
             real64 temp[3] = {};
 
-            // Particle surface normal
+            // Each update copies the current attribute into temp before
+            // adding a matrix-vector increment to that same attribute.
             // Tensor equations:
-            //   temp = particleSurfacePosition[p].
             //   particleSurfaceNormal[p] = particleSurfaceNormal[p] + dcofF * temp.
             //   particleSurfaceTraction[p] = particleSurfaceTraction[p] + dcofF * temp.
             //   particleSurfacePosition[p] = particleSurfacePosition[p] + dF * temp.
@@ -29240,8 +28764,9 @@ void SolidMechanicsMPM::computeKineticEnergy( ParticleManager & particleManager 
  * each present field is populated only for active particle storage indices.
  * This is the MPM-to-material synchronization pass for crack-band length,
  * material orientation, F/L, temperature/rate, crack-tip distance, current
- * volume, density, J=V/V0 and damage. It does not execute a stress update.
- * The reverse material-to-MPM transfer is updateSolverDependencies().
+ * volume, density, J=V/V0 and damage. The subsequent updateStress()
+ * executes the constitutive kernel; updateSolverDependencies() copies
+ * material outputs back to MPM fields.
  */
 void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & particleManager )
 {
@@ -29516,7 +29041,7 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
  * overload appropriate to their rate update. A material providing an MPM
  * host-only stress kernel may select serial host execution; otherwise the
  * parallel-device kernel is launched with the configured batch size.
- * Particle stresses are written by the kernel, not assembled by this method.
+ * The selected kernel writes the updated particle stresses.
  */
 void SolidMechanicsMPM::updateStress( real64 dt,
                                       ParticleManager & particleManager )
@@ -29758,8 +29283,7 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       } );
     }
 
-    // The value transferred here is the model's specific internal energy.
-    // Particle mass and kinetic energy are not changed by this copy.
+    // Copy the model's specific internal energy to the particle field.
     if( constitutiveModel.hasWrapper( "specificInternalEnergy" ) )
     {
       arrayView1d< real64 const > const constitutiveSpecificInternalEnergy =
@@ -29926,12 +29450,14 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           boxMass += particleMass[p];
           boxMatVolume += particleVolume[p];
           boxParticleReferenceVolume += particleReferenceVolume[p];
-          // The expression below treats stored particleKineticEnergy as
-          // specific energy and multiplies by m_p. Its exact field units
-          // remain an existing developer question; no correction is made.
-          boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];  // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
+          // particleKineticEnergy already stores 1/2*m_p*|v_p|^2 (total
+          // particle energy). Sum totals, then divide by the globally
+          // summed mass to report mean specific kinetic energy. Multiplying
+          // by mass again here would incorrectly weight by m_p^2.
+          boxKineticEnergy += particleKineticEnergy[p];
 
-          // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
+          // particleInternalEnergy is SPECIFIC internal energy, so unlike
+          // kinetic energy it needs one factor of mass before MPI summation.
           boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
 
           boxTemperature += particleTemperature[p] * particleMass[p];
@@ -29952,7 +29478,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   } );
 
   // Packed MPI numerators: stress [xx,yy,zz,yz,xz,xy], mass, V0,
-  // damage*V0, energy*m, plastic strain*V, current V, temperature*m,
+  // damage*V0, internal energy*m, total kinetic energy, plastic strain*V,
+  // current V, temperature*m,
   // supplementalPressure*V. Normalization occurs only after global sum.
   real64 boxSums[20];
   boxSums[0] = boxStress[0].get();         // sig_xx * volume
@@ -29968,7 +29495,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   boxSums[7] = boxParticleReferenceVolume.get() > 0.0 ? boxParticleReferenceVolume.get() : 1.0;
   boxSums[8] = boxDamage.get();            // damage * volume
   boxSums[9] = boxInternalEnergy.get();    // internal energy * particle mass
-  boxSums[10] = boxKineticEnergy.get();    // stored kinetic energy * particle mass
+  boxSums[10] = boxKineticEnergy.get();    // total particle kinetic energy
   boxSums[11] = boxPlasticStrain[0].get(); // plasticStrain_xx
   boxSums[12] = boxPlasticStrain[1].get(); // plasticStrain_yy
   boxSums[13] = boxPlasticStrain[2].get(); // plasticStrain_zz
@@ -30051,9 +29578,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ","
          << boxSums[8] / boxSums[7] // damage (normalized by total particle reference volume, thus 1 if all material is damaged)
          << ", "
-         // These columns are mass-normalized after accumulating m_p*E_p.
-         // Retain the existing developer questions about particle energy units;
-         // this documentation does not establish the field's physics units.
+         // Both outputs are specific energies (J/kg): internal energy is
+         // mass weighted upstream; kinetic energy is summed as total 1/2 m v^2.
+         // The same global mass denominator is applied exactly once here.
          << boxSums[9] / massNormalization // internal energy
          << ", "
          << boxSums[10] / massNormalization // kinetic energy
@@ -30106,10 +29633,12 @@ void SolidMechanicsMPM::writeParticleData( const real64 GEOS_UNUSED_PARAM( time_
  * apply CFL*sqrt(rho_min*h_min^3/gamma_max), using the maximum configured
  * positive pair tension and the minimum positive active-particle density.
  * No stable-step limit is imposed when the corresponding speed/density
- * sample is unavailable. This routine does not update dt or particle state.
+ * sample is unavailable.
  *
- * @note The current method reduces over local particles; the missing global
- * MPI reductions and additional constraints are explicitly listed below.
+ * @note This method returns a rank-local bound. The simulation scheduler must
+ *       select the MPI-global minimum of the proposed time steps before the
+ *       next advance; do not impose a second reduction here. The other
+ *       possible restrictions are documented below but not included.
  */
 real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
 {
@@ -30144,8 +29673,8 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
 
   // CFL estimate from particle wavespeed plus advection speed.
   // A very small or absent measured speed imposes no acoustic limit
-  // (DBL_MAX). This maximum is local to the current reduction context;
-  // an MPI-wide maximum is a separate, still-unimplemented requirement.
+  // (DBL_MAX). The rank-local max speed produces a rank-local minimum
+  // proposed timestep; an outer scheduler is responsible for the MPI min.
   real64 dtReturn = maxWavespeed.get() > 1.0e-16 ? cflFactor * length / maxWavespeed.get() : DBL_MAX;
 
   // Surface tension supplies an additional explicit capillary-wave bound.
@@ -30205,7 +29734,8 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
   }
 
   // TODO: expand time-step calculation to account for:
-  // - global MPI max continuum wavespeed
+  // - any additional continuum wavespeed limits not already represented
+  //   by the rank-local max and scheduler-wide minimum
   // - particle crossing / CPDI corner crossing limit
   // - domain-resize velocity from F-table or stress control
   // - contact overlap correction limit
@@ -30646,9 +30176,8 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
                                          m_oversizedParticleTreatment );
     localIndex const rankParticleCount = countRankParticles( particleManager );
     // Split and reset use the same rank-count threshold for oversized
-    // particles. If rank storage is already large, treat the selected Split
-    // policy as a reset request; otherwise splitting is handled separately
-    // by subdivideParticles. This method does not itself create children.
+    // particles. When rank storage exceeds the threshold, select reset
+    // as the Split-policy fallback; subdivideParticles handles other splits.
     bool const oversizedResetFallbackOnThisRank =
     oversizedParticleTreatment == mpm::OversizedParticleTreatmentOption::Split &&
     exceedsOversizedParticleResetRankThreshold(
