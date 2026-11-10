@@ -14,7 +14,7 @@
  */
 
 /**
- * @file MPMEnums.hpp
+ * @file MPMSolverEnums.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPMSOLVERENUMS_HPP_
@@ -28,212 +28,247 @@ namespace geos
 namespace mpm
 {
 
-    
-  /**
-   * @enum TimeIntegrationOption
-   *
-   * The options for time integration
-   */
-  enum class TimeIntegrationOption : integer
-  {
-    QuasiStatic,      //!< QuasiStatic
-    ImplicitDynamic,  //!< ImplicitDynamic
-    ExplicitDynamic   //!< ExplicitDynamic
-  };
+/**
+ * @brief Selects the solver's time-integration mode.
+ *
+ * These are input/API choices, not a statement that every mode is implemented.
+ * The current SolidMechanicsMPM solver step executes ExplicitDynamic and
+ * rejects the other selections.
+ */
+enum class TimeIntegrationOption : integer
+{
+  QuasiStatic,      //!< Reserved selection for quasi-static integration.
+  ImplicitDynamic,  //!< Reserved selection for implicit dynamics.
+  ExplicitDynamic   //!< Explicit grid momentum update and particle advection.
+};
 
-  /**
-   * @enum UpdateMethodOption
-   *
-   * The options for time integration
-   */
-  enum class UpdateMethodOption : integer
-  {
-    FLIP,      //!< FLIP
-    PIC,       //!< PIC
-    XPIC,      //!< XPIC
-    FMPM       //!< FMPM
-  };
+/**
+ * @brief Selects the grid-to-particle velocity update in explicit MPM.
+ *
+ * Each method shares the same grid/particle state but differs in how particle
+ * velocity is reconstructed from nodal motion and prior particle velocity.
+ */
+enum class UpdateMethodOption : integer
+{
+  FLIP, //!< Increment particle velocity by the gathered grid velocity change.
+  PIC,  //!< Replace particle velocity by the gathered grid velocity.
+  XPIC, //!< Apply recursive particle/grid projections to reduce PIC dissipation.
+  FMPM  //!< Apply higher-order filtered/incremental MPM velocity updates.
+};
 
-  /**
-   * @enum GridToParticleMappingOption
-   *
-   * Selects how grid-to-particle kernels obtain their node connectivity,
-   * shape-function values, and shape-function gradients.
-   */
-  enum class GridToParticleMappingOption : integer
-  {
-    Precomputed, //!< Reuse the raw mapping arrays built once per step.
-    OnTheFly     //!< Recompute the raw particle mapping inside each G2P kernel.
-  };
+/**
+ * @brief Selects where G2P obtains its raw particle interpolation stencil.
+ *
+ * This concerns grid-to-particle evaluation, not the effective/coalesced P2G
+ * mapping arrays used when scattering particle quantities to grid nodes.
+ */
+enum class GridToParticleMappingOption : integer
+{
+  Precomputed, //!< Read connectivity, values and gradients assembled earlier in the step.
+  OnTheFly     //!< Re-evaluate the particle stencil inside the G2P kernel.
+};
 
-  /**
-   * @enum BoundaryConditionOption
-   *
-   * The options for essential boundary conditions
-   */
-  enum struct BoundaryConditionOption : integer
-  {
-    Outflow,    //!<Outflow
-    Symmetry,   //!<Symmetry
-    Moving,     //!<Moving
-    Contact     //!<Contact
-  };
+/**
+ * @brief Classifies the prescribed behavior of a physical grid boundary.
+ *
+ * These values select boundary handling independently of the material-pair
+ * contact law used at internal interfaces.
+ */
+enum struct BoundaryConditionOption : integer
+{
+  Outflow,  //!< Permit material to pass through the boundary.
+  Symmetry, //!< Enforce the prescribed symmetry component(s) of motion.
+  Moving,   //!< Prescribe the boundary velocity/motion.
+  Contact   //!< Use the wall-contact treatment for this physical boundary.
+};
 
-  /**
-   * @enum SurfaceFlag
-   *
-   * The flags associated with different surface types
-   */
-  enum struct SurfaceFlag : integer
-  {
-    Interior = 0,
-    FullyDamaged = 1,
-    Surface = 2,
-    Cohesive = 3,
-    DamagedCohesive = 4
-  };
+/**
+ * @brief Identifies the particle's free-surface, damage and cohesive status.
+ *
+ * The explicit integer values are stored in particle surface-flag fields;
+ * downstream filtering and normal reconstruction distinguish these states.
+ */
+enum struct SurfaceFlag : integer
+{
+  Interior = 0,        //!< Particle is not classified as a physical surface.
+  FullyDamaged = 1,    //!< Damaged surface state used by DFG reconstruction.
+  Surface = 2,         //!< Explicit/free surface particle.
+  Cohesive = 3,        //!< Surface carrying a cohesive interface definition.
+  DamagedCohesive = 4 //!< Cohesive surface with a damaged interface state.
+};
 
-  /**
-   * @enum InterpolationOption
-   *
-   * The options for interpolating tables
-   */
-  enum struct InterpolationOption : integer
-  {
-    Linear,
-    Cosine,
-    Smoothstep
-  };
+/**
+ * @brief Selects the interpolation function between successive table entries.
+ *
+ * Value and rate use the same interpolation law within each table interval.
+ * Cosine has a trigonometric ease-in/ease-out profile; Smoothstep uses a
+ * fifth-order polynomial with zero first and second endpoint derivatives.
+ */
+enum struct InterpolationOption : integer
+{
+  Linear,    //!< Piecewise linear interpolation with constant interval rate.
+  Cosine,    //!< Cosine easing with zero endpoint rate.
+  Smoothstep //!< Quintic smoothstep easing with smooth endpoint derivatives.
+};
 
-  /**
-   * @enum ContactNormalTypeOption
-   *
-   * The options for contact gap correction
-   */
-  enum struct ContactNormalTypeOption : integer
-  {
-    Difference,
-    MassWeighted,
-    LargerMass,
-    Mixed,
-    Aligned,
-    LogisticRegression
-  };
+/**
+ * @brief Chooses how opposing grid-field normals form one contact normal.
+ *
+ * The resulting pair normal points from field A toward B. The selected
+ * arbitration precedes dimensional projection and normalization.
+ */
+enum struct ContactNormalTypeOption : integer
+{
+  Difference,         //!< Difference between the two field normals.
+  MassWeighted,       //!< Difference weighted by the respective nodal masses.
+  LargerMass,         //!< Use the normal of the field with larger nodal mass.
+  Mixed,              //!< Mass-weight if densities agree; otherwise use the denser field.
+  Aligned,            //!< Weight field normals by mapped-normal alignment quality.
+  LogisticRegression  //!< Fit a separating normal from nearby particle samples.
+};
 
-  /**
-   * @enum ContactGapCorrectionOption
-   *
-   * The options for contact gap correction
-   */
-  enum struct ContactGapCorrectionOption : integer
-  {
-    Simple,
-    Implicit,
-    Softened
-  };
+/**
+ * @brief Chooses how the contact gap gates the approach correction.
+ *
+ * All three modes require the pair to be approaching. They differ in whether
+ * existing overlap is required or a positive-gap transition is permitted.
+ */
+enum struct ContactGapCorrectionOption : integer
+{
+  Simple,   //!< Apply on approach without requiring a negative surface gap.
+  Implicit, //!< Apply only on approach with a negative surface gap.
+  Softened  //!< Taper the correction across a finite positive-gap interval.
+};
 
-  /**
-   * @enum CPDIDomainScalingTypeOption
-   *
-   * The algorithms available for limiting a CPDI particle integration domain.
-   */
-  enum struct CPDIDomainScalingTypeOption : integer
-  {
-    Homel,     //!< Radially clip selected center-to-corner vectors and reconstruct the r-vectors.
-    VPHencky  //!< Preserve as much deviatoric Hencky stretch as possible subject to the domain-diagonal limit.
-  };
+/**
+ * @brief Chooses how an oversized CPDI box integration domain is limited.
+ *
+ * These act on the mapping/integration representation, not the physical
+ * constitutive stress update. The simplex/CPTI projection is handled
+ * separately from box-specific scaling.
+ */
+enum struct CPDIDomainScalingTypeOption : integer
+{
+  Homel,    //!< Limit center-to-corner reach, then reconstruct box generators.
+  VPHencky  //!< Retain feasible deviatoric Hencky stretch at fixed volume.
+};
 
-  /**
-   * @enum DomainResetTypeOption
-   *
-   * The algorithms available when the physical deformation gradient is reset.
-   */
-  enum struct GeometryResetOption : integer { FOnly, FAndGeometry };
+/**
+ * @brief Selects which reference quantities are rebased by a geometry reset.
+ */
+enum struct GeometryResetOption : integer
+{
+  FOnly,       //!< Reset the deformation-gradient reference without material-geometry rebasing.
+  FAndGeometry //!< Also rebase the stored material-geometry reference.
+};
 
-  enum struct DomainResetTypeOption : integer
-  {
-    IsotropicPolar, //!< Preserve rotation and volume while replacing the stretch by an isotropic stretch.
-    VPHencky       //!< Preserve volume and the largest feasible fraction of the deviatoric Hencky stretch.
-  };
+/**
+ * @brief Chooses the replacement stretch during a deformation/domain reset.
+ *
+ * Both methods preserve volume; the selected rule controls the remaining
+ * deviatoric stretch while preserving the appropriate rotation.
+ */
+enum struct DomainResetTypeOption : integer
+{
+  IsotropicPolar, //!< Preserve polar rotation and volume; use isotropic stretch.
+  VPHencky       //!< Preserve the largest feasible fraction of deviatoric Hencky stretch.
+};
 
-  /**
-   * @enum OversizedParticleTreatmentOption
-   *
-   * The actions available when a particle domain exceeds the oversized-domain
-   * diagonal threshold.
-   */
-  enum struct OversizedParticleTreatmentOption : integer
-  {
-    None,                     //!< Do not apply an oversized-particle-specific treatment.
-    ResetDeformationGradient, //!< Reset the deformation gradient/domain representation.
-    Split                     //!< Split the particle unless the rank particle-count limit requests reset fallback.
-  };
+/**
+ * @brief Chooses the response when particle size exceeds the grid-scale limit.
+ *
+ * Split can fall back to resetting the domain when the per-rank particle
+ * count is above the configured subdivision limit.
+ */
+enum struct OversizedParticleTreatmentOption : integer
+{
+  None,                     //!< Leave the oversized domain untreated by this policy.
+  ResetDeformationGradient, //!< Rebase the deformation-gradient/domain representation.
+  Split                     //!< Subdivide when allowed; otherwise use the reset fallback.
+};
 
-  /**
-   * @enum AreaIntegrationOption
-   *
-   * The options for nodal area integration
-   */
-  enum struct AreaIntegrationOption : integer
-  {
-    BruteForce,
-    Mesh
-  };
+/**
+ * @brief Selects the geometric integration used to estimate nodal surface area.
+ */
+enum struct AreaIntegrationOption : integer
+{
+  BruteForce, //!< Integrate sampled surface points around a node.
+  Mesh        //!< Integrate reconstructed surface patches using neighboring particles.
+};
 
-  /**
-   * @enum OverlapCorrectionOption
-   *
-   * The options for overlap correction
-   */
-  enum struct OverlapCorrectionOption : integer
-  {
-    Off,
-    NormalForce,
-    SPH,
-    Volume
-  };
+/**
+ * @brief Selects an additional overlap correction for contact/particle motion.
+ *
+ * These choices supplement the pairwise contact gap condition; they do not
+ * change the definition of the underlying particle material geometry.
+ */
+enum struct OverlapCorrectionOption : integer
+{
+  Off,         //!< No additional overlap correction.
+  NormalForce, //!< Add an overlap-dependent normal contact force.
+  SPH,         //!< Use the SPH-based particle overlap correction.
+  Volume       //!< Use the volume-based overlap correction.
+};
 
-  /**
-   * @enum CohesiveLawOption
-   *
-   * The options for cohesive laws
-   */
-  enum struct CohesiveLawOption : integer
-  {
-    Uncoupled,
-    NeedlemanXu,
-    Polymer
-  };
+/**
+ * @brief Selects the traction-separation constitutive law at a cohesive zone.
+ */
+enum struct CohesiveLawOption : integer
+{
+  Uncoupled,  //!< Independent normal and tangential cohesive response.
+  NeedlemanXu, //!< Coupled Needleman-Xu traction-separation model.
+  Polymer    //!< Polymer-interface cohesive response.
+};
 
-  /**
-   * @enum CohesiveSurfaceDisplacementUpdateOption
-   *
-   * The options for updating the cohesive particle surface displacement.
-   */
-  enum struct CohesiveSurfaceDisplacementUpdateOption : integer
-  {
-    TypeA, //!< Surface displacement from the deformed stored surface-position vector, Fig. 4a.
-    TypeB, //!< Surface displacement from the deformed CPDI particle-face vector, Fig. 4b.
-    Nodal  //!< Bugfix nodal displacement update from the cohesive-node reference position.
-  };
+/**
+ * @brief Chooses how cohesive-interface surface displacement is reconstructed.
+ *
+ * TypeA and TypeB use a surface offset transported from the cohesive
+ * reference configuration; Nodal uses cohesive-node displacement relative
+ * to its stored reference position. These are current algorithms, not patch
+ * versions.
+ */
+enum struct CohesiveSurfaceDisplacementUpdateOption : integer
+{
+  TypeA, //!< Transport the stored reference surface-position vector.
+  TypeB, //!< Transport a reference offset derived from the CPDI domain face.
+  Nodal  //!< Reconstruct displacement from cohesive-node reference motion.
+};
 
-  enum struct GPUSchemeOption : integer
-  {
-    Atomics,
-    NoAtomics,
-    RandomMix,
-    MinimalAtomics,
-    Reduction,
-    Colors
-  };
+/**
+ * @brief Selects a particle-to-grid execution strategy.
+ *
+ * The current solver dispatch supports Atomics. The other enum labels remain
+ * registered but are not executable P2G choices in this implementation.
+ */
+enum struct GPUSchemeOption : integer
+{
+  Atomics,        //!< Use atomic accumulation during particle-to-grid scatter.
+  NoAtomics,      //!< Registered alternative; not supported by current dispatch.
+  RandomMix,      //!< Registered alternative; not supported by current dispatch.
+  MinimalAtomics, //!< Registered alternative; not supported by current dispatch.
+  Reduction,      //!< Registered alternative; not supported by current dispatch.
+  Colors          //!< Registered alternative; not supported by current dispatch.
+};
 
-  enum struct NormalsAndPositionsMethodOption : integer
-  {
-    LogisticRegression,
-    DFGAndVolumeIntegration
-  };
+/**
+ * @brief Selects reconstruction of nodal surface normals and positions.
+ */
+enum struct NormalsAndPositionsMethodOption : integer
+{
+  LogisticRegression,     //!< Fit a local separating surface to neighboring particles.
+  DFGAndVolumeIntegration //!< Use mapped DFG normals and geometric support-volume inversion.
+};
 
-  ENUM_STRINGS( mpm::TimeIntegrationOption,
+/**
+ * @brief Register the exact input/output spellings of each enum.
+ *
+ * The strings below are externally visible option values. Their spelling and
+ * order (including lowercase entries such as "vpHencky") must remain paired
+ * with the enum members above; formatting changes must not alter them.
+ */
+
+ENUM_STRINGS( mpm::TimeIntegrationOption,
               "QuasiStatic",
               "ImplicitDynamic",
               "ExplicitDynamic" );
@@ -326,12 +361,18 @@ ENUM_STRINGS( mpm::NormalsAndPositionsMethodOption,
               "LogisticRegression",
               "DFGAndVolumeIntegration" );
 
+/** @brief Return the stored integer representation of a particle surface flag. */
 GEOS_HOST_DEVICE
 inline integer toInteger( SurfaceFlag const flag )
 {
   return static_cast< integer >( flag );
 }
 
+/**
+ * @brief Convert a stored integer to SurfaceFlag without range validation.
+ *
+ * Callers must ensure the value denotes one of the enumerators above.
+ */
 GEOS_HOST_DEVICE
 inline SurfaceFlag toSurfaceFlag( integer const flag )
 {
