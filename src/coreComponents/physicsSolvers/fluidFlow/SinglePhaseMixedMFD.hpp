@@ -208,6 +208,18 @@ public:
    */
   void initializeEnthalpy( DomainPartition & domain );
 
+  /**
+   * @brief Subtract h_K times the mass row from the energy row of every cell.
+   * @param domain the domain
+   * @param dofManager the dof manager
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side
+   */
+  void removeEnthalpyReference( DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) const;
+
 private:
 
   /**
@@ -239,18 +251,6 @@ private:
    */
   void computeGhostDofs( DomainPartition const & domain,
                          DofManager const & dofManager );
-
-  /**
-   * @brief Subtract h_K times the mass row from the energy row of every cell.
-   * @param domain the domain
-   * @param dofManager the dof manager
-   * @param localMatrix the system matrix
-   * @param localRhs the system right-hand side
-   */
-  void removeEnthalpyReference( DomainPartition & domain,
-                                DofManager const & dofManager,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs ) const;
 
   /// relative tolerance used in the mass matrix computations
   real64 m_areaRelTol;
