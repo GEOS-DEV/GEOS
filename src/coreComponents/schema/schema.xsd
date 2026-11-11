@@ -459,6 +459,10 @@
 					<xsd:selector xpath="SinglePhaseHybridFVM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseMixedMFDUniqueName">
+					<xsd:selector xpath="SinglePhaseMixedMFD" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversSinglePhasePoromechanicsUniqueName">
 					<xsd:selector xpath="SinglePhasePoromechanics" />
 					<xsd:field xpath="@name" />
@@ -2133,6 +2137,12 @@ Information output from lower logLevels is added with the desired log level
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="MixedMimetic" type="MixedMimeticType" maxOccurs="1">
+				<xsd:unique name="NumericalMethodsMixedMimeticMixedMimeticDiscretizationUniqueName">
+					<xsd:selector xpath="MixedMimeticDiscretization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementsType">
@@ -2591,6 +2601,25 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:pattern value=".*[\[\]`$].*|PPU|C1PPU|IHU|HU2PH" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="MixedMimeticType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="MixedMimeticDiscretization" type="MixedMimeticDiscretizationType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="MixedMimeticDiscretizationType">
+		<!--adaptiveConsistency => Flag enabling the consistency layer: when enabled (1, default), the cell-wise inner product is TPFA where the consistency indicator is below consistencyTolerance and innerProductType elsewhere; when disabled (0), innerProductType is used in every cell-->
+		<xsd:attribute name="adaptiveConsistency" type="integer" default="1" />
+		<!--consistencyTolerance => Tolerance of the consistency layer: the consistent (MFD) product is selected where the indicator exceeds it-->
+		<xsd:attribute name="consistencyTolerance" type="real64" default="0.001" />
+		<!--degeneracyTolerance => Degeneracy tolerance in percent: a free cell whose volume is below this percentage of the total volume of its node star is not admissible for the consistent (MFD) product and uses the diagonal (TPFA) product, whatever the consistency indicator says; a prescribed cell is not altered; 0 disables the layer-->
+		<xsd:attribute name="degeneracyTolerance" type="real64" default="0.1" />
+		<!--innerProductType => Type of inner product used in the MFD-compatible cells of the mixed mimetic solver-->
+		<xsd:attribute name="innerProductType" type="string" use="required" />
+		<!--nominalGradient => Nominal pressure gradient inducing the projected admissible flow field used by the residual indicators-->
+		<xsd:attribute name="nominalGradient" type="R1Tensor" default="{1,1,1}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
@@ -2808,6 +2837,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="SeismicityRate" type="SeismicityRateType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
+			<xsd:element name="SinglePhaseMixedMFD" type="SinglePhaseMixedMFDType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
 			<xsd:element name="SinglePhasePoromechanicsConformingFractures" type="SinglePhasePoromechanicsConformingFracturesType" />
 			<xsd:element name="SinglePhasePoromechanicsConformingFracturesALM" type="SinglePhasePoromechanicsConformingFracturesALMType" />
@@ -4908,6 +4938,61 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseHybridFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
+		<xsd:attribute name="allowNegativePressure" type="integer" default="0" />
+		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
+		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not.
+SourceFluxes application if isThermal is enabled :
+- negative value (injection): the mass balance equation is modified to considered the additional source term,
+- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.
+For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Convergence information
+ - Linear solver information
+ - Output residual norm
+ - Solution information (scaling, maximum changes, quality check)
+ - Time step information
+ - Solver timers information
+ - Boundary conditions information (incl. source flux)
+2
+ - The summary of declared fields and coupling-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
+		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
+		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
+		<xsd:attribute name="maxSequentialTemperatureChange" type="real64" default="0.1" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--temperature => Temperature-->
+		<xsd:attribute name="temperature" type="real64" default="0" />
+		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
+		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
+		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
+		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseMixedMFDType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
