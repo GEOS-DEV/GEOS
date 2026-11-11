@@ -98,7 +98,7 @@ For the external workflow, the mesh file ``verticalFault_ESG_benchmark.vtm`` is 
 The vtm file ``verticalFault_ESG_benchmark.vtm`` references two separate mesh files: the domain mesh ``Domain_verticalFault_benchmark.vtu`` and the fault mesh ``Fault_verticalFault_benchmark.vtu``, which are generated prior to running the GEOS simulation. The ``mesh doctor`` module provides a convenient way to prepare these meshes. For this case, functions ``generateFractures`` and ``generateGlobalIds`` are used (more information here: `mesh doctor  <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/mesh-doctor.html#>`__).
 
 
-For internal workflow, only the domain mesh file ``verticalFault_ISG_benchmark.vtu`` is imported
+For the internal workflow, only the domain mesh file ``verticalFault_ISG_benchmark.vtu`` is imported
 
 .. literalinclude:: ../../../../../../../inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_unstable_ISG_benchmark.xml
     :language: xml
