@@ -1598,9 +1598,13 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
     getIterationStats().outputStatistics();
   }
 
-  bool wrongIterationCSVOutputRequest = getIterationStats().getCSVOutputRequest() &&
+  // CSV files are only written by rank 0
+  bool const isRankZero = MpiWrapper::commRank() == 0;
+  bool wrongIterationCSVOutputRequest = isRankZero &&
+                                        getIterationStats().getCSVOutputRequest() &&
                                         !getIterationStats().getCSVOutputOpened();
-  bool wrongConvergenceCSVOutputRequest = getConvergenceStats().getCSVOutputRequest() &&
+  bool wrongConvergenceCSVOutputRequest = isRankZero &&
+                                          getConvergenceStats().getCSVOutputRequest() &&
                                           !getConvergenceStats().getCSVOutputOpened();
 
   GEOS_WARNING_IF( wrongIterationCSVOutputRequest,
