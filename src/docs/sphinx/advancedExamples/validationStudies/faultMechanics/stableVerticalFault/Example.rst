@@ -8,7 +8,9 @@ Shear Stress Along a Stable Vertical Fault
 
 **Context**
 
-In this example, the Augmented Lagrangian Method (ALM) `(Frigo et al., 2026)  <https://www.sciencedirect.com/science/article/abs/pii/S0021999126003414>`__ is applied to solve a friction and stable fault contact problem in a depleted reservoir. This approach employs conformal discretization where discontinuities are explicitly represented by 2D interface elements placed between 3D continuum elements, coupled with a Coulomb friction law. The formulation overcomes the inf-sup instability of low-order discretizations by satisfying the Babuška–Brezzi condition via displacement enrichment with bubble functions. The model computes stress perturbations (normal and shear components) along the stable fault, which are subsequently verified against the corresponding analytical solution `(Jansen and Meulenbroek, 2022)  <https://njgjournal.nl/index.php/njg/article/view/11453/17972>`__. This comparison confirms the accuracy of our fault contact model and coupled poroelastic formulation.
+In this example, the Augmented Lagrangian Method (ALM) `(Frigo et al., 2026)  <https://www.sciencedirect.com/science/article/abs/pii/S0021999126003414>`__ is applied to solve a friction and stable fault contact problem in a depleted reservoir. This approach employs conformal discretization where discontinuities are explicitly represented by 2D interface elements placed between 3D continuum elements. The formulation overcomes the inf-sup instability of low-order discretizations by satisfying the Babuška–Brezzi condition via displacement enrichment with bubble functions and is coupled with a Coulomb friction law. Implemented in GEOS, the model computes stress perturbations (normal and shear components) along the stable fault, which are subsequently verified against the corresponding analytical solution `(Jansen and Meulenbroek, 2022)  <https://njgjournal.nl/index.php/njg/article/view/11453/17972>`__. This comparison confirms the accuracy of our fault contact model and coupled poroelastic formulation.
+
+A companion case with a frictionless fault, in which shear slip occurs upon depletion, is presented in :ref:`unstableVerticalFault`. Both cases share the set-up described on this page.
 
 
 **Input file**
@@ -27,9 +29,6 @@ The xml input files for the test case with internal workflow are located at:
 
   inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/ALM_verticalFault_base.xml
   inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ISG_benchmark.xml
-
-
-Note that in the external workflow, two mesh files are required, a damain mesh with 3D cells and a fault mesh with 2D suface elements, both of which are generated prior to running the GEOS simulation. In the internal workflow, only the domain mesh file is imported, and the fault mesh is subsequently generated within GEOS using ``SurfaceGenerator``.
 
 
 Corresponding mesh files and a python script for post-processing the simulation results are also provided:
@@ -95,7 +94,7 @@ For the external workflow, the mesh file ``verticalFault_ESG_benchmark.vtm`` is 
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
 
-The vtm file ``verticalFault_ESG_benchmark.vtm`` references two separate mesh files: the domain mesh ``Domain_verticalFault_benchmark.vtu`` and the fault mesh ``Fault_verticalFault_benchmark.vtu``, which are generated prior to running the GEOS simulation. The ``mesh doctor`` module provides a convenient way to prepare these meshes. For this case, functions ``generateFractures`` and ``generateGlobalIds`` are used (more information here: `mesh doctor  <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/mesh-doctor.html#>`__).
+The vtm file ``verticalFault_ESG_benchmark.vtm`` references two separate mesh files: the damain mesh ``Domain_verticalFault_benchmark.vtu`` and the fault mesh ``Fault_verticalFault_benchmark.vtu``, which are generated prior to running the GEOS simulation. The ``mesh doctor`` module provides a convenient way to prepare these meshes. For this case, functions ``generateFractures`` and ``generateGlobalIds`` are used (more information here: `mesh doctor  <https://geosx-geosx.readthedocs-hosted.com/projects/geosx-geospythonpackages/en/latest/mesh-doctor.html#>`__).
 
 
 For internal workflow, only the domain mesh file ``verticalFault_ISG_benchmark.vtu`` is imported
@@ -169,7 +168,7 @@ in their corresponding documents.
 In this example, let us focus on the coupling solver.
 This solver (``poroFractureSolver``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``singlePhaseFlowSolver``) and solid solver (here: ``fractureMechSolver``).
-These solvers are forced to interact with all the constitutive models in the target regions (here, we have only two, ``Region`` and ``Fault``).
+These solvers are forced to interact with all the constitutive models in the target regions (here, we only two, ``Region`` and ``Fault``).
 More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). This way, the two single-physics solvers will be simultaneously called and executed for solving the problem.
 
 ------------------------------------------------
