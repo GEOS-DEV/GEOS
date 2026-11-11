@@ -52,6 +52,7 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Rock }"
       isUpdateReactivePorosity="1"
+      isUpdateSurfaceArea="1"
       allowNegativePressure="1"
       logLevel="1">
       <NonlinearSolverParameters
@@ -98,27 +99,22 @@
   </NumericalMethods>
 
   <Constitutive>
-    <!-- Eigenstrain method: mineral precipitation imposes a stress-free volumetric
-         (anelastic) strain increment = Σ_r Δn_r · M_r / ρ_r directly on the solid,
-         which generates stress. This replaces the Biot pore-filling effective-stress
-         coupling of the PorousReactiveDamage* model, so a plain ReactivePorosity
-         (no Biot grain/mineral bulk moduli) is used instead of BiotReactivePorosity.
-         The damage phase field, damage permeability, and damage diffusion are kept. -->
-    <EigenStrainReactiveDamageSpectralElasticIsotropicCarmanKozenyPermeability
+    <EigenStrainReactiveDamageSpectralElasticIsotropicCarmanKozenyPermeabilityArchieDiffusion
       name="reactiveRock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      diffusionModelName="diffusion"/>
 
     <DamageSpectralElasticIsotropic
       name="rockSolid"
       defaultDensity="0.0"
       defaultBulkModulus="6.6667e9"
-      defaultShearModulus="1e+11"
-      lengthScale="0.002"
+      defaultShearModulus="4e9"
+      lengthScale="0.001"
       defaultCriticalFractureEnergy="0.3"
       criticalStrainEnergy="0.0"
-      degradationLowerLimit="1e-4"
+      degradationLowerLimit="1e-3"
       fractureModelType="Brittle"
       localDissipationOption="Linear"
       hybridSplit="1"/>
@@ -145,11 +141,13 @@
       particleDiameter="1.909e-05"
       sphericity="1.0"/>
 
-    <ConstantDiffusion
+    <ArchieDiffusion
       name="diffusion"
       phaseNames="{ water }"
       defaultPhaseDiffusivityMultipliers="{ 1 }"
-      diffusivityComponents="{ 1e-06, 1e-06, 1e-06 }"/>
+      fluidDiffusivity="1e-3"
+      matrixCementationExponent="4.0"
+      fractureCementationExponent="1.0"/>
   </Constitutive>
 
   <Geometry>

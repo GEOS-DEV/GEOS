@@ -19,7 +19,7 @@
       objectPath="ElementRegions/Rock"
       fieldName="initialSurfaceArea"
       component="0"
-      scale="0.1"/>
+      scale="20.0"/>
 
     <!-- Zero surface area at inlet source: no reactions in fluid reservoir element -->
     <FieldSpecification

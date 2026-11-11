@@ -53,6 +53,7 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Rock }"
       isUpdateReactivePorosity="1"
+      isUpdateSurfaceArea="1"
       allowNegativePressure="1"
       logLevel="1">
       <NonlinearSolverParameters
@@ -110,11 +111,11 @@
       name="rockSolid"
       defaultDensity="0.0"
       defaultBulkModulus="6.6667e9"
-      defaultShearModulus="1e+11"
-      lengthScale="0.002"
+      defaultShearModulus="4e9"
+      lengthScale="0.001"
       defaultCriticalFractureEnergy="0.3"
       criticalStrainEnergy="0.0"
-      degradationLowerLimit="1e-4"
+      degradationLowerLimit="1e-3"
       fractureModelType="Brittle"
       localDissipationOption="Linear"
       hybridSplit="1"/>
@@ -136,7 +137,7 @@
       molarWeights="{ 0.10009 }"
       mineralDensities="{ 2710.0 }"
       defaultGrainBulkModulus="7.3e+10"
-      defaultMineralBulkModulus="6.6667e9"/>
+      defaultMineralBulkModulus="66.66667e9"/>
 
     <CarmanKozenyPermeability
       name="rockPerm"
@@ -149,8 +150,8 @@
       name="diffusion"
       phaseNames="{ water }"
       defaultPhaseDiffusivityMultipliers="{ 1 }"
-      fluidDiffusivity="1e-4"
-      matrixCementationExponent="3.0"
+      fluidDiffusivity="1e-3"
+      matrixCementationExponent="4.0"
       fractureCementationExponent="1.0"/>
   </Constitutive>
 
