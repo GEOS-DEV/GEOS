@@ -180,7 +180,7 @@ Numerical methods in multiphysics settings are similar to single physics numeric
 
 As mentioned before, the coupling solver and the solid mechanics solver require the specification of a discretization method called ``FE1``.
 In GEOS, this discretization method represents a finite element method
-using linear basis functions and Gaussian quadrature rules.
+using tri-linear basis functions and Gaussian quadrature rules.
 For more information on defining finite elements numerical schemes,
 please see the dedicated :ref:`FiniteElement` section.
 
