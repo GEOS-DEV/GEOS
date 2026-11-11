@@ -214,6 +214,7 @@ public:
    * @param dofManager the dof manager
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side
+   * @note public: it contains a device lambda, which nvcc rejects in a private member function
    */
   void removeEnthalpyReference( DomainPartition & domain,
                                 DofManager const & dofManager,

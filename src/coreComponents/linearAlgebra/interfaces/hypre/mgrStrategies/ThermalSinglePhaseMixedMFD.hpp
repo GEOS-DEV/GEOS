@@ -35,7 +35,7 @@ namespace mgr
  * @brief MGR strategy of the thermal mixed mimetic single-phase solver.
  *
  * Unknowns: face mass and heat fluxes, cell pressure, temperature and enthalpy. Level 0 eliminates
- * every face flux as in the isothermal strategy (symmetric Gauss-Seidel on the flux blocks, Jacobi
+ * every face flux as in the isothermal strategy (symmetric Gauss-Seidel on CPU, Jacobi on GPU, with Jacobi
  * interpolation from their diagonals); level 1 eliminates the enthalpy, whose closure rows
  * h - h_eos(p, T) = 0 have a unit diagonal, exactly; the coarse solve is one BoomerAMG V-cycle on
  * the pressure-temperature system.
@@ -63,7 +63,13 @@ public:
     m_labels[1].push_back( 3 );
     setupLabels();
 
+    // Hybrid symmetric Gauss-Seidel (hypre type 6) is host-only. Use device-supported
+    // Jacobi on GPU; for condensed two-point fluxes the F-block is diagonal.
+  #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    m_levelFRelaxType[0]         = MGRFRelaxationType::jacobi;
+  #else
     m_levelFRelaxType[0]         = MGRFRelaxationType::hybridSymmetricGaussSeidel;
+  #endif
     m_levelFRelaxIters[0]        = 1;
     m_levelInterpType[0]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
