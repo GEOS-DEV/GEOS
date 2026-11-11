@@ -28,6 +28,9 @@
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
+#include <utility>
 
 namespace geos
 {
@@ -66,6 +69,8 @@ public:
    * @param avgStrain the strain averaged over quadrature points
    * @param stress the stress solution field
    * @param avgStress the stress averaged over quadrature points
+   * @param temperature the temperature field (may be empty for non-thermal simulations)
+   * @param temperature_n the temperature at the previous time step (may be empty for non-thermal simulations)
    */
   AverageStressStrainOverQuadraturePoints( NodeManager & nodeManager,
                                            EdgeManager const & edgeManager,
@@ -78,7 +83,9 @@ public:
                                            fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
                                            fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
                                            arrayView3d< real64 const, solid::STRESS_USD > const stress,
-                                           fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress ):
+                                           fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress,
+                                           arrayView1d< real64 const > const temperature,
+                                           arrayView1d< real64 const > const temperature_n ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -90,7 +97,9 @@ public:
     m_avgStrain( avgStrain ),
     m_avgPlasticStrain( avgPlasticStrain ),
     m_stress( stress ),
-    m_avgStress( avgStress )
+    m_avgStress( avgStress ),
+    m_temperature( temperature ),
+    m_temperature_n( temperature_n )
   {}
 
   /**
@@ -151,6 +160,11 @@ public:
     real64 elasticStrainInc[6] = {0.0};
     m_solidUpdate.getElasticStrainInc( k, q, elasticStrainInc );
 
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const deltaTemperature = ( m_temperature.size() > 0 )
+                                    ? ( m_temperature[k] - m_temperature_n[k] )
+                                    : 0.0;
+
     real64 conversionFactor[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5}; // used for converting from engineering shear to tensor shear
 
     for( int icomp = 0; icomp < 6; ++icomp )
@@ -158,12 +172,17 @@ public:
       m_avgStrain[k][icomp] += conversionFactor[icomp]*detJxW*strain[icomp]/m_elementVolume[k];
       m_avgStress[k][icomp] += detJxW*m_stress[k][q][icomp]/m_elementVolume[k];
 
+      // Thermal strain is purely volumetric: subtract thermal strain from normal components so that
+      // only the mechanical (plastic) part is accumulated.
+      real64 const thermalStrainInc = ( icomp < 3 ) ? thermalExpansionCoefficient * deltaTemperature : 0.0;
+      real64 const mechanicalStrainInc = strainInc[icomp] - thermalStrainInc;
+
       // This is a hack to handle boundary conditions such as those seen in plane-strain wellbore problems
       // Essentially, if bcs are constraining the strain (and thus total displacement), we do not accumulate any plastic strain (regardless
       // of stresses in material law)
-      if( std::abs( strainInc[icomp] ) > 1.0e-8 )
+      if( std::abs( mechanicalStrainInc ) > 1.0e-8 )
       {
-        m_avgPlasticStrain[k][icomp] += conversionFactor[icomp]*detJxW*(strainInc[icomp] - elasticStrainInc[icomp])/m_elementVolume[k];
+        m_avgPlasticStrain[k][icomp] += conversionFactor[icomp]*detJxW*(mechanicalStrainInc - elasticStrainInc[icomp])/m_elementVolume[k];
       }
     }
   }
@@ -196,8 +215,13 @@ public:
 
 protected:
 
+  /// Use the concrete wrapper returned by the model factory. This preserves
+  /// final wrappers for device compilation instead of slicing them to the
+  /// model's polymorphic base wrapper.
+  using KernelWrapper = decltype( std::declval< SOLID_TYPE const & >().createKernelUpdates() );
+
   /// The material
-  typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
+  KernelWrapper const m_solidUpdate;
 
   /// The displacement solution
   fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const m_displacement;
@@ -216,6 +240,12 @@ protected:
 
   /// The average stress
   fields::solidMechanics::arrayView2dLayoutAvgStress const m_avgStress;
+
+  /// The temperature at the current time step (empty for non-thermal simulations)
+  arrayView1d< real64 const > const m_temperature;
+
+  /// The temperature at the previous time step (empty for non-thermal simulations)
+  arrayView1d< real64 const > const m_temperature_n;
 
 };
 
@@ -258,11 +288,14 @@ public:
                    fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
                    fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
                    arrayView3d< real64 const, solid::STRESS_USD > const stress,
-                   fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress )
+                   fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress,
+                   arrayView1d< real64 const > const temperature = {},
+                   arrayView1d< real64 const > const temperature_n = {} )
   {
     AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
-            solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain, stress, avgStress );
+            solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain, stress, avgStress,
+            temperature, temperature_n );
 
     AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );

@@ -22,3 +22,4 @@ Most of the tutorial models are also quite small, so that large computational re
 
    step04/Tutorial
 
+After completing these tutorials, continue with the :ref:`BasicExamples`, which show complete problems organized by physical process.

@@ -34,9 +34,12 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ReactiveCompositionalMultiphaseOBL.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseMixedMFD.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALMReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp"
@@ -63,8 +66,9 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
 
   // Hypre's parameters to use MGR as a preconditioner
-  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
-  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
+  hypre::mgr::MGRParameters const mgrParameters = hypre::mgr::defaultMGRParameters();
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, mgrParameters.tolerance ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, mgrParameters.maxIterations ) );
 
   // Disabling Option 2 (0x2): In this context, we use MGR as a preconditioner for a Krylov method (e.g., GMRES),
   // and our interest lies in the Krylov method's convergence history, not MGR's. Hence, we turn off the second bit
@@ -76,6 +80,18 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
   dofManager->getLocalDofComponentLabels( mgrData.pointMarkers );
+
+  // solver-provided per-dof labels override the field-component labels (e.g. to distinguish
+  // sub-blocks of a field, as in the adaptive mixed MFD TPFA/MFD face-flux splitting)
+  if( !params.mgr.customPointMarkers.empty() )
+  {
+    GEOS_ERROR_IF_NE_MSG( params.mgr.customPointMarkers.size(), mgrData.pointMarkers.size(),
+                          "MGR preconditioner: customPointMarkers size does not match the number of local dofs" );
+    for( localIndex i = 0; i < mgrData.pointMarkers.size(); ++i )
+    {
+      mgrData.pointMarkers[i] = LvArray::integerConversion< HYPRE_Int >( params.mgr.customPointMarkers[i] );
+    }
+  }
 
   if( params.logLevel >= 1 )
   {
@@ -173,6 +189,14 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< SinglePhaseHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::singlePhaseMixedMFD:
+    {
+      GEOS_ERROR_IF( params.mgr.customPointMarkers.empty(),
+                     "The singlePhaseMixedMFD MGR strategy requires solver-provided point markers "
+                     "splitting the face-flux dofs by the TPFA/MFD classification" );
+      setStrategy< SinglePhaseMixedMFD >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:
     {
       setStrategy< SinglePhasePoromechanics >( params.mgr, numComponentsPerField, precond, mgrData );
@@ -186,6 +210,16 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures:
     {
       setStrategy< SinglePhasePoromechanicsConformingFractures >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALM:
+    {
+      setStrategy< SinglePhasePoromechanicsConformingFracturesALM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesALMReservoirFVM:
+    {
+      setStrategy< SinglePhasePoromechanicsConformingFracturesALMReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM:

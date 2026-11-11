@@ -14,7 +14,7 @@ When calibrating solid material parameters to experimental data, it can be a has
 
 .. code-block:: sh
 
-   ./bin/geosx -i myTest.xml
+   geos -i myTest.xml
 
 
 XML Structure

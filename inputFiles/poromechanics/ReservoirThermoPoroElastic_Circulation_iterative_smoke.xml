@@ -1,0 +1,223 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./ReservoirThermoPoroElastic_Circulation_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseReservoirPoromechanics
+      name="reservoirPoromechanics"
+      solidSolverName="linearElasticity"
+      reservoirAndWellsSolverName="reservoirSystem"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonTol="1e-4"
+        lineSearchAction="None"
+        newtonMaxIter="20"
+        maxAllowedResidualNorm="1e40"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </SinglePhaseReservoirPoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="linearElasticity"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"
+        newtonMinIter="0"
+        newtonTol="1.0e-5"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1.0e-10"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <SinglePhaseReservoir
+      name="reservoirSystem"
+      flowSolverName="singlePhaseFlow"
+      wellSolverName="singlePhaseWell"
+      logLevel="1"
+      usePhysicsScaling="0"
+      targetRegions="{ Domain, wellRegion1, wellRegion2 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        lineSearchAction="None"
+        newtonMaxIter="40"
+        maxAllowedResidualNorm="1e40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </SinglePhaseReservoir>
+
+    <SinglePhaseFVM
+      name="singlePhaseFlow"
+      logLevel="1"
+      isThermal="1"
+      discretization="tpfaFlow"
+      temperature="0.0"
+      targetRegions="{ Domain }"/>
+
+    <WellManager
+      name="singlePhaseWell"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ wellRegion1, wellRegion2 }">
+      <SinglePhaseWell
+        name="wellControls1"
+        logLevel="1"
+        type="producer"
+        control="totalVolRate"
+        enableCrossflow="0"
+        useSurfaceConditions="1"
+        surfacePressure="101325"
+        surfaceTemperature="20"
+        writeCSV="1">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="1e3"
+          referenceElevation="360"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          constraintScheduleTableName="producerTotalRateTable"/>
+      </SinglePhaseWell>
+      <SinglePhaseWell
+        name="wellControls2"
+        logLevel="1"
+        type="injector"
+        control="totalVolRate"
+        enableCrossflow="0"
+        useSurfaceConditions="1"
+        surfacePressure="101325"
+        surfaceTemperature="20"
+        writeCSV="1">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="5e7"
+          referenceElevation="360"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          constraintScheduleTableName="injectorTotalRateTable"
+          injectionStream="{ 1.0, 0.0 }"
+          injectionTemperature="20"/>
+      </SinglePhaseWell>
+    </WellManager>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -600, 1400 }"
+      yCoords="{ -600, 1000 }"
+      zCoords="{ -400, 1200 }"
+      nx="{ 10 }"
+      ny="{ 8 }"
+      nz="{ 8 }"
+      cellBlockNames="{ cb1 }">
+      <InternalWell
+        name="well_producer"
+        logLevel="1"
+        wellRegionName="wellRegion1"
+        wellControlsName="wellControls1"
+        polylineNodeCoords="{ { -83.8583383789, 229.961401978, 541.520494531 },
+                              { 186.55914209, 261.233222046, 404.910875391 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.11"
+        numElementsPerSegment="100">
+        <Perforation
+          name="producer1_Stage1_perf1"
+          distanceFromHead="304.5"
+          skinFactor="1"/>
+      </InternalWell>
+      <InternalWell
+        name="well_injector"
+        logLevel="1"
+        wellRegionName="wellRegion2"
+        wellControlsName="wellControls2"
+        polylineNodeCoords="{ { -56.8357568359, 232.733696166, 418.955276953 },
+                              { 186.90553262, 251.16100728, 302.01191758 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.11"
+        numElementsPerSegment="100">
+        <Perforation
+          name="injector1_Stage3_perf1"
+          distanceFromHead="269.6"
+          skinFactor="10"/>
+      </InternalWell>
+    </InternalMesh>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock, water, thermalCond }"/>
+
+    <WellElementRegion
+      name="wellRegion1"
+      materialList="{ water }"/>
+
+    <WellElementRegion
+      name="wellRegion2"
+      materialList="{ water }"/>
+  </ElementRegions>
+
+  <Events
+    minTime="-1e10"
+    maxTime="401.0">
+    <PeriodicEvent
+      name="outputs1"
+      endTime="10000.0"
+      timeFrequency="100"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs2"
+      beginTime="10000.0"
+      timeFrequency="1e4"
+      target="/Outputs/vtkOutput"/>
+
+    <SoloEvent
+      beginTime="-1e10"
+      name="singlephasePoromechanicsPreEquilibrationStep"
+      target="/Tasks/singlephasePoromechanicsPreEquilibrationStep"
+      targetTime="-1e10"/>
+
+    <PeriodicEvent
+      name="solverApplications00"
+      beginTime="0.0"
+      endTime="1.0"
+      forceDt="1.0"
+      target="/Solvers/reservoirPoromechanics"/>
+
+    <PeriodicEvent
+      name="solverApplications0"
+      beginTime="1.0"
+      endTime="401.0"
+      forceDt="100.0"
+      target="/Solvers/reservoirPoromechanics"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="3"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Tasks>
+    <SinglePhaseReservoirPoromechanicsInitialization
+      logLevel="1"
+      name="singlephasePoromechanicsPreEquilibrationStep"
+      poromechanicsSolverName="reservoirPoromechanics"/>
+  </Tasks>
+</Problem>

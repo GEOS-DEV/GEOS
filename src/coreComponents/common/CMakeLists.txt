@@ -90,7 +90,7 @@ set( common_sources
      Units.cpp
    )
 
-set( dependencyList ${parallelDeps} lvarray RAJA chai umpire)
+set( dependencyList ${parallelDeps} lvarray RAJA chai umpire::umpire)
 
 if (TARGET conduit::conduit)
   set( dependencyList ${dependencyList} conduit::conduit )
@@ -143,6 +143,15 @@ blt_add_library( NAME       common
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
+
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14.3 )
+  # GCC 14.0--14.2 falsely diagnoses libstdc++'s std::regex state move
+  # constructor as maybe-uninitialized at high optimization. Keep the
+  # diagnostic enabled and avoid only the problematic inlining in this
+  # translation unit.
+  set_source_files_properties( ${CMAKE_CURRENT_SOURCE_DIR}/logger/ErrorHandling.cpp
+                                PROPERTIES COMPILE_OPTIONS "-fno-inline" )
+endif()
 
 target_include_directories( common PUBLIC ${CMAKE_BINARY_DIR}/include )
 target_include_directories( common PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PhaseFieldFracture_ThreePointsBending_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"
+        subcycling="0"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="SolidMechSolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        lineSearchAction="None"
+        newtonTol="1.0e-5"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1e-5"
+        preconditionerType="amg"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      irreversibilityFlag="1"
+      damageUpperBound="0.95"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        lineSearchAction="None"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <Mesh>
+    <VTKMesh
+      name="ThreePointsBending"
+      file="../../../../../GEOSDATA/DataSets/PhaseField/threePointsBendSingleNotch/threePointsBendingSingleNotch.vtu"
+      nodesetNames="{ support_left_line, support_right_line, load_line_full_thickness, starter_notch_flank_nodes }"/>
+  </Mesh>
+
+  <Events
+    maxTime="600.0">
+    <PeriodicEvent
+      name="vtkOutput0"
+      endTime="360.0"
+      cycleFrequency="10"
+      target="/Outputs/ThreePointsBending_VTKOutput"/>
+
+    <PeriodicEvent
+      name="vtkOutput1"
+      beginTime="360.0"
+      cycleFrequency="100"
+      target="/Outputs/ThreePointsBending_VTKOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="360.0"
+      maxEventDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="360.0"
+      maxEventDt="0.01"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="500"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="ThreePointsBending_VTKOutput"
+      plotFileRoot="threePointsBending"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

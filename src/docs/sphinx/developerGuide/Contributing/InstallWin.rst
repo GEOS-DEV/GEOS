@@ -81,13 +81,13 @@ There are two things you may have noticed reading through the ``Dockerfile`` :
 
 .. code:: shell
 
-    PS> $env:VERSION='224-965'
-    PS> $env:IMG='ubuntu20.04-gcc9'
+    PS> $env:VERSION='364-1112'
+    PS> $env:IMG='ubuntu24.04-gcc13'
     PS> $env:REMOTE_DEV_IMG="remote-dev-${env:IMG}"
 
 
 Please note the preposition of ``env:`` in the windows formalisme. The ``${ORG}`` variable will be hard-coded as ``geosx``. The last variable will be use
-as the image name. ``224-965`` refers to a specific version of the TPLs which may not be up to date. Please refer to :ref:`Continuous_Integration_process` for further info.
+as the image name. ``364-1112`` refers to a specific version of the TPLs which may not be up to date: use the ``GEOS_TPL_TAG`` value from ``.devcontainer/devcontainer.json``. Please refer to :ref:`Continuous_Integration_process` for further info.
 
 - You'll need to generate a ssh-key to be able to access the container without the need for defining a password. This can be done from the *PowerShell*,
 
@@ -145,7 +145,7 @@ Coming back to our ``PowerShell`` terminal, we can check that our container is r
 
     PS > docker ps -a
     CONTAINER ID   IMAGE                                 COMMAND               CREATED                  STATUS          PORTS                                     NAMES
-    1efffac66c4c   remote-dev-ubuntu20.04-gcc9:224-965   "/usr/sbin/sshd -D"   Less than a second ago   Up 18 seconds   0.0.0.0:64000->22/tcp, :::64000->22/tcp   remote-dev-ubuntu20.04-gcc9-224-965
+    1efffac66c4c   remote-dev-ubuntu24.04-gcc13:364-1112   "/usr/sbin/sshd -D"   Less than a second ago   Up 18 seconds   0.0.0.0:64000->22/tcp, :::64000->22/tcp   remote-dev-ubuntu24.04-gcc13-364-1112
 
     PS > ssh root@localhost -p 64000
     Enter passphrase for key 'C:\***********/.ssh/id_rsa':
@@ -197,7 +197,7 @@ Trying to launch a case using ``mpirun``, you might get the following warning
 
 .. code:: console
 
-    root@b105f9ead860:/tmp# mpirun -np 4 /app/code/GEOS/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y1 -z1
+    root@b105f9ead860:/tmp# mpirun -np 4 /app/code/GEOS/build-environment-debug/bin/geosx -i [geosx-case].xml -x 4 -y 1 -z 1
     --------------------------------------------------------------------------
     mpirun has detected an attempt to run as root.
     Running at root is *strongly* discouraged as any mistake (e.g., in

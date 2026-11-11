@@ -3,6 +3,8 @@ set( gtest_geosx_tests
           testIsothermalReservoirCompositionalMultiphaseMSWells.cpp 
           testIsothermalReservoirCompositionalMultiphaseSSWells.cpp 
           testOpenClosePerf.cpp
+          testThermalEstimatorProdWell.cpp
+          testThermalEstimatorInjWell.cpp
           testReservoirCompositionalMultiphaseMSWells.cpp
           testReservoirSinglePhaseMSWells.cpp
           testReservoirThermalSinglePhaseMSWells.cpp

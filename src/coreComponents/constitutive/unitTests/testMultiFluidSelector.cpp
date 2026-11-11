@@ -41,9 +41,32 @@ protected:
   FluidType * m_model{};
 };
 
+using MultiFluidSelectorTestBlackOilFluid = MultiFluidSelectorTest< BlackOilFluid >;
 using MultiFluidSelectorTestDeadOilFluid = MultiFluidSelectorTest< DeadOilFluid >;
 using MultiFluidSelectorTestCO2BrinePhillipsThermalFluid = MultiFluidSelectorTest< CO2BrinePhillipsThermalFluid >;
 using MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity = MultiFluidSelectorTest< CompositionalTwoPhaseConstantViscosity >;
+
+TEST_F( MultiFluidSelectorTestBlackOilFluid, testValidComponents )
+{
+  bool isExecuted = false;
+  constitutiveComponentUpdatePassThru( getFluid(), 3, [&]( auto &, auto NC )
+  {
+    EXPECT_EQ( NC(), 3 );
+    isExecuted = true;
+  } );
+  EXPECT_TRUE( isExecuted );
+}
+
+TEST_F( MultiFluidSelectorTestBlackOilFluid, testInvalidComponents )
+{
+  for( integer components : { 2, 4 } )
+  {
+    EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), components, []( auto &, auto )
+    {
+      FAIL(); // Black-oil fluids require exactly three components
+    } ), InputError );
+  }
+}
 
 TEST_F( MultiFluidSelectorTestDeadOilFluid, testValidComponents )
 {
@@ -124,12 +147,13 @@ TEST_F( MultiFluidSelectorTestCO2BrinePhillipsThermalFluid, testThermal )
 
 TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testValidComponents )
 {
-  for( integer nc = 2; nc <= 5; nc++ )
+  for( integer nc = 2; nc <= GEOS_MAX_FLUID_COMPONENTS; nc++ )
   {
     bool isExecuted = false;
     constitutiveComponentUpdatePassThru( getFluid(), nc, [&]( auto &, auto NC )
     {
       integer constexpr numComps = NC();
+      static_assert( numComps <= GEOS_MAX_FLUID_COMPONENTS, "Disabled components must not be instantiated" );
       EXPECT_EQ( numComps, nc );
       isExecuted = true;
     } );
@@ -144,7 +168,7 @@ TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testInvali
     FAIL(); // Shouldn't be called
   } ), InputError );
 
-  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), 6, []( auto &, auto )
+  EXPECT_THROW( constitutiveComponentUpdatePassThru( getFluid(), GEOS_MAX_FLUID_COMPONENTS + 1, []( auto &, auto )
   {
     FAIL(); // Shouldn't be called
   } ), InputError );
@@ -156,4 +180,23 @@ TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testTherma
   {
     FAIL(); // Shouldn't be called
   } ), InputError );
+}
+
+TEST_F( MultiFluidSelectorTestCompositionalTwoPhaseConstantViscosity, testFluidStorageLimitDiagnostic )
+{
+  integer const requested = std::max( 15, MultiFluidBase::MAX_NUM_COMPONENTS + 1 );
+  getFluid().getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() ).resize( requested );
+
+  try
+  {
+    getFluid().postInputInitializationRecursive();
+    FAIL() << "An oversized fluid model must be rejected during input initialization";
+  }
+  catch( InputError const & error )
+  {
+    string const message = error.what();
+    EXPECT_NE( message.find( GEOS_FMT( "requires {} components", requested ) ), string::npos );
+    EXPECT_NE( message.find( GEOS_FMT( "storage capacity of {}", MultiFluidBase::MAX_NUM_COMPONENTS ) ), string::npos );
+    EXPECT_NE( message.find( GEOS_FMT( "GEOS_MAX_FLUID_COMPONENTS={}", GEOS_MAX_FLUID_COMPONENTS ) ), string::npos );
+  }
 }

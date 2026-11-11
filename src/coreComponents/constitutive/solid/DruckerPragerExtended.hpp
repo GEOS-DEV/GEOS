@@ -116,7 +116,6 @@ public:
                                               real64 ( &stress )[6],
                                               real64 ( &stiffness )[6][6] ) const override;
 
-
   GEOS_HOST_DEVICE
   inline
   virtual void saveConvergedState( localIndex const k,
@@ -364,8 +363,6 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
 {
   smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
-
-
 
 /**
  * @class DruckerPragerExtended

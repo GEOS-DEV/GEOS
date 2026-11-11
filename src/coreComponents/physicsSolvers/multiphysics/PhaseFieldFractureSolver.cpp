@@ -20,27 +20,21 @@
 
 #include "PhaseFieldFractureSolver.hpp"
 
-#include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "fieldSpecification/TractionBoundaryCondition.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
 
 namespace geos
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 
 PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
                                                     Group * const parent ):
   Base( name, parent )
 {}
-
-PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
-{
-  // TODO Auto-generated destructor stub
-}
 
 void PhaseFieldFractureSolver::postInputInitialization()
 {
@@ -52,57 +46,63 @@ void PhaseFieldFractureSolver::postInputInitialization()
 
 void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
-
   GEOS_MARK_FUNCTION;
-  if( solverType ==  static_cast< integer >( SolverType::Damage ) )
+
+  if( solverType == static_cast< integer >( SolverType::Damage ) )
   {
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  string_array const & regionNames )
+    mapDamageToQuadrature( domain );
+  }
+}
+
+void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition();
+
+    string const & discretizationName = damageSolver()->getDiscretizationName();
+
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getField< phaseField::damage >();
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [discretizationName, xNodes, nodalDamage]
+                                                                ( localIndex const,
+                                                                CellElementSubRegion & elementSubRegion )
     {
-      NodeManager & nodeManager = mesh.getNodeManager();
+      string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
+      constitutive::SolidBase &
+      solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
 
-      string const & damageFieldName = damageSolver()->getFieldName();
-
-      string const & discretizationName = damageSolver()->getDiscretizationName();
-
-      //should get reference to damage field here.
-      arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
-
-      ElementRegionManager & elemManager = mesh.getElemManager();
-
-      // begin region loop
-      elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [discretizationName, nodalDamage]
-                                                                  ( localIndex const,
-                                                                  CellElementSubRegion & elementSubRegion )
+      ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, xNodes, nodalDamage]( auto & damageModel )
       {
-        string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
-        constitutive::SolidBase &
-        solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
+        using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
+        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
-        ConstitutivePassThru< DamageBase >::execute( solidModel, [&elementSubRegion, discretizationName, nodalDamage]( auto & damageModel )
+        arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
+        arrayView3d< real64 > const damageGradOnMaterial = constitutiveUpdate.m_damageGrad;
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes = elementSubRegion.nodeList();
+
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
+
+        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=, &elementSubRegion] ( auto & finiteElement )
         {
-          using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
-          typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
+          using FE_TYPE = TYPEOFREF( finiteElement );
 
-          arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes = elementSubRegion.nodeList();
+          DamageInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
 
-          finiteElement::FiniteElementBase const &
-          fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( discretizationName );
-
-          finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [=, &elementSubRegion] ( auto & finiteElement )
-          {
-            using FE_TYPE = TYPEOFREF( finiteElement );
-
-            DamageInterpolationKernel< FE_TYPE > interpolationKernel( elementSubRegion );
-
-            interpolationKernel.interpolateDamage( elemToNodes, nodalDamage, damageFieldOnMaterial );
-          } );
+          interpolationKernel.interpolateDamageAndGradient( elemToNodes, xNodes, nodalDamage, damageFieldOnMaterial, damageGradOnMaterial );
         } );
       } );
     } );
-  }
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, PhaseFieldFractureSolver, string const &, Group * const )
