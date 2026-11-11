@@ -24,8 +24,8 @@ def main():
 
     # File path
     outputDir = args.outputDir
-    hdf5File1Path = outputDir + "/traction_ESG.hdf5"
-    hdf5File2Path = outputDir + "/traction_ISG.hdf5"
+    hdf5File1Path = outputDir + "/traction_stable_ESG.hdf5"
+    hdf5File2Path = outputDir + "/traction_stable_ISG.hdf5"
 
     # Read HDF5
     # Local Shear Displacement
