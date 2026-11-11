@@ -85,26 +85,17 @@
       target="/Solvers/poroFractureSolver" />
 
     <PeriodicEvent
-      name="tractionCollection"
-      target="/Tasks/tractionCollection" />
-
-    <PeriodicEvent
-      name="tractionOutput"
-      targetExactTimestep="0"
-      target="/Outputs/tractionOutput" />
-
-    <PeriodicEvent
-      name="displacementJumpCollection"
-      target="/Tasks/displacementJumpCollection" />
-
-    <PeriodicEvent
-      name="displacementJumpOutput"
-      targetExactTimestep="0"
-      target="/Outputs/displacementJumpOutput" />
-
-    <PeriodicEvent
       name="restartOutput"
       timeFrequency="50.0"
       target="/Outputs/restartOutput"/>
   </Events>
+  
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="verticalFault" />
+
+    <Restart
+      name="restartOutput"/> 
+  </Outputs>
 </Problem>

@@ -140,4 +140,23 @@
       targetExactTimestep="0"
       target="/Outputs/displacementJumpOutput" />
   </Events>
+  
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="verticalFault" />
+
+    <TimeHistory
+      name="tractionOutput"
+      sources="{/Tasks/tractionCollection}"
+      filename="traction_unstable_ISG" />
+
+    <TimeHistory
+      name="displacementJumpOutput"
+      sources="{/Tasks/displacementJumpCollection}"
+      filename="displacementJump_unstable_ISG" />
+
+    <Restart
+      name="restartOutput"/> 
+  </Outputs>
 </Problem>
