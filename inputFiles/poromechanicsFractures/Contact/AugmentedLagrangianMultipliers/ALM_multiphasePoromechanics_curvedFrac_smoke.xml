@@ -82,7 +82,7 @@
     <CompositionalMultiphaseStatistics
       name="compflowStatistics"
       flowSolverName="flowSolver"
-      logLevel="1"
+      logLevel="2"
       computeRegionStatistics="1"/>
     
   </Tasks>

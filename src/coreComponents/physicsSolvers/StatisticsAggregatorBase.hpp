@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "dataRepository/DataContext.hpp"
 #include "dataRepository/Group.hpp"
-#include "mesh/CellElementRegion.hpp"
+#include "mesh/ElementRegionBase.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshLevel.hpp"
 
@@ -102,7 +102,7 @@ public:
   /**
    * @brief Standard function signature for any functor that applies on statistics group instances (StatsGroupType)
    *        - param 0: OwnerType &, the group instance containing the data for which we want to aggregate the statistics (MeshLevel,
-   * CellElementRegion...)
+   * ElementRegionBase...)
    *        - param 1: StatsAggregateGroupType &, the statistics aggregate Group where to store the data
    * @tparam OwnerType the concrete type of the OwnerType param
    */
@@ -209,7 +209,7 @@ public:
    */
   void forRegionStatistics( MeshLevelSet meshSet,
                             StatsGroupType & setStats,
-                            RegionStatsFunc< CellElementRegion & > const & functor ) const;
+                            RegionStatsFunc< ElementRegionBase & > const & functor ) const;
 
   /**
    * @brief Execute the given functor on each sub-region available in the given region for the given set.
@@ -217,9 +217,9 @@ public:
    * @param setRegionStats the region statistics data structure for the given set.
    * @param functor the function to execute.
    */
-  void forRegionStatistics( CellElementRegion & region,
+  void forRegionStatistics( ElementRegionBase & region,
                             StatsGroupType & setRegionStats,
-                            RegionStatsFunc< CellElementSubRegion & > const & functor ) const;
+                            RegionStatsFunc< ElementSubRegionBase & > const & functor ) const;
 
   /**
    * @brief Get the Instance Statistics Group for the given mesh-level.
@@ -399,7 +399,7 @@ protected:
    * @param targetSet
    * @note Must be implemented for each type that implements this template (CRTP).
    */
-  void computeSubRegionRankStats( CellElementSubRegion & subRegion,
+  void computeSubRegionRankStats( ElementSubRegionBase & subRegion,
                                   StatsGroupType & subRegionStats,
                                   SetType const & targetSet ) const
   { static_cast< Impl const * >(this)->computeSubRegionRankStats( subRegion, subRegionStats, targetSet ); }

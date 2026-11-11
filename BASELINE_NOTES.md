@@ -5,6 +5,26 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4172 (2026-11-06) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4172-17930-ffdaf0c.tar.gz>
+=====================
+Correct CO2-brine thermodynamic properties: CO2 enthalpy tables (Span–Wagner non-analytic terms, molar conversion), CO2 solubility on a brine basis, compositional phase-model mapping and flash restart.
+
+PR #4139 (2026-10-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4139-17884-0f6d03e.tar.gz>
+=====================
+Add the mixed mimetic discretization: new `NumericalMethods/MixedMimetic` group in every restart file and new mixed MFD tests.
+
+PR #4169 (2026-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4169-17867-5d0c7de.tar.gz>
+=====================
+Fix surface generator splitting for contact mechanics case with wells
+
+PR #4165 (2026-10-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4165-17850-4a6ed2e.tar.gz>
+=====================
+Add zero salinity, non-default compressibility pvt driver test
+
+PR #4164 (2026-10-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4164-17838-91151f5.tar.gz>
+=====================
+Add a `Group` statistics layer for fracture surfaces.
+
 PR #4005 (2026-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4005-17824-bac337a.tar.gz>
 =====================
 Added a `Group` statistics layer for sets statistics
