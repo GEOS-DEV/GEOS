@@ -95,3 +95,14 @@ with a certain permeability can be defined as
 Note that any of the previously described solid models is used by the `PorousSolid` model
 to compute the effective stress, leading to either poro-elastic, poro-plastic, or poro-damage
 behavior depending on the specific model chosen.
+
+
+Optional thermal models
+=============================
+Two optional thermal models can be attached to a porous solid:
+
+- ``solidInternalEnergyModelName`` references a :ref:`SolidInternalEnergy <TemperatureDependentSolidVolumetricHeatCapacity>` block (temperature-dependent volumetric heat capacity).
+- ``solidThermalExpansionModelName`` references a :ref:`SolidThermalExpansion <TemperatureDependentThermalExpansionCoefficient>` block (thermal expansion coefficient linear in temperature or tabulated).
+
+When ``solidThermalExpansionModelName`` is omitted, the constant coefficient ``defaultDrainedLinearTEC``
+of the solid model is used, as before.

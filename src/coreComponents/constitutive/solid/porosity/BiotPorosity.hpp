@@ -111,6 +111,110 @@ public:
     m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature;
   }
 
+  /**
+   * @brief Fully implicit porosity update with the thermal expansion coefficient of the solid
+   *        (temperature-dependent) instead of defaultPorosityTEC.
+   *
+   * Same as updateFromPressureTemperatureAndStrain, with the thermal term written with the exact thermal strain
+   * increment of the step, so that the porosity uses the same coefficient as the stress (Biot-Coussy theory).
+   * @param[in] k element index
+   * @param[in] q quadrature point index
+   * @param[in] deltaPressure pressure increment of the time step
+   * @param[in] thermalStrainIncrement integral of the solid coefficient over the temperature increment of the
+   *            time step [dimensionless]
+   * @param[in] thermalExpansionCoefficient solid coefficient at the current temperature [1/temperature]
+   * @param[in] strainIncrement strain increment of the time step
+   * @param[out] dPorosity_dVolStrain derivative of the porosity with respect to the volumetric strain
+   * @param[out] dPorosity_dPressure derivative of the porosity with respect to the pressure
+   * @param[out] dPorosity_dTemperature derivative of the porosity with respect to the temperature
+   */
+  GEOS_HOST_DEVICE
+  void updateFromPressureThermalStrainAndStrain( localIndex const k,
+                                                 localIndex const q,
+                                                 real64 const & deltaPressure,
+                                                 real64 const & thermalStrainIncrement,
+                                                 real64 const & thermalExpansionCoefficient,
+                                                 real64 const (&strainIncrement)[6],
+                                                 real64 & dPorosity_dVolStrain,
+                                                 real64 & dPorosity_dPressure,
+                                                 real64 & dPorosity_dTemperature ) const
+  {
+    real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus[k];
+    real64 const porosityThermalFactor = 3 * ( m_biotCoefficient[k] - m_referencePorosity[k] );
+
+    real64 const porosity = m_porosity_n[k][q]
+                            + m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
+                            + biotSkeletonModulusInverse * deltaPressure
+                            - porosityThermalFactor * thermalStrainIncrement;
+
+    dPorosity_dVolStrain = m_biotCoefficient[k];
+    dPorosity_dPressure = biotSkeletonModulusInverse;
+    dPorosity_dTemperature = -porosityThermalFactor * thermalExpansionCoefficient;
+
+    m_newPorosity[k][q] = porosity;
+    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
+    m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature;
+  }
+
+  /**
+   * @brief Fixed-stress porosity update with the thermal expansion coefficient of the solid
+   *        (temperature-dependent) instead of defaultPorosityTEC.
+   *
+   * Same as updateFixedStress, with each term alpha * ( T_b - T_a ) replaced by the exact integral of the
+   * solid coefficient from T_a to T_b, so that the porosity uses the same coefficient as the mean total stress
+   * computed by the mechanics.
+   * @param[in] k element index
+   * @param[in] q quadrature point index
+   * @param[in] pressure current pressure
+   * @param[in] pressure_k pressure at the previous sequential iteration
+   * @param[in] pressure_n pressure at the previous time step
+   * @param[in] thermalStrainIncrement integral of the solid coefficient from temperature_n to temperature
+   *            [dimensionless]
+   * @param[in] thermalStrainIncrement_k integral of the solid coefficient from temperature_n to temperature_k
+   *            [dimensionless]
+   * @param[in] thermalExpansionCoefficient solid coefficient at the current temperature [1/temperature]
+   */
+  GEOS_HOST_DEVICE
+  void updateFixedStressWithThermalStrain( localIndex const k,
+                                           localIndex const q,
+                                           real64 const & pressure,
+                                           real64 const & pressure_k,
+                                           real64 const & pressure_n,
+                                           real64 const & thermalStrainIncrement,
+                                           real64 const & thermalStrainIncrement_k,
+                                           real64 const & thermalExpansionCoefficient ) const
+  {
+    real64 const biotCoefficient = m_biotCoefficient[k];
+    real64 const bulkModulus = m_bulkModulus[k];
+    real64 const fixedStressModulus = m_useUniaxialFixedStress ? (bulkModulus + 4 * m_shearModulus[k] / 3) : bulkModulus;
+    real64 const biotSkeletonModulusInverse = (biotCoefficient - m_referencePorosity[k]) / m_grainBulkModulus[k];
+    real64 const porosityThermalFactor = 3 * ( biotCoefficient - m_referencePorosity[k] );
+    real64 const pressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
+
+    // total stress formulation for porosity update
+    real64 porosity = m_porosity_n[k][q]
+                      // change due to stress increment
+                      + biotCoefficient * m_averageMeanTotalStressIncrement_k[k] / bulkModulus
+                      // change due to pressure increment
+                      + biotSkeletonModulusInverse * ( pressure - pressure_n ) + pressureCoefficient * ( pressure_k - pressure_n )
+                      // change due to temperature increment: removes the thermal strain contained in the stress increment
+                      - porosityThermalFactor * thermalStrainIncrement + 3 * biotCoefficient * thermalStrainIncrement_k;
+    real64 dPorosity_dPressure = biotSkeletonModulusInverse;
+    real64 dPorosity_dTemperature = -porosityThermalFactor * thermalExpansionCoefficient;
+
+    // Fixed-stress part: the temperature term is the thermal strain from temperature_k to temperature
+    real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / fixedStressModulus;
+    real64 const fixedStressThermalFactor = 3 * biotCoefficient * bulkModulus / fixedStressModulus;
+    porosity += fixedStressPressureCoefficient * ( pressure - pressure_k )
+                + fixedStressThermalFactor * ( thermalStrainIncrement - thermalStrainIncrement_k );
+    dPorosity_dPressure += fixedStressPressureCoefficient;
+    dPorosity_dTemperature += fixedStressThermalFactor * thermalExpansionCoefficient;
+
+    m_newPorosity[k][q] = porosity;
+    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
+    m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature;
+  }
+
   GEOS_HOST_DEVICE
   void computePorosityFixedStress( real64 const & pressure,
                                    real64 const & pressure_k,

@@ -92,7 +92,32 @@ void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsP
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
-  updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  if( m_isThermal )
+  {
+    // The thermal kernel with embedded fractures uses a thermal expansion coefficient that does not depend on temperature.
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel const & mesh,
+                                                                  string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                          [&]( localIndex const,
+                                                                               CellElementSubRegion const & subRegion )
+      {
+        string const & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+        CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, porousName );
+        GEOS_THROW_IF( porousSolid.hasTemperatureDependentThermalExpansion(),
+                       GEOS_FMT( "{}: The thermal expansion coefficient of '{}' depends on temperature, which is not "
+                                 "supported yet with embedded fractures",
+                                 getCatalogName(), porousName ),
+                       InputError, getDataContext(),
+                       porousSolid.getWrapperDataContext( CoupledSolidBase::viewKeyStruct::solidThermalExpansionModelNameString() ) );
+      } );
+    } );
+  }
+
+  updateState( domain );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::setupCoupling( DomainPartition const & domain,

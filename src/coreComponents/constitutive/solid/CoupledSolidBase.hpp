@@ -26,6 +26,7 @@
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
+#include "constitutive/solid/SolidThermalExpansion.hpp"
 
 namespace geos
 {
@@ -50,6 +51,7 @@ public:
     static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
     static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
     static constexpr char const * solidInternalEnergyModelNameString() { return "solidInternalEnergyModelName"; }
+    static constexpr char const * solidThermalExpansionModelNameString() { return "solidThermalExpansionModelName"; }
   };
 
   virtual stdVector< string > getSubRelationNames() const override final
@@ -61,6 +63,11 @@ public:
     if( !m_solidInternalEnergyModelName.empty() )
     {
       subRelationNames.push_back( m_solidInternalEnergyModelName );
+    }
+
+    if( !m_solidThermalExpansionModelName.empty() )
+    {
+      subRelationNames.push_back( m_solidThermalExpansionModelName );
     }
 
     return subRelationNames;
@@ -240,6 +247,47 @@ public:
   { return this->getParent().template getGroup< SolidInternalEnergy >( m_solidInternalEnergyModelName ); }
 
   /**
+   * @return the name of the solid model given by solidModelName
+   */
+  string const & getSolidModelName() const
+  { return m_solidModelName; }
+
+  /**
+   * @return true if a SolidThermalExpansion model is attached through solidThermalExpansionModelName
+   */
+  bool hasSolidThermalExpansionModel() const
+  { return !m_solidThermalExpansionModelName.empty(); }
+
+  /**
+   * @brief get a constant reference to the solid thermal expansion model
+   * @pre hasSolidThermalExpansionModel() is true
+   * @return a constant SolidThermalExpansion reference
+   */
+  SolidThermalExpansion const & getSolidThermalExpansionModel() const
+  { return this->getParent().template getGroup< SolidThermalExpansion >( m_solidThermalExpansionModelName ); }
+
+  /**
+   * @brief Create the evaluator of the thermal expansion coefficient used by the kernels. Must be called on the host.
+   * @return the wrapper of the attached SolidThermalExpansion model if there is one, otherwise a wrapper
+   *         reading the per-element coefficient of the solid model
+   */
+  SolidThermalExpansionUpdates createThermalExpansionUpdates() const;
+
+  /**
+   * @brief Create an evaluator reading the per-element thermal expansion coefficient of a solid model
+   *        (defaultDrainedLinearTEC). Must be called on the host.
+   * @param[in] solidModel the solid model
+   * @return the evaluator
+   */
+  static SolidThermalExpansionUpdates createThermalExpansionUpdates( SolidBase const & solidModel );
+
+  /**
+   * @return true if the thermal expansion coefficient depends on temperature
+   */
+  bool hasTemperatureDependentThermalExpansion() const
+  { return hasSolidThermalExpansionModel() && getSolidThermalExpansionModel().isTemperatureDependent(); }
+
+  /**
    * @brief get a PorosityBase constant reference to the porosity model
    * return a constant PorosityBase reference to the porosity model
    */
@@ -266,6 +314,16 @@ protected:
 
   /// the name of the solid internal energy model
   string m_solidInternalEnergyModelName;
+
+  /// the name of the solid thermal expansion model (optional)
+  string m_solidThermalExpansionModelName;
+
+  virtual void postInputInitialization() override;
+
+  /**
+   * @return true if this coupled solid uses the model given by solidThermalExpansionModelName
+   */
+  virtual bool supportsSolidThermalExpansionModel() const { return false; }
 
 private:
 

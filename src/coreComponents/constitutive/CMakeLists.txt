@@ -199,6 +199,7 @@ set( constitutive_headers
      solid/SolidBase.hpp
      solid/SolidUtilities.hpp
      solid/SolidInternalEnergy.hpp
+     solid/SolidThermalExpansion.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotropic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
@@ -344,6 +345,7 @@ set( constitutive_sources
      solid/ReactiveSolid.cpp
      solid/SolidBase.cpp
      solid/SolidInternalEnergy.cpp
+     solid/SolidThermalExpansion.cpp
      solid/CeramicDamage.cpp
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp

@@ -49,8 +49,10 @@ public:
    */
   PorousDamageSolidUpdates( SOLID_TYPE const & solidModel,
                             BiotPorosity const & porosityModel,
-                            DamagePermeability const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >( solidModel, porosityModel, permModel )
+                            DamagePermeability const & permModel,
+                            SolidThermalExpansionUpdates const & thermalExpansionUpdate ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >( solidModel, porosityModel, permModel ),
+    m_thermalExpansionUpdate( thermalExpansionUpdate )
   {}
 
   GEOS_HOST_DEVICE
@@ -59,6 +61,7 @@ public:
                                        real64 const & timeIncrement,
                                        real64 const & pressure_n,
                                        real64 const & pressure,
+                                       real64 const & temperature,
                                        real64 const & deltaTemperature,
                                        real64 const & deltaTemperatureFromLastStep,
                                        real64 const ( &strainIncrement )[6],
@@ -74,13 +77,15 @@ public:
                                        real64 & dPorosity_dTemperature,
                                        real64 & dSolidDensity_dPressure ) const
   {
+    GEOS_UNUSED_VAR( deltaTemperature );
+
     // Compute total stress increment and its derivative
     computeTotalStress( k,
                         q,
                         timeIncrement,
                         pressure_n,
                         pressure,
-                        deltaTemperature,
+                        temperature,
                         deltaTemperatureFromLastStep,
                         strainIncrement,
                         totalStress,
@@ -94,6 +99,7 @@ public:
     computePorosity( k,
                      q,
                      deltaPressure,
+                     temperature,
                      deltaTemperatureFromLastStep,
                      strainIncrement,
                      porosity,
@@ -177,7 +183,9 @@ public:
   inline
   void getThermalExpansionCoefficient( localIndex const k, real64 & thermalExpansionCoefficient ) const
   {
-    thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    // precondition: the coefficient does not depend on temperature (checked on the host by the callers)
+    real64 meanThermalExpansionCoefficient = 0.0;
+    m_thermalExpansionUpdate.compute( k, 0.0, 0.0, meanThermalExpansionCoefficient, thermalExpansionCoefficient );
   }
 
 private:
@@ -185,6 +193,9 @@ private:
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >::m_solidUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >::m_porosityUpdate;
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, DamagePermeability >::m_permUpdate;
+
+  /// Evaluator of the thermal expansion coefficient
+  SolidThermalExpansionUpdates const m_thermalExpansionUpdate;
 
 
   GEOS_HOST_DEVICE
@@ -232,6 +243,7 @@ private:
   void computePorosity( localIndex const k,
                         localIndex const q,
                         real64 const & deltaPressure,
+                        real64 const & temperature,
                         real64 const & deltaTemperature,
                         real64 const ( &strainIncrement )[6],
                         real64 & porosity,
@@ -241,14 +253,39 @@ private:
                         real64 & dPorosity_dPressure,
                         real64 & dPorosity_dTemperature ) const
   {
-    m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
-                                                             q,
-                                                             deltaPressure,
-                                                             deltaTemperature,
-                                                             strainIncrement,
-                                                             dPorosity_dVolStrain,
-                                                             dPorosity_dPressure,
-                                                             dPorosity_dTemperature );
+    if( m_thermalExpansionUpdate.getStrategy() == SolidThermalExpansionUpdates::Strategy::FromSolidBase )
+    {
+      // no SolidThermalExpansion model: the porosity uses its own coefficient (defaultPorosityTEC)
+      m_porosityUpdate.updateFromPressureTemperatureAndStrain( k,
+                                                               q,
+                                                               deltaPressure,
+                                                               deltaTemperature,
+                                                               strainIncrement,
+                                                               dPorosity_dVolStrain,
+                                                               dPorosity_dPressure,
+                                                               dPorosity_dTemperature );
+    }
+    else
+    {
+      // The porosity uses the coefficient of the SolidThermalExpansion model, like the stress:
+      // exact thermal strain increment of the step, and its derivative alpha( temperature ).
+      real64 meanThermalExpansionCoefficient = 0.0;
+      real64 thermalExpansionCoefficient = 0.0;
+      m_thermalExpansionUpdate.compute( k,
+                                        temperature - deltaTemperature,
+                                        temperature,
+                                        meanThermalExpansionCoefficient,
+                                        thermalExpansionCoefficient );
+      m_porosityUpdate.updateFromPressureThermalStrainAndStrain( k,
+                                                                 q,
+                                                                 deltaPressure,
+                                                                 meanThermalExpansionCoefficient * deltaTemperature,
+                                                                 thermalExpansionCoefficient,
+                                                                 strainIncrement,
+                                                                 dPorosity_dVolStrain,
+                                                                 dPorosity_dPressure,
+                                                                 dPorosity_dTemperature );
+    }
 
     real64 const damage = fmax( fmin( 1.0, m_solidUpdate.getDamage( k, q ) ), 0.0 );
     real64 const damage_n = fmax( fmin( 1.0, m_solidUpdate.getOldDamage( k, q ) ), 0.0 );
@@ -267,7 +304,7 @@ private:
                            real64 const & timeIncrement,
                            real64 const & pressure_n,
                            real64 const & pressure,
-                           real64 const & deltaTemperature,
+                           real64 const & temperature,
                            real64 const & deltaTemperatureFromLastStep,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
@@ -275,16 +312,22 @@ private:
                            real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
-    GEOS_UNUSED_VAR( deltaTemperature );
-
     updateBiotCoefficientAndAssignModuli( k );
 
-    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    // Thermal strain increment: exact integral of alpha from temperature_n to temperature.
+    // Its derivative with respect to temperature is alpha( temperature ).
+    real64 meanThermalExpansionCoefficient = 0.0;
+    real64 thermalExpansionCoefficient = 0.0;
+    m_thermalExpansionUpdate.compute( k,
+                                      temperature - deltaTemperatureFromLastStep,
+                                      temperature,
+                                      meanThermalExpansionCoefficient,
+                                      thermalExpansionCoefficient );
 
     real64 strainIncrementNoThermalStrain[6]{};
-    strainIncrementNoThermalStrain[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
-    strainIncrementNoThermalStrain[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
-    strainIncrementNoThermalStrain[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[0] = strainIncrement[0] - meanThermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[1] = strainIncrement[1] - meanThermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[2] = strainIncrement[2] - meanThermalExpansionCoefficient * deltaTemperatureFromLastStep;
     strainIncrementNoThermalStrain[3] = strainIncrement[3];
     strainIncrementNoThermalStrain[4] = strainIncrement[4];
     strainIncrementNoThermalStrain[5] = strainIncrement[5];
@@ -365,7 +408,8 @@ public:
   {
     return KernelWrapper( getSolidModel(),
                           getPorosityModel(),
-                          getPermModel() );
+                          getPermModel(),
+                          createThermalExpansionUpdates() );
   }
 
   /**
@@ -386,10 +430,14 @@ public:
     return getPorosityModel().getBiotCoefficient();
   }
 
+protected:
+  virtual bool supportsSolidThermalExpansionModel() const override { return true; }
+
 private:
   using CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >::getSolidModel;
   using CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >::getPorosityModel;
   using CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >::getPermModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >::createThermalExpansionUpdates;
 };
 
 

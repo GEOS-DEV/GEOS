@@ -28,6 +28,7 @@
 
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationImpl.hpp"
@@ -1013,6 +1014,17 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
         ? subRegion.getField< fields::flow::temperature_n >().toViewConst()
         : arrayView1d< real64 const >{};
 
+      // Thermal expansion used to remove the thermal strain from the average plastic strain: the model of the
+      // coupled solid built on this solid model if there is one, otherwise the coefficient of the solid model.
+      SolidThermalExpansionUpdates thermalExpansionUpdate = CoupledSolidBase::createThermalExpansionUpdates( constitutiveRelation );
+      subRegion.getConstitutiveModels().forSubGroups< CoupledSolidBase >( [&]( CoupledSolidBase const & coupledSolid )
+      {
+        if( coupledSolid.getSolidModelName() == solidMaterialName )
+        {
+          thermalExpansionUpdate = coupledSolid.createThermalExpansionUpdates();
+        }
+      } );
+
       constitutive::ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, [&] ( auto & solidModel )
       {
         using SOLID_TYPE = TYPEOFREF( solidModel );
@@ -1033,6 +1045,7 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
                                                                                                                                 avgPlasticStrain,
                                                                                                                                 stress,
                                                                                                                                 avgStress,
+                                                                                                                                thermalExpansionUpdate,
                                                                                                                                 temperature,
                                                                                                                                 temperature_n );
         } );

@@ -11,4 +11,6 @@ Thermoporomechanics
 
    1DCooling/Example
 
+   nonLinearThermalOedometric/Example
+
 

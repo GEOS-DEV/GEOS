@@ -111,6 +111,30 @@ decks = [
         partitions=((1, 1, 1), (1, 2, 1)),
         restart_step=0,
         check_step=1,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoElasticOedometric_linearTEC_smoke",
+        description=
+        'Drained oedometric heating with a thermal expansion coefficient linear in temperature (SolidThermalExpansion)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoElasticOedometric_tecTable_smoke",
+        description=
+        'Drained oedometric heating with a tabulated thermal expansion coefficient (SolidThermalExpansion)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoElasticOedometric_linearTEC_cooling_smoke",
+        description=
+        'Drained oedometric cooling with a steep thermal expansion coefficient linear in temperature (SolidThermalExpansion)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=5,
+        check_step=10,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 

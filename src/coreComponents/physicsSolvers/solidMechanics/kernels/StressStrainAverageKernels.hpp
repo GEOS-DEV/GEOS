@@ -25,6 +25,7 @@
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/solid/SolidThermalExpansion.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -69,6 +70,7 @@ public:
    * @param avgStrain the strain averaged over quadrature points
    * @param stress the stress solution field
    * @param avgStress the stress averaged over quadrature points
+   * @param thermalExpansionUpdate evaluator of the thermal expansion coefficient, built on the host
    * @param temperature the temperature field (may be empty for non-thermal simulations)
    * @param temperature_n the temperature at the previous time step (may be empty for non-thermal simulations)
    */
@@ -84,6 +86,7 @@ public:
                                            fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
                                            arrayView3d< real64 const, solid::STRESS_USD > const stress,
                                            fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress,
+                                           constitutive::SolidThermalExpansionUpdates const & thermalExpansionUpdate,
                                            arrayView1d< real64 const > const temperature,
                                            arrayView1d< real64 const > const temperature_n ):
     Base( nodeManager,
@@ -98,6 +101,7 @@ public:
     m_avgPlasticStrain( avgPlasticStrain ),
     m_stress( stress ),
     m_avgStress( avgStress ),
+    m_thermalExpansionUpdate( thermalExpansionUpdate ),
     m_temperature( temperature ),
     m_temperature_n( temperature_n )
   {}
@@ -160,10 +164,19 @@ public:
     real64 elasticStrainInc[6] = {0.0};
     m_solidUpdate.getElasticStrainInc( k, q, elasticStrainInc );
 
-    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-    real64 const deltaTemperature = ( m_temperature.size() > 0 )
-                                    ? ( m_temperature[k] - m_temperature_n[k] )
-                                    : 0.0;
+    // Thermal strain increment of the time step: exact integral of the coefficient from temperature_n to temperature
+    real64 thermalStrainIncrement = 0.0;
+    if( m_temperature.size() > 0 )
+    {
+      real64 meanThermalExpansionCoefficient = 0.0;
+      real64 thermalExpansionCoefficient = 0.0;
+      m_thermalExpansionUpdate.compute( k,
+                                        m_temperature_n[k],
+                                        m_temperature[k],
+                                        meanThermalExpansionCoefficient,
+                                        thermalExpansionCoefficient );
+      thermalStrainIncrement = meanThermalExpansionCoefficient * ( m_temperature[k] - m_temperature_n[k] );
+    }
 
     real64 conversionFactor[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5}; // used for converting from engineering shear to tensor shear
 
@@ -174,7 +187,7 @@ public:
 
       // Thermal strain is purely volumetric: subtract thermal strain from normal components so that
       // only the mechanical (plastic) part is accumulated.
-      real64 const thermalStrainInc = ( icomp < 3 ) ? thermalExpansionCoefficient * deltaTemperature : 0.0;
+      real64 const thermalStrainInc = ( icomp < 3 ) ? thermalStrainIncrement : 0.0;
       real64 const mechanicalStrainInc = strainInc[icomp] - thermalStrainInc;
 
       // This is a hack to handle boundary conditions such as those seen in plane-strain wellbore problems
@@ -241,6 +254,9 @@ protected:
   /// The average stress
   fields::solidMechanics::arrayView2dLayoutAvgStress const m_avgStress;
 
+  /// Evaluator of the thermal expansion coefficient
+  constitutive::SolidThermalExpansionUpdates const m_thermalExpansionUpdate;
+
   /// The temperature at the current time step (empty for non-thermal simulations)
   arrayView1d< real64 const > const m_temperature;
 
@@ -272,6 +288,9 @@ public:
    * @param finiteElementSpace the finite element space
    * @param property the property at quadrature points
    * @param averageProperty the property averaged over quadrature points
+   * @param thermalExpansionUpdate evaluator of the thermal expansion coefficient, built on the host
+   * @param temperature the temperature field (may be empty for non-thermal simulations)
+   * @param temperature_n the temperature at the previous time step (may be empty for non-thermal simulations)
    */
   template< typename FE_TYPE,
             typename SOLID_TYPE,
@@ -289,13 +308,14 @@ public:
                    fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
                    arrayView3d< real64 const, solid::STRESS_USD > const stress,
                    fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress,
+                   constitutive::SolidThermalExpansionUpdates const & thermalExpansionUpdate,
                    arrayView1d< real64 const > const temperature = {},
                    arrayView1d< real64 const > const temperature_n = {} )
   {
     AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
             solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain, stress, avgStress,
-            temperature, temperature_n );
+            thermalExpansionUpdate, temperature, temperature_n );
 
     AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
