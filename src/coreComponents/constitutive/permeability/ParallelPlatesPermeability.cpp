@@ -47,7 +47,7 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
     setDescription( "Joint roughness coefficient (JRC), between 1 and 20. "
                     "If specified, the aperture used in the cubic law is reduced following Barton et al. (1985): "
                     "e_h = E^2 / JRC^2.5 (apertures in microns), only where e_h <= E. "
-                    "If not specified, the aperture is used directly." );
+                    "If not specified or negative (default: -1), the correction is disabled and the aperture is used directly." );
 
   registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
