@@ -230,7 +230,7 @@
       <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
     </PeriodicEvent>
 
-    <SoloEvent name="saveHistory" targetTime="4.733640e+08" targetExactTimestep="1" target="/Outputs/timeHistory"/>
+    <PeriodicEvent name="saveHistory" target="/Outputs/timeHistory"/>
 
     <PeriodicEvent
       name="restarts"
