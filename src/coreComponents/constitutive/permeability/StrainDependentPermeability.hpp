@@ -98,6 +98,9 @@ public:
 
 private:
 
+  /// Minimum porosity used to keep the porosity ratio defined
+  static constexpr real64 minPorosity = 1.0e-6;
+
   /// Derivative of the permeability w.r.t. the volumetric strain
   arrayView3d< real64 > m_dPerm_dVolStrain;
 
@@ -204,16 +207,29 @@ void StrainDependentPermeabilityUpdate::compute( real64 const & initialPorosity,
                                                  arraySlice1d< real64 > const & permeability,
                                                  arraySlice1d< real64 > const & dPerm_dVolStrain ) const
 {
-  // porosity from the conservation of the solid volume (incompressible grains)
+  // without (initial) porosity, the porosity ratio is undefined: keep the reference permeability
+  if( initialPorosity <= minPorosity )
+  {
+    for( localIndex i = 0; i < permeability.size(); ++i )
+    {
+      permeability[i] = referencePermeability[i];
+      dPerm_dVolStrain[i] = 0.0;
+    }
+    return;
+  }
+
+  // porosity from the conservation of the solid volume (incompressible grains),
+  // clamped to a small positive value to remain defined under strong compaction
   real64 const solidFraction = ( 1.0 - initialPorosity ) * LvArray::math::exp( -volStrain );
-  real64 const porosity = 1.0 - solidFraction;
+  bool const isClamped = ( 1.0 - solidFraction ) < minPorosity;
+  real64 const porosity = isClamped ? minPorosity : 1.0 - solidFraction;
   real64 const logPorosityRatio = LvArray::math::log( porosity / initialPorosity );
 
   for( localIndex i = 0; i < permeability.size(); ++i )
   {
     permeability[i] = referencePermeability[i] * LvArray::math::exp( m_permeabilityExponents[i] * logPorosityRatio );
-    // dk/de_v = n k (1 - phi) / phi
-    dPerm_dVolStrain[i] = m_permeabilityExponents[i] * permeability[i] * solidFraction / porosity;
+    // dk/de_v = n k (1 - phi) / phi (zero where the porosity is clamped)
+    dPerm_dVolStrain[i] = isClamped ? 0.0 : m_permeabilityExponents[i] * permeability[i] * solidFraction / porosity;
   }
 }
 
