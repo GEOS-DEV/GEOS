@@ -82,8 +82,9 @@ protected:
   void compute( real64 const initialPorosity, real64 const volStrain )
   {
     StrainDependentPermeabilityUpdate const cmw = createKernelWrapper();
+    arrayView3d< real64 const > const referencePermeability = m_referencePermeability.toViewConst();
     cmw.compute( initialPorosity,
-                 m_referencePermeability.toViewConst()[0][0],
+                 referencePermeability[0][0],
                  volStrain,
                  m_permeability[0][0],
                  m_dPerm_dVolStrain[0][0] );
