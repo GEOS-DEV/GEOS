@@ -56,12 +56,20 @@ public:
     GEOS_UNUSED_VAR( k, q, pressure, porosity );
   }
 
+  /**
+   * @brief Update the permeability from the volumetric strain increment at a quadrature point
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] initialPorosity the initial porosity at this quadrature point
+   * @param[in] volStrainIncrement the volumetric strain increment since the last converged state
+   */
   GEOS_HOST_DEVICE
-  virtual void updateFromPorosityAndStrain( localIndex const k,
-                                            real64 const & currentPorosity,
-                                            real64 const & referencePorosity ) const
+  virtual void updateFromVolumetricStrainIncrement( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const & initialPorosity,
+                                                    real64 const & volStrainIncrement ) const
   {
-    GEOS_UNUSED_VAR( k, currentPorosity, referencePorosity );
+    GEOS_UNUSED_VAR( k, q, initialPorosity, volStrainIncrement );
   }
 
   GEOS_HOST_DEVICE
@@ -119,6 +127,12 @@ public:
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override;
+
+  /**
+   * @brief Reset the state to the last converged state (e.g., after the initialization step)
+   */
+  virtual void ignoreConvergedState() const
+  {}
 
   /**
    * @brief Const/non-mutable accessor for permeability.

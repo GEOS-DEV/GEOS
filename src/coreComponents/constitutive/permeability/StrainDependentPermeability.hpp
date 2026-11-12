@@ -21,7 +21,6 @@
 #define GEOS_CONSTITUTIVE_PERMEABILITY_STRAINDEPENDENTPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "LvArray/src/tensorOps.hpp"
 
 
 namespace geos
@@ -29,58 +28,90 @@ namespace geos
 namespace constitutive
 {
 
+/**
+ * @brief Kernel wrapper for the volumetric strain dependent permeability model (Chin et al., 2000):
+ *        phi(e_v) = 1 - (1 - phi_0) exp( -e_v ),   k_i / k_0,i = ( phi(e_v) / phi_0 )^n_i
+ *        where e_v is the total volumetric strain since the initial state (positive in extension).
+ */
 class StrainDependentPermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
   StrainDependentPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                      arrayView3d< real64 > const & dPerm_dPressure,
-                                     arrayView3d< real64 > const & dPerm_dPorosity,
-                                     arrayView3d< real64 > const & referencePermeability,
-                                     R1Tensor const strainDependenceConstants )
+                                     arrayView3d< real64 > const & dPerm_dVolStrain,
+                                     arrayView3d< real64 const > const & referencePermeability,
+                                     arrayView2d< real64 > const & volStrain,
+                                     arrayView2d< real64 const > const & volStrain_n,
+                                     R1Tensor const permeabilityExponents )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_dPerm_dPorosity( dPerm_dPorosity ),
+    m_dPerm_dVolStrain( dPerm_dVolStrain ),
     m_referencePermeability( referencePermeability ),
-    m_strainDependenceConstants( strainDependenceConstants )
+    m_volStrain( volStrain ),
+    m_volStrain_n( volStrain_n ),
+    m_permeabilityExponents( permeabilityExponents )
   {}
 
+  /**
+   * @brief Compute the permeability and its derivative w.r.t. the volumetric strain
+   * @param[in] initialPorosity the initial porosity phi_0
+   * @param[in] referencePermeability the permeability k_0 at the initial state
+   * @param[in] volStrain the total volumetric strain e_v since the initial state
+   * @param[out] permeability the permeability
+   * @param[out] dPerm_dVolStrain the derivative of the permeability w.r.t. e_v
+   */
   GEOS_HOST_DEVICE
-  void compute( real64 const & referencePorosity,
-                real64 const (&referencePermeability)[3],
-                R1Tensor const strainDependenceConstants,
-                real64 const & currentPorosity,
+  void compute( real64 const & initialPorosity,
+                arraySlice1d< real64 const > const & referencePermeability,
+                real64 const & volStrain,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dPorosity ) const;
+                arraySlice1d< real64 > const & dPerm_dVolStrain ) const;
 
   GEOS_HOST_DEVICE
-  virtual void updateFromPorosityAndStrain( localIndex const k,
-                                            real64 const & currentPorosity,
-                                            real64 const & referencePorosity ) const override
+  virtual void updateFromVolumetricStrainIncrement( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const & initialPorosity,
+                                                    real64 const & volStrainIncrement ) const override
   {
-    real64 referencePermeability[3];
+    m_volStrain[k][q] = m_volStrain_n[k][q] + volStrainIncrement;
 
-    referencePermeability[0] = m_referencePermeability[k][0][0];
-    referencePermeability[1] = m_referencePermeability[k][0][1];
-    referencePermeability[2] = m_referencePermeability[k][0][2];
+    // The permeability is cell-centered (one value per element): it is computed from the
+    // element-averaged volumetric strain once all the quadrature points of element k have been updated.
+    // This assumes the quadrature points of an element are visited in order, as in the FE kernels.
+    localIndex const numQuad = m_volStrain.size( 1 );
+    if( q == numQuad - 1 )
+    {
+      real64 avgVolStrain = 0.0;
+      for( localIndex iq = 0; iq < numQuad; ++iq )
+      {
+        avgVolStrain += m_volStrain[k][iq];
+      }
+      avgVolStrain /= numQuad;
 
-    compute( referencePorosity,
-             referencePermeability,
-             m_strainDependenceConstants,
-             currentPorosity,
-             m_permeability[k][0],
-             m_dPerm_dPorosity[k][0] );
+      compute( initialPorosity,
+               m_referencePermeability[k][0],
+               avgVolStrain,
+               m_permeability[k][0],
+               m_dPerm_dVolStrain[k][0] );
+    }
   }
 
 private:
 
-  /// dPermeability_dPorosity
-  arrayView3d< real64 > m_dPerm_dPorosity;
+  /// Derivative of the permeability w.r.t. the volumetric strain
+  arrayView3d< real64 > m_dPerm_dVolStrain;
 
-  /// Reference permeability
-  arrayView3d< real64 > m_referencePermeability;
+  /// Permeability at the initial state
+  arrayView3d< real64 const > m_referencePermeability;
 
-  /// Volumetric strain dependence coefficients for each permeability component
-  R1Tensor m_strainDependenceConstants;
+  /// Total volumetric strain since the initial state
+  arrayView2d< real64 > m_volStrain;
+
+  /// Total volumetric strain at the last converged state
+  arrayView2d< real64 const > m_volStrain_n;
+
+  /// Exponents of the porosity ratio for each permeability component
+  R1Tensor m_permeabilityExponents;
 };
 
 
@@ -100,6 +131,10 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override;
 
+  virtual void saveConvergedState() const override;
+
+  virtual void ignoreConvergedState() const override;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = StrainDependentPermeabilityUpdate;
 
@@ -111,18 +146,23 @@ public:
   {
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
-                          m_dPerm_dPorosity,
+                          m_dPerm_dVolStrain,
                           m_referencePermeability,
-                          m_strainDependenceConstants );
+                          m_volStrain,
+                          m_volStrain_n,
+                          m_permeabilityExponents );
   }
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
     static constexpr char const * referencePermeabilityComponentsString() { return "referencePermeabilityComponents"; }
-    static constexpr char const * dPerm_dPorosityString() { return "dPerm_dPorosity"; }
-    static constexpr char const * strainDependenceConstantsString() { return "strainDependenceConstants"; }
+    static constexpr char const * permeabilityExponentsString() { return "permeabilityExponents"; }
     static constexpr char const * referencePermeabilityString() { return "referencePermeability"; }
+    static constexpr char const * dPerm_dVolStrainString() { return "dPerm_dVolStrain"; }
+    static constexpr char const * volumetricStrainString() { return "volumetricStrain"; }
+    static constexpr char const * volumetricStrain_nString() { return "volumetricStrain_n"; }
+    static constexpr char const * permeability_nString() { return "permeability_n"; }
   };
 
   virtual void initializeState() const override final;
@@ -133,35 +173,47 @@ protected:
 
 private:
 
-  /// Permeability components at the reference pressure
+  /// Permeability components at the initial state (used where the permeability is not set by a field)
   R1Tensor m_referencePermeabilityComponents;
 
-  /// dPermeability_dPorosity
-  array3d< real64 > m_dPerm_dPorosity;
+  /// Exponents of the porosity ratio for each permeability component
+  R1Tensor m_permeabilityExponents;
 
-  /// Reference permeability
+  /// Permeability at the initial state
   array3d< real64 > m_referencePermeability;
 
-  /// Volumetric strain dependence coefficients for each permeability component
-  R1Tensor m_strainDependenceConstants;
+  /// Derivative of the permeability w.r.t. the volumetric strain
+  array3d< real64 > m_dPerm_dVolStrain;
+
+  /// Total volumetric strain since the initial state
+  array2d< real64 > m_volStrain;
+
+  /// Total volumetric strain at the last converged state
+  array2d< real64 > m_volStrain_n;
+
+  /// Permeability at the last converged state
+  array3d< real64 > m_permeability_n;
 };
 
 
 GEOS_HOST_DEVICE
 inline
-void StrainDependentPermeabilityUpdate::compute( real64 const & referencePorosity,
-                                                 real64 const (&referencePermeability)[3],
-                                                 R1Tensor const strainDependenceConstants,
-                                                 real64 const & currentPorosity,
+void StrainDependentPermeabilityUpdate::compute( real64 const & initialPorosity,
+                                                 arraySlice1d< real64 const > const & referencePermeability,
+                                                 real64 const & volStrain,
                                                  arraySlice1d< real64 > const & permeability,
-                                                 arraySlice1d< real64 > const & dPerm_dPorosity ) const
+                                                 arraySlice1d< real64 > const & dPerm_dVolStrain ) const
 {
-  real64 const porosityRatio = currentPorosity / referencePorosity;
+  // porosity from the conservation of the solid volume (incompressible grains)
+  real64 const solidFraction = ( 1.0 - initialPorosity ) * LvArray::math::exp( -volStrain );
+  real64 const porosity = 1.0 - solidFraction;
+  real64 const logPorosityRatio = LvArray::math::log( porosity / initialPorosity );
 
   for( localIndex i = 0; i < permeability.size(); ++i )
   {
-    permeability[i] = referencePermeability[i] * pow( porosityRatio, strainDependenceConstants[i] );
-    dPerm_dPorosity[i] = strainDependenceConstants[i] * permeability[i] / currentPorosity;
+    permeability[i] = referencePermeability[i] * LvArray::math::exp( m_permeabilityExponents[i] * logPorosityRatio );
+    // dk/de_v = n k (1 - phi) / phi
+    dPerm_dVolStrain[i] = m_permeabilityExponents[i] * permeability[i] * solidFraction / porosity;
   }
 }
 

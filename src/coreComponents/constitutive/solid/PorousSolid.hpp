@@ -129,7 +129,7 @@ public:
       dPorosity_dTemperature = 0.0;
     }
 
-    updateMatrixPermeability( k );
+    updateMatrixPermeability( k, q, strainIncrement, performStressInitialization );
 
     // Save the derivative of solid density wrt pressure for the computation of the body force
     dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure( k );
@@ -247,23 +247,18 @@ private:
   }
 
   GEOS_HOST_DEVICE
-  void updateMatrixPermeability( localIndex const k ) const
+  void updateMatrixPermeability( localIndex const k,
+                                 localIndex const q,
+                                 real64 const ( &strainIncrement )[6],
+                                 integer const performStressInitialization ) const
   {
-    // Compute averaged porosity over all quadrature points for the cell-centered permeability
-    integer const numQuad = m_porosityUpdate.numGauss();
+    // the strain of the stress initialization step does not modify the permeability
+    real64 const volStrainIncrement = performStressInitialization ? 0.0 : LvArray::tensorOps::symTrace< 3 >( strainIncrement );
 
-    real64 avgPorosity = 0.0;
-
-    for( localIndex q = 0; q < numQuad; ++q )
-    {
-      avgPorosity += m_porosityUpdate.getPorosity( k, q );
-    }
-
-    avgPorosity /= numQuad;
-
-    m_permUpdate.updateFromPorosityAndStrain( k,
-                                              avgPorosity,
-                                              m_porosityUpdate.getReferencePorosity( k ) );
+    m_permUpdate.updateFromVolumetricStrainIncrement( k,
+                                                      q,
+                                                      m_porosityUpdate.getInitialPorosity( k, q ),
+                                                      volStrainIncrement );
   }
 
   GEOS_HOST_DEVICE
