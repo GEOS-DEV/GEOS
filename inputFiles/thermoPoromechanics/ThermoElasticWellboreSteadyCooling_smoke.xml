@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+
+<!-- Coarse version of the steady wellbore cooling. The convergence study of the validation example refines nr and
+     nt together. -->
+<Problem>
+  <Included>
+    <File name="./ThermoElasticWellboreSteadyCooling_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      radius="{ 0.1, 1.0 }"
+      theta="{ 0, 90 }"
+      zCoords="{ 0, 0.01 }"
+      nr="{ 8 }"
+      nt="{ 8 }"
+      nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, 0.0 },
+                    { 0.0, 0.0, 0.01 } }"
+      autoSpaceRadialElems="{ 1 }"
+      cellBlockNames="{ rock }"/>
+  </Mesh>
+
+  <!-- six steps of 1e9, much longer than the diffusion time 1e6: each step damps the transient by about 1e4, so the
+       last steps are the steady state to round-off. The collections come after the solver, so they record the state
+       at the end of each step. -->
+  <Events
+    maxTime="6e9">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1e9"
+      target="/Solvers/thermoPoroSolver"/>
+    <PeriodicEvent
+      name="historyCollection"
+      timeFrequency="1e9"
+      target="/Tasks/temperatureCollection"/>
+    <PeriodicEvent
+      name="stressHistoryCollection"
+      timeFrequency="1e9"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="displacementHistoryCollection"
+      timeFrequency="1e9"
+      target="/Tasks/displacementCollection"/>
+    <PeriodicEvent
+      name="historyOutput"
+      timeFrequency="1e9"
+      target="/Outputs/historyOutput"/>
+    <PeriodicEvent
+      name="displacementHistoryOutput"
+      timeFrequency="1e9"
+      target="/Outputs/displacementHistoryOutput"/>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="3e9"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>

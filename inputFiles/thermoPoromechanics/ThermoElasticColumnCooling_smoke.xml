@@ -1,0 +1,58 @@
+<?xml version="1.0" ?>
+
+<!-- Coarse version of the column cooling: 20 cells, 16 steps. The convergence study of the validation example
+     refines nx and the time step together (time step proportional to the square of the cell size). -->
+<Problem>
+  <Included>
+    <File name="./ThermoElasticColumnCooling_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 0.05 }"
+      zCoords="{ 0, 0.05 }"
+      nx="{ 20 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ column }"/>
+  </Mesh>
+
+  <Events
+    maxTime="1.0625e4">
+    <PeriodicEvent
+      name="temperatureHistoryCollection"
+      timeFrequency="2500"
+      target="/Tasks/temperatureCollection"/>
+    <PeriodicEvent
+      name="stressHistoryCollection"
+      timeFrequency="2500"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="displacementHistoryCollection"
+      timeFrequency="2500"
+      target="/Tasks/displacementCollection"/>
+    <PeriodicEvent
+      name="historyOutput"
+      timeFrequency="2500"
+      target="/Outputs/historyOutput"/>
+    <PeriodicEvent
+      name="displacementHistoryOutput"
+      timeFrequency="2500"
+      target="/Outputs/displacementHistoryOutput"/>
+
+    <!-- after the collections, so that each one records the state at its own time -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="625"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5000"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+</Problem>

@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+
+<!-- Sealed oedometric heating with a tabulated solid thermal expansion coefficient, fully implicit coupling -->
+<Problem>
+  <Included>
+    <File name="./ThermoPoroElasticSealedHeating_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhasePoromechanics
+      name="thermoPoroSolver"
+      solidSolverName="solidMechSolver"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ rock }">
+      <NonlinearSolverParameters
+        couplingType="FullyImplicit"
+        newtonTol="1.0e-12"
+        newtonMaxIter="50"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="solidMechSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ rock }"/>
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="0"
+      isThermal="1"
+      targetRegions="{ rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-12"
+        newtonMaxIter="50"/>
+    </SinglePhaseFVM>
+  </Solvers>
+</Problem>

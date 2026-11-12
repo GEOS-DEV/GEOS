@@ -22,8 +22,12 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/initializeEnvironment.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/solid/ElasticIsotropic.hpp"
+#include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidThermalExpansion.hpp"
+#include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
@@ -35,6 +39,21 @@ namespace
 {
 
 using Strategy = SolidThermalExpansionUpdates::Strategy;
+using PorousElasticIsotropicConstant = PorousSolid< ElasticIsotropic, ConstantPermeability >;
+
+/// Porous solid of the coupled tests: K = 1e10, b = 1 - K / Ks = 0.9, reference porosity 0.1
+real64 constexpr bulkModulus = 1.0e10;
+real64 constexpr grainBulkModulus = 1.0e11;
+real64 constexpr biotCoefficient = 1.0 - bulkModulus / grainBulkModulus;
+real64 constexpr referencePorosity = 0.1;
+
+/// The porous solid of the coupled tests and the sub-models whose state the tests read or save
+struct PorousSolidModels
+{
+  PorousElasticIsotropicConstant & rock;
+  ElasticIsotropic & solid;
+  BiotPorosity & porosity;
+};
 
 /// Table used by the tabulated tests: knots and values
 stdVector< real64 > const tableKnots = { 0.0, 20.0, 50.0, 90.0 };
@@ -137,6 +156,35 @@ public:
     SolidThermalExpansion & model = parseManager( constitutiveBlock ).getConstitutiveRelation< SolidThermalExpansion >( name );
     model.initialize();
     return model;
+  }
+
+  /**
+   * @brief Build the porous solid "rock" with the SolidThermalExpansion model given in @p thermalExpansionBlock
+   *        (named "rockTEC"), on one element with one quadrature point, as a mesh sub-region would.
+   */
+  PorousSolidModels setupPorousSolid( string const & thermalExpansionBlock )
+  {
+    ConstitutiveManager & constitutiveManager =
+      parseManager( thermalExpansionBlock +
+                    "<BiotPorosity name=\"rockPorosity\" defaultReferencePorosity=\"0.1\" defaultGrainBulkModulus=\"1.0e11\"/>"
+                    "<ConstantPermeability name=\"rockPerm\" permeabilityComponents=\"{ 1.0e-15, 1.0e-15, 1.0e-15 }\"/>"
+                    "<ElasticIsotropic name=\"rockSolid\" defaultDensity=\"2700\" defaultBulkModulus=\"1.0e10\" defaultShearModulus=\"6.0e9\"/>"
+                    "<PorousElasticIsotropic name=\"rock\" solidModelName=\"rockSolid\" porosityModelName=\"rockPorosity\" "
+                    "permeabilityModelName=\"rockPerm\" solidThermalExpansionModelName=\"rockTEC\"/>" );
+    constitutiveManager.getConstitutiveRelation< SolidThermalExpansion >( "rockTEC" ).initialize();
+
+    dataRepository::Group & discretization =
+      m_root.registerGroup< dataRepository::Group >( "discretization" + std::to_string( m_constitutiveManagers.size() ) );
+    discretization.resize( 1 );
+    for( string const & name : stdVector< string >{ "rockSolid", "rockPorosity", "rockPerm", "rock" } )
+    {
+      constitutiveManager.getConstitutiveRelation< ConstitutiveBase >( name ).allocateConstitutiveData( discretization, 1 );
+    }
+    BiotPorosity & porosity = constitutiveManager.getConstitutiveRelation< BiotPorosity >( "rockPorosity" );
+    porosity.initializeState();
+    return { constitutiveManager.getConstitutiveRelation< PorousElasticIsotropicConstant >( "rock" ),
+             constitutiveManager.getConstitutiveRelation< ElasticIsotropic >( "rockSolid" ),
+             porosity };
   }
 
   /// Run @p func and check that it throws an InputError whose message contains @p expectedMessage
@@ -269,6 +317,160 @@ void checkJacobian( SolidThermalExpansionUpdates const & wrapper, real64 const T
   wrapper.compute( 0, Tn, T, meanAlpha, alpha );
   SCOPED_TRACE( "Tn = " + std::to_string( Tn ) + ", T = " + std::to_string( T ) );
   EXPECT_LT( relativeError( finiteDifference, alpha ), 1.0e-7 );
+}
+
+/// Kernel state at one quadrature point after a fully implicit poromechanics update
+struct PoromechanicsState
+{
+  real64 totalStress[6]{};
+  real64 dTotalStress_dPressure[6]{};
+  real64 dTotalStress_dTemperature[6]{};
+  real64 porosity = 0.0;
+  real64 dPorosity_dVolStrain = 0.0;
+  real64 dPorosity_dPressure = 0.0;
+  real64 dPorosity_dTemperature = 0.0;
+};
+
+/// Fully implicit update of the porous solid, as called by the thermal poromechanics kernels
+GEOS_HOST_DEVICE
+PoromechanicsState poromechanicsUpdate( PorousElasticIsotropicConstant::KernelWrapper const & porousWrapper,
+                                        real64 const pressure_n,
+                                        real64 const pressure,
+                                        real64 const temperature_n,
+                                        real64 const temperature,
+                                        real64 const volumetricStrainIncrement )
+{
+  PoromechanicsState state;
+  real64 const strainIncrement[6] = { volumetricStrainIncrement / 3, volumetricStrainIncrement / 3, volumetricStrainIncrement / 3, 0.0, 0.0, 0.0 };
+  PorousElasticIsotropicConstant::KernelWrapper::DiscretizationOps stiffness;
+  real64 porosity_n = 0.0;
+  real64 dSolidDensity_dPressure = 0.0;
+  porousWrapper.smallStrainUpdatePoromechanics( 0, 0, 1.0,
+                                                pressure, pressure_n,
+                                                temperature, temperature - temperature_n, temperature - temperature_n,
+                                                strainIncrement,
+                                                state.totalStress, state.dTotalStress_dPressure, state.dTotalStress_dTemperature,
+                                                stiffness, 0,
+                                                state.porosity, porosity_n,
+                                                state.dPorosity_dVolStrain, state.dPorosity_dPressure, state.dPorosity_dTemperature,
+                                                dSolidDensity_dPressure );
+  return state;
+}
+
+/// Richardson extrapolation of central differences of @p f at @p x, error O( h^4 )
+template< typename FUNC >
+real64 richardsonDerivative( FUNC && f, real64 const x, real64 const h )
+{
+  real64 const coarse = ( f( x + h ) - f( x - h ) ) / ( 2.0 * h );
+  real64 const fine = ( f( x + 0.5 * h ) - f( x - 0.5 * h ) ) / h;
+  return ( 4.0 * fine - coarse ) / 3.0;
+}
+
+/// Absolute error divided by the size of the reference, or by @p scale when the reference is smaller
+real64 scaledError( real64 const value, real64 const reference, real64 const scale )
+{
+  return LvArray::math::abs( value - reference ) / LvArray::math::max( LvArray::math::abs( reference ), scale );
+}
+
+/**
+ * @brief Check the temperature and pressure derivatives of the stress and porosity of the fully implicit update,
+ *        and of the fixed-stress porosity, against finite differences.
+ */
+void checkPorousSolidJacobian( PorousSolidModels const & models, real64 const temperature_n, real64 const temperature )
+{
+  SCOPED_TRACE( "temperature_n = " + std::to_string( temperature_n ) + ", temperature = " + std::to_string( temperature ) );
+  PorousElasticIsotropicConstant::KernelWrapper const porousWrapper = models.rock.createKernelUpdates();
+  real64 const pressure_n = 1.0e6;
+  real64 const pressure = 3.0e6;
+  real64 const volumetricStrainIncrement = 2.0e-4;
+  real64 constexpr tolerance = 1.0e-8;
+  real64 constexpr h = 1.0e-2;  // temperature step, small enough to stay within one segment of the tables
+  real64 constexpr hPressure = 1.0e2;
+
+  PoromechanicsState const state = poromechanicsUpdate( porousWrapper, pressure_n, pressure, temperature_n, temperature, volumetricStrainIncrement );
+  real64 const stressScale = bulkModulus * 1.0e-6;
+
+  for( integer i = 0; i < 6; ++i )
+  {
+    auto const stressOfTemperature = [&]( real64 const T )
+    { return poromechanicsUpdate( porousWrapper, pressure_n, pressure, temperature_n, T, volumetricStrainIncrement ).totalStress[i]; };
+    auto const stressOfPressure = [&]( real64 const p )
+    { return poromechanicsUpdate( porousWrapper, pressure_n, p, temperature_n, temperature, volumetricStrainIncrement ).totalStress[i]; };
+    EXPECT_LT( scaledError( state.dTotalStress_dTemperature[i], richardsonDerivative( stressOfTemperature, temperature, h ), stressScale ), tolerance )
+      << "dTotalStress_dTemperature[" << i << "]";
+    EXPECT_LT( scaledError( state.dTotalStress_dPressure[i], richardsonDerivative( stressOfPressure, pressure, hPressure ), 1.0 ), tolerance )
+      << "dTotalStress_dPressure[" << i << "]";
+  }
+
+  auto const porosityOfTemperature = [&]( real64 const T )
+  { return poromechanicsUpdate( porousWrapper, pressure_n, pressure, temperature_n, T, volumetricStrainIncrement ).porosity; };
+  auto const porosityOfPressure = [&]( real64 const p )
+  { return poromechanicsUpdate( porousWrapper, pressure_n, p, temperature_n, temperature, volumetricStrainIncrement ).porosity; };
+  auto const porosityOfStrain = [&]( real64 const e )
+  { return poromechanicsUpdate( porousWrapper, pressure_n, pressure, temperature_n, temperature, e ).porosity; };
+  EXPECT_LT( relativeError( state.dPorosity_dTemperature, richardsonDerivative( porosityOfTemperature, temperature, h ) ), tolerance );
+  EXPECT_LT( relativeError( state.dPorosity_dPressure, richardsonDerivative( porosityOfPressure, pressure, hPressure ) ), tolerance );
+  EXPECT_LT( relativeError( state.dPorosity_dVolStrain, richardsonDerivative( porosityOfStrain, volumetricStrainIncrement, 1.0e-6 ) ), tolerance );
+
+  // fixed-stress porosity: derivatives with respect to the current temperature and pressure, at a fixed previous iterate
+  arrayView2d< real64 const > const newPorosity = models.porosity.getPorosity();
+  arrayView2d< real64 const > const dPorosity_dTemperature = models.porosity.dPorosity_dTemperature();
+  arrayView2d< real64 const > const dPorosity_dPressure = models.porosity.dPorosity_dPressure();
+  real64 const temperature_k = 0.5 * ( temperature_n + temperature );
+  real64 const pressure_k = 2.0e6;
+  auto const fixedStressPorosity = [&]( real64 const p, real64 const T )
+  {
+    porousWrapper.updateStateFixedStress( 0, 0, p, pressure_k, pressure_n, T, temperature_k, temperature_n );
+    return newPorosity[0][0];
+  };
+  fixedStressPorosity( pressure, temperature );
+  real64 const fixedStress_dPorosity_dTemperature = dPorosity_dTemperature[0][0];
+  real64 const fixedStress_dPorosity_dPressure = dPorosity_dPressure[0][0];
+  EXPECT_LT( relativeError( fixedStress_dPorosity_dTemperature,
+                            richardsonDerivative( [&]( real64 const T ) { return fixedStressPorosity( pressure, T ); }, temperature, h ) ), tolerance );
+  EXPECT_LT( relativeError( fixedStress_dPorosity_dPressure,
+                            richardsonDerivative( [&]( real64 const p ) { return fixedStressPorosity( p, temperature ); }, pressure, hPressure ) ), tolerance );
+}
+
+/**
+ * @brief Drive the porous solid along a list of states (temperature, pressure, volumetric strain), saving the converged
+ *        state after each step, with the given policy; return the stress and porosity at the end.
+ */
+template< typename POLICY >
+void runPath( PorousSolidModels const & models,
+              stdVector< stdArray< real64, 3 > > const & path,
+              real64 ( & finalStress )[6],
+              real64 & finalPorosity )
+{
+  PorousElasticIsotropicConstant::KernelWrapper const porousWrapper = models.rock.createKernelUpdates();
+  array1d< real64 > result( 7 );
+  arrayView1d< real64 > const resultView = result.toView();
+  for( localIndex step = 1; step < LvArray::integerConversion< localIndex >( path.size() ); ++step )
+  {
+    real64 const temperature_n = path[step - 1][0];
+    real64 const temperature = path[step][0];
+    real64 const pressure_n = path[step - 1][1];
+    real64 const pressure = path[step][1];
+    real64 const volumetricStrainIncrement = path[step][2] - path[step - 1][2];
+    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const )
+    {
+      PoromechanicsState const state =
+        poromechanicsUpdate( porousWrapper, pressure_n, pressure, temperature_n, temperature, volumetricStrainIncrement );
+      for( integer i = 0; i < 6; ++i )
+      {
+        resultView[i] = state.totalStress[i];
+      }
+      resultView[6] = state.porosity;
+    } );
+    models.solid.saveConvergedState();
+    models.porosity.saveConvergedState();
+  }
+  result.move( hostMemorySpace, false );
+  for( integer i = 0; i < 6; ++i )
+  {
+    finalStress[i] = result[i];
+  }
+  finalPorosity = result[6];
 }
 
 } // namespace
@@ -436,6 +638,84 @@ TEST_F( SolidThermalExpansionTest, coupledSolid )
                   "permeabilityModelName=\"rockPerm\" solidThermalExpansionModelName=\"rockTEC\"/>" );
   },
                     "solidThermalExpansionModelName is not supported by CompressibleSolidConstantPermeability" );
+}
+
+/// Derivatives of the porous solid (stress and porosity, fully implicit and fixed-stress) against finite differences
+TEST_F( SolidThermalExpansionTest, porousSolidJacobian )
+{
+  addTable( "tecTable", tableKnots, tableValues );
+  PorousSolidModels const tabulatedRock =
+    setupPorousSolid( "<SolidThermalExpansion name=\"rockTEC\" drainedLinearTECTableName=\"tecTable\"/>" );
+  checkPorousSolidJacobian( tabulatedRock, 10.0, 35.0 );   // inside one segment
+  checkPorousSolidJacobian( tabulatedRock, 5.0, 70.0 );    // across two knots
+  checkPorousSolidJacobian( tabulatedRock, 85.0, 19.0 );   // cooling, just below a knot
+  checkPorousSolidJacobian( tabulatedRock, 40.0, 110.0 );  // beyond the last knot
+
+  PorousSolidModels const linearRock =
+    setupPorousSolid( "<SolidThermalExpansion name=\"rockTEC\" referenceDrainedLinearTEC=\"1.0e-5\" "
+                      "dDrainedLinearTEC_dTemperature=\"2.0e-7\" referenceTemperature=\"20.0\"/>" );
+  checkPorousSolidJacobian( linearRock, 20.0, 60.0 );
+  checkPorousSolidJacobian( linearRock, 80.0, 10.0 );
+}
+
+/**
+ * Stress and porosity depend only on the final state, not on the path or the time steps, because the thermal strain
+ * of each step is the exact integral of alpha. They also match the closed form, and a heating-cooling cycle returns
+ * them to their initial values. Sampling alpha( T ) * dT instead would fail all three checks.
+ */
+TEST_F( SolidThermalExpansionTest, pathIndependence )
+{
+  addTable( "tecTable", tableKnots, tableValues );
+  real64 constexpr finalTemperature = 85.0;
+  real64 constexpr finalPressure = 5.0e6;
+  real64 constexpr finalVolumetricStrain = 1.0e-4;
+
+  // path: ( temperature, pressure, volumetric strain ) from the reference state, in one step or in uneven steps
+  stdVector< stdArray< real64, 3 > > const oneStep = { { 0.0, 0.0, 0.0 }, { finalTemperature, finalPressure, finalVolumetricStrain } };
+  stdVector< stdArray< real64, 3 > > manySteps = { { 0.0, 0.0, 0.0 } };
+  integer constexpr numSteps = 37;
+  for( integer step = 1; step <= numSteps; ++step )
+  {
+    real64 const fraction = ( step * step ) / real64( numSteps * numSteps );   // uneven steps, crossing the knots off-grid
+    manySteps.push_back( { finalTemperature * fraction, finalPressure * fraction, finalVolumetricStrain * fraction } );
+  }
+  stdVector< stdArray< real64, 3 > > cycle = manySteps;
+  for( integer step = numSteps - 1; step >= 0; --step )
+  {
+    cycle.push_back( manySteps[step] );
+  }
+
+  // closed form: sigma_ii = K ( eps_v - 3 I ) - b p, phi = phi_0 + b eps_v + ( b - phi_0 ) / Ks p - 3 ( b - phi_0 ) I,
+  // with I the integral of alpha from 0 to the final temperature
+  real64 const thermalStrain = referenceMean( referenceTableAlpha, 0.0, finalTemperature ) * finalTemperature;
+  real64 const referenceStress = bulkModulus * ( finalVolumetricStrain - 3.0 * thermalStrain ) - biotCoefficient * finalPressure;
+  real64 const referencePorosityValue = referencePorosity + biotCoefficient * finalVolumetricStrain
+                                        + ( biotCoefficient - referencePorosity ) / grainBulkModulus * finalPressure
+                                        - 3.0 * ( biotCoefficient - referencePorosity ) * thermalStrain;
+
+  real64 stressOneStep[6], stressManySteps[6], stressCycle[6];
+  real64 porosityOneStep = 0.0, porosityManySteps = 0.0, porosityCycle = 0.0;
+  runPath< serialPolicy >( setupPorousSolid( "<SolidThermalExpansion name=\"rockTEC\" drainedLinearTECTableName=\"tecTable\"/>" ),
+                           oneStep, stressOneStep, porosityOneStep );
+  runPath< parallelDevicePolicy<> >( setupPorousSolid( "<SolidThermalExpansion name=\"rockTEC\" drainedLinearTECTableName=\"tecTable\"/>" ),
+                                     manySteps, stressManySteps, porosityManySteps );
+  runPath< parallelDevicePolicy<> >( setupPorousSolid( "<SolidThermalExpansion name=\"rockTEC\" drainedLinearTECTableName=\"tecTable\"/>" ),
+                                     cycle, stressCycle, porosityCycle );
+
+  real64 const stressScale = LvArray::math::abs( referenceStress );
+  for( integer i = 0; i < 3; ++i )
+  {
+    EXPECT_LT( relativeError( stressOneStep[i], referenceStress ), 1.0e-8 );
+    EXPECT_LT( relativeError( stressManySteps[i], stressOneStep[i] ), 1.0e-12 );
+    EXPECT_LT( LvArray::math::abs( stressCycle[i] ) / stressScale, 1.0e-12 );
+  }
+  for( integer i = 3; i < 6; ++i )
+  {
+    EXPECT_LT( LvArray::math::abs( stressManySteps[i] ) / stressScale, 1.0e-14 );
+  }
+  EXPECT_LT( relativeError( porosityOneStep, referencePorosityValue ), 1.0e-10 );
+  EXPECT_LT( relativeError( porosityManySteps, porosityOneStep ), 1.0e-13 );
+  EXPECT_LT( relativeError( porosityCycle, referencePorosity ), 1.0e-13 );
 }
 
 int main( int argc, char * * argv )

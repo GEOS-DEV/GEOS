@@ -1,0 +1,265 @@
+<?xml version="1.0" ?>
+
+<!-- Steady cooling of a wellbore wall with a tabulated, temperature-dependent solid thermal expansion coefficient:
+     quarter of an annulus a < r < b in plane strain, drained, inner wall held at 0 and free, outer boundary held at
+     90 (the initial temperature) and fixed. A few long time steps give the steady state, where the temperature is
+     logarithmic in r. The stresses then follow from one quadrature of the thermal strain, the integral of alpha from
+     90 to T( r ), which gives a reference for a mesh-convergence study (see the validation example). -->
+<Problem>
+  <!-- The problem is linear and the linear solver direct, so one Newton iteration solves each step. Once the state
+       stops changing, the normalized energy residual stays at round-off (about 1e-9 times the time step / 1e9), hence
+       the loose newtonTol, which does not limit the accuracy. -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhasePoromechanics
+      name="thermoPoroSolver"
+      solidSolverName="solidMechSolver"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ rock }">
+      <NonlinearSolverParameters
+        couplingType="FullyImplicit"
+        newtonTol="1.0e-6"
+        newtonMaxIter="10"
+        lineSearchAction="None"/>
+      <LinearSolverParameters
+        solverType="direct"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="solidMechSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ rock }"/>
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="90"
+      isThermal="1"
+      targetRegions="{ rock }"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="rock"
+      cellBlocks="{ * }"
+      materialList="{ fluid, rock, rockThermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"
+      solidThermalExpansionModelName="rockTEC"/>
+
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="9.12345679e9"
+      defaultShearModulus="6.00813e9"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      defaultGrainBulkModulus="1.0e11"/>
+
+    <SolidThermalExpansion
+      name="rockTEC"
+      drainedLinearTECTableName="tecTable"/>
+
+        <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="1.0e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="0.0"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="1000"
+      referenceInternalEnergy="1.0e-3"/>
+
+    <SinglePhaseThermalConductivity
+      name="rockThermalCond"
+      defaultThermalConductivityComponents="{ 1.0, 1.0, 1.0 }"/>
+    
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- symmetry planes, plane strain, fixed outer boundary; the inner wall is free -->
+    <FieldSpecification
+      name="tNegConstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ tneg }"/>
+    <FieldSpecification
+      name="tPosConstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ tpos }"/>
+    <FieldSpecification
+      name="zConstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+    <FieldSpecification
+      name="rPosConstraint_x"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ rpos }"/>
+    <FieldSpecification
+      name="rPosConstraint_y"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ rpos }"/>
+
+    <FieldSpecification
+      name="initialSigma_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockSolid_stress"
+      component="0"
+      scale="0"/>
+    <FieldSpecification
+      name="initialSigma_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockSolid_stress"
+      component="1"
+      scale="0"/>
+    <FieldSpecification
+      name="initialSigma_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockSolid_stress"
+      component="2"
+      scale="0"/>
+
+    <!-- drained: the pressure is held at zero everywhere -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="0"/>
+    <FieldSpecification
+      name="fixedPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="0"/>
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="90"/>
+    <!-- a face condition needs both the pressure and the temperature -->
+    <FieldSpecification
+      name="innerPressure"
+      setNames="{ rneg }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0"/>
+    <FieldSpecification
+      name="outerPressure"
+      setNames="{ rpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0"/>
+    <FieldSpecification
+      name="innerTemperature"
+      setNames="{ rneg }"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="0"/>
+    <FieldSpecification
+      name="outerTemperature"
+      setNames="{ rpos }"
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="90"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <!-- the kinked table of the drained oedometric tests; the wall crosses all three kinks -->
+    <TableFunction
+      name="tecTable"
+      inputVarNames="{ temperature }"
+      coordinates="{ 0.0, 20.0, 50.0, 70.0 }"
+      values="{ 0.2e-5, 0.5e-5, 0.6e-5, 1.6e-5 }"/>
+  </Functions>
+
+  <Tasks>
+    <PackCollection
+      name="temperatureCollection"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="temperature"/>
+    <PackCollection
+      name="stressCollection"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockSolid_stress"/>
+    <PackCollection
+      name="displacementCollection"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"/>
+  </Tasks>
+
+  <Outputs>
+    <TimeHistory
+      name="historyOutput"
+      sources="{ /Tasks/temperatureCollection, /Tasks/stressCollection }"
+      filename="wellboreHistory"/>
+    <TimeHistory
+      name="displacementHistoryOutput"
+      sources="{ /Tasks/displacementCollection }"
+      filename="wellboreDisplacementHistory"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

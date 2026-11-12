@@ -1,0 +1,255 @@
+<?xml version="1.0" ?>
+
+<!-- Sealed (undrained) oedometric heating with a tabulated, temperature-dependent solid thermal expansion
+     coefficient. The sample is laterally confined, free on top, and no fluid leaves it; the temperature is
+     imposed uniformly. The pore pressure, porosity and stress then follow from mass conservation alone,
+     which gives a closed-form reference to round-off (see the validation example). -->
+<Problem>
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 0.1 }"
+      yCoords="{ 0, 0.1 }"
+      zCoords="{ 0, 0.1 }"
+      nx="{ 2 }"
+      ny="{ 2 }"
+      nz="{ 2 }"
+      cellBlockNames="{ rock }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="rock"
+      cellBlocks="{ rock }"
+      materialList="{ fluid, rock, rockThermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <!-- SPHINX_SealedPorousSolid -->
+    <PorousElasticIsotropic
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"
+      solidThermalExpansionModelName="rockTEC"/>
+
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="9.12345679e9"
+      defaultShearModulus="6.00813e9"/>
+
+    <!-- no defaultPorosityTEC: the porosity uses the coefficient of rockTEC -->
+    <BiotPorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      defaultGrainBulkModulus="1.0e11"/>
+
+    <SolidThermalExpansion
+      name="rockTEC"
+      drainedLinearTECTableName="tecTable"/>
+    <!-- SPHINX_SealedPorousSolidEnd -->
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="4.56e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
+
+    <SinglePhaseThermalConductivity
+      name="rockThermalCond"
+      defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
+
+    <!-- SPHINX_SealedFluid -->
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="5e-10"
+      thermalExpansionCoeff="2e-4"
+      viscosibility="0.0"
+      specificHeatCapacity="1"
+      referenceInternalEnergy="1"/>
+    <!-- SPHINX_SealedFluidEnd -->
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- lateral confinement, fixed base, free top -->
+    <FieldSpecification
+      name="constraint_x"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="constraint_y"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="constraint_z"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+    <FieldSpecification
+      name="initialSigma_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockSolid_stress"
+      component="0"
+      scale="0"/>
+    <FieldSpecification
+      name="initialSigma_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockSolid_stress"
+      component="1"
+      scale="0"/>
+    <FieldSpecification
+      name="initialSigma_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockSolid_stress"
+      component="2"
+      scale="0"/>
+
+    <!-- sealed: no pressure boundary condition, the pressure starts at zero -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="0"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="0"/>
+
+    <FieldSpecification
+      name="appliedTemperature"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      scale="1"
+      functionName="temperatureTable"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="temperatureTable"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0e5 }"
+      values="{ 0, 90 }"/>
+
+    <!-- the kinked table of the drained oedometric tests -->
+    <TableFunction
+      name="tecTable"
+      inputVarNames="{ temperature }"
+      coordinates="{ 0.0, 20.0, 50.0, 70.0 }"
+      values="{ 0.2e-5, 0.5e-5, 0.6e-5, 1.6e-5 }"/>
+  </Functions>
+
+  <Tasks>
+    <PackCollection
+      name="temperatureCollection"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="temperature"/>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="pressure"/>
+    <PackCollection
+      name="porosityCollection"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockPorosity_porosity"/>
+    <PackCollection
+      name="stressCollection"
+      objectPath="ElementRegions/rock/rock"
+      fieldName="rockSolid_stress"/>
+  </Tasks>
+
+  <!-- the ramp ends at 1e5; the last step keeps the temperature at 90 so that the final state is collected -->
+  <Events
+    maxTime="1.1e5">
+    <PeriodicEvent
+      name="historyCollection"
+      timeFrequency="1e4"
+      targetExactTimestep="0"
+      target="/Tasks/temperatureCollection"/>
+    <PeriodicEvent
+      name="pressureHistoryCollection"
+      timeFrequency="1e4"
+      target="/Tasks/pressureCollection"/>
+    <PeriodicEvent
+      name="porosityHistoryCollection"
+      timeFrequency="1e4"
+      target="/Tasks/porosityCollection"/>
+    <PeriodicEvent
+      name="stressHistoryCollection"
+      timeFrequency="1e4"
+      target="/Tasks/stressCollection"/>
+    <PeriodicEvent
+      name="historyOutput"
+      timeFrequency="1e4"
+      target="/Outputs/historyOutput"/>
+
+    <!-- ten steps over the whole ramp: with the exact integral of alpha, the step size does not matter -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1e4"
+      target="/Solvers/thermoPoroSolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5e4"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <TimeHistory
+      name="historyOutput"
+      sources="{ /Tasks/temperatureCollection, /Tasks/pressureCollection, /Tasks/porosityCollection, /Tasks/stressCollection }"
+      filename="sealedHeatingHistory"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

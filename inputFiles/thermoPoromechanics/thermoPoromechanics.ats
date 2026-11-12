@@ -135,6 +135,38 @@ decks = [
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=5,
         check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoPoroElasticSealedHeating_fim_smoke",
+        description=
+        'Sealed oedometric heating with a tabulated thermal expansion coefficient used by stress and porosity (fully implicit)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=5,
+        check_step=11,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoPoroElasticSealedHeating_sequential_smoke",
+        description=
+        'Sealed oedometric heating with a tabulated thermal expansion coefficient used by stress and porosity (sequential)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=5,
+        check_step=11,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoElasticColumnCooling_smoke",
+        description=
+        'Conductive cooling of a confined column with a tabulated thermal expansion coefficient (SolidThermalExpansion)',
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=8,
+        check_step=17,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="ThermoElasticWellboreSteadyCooling_smoke",
+        description=
+        'Steady cooling of a wellbore wall with a tabulated thermal expansion coefficient (SolidThermalExpansion)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=3,
+        check_step=6,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 

@@ -111,6 +111,103 @@ The data of the figure (``thermoElasticOedometric.csv``) is produced from the be
 ``postprocessThermoElasticOedometric.py``, located next to this page.
 
 ------------------------------------------------------------------
+Sealed heating: pore pressure and porosity
+------------------------------------------------------------------
+
+The drained test above has no pore pressure, so it does not exercise the porosity. In the sealed variant
+the same oedometric sample cannot drain: no fluid leaves it, and the uniform temperature rises from 0 to
+90 with the kinked table above. The porosity then uses the coefficient of the ``SolidThermalExpansion``
+model, like the stress; ``defaultPorosityTEC`` is not given (it is rejected when the model is attached):
+
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoPoroElasticSealedHeating_base.xml
+  :language: xml
+  :start-after: <!-- SPHINX_SealedPorousSolid -->
+  :end-before: <!-- SPHINX_SealedPorousSolidEnd -->
+
+With :math:`I(T) = \int_{T_{init}}^{T} \alpha(s)\,ds`, Biot coefficient :math:`b`, grain bulk modulus
+:math:`K_s`, and a fluid of density :math:`\rho_0 \exp( c_f p - \beta_f (T - T_{init}) )`, the vertical
+strain, the porosity and the fluid mass balance read
+
+.. math::
+   \varepsilon_{zz} = \frac{3 K I + b\,p}{K + \frac{4}{3} G}, \qquad
+   \phi = \phi_0 + b\,\varepsilon_{zz} + \frac{b - \phi_0}{K_s}\,p - 3 (b - \phi_0)\,I, \qquad
+   \phi\, e^{c_f p - \beta_f (T - T_{init})} = \phi_0 .
+
+The last equation gives the pressure at each temperature (one scalar root, solved to round-off), and
+the effective stresses follow. GEOS matches this solution to :math:`10^{-13}` with the fully implicit
+coupling and to :math:`2 \times 10^{-10}` with the sequential coupling, whose iterations stop at
+``newtonTol``. The time step does not matter: the ten steps of the smoke decks give the same result as
+any finer stepping. The dashed curve is the exact pressure when the porosity uses a constant coefficient
+:math:`\alpha(0)` instead: the final pressure would be 30 % lower.
+
+.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/nonLinearThermalOedometric/plotSealedHeating.py
+
+.. code-block:: console
+
+  inputFiles/thermoPoromechanics/ThermoPoroElasticSealedHeating_base.xml
+  inputFiles/thermoPoromechanics/ThermoPoroElasticSealedHeating_fim_smoke.xml
+  inputFiles/thermoPoromechanics/ThermoPoroElasticSealedHeating_sequential_smoke.xml
+
+The data (``sealedHeating.csv``) is produced by ``postprocessSealedHeating.py``.
+
+------------------------------------------------------------------
+Mesh convergence: cooling of a column
+------------------------------------------------------------------
+
+The previous tests are uniform. Here a column of length 1 along :math:`x`, confined in :math:`y` and
+:math:`z`, fixed at :math:`x = 0` and free at :math:`x = 1`, starts at 90; its end :math:`x = 0` is held
+at 0 and the other end is insulated. The pressure is held at zero. The fluid and the solid have the
+same volumetric heat capacity :math:`C`, so that the energy balance does not depend on porosity:
+
+.. literalinclude:: ../../../../../../../inputFiles/thermoPoromechanics/ThermoElasticColumnCooling_base.xml
+  :language: xml
+  :start-after: <!-- SPHINX_ColumnHeatCapacities -->
+  :end-before: <!-- SPHINX_ColumnHeatCapacitiesEnd -->
+
+The temperature is then the series solution of the heat equation with diffusivity :math:`D = k / C`,
+
+.. math::
+   T(x,t) = 90 \sum_{n \ge 0} \frac{4}{(2n+1)\pi} \sin(\lambda_n x)\, e^{-\lambda_n^2 D t},
+   \qquad \lambda_n = \frac{(2n+1)\pi}{2},
+
+and, since :math:`\sigma_{xx} = 0` everywhere, the lateral stress at each point is
+:math:`\sigma_{yy} = -\frac{E}{1-\nu} \int_{90}^{T(x,t)} \alpha(s)\,ds`. The column crosses all the
+kinks of the table. ``convergenceThermoElasticColumn.py`` runs GEOS on 10 to 160 cells, with a time
+step proportional to the square of the cell size, and fits the order of the error on the temperature,
+the lateral stress and the end displacement at three times. All three converge at order 2.0.
+
+.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/nonLinearThermalOedometric/plotConvergenceStudies.py column
+
+------------------------------------------------------------------
+Mesh convergence: steady cooling of a wellbore wall
+------------------------------------------------------------------
+
+A quarter of an annulus :math:`0.1 < r < 1`, in plane strain and drained, is held at 0 on its inner wall
+(free) and at 90 on its outer boundary (fixed). At steady state the temperature is
+:math:`T(r) = 90 \ln(r/a) / \ln(b/a)`, and with the thermal strain :math:`e(r) = \int_{90}^{T(r)} \alpha`,
+the displacement is
+
+.. math::
+   u(r) = \beta \frac{J(r)}{r} + C_1 r + \frac{C_2}{r}, \qquad J(r) = \int_a^r e(s)\, s\, ds, \qquad
+   \beta = \frac{3K}{\lambda + 2G},
+
+with :math:`C_1, C_2` given by :math:`\sigma_{rr}(a) = 0` and :math:`u(b) = 0`; the stresses follow.
+``convergenceThermoElasticWellbore.py`` runs GEOS on 8 x 8 to 64 x 64 cells: the temperature, the three
+stresses and the wall displacement converge at order 2.0.
+
+.. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/nonLinearThermalOedometric/plotConvergenceStudies.py wellbore
+
+.. code-block:: console
+
+  inputFiles/thermoPoromechanics/ThermoElasticColumnCooling_base.xml
+  inputFiles/thermoPoromechanics/ThermoElasticColumnCooling_smoke.xml
+  inputFiles/thermoPoromechanics/ThermoElasticWellboreSteadyCooling_base.xml
+  inputFiles/thermoPoromechanics/ThermoElasticWellboreSteadyCooling_smoke.xml
+
+The two scripts write the CSV files of the figures and exit with an error if an observed order falls
+below 1.8.
+
+------------------------------------------------------------------
 To go further
 ------------------------------------------------------------------
 
