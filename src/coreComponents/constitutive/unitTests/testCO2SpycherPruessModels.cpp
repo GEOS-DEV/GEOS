@@ -50,18 +50,17 @@ protected:
   static real64 constexpr relTol = 1.0e-5;
   static real64 constexpr absTol = 1.0e-7;
   static real64 constexpr pertubation = 1.0e-6;
-  static constexpr char const * flashContent = "FlashModel CO2Solubility 1.0e5 1.0e7 9.9e5 283.15 383.15 10.0 0.15 1.0e-8 SpycherPruess";
 
 public:
   CO2SolubilitySpycherPruessTestFixture() = default;
   ~CO2SolubilitySpycherPruessTestFixture() override = default;
 
 protected:
-  static std::unique_ptr< CO2Solubility > makeFlashModel( string const & fileContent );
+  static std::unique_ptr< CO2Solubility > makeFlashModel();
 };
 
 std::unique_ptr< CO2Solubility >
-CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileContent )
+CO2SolubilitySpycherPruessTestFixture::makeFlashModel()
 {
   // Define phase names
   string_array phaseNames;
@@ -80,16 +79,25 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
   componentMolarWeight[0] = 44.0e-3;
   componentMolarWeight[1] = 18.0e-3;
 
-  // Read file parameters
-  string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( fileContent );
+  // Fluid model parameters
+  BrineFluidParameters parameters;
+  parameters.m_solubilityModel = BrineFluidParameters::SolubilityModel::SpycherPruess;
+  parameters.m_pressureCoordinates.emplace_back( 1.0e5 );
+  parameters.m_pressureCoordinates.emplace_back( 1.0e7 );
+  parameters.m_pressureInterval = 9.9e5;
+  parameters.m_temperatureCoordinates.emplace_back( 283.15 );
+  parameters.m_temperatureCoordinates.emplace_back( 383.15 );
+  parameters.m_temperatureInterval = 10.0;
+  parameters.m_salinity = 0.15;
+  parameters.m_tolerance = 1.0e-8;
 
   TableFunction::OutputOptions const flashOutputOpts = {
     false,  // writeCSV
     false,   // writeInLog
   };
 
-  return std::make_unique< CO2Solubility >( strs[1],
-                                            strs,
+  return std::make_unique< CO2Solubility >( "FlashModel",
+                                            parameters,
                                             phaseNames,
                                             componentNames,
                                             componentMolarWeight,
@@ -98,7 +106,7 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
 
 TEST_P( CO2SolubilitySpycherPruessTestFixture, testExpectedValues )
 {
-  auto flashModel = makeFlashModel( CO2SolubilitySpycherPruessTestFixture::flashContent );
+  auto flashModel = makeFlashModel();
 
   auto [pressure, temperature, z_co2, expected_V, expected_x_co2, expected_y_wat] = GetParam();
 
@@ -137,7 +145,7 @@ TEST_P( CO2SolubilitySpycherPruessTestFixture, testNumericalDerivatives )
 {
   using Deriv = multifluid::DerivativeOffset;
 
-  auto flashModel = makeFlashModel( CO2SolubilitySpycherPruessTestFixture::flashContent );
+  auto flashModel = makeFlashModel();
 
   auto [pressure, temperature, z_co2, expected_V, expected_x_co2, expected_y_wat] = GetParam();
   GEOS_UNUSED_VAR( expected_V, expected_x_co2, expected_y_wat );
@@ -297,26 +305,26 @@ stdVector< TestParam > generateTestData()
     {1.00000000e+08, 5.00000000e+01, 1.00000000e-05, 0.00000000e+00, 1.00000000e-05, 0.00000000e+00},
     {1.00000000e+08, 8.00000000e+01, 1.00000000e-05, 0.00000000e+00, 1.00000000e-05, 0.00000000e+00},
     {1.00000000e+08, 1.10000000e+02, 1.00000000e-05, 0.00000000e+00, 1.00000000e-05, 0.00000000e+00},
-    {1.00000000e+05, 1.00000000e+01, 3.00000000e-01, 3.03161030e-01, 8.58355906e-04, 1.23998968e-02},
-    {1.00000000e+05, 5.00000000e+01, 3.00000000e-01, 3.42216891e-01, 3.10066097e-04, 1.23958952e-01},
-    {1.00000000e+05, 8.00000000e+01, 3.00000000e-01, 5.66944658e-01, 1.24160030e-04, 4.70942662e-01},
+    {1.00000000e+05, 1.00000000e+01, 3.00000000e-01, 0.30316629266172906, 0.00085090329021506083, 1.23998968e-02},
+    {1.00000000e+05, 5.00000000e+01, 3.00000000e-01, 0.34221891417081973, 0.00030737250473219488, 1.23958952e-01},
+    {1.00000000e+05, 8.00000000e+01, 3.00000000e-01, 0.56694554161147426, 0.00012308123367675458, 4.70942662e-01},
     {1.00000000e+05, 1.10000000e+02, 3.00000000e-01, 3.00000000e-01, 0.00000000e+00, 0.00000000e+00},
-    {1.00000000e+06, 1.00000000e+01, 3.00000000e-01, 2.94948990e-01, 8.11504677e-03, 2.27331474e-03},
-    {1.00000000e+06, 5.00000000e+01, 3.00000000e-01, 3.04861076e-01, 3.32772200e-03, 2.35330303e-02},
-    {1.00000000e+06, 8.00000000e+01, 3.00000000e-01, 3.35758987e-01, 2.14620607e-03, 1.10747849e-01},
-    {1.00000000e+06, 1.10000000e+02, 3.00000000e-01, 3.40957999e-01, 1.62203194e-03, 1.23261476e-01},
-    {5.00000000e+06, 1.00000000e+01, 3.00000000e-01, 2.79742151e-01, 2.89079228e-02, 2.01367187e-03},
-    {5.00000000e+06, 5.00000000e+01, 3.00000000e-01, 2.91378214e-01, 1.36880088e-02, 3.69909366e-03},
-    {5.00000000e+06, 8.00000000e+01, 3.00000000e-01, 2.97134400e-01, 9.51668603e-03, 1.28674138e-02},
-    {5.00000000e+06, 1.10000000e+02, 3.00000000e-01, 3.05337535e-01, 8.04059852e-03, 3.57736478e-02},
-    {1.00000000e+07, 1.00000000e+01, 3.00000000e-01, 2.78859111e-01, 3.01769401e-02, 2.22670319e-03},
-    {1.00000000e+07, 5.00000000e+01, 3.00000000e-01, 2.86981820e-01, 1.98935606e-02, 4.06398711e-03},
-    {1.00000000e+07, 8.00000000e+01, 3.00000000e-01, 2.91881746e-01, 1.54455782e-02, 9.65816584e-03},
-    {1.00000000e+07, 1.10000000e+02, 3.00000000e-01, 2.97372350e-01, 1.38649677e-02, 2.39237441e-02},
-    {1.00000000e+08, 1.00000000e+01, 3.00000000e-01, 2.78859111e-01, 3.01769401e-02, 2.22670319e-03},
-    {1.00000000e+08, 5.00000000e+01, 3.00000000e-01, 2.86981820e-01, 1.98935606e-02, 4.06398711e-03},
-    {1.00000000e+08, 8.00000000e+01, 3.00000000e-01, 2.91881746e-01, 1.54455782e-02, 9.65816584e-03},
-    {1.00000000e+08, 1.10000000e+02, 3.00000000e-01, 2.97372350e-01, 1.38649677e-02, 2.39237441e-02},
+    {1.00000000e+06, 1.00000000e+01, 3.00000000e-01, 0.29499882319684639, 0.0080450957564913543, 2.27331474e-03},
+    {1.00000000e+06, 5.00000000e+01, 3.00000000e-01, 0.30488166349930129, 0.0032989000731056487, 2.35330303e-02},
+    {1.00000000e+06, 8.00000000e+01, 3.00000000e-01, 0.33577292210903398, 0.002127595591701263, 1.10747849e-01},
+    {1.00000000e+06, 1.10000000e+02, 3.00000000e-01, 0.34096859661779633, 0.0016079594339768342, 1.23261476e-01},
+    {5.00000000e+06, 1.00000000e+01, 3.00000000e-01, 0.2799234586625956, 0.02866391855130497, 2.01367187e-03},
+    {5.00000000e+06, 5.00000000e+01, 3.00000000e-01, 0.29146281934391888, 0.013570676580556669, 3.69909366e-03},
+    {5.00000000e+06, 8.00000000e+01, 3.00000000e-01, 0.29719329085522239, 0.0094347679322459715, 1.28674138e-02},
+    {5.00000000e+06, 1.10000000e+02, 3.00000000e-01, 0.30538788828878705, 0.0079712840925638476, 3.57736478e-02},
+    {1.00000000e+07, 1.00000000e+01, 3.00000000e-01, 0.27904865261135298, 0.029922554402427436, 2.22670319e-03},
+    {1.00000000e+07, 5.00000000e+01, 3.00000000e-01, 0.28710559375554839, 0.019724098763057561, 4.06398711e-03},
+    {1.00000000e+07, 8.00000000e+01, 3.00000000e-01, 0.2919777311217493, 0.015313414145722523, 9.65816584e-03},
+    {1.00000000e+07, 1.10000000e+02, 3.00000000e-01, 0.2974591103618851, 0.013746139793011094, 2.39237441e-02},
+    {1.00000000e+08, 1.00000000e+01, 3.00000000e-01, 0.27904865261135298, 0.029922554402427436, 2.22670319e-03},
+    {1.00000000e+08, 5.00000000e+01, 3.00000000e-01, 0.28710559375554839, 0.019724098763057561, 4.06398711e-03},
+    {1.00000000e+08, 8.00000000e+01, 3.00000000e-01, 0.2919777311217493, 0.015313414145722523, 9.65816584e-03},
+    {1.00000000e+08, 1.10000000e+02, 3.00000000e-01, 0.2974591103618851, 0.013746139793011094, 2.39237441e-02},
     {1.00000000e+05, 1.00000000e+01, 9.99990000e-01, 1.00000000e+00, 0.00000000e+00, 1.00000000e-05},
     {1.00000000e+05, 5.00000000e+01, 9.99990000e-01, 1.00000000e+00, 0.00000000e+00, 1.00000000e-05},
     {1.00000000e+05, 8.00000000e+01, 9.99990000e-01, 1.00000000e+00, 0.00000000e+00, 1.00000000e-05},

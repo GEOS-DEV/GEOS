@@ -85,6 +85,45 @@ TEST( testXmlWrapper, array3d_errors )
   }
 }
 
+TEST( testXmlWrapper, paddedRealMatrix )
+{
+  Regex const & regex = rtTypes::getTypeRegex< array2d< real64 > >();
+  for( localIndex size : { 8, 20 } )
+  {
+    string input = "{ ";
+    for( localIndex row = 0; row < size; ++row )
+    {
+      if( row > 0 )
+        input += ",                              ";
+      input += "{ ";
+      for( localIndex column = 0; column < size; ++column )
+      {
+        if( column > 0 )
+          input += ",        ";
+        input += row == column ? "0.0" : "0.15";
+      }
+      input += " }";
+    }
+    input += " }";
+
+    array2d< real64 > matrix;
+    ASSERT_NO_THROW( xmlWrapper::stringToInputVariable( matrix, input, regex ) );
+    ASSERT_EQ( matrix.size( 0 ), size );
+    ASSERT_EQ( matrix.size( 1 ), size );
+    for( localIndex row = 0; row < size; ++row )
+    {
+      for( localIndex column = 0; column < size; ++column )
+      {
+        EXPECT_DOUBLE_EQ( matrix( row, column ), row == column ? 0.0 : 0.15 );
+      }
+    }
+
+    // Invalid values must still be rejected even in a large, padded matrix.
+    input.replace( input.rfind( "0.0" ), 3, "invalid" );
+    EXPECT_THROW( xmlWrapper::stringToInputVariable( matrix, input, regex ), InputError );
+  }
+}
+
 TEST( testXmlWrapper, array3d )
 {
 //  string input = " { { {0,1,2},{3,4,5} }, { {6,7,8},{9,10,11} }, { {12,13,14},{15,16,17} } , { {18,19,20},{21,22,23} }

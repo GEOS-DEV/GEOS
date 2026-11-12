@@ -382,25 +382,33 @@ public:
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
-      integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC() + 1;
+      // MultiphasePoromechanics supports at most three components; skip larger instantiations.
+      if constexpr ( NC() > 3 )
+      {
+        GEOS_ERROR( GEOS_FMT( "Conforming-fracture poromechanics supports at most 3 components, got {}.", numComps ) );
+      }
+      else
+      {
+        integer constexpr NUM_COMP = NC();
+        integer constexpr NUM_DOF = NC() + 1;
 
-      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+          elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+        dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
+        using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF >;
+        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors, fracPermAccessors,
-                         dt, localMatrix, localRhs, kernelFlags, dR_dAper );
+        kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors, fracPermAccessors,
+                           dt, localMatrix, localRhs, kernelFlags, dR_dAper );
 
-      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      }
     } );
   }
 };

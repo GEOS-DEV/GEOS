@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./deadoil_3ph_staircase_obl_3d_base.xml"/>
+  </Included>
+
+  <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
+  <Solvers>
+    <ReactiveCompositionalMultiphaseOBL
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ Channel }"
+      maxCompFractionChange="0.3"
+      enableEnergyBalance="0"
+      useDARTSL2Norm="1"
+      numComponents="3"
+      numPhases="3"
+      OBLOperatorsTableFile="obl_do_static.txt">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-10"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </ReactiveCompositionalMultiphaseOBL>
+  </Solvers>
+
+  <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
+
+</Problem>

@@ -9,4 +9,6 @@ Thermoporomechanics
 
    thermalConsolidation/Example
 
+   1DCooling/Example
+
 

@@ -53,6 +53,13 @@ blt_add_library( NAME       mainInterface
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
+if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14.3 )
+  # See the matching workaround in common/CMakeLists.txt. ProblemManager
+  # constructs std::regex objects while processing input paths.
+  set_source_files_properties( ${CMAKE_CURRENT_SOURCE_DIR}/ProblemManager.cpp
+                                PROPERTIES COMPILE_OPTIONS "-fno-inline" )
+endif()
+
 add_dependencies( mainInterface generate_version )
 
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

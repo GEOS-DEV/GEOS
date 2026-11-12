@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- INITIAL LOG CONCENTRATIONS AT MEDIUM, FOR SYSTEMS WITH NO EQUILIBRIUM REACTIONS -->
+    <FieldSpecification
+      name="initialLog_C1_medium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Medium"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-18.420680744"/>
+
+    <FieldSpecification
+      name="initialLog_C2_medium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Medium"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-18.420680744"/>
+
+    <FieldSpecification
+      name="initialLog_C3_medium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Medium"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-18.420680744"/>
+  </FieldSpecifications>
+</Problem>

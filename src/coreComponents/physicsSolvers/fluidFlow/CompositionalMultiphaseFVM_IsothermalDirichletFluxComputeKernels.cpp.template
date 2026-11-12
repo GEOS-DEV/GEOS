@@ -30,12 +30,12 @@ namespace geos
   {
     template class @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>;
 
-    template void @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::
+    template GEOS_HOST_DEVICE void @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::
     computeFlux( localIndex const,
                  typename @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::StackVariables &,
                  NoOpFunc&& ) const;
 
-    template void @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::
+    template GEOS_HOST_DEVICE void @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::
     complete( localIndex const,
               typename @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::StackVariables &,
               NoOpFunc&& ) const;

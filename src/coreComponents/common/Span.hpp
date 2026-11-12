@@ -77,7 +77,8 @@ public:
    */
   template< typename ITER >
   constexpr Span( ITER const begin, ITER const end ) noexcept
-    : Span( std::addressof( *begin ), std::distance( begin, end ) )
+    : m_data( begin == end ? nullptr : std::addressof( *begin ) ),
+    m_size( std::distance( begin, end ) )
   {}
 
   /**

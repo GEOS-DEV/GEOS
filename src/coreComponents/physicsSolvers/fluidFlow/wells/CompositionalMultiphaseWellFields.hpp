@@ -58,21 +58,7 @@ DECLARE_FIELD( globalCompDensity_n,
                WRITE_AND_READ,
                "Global component density at the previous converged time step" );
 
-DECLARE_FIELD( mixtureConnectionRate,
-               "wellElementMixtureConnectionRate",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Mixture connection rate" );
 
-DECLARE_FIELD( mixtureConnectionRate_n,
-               "wellElementMixtureConnectionRate_n",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Mixture connection rate at the previous converged time step" );
 
 DECLARE_FIELD( globalCompFraction,
                "globalCompFraction",

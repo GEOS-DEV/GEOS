@@ -1304,57 +1304,19 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhases == 2 )
   {
-    if( numComps == 2 )
+    geos::internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
-      { KERNELWRAPPER::template launch< NF(), 2, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
-    }
-    else if( numComps == 3 )
-    {
-      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
-      { KERNELWRAPPER::template launch< NF(), 3, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
-    }
-    else if( numComps == 4 )
-    {
-      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
-      { KERNELWRAPPER::template launch< NF(), 4, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
-    }
-    else if( numComps == 5 )
-    {
-      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
-      { KERNELWRAPPER::template launch< NF(), 5, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
-    }
-    else
-    {
-      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", numComps ) );
-    }
+      { KERNELWRAPPER::template launch< NF(), NC(), 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    } );
   }
   else if( numPhases == 3 )
   {
-    if( numComps == 2 )
+    geos::internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
-      { KERNELWRAPPER::template launch< NF(), 2, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
-    }
-    else if( numComps == 3 )
-    {
-      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
-      { KERNELWRAPPER::template launch< NF(), 3, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
-    }
-    else if( numComps == 4 )
-    {
-      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
-      { KERNELWRAPPER::template launch< NF(), 4, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
-    }
-    else if( numComps == 5 )
-    {
-      internal::kernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
-      { KERNELWRAPPER::template launch< NF(), 5, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
-    }
-    else
-    {
-      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", numComps ) );
-    }
+      { KERNELWRAPPER::template launch< NF(), NC(), 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    } );
   }
   else
   {

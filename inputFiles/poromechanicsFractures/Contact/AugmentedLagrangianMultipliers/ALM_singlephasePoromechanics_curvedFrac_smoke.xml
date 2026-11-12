@@ -77,6 +77,15 @@
     </SinglePhaseFVM>
   </Solvers>
 
+  <Tasks>
+
+    <SinglePhaseStatistics
+      name="compflowStatistics"
+      flowSolverName="flowSolver"
+      logLevel="1" />
+    
+  </Tasks>
+
   <ElementRegions>
     <CellElementRegion
       name="Region"
