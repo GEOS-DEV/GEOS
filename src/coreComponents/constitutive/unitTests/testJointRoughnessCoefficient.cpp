@@ -43,7 +43,7 @@ protected:
       "   <ParallelPlatesPermeability"
       "      name=\"fracturePerm\" "
       "      jointRoughnessCoefficient=\"" + jointRoughnessCoefficient + "\"/>"
-      "</Constitutive>";
+                                                                         "</Constitutive>";
 
     xmlWrapper::xmlResult const xmlResult = m_xmlDocument.loadString( inputStream );
     EXPECT_TRUE( xmlResult ) << xmlResult.description();
