@@ -49,7 +49,8 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
                                 real64 const inputDt,
-                                real64 const (&inputGravityVector)[3] ):
+                                real64 const (&inputGravityVector)[3],
+                                integer const performStressInitialization ):
   Base( nodeManager,
         edgeManager,
         faceManager,
@@ -71,7 +72,8 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
   m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
   m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
   m_temperature( elementSubRegion.template getField< fields::flow::temperature >() ),
-  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() )
+  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
+  m_performStressInitialization( performStressInitialization )
 {}
 
 template< typename SUBREGION_TYPE,
@@ -146,6 +148,13 @@ quadraturePointKernel( localIndex const k,
                                                                   strainInc,
                                                                   totalStress,
                                                                   stiffness );
+
+  // Update the strain-dependent permeability, used by the flow solver in the next sequential iteration.
+  // The strain of the stress initialization does not modify the permeability.
+  if( !m_performStressInitialization )
+  {
+    m_constitutiveUpdate.updateStrainDependentPermeability( k, q, strainInc );
+  }
 
   for( localIndex i=0; i<6; ++i )
   {

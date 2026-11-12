@@ -176,10 +176,20 @@ public:
     real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
                                             - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
     m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
+  }
 
-    // Update the strain-dependent permeability models, used by the flow solver in the next sequential iteration.
-    // The porosity-dependent permeability models are updated by the flow solver (see updateStateFixedStress).
-    // The strain of the stress initialization step is discarded by ignoreConvergedState at the end of that step.
+  /**
+   * @brief Update the strain-dependent permeability models from the strain increment (fixed-stress scheme).
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] strainIncrement the strain increment since the last converged state
+   * @note The porosity-dependent permeability models are updated by the flow solver (see updateStateFixedStress).
+   */
+  GEOS_HOST_DEVICE
+  void updateStrainDependentPermeability( localIndex const k,
+                                          localIndex const q,
+                                          real64 const ( &strainIncrement )[6] ) const
+  {
     m_permUpdate.updateFromVolumetricStrainIncrement( k,
                                                       q,
                                                       m_porosityUpdate.getInitialPorosity( k, q ),

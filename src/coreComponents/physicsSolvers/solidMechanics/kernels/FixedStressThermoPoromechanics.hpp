@@ -80,6 +80,7 @@ public:
    * @brief Constructor
    * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
+   * @param performStressInitialization Flag to indicate that the stress initialization is being performed.
    */
   FixedStressThermoPoromechanics( NodeManager const & nodeManager,
                                   EdgeManager const & edgeManager,
@@ -93,7 +94,8 @@ public:
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
                                   real64 const inputDt,
-                                  real64 const (&inputGravityVector)[3] );
+                                  real64 const (&inputGravityVector)[3],
+                                  integer const performStressInitialization );
 
   //*****************************************************************************
   /**
@@ -198,6 +200,9 @@ protected:
   arrayView1d< real64 const > const m_temperature;
   arrayView1d< real64 const > const m_temperature_n;
 
+  /// Flag to indicate that the stress initialization is being performed
+  integer const m_performStressInitialization;
+
   /**
    * @brief Get a parameter representative of the stiffness, used as physical scaling for the
    * stabilization matrix.
@@ -220,7 +225,8 @@ using FixedStressThermoPoromechanicsFactory = finiteElement::KernelFactory< Fixe
                                                                             CRSMatrixView< real64, globalIndex const > const,
                                                                             arrayView1d< real64 > const,
                                                                             real64 const,
-                                                                            real64 const (&)[3] >;
+                                                                            real64 const (&)[3],
+                                                                            integer const >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
 

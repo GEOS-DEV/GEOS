@@ -114,6 +114,10 @@ void StrainDependentPermeability::initializeState() const
   } );
 
   m_permeability_n.setValues< parallelDevicePolicy<> >( m_permeability.toViewConst() );
+
+  // the current state becomes the reference state (zero volumetric strain), consistently with k_0
+  m_volStrain.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_volStrain_n.setValues< parallelDevicePolicy<> >( 0.0 );
 }
 
 void StrainDependentPermeability::saveConvergedState() const
