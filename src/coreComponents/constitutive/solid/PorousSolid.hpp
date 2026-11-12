@@ -176,6 +176,14 @@ public:
     real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
                                             - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
     m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
+
+    // Update the strain-dependent permeability models, used by the flow solver in the next sequential iteration.
+    // The porosity-dependent permeability models are updated by the flow solver (see updateStateFixedStress).
+    // The strain of the stress initialization step is discarded by ignoreConvergedState at the end of that step.
+    m_permUpdate.updateFromVolumetricStrainIncrement( k,
+                                                      q,
+                                                      m_porosityUpdate.getInitialPorosity( k, q ),
+                                                      LvArray::tensorOps::symTrace< 3 >( strainIncrement ) );
   }
 
   /**
