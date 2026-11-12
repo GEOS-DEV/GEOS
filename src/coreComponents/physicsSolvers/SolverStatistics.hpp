@@ -152,6 +152,13 @@ public:
   void setFilename( string_view filename )
   { m_iterationsFilename = filename; }
 
+  /**
+   * @brief Set the table title in the log.
+   * @param name The table as a string_view.
+   */
+  void setTableName( string_view name )
+  { m_tableIterationName = name; }
+
 
   /**
    * @return  A const string iteration filename
@@ -165,13 +172,6 @@ public:
   string & getFilename()
   { return m_iterationsFilename;  }
 
-
-  /**
-   * @brief Set the filename output file.
-   * @param name The filename as a string_view.
-   */
-  void setTableName( string_view name )
-  { m_tableIterationName = name; }
 
   /**
    * @brief Output the statistics to the console in table format
