@@ -75,7 +75,7 @@ The figure below presents a comparison between GEOS simulations (dashed lines) a
 Furthermore, a mesh convergence study is also performed. For isotropic meshes (with near-unity aspect ratio in the x–z plane), the L2 error norm approaches the theoretical convergence rate, confirming the robustness and accuracy of the implemented ALM solver.
 
 .. _problemSketchUnstableVerticalFaultFig1:
-.. figure:: convergence_unstableFault.PNG
+.. figure:: convergence_unstableFault.png
    :align: center
    :width: 1000
    :figclass: align-center

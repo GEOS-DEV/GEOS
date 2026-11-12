@@ -30,7 +30,7 @@ The xml input files for the test case with internal workflow are located at:
   inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/ALM_verticalFault_base.xml
   inputFiles/poromechanicsFractures/Contact/AugmentedLagrangianMultipliers/verticalFault_stable_ISG_benchmark.xml
   
-Note that in the external workflow, two mesh files are required, a domain mesh with 3D cells and a fault mesh with 2D suface elements, both of which are generated prior to running the GEOS simulation. In the internal workflow, only the domain mesh file is imported, and the fault mesh is subsequently generated within GEOS using ``SurfaceGenerator``.
+Note that in the external workflow, two mesh files are required, a domain mesh with 3D cells and a fault mesh with 2D surface elements, both of which are generated prior to running the GEOS simulation. In the internal workflow, only the domain mesh file is imported, and the fault mesh is subsequently generated within GEOS using ``SurfaceGenerator``.
 
 
 Corresponding mesh files and a python script for post-processing the simulation results are also provided:
@@ -49,16 +49,16 @@ Description of the case
 ------------------------------------------------------------------
 
 We simulate induced stresses and shear slip along a vertical fault in a depleted reservoir and compare our results against an analytical solution.
-In conformity to the analytical set-up, the reservoir is divided into two parts by a vertical fault. The fault crosses and offsets the entire reservoir layer and well contained with the domain. The domain is infinite, homogeneous, isotropic, and elastic. The reservoir is depressurized uniformely upon depletion, and we neglect the transient effect of fluid flow. A pressure drop is applied to the reservoir layer located in the center of the domain. The overburden and underburden are impermeable, and no pressure changes occur in these layers. Due to poromechanical effects, pore pressure changes in the reservoir cause a mechanical deformation of the entire domain. This deformation leads to a stress (normal and shear) perturbation on the fault plane, potentially leading to fault reactivation. For verification, the numerical model considers plane strain deformation and the Coulomb failure criterion.
+In conformity to the analytical set-up, the reservoir is divided into two parts by a vertical fault. The fault crosses and offsets the entire reservoir layer and is well contained within the domain. The domain is infinite, homogeneous, isotropic, and elastic. The reservoir is depressurized uniformly upon depletion, and we neglect the transient effect of fluid flow. A pressure drop is applied to the reservoir layer located in the center of the domain. The overburden and underburden are impermeable, and no pressure changes occur in these layers. Due to poromechanical effects, pore pressure changes in the reservoir cause a mechanical deformation of the entire domain. This deformation leads to a stress (normal and shear) perturbation on the fault plane, potentially leading to fault reactivation. For verification, the numerical model considers plane strain deformation and the Coulomb failure criterion.
 
 
 .. _problemSketchStableVerticalFault:
-.. figure:: geometry.PNG
+.. figure:: geometry.png
    :align: center
    :width: 500
    :figclass: align-center
 
-   Sketch of the problem 
+   Sketch of the problem
 
 
 In this example, a poroelastic model is established to evaluate the spatial evolution of displacement and stress fields associated with reservoir depletion. 
@@ -76,11 +76,11 @@ Mesh
 ------------------------------------------------------------------
 
 The following figure shows the mesh used in this problem.
-The domain modeled here measures 4,500 m x 4,500 m x 500 m and is discretized into 17,220 hexahedral elements. 
+The domain modeled here measures 9,000 m x 500 m x 9,000 m (x, y, z) and is discretized into 17,220 hexahedral elements. 
 The vertical fault plane is divided into 156 surface elements. The mesh is refined locally to match the geometry of the two reservoir compartments displaced by the vertical fault. The reservoir has a thickness of 225 m, and the fault throw is 75 m.
 
 .. _problemStableVerticalFault:
-.. figure:: mesh.PNG
+.. figure:: mesh.png
    :align: center
    :width: 500
    :figclass: align-center
@@ -220,7 +220,7 @@ The next step is to specify fields, including:
   - The boundary conditions (pressure drop within the reservoir and constraints of the outer boundaries have to be set).
 
 In this example, we need to specify isotropic horizontal total stress (:math:`\sigma_h` = -60.0 MPa and :math:`\sigma_H` = -60.0 MPa), vertical total stress (:math:`\sigma_v` = -70.0 MPa), and initial reservoir pressure (:math:`P_0` = 35.0 MPa). 
-When initializing the model, a normal traction (``name="NormalTraction"``) of -70.0 MPa is imposed on the upper boundary (``setNames="{ zposFace }"``) to reach mechanical equilibrium.
+When initializing the model, a normal traction (``name="tractionTop"``) of -70.0 MPa is imposed on the upper boundary (``setNames="{ zposFace }"``) to reach mechanical equilibrium.
 The lateral and lower boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -259,11 +259,11 @@ The parameters used in the simulation are summarized in the following table, whi
 +------------------+-----------------------------+------------------+--------------------+
 | :math:`\phi`     | Porosity                    | [-]              | 0.15               |
 +------------------+-----------------------------+------------------+--------------------+
-| :math:`D_L`      | Domain Length               | [m]              | 4500.0             |
+| :math:`D_L`      | Domain Length (x)           | [m]              | 9000.0             |
 +------------------+-----------------------------+------------------+--------------------+
-| :math:`D_W`      | Domain Width                | [m]              | 4500.0             |
+| :math:`D_H`      | Domain Height (z)           | [m]              | 9000.0             |
 +------------------+-----------------------------+------------------+--------------------+
-| :math:`D_T`      | Domain Thickness            | [m]              | 500.0              |
+| :math:`D_T`      | Domain Thickness (y)        | [m]              | 500.0              |
 +------------------+-----------------------------+------------------+--------------------+
 | :math:`Res_T`    | Reservoir Thickness         | [m]              | 225.0              |
 +------------------+-----------------------------+------------------+--------------------+
@@ -286,7 +286,7 @@ The figure below compares GEOS simulations (dashed lines) with analytical soluti
 A convergence study is also performed. For isotropic meshes (aspect ratio ≈ 1 in the x–z plane), the L2 error norm closely follows the theoretical rate, validating the accuracy of the ALM solver.
 
 .. _problemSketchStableVerticalFaultFig1:
-.. figure:: convergence_stableFault.PNG
+.. figure:: convergence_stableFault.png
    :align: center
    :width: 1000
    :figclass: align-center
