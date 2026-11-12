@@ -27,137 +27,79 @@ using namespace geos;
 using namespace ::geos::constitutive;
 
 
-TEST( JointRoughnessCoefficientTests, testJRC5 )
+class JointRoughnessCoefficientTest : public ::testing::Test
 {
-  conduit::Node node;
-  dataRepository::Group rootGroup( "root", node );
-  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
+protected:
 
-  real64 constexpr defaultAperture = 1.0e-4; // mechanical aperture defined in SurfaceElementRegion
+  JointRoughnessCoefficientTest():
+    m_rootGroup( "root", m_node ),
+    m_constitutiveManager( "constitutive", &m_rootGroup )
+  {}
 
-  string const inputStream =
-    "<Constitutive>"
-    "   <ParallelPlatesPermeability"
-    "      name=\"fracturePerm\" "
-    "      jointRoughnessCoefficient=\"5.0\"/>"
-    "</Constitutive>";
-
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
-  if( !xmlResult )
+  ParallelPlatesPermeability & createModel( string const & jointRoughnessCoefficient )
   {
-    GEOS_LOG_RANK_0( "XML parsed with errors!" );
-    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    string const inputStream =
+      "<Constitutive>"
+      "   <ParallelPlatesPermeability"
+      "      name=\"fracturePerm\" "
+      "      jointRoughnessCoefficient=\"" + jointRoughnessCoefficient + "\"/>"
+      "</Constitutive>";
+
+    xmlWrapper::xmlResult const xmlResult = m_xmlDocument.loadString( inputStream );
+    EXPECT_TRUE( xmlResult ) << xmlResult.description();
+
+    xmlWrapper::xmlNode xmlConstitutiveNode = m_xmlDocument.getChild( "Constitutive" );
+    m_constitutiveManager.processInputFileRecursive( m_xmlDocument, xmlConstitutiveNode );
+    m_constitutiveManager.postInputInitializationRecursive();
+
+    return m_constitutiveManager.getConstitutiveRelation< ParallelPlatesPermeability >( "fracturePerm" );
   }
 
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
-  constitutiveManager.postInputInitializationRecursive();
+  conduit::Node m_node;
+  dataRepository::Group m_rootGroup;
+  ConstitutiveManager m_constitutiveManager;
+  xmlWrapper::xmlDocument m_xmlDocument;
+};
 
-  ParallelPlatesPermeability & cm = constitutiveManager.getConstitutiveRelation< ParallelPlatesPermeability >( "fracturePerm" );
+// mechanical aperture defined in SurfaceElementRegion
+real64 constexpr defaultAperture = 1.0e-4;
 
-  ParallelPlatesPermeability::KernelWrapper cmw = cm.createKernelWrapper();
+TEST_F( JointRoughnessCoefficientTest, testJRC5 )
+{
+  ParallelPlatesPermeability::KernelWrapper const cmw = createModel( "5.0" ).createKernelWrapper();
 
-  {    
-    // When JRC = 5 in this case, the new aperture should be in the invalid region. 
-    // So the new aperture should be equal to the default aperture.
-    real64 newHydraulicAperture = cmw.computeApertureUsingJRC( defaultAperture );
+  // With JRC = 5 the reduced aperture (1.79e-4) would exceed the input aperture,
+  // so the input aperture is kept and the derivative is 1.
+  real64 dAperture_dInput = 0.0;
+  real64 const aperture = cmw.computeApertureUsingJRC( defaultAperture, dAperture_dInput );
 
-    EXPECT_DOUBLE_EQ( newHydraulicAperture, defaultAperture ); 
-  }
+  EXPECT_DOUBLE_EQ( aperture, defaultAperture );
+  EXPECT_DOUBLE_EQ( dAperture_dInput, 1.0 );
 }
 
 
-TEST( JointRoughnessCoefficientTests, testJRC10 )
+TEST_F( JointRoughnessCoefficientTest, testJRC10 )
 {
-  conduit::Node node;
-  dataRepository::Group rootGroup( "root", node );
-  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
+  ParallelPlatesPermeability::KernelWrapper const cmw = createModel( "10.0" ).createKernelWrapper();
 
-  real64 constexpr defaultAperture = 1.0e-4; // mechanical aperture defined in SurfaceElementRegion
+  // With JRC = 10: e_h = E^2 / JRC^2.5 (in microns) = 100^2 / 10^2.5 um = 10^-4.5 m
+  real64 const expectedAperture = 3.162277660168379e-05;
+  real64 dAperture_dInput = 0.0;
+  real64 const aperture = cmw.computeApertureUsingJRC( defaultAperture, dAperture_dInput );
 
-  string const inputStream =
-    "<Constitutive>"
-    "   <ParallelPlatesPermeability"
-    "      name=\"fracturePerm\" "
-    "      jointRoughnessCoefficient=\"10.0\"/>"
-    "</Constitutive>";
+  EXPECT_NEAR( aperture, expectedAperture, 1e-12 * expectedAperture );
 
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
-  if( !xmlResult )
-  {
-    GEOS_LOG_RANK_0( "XML parsed with errors!" );
-    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-  }
+  // analytical derivative: 2 e_h / E
+  EXPECT_NEAR( dAperture_dInput, 2.0 * expectedAperture / defaultAperture, 1e-12 );
 
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
-  constitutiveManager.postInputInitializationRecursive();
-
-  ParallelPlatesPermeability & cm = constitutiveManager.getConstitutiveRelation< ParallelPlatesPermeability >( "fracturePerm" );
-
-  ParallelPlatesPermeability::KernelWrapper cmw = cm.createKernelWrapper();
-
-  {    
-    // When JRC = 5 in this case, the new aperture should be in the invalid region. 
-    // So the new aperture should be equal to the default aperture.
-    real64 newHydraulicAperture = cmw.computeApertureUsingJRC( defaultAperture );
-
-    EXPECT_DOUBLE_EQ( newHydraulicAperture, 3.162277660168379e-05 ); 
-  }
+  // finite-difference check of the derivative
+  real64 const eps = 1e-6 * defaultAperture;
+  real64 const finiteDifference = ( cmw.computeApertureUsingJRC( defaultAperture + eps )
+                                    - cmw.computeApertureUsingJRC( defaultAperture - eps ) ) / ( 2.0 * eps );
+  EXPECT_NEAR( dAperture_dInput, finiteDifference, 1e-6 * dAperture_dInput );
 }
-/*
-TEST( BartonBandisStressPathDrivenTests, testPressure )
+
+TEST_F( JointRoughnessCoefficientTest, testInvalidJRC )
 {
-  conduit::Node node;
-  dataRepository::Group rootGroup( "root", node );
-  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
-
-  real64 constexpr referenceAperture = 1.0e-4; // in-situ
-  std::stringstream ss;
-  ss << std::scientific << std::setprecision(4) << referenceAperture;
-  
-  string const inputStream =
-    "<Constitutive>"
-    "   <BartonBandisStressPathDriven"
-    "      name=\"hApertureModel\" "
-    "      biot=\"1.0\" "
-    "      poisson=\"0.3\" "
-    "      normalStiffness=\"10.0e9\" "
-    "      referenceAperture=\"" + ss.str() + "\" "
-    "      referencePressure=\"1e5\" "
-    "      referenceTotalStress=\"{ 40.0e6, 40.0e6, 20.0e6 }\"/>"
-    "</Constitutive>";
-
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
-  if( !xmlResult )
-  {
-    GEOS_LOG_RANK_0( "XML parsed with errors!" );
-    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-  }
-
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
-  constitutiveManager.postInputInitializationRecursive();
-
-  BartonBandisStressPathDriven & cm = constitutiveManager.getConstitutiveRelation< BartonBandisStressPathDriven >( "hApertureModel" );
-
-  BartonBandisStressPathDriven::KernelWrapper cmw = cm.createKernelWrapper();
-
-  {    
-    array1d < real64 > normal(3);
-    normal[0] = 0.0;
-    normal[1] = 0.0;
-    normal[2] = 1.0;
-    
-    real64 const newAperture = cmw.computeHydraulicAperture(13842265.4230671, normal);
-    EXPECT_DOUBLE_EQ( newAperture, 0.00022328650392488669 );
-  }
-
+  EXPECT_THROW( createModel( "0.5" ), InputError );
 }
-  */

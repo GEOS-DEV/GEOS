@@ -40,12 +40,14 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
     setSizedFromParent( 0 ).
     setDescription( "Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. " );
 
-  // JRC is valid for values between 0 and 20, but we will limit the range to 1-20 to avoid divsion by 0.
   registerWrapper( viewKeyStruct::jointRoughnessCoefficientString(), &m_jointRoughnessCoefficient ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Default value of the joint roughness coefficient." );
+    setDescription( "Joint roughness coefficient (JRC), between 1 and 20. "
+                    "If specified, the aperture used in the cubic law is reduced following Barton et al. (1985): "
+                    "e_h = E^2 / JRC^2.5 (apertures in microns), only where e_h <= E. "
+                    "If not specified, the aperture is used directly." );
 
   registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
@@ -68,14 +70,13 @@ void ParallelPlatesPermeability::postInputInitialization()
     m_updateTransversalComponent = false;
   }
 
-  // if the JRC value is not -1 (the flag for not using it), then check for validity.
-  GEOS_LOG_RANK_0(std::abs( m_jointRoughnessCoefficient + 1.0));
-  if( std::abs( m_jointRoughnessCoefficient + 1.0) > 1e-10 ) 
+  // a negative value (default: -1) means the JRC correction is not used
+  if( m_jointRoughnessCoefficient >= 0 )
   {
-    GEOS_THROW_IF( m_jointRoughnessCoefficient < 0 || m_jointRoughnessCoefficient > 20,
-                  GEOS_FMT( "Joint Roughness Coefficient must be between 0 and 20. Provided value: {}",
-                            m_jointRoughnessCoefficient ),
-                  InputError, getDataContext() );
+    GEOS_THROW_IF( m_jointRoughnessCoefficient < 1 || m_jointRoughnessCoefficient > 20,
+                   GEOS_FMT( "Joint Roughness Coefficient must be between 1 and 20. Provided value: {}",
+                             m_jointRoughnessCoefficient ),
+                   InputError, getDataContext() );
   }
 }
 

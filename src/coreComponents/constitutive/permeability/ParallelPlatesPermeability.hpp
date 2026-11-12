@@ -40,10 +40,42 @@ public:
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dDispJump( dPerm_dDispJump ),
     m_numDimensionsToUpdate( 3 ),
-    m_jointRoughnessCoefficient( jointRoughnessCoefficient ),
-    m_printWarning(true)
+    m_jointRoughnessCoefficient( jointRoughnessCoefficient )
   {
     m_numDimensionsToUpdate = updateTransversalComponent ? 3 : 2;
+  }
+
+  /**
+   * @brief Compute the aperture reduced by the joint roughness coefficient (Barton et al., 1985):
+   *        e_h = E^2 / JRC^2.5, with apertures in microns.
+   *        The reduction is only applied where e_h <= E (i.e. E[um]^0.4 <= JRC); otherwise E is returned.
+   * @param[in] aperture the input aperture E [m]
+   * @param[out] dReducedAperture_dAperture derivative of the returned aperture w.r.t. E
+   * @return the reduced aperture [m]
+   */
+  GEOS_HOST_DEVICE
+  real64 computeApertureUsingJRC( real64 const & aperture,
+                                  real64 & dReducedAperture_dAperture ) const
+  {
+    dReducedAperture_dAperture = 1.0;
+    if( m_jointRoughnessCoefficient >= 1.0 )
+    {
+      real64 const factor = 1e6 / std::pow( m_jointRoughnessCoefficient, 2.5 );
+      real64 const reducedAperture = factor * aperture * aperture;
+      if( reducedAperture <= aperture )
+      {
+        dReducedAperture_dAperture = 2.0 * factor * aperture;
+        return reducedAperture;
+      }
+    }
+    return aperture;
+  }
+
+  GEOS_HOST_DEVICE
+  real64 computeApertureUsingJRC( real64 const & aperture ) const
+  {
+    real64 dReducedAperture_dAperture = 0.0;
+    return computeApertureUsingJRC( aperture, dReducedAperture_dAperture );
   }
 
   GEOS_HOST_DEVICE
@@ -55,23 +87,11 @@ public:
   {
     GEOS_UNUSED_VAR( oldHydraulicAperture );
 
-    real64 aperture = newHydraulicAperture;
-    if ( m_jointRoughnessCoefficient >= 1.0 )
-    {
-      if( std::pow( newHydraulicAperture, 0.4 ) <= m_jointRoughnessCoefficient )
-      {
-        aperture = (newHydraulicAperture*newHydraulicAperture * 1e6) / std::pow( m_jointRoughnessCoefficient, 2.5 );
-        if ( aperture > newHydraulicAperture ) // invalid region of the plot
-        {
-          aperture = newHydraulicAperture;
-          GEOS_LOG_RANK_0_IF( m_printWarning, "Warning: computed aperture with JRC is greater than the hydraulic aperture. This is an invalid region of the plot. Using the original aperture value instead.");
-          m_printWarning = false;
-        }
-      }
-    }
+    real64 dAperture_dHydraulicAperture = 1.0;
+    real64 const aperture = computeApertureUsingJRC( newHydraulicAperture, dAperture_dHydraulicAperture );
 
     real64 const perm  = aperture*aperture / 12.0;
-    real64 const dPerm_dHydraulicAperture = aperture / 6.0;
+    real64 const dPerm_dHydraulicAperture = aperture / 6.0 * dAperture_dHydraulicAperture;
 
     for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
@@ -118,7 +138,6 @@ private:
   arrayView4d< real64 > m_dPerm_dDispJump;
   int m_numDimensionsToUpdate;
   real64 m_jointRoughnessCoefficient;
-  bool mutable m_printWarning;
 };
 
 
