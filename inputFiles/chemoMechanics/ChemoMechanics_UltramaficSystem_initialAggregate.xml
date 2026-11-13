@@ -1,0 +1,79 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- AGGREGATE CONCENTRATIONS AT ROCK -->
+    <FieldSpecification
+      name="initialAggregate_H_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1e-7"/>
+
+    <FieldSpecification
+      name="initialAggregate_HCO3_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="2.6e-4"/>
+    
+    <FieldSpecification
+      name="initialAggregate_Mg_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="3.2e-2"/>
+
+    <FieldSpecification
+      name="initialAggregate_SiO2_aq_all"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="3"
+      scale="1.05e-4"/>
+
+    <!-- AGGREGATE CONCENTRATIONS AT SOURCE -->
+    <FieldSpecification
+      name="initialAggregate_H_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_HCO3_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="5.2e-2"/>
+    
+    <FieldSpecification
+      name="initialAggregate_Mg_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="1.02e-4"/>
+
+    <FieldSpecification
+      name="initialAggregate_SiO2_aq_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="3"
+      scale="2.38e-5"/>
+  </FieldSpecifications>
+</Problem>

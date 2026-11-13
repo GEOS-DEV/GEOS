@@ -54,13 +54,18 @@ public:
                          arrayView1d< real64 > const & inputCompressiveStrength,
                          arrayView1d< real64 > const & inputDeltaCoefficient,
                          arrayView1d< real64 > const & inputBiotCoefficient,
+                         integer const inputHybridSplit,
                          PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputCrackDrivingForce, inputOldCrackDrivingForce, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputFractureModelType,
                                   inputLocalDissipationOption,
                                   inputTensileStrength, inputCompressiveStrength, inputDeltaCoefficient, inputBiotCoefficient,
-                                  std::forward< PARAMS >( baseParams )... )
+                                  std::forward< PARAMS >( baseParams )... ),
+    m_hybridSplit( inputHybridSplit )
   {}
+
+  /// 1: spectral split only in the crack driving force; stress and stiffness are degraded isotropically
+  integer const m_hybridSplit;
 
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
@@ -153,8 +158,25 @@ public:
     }
 
     real64 positivePartOfStrain[6] = {};
-    real64 negativePartOfStrain[6] = {};
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( positivePartOfStrain, eigenVectors, eigenPlus );
+
+    // compute strain energy density: the positive (tensile) part drives the crack in both the full spectral
+    // and the hybrid split
+
+    real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * doubleContraction( positivePartOfStrain, positivePartOfStrain );
+
+    m_crackDrivingForce( k, q ) = fmax( sed, m_oldCrackDrivingForce( k, q ) );
+
+    // Hybrid split (Ambati et al. 2015): tension still drives the crack through the positive energy above, but the
+    // stress is g C:eps, linear in strain, so the tangent is exact and does not switch as eigenvalues change sign.
+    if( m_hybridSplit )
+    {
+      LvArray::tensorOps::scale< 6 >( stress, damageFactor );
+      LvArray::tensorOps::scale< 6, 6 >( stiffness, damageFactor );
+      return;
+    }
+
+    real64 negativePartOfStrain[6] = {};
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( negativePartOfStrain, eigenVectors, eigenMinus );
 
     // stress
@@ -199,12 +221,6 @@ public:
 
     LvArray::tensorOps::scale< 6, 6 >( cPositive, damageFactor );
     LvArray::tensorOps::add< 6, 6 >( stiffness, cPositive );
-
-    // compute strain energy density
-
-    real64 const sed = 0.5 * lambda * tracePlus * tracePlus + mu * doubleContraction( positivePartOfStrain, positivePartOfStrain );
-
-    m_crackDrivingForce( k, q ) = fmax( sed, m_oldCrackDrivingForce( k, q ) );
   }
 
 
@@ -273,8 +289,19 @@ public:
                                                                        m_tensileStrength.toView(),
                                                                        m_compressiveStrength.toView(),
                                                                        m_deltaCoefficient.toView(),
-                                                                       m_biotCoefficient.toView() );
+                                                                       m_biotCoefficient.toView(),
+                                                                       m_hybridSplit );
   }
+
+  struct viewKeyStruct : public Damage< BASE >::viewKeyStruct
+  {
+    static constexpr char const * hybridSplitString() { return "hybridSplit"; }
+  };
+
+protected:
+
+  /// Flag for the hybrid split: spectral driving force with isotropically degraded stress
+  integer m_hybridSplit;
 
 };
 

@@ -140,6 +140,7 @@ public:
   using UPDATE_BASE::saveConvergedState;
 
   using UPDATE_BASE::m_disableInelasticity;
+  using UPDATE_BASE::m_bulkModulus;
 
   //Degradation functions: quadratic (Brittle/Nucleation) or Lorentz-type rational (Cohesive,
   //Geelen et al., 2019, CMAME; AT1-only, validated at input-parsing time).
@@ -410,6 +411,14 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const override final
+  {
+    real64 const factor = getDegradationValue( k, 0 ); // Note: this assumes the degradation is the same across all quadrature points in the
+                                                       // element
+    return factor * m_bulkModulus[k];
+  }
+
+  GEOS_HOST_DEVICE
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
@@ -472,11 +481,11 @@ public:
 
 
 
-class DamageBase : public SolidBase
+class DamageBase
 {};
 
 template< typename BASE >
-class Damage : public BASE
+class Damage : public BASE, public DamageBase
 {
 public:
 

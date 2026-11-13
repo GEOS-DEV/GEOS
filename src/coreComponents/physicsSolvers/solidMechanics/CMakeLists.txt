@@ -25,6 +25,8 @@ set( solidMechanicsSolvers_headers
      kernels/SolidMechanicsLagrangianFEMKernels.hpp
      SolidMechanicsMPM.hpp
      MPMSolverFields.hpp
+     kernels/ExplicitChemoMechanics.hpp
+     kernels/ExplicitChemoMechanics_impl.hpp
      kernels/ExplicitFiniteStrain.hpp
      kernels/ExplicitFiniteStrain_impl.hpp
      kernels/ExplicitMPM.hpp
@@ -85,6 +87,7 @@ set( kernelTemplateFileList "" )
   list( APPEND kernelTemplateFileList
         kernels/SolidMechanicsKernels.cpp.template
         kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template
+        kernels/SolidMechanicsExplicitChemoMechanicsKernels.cpp.template
         contact/kernels/SolidMechanicsALMContactPorousKernels.cpp.template )
 
 
