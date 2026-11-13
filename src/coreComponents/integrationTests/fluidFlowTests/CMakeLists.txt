@@ -9,6 +9,7 @@ set( gtest_geosx_tests
      testImmiscibleMultiphaseFlow.cpp
      testReactiveCompositionalMultiphaseOBL.cpp
      testSinglePhaseMFDPolyhedral.cpp
+     testSinglePhaseMixedMFD.cpp
      testSinglePhaseReactiveTransport.cpp )
 
 set( tplDependencyList ${parallelDeps} gtest )

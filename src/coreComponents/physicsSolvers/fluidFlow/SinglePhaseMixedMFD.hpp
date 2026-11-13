@@ -180,13 +180,46 @@ public:
                                CRSMatrixView< real64 const, globalIndex const > const & localMatrix );
 
   /**
-   * @brief Populate the boundary face mask and pressure values from the field specifications.
+   * @brief Evaluate the face specifications at the given time and fill the condition (type, g, alpha) of every
+   *        operator on every face.
    * @param[in] time the time at which the boundary values are evaluated
    * @param[in] domain the domain
    * @note public: it contains a device lambda, which nvcc rejects in a private member function
    */
-  void applyFacePressureBCValues( real64 const time,
-                                  DomainPartition & domain );
+  void applyFaceBoundaryValues( real64 const time,
+                                DomainPartition & domain );
+
+  /// number of cell dof components: pressure, and temperature and enthalpy when thermal
+  integer numCellDofComponents() const { return m_isThermal ? 3 : 1; }
+
+  /**
+   * @brief Define the type of the boundary condition of every operator on every face from the field
+   *        specifications active at the given time (Dirichlet, Neumann or Robin), and the faces with a
+   *        prescribed inflow enthalpy.
+   * @param[in] time the time at which the specifications are evaluated
+   * @param[in] domain the domain
+   */
+  void markBoundaryFaces( real64 const time,
+                          DomainPartition & domain );
+
+  /**
+   * @brief Initialize the enthalpy unknown from the fluid model, h = h_eos( p, T ).
+   * @param domain the domain
+   */
+  void initializeEnthalpy( DomainPartition & domain );
+
+  /**
+   * @brief Subtract h_K times the mass row from the energy row of every cell.
+   * @param domain the domain
+   * @param dofManager the dof manager
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side
+   * @note public: it contains a device lambda, which nvcc rejects in a private member function
+   */
+  void removeEnthalpyReference( DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) const;
 
 private:
 

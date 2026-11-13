@@ -2525,6 +2525,68 @@ TEST( MimeticIP_RT0Exactness, Tetrahedron )
   }
 }
 
+TEST( MimeticIP_RT0Exactness, RectangularParallelepiped )
+{
+  // anisotropic rectangular parallelepiped [0,Lx] x [0,Ly] x [0,Lz], K diagonal in its axes: the mass matrix of the
+  // RT[0] element couples the two faces normal to each axis only, ( L_i / ( k_i A_i ) ) [ 1/3, -1/6; -1/6, 1/3 ]
+  // in outward-flux dofs
+  localIndex constexpr numNodes = 8;
+  localIndex constexpr numFaces = 6;
+  real64 const L[3] = { 0.5, 4.0, 1.0 };
+  real64 const perm[3] = { 1.0, 3.0, 0.5 };
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+  nodePosition.resize( numNodes, 3 );
+  for( localIndex n = 0; n < numNodes; ++n )
+  {
+    nodePosition( n, 0 ) = ( ( n == 1 || n == 2 || n == 5 || n == 6 ) ? 1.0 : 0.0 ) * L[0];
+    nodePosition( n, 1 ) = ( ( n == 2 || n == 3 || n == 6 || n == 7 ) ? 1.0 : 0.0 ) * L[1];
+    nodePosition( n, 2 ) = ( n >= 4 ? 1.0 : 0.0 ) * L[2];
+  }
+
+  // faces ordered by axis: x = 0, x = Lx, y = 0, y = Ly, z = 0, z = Lz
+  localIndex const faceNodes[numFaces][4] = { { 0, 3, 7, 4 }, { 1, 2, 6, 5 }, { 0, 1, 5, 4 }, { 3, 2, 6, 7 }, { 0, 1, 2, 3 }, { 4, 5, 6, 7 } };
+  FaceManager::NodeMapType faceToNodes;
+  faceToNodes.resize( numFaces );
+  array1d< localIndex > elemToFaces;
+  elemToFaces.resize( numFaces );
+  for( localIndex f = 0; f < numFaces; ++f )
+  {
+    faceToNodes.resizeArray( f, 4 );
+    for( localIndex i = 0; i < 4; ++i )
+      faceToNodes( f, i ) = faceNodes[f][i];
+    elemToFaces( f ) = f;
+  }
+
+  stackArray1d< real64, 3 > center( 3 );
+  for( int d = 0; d < 3; ++d )
+    center[d] = 0.5 * L[d];
+  real64 const vol = L[0] * L[1] * L[2];
+
+  stackArray2d< real64, 36 > M( 6, 6 );
+  M.template setValues< parallelHostPolicy >( 0.0 );
+  RTInnerProduct::computeM< 6 >( nodePosition.toViewConst(),
+                                 faceToNodes.toViewConst(),
+                                 elemToFaces.toSliceConst(),
+                                 center.toSliceConst(),
+                                 vol, perm, 1e-12, M.toSlice() );
+
+  for( int i = 0; i < 6; ++i )
+  {
+    for( int j = 0; j < 6; ++j )
+    {
+      real64 ref = 0.0;
+      if( i / 2 == j / 2 )
+      {
+        int const d = i / 2;
+        real64 const scale = L[d] / ( perm[d] * vol / L[d] );
+        ref = ( i == j ? 1.0 / 3.0 : -1.0 / 6.0 ) * scale;
+      }
+      EXPECT_NEAR( M( i, j ), ref, rt0_exactness_tol ) << "entry " << i << "," << j;
+    }
+  }
+}
+
 TEST( MimeticIP_RT0Exactness, Triangle2D )
 {
   // The stabilization rule s = tr(M1)/(d+2) is dimension generic; computeM() hard-codes d = 3,
