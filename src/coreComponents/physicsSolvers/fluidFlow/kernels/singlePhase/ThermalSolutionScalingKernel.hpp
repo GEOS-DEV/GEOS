@@ -38,7 +38,7 @@ struct SolutionScalingKernel
   static singlePhaseBaseKernels::SolutionScalingData
   launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
-          globalIndex const temperatureOffset,
+          integer const temperatureOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & ghostRank,
           real64 const maxAbsolutePresChange,
