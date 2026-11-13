@@ -656,16 +656,16 @@ WellManager::scalingForSystemSolution( DomainPartition & domain,
                                                                      WellElementSubRegion & subRegion )
 
       {
-        CompositionalMultiphaseWell * wellControls = dynamic_cast< CompositionalMultiphaseWell * >(&getWellControls ( subRegion ));
-        localScalingFactor = wellControls->scalingForLocalSystemSolution( subRegion,
-                                                                          dofManager,
-                                                                          localMaxDeltaPres,
-                                                                          localMaxDeltaCompDens,
-                                                                          localMaxDeltaTemp,
-                                                                          localMinPresScalingFactor,
-                                                                          localMinCompDensScalingFactor,
-                                                                          localMinTempScalingFactor,
-                                                                          localSolution );
+        CompositionalMultiphaseWell & wellControls = dynamicCast< CompositionalMultiphaseWell & >( getWellControls( subRegion ) );
+        localScalingFactor = wellControls.scalingForLocalSystemSolution( subRegion,
+                                                                         dofManager,
+                                                                         localMaxDeltaPres,
+                                                                         localMaxDeltaCompDens,
+                                                                         localMaxDeltaTemp,
+                                                                         localMinPresScalingFactor,
+                                                                         localMinCompDensScalingFactor,
+                                                                         localMinTempScalingFactor,
+                                                                         localSolution );
         maxDeltaPres = LvArray::math::max( localMaxDeltaPres, maxDeltaPres );
         maxDeltaCompDens = LvArray::math::max( localMaxDeltaCompDens, maxDeltaCompDens );
         maxDeltaTemp = LvArray::math::max( localMaxDeltaTemp, maxDeltaTemp );
