@@ -733,14 +733,14 @@ WellManager::scalingForSystemSolution( DomainPartition & domain,
                                                                      WellElementSubRegion & subRegion )
 
       {
-        SinglePhaseWell * wellControls = dynamic_cast< SinglePhaseWell * >(&getWellControls ( subRegion ));
-        localScalingFactor = wellControls->scalingForLocalSystemSolution( subRegion,
-                                                                          dofManager,
-                                                                          localMaxDeltaPres,
-                                                                          localMaxDeltaTemp,
-                                                                          localMinPresScalingFactor,
-                                                                          localMinTempScalingFactor,
-                                                                          localSolution );
+        SinglePhaseWell & wellControls = dynamicCast< SinglePhaseWell & >( getWellControls( subRegion ) );
+        localScalingFactor = wellControls.scalingForLocalSystemSolution( subRegion,
+                                                                         dofManager,
+                                                                         localMaxDeltaPres,
+                                                                         localMaxDeltaTemp,
+                                                                         localMinPresScalingFactor,
+                                                                         localMinTempScalingFactor,
+                                                                         localSolution );
         maxDeltaPres = LvArray::math::max( localMaxDeltaPres, maxDeltaPres );
         maxDeltaTemp = LvArray::math::max( localMaxDeltaTemp, maxDeltaTemp );
         minPresScalingFactor = LvArray::math::min( localMinPresScalingFactor, minPresScalingFactor );
