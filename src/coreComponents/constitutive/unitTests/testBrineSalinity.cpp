@@ -16,7 +16,7 @@
 // Source includes
 #include "constitutive/fluid/multifluid/compositional/parameters/BrineSalinity.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "TestFluid.hpp"
+#include "TestFluids.hpp"
 
 #include <conduit.hpp>
 #include <gtest/gtest.h>
@@ -66,7 +66,7 @@ protected:
 BrineSalinityTestFixture::BrineSalinityTestFixture():
   m_parent( "parent", m_node ),
   m_fluid( std::make_unique< MockFluid >( "fluid", &m_parent )),
-  m_testFluid( TestFluid< numComps >::create( {Fluid::CO2, Fluid::H2O, Fluid::CH4, Fluid::C5H12} ))
+  m_testFluid( createTestFluid< TestFluidName::EnhancedOilRecovery >())
 {
   m_parameters = BrineSalinity::create( std::move( m_parameters ));
   m_salinity = dynamic_cast< BrineSalinity * >(m_parameters.get());

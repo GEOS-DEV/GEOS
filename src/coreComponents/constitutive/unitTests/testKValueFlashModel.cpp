@@ -18,7 +18,7 @@
 #include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/unitTests/TestFluid.hpp"
+#include "TestFluidFixture.hpp"
 #include "constitutive/unitTests/TestFluidUtilities.hpp"
 
 #include "functions/FunctionManager.hpp"
@@ -33,46 +33,51 @@ using namespace geos::testing;
 namespace geos
 {
 
-template< int numComps >
-struct TestData;
+constexpr integer numTestComps = 3;
+
+// Components for which phase compositions are checked
+template< TestFluidName FLUID >
+constexpr std::array< integer, numTestComps > testComponents{};
 
 template<>
-struct TestData< 9 >
+constexpr std::array< integer, numTestComps > testComponents< TestFluidName::VolatileOil >{0, 2, 8};
+
+template< integer numPhases, integer NC >
+struct FlashData : public TestDataBase< NC >
 {
-  static constexpr integer numTestComps = 3;
-  static constexpr integer testComponents[numTestComps] = {0, 2, 8};
-  static std::unique_ptr< TestFluid< 9 > > createFluid()
-  {
-    auto fluid = TestFluid< 9 >::create( {Fluid::H2O, Fluid::CO2, Fluid::N2, Fluid::CH4, Fluid::C2H6, Fluid::C3H8, Fluid::C4H10, Fluid::C5H12, Fluid::C10H22} );
-    const std::array< real64 const, 36 > bics = {
-      0.01, 0, 0.003732, 0, 0.01, 0, 0, 0.01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0.01, 0, 0.028, 0.01, 0.01, 0, 0, 0.01, 0, 0.04532, 0.01, 0.01, 0, 0, 0
-    };
-    fluid->setBinaryCoefficients( bics );
-    return fluid;
-  }
+  Feed< numPhases > expectedPhaseFractions;                  ///< Expected phase fractions
+  Feed< numTestComps *numPhases > expectedPhaseCompositions; ///< Expected phase compositions of the test components
 };
 
-template< integer numPhases, integer numComps >
-using FlashData = std::tuple<
-  real64 const,                                             // pressure
-  real64 const,                                             // temperature
-  Feed< numComps > const,                                   // total composition
-  Feed< numPhases > const,                                  // expected phase fractions
-  Feed< TestData< numComps >::numTestComps *numPhases >     // expected phase composition (2 selected components)
-  >;
-
-template< integer numPhases, integer numComps >
-class KValueFlashTestFixture : public ::testing::TestWithParam< FlashData< numPhases, numComps > >
+template< integer numPhases, integer NC >
+std::ostream & operator<<( std::ostream & os, FlashData< numPhases, NC > const & data )
 {
-  static constexpr real64 relTol = 1.0e-5;
-  static constexpr real64 absTol = 1.0e-7;
-  static constexpr int numDofs = numComps + 2;
-  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
+  return TestDataPrinter( os, data ).output( data.expectedPhaseFractions )
+                                    .output( data.expectedPhaseCompositions );
+}
+
+/// Adaptor to use FlashData with a fixed number of phases as a fixture parameter type
+template< integer numPhases >
+struct FlashDataType
+{
+  template< integer NC >
+  using type = FlashData< numPhases, NC >;
+};
+
+template< integer numPhases, TestFluidName FLUID >
+class KValueFlashTestFixture : public TestFluidFixture< FLUID, FlashDataType< numPhases >::template type >
+{
+  using Base = TestFluidFixture< FLUID, FlashDataType< numPhases >::template type >;
+  using Base::numComps;
+  using Base::numDofs;
+  using Base::relTol;
+  using Base::absTol;
+  using typename Base::Deriv;
   using FlashModelType = KValueFlashModel< numPhases >;
   using FlashModelParamType = KValueFlashParameters< numPhases >;
   using PhasePropSlice = typename FlashModelType::KernelWrapper::PhaseProp::SliceType;
   using PhaseCompSlice = typename FlashModelType::KernelWrapper::PhaseComp::SliceType;
+
 public:
   KValueFlashTestFixture();
   ~KValueFlashTestFixture() override;
@@ -86,7 +91,6 @@ protected:
   conduit::Node m_node;
   dataRepository::Group m_parent;
   std::unique_ptr< FunctionManager > m_functionManager{};
-  std::unique_ptr< TestFluid< numComps > > m_fluid{};
   std::unique_ptr< ModelParameters > m_parameters{};
   std::unique_ptr< FlashModelType > m_flash{};
   array1d< integer > m_phaseTypes{};
@@ -101,8 +105,8 @@ private:
   string_array m_fileNames;
 };
 
-template< integer numPhases, integer numComps >
-class KValueFlashTestFixture< numPhases, numComps >::MockFluid : public MultiFluidBase
+template< integer numPhases, TestFluidName FLUID >
+class KValueFlashTestFixture< numPhases, FLUID >::MockFluid : public MultiFluidBase
 {
 public:
   MockFluid( Group * const parent ): MultiFluidBase( "fluid", parent ) {}
@@ -119,10 +123,9 @@ public:
   }
 };
 
-template< integer numPhases, integer numComps >
-KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture()
-  : m_parent( "parent", m_node ),
-  m_fluid( TestData< numComps >::createFluid() )
+template< integer numPhases, TestFluidName FLUID >
+KValueFlashTestFixture< numPhases, FLUID >::KValueFlashTestFixture()
+  : m_parent( "parent", m_node )
 {
   m_functionManager = std::make_unique< FunctionManager >( "FunctionManager", &m_parent );
 
@@ -149,8 +152,8 @@ KValueFlashTestFixture< numPhases, numComps >::KValueFlashTestFixture()
   m_flash = std::make_unique< FlashModelType >( flashName, componentProperties, *m_parameters, m_phaseTypes );
 }
 
-template< integer numPhases, integer numComps >
-KValueFlashTestFixture< numPhases, numComps >::~KValueFlashTestFixture()
+template< integer numPhases, TestFluidName FLUID >
+KValueFlashTestFixture< numPhases, FLUID >::~KValueFlashTestFixture()
 {
   for( string const & fileName : m_fileNames )
   {
@@ -179,8 +182,8 @@ real64 getKValue( integer const phaseIndex, integer const compIndex, real64 cons
   return LvArray::math::max( kValue, 1.0e-8 );
 }
 
-template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::generateTables( string_array & names, string const fluidName )
+template< integer numPhases, TestFluidName FLUID >
+void KValueFlashTestFixture< numPhases, FLUID >::generateTables( string_array & names, string const fluidName )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   std::ostringstream content;
@@ -269,8 +272,8 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( string_array
   }
 }
 
-template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::writeToFile( string const & fileName, string const & content )
+template< integer numPhases, TestFluidName FLUID >
+void KValueFlashTestFixture< numPhases, FLUID >::writeToFile( string const & fileName, string const & content )
 {
   std::ofstream os( fileName );
   ASSERT_TRUE( os.is_open() );
@@ -278,29 +281,29 @@ void KValueFlashTestFixture< numPhases, numComps >::writeToFile( string const & 
   os.close();
 }
 
-template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::removeFile( string const & fileName )
+template< integer numPhases, TestFluidName FLUID >
+void KValueFlashTestFixture< numPhases, FLUID >::removeFile( string const & fileName )
 {
   int const ret = std::remove( fileName.c_str() );
   ASSERT_TRUE( ret == 0 );
 }
 
 /* --- Start tests --- */
-template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::testFlash( typename KValueFlashTestFixture::ParamType const & data )
+template< integer numPhases, TestFluidName FLUID >
+void KValueFlashTestFixture< numPhases, FLUID >::testFlash( typename KValueFlashTestFixture::ParamType const & data )
 {
   auto const & componentProperties = this->m_fluid->getComponentProperties().createKernelWrapper();
 
   auto flashKernelWrapper = this->m_flash->createKernelWrapper();
 
-  real64 const pressure = std::get< 0 >( data );
-  real64 const temperature = std::get< 1 >( data );
+  real64 const pressure = data.pressure;
+  real64 const temperature = data.temperature;
   stackArray1d< real64, numComps > composition;
-  TestFluid< numComps >::createArray( composition, std::get< 2 >( data ));
+  TestFluid< numComps >::createArray( composition, data.composition );
   stackArray1d< real64, numPhases > expactedPhaseFractions;
-  TestFluid< numComps >::createArray( expactedPhaseFractions, std::get< 3 >( data ));
-  stackArray1d< real64, TestData< numComps >::numTestComps *numPhases > expactedPhaseCompositions;
-  TestFluid< numComps >::createArray( expactedPhaseCompositions, std::get< 4 >( data ));
+  TestFluid< numComps >::createArray( expactedPhaseFractions, data.expectedPhaseFractions );
+  stackArray1d< real64, numTestComps *numPhases > expactedPhaseCompositions;
+  TestFluid< numComps >::createArray( expactedPhaseCompositions, data.expectedPhaseCompositions );
 
   stackArray2d< real64, (numPhases-1)*numComps > kValues( numPhases-1, numComps );
   LvArray::forValuesInSlice( kValues.toSlice(), []( real64 & v ){ v = 0.0; } );
@@ -323,20 +326,20 @@ void KValueFlashTestFixture< numPhases, numComps >::testFlash( typename KValueFl
                               PhasePropSlice( phaseFraction, dPhaseFraction ),
                               PhaseCompSlice( phaseComponentFraction, dPhaseComponentFraction ) );
 
-  integer constexpr nc = TestData< numComps >::numTestComps;
+  integer constexpr nc = numTestComps;
   for( integer ip = 0; ip < numPhases; ++ip )
   {
     checkRelativeError( phaseFraction[ip], expactedPhaseFractions[ip], relTol, absTol );
     for( integer i = 0; i < nc; ++i )
     {
-      integer const ic = TestData< numComps >::testComponents[i];
+      integer const ic = testComponents< FLUID >[i];
       checkRelativeError( phaseComponentFraction[ip][ic], expactedPhaseCompositions[ip*nc+i], relTol, absTol );
     }
   }
 }
 
-template< integer numPhases, integer numComps >
-void KValueFlashTestFixture< numPhases, numComps >::testNumericalDerivative( typename KValueFlashTestFixture::ParamType const & data )
+template< integer numPhases, TestFluidName FLUID >
+void KValueFlashTestFixture< numPhases, FLUID >::testNumericalDerivative( typename KValueFlashTestFixture::ParamType const & data )
 {
   // Number of output values from each flash calculation
   constexpr integer numValues = numPhases * (1 + numComps);
@@ -345,10 +348,10 @@ void KValueFlashTestFixture< numPhases, numComps >::testNumericalDerivative( typ
 
   auto flashKernelWrapper = this->m_flash->createKernelWrapper();
 
-  real64 const pressure = std::get< 0 >( data );
-  real64 const temperature = std::get< 1 >( data );
+  real64 const pressure = data.pressure;
+  real64 const temperature = data.temperature;
   stackArray1d< real64, numComps > composition;
-  TestFluid< numComps >::createArray( composition, std::get< 2 >( data ));
+  TestFluid< numComps >::createArray( composition, data.composition );
 
   stackArray2d< real64, (numPhases-1)*numComps > kValues( numPhases-1, numComps );
   LvArray::forValuesInSlice( kValues.toSlice(), []( real64 & v ){ v = 0.0; } );
@@ -436,7 +439,7 @@ void KValueFlashTestFixture< numPhases, numComps >::testNumericalDerivative( typ
 
   // -- Composition derivatives derivative
   real64 const dz = 1.0e-5;
-  for( integer const ic : TestData< numComps >::testComponents )
+  for( integer const ic : testComponents< FLUID > )
   {
     if( composition[ic] < absTol || 1.0-composition[ic] < absTol )
     {
@@ -457,7 +460,7 @@ void KValueFlashTestFixture< numPhases, numComps >::testNumericalDerivative( typ
   }
 }
 
-using KValueFlashTest_2_9 = KValueFlashTestFixture< 2, 9 >;
+using KValueFlashTest_2_9 = KValueFlashTestFixture< 2, TestFluidName::VolatileOil >;
 using FlashData_2_9 = FlashData< 2, 9 >;
 TEST_P( KValueFlashTest_2_9, testFlash )
 {
@@ -475,28 +478,28 @@ TEST_P( KValueFlashTest_2_9, testFlashNumericalDerivative )
 INSTANTIATE_TEST_SUITE_P(
   KValueFlash, KValueFlashTest_2_9,
   ::testing::ValuesIn< FlashData_2_9 >({
-    {1.0e+05, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.912604, 0.087396}, {0.000121, 0.000126, 0.914986, 0.002885, 0.038401, 0.045656}},
-    {1.0e+05, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.913798, 0.086202}, {0.000263, 0.000150, 0.912936, 0.001423, 0.038675, 0.055346}},
-    {1.0e+05, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.993677, 0.006323}, {0.000364, 0.002621, 0.844231, 0.000199, 0.137069, 0.018459}},
-    {1.0e+06, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.936231, 0.063769}, {0.000069, 0.000237, 0.891605, 0.004676, 0.050950, 0.066831}},
-    {1.0e+06, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.923713, 0.076287}, {0.000173, 0.000446, 0.902155, 0.002662, 0.040096, 0.074422}},
-    {1.0e+06, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000565, 0.144455, 0.000000}},
-    {1.0e+07, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.956084, 0.043916}, {0.000169, 0.000288, 0.876451, 0.004582, 0.072778, 0.023888}},
-    {1.0e+07, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.986650, 0.013350}, {0.000339, 0.001404, 0.850276, 0.002119, 0.156249, 0.006348}},
-    {1.0e+07, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000299, 0.077400, 0.000000}},
-    {5.0e+07, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.912044, 0.087956}, {0.000072, 0.000140, 0.916453, 0.003384, 0.038006, 0.035974}},
-    {5.0e+07, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {0.993464, 0.006536}, {0.000341, 0.001947, 0.844472, 0.003713, 0.235032, 0.008766}},
-    {5.0e+07, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000523, 0.087190, 0.000000}},
-    {1.0e+05, 298.15, {0.000000, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.999999}, {1.000000, 0.000000}, {0.000000, 0.000000, 0.999999, 0.000000, 0.000000, 0.049822}},
-    {5.0e+07, 373.15, {0.000000, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.999999}, {1.000000, 0.000000}, {0.000000, 0.000000, 0.999999, 0.000000, 0.000000, 0.000000}},
-    {1.0e+05, 298.15, {0.100000, 0.000000, 0.899999, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000001}, {0.000000, 1.000000}, {0.004008, 0.002805, 0.993188, 0.100000, 0.899999, 0.000001}},
-    {1.0e+05, 298.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}},
-    {1.0e+05, 323.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}},
-    {5.0e+07, 373.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}},
-    {1.0e+05, 298.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}},
-    {1.0e+05, 323.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}},
-    {5.0e+07, 323.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}},
-    {5.0e+07, 373.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}}
+    {{1.0e+05, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.912604, 0.087396}, {0.000121, 0.000126, 0.914986, 0.002885, 0.038401, 0.045656}},
+    {{1.0e+05, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.913798, 0.086202}, {0.000263, 0.000150, 0.912936, 0.001423, 0.038675, 0.055346}},
+    {{1.0e+05, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.993677, 0.006323}, {0.000364, 0.002621, 0.844231, 0.000199, 0.137069, 0.018459}},
+    {{1.0e+06, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.936231, 0.063769}, {0.000069, 0.000237, 0.891605, 0.004676, 0.050950, 0.066831}},
+    {{1.0e+06, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.923713, 0.076287}, {0.000173, 0.000446, 0.902155, 0.002662, 0.040096, 0.074422}},
+    {{1.0e+06, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000565, 0.144455, 0.000000}},
+    {{1.0e+07, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.956084, 0.043916}, {0.000169, 0.000288, 0.876451, 0.004582, 0.072778, 0.023888}},
+    {{1.0e+07, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.986650, 0.013350}, {0.000339, 0.001404, 0.850276, 0.002119, 0.156249, 0.006348}},
+    {{1.0e+07, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000299, 0.077400, 0.000000}},
+    {{5.0e+07, 298.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.912044, 0.087956}, {0.000072, 0.000140, 0.916453, 0.003384, 0.038006, 0.035974}},
+    {{5.0e+07, 323.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {0.993464, 0.006536}, {0.000341, 0.001947, 0.844472, 0.003713, 0.235032, 0.008766}},
+    {{5.0e+07, 373.15, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}}, {1.000000, 0.000000}, {0.000363, 0.003471, 0.839010, 0.000523, 0.087190, 0.000000}},
+    {{1.0e+05, 298.15, {0.000000, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.999999}}, {1.000000, 0.000000}, {0.000000, 0.000000, 0.999999, 0.000000, 0.000000, 0.049822}},
+    {{5.0e+07, 373.15, {0.000000, 0.000001, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.999999}}, {1.000000, 0.000000}, {0.000000, 0.000000, 0.999999, 0.000000, 0.000000, 0.000000}},
+    {{1.0e+05, 298.15, {0.100000, 0.000000, 0.899999, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000001}}, {0.000000, 1.000000}, {0.004008, 0.002805, 0.993188, 0.100000, 0.899999, 0.000001}},
+    {{1.0e+05, 298.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}},
+    {{1.0e+05, 323.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}},
+    {{5.0e+07, 373.15, {0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000}}, {1.000000, 0.000000}, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 1.000000}},
+    {{1.0e+05, 298.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}},
+    {{1.0e+05, 323.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}},
+    {{5.0e+07, 323.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}},
+    {{5.0e+07, 373.15, {0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000}}, {0.000000, 1.000000}, {0.000000, 1.000000, 0.000000, 0.000000, 1.000000, 0.000000}}
   })
 );
 
