@@ -5,6 +5,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4149 (2026-11-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4149-17947-f455127.tar.gz>
+=====================
+Add the thermal mixed MFD solver: new thermal tests and a `bcMassFlux` face field in the mixed MFD restart files.
+
 PR #4172 (2026-11-06) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4172-17930-ffdaf0c.tar.gz>
 =====================
 Correct CO2-brine thermodynamic properties: CO2 enthalpy tables (Span–Wagner non-analytic terms, molar conversion), CO2 solubility on a brine basis, compositional phase-model mapping and flash restart.
