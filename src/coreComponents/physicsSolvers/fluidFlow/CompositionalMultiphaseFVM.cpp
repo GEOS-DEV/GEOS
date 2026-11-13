@@ -69,7 +69,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace compositionalMultiphaseUtilities; // for ScalingType
+using namespace flowSolverUtilities; // for ScalingType
 
 CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
@@ -613,6 +613,14 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
+  // In a coupled run the coupled solver's NonlinearSolverParameters overwrite the flow subsolver,
+  // so the lineSearchAction / scalingType compatibility is checked here at run time.
+  // A better fix is to check it at input time in CoupledSolver.
+  GEOS_ERROR_IF( m_scalingType == ScalingType::Local &&
+                 m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None,
+                 "line search is not supported for scalingType = Local; set lineSearchAction to None, including in the coupled solver",
+                 getDataContext() );
+
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     return scalingForSystemSolutionZFormulation( domain, dofManager, localSolution );
@@ -651,6 +659,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                      createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                                                 m_maxAbsolutePresChange,
                                                                                 m_maxRelativeTempChange,
+                                                                                m_maxAbsoluteTempChange,
                                                                                 m_maxCompFracChange,
                                                                                 m_maxRelativeCompDensChange,
                                                                                 pressure,

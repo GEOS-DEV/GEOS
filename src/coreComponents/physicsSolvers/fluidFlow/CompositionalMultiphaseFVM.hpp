@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverUtilities.hpp"
 
 namespace geos
 {
@@ -229,7 +230,7 @@ protected:
   } m_dbcParams;
 
   /// Solution scaling type
-  compositionalMultiphaseUtilities::ScalingType m_scalingType;
+  flowSolverUtilities::ScalingType m_scalingType;
 
   /// scheme for density treatment in gravity
   GravityDensityScheme m_gravityDensityScheme;

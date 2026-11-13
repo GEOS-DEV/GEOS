@@ -31,14 +31,33 @@ namespace singlePhaseBaseKernels
 
 /******************************** SolutionScalingKernel ********************************/
 
+/**
+ * @struct SolutionScalingData
+ * @brief Rank-local reductions from the single-phase solution scaling kernels
+ */
+struct SolutionScalingData
+{
+  /// the Newton update scaling factor
+  real64 scalingFactor = 1.0;
+  /// the maximum absolute pressure change (before scaling)
+  real64 maxDeltaPres = 0.0;
+  /// the maximum absolute temperature change (before scaling)
+  real64 maxDeltaTemp = 0.0;
+  /// the minimum pressure scaling factor
+  real64 minPresScalingFactor = 1.0;
+  /// the minimum temperature scaling factor
+  real64 minTempScalingFactor = 1.0;
+};
+
 struct SolutionScalingKernel
 {
   template< typename POLICY >
-  static std::pair< real64, real64 > launch( arrayView1d< real64 const > const & localSolution,
-                                             globalIndex const rankOffset,
-                                             arrayView1d< globalIndex const > const & dofNumber,
-                                             arrayView1d< integer const > const & ghostRank,
-                                             real64 const maxAbsolutePresChange )
+  static SolutionScalingData launch( arrayView1d< real64 const > const & localSolution,
+                                     globalIndex const rankOffset,
+                                     arrayView1d< globalIndex const > const & dofNumber,
+                                     arrayView1d< integer const > const & ghostRank,
+                                     real64 const maxAbsolutePresChange,
+                                     arrayView1d< real64 > pressureScalingFactor )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > scalingFactor( 1.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
@@ -47,6 +66,8 @@ struct SolutionScalingKernel
     {
       if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
       {
+        pressureScalingFactor[ei] = 1.0;
+
         localIndex const lid = dofNumber[ei] - rankOffset;
 
         // compute the change in pressure
@@ -57,13 +78,18 @@ struct SolutionScalingKernel
         if( maxAbsolutePresChange > 0.0 && absPresChange > maxAbsolutePresChange )
         {
           real64 const presScalingFactor = maxAbsolutePresChange / absPresChange;
+          pressureScalingFactor[ei] = presScalingFactor;
           scalingFactor.min( presScalingFactor );
         }
       }
 
     } );
 
-    return { scalingFactor.get(), maxDeltaPres.get() };
+    SolutionScalingData scalingData;
+    scalingData.scalingFactor = scalingFactor.get();
+    scalingData.maxDeltaPres = maxDeltaPres.get();
+    scalingData.minPresScalingFactor = scalingFactor.get();
+    return scalingData;
   }
 
 };
