@@ -129,8 +129,8 @@
     <TableFunction
       name="gcFieldFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ gcFieldGcMin=1/x.csv, gcFieldGcMin=1/y.csv, gcFieldGcMin=1/z.csv }"
-      voxelFile="gcFieldGcMin=1/gc.csv"
+      coordinateFiles="{ gcField/x.csv, gcField/y.csv, gcField/z.csv }"
+      voxelFile="gcField/gc.csv"
       interpolation="linear"/>
   </Functions>
 
