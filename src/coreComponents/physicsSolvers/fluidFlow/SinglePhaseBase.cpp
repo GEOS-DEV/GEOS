@@ -1358,7 +1358,6 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
   }
   else
   {
-    GEOS_UNUSED_VAR( maxDeltaTemp );
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
