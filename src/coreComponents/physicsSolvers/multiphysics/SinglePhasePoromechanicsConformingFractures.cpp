@@ -168,9 +168,12 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
 
       // flux derivative
       bool skipAssembly = true;
-      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
+      // this assembles the mass balance row, the first of the rows this element owns in dR_dAper
+      // (the energy balance row is not assembled wrt displacement yet)
+      localIndex const massRow = kfe * ( this->m_isThermal ? 2 : 1 );
+      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( massRow );
+      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( massRow );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( massRow );
 
       skipAssembly &= !isFractureOpen;
 

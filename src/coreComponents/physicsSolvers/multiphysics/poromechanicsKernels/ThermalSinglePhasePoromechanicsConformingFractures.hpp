@@ -141,7 +141,8 @@ public:
       dEnergyFlux_dTrans( 0.0 ),
       dEnergyFlux_dP( size ),
       dEnergyFlux_dT( size ),
-      dEnergyFlux_dDispJump( size, 3 )
+      dEnergyFlux_dDispJump( size, 3 ),
+      dEnergyFlux_dAperture( numElems, size )
     {}
     using SinglePhaseFVMBase::StackVariables::stencilSize;
     using SinglePhaseFVMBase::StackVariables::numFluxElems;
@@ -167,6 +168,8 @@ public:
     stackArray1d< real64, maxStencilSize > dEnergyFlux_dT;
     /// Derivatives of energy fluxes wrt dispJump
     stackArray2d< real64, maxStencilSize *3 > dEnergyFlux_dDispJump{};
+    /// Derivatives of energy fluxes wrt the aperture of each element of the connection
+    stackArray2d< real64, maxNumElems * maxStencilSize > dEnergyFlux_dAperture;
 
   };
 
@@ -193,7 +196,7 @@ public:
                                            localIndex const (&seri)[2],
                                            localIndex const (&sesri)[2],
                                            localIndex const (&sei)[2],
-                                           localIndex const,
+                                           localIndex const connectionIndex,
                                            real64 const & alpha,
                                            real64 const & mobility,
                                            real64 const & potGrad,
@@ -230,6 +233,18 @@ public:
         stack.localFluxJacobian[k[0]*numEqn][localDofIndexTemp] += m_dt * dMassFlux_dT[ke];
         stack.localFluxJacobian[k[1]*numEqn][localDofIndexTemp] -= m_dt * dMassFlux_dT[ke];
       }
+
+      // The enthalpy part of the energy flux depends on the aperture through the transmissibility,
+      // exactly like the mass flux. The conduction part added below is not differentiated wrt the
+      // aperture, consistently with the explicit treatment of the thermal transmissibility.
+      real64 const dEnergyFlux_dAper[2] =
+      {  m_dt * stack.dEnergyFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][0][0],
+         -m_dt * stack.dEnergyFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][1][0] };
+
+      stack.dEnergyFlux_dAperture[k[0]][k[0]] += dEnergyFlux_dAper[0];
+      stack.dEnergyFlux_dAperture[k[0]][k[1]] += dEnergyFlux_dAper[1];
+      stack.dEnergyFlux_dAperture[k[1]][k[0]] -= dEnergyFlux_dAper[0];
+      stack.dEnergyFlux_dAperture[k[1]][k[1]] -= dEnergyFlux_dAper[1];
     } );
 
     // *****************************************************
@@ -301,6 +316,14 @@ public:
                                                                                                       stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
                                                                                                       stack.stencilSize * numDof );
 
+      // the energy balance is the last of the numEqn rows this element owns in dR_dAper
+      localIndex const energyRow = Base::m_dR_dAperOffset
+                                   + LvArray::integerConversion< localIndex >( m_sei( iconn, i ) ) * numEqn + numEqn - 1;
+
+      Base::m_dR_dAper.template addToRowBinarySearch< parallelDeviceAtomic >( energyRow,
+                                                                              stack.localColIndices.data(),
+                                                                              stack.dEnergyFlux_dAperture[i].dataIfContiguous(),
+                                                                              stack.stencilSize );
     } );
   }
 
