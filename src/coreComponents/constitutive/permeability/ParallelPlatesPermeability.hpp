@@ -35,12 +35,47 @@ public:
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dPressure,
                                     arrayView4d< real64 > const & dPerm_dDispJump,
-                                    bool const updateTransversalComponent )
+                                    bool const updateTransversalComponent,
+                                    real64 const jointRoughnessCoefficient )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dDispJump( dPerm_dDispJump ),
-    m_numDimensionsToUpdate( 3 )
+    m_numDimensionsToUpdate( 3 ),
+    m_jointRoughnessCoefficient( jointRoughnessCoefficient )
   {
     m_numDimensionsToUpdate = updateTransversalComponent ? 3 : 2;
+  }
+
+  /**
+   * @brief Compute the aperture reduced by the joint roughness coefficient (Barton et al., 1985):
+   *        e_h = E^2 / JRC^2.5, with apertures in microns.
+   *        The reduction is only applied where e_h <= E (i.e. E[um]^0.4 <= JRC); otherwise E is returned.
+   * @param[in] aperture the input aperture E [m]
+   * @param[out] dReducedAperture_dAperture derivative of the returned aperture w.r.t. E
+   * @return the reduced aperture [m]
+   */
+  GEOS_HOST_DEVICE
+  real64 computeApertureUsingJRC( real64 const & aperture,
+                                  real64 & dReducedAperture_dAperture ) const
+  {
+    dReducedAperture_dAperture = 1.0;
+    if( m_jointRoughnessCoefficient >= 1.0 )
+    {
+      real64 const factor = 1e6 / std::pow( m_jointRoughnessCoefficient, 2.5 );
+      real64 const reducedAperture = factor * aperture * aperture;
+      if( reducedAperture <= aperture )
+      {
+        dReducedAperture_dAperture = 2.0 * factor * aperture;
+        return reducedAperture;
+      }
+    }
+    return aperture;
+  }
+
+  GEOS_HOST_DEVICE
+  real64 computeApertureUsingJRC( real64 const & aperture ) const
+  {
+    real64 dReducedAperture_dAperture = 0.0;
+    return computeApertureUsingJRC( aperture, dReducedAperture_dAperture );
   }
 
   GEOS_HOST_DEVICE
@@ -52,8 +87,11 @@ public:
   {
     GEOS_UNUSED_VAR( oldHydraulicAperture );
 
-    real64 const perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
-    real64 const dPerm_dHydraulicAperture = newHydraulicAperture / 6.0;
+    real64 dAperture_dHydraulicAperture = 1.0;
+    real64 const aperture = computeApertureUsingJRC( newHydraulicAperture, dAperture_dHydraulicAperture );
+
+    real64 const perm  = aperture*aperture / 12.0;
+    real64 const dPerm_dHydraulicAperture = aperture / 6.0 * dAperture_dHydraulicAperture;
 
     for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
@@ -99,6 +137,7 @@ private:
 
   arrayView4d< real64 > m_dPerm_dDispJump;
   int m_numDimensionsToUpdate;
+  real64 m_jointRoughnessCoefficient;
 };
 
 
@@ -129,13 +168,15 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
                           m_dPerm_dDispJump,
-                          m_updateTransversalComponent );
+                          m_updateTransversalComponent,
+                          m_jointRoughnessCoefficient );
   }
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
     static constexpr char const * transversalPermeabilityString() { return "transversalPermeability"; }
+    static constexpr char const * jointRoughnessCoefficientString() { return "jointRoughnessCoefficient"; }
   };
 
 protected:
@@ -150,6 +191,7 @@ private:
   array4d< real64 > m_dPerm_dDispJump;
 
   real64 m_transversalPermeability;
+  real64 m_jointRoughnessCoefficient;
 
   bool m_updateTransversalComponent;
 
