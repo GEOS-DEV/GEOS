@@ -44,6 +44,7 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/HydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalHydrostaticPressureKernel.hpp"
@@ -61,7 +62,8 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ),
+  m_scalingType( flowSolverUtilities::ScalingType::Global )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setApplyDefaultValue( 0.0 ).
@@ -103,9 +105,12 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< flow::mass_n >( getName() );
       subRegion.registerField< flow::dMass >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
 
+      subRegion.registerField< flow::pressureScalingFactor >( getName() );
+
       if( m_isThermal )
       {
         subRegion.registerField< flow::dEnergy >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
+        subRegion.registerField< flow::temperatureScalingFactor >( getName() );
       }
     } );
 
@@ -1300,36 +1305,108 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  // In a coupled run the coupled solver's NonlinearSolverParameters overwrite the flow subsolver,
+  // so the lineSearchAction / scalingType compatibility is checked here at run time.
+  // A better fix is to check it at input time in CoupledSolver.
+  GEOS_ERROR_IF( m_scalingType == flowSolverUtilities::ScalingType::Local &&
+                 m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None,
+                 "line search is not supported for scalingType = Local; set lineSearchAction to None, including in the coupled solver",
+                 getDataContext() );
+
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
   real64 maxDeltaPres = 0.0;
+  real64 maxDeltaTemp = 0.0;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               string_array const & regionNames )
+  real64 minPresScalingFactor = 1.0, minTempScalingFactor = 1.0;
+
+  if( m_isThermal )
   {
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase & subRegion )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
     {
-      globalIndex const rankOffset = dofManager.rankOffset();
-      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase & subRegion )
+      {
+        globalIndex const rankOffset = dofManager.rankOffset();
+        arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-      auto const subRegionData =
-        singlePhaseBaseKernels::SolutionScalingKernel::
-          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
+        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
+        arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
 
-      scalingFactor = std::min( scalingFactor, subRegionData.first );
-      maxDeltaPres  = std::max( maxDeltaPres, subRegionData.second );
+        integer const tempDofOffset = 1;
+        auto const subRegionData = thermalSinglePhaseBaseKernels::
+                                     SolutionScalingKernel::
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, tempDofOffset, dofNumber, ghostRank,
+                                                                       m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
+                                                                       pressureScalingFactor, temperatureScalingFactor );
+
+        if( m_scalingType == flowSolverUtilities::ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        }
+        maxDeltaPres  = std::max( maxDeltaPres, subRegionData.maxDeltaPres );
+        maxDeltaTemp  = std::max( maxDeltaTemp, subRegionData.maxDeltaTemp );
+
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.minPresScalingFactor );
+        minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.minTempScalingFactor );
+      } );
     } );
-  } );
+  }
+  else
+  {
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase & subRegion )
+      {
+        globalIndex const rankOffset = dofManager.rankOffset();
+        arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
+
+        auto const subRegionData = singlePhaseBaseKernels::
+                                     SolutionScalingKernel::
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
+                                                                       m_maxAbsolutePresChange, pressureScalingFactor );
+
+        if( m_scalingType == flowSolverUtilities::ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        }
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.minPresScalingFactor );
+        maxDeltaPres  = std::max( maxDeltaPres, subRegionData.maxDeltaPres );
+      } );
+    } );
+  }
 
   scalingFactor = MpiWrapper::min( scalingFactor );
+  minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
   maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
                                                       getName(), fmt::format( "{:.{}f}", maxDeltaPres, 3 ) ) );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
+
+  if( m_isThermal )
+  {
+    minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+    maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
+                                                        getName(), fmt::format( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
+  }
 
   return scalingFactor;
 }
@@ -1358,6 +1435,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      arrayView1d< real64 const > const pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
       auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
       auto const statistics = singlePhaseBaseKernels::SolutionCheckKernel::
@@ -1366,7 +1444,9 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
                                                                   dofNumber,
                                                                   ghostRank,
                                                                   pres,
-                                                                  scalingFactor,
+                                                                  m_scalingType,
+                                                                  scalingFactor, // global scaling factor
+                                                                  pressureScalingFactor, // per-element scaling factors
                                                                   negPresCollector );
 
       minPressure = std::min( minPressure, statistics.minNegPres );
