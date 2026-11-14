@@ -40,6 +40,15 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
     setSizedFromParent( 0 ).
     setDescription( "Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. " );
 
+  registerWrapper( viewKeyStruct::jointRoughnessCoefficientString(), &m_jointRoughnessCoefficient ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Joint roughness coefficient (JRC), between 1 and 20. "
+                    "If specified, the aperture used in the cubic law is reduced following Barton et al. (1985): "
+                    "e_h = E^2 / JRC^2.5 (apertures in microns), only where e_h <= E. "
+                    "If not specified or negative (default: -1), the correction is disabled and the aperture is used directly." );
+
   registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
@@ -59,6 +68,15 @@ void ParallelPlatesPermeability::postInputInitialization()
   if( m_transversalPermeability > -1 )
   {
     m_updateTransversalComponent = false;
+  }
+
+  // a negative value (default: -1) means the JRC correction is not used
+  if( m_jointRoughnessCoefficient >= 0 )
+  {
+    GEOS_THROW_IF( m_jointRoughnessCoefficient < 1 || m_jointRoughnessCoefficient > 20,
+                   GEOS_FMT( "Joint Roughness Coefficient must be between 1 and 20. Provided value: {}",
+                             m_jointRoughnessCoefficient ),
+                   InputError, getDataContext() );
   }
 }
 
