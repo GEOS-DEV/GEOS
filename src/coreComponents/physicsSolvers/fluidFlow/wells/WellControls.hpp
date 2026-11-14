@@ -148,9 +148,15 @@ public:
    */
   /**@{*/
 
+  /**
+   * @brief Make sure that the well constraints are compatible
+   * @param time_n the time at the beginning of the time step
+   * @param dt the time step dt
+   * @param subRegion the well subRegion
+   */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) = 0;
+                                        WellElementSubRegion const & subRegion );
 
   virtual bool isCompositional() const = 0;
   /**
