@@ -1,0 +1,259 @@
+<?xml version="1.0" ?>
+
+<!-- Thermal variant of kgdViscosityDominated_base.xml, with a rock-only (non poroelastic) matrix.
+     Flow and heat transport are solved in the fracture only, so the matrix carries no temperature
+     degree of freedom. The thermal stress acting on the fracture faces is therefore computed from the
+     prescribed matrixTemperature: cold injected fluid lowers the normal stress and opens the fracture. -->
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -0.0 }">
+    <Hydrofracture
+      name="hydrofracture"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      logLevel="1"
+      targetRegions="{ Fracture }"
+      isThermal="1"
+      matrixTemperature="350.0"
+      maxNumResolves="2">
+
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="50"
+        lineSearchMaxCuts="3"/>
+      <!-- MGR has no strategy for thermal hydrofracture yet -->
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </Hydrofracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }"
+      contactRelationName="fractureContact"
+      contactPenaltyStiffness="1.0"/>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"
+      isThermal="1"/>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      nodeBasedSIF="1"
+      initialRockToughness="1e4"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <!-- the matrix is not part of the flow problem, so it only needs the solid model -->
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ * }"
+      materialList="{ rock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      defaultAperture="0.02e-3"
+      materialList="{ water, fractureFilling, fractureContact, hApertureModel, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ThermalCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1.0e-3"
+      referenceViscosity="1.0e-3"
+      referencePressure="0.0"
+      referenceTemperature="0.0"
+      compressibility="5e-10"
+      thermalExpansionCoeff="0.0"
+      viscosibility="0.0"
+      specificHeatCapacity="4.2e3"
+      referenceInternalEnergy="0.001"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultYoungModulus="30.0e9"
+      defaultPoissonRatio="0.25"
+      defaultDrainedLinearTEC="1.0e-7"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="2.16e6"
+      referenceTemperature="0.0"
+      referenceInternalEnergy="0.0"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 3.0, 3.0, 3.0 }"/>
+
+    <FrictionlessContact
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="waterDensity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="water_density"
+      scale="1000"/>
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="initialTemperatureFracture"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="temperature"
+      scale="350.0"/>
+
+    <!-- Cold injected fluid -->
+    <FieldSpecification
+      name="sourceTemperature"
+      objectPath="ElementRegions/Fracture"
+      fieldName="temperature"
+      scale="1.0"
+      functionName="injectionTemperature"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="xConstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Fracture"
+      scale="-5e-2"
+      setNames="{ source }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
+
+    <!-- injected fluid temperature: in situ value, ramped down to the injection value over 10 s -->
+    <TableFunction
+      name="injectionTemperature"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 350.0, 300.0 }"/>
+  </Functions>
+
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="temperatureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="temperature"/>
+
+    <PackCollection
+      name="apertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="elementAperture"/>
+
+    <PackCollection
+      name="hydraulicApertureCollection"
+      objectPath="ElementRegions/Fracture/FractureSubRegion"
+      fieldName="hydraulicAperture"/>
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="kgdViscosityDominated_thermal"
+      plotLevel="3"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/pressureCollection, /Tasks/temperatureCollection, /Tasks/apertureCollection, /Tasks/hydraulicApertureCollection}"
+      filename="kgdViscosityDominated_thermal_output"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
