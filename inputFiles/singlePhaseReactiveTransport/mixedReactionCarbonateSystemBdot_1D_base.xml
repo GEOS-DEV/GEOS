@@ -1,0 +1,155 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Region1 }"
+      writeLinearSystem="0"
+      logLevel="2">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        maxTimeStepCuts="5"
+        newtonMaxIter="40"
+        logLevel="2"
+        lineSearchAction="None"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ * }"
+      materialList="{ water, rock, diffusion }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ReactiveCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"
+      chemicalSystemType="carbonate"
+      activityModelType="bdot"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 3.0e-16, 3.0e-16, 3.0e-16 }"/>
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ water }"
+      defaultPhaseDiffusivityMultipliers="{ 1 }"
+      diffusivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="Porosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="sourcePressure"
+      setNames="{ source }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"
+      scale="4e6"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ xpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e6"/>
+
+    <FieldSpecification
+      name="surfaceArea"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="2.4573e+06"/>
+  </FieldSpecifications>
+
+  <Tasks>
+    <PackCollection
+      name="logPrimarySpeciesCollection"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="kineticRateCollection"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="water_kineticReactionRates"/>
+  </Tasks>
+
+  <Outputs>
+    <TimeHistory
+      name="logPrimarySpeciesHistoryOutput"
+      sources="{ /Tasks/logPrimarySpeciesCollection }"
+      filename="logPrimarySpeciesHistory"/>
+
+    <TimeHistory
+      name="pressureHistoryOutput"
+      sources="{ /Tasks/pressureCollection }"
+      filename="pressureHistory"/>
+
+    <TimeHistory
+      name="kineticReactionHistoryOutput"
+      sources="{ /Tasks/kineticRateCollection }"
+      filename="kineticReactionHistory"/>
+
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
