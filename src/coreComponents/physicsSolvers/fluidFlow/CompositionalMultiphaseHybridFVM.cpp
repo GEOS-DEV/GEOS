@@ -616,7 +616,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
                                                      m_allowNegativePressure,
-                                                     compositionalMultiphaseUtilities::ScalingType::Global,
+                                                     flowSolverUtilities::ScalingType::Global,
                                                      scalingFactor,
                                                      pressure,
                                                      compDens,
