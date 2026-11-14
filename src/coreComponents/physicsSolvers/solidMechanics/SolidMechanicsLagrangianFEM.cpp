@@ -1207,7 +1207,8 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                                                                        FlowSolverBase::viewKeyStruct::solidNamesString(),
                                                                                                                                        localMatrix,
                                                                                                                                        localRhs,
-                                                                                                                                       dt );
+                                                                                                                                       dt,
+                                                                                                                                       m_performStressInitialization );
       // second pass for pure mechanics regions
       real64 const mechanicsMaxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                                        solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,

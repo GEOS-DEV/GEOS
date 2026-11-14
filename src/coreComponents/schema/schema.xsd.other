@@ -1704,24 +1704,35 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
 			<xsd:element name="PorousDelftEggCarmanKozenyPermeability" type="PorousDelftEggCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousDelftEggStrainDependentPermeability" type="PorousDelftEggStrainDependentPermeabilityType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousDruckerPragerCarmanKozenyPermeability" type="PorousDruckerPragerCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousDruckerPragerStrainDependentPermeability" type="PorousDruckerPragerStrainDependentPermeabilityType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
 			<xsd:element name="PorousElasticIsotropicCarmanKozenyPermeability" type="PorousElasticIsotropicCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousElasticIsotropicPressureDependentStrainDependentPermeability" type="PorousElasticIsotropicPressureDependentStrainDependentPermeabilityType" />
+			<xsd:element name="PorousElasticIsotropicStrainDependentPermeability" type="PorousElasticIsotropicStrainDependentPermeabilityType" />
 			<xsd:element name="PorousElasticOrthotropic" type="PorousElasticOrthotropicType" />
 			<xsd:element name="PorousElasticOrthotropicCarmanKozenyPermeability" type="PorousElasticOrthotropicCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousElasticOrthotropicStrainDependentPermeability" type="PorousElasticOrthotropicStrainDependentPermeabilityType" />
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
 			<xsd:element name="PorousElasticTransverseIsotropicCarmanKozenyPermeability" type="PorousElasticTransverseIsotropicCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousElasticTransverseIsotropicStrainDependentPermeability" type="PorousElasticTransverseIsotropicStrainDependentPermeabilityType" />
 			<xsd:element name="PorousExtendedDruckerPrager" type="PorousExtendedDruckerPragerType" />
 			<xsd:element name="PorousExtendedDruckerPragerCarmanKozenyPermeability" type="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousExtendedDruckerPragerStrainDependentPermeability" type="PorousExtendedDruckerPragerStrainDependentPermeabilityType" />
 			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
 			<xsd:element name="PorousModifiedCamClayCarmanKozenyPermeability" type="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousModifiedCamClayStrainDependentPermeability" type="PorousModifiedCamClayStrainDependentPermeabilityType" />
 			<xsd:element name="PorousViscoDruckerPrager" type="PorousViscoDruckerPragerType" />
 			<xsd:element name="PorousViscoDruckerPragerCarmanKozenyPermeability" type="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousViscoDruckerPragerStrainDependentPermeability" type="PorousViscoDruckerPragerStrainDependentPermeabilityType" />
 			<xsd:element name="PorousViscoExtendedDruckerPrager" type="PorousViscoExtendedDruckerPragerType" />
 			<xsd:element name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" type="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousViscoExtendedDruckerPragerStrainDependentPermeability" type="PorousViscoExtendedDruckerPragerStrainDependentPermeabilityType" />
 			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
 			<xsd:element name="PorousViscoModifiedCamClayCarmanKozenyPermeability" type="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
+			<xsd:element name="PorousViscoModifiedCamClayStrainDependentPermeability" type="PorousViscoModifiedCamClayStrainDependentPermeabilityType" />
 			<xsd:element name="PressurePermeability" type="PressurePermeabilityType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
@@ -1739,6 +1750,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SinglePhaseThermalConductivity" type="SinglePhaseThermalConductivityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
+			<xsd:element name="StrainDependentPermeability" type="StrainDependentPermeabilityType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
@@ -3007,24 +3019,35 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="PorousDamageVolDevElasticIsotropicType" />
 	<xsd:complexType name="PorousDelftEggType" />
 	<xsd:complexType name="PorousDelftEggCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousDelftEggStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousDruckerPragerType" />
 	<xsd:complexType name="PorousDruckerPragerCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousDruckerPragerStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousElasticIsotropicType" />
 	<xsd:complexType name="PorousElasticIsotropicCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousElasticIsotropicPressureDependentStrainDependentPermeabilityType" />
+	<xsd:complexType name="PorousElasticIsotropicStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousElasticOrthotropicType" />
 	<xsd:complexType name="PorousElasticOrthotropicCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousElasticOrthotropicStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousElasticTransverseIsotropicType" />
 	<xsd:complexType name="PorousElasticTransverseIsotropicCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousElasticTransverseIsotropicStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousExtendedDruckerPragerType" />
 	<xsd:complexType name="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousExtendedDruckerPragerStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousModifiedCamClayType" />
 	<xsd:complexType name="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousModifiedCamClayStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousViscoDruckerPragerType" />
 	<xsd:complexType name="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousViscoDruckerPragerStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousViscoExtendedDruckerPragerType" />
 	<xsd:complexType name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousViscoExtendedDruckerPragerStrainDependentPermeabilityType" />
 	<xsd:complexType name="PorousViscoModifiedCamClayType" />
 	<xsd:complexType name="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
+	<xsd:complexType name="PorousViscoModifiedCamClayStrainDependentPermeabilityType" />
 	<xsd:complexType name="PressurePermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
@@ -3280,6 +3303,22 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="internalEnergy" type="real64_array2d" />
 		<!--oldInternalEnergy => Internal energy of the solid per unit volume at the previous time-step [J/m^3]-->
 		<xsd:attribute name="oldInternalEnergy" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="StrainDependentPermeabilityType">
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
+		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
+		<!--dPerm_dVolStrain => Derivative of the permeability w.r.t. the volumetric strain-->
+		<xsd:attribute name="dPerm_dVolStrain" type="real64_array3d" />
+		<!--permeability => Rock permeability-->
+		<xsd:attribute name="permeability" type="real64_array3d" />
+		<!--permeability_n => Permeability at the last converged state-->
+		<xsd:attribute name="permeability_n" type="real64_array3d" />
+		<!--referencePermeability => Permeability at the initial state-->
+		<xsd:attribute name="referencePermeability" type="real64_array3d" />
+		<!--volumetricStrain => Total volumetric strain since the initial state (positive in extension)-->
+		<xsd:attribute name="volumetricStrain" type="real64_array2d" />
+		<!--volumetricStrain_n => Total volumetric strain at the last converged state-->
+		<xsd:attribute name="volumetricStrain_n" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">
 		<!--capPresWrappers => (no description available)-->
