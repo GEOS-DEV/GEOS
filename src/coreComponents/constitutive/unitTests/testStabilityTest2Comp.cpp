@@ -17,7 +17,7 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
-#include "TestFluid.hpp"
+#include "TestFluids.hpp"
 
 using namespace geos::constitutive;
 using namespace geos::constitutive::compositional;
@@ -45,7 +45,7 @@ class StabilityTestTest2CompFixture :  public ::testing::TestWithParam< Stabilit
 
 public:
   StabilityTestTest2CompFixture()
-    : m_fluid( createFluid() )
+    : m_fluid( createTestFluid< TestFluidName::RichGas >() )
   {}
 
   ~StabilityTestTest2CompFixture() = default;
@@ -110,12 +110,6 @@ protected:
   std::unique_ptr< TestFluid< numComps > > m_fluid{};
 
 private:
-  static std::unique_ptr< TestFluid< numComps > > createFluid()
-  {
-    std::unique_ptr< TestFluid< numComps > > fluid = TestFluid< numComps >::create( {Fluid::CH4, Fluid::C3H8} );
-    fluid->setBinaryCoefficients( Feed< 1 >{ 0.1 } );
-    return fluid;
-  }
 };
 
 using PengRobinson = StabilityTestTest2CompFixture< EquationOfStateType::PengRobinson >;

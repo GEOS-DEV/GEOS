@@ -21,6 +21,12 @@
 #define GEOS_CONSTITUTIVE_UNITTESTS_TESTFLUIDUTILITIES_HPP_
 
 #include "codingUtilities/UnitTestUtilities.hpp"
+#include "common/format/table/TableData.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
+
+#include <algorithm>
+#include <initializer_list>
 
 namespace geos
 {
@@ -34,30 +40,87 @@ namespace internal
 static constexpr real64 relTol = 1.0e-4;
 static constexpr real64 absTol = 1.0e-7;
 
-/**
- * @brief Tests a function against a derivative
- * @details Will calculate the left-sided and the right-sided numerical derivatives of a function
- *          and compare this against a analytically calculated value provided.
- * @param x The value at which the function should be evaluated
- * @param dx The value to use to perturb @c x in the calculation of the numerical derivatives
- * @param derivative The value of the analytically calculated derivative to use for comparison
- * @param function The function which is being tested. This should be a function that returns
-          a single real value.
- * @param absTolerance The absolute tolerance to use for the comparison
- * @param relTolerance The relative tolerance to use for the comparison
- */
-template< typename FUNCTION >
-void testNumericalDerivative( real64 const x, real64 const dx, real64 const derivative,
-                              FUNCTION && function,
-                              real64 const absTolerance = absTol, real64 const relTolerance = relTol )
+/// @return the scale used for the relative error between two derivatives (as in @c checkRelativeError)
+inline real64 derivativeErrorScale( real64 const analytical, real64 const numerical )
 {
-  real64 const leftValue = function( x-dx );
-  real64 const centreValue = function( x );
-  real64 const rightValue = function( x+dx );
-  real64 const leftDerivative = (centreValue - leftValue) / dx;
-  real64 const rightDerivative = (rightValue - centreValue) / dx;
-  checkRelativeError( derivative, leftDerivative, relTolerance, absTolerance, "Left derivative" );
-  checkRelativeError( derivative, rightDerivative, relTolerance, absTolerance, "Right derivative" );
+  return std::max( LvArray::math::abs( analytical ), LvArray::math::abs( numerical ) ) + 1.0;
+}
+
+/// @return the relative error between an analytical and a numerical derivative
+inline real64 derivativeRelativeError( real64 const analytical, real64 const numerical )
+{
+  return LvArray::math::abs( analytical - numerical ) / derivativeErrorScale( analytical, numerical );
+}
+
+/// @return true if a numerical derivative matches the analytical derivative (same criterion as @c checkRelativeError)
+inline bool derivativeWithinTolerance( real64 const analytical, real64 const numerical,
+                                       real64 const relTolerance, real64 const absTolerance )
+{
+  real64 const delta = LvArray::math::abs( analytical - numerical );
+  return delta <= absTolerance || delta <= relTolerance * derivativeErrorScale( analytical, numerical );
+}
+
+/**
+ * @brief Add a row to a derivative check table
+ * @param table the table
+ * @param index the index of the value
+ * @param values the function values and derivatives to show
+ * @param error the relative error
+ * @param passed whether the check passed
+ * @return 1 if the check failed, 0 otherwise
+ */
+inline integer addDerivativeRow( TableData & table,
+                                 integer const index,
+                                 std::initializer_list< real64 > const values,
+                                 real64 const error,
+                                 bool const passed )
+{
+  stdVector< TableData::CellData > row;
+  row.push_back( { CellType::Value, GEOS_FMT( "{}", index ) } );
+  for( real64 const value : values )
+  {
+    row.push_back( { CellType::Value, GEOS_FMT( "{:.5e}", value ) } );
+  }
+  row.push_back( { CellType::Value, GEOS_FMT( "{:.5e}", error ) } );
+  row.push_back( { CellType::Value, passed ? "ok" : "FAIL" } );
+  table.addRow( row );
+  return passed ? 0 : 1;
+}
+
+/**
+ * @brief Issue a single test failure showing the derivative check table if any check failed
+ * @param valueColumns the names of the value columns
+ * @param table the table of results
+ * @param numFailures the number of failed checks
+ * @param numValues the number of values checked
+ * @param x the value at which the derivatives are evaluated
+ * @param dx the perturbation used for the numerical derivatives
+ * @param relTolerance the relative tolerance
+ * @param absTolerance the absolute tolerance
+ */
+inline void reportDerivativeFailures( std::initializer_list< string > const valueColumns,
+                                      TableData const & table,
+                                      integer const numFailures,
+                                      integer const numValues,
+                                      real64 const x,
+                                      real64 const dx,
+                                      real64 const relTolerance,
+                                      real64 const absTolerance )
+{
+  if( numFailures == 0 )
+  {
+    return;
+  }
+  stdVector< string > columns{ "index" };
+  columns.insert( columns.end(), valueColumns.begin(), valueColumns.end() );
+  columns.emplace_back( "rel. error" );
+  columns.emplace_back( "status" );
+  TableLayout const layout( "", columns );
+  TableTextFormatter const formatter( layout );
+  ADD_FAILURE() << GEOS_FMT( "Numerical derivative check failed for {} of {} value(s) at x = {:.5e} with dx = {:.5e} "
+                             "(relTol = {:.5e}, absTol = {:.5e})\n",
+                             numFailures, numValues, x, dx, relTolerance, absTolerance )
+                << formatter.toString( table );
 }
 
 /**
@@ -90,27 +153,55 @@ void testNumericalDerivative( real64 const x,
   function( x, centreValues );
   function( x+dx, rightValues );
 
-  // Use the same space to calculate the left-sided and right sided derivatives
+  TableData table;
+  integer numFailures = 0;
   for( integer i = 0; i < numValues; ++i )
   {
+    real64 const leftDerivative = (centreValues[i] - leftValues[i]) / dx;
+    real64 const rightDerivative = (rightValues[i] - centreValues[i]) / dx;
+    real64 const centralDerivative = 0.5*(rightValues[i] - leftValues[i]) / dx;
+
     // Choose from the left, central and right derivatives, the one that's nearest the analytical value
-    real64 minError = LvArray::NumericLimits< real64 >::max;
-    real64 selectedDerivative = 0.0;
-    for( real64 const distance : {centreValues[i] - leftValues[i],
-                                  rightValues[i] - centreValues[i],
-                                  0.5*(rightValues[i] - leftValues[i])} )
+    real64 selectedDerivative = leftDerivative;
+    for( real64 const deriv : {rightDerivative, centralDerivative} )
     {
-      real64 const deriv = distance / dx;
-      real64 const error = LvArray::math::abs( deriv - derivatives[i] );
-      if( error < minError )
+      if( LvArray::math::abs( deriv - derivatives[i] ) < LvArray::math::abs( selectedDerivative - derivatives[i] ) )
       {
-        minError = error;
         selectedDerivative = deriv;
       }
     }
-    checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
-                        GEOS_FMT( "Numerical derivative for component {}", i ) );
+    numFailures += addDerivativeRow( table, i,
+                                     {leftValues[i], centreValues[i], rightValues[i], derivatives[i],
+                                      leftDerivative, rightDerivative, centralDerivative},
+                                     derivativeRelativeError( derivatives[i], selectedDerivative ),
+                                     derivativeWithinTolerance( derivatives[i], selectedDerivative, relTolerance, absTolerance ) );
   }
+  reportDerivativeFailures( {"f(x-dx)", "f(x)", "f(x+dx)", "analytical", "left", "right", "central"},
+                            table, numFailures, numValues, x, dx, relTolerance, absTolerance );
+}
+
+/**
+ * @brief Tests a function against a derivative
+ * @details Single-valued version of the multi-valued check below: the test passes if the left, right
+ *          or central numerical derivative matches the analytical value.
+ * @param x The value at which the function should be evaluated
+ * @param dx The value to use to perturb @c x in the calculation of the numerical derivatives
+ * @param derivative The value of the analytically calculated derivative to use for comparison
+ * @param function The function which is being tested. This should be a function that returns
+ *        a single real value.
+ * @param absTolerance The absolute tolerance to use for the comparison
+ * @param relTolerance The relative tolerance to use for the comparison
+ */
+template< typename FUNCTION >
+void testNumericalDerivative( real64 const x, real64 const dx, real64 const derivative,
+                              FUNCTION && function,
+                              real64 const absTolerance = absTol, real64 const relTolerance = relTol )
+{
+  stackArray1d< real64, 1 > derivatives( 1 );
+  derivatives[0] = derivative;
+  testNumericalDerivative< 1 >( x, dx, derivatives.toSliceConst(),
+                                [&]( real64 const xi, auto & values ){ values[0] = function( xi ); },
+                                absTolerance, relTolerance );
 }
 
 /**
@@ -152,8 +243,11 @@ void testNumericalSecondDerivative( real64 const x,
     {0.0, 0.0, 1.0, -2.0, 1.0},
   };
   real64 const invdx2 = 1.0 / (dx*dx);
+  TableData table;
+  integer numFailures = 0;
   for( integer i = 0; i < numValues; ++i )
   {
+    // Choose the stencil whose second derivative is nearest the analytical value
     real64 minError = LvArray::NumericLimits< real64 >::max;
     real64 selectedDerivative = 0.0;
     for( integer si = 0; si < 6; si++ )
@@ -171,9 +265,14 @@ void testNumericalSecondDerivative( real64 const x,
         selectedDerivative = deriv;
       }
     }
-    checkRelativeError( derivatives[i], selectedDerivative, relTolerance, absTolerance,
-                        GEOS_FMT( "Numerical derivative for component {}", i ) );
+    numFailures += addDerivativeRow( table, i,
+                                     {values( 0, i ), values( 1, i ), values( 2, i ), values( 3, i ), values( 4, i ),
+                                      derivatives[i], selectedDerivative},
+                                     derivativeRelativeError( derivatives[i], selectedDerivative ),
+                                     derivativeWithinTolerance( derivatives[i], selectedDerivative, relTolerance, absTolerance ) );
   }
+  reportDerivativeFailures( {"f(x-2dx)", "f(x-dx)", "f(x)", "f(x+dx)", "f(x+2dx)", "analytical", "numerical"},
+                            table, numFailures, numValues, x, dx, relTolerance, absTolerance );
 }
 
 }// namespace internal

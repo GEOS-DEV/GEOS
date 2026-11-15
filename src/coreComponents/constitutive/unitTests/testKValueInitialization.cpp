@@ -40,6 +40,7 @@ class WilsonKValueInitializationTestFixture :
 {
 public:
   using Feed = std::initializer_list< real64 const >;
+
 public:
   WilsonKValueInitializationTestFixture( Feed const Pc, Feed const Tc, Feed const omega )
     : numComps( NC )
