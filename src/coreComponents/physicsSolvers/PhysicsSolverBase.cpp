@@ -368,7 +368,12 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     }
   }
   GEOS_ERROR_IF( dtRemaining > 0.0,
-                 "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
+                 GEOS_FMT( "Maximum allowed number of sub-steps ({}) reached at time {} s: {} s of the {} s requested by the "
+                           "event are still to be covered (last sub-step {} s). The time step was cut repeatedly. Increase "
+                           "maxSubSteps in NonlinearSolverParameters, or lower maxEventDt of the event that runs this solver, "
+                           "and check the convergence history above.",
+                           maxSubSteps, time_n + ( dt - dtRemaining ), dtRemaining, dt,
+                           numOfSubSteps > 0 ? subStepDts[numOfSubSteps - 1] : 0.0 ),
                  getDataContext() );
 
   // Decide what to do with the next Dt for the event running the solver.
