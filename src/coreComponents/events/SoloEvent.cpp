@@ -19,6 +19,8 @@
 
 #include "SoloEvent.hpp"
 
+#include "codingUtilities/Utilities.hpp"
+
 namespace geos
 {
 
@@ -83,6 +85,34 @@ void SoloEvent::estimateEventTiming( real64 const time,
   else
   {
     setIdle();
+  }
+}
+
+
+void SoloEvent::cleanup( real64 const time_n,
+                         integer const cycleNumber,
+                         integer const GEOS_UNUSED_PARAM( eventCounter ),
+                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                         DomainPartition & domain )
+{
+  // Note: if m_lastCycle is set, then the event has already executed
+  if( m_lastCycle >= 0 )
+  {
+    return;
+  }
+
+  bool const isDueNow = ( m_targetTime >= 0.0 )
+                        ? isZero( time_n - m_targetTime, 1e-10 * std::max( 1.0, std::abs( m_targetTime ) ) )
+                        : ( m_targetCycle == cycleNumber );
+  if( !isDueNow )
+  {
+    return;
+  }
+
+  ExecutableGroup * target = getEventTarget();
+  if( target != nullptr )
+  {
+    target->cleanup( time_n, cycleNumber, 0, 0, domain );
   }
 }
 
