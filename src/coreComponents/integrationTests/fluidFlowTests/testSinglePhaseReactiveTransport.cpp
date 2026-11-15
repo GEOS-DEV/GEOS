@@ -562,13 +562,15 @@ TEST_F( SinglePhaseReactiveTransportTest, jacobianNumericalCheck_accumulationBal
   real64 const perturb = std::sqrt( eps );
   real64 const tol = 1e-6; // 1% error margin
 
+  real64 const accumulationDt = 1e-4;
+
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->assembleAccumulationTermsInMassBalanceAndSpeciesAmountEqs( dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleAccumulationTermsInMassBalanceAndSpeciesAmountEqs( accumulationDt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

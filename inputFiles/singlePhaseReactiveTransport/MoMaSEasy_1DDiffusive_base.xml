@@ -19,7 +19,7 @@
         lineSearchAction="None"
         timeStepIncreaseFactor="1.2"
         logLevel="2"
-        maxAllowedResidualNorm="1e100"/>
+        maxAllowedResidualNorm="1e8"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseReactiveTransport>

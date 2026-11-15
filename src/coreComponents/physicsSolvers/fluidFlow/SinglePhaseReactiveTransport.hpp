@@ -28,6 +28,7 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/SolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ReactionUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/SourceFluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp"
@@ -126,6 +127,18 @@ public:
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
+
+  /**
+   * @brief Compute the factor the Newton update is scaled by before it is applied.
+   * @param domain the physical domain
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localSolution the solution vector
+   * @return the smaller of the pressure scaling from the base and the log concentration scaling
+   */
+  virtual real64
+  scalingForSystemSolution( DomainPartition & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -271,9 +284,14 @@ public:
     static constexpr char const * isUpdateReactivePorosityString() { return "isUpdateReactivePorosity"; }
     static constexpr char const * isUpdateSurfaceAreaString() { return "isUpdateSurfaceArea"; }
     static constexpr char const * immobilePrimarySpeciesIndicesString() { return "immobilePrimarySpeciesIndices"; }
+
+    static constexpr char const * maxAbsoluteLogConcChangeString() { return "maxAbsoluteLogConcentrationChange"; }
   };
 
 protected:
+
+  /// Maximum (absolute) change in log primary species concentration in a Newton iteration, in ln units
+  real64 m_maxAbsoluteLogConcChange;
 
   /// the number of primary species in the fluid
   integer m_numPrimarySpecies;
