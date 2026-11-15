@@ -176,6 +176,25 @@ public:
                              DofManager const & dofManager,
                              arrayView1d< real64 const > const & localRhs ) override;
 
+  /**
+   * @brief Compute the Newton update scaling factor of one well, with the quantities reported in the log
+   * @param[in] subRegion the well subregion
+   * @param[in] dofManager degree-of-freedom manager associated with the linear system
+   * @param[out] maxDeltaPres the maximum absolute pressure change (before scaling)
+   * @param[out] maxDeltaTemp the maximum absolute temperature change (before scaling)
+   * @param[out] minPresScalingFactor the minimum pressure scaling factor
+   * @param[out] minTempScalingFactor the minimum temperature scaling factor
+   * @param[in] localSolution the solution vector
+   * @return the scaling factor, local to this rank
+   */
+  real64 scalingForLocalSystemSolution( WellElementSubRegion & subRegion,
+                                        DofManager const & dofManager,
+                                        real64 & maxDeltaPres,
+                                        real64 & maxDeltaTemp,
+                                        real64 & minPresScalingFactor,
+                                        real64 & minTempScalingFactor,
+                                        arrayView1d< real64 const > const & localSolution );
+
   virtual real64 scalingForWellSystemSolution( WellElementSubRegion & subRegion,
                                                DofManager const & dofManager,
                                                arrayView1d< real64 const > const & localSolution ) override;
