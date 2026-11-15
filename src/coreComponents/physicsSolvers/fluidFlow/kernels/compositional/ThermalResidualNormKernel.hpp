@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_THERMALRESIDUALNORMKERNEL_HPP
 
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -67,7 +68,9 @@ public:
     m_totalDens_n( fluid.totalDensity_n() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
-    m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() )
+    m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() ),
+    m_dSolidInternalEnergy_dTemp( solidInternalEnergy.getDinternalEnergy_dTemperature() ),
+    m_temperature_n( subRegion.getField< fields::flow::temperature_n >() )
   {}
 
   GEOS_HOST_DEVICE
@@ -82,8 +85,15 @@ public:
     {
       energyNormalizer += m_phaseInternalEnergy_n[ei][0][ip] * m_phaseDens_n[ei][0][ip] * m_phaseVolFrac_n[ei][ip] * poreVolume;
     }
-    // warning: internal energy can be negative
-    energyNormalizer = LvArray::math::max( m_minNormalizer, LvArray::math::abs( energyNormalizer ) );
+    // warning: internal energy can be negative, and it vanishes at the user-chosen reference state of the solid
+    // (SolidInternalEnergy referenceInternalEnergy at referenceTemperature). The cell energy alone is then a poor
+    // scale: near the reference temperature in a low-porosity cell it tends to zero and the energy residual is
+    // overstated by orders of magnitude. Bound it from below by the sensible heat of the solid measured from 0 K,
+    // which does not depend on that reference.
+    real64 const solidHeatScale = LvArray::math::abs( m_dSolidInternalEnergy_dTemp[ei][0] * m_temperature_n[ei] )
+                                  * ( 1.0 - m_porosity_n[ei][0] ) * m_volume[ei];
+    energyNormalizer = LvArray::math::max( m_minNormalizer,
+                                           LvArray::math::max( LvArray::math::abs( energyNormalizer ), solidHeatScale ) );
   }
 
   GEOS_HOST_DEVICE
@@ -173,6 +183,12 @@ protected:
 
   /// View on solid properties at the previous converged time step
   arrayView2d< real64 const > const m_solidInternalEnergy_n;
+
+  /// View on the derivative of the solid internal energy with respect to temperature (volumetric heat capacity)
+  arrayView2d< real64 const > const m_dSolidInternalEnergy_dTemp;
+
+  /// View on the temperature at the previous converged time step (absolute, K)
+  arrayView1d< real64 const > const m_temperature_n;
 
 };
 
