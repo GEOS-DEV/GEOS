@@ -1789,6 +1789,114 @@ char const bcLogMessage[] =
   "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
 }
 
+namespace
+{
+
+/**
+ * @brief Enthalpy of a stream made of one fluid component, per unit mass (or mole, as the fluid works)
+ * @param fluidWrapper the fluid kernel wrapper
+ * @param numComps the number of fluid components
+ * @param component the index of the injected component
+ * @param pressure the pressure at which the stream is evaluated
+ * @param temperature the temperature of the stream
+ * @return the mixture enthalpy, sum over the phases of phase fraction times phase enthalpy
+ */
+template< typename FLUID_WRAPPER >
+GEOS_HOST_DEVICE
+real64 injectedStreamEnthalpy( FLUID_WRAPPER const & fluidWrapper,
+                               integer const numComps,
+                               integer const component,
+                               real64 const pressure,
+                               real64 const temperature )
+{
+  integer const numPhases = fluidWrapper.numPhases();
+  StackArray< real64, 2, MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > composition( 1, numComps );
+  StackArray< real64, 3, MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseFrac( 1, 1, numPhases );
+  StackArray< real64, 3, MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
+  StackArray< real64, 3, MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
+  StackArray< real64, 3, MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
+  StackArray< real64, 3, MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhases );
+  StackArray< real64, 3, MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhases );
+  StackArray< real64, 4, MultiFluidBase::MAX_NUM_PHASES * MultiFluidBase::MAX_NUM_COMPONENTS,
+              constitutive::multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
+  real64 totalDens = 0.0;
+
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    composition[0][ic] = ( ic == component ) ? 1.0 : 0.0;
+  }
+  MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+                                                pressure,
+                                                temperature,
+                                                composition[0],
+                                                phaseFrac[0][0],
+                                                phaseDens[0][0],
+                                                phaseMassDens[0][0],
+                                                phaseVisc[0][0],
+                                                phaseEnthalpy[0][0],
+                                                phaseInternalEnergy[0][0],
+                                                phaseCompFrac[0][0],
+                                                totalDens );
+  real64 enthalpy = 0.0;
+  for( integer ip = 0; ip < numPhases; ++ip )
+  {
+    enthalpy += phaseFrac[0][0][ip] * phaseEnthalpy[0][0][ip];
+  }
+  return enthalpy;
+}
+
+/**
+ * @brief Add the enthalpy carried by the injecting cells of a source flux to their energy balance
+ * @details A function template, since nvcc rejects a device lambda defined inside a generic lambda.
+ */
+template< typename FLUID_WRAPPER >
+void addInjectedStreamEnthalpy( FLUID_WRAPPER const & fluidWrapper,
+                                SortedArrayView< localIndex const > const & targetSet,
+                                arrayView1d< integer const > const & ghostRank,
+                                arrayView1d< globalIndex const > const & dofNumber,
+                                arrayView1d< real64 const > const & rhsContribution,
+                                arrayView1d< real64 const > const & pres,
+                                real64 const sizeScalingFactor,
+                                globalIndex const rankOffset,
+                                integer const fluidComponentId,
+                                integer const numFluidComponents,
+                                real64 const injectionTemperature,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )
+{
+  forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+  {
+    localIndex const ei = targetSet[a];
+    if( ghostRank[ei] >= 0 )
+    {
+      return;
+    }
+
+    // injection is a negative contribution to the right-hand side (mass entering the cell)
+    real64 const rhsValue = rhsContribution[a] / sizeScalingFactor;
+    if( rhsValue >= 0.0 )
+    {
+      return;
+    }
+
+    real64 const enthalpy = injectedStreamEnthalpy( fluidWrapper, numFluidComponents, fluidComponentId,
+                                                    pres[ei], injectionTemperature );
+    // derivative with respect to the cell pressure by a one-sided difference (the stream composition and
+    // temperature are fixed, so the pressure is the only cell unknown it depends on)
+    real64 const dp = 1.0e-6 * LvArray::math::max( LvArray::math::abs( pres[ei] ), 1.0e5 );
+    real64 const dEnthalpy_dPres = ( injectedStreamEnthalpy( fluidWrapper, numFluidComponents, fluidComponentId,
+                                                             pres[ei] + dp, injectionTemperature ) - enthalpy ) / dp;
+
+    globalIndex const presDof = dofNumber[ei];
+    localIndex const energyRow = LvArray::integerConversion< localIndex >( dofNumber[ei] - rankOffset ) + numFluidComponents + 1;
+    localRhs[energyRow] += rhsValue * enthalpy;
+    real64 const dEnergy_dPres = rhsValue * dEnthalpy_dPres;
+    localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( energyRow, &presDof, &dEnergy_dPres, 1 );
+  } );
+}
+
+} // namespace
+
 void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                      real64 const dt,
                                                      DofManager const & dofManager,
@@ -1948,6 +2056,24 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
           localRhs[compMassBalanceRow] += rhsValue;
         }
       } );
+
+      // Step 3.3: in thermal runs, an injecting source brings the enthalpy of the injected component at the cell pressure
+      // and at the injection temperature, when the latter is given. Production is not affected.
+
+      real64 const injectionTemperature = fs.getInjectionTemperature();
+      if( m_isThermal && injectionTemperature > 0.0 )
+      {
+        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+        MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+        arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+
+        constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+        {
+          addInjectedStreamEnthalpy( castedFluid.createKernelWrapper(), targetSet, ghostRank, dofNumber,
+                                     rhsContributionArrayView.toViewConst(), pres, sizeScalingFactor, rankOffset,
+                                     fluidComponentId, numFluidComponents, injectionTemperature, localMatrix, localRhs );
+        } );
+      }
 
       SourceFluxStatsAggregator::forAllFluxStatWrappers( subRegion, fs.getName(),
                                                          [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )

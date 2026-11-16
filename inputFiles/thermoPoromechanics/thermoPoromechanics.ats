@@ -41,6 +41,13 @@ decks = [
         check_step=33,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="ThermoPoroElastic_staircase_co2_injectionTemperature_smoke",
+        description='Staircase thermo-poro-mechanics, CO2 SourceFlux with an injection temperature (enthalpy of the injected stream)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=22,
+        check_step=33,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
         name="ThermoPoroElastic_staircase_co2_iterative_smoke",
         description=
         "Thermal multiphase poromechanics staircase with hypre MGR (exercises the hypredrive path when available)",

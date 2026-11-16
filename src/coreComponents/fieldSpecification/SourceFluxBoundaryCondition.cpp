@@ -25,8 +25,18 @@ namespace geos
 using namespace dataRepository;
 
 SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, Group * const parent ):
-  FieldSpecification( name, parent )
+  FieldSpecification( name, parent ),
+  m_injectionTemperature( -1.0 )
 {
+  registerWrapper( viewKeyStruct::injectionTemperatureString(), &m_injectionTemperature ).
+    setApplyDefaultValue( -1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( GEOS_FMT( "Temperature of the injected stream [K], used by the thermal compositional flow solvers. "
+                              "When it is set, each cell where this {} injects receives, in its energy balance, the enthalpy "
+                              "of the injected component at the cell pressure and this temperature. Production (a positive "
+                              "rate) is not affected. When it is not set, the injected mass carries no energy.",
+                              catalogName() ) );
+
   getWrapper< string >( FieldSpecification::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );

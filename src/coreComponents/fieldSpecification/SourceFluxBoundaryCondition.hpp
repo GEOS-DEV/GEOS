@@ -56,6 +56,26 @@ public:
     return SourceFluxBoundaryCondition::catalogName();
   }
 
+  /**
+   * @brief View keys
+   */
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
+  {
+    /// @return The key for the temperature of the injected stream
+    constexpr static char const * injectionTemperatureString() { return "injectionTemperature"; }
+  };
+
+  /**
+   * @brief Getter for the temperature of the injected stream
+   * @return the injection temperature [K], negative when it is not set
+   */
+  real64 getInjectionTemperature() const { return m_injectionTemperature; }
+
+private:
+
+  /// Temperature of the injected stream [K], used by the thermal flow solvers (negative: not set)
+  real64 m_injectionTemperature;
+
 };
 
 } /* namespace geos */
