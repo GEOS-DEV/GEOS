@@ -47,6 +47,8 @@ set( constitutive_headers
      contact/HydraulicApertureTable.hpp
      contact/RateAndStateFriction.hpp
      diffusion/ConstantDiffusion.hpp
+     diffusion/ArchieDiffusion.hpp
+     diffusion/DamageDiffusion.hpp
      diffusion/DiffusionBase.hpp
      diffusion/DiffusionFields.hpp
      diffusion/DiffusionSelector.hpp
@@ -186,6 +188,7 @@ set( constitutive_headers
      solid/DruckerPragerExtended.hpp
      solid/ModifiedCamClay.hpp
      solid/DelftEgg.hpp
+     solid/EigenstrainReactiveSolid.hpp
      solid/ElasticIsotropic.hpp
      solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
@@ -193,6 +196,7 @@ set( constitutive_headers
      solid/InvariantDecompositions.hpp
      solid/PorousDamageSolid.hpp
      solid/PerfectlyPlastic.hpp
+     solid/PorousReactiveSolid.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/ReactiveSolid.hpp
@@ -208,10 +212,11 @@ set( constitutive_headers
      solid/SolidFields.hpp
      solid/porosity/PorosityFields.hpp
      solid/porosity/BiotPorosity.hpp
+     solid/porosity/BiotReactivePorosity.hpp
      solid/porosity/PorosityBase.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
-     solid/porosity/ReactivePorosity.hpp
+     solid/porosity/ReactivePorosityBase.hpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
      thermalConductivity/MultiPhaseThermalConductivityBase.hpp
      thermalConductivity/MultiPhaseThermalConductivityFields.hpp
@@ -244,6 +249,8 @@ set( constitutive_sources
      contact/HydraulicApertureTable.cpp
      contact/RateAndStateFriction.cpp
      diffusion/ConstantDiffusion.cpp
+     diffusion/ArchieDiffusion.cpp
+     diffusion/DamageDiffusion.cpp
      diffusion/DiffusionBase.cpp
      dispersion/DispersionBase.cpp
      dispersion/LinearIsotropicDispersion.cpp
@@ -334,22 +341,25 @@ set( constitutive_sources
      solid/DruckerPragerExtended.cpp
      solid/ModifiedCamClay.cpp
      solid/DelftEgg.cpp
+     solid/EigenstrainReactiveSolid.cpp
      solid/ElasticIsotropic.cpp
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
      solid/PorousDamageSolid.cpp
      solid/PerfectlyPlastic.cpp
+     solid/PorousReactiveSolid.cpp
      solid/PorousSolid.cpp
      solid/ReactiveSolid.cpp
      solid/SolidBase.cpp
      solid/SolidInternalEnergy.cpp
      solid/CeramicDamage.cpp
      solid/porosity/BiotPorosity.cpp
+     solid/porosity/BiotReactivePorosity.cpp
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
      solid/porosity/ProppantPorosity.cpp
-     solid/porosity/ReactivePorosity.cpp
+     solid/porosity/ReactivePorosityBase.cpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.cpp
      thermalConductivity/MultiPhaseThermalConductivityBase.cpp
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.cpp
