@@ -1845,6 +1845,56 @@ real64 injectedStreamEnthalpy( FLUID_WRAPPER const & fluidWrapper,
   return enthalpy;
 }
 
+/**
+ * @brief Add the enthalpy carried by the injecting cells of a source flux to their energy balance
+ * @details A function template, since nvcc rejects a device lambda defined inside a generic lambda.
+ */
+template< typename FLUID_WRAPPER >
+void addInjectedStreamEnthalpy( FLUID_WRAPPER const & fluidWrapper,
+                                SortedArrayView< localIndex const > const & targetSet,
+                                arrayView1d< integer const > const & ghostRank,
+                                arrayView1d< globalIndex const > const & dofNumber,
+                                arrayView1d< real64 const > const & rhsContribution,
+                                arrayView1d< real64 const > const & pres,
+                                real64 const sizeScalingFactor,
+                                globalIndex const rankOffset,
+                                integer const fluidComponentId,
+                                integer const numFluidComponents,
+                                real64 const injectionTemperature,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )
+{
+  forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+  {
+    localIndex const ei = targetSet[a];
+    if( ghostRank[ei] >= 0 )
+    {
+      return;
+    }
+
+    // injection is a negative contribution to the right-hand side (mass entering the cell)
+    real64 const rhsValue = rhsContribution[a] / sizeScalingFactor;
+    if( rhsValue >= 0.0 )
+    {
+      return;
+    }
+
+    real64 const enthalpy = injectedStreamEnthalpy( fluidWrapper, numFluidComponents, fluidComponentId,
+                                                    pres[ei], injectionTemperature );
+    // derivative with respect to the cell pressure by a one-sided difference (the stream composition and
+    // temperature are fixed, so the pressure is the only cell unknown it depends on)
+    real64 const dp = 1.0e-6 * LvArray::math::max( LvArray::math::abs( pres[ei] ), 1.0e5 );
+    real64 const dEnthalpy_dPres = ( injectedStreamEnthalpy( fluidWrapper, numFluidComponents, fluidComponentId,
+                                                             pres[ei] + dp, injectionTemperature ) - enthalpy ) / dp;
+
+    globalIndex const presDof = dofNumber[ei];
+    localIndex const energyRow = LvArray::integerConversion< localIndex >( dofNumber[ei] - rankOffset ) + numFluidComponents + 1;
+    localRhs[energyRow] += rhsValue * enthalpy;
+    real64 const dEnergy_dPres = rhsValue * dEnthalpy_dPres;
+    localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( energyRow, &presDof, &dEnergy_dPres, 1 );
+  } );
+}
+
 } // namespace
 
 void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
@@ -2019,50 +2069,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
         constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
         {
-          using FluidType = TYPEOFREF( castedFluid );
-          typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-          forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
-                                                               targetSet,
-                                                               rankOffset,
-                                                               ghostRank,
-                                                               fluidComponentId,
-                                                               numFluidComponents,
-                                                               injectionTemperature,
-                                                               dofNumber,
-                                                               rhsContributionArrayView,
-                                                               pres,
-                                                               fluidWrapper,
-                                                               localMatrix,
-                                                               localRhs] GEOS_HOST_DEVICE ( localIndex const a )
-          {
-            localIndex const ei = targetSet[a];
-            if( ghostRank[ei] >= 0 )
-            {
-              return;
-            }
-
-            // injection is a negative contribution to the right-hand side (mass entering the cell)
-            real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;
-            if( rhsValue >= 0.0 )
-            {
-              return;
-            }
-
-            real64 const enthalpy = injectedStreamEnthalpy( fluidWrapper, numFluidComponents, fluidComponentId,
-                                                            pres[ei], injectionTemperature );
-            // derivative with respect to the cell pressure by a one-sided difference (the stream composition and
-            // temperature are fixed, so the pressure is the only cell unknown it depends on)
-            real64 const dp = 1.0e-6 * LvArray::math::max( LvArray::math::abs( pres[ei] ), 1.0e5 );
-            real64 const dEnthalpy_dPres = ( injectedStreamEnthalpy( fluidWrapper, numFluidComponents, fluidComponentId,
-                                                                     pres[ei] + dp, injectionTemperature ) - enthalpy ) / dp;
-
-            globalIndex const presDof = dofNumber[ei];
-            localIndex const energyRow = LvArray::integerConversion< localIndex >( dofNumber[ei] - rankOffset ) + numFluidComponents + 1;
-            localRhs[energyRow] += rhsValue * enthalpy;
-            real64 const dEnergy_dPres = rhsValue * dEnthalpy_dPres;
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( energyRow, &presDof, &dEnergy_dPres, 1 );
-          } );
+          addInjectedStreamEnthalpy( castedFluid.createKernelWrapper(), targetSet, ghostRank, dofNumber,
+                                     rhsContributionArrayView.toViewConst(), pres, sizeScalingFactor, rankOffset,
+                                     fluidComponentId, numFluidComponents, injectionTemperature, localMatrix, localRhs );
         } );
       }
 
