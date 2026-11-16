@@ -89,6 +89,9 @@
         "constitutive::CO2BrineEzrokhiThermalFluid",
         "constitutive::CompositionalKValuePhillipsBrine",
         "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThermalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThermalTwoPhasePhillipsBrine",
+        "constitutive::CompositionalThermalKValuePhillipsBrine",
         "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
         "constitutive::CompositionalTwoPhaseConstantViscosity",
         "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
@@ -125,7 +128,10 @@
       "NCOMP": [ 2 ],
       "FLUID_TYPE": [
         "constitutive::CO2BrinePhillipsThermalFluid",
-        "constitutive::CO2BrineEzrokhiThermalFluid"
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalThermalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThermalTwoPhasePhillipsBrine",
+        "constitutive::CompositionalThermalKValuePhillipsBrine"
       ]
     },
     "NCOMP_BOUNDS": {
@@ -202,6 +208,9 @@
         "constitutive::CO2BrineEzrokhiThermalFluid",
         "constitutive::CompositionalKValuePhillipsBrine",
         "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThermalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThermalTwoPhasePhillipsBrine",
+        "constitutive::CompositionalThermalKValuePhillipsBrine",
         "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
         "constitutive::CompositionalTwoPhaseConstantViscosity",
         "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
@@ -228,6 +237,9 @@
         "constitutive::CO2BrineEzrokhiThermalFluid",
         "constitutive::CompositionalKValuePhillipsBrine",
         "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThermalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThermalTwoPhasePhillipsBrine",
+        "constitutive::CompositionalThermalKValuePhillipsBrine",
         "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
         "constitutive::CompositionalTwoPhaseConstantViscosity",
         "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
