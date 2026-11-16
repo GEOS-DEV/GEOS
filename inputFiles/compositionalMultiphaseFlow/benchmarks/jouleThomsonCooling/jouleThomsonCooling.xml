@@ -230,7 +230,7 @@
       <PeriodicEvent name="collectMoleFractions" target="/Tasks/collectMoleFractions"/>
     </PeriodicEvent>
 
-    <PeriodicEvent name="saveHistory" target="/Outputs/timeHistory"/>
+    <SoloEvent name="saveHistory" targetTime="4.733640e+08" targetExactTimestep="1" target="/Outputs/timeHistoryOutput" />
 
     <PeriodicEvent
       name="restarts"
@@ -406,7 +406,7 @@
     <Restart
       name="restartOutput"/>
     <TimeHistory
-      name="timeHistory"
+      name="timeHistoryOutput"
       filename="jouleThomsonCooling"
       sources="{ /Tasks/collectCellCenters, /Tasks/collectPressure, /Tasks/collectTemperature, /Tasks/collectMoleFractions }"/>
   </Outputs>
