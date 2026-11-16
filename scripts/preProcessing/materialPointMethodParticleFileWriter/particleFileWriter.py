@@ -249,6 +249,37 @@ def _format_solver_child_xml_block(tagName, value, indent="\t\t\t"):
   return "\n" + indent + f"<{tagName}>\n" + childIndent + ("\n" + childIndent).join(body.splitlines()) + "\n" + indent + f"</{tagName}>\n"
 
 
+def _format_thermal_xml_block(value, indent="\t\t\t"):
+  """Preserve Thermal attributes; accept a complete XML block or a settings dict."""
+  import xml.etree.ElementTree as ET
+  if value is None or value == "" or value == {}:
+    return ""
+
+  def attribute(item):
+    if isinstance(item, bool):
+      return "1" if item else "0"
+    if isinstance(item, (list, tuple)):
+      return "{ " + ", ".join(str(v) for v in item) + " }"
+    return str(item)
+
+  if isinstance(value, dict):
+    child_keys = {"heatSources": "HeatSource", "isothermal": "Isothermal",
+                  "contactResistance": "ContactResistance"}
+    attrs = {key: attribute(item) for key, item in value.items() if key not in child_keys}
+    attrs.setdefault("enabled", "1")
+    root = ET.Element("Thermal", attrs)
+    for key, tag in child_keys.items():
+      for child in value.get(key, []):
+        ET.SubElement(root, tag, {name: attribute(item) for name, item in child.items()})
+  elif isinstance(value, str):
+    root = ET.fromstring(value.strip())
+    if root.tag != "Thermal":
+      raise ValueError('pfw["thermal"] must contain one complete <Thermal> XML block')
+  else:
+    raise TypeError('pfw["thermal"] must be a dictionary or XML string')
+  return "\n" + indent + ET.tostring(root, encoding="unicode") + "\n"
+
+
 _NUMERIC_TABLE_XML_PARAMS = {
   "bcTable",
   "fTable",
@@ -850,6 +881,7 @@ parameters = {
                'mPartition': ( 'pbatch', False ),  # PFW: batch partition/queue.
                'mpmEventsString': ( '', False ),  # PFW: extra MPM event XML.
                'cohesiveZoneRegions': ( [], False ),  # PFW: explicit CohesiveZoneRegions child XML.
+               'thermal': ( None, False ),  # PFW: Thermal child XML or settings/conditions dictionary.
                'mSubmitJobs': ( False, False ),  # PFW: submit generated batch job.
                'mWallTime': ( '00:30:00', False ),  # PFW: batch wall time.
                'needsNeighborList': ( None, True ),  # MPM: build particle neighbor list.
@@ -1848,6 +1880,7 @@ if rank == 0:
     "MPMEvents",
     mpmEventsString
   )
+  thermalBlock = _format_thermal_xml_block(thermal)
   geosInputFileName = 'mpm_'+inputFile.replace('pfw_input_',"")+'.xml'
 
   geosInputFile = open(geosInputFileName, 'w')
@@ -1895,7 +1928,7 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
       name="mpmsolve"
       discretization="FE1"
       targetRegions="{{ backgroundGrid/CellRegion1, {targetRegionsString} }}"
-{mpmSolverParameterString}>{cohesiveZoneRegionString}{mpmEventsBlock}
+{mpmSolverParameterString}>{cohesiveZoneRegionString}{mpmEventsBlock}{thermalBlock}
     </SolidMechanics_MPM>
   </Solvers>
 

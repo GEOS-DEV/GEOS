@@ -459,6 +459,9 @@ public:
    */
   virtual string getCatalogName() const override { return catalogName(); }
 
+  /// Mechanical identity is preserved by compositional thermal decorators.
+  virtual string getMechanicalCatalogName() const { return getCatalogName(); }
+
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {

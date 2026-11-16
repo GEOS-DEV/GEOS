@@ -55,7 +55,8 @@ struct ParticleStateUpdateKernel
                       localIndex const batchSize,
                       CONSTITUTIVE_WRAPPER const & constitutiveWrapper,
                       arrayView3d< real64 const > const deformationGradient,
-                      arrayView2d< real64 > const particleStress )
+                      arrayView2d< real64 > const particleStress,
+                      arrayView1d< real64 const > const thermalStretch = {} )
   {
     arrayView3d< real64, solid::STRESS_USD > const oldStress = constitutiveWrapper.m_oldStress;
     arrayView3d< real64, solid::STRESS_USD > const newStress = constitutiveWrapper.m_newStress;
@@ -78,6 +79,10 @@ struct ParticleStateUpdateKernel
 
         real64 FminusI[3][3] = {};
         LvArray::tensorOps::copy< 3, 3 >( FminusI, deformationGradient[p] );
+        if( thermalStretch.size() > 0 )
+        {
+          LvArray::tensorOps::scale< 3, 3 >( FminusI, 1.0 / thermalStretch[p] );
+        }
         LvArray::tensorOps::addIdentity< 3 >( FminusI, -1.0 );
 
         constitutiveWrapper.hyperUpdate( p,       // particle local index
@@ -116,7 +121,8 @@ struct ParticleStateUpdateKernel
                       arrayView3d< real64 const > const rotation,
                       arrayView3d< real64 const > const oldRotation,
                       arrayView3d< real64 const > const velocityGradient,
-                      arrayView2d< real64 > const particleStress )
+                      arrayView2d< real64 > const particleStress,
+                      arrayView1d< real64 const > const thermalStrainIncrement = {} )
   {
     GEOS_UNUSED_VAR( deformationGradient );
 
@@ -148,6 +154,11 @@ struct ParticleStateUpdateKernel
         strainIncrement[3] = (velocityGradient[p][1][2] + velocityGradient[p][2][1]) * dt;
         strainIncrement[4] = (velocityGradient[p][0][2] + velocityGradient[p][2][0]) * dt;
         strainIncrement[5] = (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
+        if( thermalStrainIncrement.size() > 0 )
+        {
+          // Include all three normal components for plane strain, too.
+          for( integer i = 0; i < 3; ++i ) strainIncrement[i] -= thermalStrainIncrement[p];
+        }
 
         real64 rotBeginning[3][3] = {};
         real64 rotEnd[3][3] = {};

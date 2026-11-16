@@ -92,6 +92,29 @@ DECLARE_FIELD( particleHeatCapacity,
                WRITE_AND_READ,
                "An array that stores particle heat capacity." );
 
+DECLARE_FIELD( particleRetainedPlasticEnergy, "particleRetainedPlasticEnergy", array1d< real64 >,
+               0.0, LEVEL_1, WRITE_AND_READ, "Stored fraction of plastic work, a constitutive history component of total internal energy." );
+DECLARE_FIELD( particlePlasticWork, "particlePlasticWork", array1d< real64 >,
+               0.0, LEVEL_1, WRITE_AND_READ, "Cumulative specific plastic work; diagnostic, not an additional total energy." );
+DECLARE_FIELD( particleThermalIsothermal, "particleThermalIsothermal", array1d< integer >,
+               0, NOPLOT, WRITE_AND_READ, "Particle has an active isothermal condition at the current mechanical endpoint." );
+DECLARE_FIELD( particleThermalMaterialIndex, "particleThermalMaterialIndex", array1d< integer >,
+               -1, NOPLOT, WRITE_AND_READ, "Caloric material identity used to conserve thermal energy at material swaps." );
+DECLARE_FIELD( particleThermalInitialized, "particleThermalInitialized", array1d< integer >,
+               0, NOPLOT, WRITE_AND_READ, "Thermal state initialization flag." );
+DECLARE_FIELD( particleThermalPreviousTemperature, "particleThermalPreviousTemperature", array1d< real64 >,
+               0.0, NOPLOT, WRITE_AND_READ, "Temperature consumed by the preceding mechanical update." );
+DECLARE_FIELD( particleThermalReservoirEnergy, "particleThermalReservoirEnergy", array1d< real64 >,
+               0.0, LEVEL_1, WRITE_AND_READ, "Cumulative reservoir energy supplied per unit particle mass." );
+DECLARE_FIELD( particleThermalStrainIncrement, "particleThermalStrainIncrement", array1d< real64 >,
+               0.0, NOPLOT, WRITE_AND_READ, "Isotropic thermal strain increment for the current mechanical step." );
+DECLARE_FIELD( particleThermalStretch, "particleThermalStretch", array1d< real64 >,
+               1.0, NOPLOT, WRITE_AND_READ, "Accumulated isotropic thermal stretch for hyperelastic updates." );
+DECLARE_FIELD( particleThermalConditionMembership, "particleThermalConditionMembership", array2d< integer >,
+               -1, NOPLOT, WRITE_AND_READ, "Material-following thermal condition membership." );
+DECLARE_FIELD( particleThermalConditionReferenceMass, "particleThermalConditionReferenceMass", array2d< real64 >,
+               0.0, NOPLOT, WRITE_AND_READ, "Original mass for distributing prescribed power through subdivision." );
+
 DECLARE_FIELD( particleReferenceTemperature,
                "particleReferenceTemperature",
                array1d< real64 >,
@@ -122,7 +145,7 @@ DECLARE_FIELD( particleInternalEnergy,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
-               "An array that stores particle internal energy." );
+               "Total specific internal energy: caloric, elastic, thermoelastic, and retained plastic energy. Reference values may be negative." );
 
 DECLARE_FIELD( particleKineticEnergy,
                "particleKineticEnergy",

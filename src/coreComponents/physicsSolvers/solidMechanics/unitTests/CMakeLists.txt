@@ -10,6 +10,8 @@
 # See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
 
 set( solidMechanicsMPM_tests
+     testMPMThermal.cpp
+     testMPMThermomechanics.cpp
      testProjectedGaussSeidelContact.cpp
      testCohesiveZonePairDebug.cpp
      testCohesiveZoneMultipleFields.cpp )

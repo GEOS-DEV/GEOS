@@ -19,6 +19,7 @@
 
 #include "SolidMechanicsMPM.hpp"
 #include "NewtonRaphsonContact.hpp"
+#include "constitutive/solid/ThermalLaw.hpp"
 
 #if defined( GEOS_USE_HIP )
 #include <hip/hip_runtime.h>
@@ -4341,6 +4342,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Flag to enable writing particle data to file" );
 
   // Register groups
+  registerGroup< MPMThermalSettings >( "Thermal" );
   registerGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
 
   registerGroup< CohesiveZoneManager >( groupKeyStruct::cohesiveZoneManagerString() );
@@ -5196,10 +5198,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
           subRegion.registerField< particleCopyFlag >( getName() );
         }
 
-        if( m_computeInternalEnergyAndTemperature == 1 )
+        if( m_computeInternalEnergyAndTemperature == 1 || thermalEnabled() )
         {
           subRegion.registerField< particleHeatCapacity >( getName() );
         }
+        registerThermalParticleFields( subRegion );
 
         // Adjust plotting levels for particle fields to match those specified in plottable fields
         if( m_plottableFieldsSorted.size() > 0 )
@@ -5223,6 +5226,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
     else // Background grid field registration
     {
       NodeManager & nodeManager = meshLevel.getNodeManager();
+      registerThermalGridFields( nodeManager );
 
       PlotLevel gridFieldPlotLevel = m_plotGridFields == 1 ? PlotLevel::LEVEL_0 : PlotLevel::NOPLOT;
 
@@ -6391,6 +6395,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   updateGridDynamicsAndContactForExplicitStep( dt,
                                                particleManager,
                                                nodeManager );
+
+  // One thermal advance per physical step, using the current frozen geometry.
+  // It is independent of mechanical contact iterations and velocity transfer order.
+  if( thermalEnabled() )
+  {
+    logAndProfile( "13.5. Advance thermal state", particleManager, nodeManager );
+  }
+  advanceThermalState( time_n, dt, domain, particleManager, nodeManager, mesh );
 
   if( m_rigidBodyMode == 0 && m_enableWeakInterfaceTraceProjection == 1 )
   {
@@ -7966,7 +7978,7 @@ void SolidMechanicsMPM::updateParticleKinematicsForExplicitStep( real64 const dt
 void SolidMechanicsMPM::updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
                                                                           ParticleManager & particleManager )
 {
-  if( m_computeInternalEnergyAndTemperature == 1 )
+  if( m_computeInternalEnergyAndTemperature == 1 && !thermalEnabled() )
   {
     computeInternalEnergyAndTemperature( dt,
                                          particleManager );
@@ -7986,7 +7998,7 @@ void SolidMechanicsMPM::updateConstitutiveAndThermalStateForExplicitStep( real64
   {
     disableSurfaceDataOnMeltedParticles( particleManager );
   }
-  if( m_computeInternalEnergyAndTemperature == 1 )
+  if( m_computeInternalEnergyAndTemperature == 1 && !thermalEnabled() )
   {
     computeInternalEnergyAndTemperature( dt,
                                          particleManager );
@@ -13379,7 +13391,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
             ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( targetSubRegion, solidMaterialName );
 
-            if( ( constitutiveModel.getCatalogName() == "StrainHardeningPolymer" || constitutiveModel.getCatalogName() == "SurfaceInformedPolymer" ) )
+            if( ( constitutiveModel.getMechanicalCatalogName() == "StrainHardeningPolymer" || constitutiveModel.getMechanicalCatalogName() == "SurfaceInformedPolymer" ) )
             {
               // Particle fields
               arrayView1d< real64 > const particleDamage = targetSubRegion.getParticleDamage();
@@ -14375,8 +14387,8 @@ bool SolidMechanicsMPM::subdivideParticles(
     ContinuumBase const & constitutiveModel =
       getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
     bool const isFluidMaterial =
-      constitutiveModel.getCatalogName() == "Gas" ||
-      constitutiveModel.getCatalogName() == "Liquid";
+      constitutiveModel.getMechanicalCatalogName() == "Gas" ||
+      constitutiveModel.getMechanicalCatalogName() == "Liquid";
     bool const isLinearCPDISubRegion =
       subRegion.getParticleType() == ParticleType::CPDI;
     bool const hasParticleDomainVectors = subRegion.hasRVectors();
@@ -22955,7 +22967,7 @@ void SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce( real64 const time_
     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
 
     array1d< real64 > shearModulus;
-    string constitutiveModelName = constitutiveModel.getCatalogName();
+    string constitutiveModelName = constitutiveModel.getMechanicalCatalogName();
     if( constitutiveModelName == "Hyperelastic" )
     {
       Hyperelastic & hyperelastic = dynamic_cast< Hyperelastic & >( constitutiveModel );
@@ -28444,185 +28456,6 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
 
 /**
- * @brief Computes the DFG surface quality from the mapping-normal orientation tensor.
- *
- * The tensor stores a volume-weighted sum of normalized mapping normals,
- * M = sum Vp N np np^T.  Its dominant-eigenvalue coherence is one for a
- * single well-defined normal axis and zero for an isotropic normal cloud.  The
- * coherence is multiplied by the fraction of mapped material volume that
- * contributed a valid mapping normal, so poorly covered nodes do not pass a
- * high quality threshold solely because a tiny amount of material was coherent.
- */
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-real64 SolidMechanicsMPM::computeSurfaceQualityFromMappingNormalTensor( int const & planeStrain,
-                                                                        arraySlice1d< real64 const > const mappingNormalTensorA,
-                                                                        arraySlice1d< real64 const > const mappingNormalTensorB,
-                                                                        real64 const & materialVolumeA,
-                                                                        real64 const & materialVolumeB )
-{
-  real64 const mxx = mappingNormalTensorA[0] + mappingNormalTensorB[0];
-  real64 const myy = mappingNormalTensorA[1] + mappingNormalTensorB[1];
-  real64 const mzz = mappingNormalTensorA[2] + mappingNormalTensorB[2];
-  real64 const mxy = mappingNormalTensorA[3] + mappingNormalTensorB[3];
-  real64 const mxz = mappingNormalTensorA[4] + mappingNormalTensorB[4];
-  real64 const myz = mappingNormalTensorA[5] + mappingNormalTensorB[5];
-
-  real64 const totalMaterialVolume = materialVolumeA + materialVolumeB;
-  real64 const normalVolume = planeStrain == 1 ? mxx + myy : mxx + myy + mzz;
-
-  if( totalMaterialVolume <= 1.0e-30 || normalVolume <= 1.0e-30 )
-  {
-    return 0.0;
-  }
-
-  real64 normalCoverage = normalVolume / totalMaterialVolume;
-  if( normalCoverage > 1.0 )
-  {
-    normalCoverage = 1.0;
-  }
-  else if( normalCoverage < 0.0 )
-  {
-    normalCoverage = 0.0;
-  }
-
-  real64 coherence = 0.0;
-  if( planeStrain == 1 )
-  {
-    real64 const invTrace = 1.0 / normalVolume;
-    real64 const a = mxx * invTrace;
-    real64 const b = myy * invTrace;
-    real64 const c = mxy * invTrace;
-    real64 const lambdaMax = 0.5 * ( 1.0 + LvArray::math::sqrt( ( a - b ) * ( a - b ) + 4.0 * c * c ) );
-    coherence = 2.0 * lambdaMax - 1.0;
-  }
-  else
-  {
-    real64 const invTrace = 1.0 / normalVolume;
-    real64 const a00 = mxx * invTrace;
-    real64 const a11 = myy * invTrace;
-    real64 const a22 = mzz * invTrace;
-    real64 const a01 = mxy * invTrace;
-    real64 const a02 = mxz * invTrace;
-    real64 const a12 = myz * invTrace;
-
-    real64 v0 = 1.0;
-    real64 v1 = 0.0;
-    real64 v2 = 0.0;
-    if( a11 >= a00 && a11 >= a22 )
-    {
-      v0 = 0.0;
-      v1 = 1.0;
-    }
-    else if( a22 >= a00 && a22 >= a11 )
-    {
-      v0 = 0.0;
-      v2 = 1.0;
-    }
-
-    for( int iteration = 0; iteration < 12; ++iteration )
-    {
-      real64 const w0 = a00 * v0 + a01 * v1 + a02 * v2;
-      real64 const w1 = a01 * v0 + a11 * v1 + a12 * v2;
-      real64 const w2 = a02 * v0 + a12 * v1 + a22 * v2;
-      real64 const wNorm = LvArray::math::sqrt( w0 * w0 + w1 * w1 + w2 * w2 );
-      if( wNorm <= 1.0e-30 )
-      {
-        break;
-      }
-      real64 const invWNorm = 1.0 / wNorm;
-      v0 = w0 * invWNorm;
-      v1 = w1 * invWNorm;
-      v2 = w2 * invWNorm;
-    }
-
-    real64 const lambdaMax =
-      v0 * ( a00 * v0 + a01 * v1 + a02 * v2 ) +
-      v1 * ( a01 * v0 + a11 * v1 + a12 * v2 ) +
-      v2 * ( a02 * v0 + a12 * v1 + a22 * v2 );
-    coherence = 0.5 * ( 3.0 * lambdaMax - 1.0 );
-  }
-
-  if( coherence > 1.0 )
-  {
-    coherence = 1.0;
-  }
-  else if( coherence < 0.0 )
-  {
-    coherence = 0.0;
-  }
-
-  return coherence * normalCoverage;
-}
-
-/**
- * @brief Evaluates separability criterion.
- */
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & numContactGroups,
-                                                      real64 const & maxSingleFieldStateFractionForSeparability,
-                                                      real64 const & separabilityMinDamage,
-                                                      real64 const & thinFeatureDFGThreshold,
-                                                      real64 const & neighborRadius,
-                                                      real64 const & surfaceQualityThreshold,
-                                                      localIndex const & A,
-                                                      localIndex const & B,
-                                                      real64 const & damageA,
-                                                      real64 const & damageB,
-                                                      real64 const & maxDamageA,
-                                                      real64 const & maxDamageB,
-                                                      arraySlice1d< real64 const > const xA,
-                                                      arraySlice1d< real64 const > const xB,
-                                                      real64 const & surfaceQuality,
-                                                      real64 const & singleFieldStateFraction )
-{
-  bool separable = false;
-
-  // Same-group DFG separation requires high damage on both fields, at least
-  // one field reaching full damage, and a mapping-normal tensor quality that
-  // meets the configured threshold. Different contact groups remain separable.
-  if( ( ( ( maxDamageA >= 0.9999 || maxDamageB >= 0.9999 ) && ( damageA >= separabilityMinDamage && damageB >= separabilityMinDamage ) ) &&
-        ( surfaceQuality >= surfaceQualityThreshold ) ) ||
-      ( A % numContactGroups != B % numContactGroups ) )
-  {
-    separable = true;
-  }
-
-  // Suppress separation in regions dominated by particles whose kinematics are
-  // better treated as a single field: fully damaged, melted, or domain-reset.
-  if( separable &&
-      maxSingleFieldStateFractionForSeparability >= 0.0 &&
-      singleFieldStateFraction > maxSingleFieldStateFractionForSeparability )
-  {
-    separable = false;
-  }
-
-  // When two DFG field centers are closer than the configured fraction of
-  // the neighbor radius, suppress separation to avoid inserting an unresolved
-  // internal slip surface through a thin feature.
-  if( thinFeatureDFGThreshold < 10.0 )
-  {
-    real64 dx[3] = {};
-    // Tensor equation: dx = xA - xB.
-    LvArray::tensorOps::copy< 3 >( dx, xA );
-    LvArray::tensorOps::subtract< 3 >( dx, xB );
-
-    real64 const sumOfSquares =
-      ( dx[0] * dx[0] ) + ( dx[1] * dx[1] ) + ( dx[2] * dx[2] );
-    real64 const thresholdDistance =
-      thinFeatureDFGThreshold * neighborRadius;
-
-    if( sumOfSquares < thresholdDistance * thresholdDistance )
-    {
-      separable = false;
-    }
-  }
-
-  return separable;
-}
-
-/**
  * @brief Computes pairwise nodal contact impulse.
  *
  * This is the impulse form of the nodal contact law. The standard contact-force
@@ -29570,7 +29403,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
     array1d< real64 > bulkModulus;
-    string constitutiveModelName = constitutiveModel.getCatalogName();
+    string constitutiveModelName = constitutiveModel.getMechanicalCatalogName();
     if( constitutiveModelName == "Hyperelastic" )
     {
       const Hyperelastic & hyperelastic = dynamic_cast< const Hyperelastic & >( constitutiveModel );
@@ -34237,6 +34070,9 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
                                                              ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
+  // The thermal material owns total energy and temperature when enabled.
+  // Never add the legacy stress-work halves on top of its constitutive balance.
+  if( thermalEnabled() ) return;
 
   integer const numDims = m_numDims;
 
@@ -34257,6 +34093,7 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
     arrayView3d< real64 const > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
 
+    bool const transportOwnsTemperature = thermalEnabled();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
@@ -34272,7 +34109,10 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
         }
       }
 
-      particleTemperature[p] += energyIncrement / particleHeatCapacity[p];
+      if( !transportOwnsTemperature )
+      {
+        particleTemperature[p] += energyIncrement / particleHeatCapacity[p];
+      }
       particleInternalEnergy[p] += energyIncrement;
       particleInternalEnergy[p] = ( particleInternalEnergy[p] < 0 ) ? 0 : particleInternalEnergy[p];
     } );
@@ -35042,6 +34882,12 @@ void SolidMechanicsMPM::updateStress( real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
+  if( thermalEnabled() )
+  {
+    updateThermomechanicalStress( dt, particleManager );
+    return;
+  }
+
   int rank;
   MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 
@@ -35063,9 +34909,17 @@ void SolidMechanicsMPM::updateStress( real64 dt,
     // We chose to have a flag since some models may have hyperelastic formulations which should be chosen from input
     // based on user preference
     int hyperelasticUpdate = 0;
-    if( constitutiveModel.getCatalogName() == "HyperelasticMMS" || constitutiveModel.getCatalogName() == "Hyperelastic" || constitutiveModel.getCatalogName() == "Chiumenti" )
+    if( constitutiveModel.getMechanicalCatalogName() == "HyperelasticMMS" || constitutiveModel.getMechanicalCatalogName() == "Hyperelastic" || constitutiveModel.getMechanicalCatalogName() == "Chiumenti" )
     {
       hyperelasticUpdate = 1;
+    }
+
+    arrayView1d< real64 const > thermalStrainIncrement;
+    arrayView1d< real64 const > thermalStretch;
+    if( thermalEnabled() )
+    {
+      thermalStrainIncrement = subRegion.getField< fields::mpm::particleThermalStrainIncrement >();
+      thermalStretch = subRegion.getField< fields::mpm::particleThermalStretch >();
     }
 
     // Call constitutive model
@@ -35084,7 +34938,7 @@ void SolidMechanicsMPM::updateStress( real64 dt,
                                                                                          subRegion.activeParticleIndices().size(),
                                                                                          constitutiveModelWrapper,
                                                                                          particleDeformationGradient,
-                                                                                         particleStress );
+                                                                                         particleStress, thermalStretch );
           }
           else 
           {
@@ -35096,7 +34950,7 @@ void SolidMechanicsMPM::updateStress( real64 dt,
                                                                                          particleRotation,
                                                                                          particleOldRotation,
                                                                                          particleVelocityGradient,
-                                                                                         particleStress );
+                                                                                         particleStress, thermalStrainIncrement );
           }
           return;
         }
@@ -35108,7 +34962,7 @@ void SolidMechanicsMPM::updateStress( real64 dt,
                                                                                                m_batchSize,
                                                                                                constitutiveModelWrapper,
                                                                                                particleDeformationGradient,
-                                                                                               particleStress );
+                                                                                               particleStress, thermalStretch );
       }
       else 
       {
@@ -35120,7 +34974,7 @@ void SolidMechanicsMPM::updateStress( real64 dt,
                                                                                                particleRotation,
                                                                                                particleOldRotation,
                                                                                                particleVelocityGradient,
-                                                                                               particleStress );
+                                                                                               particleStress, thermalStrainIncrement );
           }
     } );
   } );
@@ -35650,6 +35504,10 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
   // - output/restart landing time, if exact event alignment matters
   //
   // and cap timestep growth (e.g. no moore than 20% of previous value.)
+  if( thermalEnabled() )
+  {
+    dtReturn = LvArray::math::min( dtReturn, getGroup< MPMThermalSettings >( "Thermal" ).suggestedTimeStep );
+  }
   return dtReturn;
 }
 
@@ -36054,8 +35912,8 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
 
     bool const isFluidMaterial =
-      constitutiveModel.getCatalogName() == "Gas" ||
-      constitutiveModel.getCatalogName() == "Liquid";
+      constitutiveModel.getMechanicalCatalogName() == "Gas" ||
+      constitutiveModel.getMechanicalCatalogName() == "Liquid";
     bool const isFiber = constitutiveModel.hasWrapper( "isFiber" );
     bool const shouldResetDeformationGradientInSubRegion =
       isFluidMaterial ||

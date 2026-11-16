@@ -34,11 +34,16 @@ if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
         ProjectedGaussSeidelContact.hpp
         SolidMechanicsMPM.hpp
         MPMSolverFields.hpp
+        MPMThermalSettings.hpp
+        MPMThermalNumerics.hpp
         kernels/CohesiveZonePairDebug.hpp
         kernels/ExplicitMPM.hpp )
 
   list( APPEND solidMechanicsSolvers_sources
         SolidMechanicsMPM.cpp
+        SolidMechanicsMPMThermal.cpp
+        SolidMechanicsMPMThermomechanics.cpp
+        MPMThermalSettings.cpp
         SolidMechanicsMPMRigidBody.cpp )
 endif()
 

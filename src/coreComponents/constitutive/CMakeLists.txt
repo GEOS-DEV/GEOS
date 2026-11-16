@@ -153,6 +153,9 @@ endmacro()
 # Specify all headers
 #
 set( constitutive_headers
+     solid/Thermal.hpp
+     solid/ThermalLaw.hpp
+     solid/ThermomechanicalLaw.hpp
      ConstitutiveBase.hpp
      ConstitutiveManager.hpp
      ConstitutivePassThru.hpp
@@ -373,6 +376,7 @@ set( constitutive_headers
 # Specify all sources
 #
 set( constitutive_sources
+     solid/Thermal.cpp
      ConstitutiveBase.cpp
      ConstitutiveManager.cpp
      NullModel.cpp
@@ -525,6 +529,7 @@ if( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY )
   # and ConstitutivePassThruCohesiveZone<CohesiveZoneBase>.  Keep only the
   # concrete models used by those two dispatch lists, plus their bases.
   set( constitutive_sources
+       solid/Thermal.cpp
        ConstitutiveBase.cpp
        ConstitutiveManager.cpp
        NullModel.cpp

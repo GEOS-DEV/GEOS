@@ -133,6 +133,13 @@ def _format_material_xml(material, attribute_names):
     name = _required(material, 'name')
     model = _required(material, 'model')
     version = material.get('version', 'unknown')
+    if model.startswith(('Thermal', 'LinearThermal')):
+        attribute_names = list(attribute_names) + [
+            'thermalSpecificHeat', 'thermalConductivity', 'thermalReferenceTemperature',
+            'thermalHeatCapacitySlope', 'thermalConductivitySlope',
+            'solverThermalExpansion', 'defaultDrainedLinearTEC',
+            'plasticHeatFraction', 'thermalYieldSoftening',
+        ]
     lines = [
         '<!--%s parameterization of %s model, version: %s-->' % (name, model, version),
         '<%s' % model,
@@ -496,6 +503,15 @@ MATERIAL_STRING_GENERATORS = {
     'PerfectlyPlastic': generatePerfectlyPlasticMaterialString,
     'ElasticTransverseIsotropic': generateElasticTransverseIsotropicMaterialString,
 }
+
+# Thermal decorators preserve the existing mechanical parameter generator.
+for _thermal_base in (
+        'ElasticIsotropic', 'CeramicDamage', 'SurfaceInformedPolymer',
+        'StrainHardeningPolymer', 'Graphite', 'Hyperelastic', 'HyperelasticMMS',
+        'Geomechanics', 'Chiumenti', 'VonMisesJ', 'PerfectlyPlastic',
+        'ElasticTransverseIsotropic'):
+    for _thermal_prefix in ('Thermal', 'LinearThermal'):
+        MATERIAL_STRING_GENERATORS[_thermal_prefix + _thermal_base] = MATERIAL_STRING_GENERATORS[_thermal_base]
 
 
 def getMaterialStringGenerator(material_or_model):

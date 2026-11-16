@@ -34,6 +34,7 @@
 #include "mesh/CohesiveZoneManager.hpp"
 
 #include "MPMSolverFields.hpp"
+#include "MPMThermalSettings.hpp"
 #include "ProjectedGaussSeidelContact.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
@@ -1071,6 +1072,13 @@ public:
 
   void updateSolverDependencies( ParticleManager & particleManager );
 
+  bool thermalEnabled() const;
+  void updateThermomechanicalStress( real64 dt, ParticleManager & particleManager );
+  void registerThermalParticleFields( ParticleSubRegion & subRegion );
+  void registerThermalGridFields( NodeManager & nodeManager );
+  void advanceThermalState( real64 time, real64 dt, DomainPartition & domain,
+                            ParticleManager & particleManager, NodeManager & nodeManager, MeshLevel & mesh );
+
   real64 getStableTimeStep( ParticleManager & particleManager );
 
   void deleteBadParticles( ParticleManager & particleManager );
@@ -1697,6 +1705,188 @@ private:
 
   void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
 };
+
+// These host/device inline helpers are shared by the mechanical and thermal
+// translation units. Keep their definitions visible to every caller.
+
+/**
+ * @brief Computes the DFG surface quality from the mapping-normal orientation tensor.
+ *
+ * The tensor stores a volume-weighted sum of normalized mapping normals,
+ * M = sum Vp N np np^T.  Its dominant-eigenvalue coherence is one for a
+ * single well-defined normal axis and zero for an isotropic normal cloud.  The
+ * coherence is multiplied by the fraction of mapped material volume that
+ * contributed a valid mapping normal, so poorly covered nodes do not pass a
+ * high quality threshold solely because a tiny amount of material was coherent.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64 SolidMechanicsMPM::computeSurfaceQualityFromMappingNormalTensor( int const & planeStrain,
+                                                                        arraySlice1d< real64 const > const mappingNormalTensorA,
+                                                                        arraySlice1d< real64 const > const mappingNormalTensorB,
+                                                                        real64 const & materialVolumeA,
+                                                                        real64 const & materialVolumeB )
+{
+  real64 const mxx = mappingNormalTensorA[0] + mappingNormalTensorB[0];
+  real64 const myy = mappingNormalTensorA[1] + mappingNormalTensorB[1];
+  real64 const mzz = mappingNormalTensorA[2] + mappingNormalTensorB[2];
+  real64 const mxy = mappingNormalTensorA[3] + mappingNormalTensorB[3];
+  real64 const mxz = mappingNormalTensorA[4] + mappingNormalTensorB[4];
+  real64 const myz = mappingNormalTensorA[5] + mappingNormalTensorB[5];
+
+  real64 const totalMaterialVolume = materialVolumeA + materialVolumeB;
+  real64 const normalVolume = planeStrain == 1 ? mxx + myy : mxx + myy + mzz;
+
+  if( totalMaterialVolume <= 1.0e-30 || normalVolume <= 1.0e-30 )
+  {
+    return 0.0;
+  }
+
+  real64 normalCoverage = normalVolume / totalMaterialVolume;
+  if( normalCoverage > 1.0 )
+  {
+    normalCoverage = 1.0;
+  }
+  else if( normalCoverage < 0.0 )
+  {
+    normalCoverage = 0.0;
+  }
+
+  real64 coherence = 0.0;
+  if( planeStrain == 1 )
+  {
+    real64 const invTrace = 1.0 / normalVolume;
+    real64 const a = mxx * invTrace;
+    real64 const b = myy * invTrace;
+    real64 const c = mxy * invTrace;
+    real64 const lambdaMax = 0.5 * ( 1.0 + LvArray::math::sqrt( ( a - b ) * ( a - b ) + 4.0 * c * c ) );
+    coherence = 2.0 * lambdaMax - 1.0;
+  }
+  else
+  {
+    real64 const invTrace = 1.0 / normalVolume;
+    real64 const a00 = mxx * invTrace;
+    real64 const a11 = myy * invTrace;
+    real64 const a22 = mzz * invTrace;
+    real64 const a01 = mxy * invTrace;
+    real64 const a02 = mxz * invTrace;
+    real64 const a12 = myz * invTrace;
+
+    real64 v0 = 1.0;
+    real64 v1 = 0.0;
+    real64 v2 = 0.0;
+    if( a11 >= a00 && a11 >= a22 )
+    {
+      v0 = 0.0;
+      v1 = 1.0;
+    }
+    else if( a22 >= a00 && a22 >= a11 )
+    {
+      v0 = 0.0;
+      v2 = 1.0;
+    }
+
+    for( int iteration = 0; iteration < 12; ++iteration )
+    {
+      real64 const w0 = a00 * v0 + a01 * v1 + a02 * v2;
+      real64 const w1 = a01 * v0 + a11 * v1 + a12 * v2;
+      real64 const w2 = a02 * v0 + a12 * v1 + a22 * v2;
+      real64 const wNorm = LvArray::math::sqrt( w0 * w0 + w1 * w1 + w2 * w2 );
+      if( wNorm <= 1.0e-30 )
+      {
+        break;
+      }
+      real64 const invWNorm = 1.0 / wNorm;
+      v0 = w0 * invWNorm;
+      v1 = w1 * invWNorm;
+      v2 = w2 * invWNorm;
+    }
+
+    real64 const lambdaMax =
+      v0 * ( a00 * v0 + a01 * v1 + a02 * v2 ) +
+      v1 * ( a01 * v0 + a11 * v1 + a12 * v2 ) +
+      v2 * ( a02 * v0 + a12 * v1 + a22 * v2 );
+    coherence = 0.5 * ( 3.0 * lambdaMax - 1.0 );
+  }
+
+  if( coherence > 1.0 )
+  {
+    coherence = 1.0;
+  }
+  else if( coherence < 0.0 )
+  {
+    coherence = 0.0;
+  }
+
+  return coherence * normalCoverage;
+}
+
+/**
+ * @brief Evaluates separability criterion.
+ */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & numContactGroups,
+                                                      real64 const & maxSingleFieldStateFractionForSeparability,
+                                                      real64 const & separabilityMinDamage,
+                                                      real64 const & thinFeatureDFGThreshold,
+                                                      real64 const & neighborRadius,
+                                                      real64 const & surfaceQualityThreshold,
+                                                      localIndex const & A,
+                                                      localIndex const & B,
+                                                      real64 const & damageA,
+                                                      real64 const & damageB,
+                                                      real64 const & maxDamageA,
+                                                      real64 const & maxDamageB,
+                                                      arraySlice1d< real64 const > const xA,
+                                                      arraySlice1d< real64 const > const xB,
+                                                      real64 const & surfaceQuality,
+                                                      real64 const & singleFieldStateFraction )
+{
+  bool separable = false;
+
+  // Same-group DFG separation requires high damage on both fields, at least
+  // one field reaching full damage, and a mapping-normal tensor quality that
+  // meets the configured threshold. Different contact groups remain separable.
+  if( ( ( ( maxDamageA >= 0.9999 || maxDamageB >= 0.9999 ) && ( damageA >= separabilityMinDamage && damageB >= separabilityMinDamage ) ) &&
+        ( surfaceQuality >= surfaceQualityThreshold ) ) ||
+      ( A % numContactGroups != B % numContactGroups ) )
+  {
+    separable = true;
+  }
+
+  // Suppress separation in regions dominated by particles whose kinematics are
+  // better treated as a single field: fully damaged, melted, or domain-reset.
+  if( separable &&
+      maxSingleFieldStateFractionForSeparability >= 0.0 &&
+      singleFieldStateFraction > maxSingleFieldStateFractionForSeparability )
+  {
+    separable = false;
+  }
+
+  // When two DFG field centers are closer than the configured fraction of
+  // the neighbor radius, suppress separation to avoid inserting an unresolved
+  // internal slip surface through a thin feature.
+  if( thinFeatureDFGThreshold < 10.0 )
+  {
+    real64 dx[3] = {};
+    // Tensor equation: dx = xA - xB.
+    LvArray::tensorOps::copy< 3 >( dx, xA );
+    LvArray::tensorOps::subtract< 3 >( dx, xB );
+
+    real64 const sumOfSquares =
+      ( dx[0] * dx[0] ) + ( dx[1] * dx[1] ) + ( dx[2] * dx[2] );
+    real64 const thresholdDistance =
+      thinFeatureDFGThreshold * neighborRadius;
+
+    if( sumOfSquares < thresholdDistance * thresholdDistance )
+    {
+      separable = false;
+    }
+  }
+
+  return separable;
+}
 
 } /* namespace geos */
 

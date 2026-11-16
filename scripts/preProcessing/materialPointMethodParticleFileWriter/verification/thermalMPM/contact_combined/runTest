@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""GEOS MPM verification runner for contact_combined."""
+from pathlib import Path
+import sys
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent.parent
+sys.path.insert(0,str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+VARIANTS=[{"name":"default","label":'Combined group-and-material pair precedence',"case_name":"thermalVV_contact_combined","env":{}}]
+if __name__=='__main__':
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR,
+        input_file='pfw_input_contact_combined.py',post_script='postProcess_contact_combined.py',
+        variants=VARIANTS,default_case_id='thermal_contact_combined',
+        description='Combined group-and-material pair precedence'))

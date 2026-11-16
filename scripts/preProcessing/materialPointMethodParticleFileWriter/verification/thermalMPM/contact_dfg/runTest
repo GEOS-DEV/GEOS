@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""GEOS MPM verification runner for contact_dfg."""
+from pathlib import Path
+import sys
+SOURCE_DIR = Path(__file__).resolve().parent
+PFW_ROOT = SOURCE_DIR.parent.parent.parent
+sys.path.insert(0,str(PFW_ROOT))
+from mpm_vv_folder_runner import run_folder
+VARIANTS=[{"name":"default","label":'Same-material DFG crack thermal resistance',"case_name":"thermalVV_contact_dfg","env":{}}]
+if __name__=='__main__':
+    raise SystemExit(run_folder(source_dir=SOURCE_DIR,
+        input_file='pfw_input_contact_dfg.py',post_script='postProcess_contact_dfg.py',
+        variants=VARIANTS,default_case_id='thermal_contact_dfg',
+        description='Same-material DFG crack thermal resistance'))
