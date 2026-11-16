@@ -1,0 +1,25 @@
+# Single-edge notched block under shear: reference load-displacement curve
+# Source: C. Miehe, M. Hofacker, F. Welschinger, Computer Methods in Applied
+# Mechanics and Engineering 199:2765-2778, 2010. Digitized from the published
+# figure for the length scale L = 0.0075 mm and the viscosity eta = 0.
+# displacement [mm],load [kN per mm of thickness]
+0.000000e+00,0.000000e+00
+9.000000e-04,5.900000e-02
+1.800000e-03,1.180000e-01
+2.700000e-03,1.770000e-01
+3.600000e-03,2.360000e-01
+4.500000e-03,2.950000e-01
+5.400000e-03,3.540000e-01
+6.300000e-03,4.140000e-01
+7.200000e-03,4.740000e-01
+8.100000e-03,5.390000e-01
+8.700000e-03,5.580000e-01
+9.500000e-03,5.720000e-01
+1.030000e-02,5.770000e-01
+1.110000e-02,5.710000e-01
+1.180000e-02,5.480000e-01
+1.250000e-02,5.080000e-01
+1.320000e-02,4.580000e-01
+1.390000e-02,4.120000e-01
+1.460000e-02,3.820000e-01
+1.480000e-02,3.720000e-01

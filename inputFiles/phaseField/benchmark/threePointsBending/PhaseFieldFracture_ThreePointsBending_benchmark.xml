@@ -7,6 +7,7 @@
 
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_PHASEFIELD_SOLVER -->
     <PhaseFieldFracture
       name="PhaseFieldSolve"
       solidSolverName="SolidMechSolve"
@@ -18,7 +19,9 @@
         lineSearchAction="None"
         subcycling="0"/>
     </PhaseFieldFracture>
+    <!-- SPHINX_PHASEFIELD_SOLVER_END -->
 
+    <!-- SPHINX_SOLID_SOLVER -->
     <SolidMechanicsLagrangianFEM
       name="SolidMechSolve"
       logLevel="1"
@@ -33,7 +36,9 @@
         krylovTol="1e-5"
         preconditionerType="amg"/>
     </SolidMechanicsLagrangianFEM>
+    <!-- SPHINX_SOLID_SOLVER_END -->
 
+    <!-- SPHINX_DAMAGE_SOLVER -->
     <PhaseFieldDamageFEM
       name="DamageSolve"
       discretization="FE1"
@@ -50,14 +55,52 @@
         solverType="gmres"
         preconditionerType="amg"/>
     </PhaseFieldDamageFEM>
+    <!-- SPHINX_DAMAGE_SOLVER_END -->
   </Solvers>
 
+  <!-- SPHINX_MESH -->
   <Mesh>
     <VTKMesh
       name="ThreePointsBending"
       file="../../../../../GEOSDATA/DataSets/PhaseField/threePointsBendSingleNotch/threePointsBendingSingleNotch.vtu"
       nodesetNames="{ support_left_line, support_right_line, load_line_full_thickness, starter_notch_flank_nodes }"/>
   </Mesh>
+  <!-- SPHINX_MESH_END -->
+
+  <!-- SPHINX_EVENTS -->
+  <Geometry>
+    <!-- Vertical slab between the left support (x = 0) and the load line (x = 4), where the shear force equals half of the
+         applied load. Integrating the shear stress over it gives the reaction without
+         relying on any nodal force field. -->
+    <Box
+      name="reactionCut"
+      xMin="{ 1.5, -0.01, -0.06 }"
+      xMax="{ 2.5, 2.01,  0.06 }"/>
+
+  </Geometry>
+
+  <!-- SPHINX_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="deflectionCollection"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      setNames="{ load_line_full_thickness }"/>
+
+    <PackCollection
+      name="cutStressCollection"
+      objectPath="ElementRegions/Region1/hexahedra"
+      fieldName="averageStress"
+      setNames="{ reactionCut }"/>
+
+    <PackCollection
+      name="cutVolumeCollection"
+      objectPath="ElementRegions/Region1/hexahedra"
+      fieldName="elementVolume"
+      setNames="{ reactionCut }"
+      disableCoordCollection="1"/>
+  </Tasks>
+  <!-- SPHINX_TASKS_END -->
 
   <Events
     maxTime="600.0">
@@ -85,16 +128,74 @@
       maxEventDt="0.01"
       target="/Solvers/PhaseFieldSolve"/>
 
+    <!-- 360 steps at dt <= 1 then 24000 at dt <= 0.01: sampling every 15 cycles before
+         the switch and every 400 after keeps both branches populated -->
+    <PeriodicEvent
+      name="deflectionCollection0"
+      endTime="360.0"
+      cycleFrequency="15"
+      target="/Tasks/deflectionCollection"/>
+
+    <PeriodicEvent
+      name="deflectionCollection1"
+      beginTime="360.0"
+      cycleFrequency="400"
+      target="/Tasks/deflectionCollection"/>
+
+    <PeriodicEvent
+      name="cutStressCollection0"
+      endTime="360.0"
+      cycleFrequency="15"
+      target="/Tasks/cutStressCollection"/>
+
+    <PeriodicEvent
+      name="cutStressCollection1"
+      beginTime="360.0"
+      cycleFrequency="400"
+      target="/Tasks/cutStressCollection"/>
+
+    <PeriodicEvent
+      name="cutVolumeCollection0"
+      endTime="360.0"
+      cycleFrequency="15"
+      target="/Tasks/cutVolumeCollection"/>
+
+    <PeriodicEvent
+      name="cutVolumeCollection1"
+      beginTime="360.0"
+      cycleFrequency="400"
+      target="/Tasks/cutVolumeCollection"/>
+
+    <PeriodicEvent
+      name="reactionHistoryOutput0"
+      endTime="360.0"
+      cycleFrequency="15"
+      targetExactTimestep="0"
+      target="/Outputs/reactionHistoryOutput"/>
+
+    <PeriodicEvent
+      name="reactionHistoryOutput1"
+      beginTime="360.0"
+      cycleFrequency="400"
+      targetExactTimestep="0"
+      target="/Outputs/reactionHistoryOutput"/>
+
     <PeriodicEvent
       name="restarts"
       cycleFrequency="500"
       target="/Outputs/restartOutput"/>
   </Events>
+  <!-- SPHINX_EVENTS_END -->
 
   <Outputs>
     <VTK
       name="ThreePointsBending_VTKOutput"
       plotFileRoot="threePointsBending"/>
+
+    <TimeHistory
+      name="reactionHistoryOutput"
+      sources="{ /Tasks/deflectionCollection, /Tasks/cutStressCollection, /Tasks/cutVolumeCollection }"
+      filename="threePointsBending_reactionCut"/>
 
     <Restart
       name="restartOutput"/>
