@@ -28,6 +28,8 @@ More examples, including validation studies against analytical solutions and ben
 
    co2Injection/Example
 
+   depletedReservoir/Example
+
    poromechanics/Example
 
    hydraulicFracturing/Example
