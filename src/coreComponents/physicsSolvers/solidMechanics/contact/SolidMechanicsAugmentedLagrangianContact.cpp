@@ -571,6 +571,8 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() );
     arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
     arrayView2d< real64 > const dispJump_n = subRegion.getField< contact::dispJump_n >();
+    arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
     arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
 
@@ -579,6 +581,8 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
       LvArray::tensorOps::copy< 3 >( traction_n[kfe], traction[kfe] );
       LvArray::tensorOps::copy< 5 >( iterativePenalty_n[kfe], iterativePenalty[kfe] );
       LvArray::tensorOps::copy< 3 >( dispJump_n[kfe], dispJump[kfe] );
+      LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
+      LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
       oldFractureState[kfe] = fractureState[kfe];
     } );
   } );
@@ -2346,9 +2350,9 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                           faceToElemSubRegion,
                                                           faceToElemIndex,
                                                           traction,
-                                                          dispJump,
-                                                          iterativePenalty,
-                                                          totalBubbleDisplacement,
+                                                          // dispJump,
+                                                          // iterativePenalty,
+                                                          // totalBubbleDisplacement,
                                                           hasCoulombParams,
                                                           cohesion,
                                                           frictionCoefficient,
@@ -2414,38 +2418,39 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 
               // Store the traction
               LvArray::tensorOps::copy< 3 >( traction[kfe], tLocal );
+              // ALM traction is the multipliers, consistent closed state is with g=0, b=0;
 
               // Update displacement jump based on penalty stiffness
-              real64 const kn = iterativePenalty[kfe][0];
-              real64 const kt = iterativePenalty[kfe][1];
-              real64 dJump[3] = { 0.0, 0.0, 0.0 };
+              // real64 const kn = iterativePenalty[kfe][0];
+              // real64 const kt = iterativePenalty[kfe][1];
+              // real64 dJump[3] = { 0.0, 0.0, 0.0 };
 
-              if( kn > LvArray::NumericLimits< real64 >::min )
-              {
-                dJump[0] = tLocal[0] / kn;
-              }
-              if( kt > LvArray::NumericLimits< real64 >::min )
-              {
-                dJump[1] = tLocal[1] / kt;
-                dJump[2] = tLocal[2] / kt;
-              }
+              // if( kn > LvArray::NumericLimits< real64 >::min )
+              // {
+              //   dJump[0] = tLocal[0] / kn;
+              // }
+              // if( kt > LvArray::NumericLimits< real64 >::min )
+              // {
+              //   dJump[1] = tLocal[1] / kt;
+              //   dJump[2] = tLocal[2] / kt;
+              // }
 
-              dispJump[kfe][0] = dJump[0];
-              dispJump[kfe][1] = dJump[1];
-              dispJump[kfe][2] = dJump[2];
+              // dispJump[kfe][0] = dJump[0];
+              // dispJump[kfe][1] = dJump[1];
+              // dispJump[kfe][2] = dJump[2];
 
-              // Compute Global Bubble Displacement: b_global = R * [u]_local
-              real64 bGlobal[3];
-              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( bGlobal, faceRotationMatrix[kfe], dJump );
+              // // Compute Global Bubble Displacement: b_global = R * [u]_local
+              // real64 bGlobal[3];
+              // LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( bGlobal, faceRotationMatrix[kfe], dJump );
 
-              // Store to totalBubbleDisplacement for both faces
-              for( localIndex faceIdx = 0; faceIdx < 2; ++faceIdx )
-              {
-                localIndex const faceIndex = elemsToFaces( kfe, faceIdx );
-                totalBubbleDisplacement[faceIndex][0] = bGlobal[0];
-                totalBubbleDisplacement[faceIndex][1] = bGlobal[1];
-                totalBubbleDisplacement[faceIndex][2] = bGlobal[2];
-              }
+              // // Store to totalBubbleDisplacement for both faces
+              // for( localIndex faceIdx = 0; faceIdx < 2; ++faceIdx )
+              // {
+              //   localIndex const faceIndex = elemsToFaces( kfe, faceIdx );
+              //   totalBubbleDisplacement[faceIndex][0] = bGlobal[0];
+              //   totalBubbleDisplacement[faceIndex][1] = bGlobal[1];
+              //   totalBubbleDisplacement[faceIndex][2] = bGlobal[2];
+              // }
 
               // Check Coulomb friction consistency if parameters are available
               if( hasCoulombParams )
@@ -2514,12 +2519,12 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                                 string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { contact::traction::key(),
-                                       contact::dispJump::key() },
+    fieldsToBeSync.addElementFields( { contact::traction::key()},
+                                      //  contact::dispJump::key() 
                                      { getUniqueFractureRegionName() } );
 
-    fieldsToBeSync.addFields( FieldLocation::Face,
-                              { contact::totalBubbleDisplacement::key() } );
+    // fieldsToBeSync.addFields( FieldLocation::Face,
+    //                           { contact::totalBubbleDisplacement::key() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
