@@ -20,6 +20,7 @@ Contains:
 set( fluidFlowSolvers_headers
      FlowSolverBase.hpp
      FlowSolverBaseFields.hpp
+     FlowSolverUtilities.hpp
      CompositionalMultiphaseBase.hpp
      CompositionalMultiphaseBaseFields.hpp
      CompositionalMultiphaseStatisticsAggregator.hpp
@@ -39,6 +40,7 @@ set( fluidFlowSolvers_headers
      SinglePhaseStatisticsTask.hpp
      SinglePhaseFVM.hpp
      SinglePhaseHybridFVM.hpp
+     SinglePhaseMixedMFD.hpp
      SinglePhaseProppantBase.hpp
      StencilAccessors.hpp
      SolutionCheckHelpers.hpp
@@ -59,6 +61,7 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/MobilityKernel.hpp
      kernels/singlePhase/ResidualNormKernel.hpp
      kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp
+     kernels/singlePhase/SinglePhaseMixedMFDKernels.hpp
      kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp
      kernels/singlePhase/SolutionCheckKernel.hpp
      kernels/singlePhase/SolutionScalingKernel.hpp
@@ -67,6 +70,7 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/ThermalAccumulationKernels.hpp
      kernels/singlePhase/ThermalDirichletFluxComputeKernel.hpp
      kernels/singlePhase/ThermalFluxComputeKernel.hpp
+     kernels/singlePhase/ThermalSolutionScalingKernel.hpp
      kernels/singlePhase/proppant/ProppantBaseKernels.hpp
      kernels/singlePhase/proppant/ProppantFluxKernels.hpp
      kernels/singlePhase/reactive/AccumulationKernels.hpp
@@ -169,6 +173,7 @@ set( fluidFlowSolvers_sources
      SinglePhaseStatisticsTask.cpp
      SinglePhaseFVM.cpp
      SinglePhaseHybridFVM.cpp
+     SinglePhaseMixedMFD.cpp
      SinglePhaseProppantBase.cpp
      SinglePhaseReactiveTransport.cpp
      SourceFluxStatistics.cpp
