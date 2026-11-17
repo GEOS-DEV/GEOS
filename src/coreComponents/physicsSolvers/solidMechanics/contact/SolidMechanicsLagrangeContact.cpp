@@ -422,10 +422,8 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
             }
 
             // Rotate in the local reference system, computing R^T * (invK) * R
-            real64 temp[ 3 ][ 3 ];
-            LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
             real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
+            LvArray::tensorOps::Rij_eq_PkiBklPlj< 3, 3 >( rotatedInvStiffApprox, faceRotationMatrix[ kfe ], invStiffApprox );
             LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
             // Finally, compute tolerances for the given fracture element
@@ -1982,10 +1980,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
         }
 
         // Compute R^T * (invK) * R
-        real64 temp[ 3 ][ 3 ];
         real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-        LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( temp, avgRotationMatrix, invTotStiffApprox );
-        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, avgRotationMatrix );
+        LvArray::tensorOps::Rij_eq_PkiBklPlj< 3, 3 >( rotatedInvStiffApprox, avgRotationMatrix, invTotStiffApprox );
 
         // Add nodal area contribution
         stackArray2d< real64, 3*3 > totalInvStiffApprox( 3, 3 );
