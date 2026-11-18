@@ -96,6 +96,67 @@ struct ConstraintCheckKernel
 };
 
 /**
+ * @brief A struct to adapt the per-element relaxation factor of the multiplier update
+ */
+struct AdaptRelaxationKernel
+{
+  /**
+   * @brief Lower the relaxation factor of the elements whose normal constraint flag reverses
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @param[in] size the size of the subregion
+   * @param[in] ghostRank the ghost rank of the elements (ghosts are skipped: their factor is synchronized)
+   * @param[in] trialTraction the array containing the traction updated from the current displacement jump
+   * @param[in] normalTractionTolerance Check tolerance (normal traction)
+   * @param[in] condConv the convergence flag of the current configuration check
+   * @param[in] minRelaxation the lowest relaxation factor omega_min
+   * @param[inout] previousNormalFlag the last nonzero normal flag (+1: gN > 0 on a closed element, -1: compenetration)
+   * @param[inout] relaxation the per-element relaxation factor
+   * @return the number of (locally owned) elements with a relaxation factor lower than 1
+   *
+   * @detail An element starts each time step with omega = 1. Each time its normal flag reverses (small opening on a
+   * closed element <-> compenetration), the augmentation has overshot: its factor is halved, down to omega_min.
+   * Elements that approach the constraint from one side keep the full augmentation.
+   */
+  template< typename POLICY >
+  static localIndex
+  launch( localIndex const size,
+          arrayView1d< integer const > const & ghostRank,
+          arrayView2d< real64 const > const & trialTraction,
+          arrayView1d< real64 const > const & normalTractionTolerance,
+          arrayView1d< int const > const & condConv,
+          real64 const minRelaxation,
+          arrayView1d< integer > const & previousNormalFlag,
+          arrayView1d< real64 > const & relaxation )
+  {
+    RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > numRelaxed( 0 );
+
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    {
+      if( ghostRank[k] >= 0 )
+      {
+        return;
+      }
+      bool const isTensile = trialTraction[k][0] >= normalTractionTolerance[k];
+      integer const normalFlag = ( condConv[k] == 1 && !isTensile ) ? 1 : ( condConv[k] == 2 ? -1 : 0 );
+      if( normalFlag != 0 )
+      {
+        if( normalFlag == -previousNormalFlag[k] )
+        {
+          relaxation[k] = LvArray::math::max( minRelaxation, 0.5 * relaxation[k] );
+        }
+        previousNormalFlag[k] = normalFlag;
+      }
+      if( relaxation[k] < 1.0 )
+      {
+        numRelaxed += 1;
+      }
+    } );
+
+    return numRelaxed.get();
+  }
+};
+
+/**
  * @brief A struct to check for constraint satisfaction
  */
 struct UpdateStateKernel
@@ -112,7 +173,13 @@ struct UpdateStateKernel
    * @param[in] symmetric flag to compute symmetric penalty matrix
    * @param[in] normalTractionTolerance Check tolerance (normal traction)
    * @param[in] traction the array containing the current traction
+   * @param[in] relaxation per-element relaxation factor omega in (0, 1] of the multiplier update (1: no relaxation)
    * @param[in] fractureState the array containing the fracture state
+   *
+   * @detail With relaxation, the multiplier is moved only part of the way towards its augmented (and projected)
+   * value: lambda <- lambda + omega * ( proj( lambda + k g ) - lambda ). In stick this is lambda <- lambda + omega k g.
+   * The new multiplier is a convex combination of two admissible tractions, so it remains within the Coulomb cone.
+   * The fracture state is the one of the projected traction.
    */
   template< typename POLICY, typename CONTACT_WRAPPER >
   static void
@@ -124,6 +191,7 @@ struct UpdateStateKernel
           bool const symmetric,
           arrayView1d< real64 const > const & normalTractionTolerance,
           arrayView2d< real64 > const & traction,
+          arrayView1d< real64 const > const & relaxation,
           arrayView1d< integer > const & fractureState )
 
   {
@@ -168,6 +236,14 @@ struct UpdateStateKernel
           fractureState[k] = fields::contact::FractureState::Slip;
         }
         // else: cohesion allows stick state, keep traction as computed by updateTraction()
+      }
+
+      if( relaxation[k] < 1.0 )
+      {
+        for( int i = 0; i < 3; ++i )
+        {
+          localTractionNew[i] = traction[k][i] + relaxation[k] * ( localTractionNew[i] - traction[k][i] );
+        }
       }
 
       LvArray::tensorOps::copy< 3 >( traction[k], localTractionNew );

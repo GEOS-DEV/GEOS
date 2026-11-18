@@ -211,6 +211,12 @@ public:
   void updateStickSlipList( DomainPartition const & domain );
 
   /**
+   * @brief Reset the per-element relaxation factor (and the normal flag history) at the beginning of a time step
+   * @param domain The physical domain object
+   */
+  void resetRelaxationFactor( DomainPartition & domain ) const;
+
+  /**
    * @brief Create the list of finite elements of the same type for each FaceElementSubRegion (Triangle or Quadrilateral).
    * @param domain The physical domain object
    */
@@ -333,6 +339,14 @@ private:
 
     constexpr static char const * isAnisotropicString() { return "anisotropic"; }
 
+    constexpr static char const * augmentationRelaxationString() { return "augmentationRelaxation"; }
+
+    constexpr static char const * adaptiveRelaxationString() { return "adaptiveRelaxation"; }
+
+    constexpr static char const * relaxationFactorString() { return "relaxationFactor"; }
+
+    constexpr static char const * previousNormalFlagString() { return "previousNormalFlag"; }
+
   };
 
   /// Tolerance for the sliding check: the tangential traction must exceed (1 + m_slidingCheckTolerance) * t_lim to activate the sliding
@@ -363,6 +377,13 @@ private:
 
   /// Flag for anisotropic scaling in Tolerances and Penalties
   int m_isAnisotropic = 1;
+
+  /// Relaxation factor of the multiplier update in the configuration loop (1: no relaxation);
+  /// lowest per-element factor when the relaxation is adaptive
+  real64 m_augmentationRelaxation = 1.0;
+
+  /// Flag for the per-element adaptive relaxation (0: the same factor for all the elements)
+  int m_adaptiveRelaxation = 0;
 
 };
 
