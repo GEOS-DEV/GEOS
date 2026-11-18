@@ -106,16 +106,18 @@ jobs:
         # Validates the code-style using uncrustify
         - name: Check code style
           BUILD_AND_TEST_ARGS: --test-code-style
+          DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
         # Validates that the documentation generated using doxygen has no hole.
         - name: Check documentation
           BUILD_AND_TEST_ARGS: --test-documentation
+          DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13-docs
     uses: ./.github/workflows/build_and_test.yml
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       HOST_CONFIG: /spack-generated.cmake
-      DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
+      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       RUNS_ON: ubuntu-22.04
       USE_SCCACHE: false
 
