@@ -1,0 +1,1 @@
+CPU-OPTO3fast-avx512-GCC-MPI-OMP.cmake
