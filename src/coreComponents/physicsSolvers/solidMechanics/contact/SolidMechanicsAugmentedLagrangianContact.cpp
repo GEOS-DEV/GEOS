@@ -2364,6 +2364,13 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 
             forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
             {
+              // Only locally owned fracture elements are consumed below (traction is then synchronized);
+              // a ghost fracture element may reference adjacent cells that are not present on this rank.
+              if( ghostRank[kfe] >= 0 )
+              {
+                return;
+              }
+
               real64 const n[3]{ faceRotationMatrix( kfe, 0, 0 ), faceRotationMatrix( kfe, 1, 0 ), faceRotationMatrix( kfe, 2, 0 ) };
 
               for( integer side = 0; side < 2; ++side )
