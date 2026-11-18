@@ -29,6 +29,7 @@
 #endif
 
 // System includes
+#include <exception>
 #include <ostream>
 
 namespace geos
@@ -113,7 +114,13 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
 GeosxState::~GeosxState()
 {
 #if defined( GEOS_USE_CALIPER )
-  m_caliperManager->flush();
+  // The flush of the MPI-aggregated reports (spot, runtime-report) is collective. When the state is
+  // destroyed while an exception propagates, which may happen on some ranks only, the other ranks never
+  // reach it: the run would hang instead of printing the error and aborting. Skip the flush then.
+  if( std::uncaught_exceptions() == 0 )
+  {
+    m_caliperManager->flush();
+  }
 #endif
 
   GEOS_ERROR_IF( currentGlobalState != this, "This shouldn't be possible." );
