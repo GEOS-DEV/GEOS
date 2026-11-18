@@ -23,6 +23,8 @@ Contains classes for storing and computing arbitrary N-dimensional functions.
 set( functions_headers
      FunctionBase.hpp
      FunctionManager.hpp
+     HDF5Utilities.hpp
+     HDF5Utilities_impl.hpp
      LogLevelsInfo.hpp
      TableFunction.hpp
    )
@@ -33,6 +35,7 @@ set( functions_headers
 set( functions_sources
      FunctionBase.cpp
      FunctionManager.cpp
+     HDF5Utilities.cpp
      TableFunction.cpp
      MultivariableTableFunction.cpp
    )

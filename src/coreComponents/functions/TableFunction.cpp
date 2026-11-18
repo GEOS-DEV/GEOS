@@ -27,7 +27,7 @@
 #include "common/MpiWrapper.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 
-#include <algorithm>
+#include "HDF5Utilities.hpp"
 
 namespace geos
 {
@@ -59,6 +59,21 @@ TableFunction::TableFunction( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Voxel file name for ND Table" );
 
+  registerWrapper( viewKeyStruct::hdf5FileString(), &m_hdf5FileName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "HDF5 file name for ND Table" );
+
+  registerWrapper( viewKeyStruct::hdf5CoordinateDatasetNamesString(), &m_hdf5CoordinateDatasetNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "List of coordinate dataset names in HDF5 file" );
+
+  registerWrapper( viewKeyStruct::hdf5TableDatasetNameString(), &m_hdf5TableDatasetName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Table dataset name in HDF5 file" );
+
   registerWrapper( viewKeyStruct::interpolationString(), &m_interpolationMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Interpolation method. Valid options:\n* " + EnumStrings< InterpolationType >::concat( "\n* " ) ).
@@ -72,6 +87,40 @@ TableFunction::TableFunction( const string & name,
                     "if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0." );
 
   addLogLevel< logInfo::TableLogOutput >();
+}
+
+TableFunction::TableInputType TableFunction::determineTableInputType() const
+{
+  // Determine which input types are provided
+  bool has1DTableInputs = !m_tableCoordinates1D.empty() && !m_values.empty();
+  bool hasNDTableInputs = !m_coordinateFiles.empty() && !m_voxelFile.empty();
+  bool hasHDF5TableInputs = !m_hdf5FileName.empty() && !m_hdf5CoordinateDatasetNames.empty() && !m_hdf5TableDatasetName.empty();
+
+  // Ensure mutual exclusivity of the three options
+  int const inputTypeCount = static_cast< int >(has1DTableInputs) + static_cast< int >(hasNDTableInputs) + static_cast< int >(hasHDF5TableInputs);
+  GEOS_THROW_IF( inputTypeCount > 1,
+                 GEOS_FMT( "{} {}: Multiple table input types are provided. Only one of the following is allowed:\n"
+                           "1. 1D table inputs (coordinates and values)\n"
+                           "2. ND table inputs (coordinate files and voxel file)\n"
+                           "3. HDF5 table inputs (HDF5 file, coordinate dataset names, and table dataset name).",
+                           catalogName(), getDataContext()),
+                 InputError );
+
+  // Return the determined input type
+  if( has1DTableInputs )
+  {
+    return TableInputType::OneD;
+  }
+  if( hasNDTableInputs )
+  {
+    return TableInputType::ND;
+  }
+  if( hasHDF5TableInputs )
+  {
+    return TableInputType::HDF5;
+  }
+
+  return TableInputType::None;
 }
 
 void TableFunction::readFile( string const & filename, array1d< real64 > & target )
@@ -120,7 +169,6 @@ void TableFunction::setTableValues( real64_array values, units::Unit unit )
 
 void TableFunction::initializeFunction()
 {
-  // Read in data
   if( m_coordinates.size() > 0 )
   {
     // This function appears to be already initialized
@@ -136,18 +184,64 @@ void TableFunction::initializeFunction()
   }
   else
   {
-    array1d< real64 > tmp;
-    localIndex numValues = 1;
-    for( localIndex ii = 0; ii < m_coordinateFiles.size(); ++ii )
+    TableFunction::TableInputType inputType = determineTableInputType();
+
+    // Read in data
+    switch( inputType )
     {
-      tmp.clear();
-      readFile( m_coordinateFiles[ii], tmp );
-      m_coordinates.appendArray( tmp.begin(), tmp.end() );
-      numValues *= tmp.size();
+      case TableInputType::OneD:
+      {
+        m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end());
+        GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
+                              GEOS_FMT( "{} {}: 1D table function coordinates and values must have the same length",
+                                        catalogName(), getDataContext()),
+                              InputError );
+        break;
+      }
+
+      case TableInputType::ND:
+      {
+        array1d< real64 > tmp;
+        localIndex numValues = 1;
+        for( localIndex ii = 0; ii < m_coordinateFiles.size(); ++ii )
+        {
+          tmp.clear();
+          readFile( m_coordinateFiles[ii], tmp );
+          m_coordinates.appendArray( tmp.begin(), tmp.end());
+          numValues *= tmp.size();
+        }
+        m_values.reserve( numValues );
+        readFile( m_voxelFile, m_values );
+        break;
+      }
+
+      case TableInputType::HDF5:
+      {
+        hdf5Utils::SerialHDF5Reader reader( m_hdf5FileName );
+
+        // Read table coordinates
+        int tableDim = 0;
+        for( auto const & coordName : m_hdf5CoordinateDatasetNames )
+        {
+          array1d< real64 > tmp = reader.readAsFortranFlatArray< real64 >( coordName, 1 );
+          m_coordinates.appendArray( tmp.begin(), tmp.end() );
+          tableDim += 1;
+        }
+
+        // Read table dataset
+        m_values = reader.readAsFortranFlatArray< real64 >( m_hdf5TableDatasetName, tableDim );
+        break;
+      }
+
+      case TableInputType::None:
+      default:
+      {
+        GEOS_THROW( GEOS_FMT( "{} {}: No valid table input type is provided.",
+                              catalogName(), getDataContext()),
+                    InputError );
+        break;
+      }
     }
-    // ND Table
-    m_values.reserve( numValues );
-    readFile( m_voxelFile, m_values );
   }
 
   reInitializeFunction();
