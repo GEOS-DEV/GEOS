@@ -1179,28 +1179,39 @@ static stdVector< int64_t > find2DTo3DNeighborsByCoordinates(
  * @param[in] mesh Original mesh
  * @param[in] cells2DIndices Indices of 2D cells in original mesh
  * @param[in] cells3DIndices Indices of 3D cells in original mesh
+ * @param[in] comm MPI communicator (the statistics and the error check are global)
  * @return Mapping from 2D cell index (in cells2DIndices) to global IDs of neighboring 3D cells
+ *
+ * The neighbors are searched among the 3D cells of this rank: with a partitioned input (e.g. .pvtu),
+ * each 2D cell must be in the same piece as at least one of its 3D neighbors.
  */
 static ArrayOfArrays< localIndex, int64_t >
 build2DTo3DNeighbors( vtkDataSet & mesh,
                       arrayView1d< vtkIdType const > cells2DIndices,
-                      arrayView1d< vtkIdType const > cells3DIndices )
+                      arrayView1d< vtkIdType const > cells3DIndices,
+                      MPI_Comm const comm )
 {
   GEOS_MARK_FUNCTION;
 
+  // A rank without 2D cells only takes part in the global statistics below: with a single input
+  // file, the other ranks have an empty mesh, which may have no global ids.
+  bool const hasLocal2DCells = !cells2DIndices.empty();
+
   // Retrieve global cell ID array
   vtkDataArray * globalCellIds = mesh.GetCellData()->GetGlobalIds();
-  GEOS_ERROR_IF( globalCellIds == nullptr,
+  GEOS_ERROR_IF( hasLocal2DCells && globalCellIds == nullptr,
                  "Global cell IDs must be present in mesh for 2D-3D neighbor mapping" );
 
   // Build reverse lookup: original mesh index to global cell ID (3D cells only)
   stdUnorderedMap< vtkIdType, int64_t > meshIdxToGlobalId3D;
-  meshIdxToGlobalId3D.reserve( cells3DIndices.size() );
-
-  for( vtkIdType meshIdx : cells3DIndices )
+  if( hasLocal2DCells )
   {
-    int64_t const globalId = static_cast< int64_t >( globalCellIds->GetTuple1( meshIdx ) );
-    meshIdxToGlobalId3D.emplace( meshIdx, globalId );
+    meshIdxToGlobalId3D.reserve( cells3DIndices.size() );
+    for( vtkIdType meshIdx : cells3DIndices )
+    {
+      int64_t const globalId = static_cast< int64_t >( globalCellIds->GetTuple1( meshIdx ) );
+      meshIdxToGlobalId3D.emplace( meshIdx, globalId );
+    }
   }
 
   ArrayOfArrays< localIndex, int64_t > neighbors2Dto3D;
@@ -1282,12 +1293,20 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
     neighbors2Dto3D.appendArray( neighbor3DGlobalIds.begin(), neighbor3DGlobalIds.end() );
   }
 
+  // The 2D cells may be spread over several ranks (partitioned input): report global counts, and
+  // raise the error on every rank, so that it is not thrown by some ranks only.
+  localIndex const num2DCells = MpiWrapper::sum( LvArray::integerConversion< localIndex >( cells2DIndices.size() ), comm );
+  numStandalone = MpiWrapper::sum( numStandalone, comm );
+  numBoundary = MpiWrapper::sum( numBoundary, comm );
+  numInternal = MpiWrapper::sum( numInternal, comm );
+  numJunction = MpiWrapper::sum( numJunction, comm );
+
   // Print diagnostic summary
   if( numStandalone > 0 || numJunction > 0 )
   {
     // Show detailed breakdown when anomalies exist
     GEOS_LOG_RANK_0( "\n2D-to-3D Neighbor Topology" );
-    GEOS_LOG_RANK_0( GEOS_FMT( " Total 2D cells:           {}", cells2DIndices.size() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( " Total 2D cells:           {}", num2DCells ) );
     GEOS_LOG_RANK_0( GEOS_FMT( " Standalone (0 neighbors): {}", numStandalone ) );
     GEOS_LOG_RANK_0( GEOS_FMT( " Boundary   (1 neighbor):  {}", numBoundary ) );
     GEOS_LOG_RANK_0( GEOS_FMT( " Internal   (2 neighbors): {}", numInternal ) );
@@ -1297,14 +1316,16 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
   {
     // Condensed output for normal cases
     GEOS_LOG_RANK_0( GEOS_FMT( "2D cells: {} (1-neighbor/boundary: {}, 2-neighbor/internal: {})",
-                               cells2DIndices.size(), numBoundary, numInternal ) );
+                               num2DCells, numBoundary, numInternal ) );
   }
 
   // Standalone 2D cells indicate mesh topology errors
   GEOS_ERROR_IF( numStandalone > 0,
                  GEOS_FMT( "{} orphaned 2D cells detected with no 3D neighbors. "
                            "These may be artifacts or detached surfaces. "
-                           "Please clean the mesh or verify the geometry.", numStandalone ) );
+                           "Please clean the mesh or verify the geometry. "
+                           "With a partitioned input (e.g. .pvtu), each 2D cell must be in the same piece "
+                           "as one of its 3D neighbors.", numStandalone ) );
 
   return neighbors2Dto3D;
 }
@@ -1523,7 +1544,8 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
   array1d< int > partitions3D( redistributed3D->GetNumberOfCells() );
   partitions3D.setValues< parallelHostPolicy >( rank );
 
-  bool const hasLocal2DCells = (rank == 0 && !cells2DIndices.empty());
+  // 2D cells may have been read by any rank (partitioned input), not only by rank 0.
+  bool const hasLocal2DCells = !cells2DIndices.empty();
 
   array1d< int > partitions2D = assignCellsBasedOn3DNeighbors(
     hasLocal2DCells ? neighbors2Dto3D : ArrayOfArrays< localIndex, int64_t >{},
@@ -1543,8 +1565,7 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
 
   // Conservation check
   vtkIdType const total2DCells = MpiWrapper::sum( redistributed2D->GetNumberOfCells(), comm );
-  vtkIdType expected2DCells = cells2DIndices.size();
-  MpiWrapper::broadcast( expected2DCells, 0, comm );
+  vtkIdType const expected2DCells = MpiWrapper::sum( static_cast< vtkIdType >( cells2DIndices.size() ), comm );
 
   GEOS_ERROR_IF( total2DCells != expected2DCells,
                  GEOS_FMT( "2D cell redistribution failed: expected {} cells, got {} cells",
@@ -2338,12 +2359,14 @@ redistributeMeshes( integer const logLevel,
   // -----------------------------------------------------------------------
   // Step 2: Build 2D-to-3D neighbor mapping
   // -----------------------------------------------------------------------
+  // With a partitioned input (e.g. .pvtu), 2D cells can be on any rank.
   ArrayOfArrays< localIndex, int64_t > neighbors2Dto3D;
-  if( !cells2DIndices.empty() )
+  if( MpiWrapper::max( cells2DIndices.empty() ? 0 : 1, comm ) > 0 )
   {
     neighbors2Dto3D = build2DTo3DNeighbors( *mesh,
                                             cells2DIndices.toViewConst(),
-                                            cells3DIndices.toViewConst() );
+                                            cells3DIndices.toViewConst(),
+                                            comm );
   }
 
   // -----------------------------------------------------------------------
