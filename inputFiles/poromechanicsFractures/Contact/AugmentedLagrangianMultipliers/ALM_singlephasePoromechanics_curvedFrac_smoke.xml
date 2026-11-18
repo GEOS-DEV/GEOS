@@ -63,7 +63,8 @@
       name="flowSolver"
       logLevel="1"
       discretization="fluidTPFA"
-      targetRegions="{ Region, Reservoir, Fracture }" > 
+      targetRegions="{ Region, Reservoir, Fracture }" >
+      <!-- 'allowNonConverged' is a workaround, DO NOT USE IN PRODUCTION WITHOUT CONSIDERATION. -->
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"
