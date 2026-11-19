@@ -116,7 +116,7 @@ struct AdaptRelaxationKernel
    *
    * @detail An element starts each time step with omega = 1. Each time its normal flag reverses (small opening on a
    * closed element <-> compenetration), the augmentation has overshot: its factor is halved, down to omega_min.
-   * Once the flag has stayed on the same side for two more checks in a row, the update undershoots: the factor is
+   * Once the flag has stayed on the same side for three more checks in a row, the update undershoots: the factor is
    * doubled at each further same-side check, up to 1. An element that keeps flipping stays damped.
    * Elements that approach the constraint from one side keep the full augmentation.
    */
@@ -154,9 +154,9 @@ struct AdaptRelaxationKernel
         else if( normalFlag * previous > 0 )
         {
           streak = LvArray::math::min( LvArray::math::abs( previous ) + 1, 1000 );
-          if( streak >= 3 )
+          if( streak >= 4 )
           {
-            // two more checks in a row on the same side: the update undershoots, let the augmentation recover
+            // three more checks in a row on the same side: the update undershoots, let the augmentation recover
             relaxation[k] = LvArray::math::min( 1.0, 2.0 * relaxation[k] );
           }
         }
