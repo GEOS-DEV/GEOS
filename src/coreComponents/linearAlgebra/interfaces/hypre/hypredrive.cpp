@@ -1889,6 +1889,15 @@ void HypredriveSolver::reportGeneratedYamlFailure( char const * const reason )
   m_reportedGeneratedYamlFailure = true;
 }
 
+void HypredriveSolver::setKrylovRelativeTolerance( real64 const tolerance )
+{
+  Base::setKrylovRelativeTolerance( tolerance );
+  if( m_legacySolver )
+  {
+    m_legacySolver->setKrylovRelativeTolerance( tolerance );
+  }
+}
+
 void HypredriveSolver::setup( HypreMatrix const & mat )
 {
   Base::setup( mat );
@@ -1906,6 +1915,13 @@ void HypredriveSolver::setup( HypreMatrix const & mat )
   {
     resetHypredriveState();
     setupLegacy( mat );
+  }
+  else if( m_params.krylov.useAdaptiveTol && !m_reportedAdaptiveToleranceIgnored )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: krylovAdaptiveTol is on, but the hypredrive input file '{}' sets the "
+                               "Krylov relative tolerance; the adaptive tolerance is not applied",
+                               solverNameForLogs(), string( m_params.hypredriveInputFile ) ) );
+    m_reportedAdaptiveToleranceIgnored = true;
   }
 }
 

@@ -99,6 +99,15 @@ public:
   void setExecutionContext( LinearSolverExecutionContext const & context ) override;
 
   /**
+   * @brief Update the relative Krylov tolerance (adaptive tolerance scheme).
+   * @param tolerance the new relative tolerance
+   *
+   * Forwarded to the legacy fallback solver. An authoritative hypredrive YAML file keeps its own
+   * relative tolerance: hypredrive does not provide a per-solve tolerance setting yet.
+   */
+  void setKrylovRelativeTolerance( real64 const tolerance ) override;
+
+  /**
    * @brief Set near-null-space modes to pass to HypreDrive during setup.
    * @param nearNullKernel Full-system distributed near-null-space vectors.
    */
@@ -181,6 +190,7 @@ private:
   bool m_newtonScopeActive = false;
   arrayView1d< HypreVector const > m_nearNullKernel;
   bool m_reportedGeneratedYamlFailure = false;
+  bool m_reportedAdaptiveToleranceIgnored = false;
   size_t m_hypredriveGeneration = 0;
   HYPREDRV_t m_hypredrive{};
   bool m_linearSolverCreated = false;
