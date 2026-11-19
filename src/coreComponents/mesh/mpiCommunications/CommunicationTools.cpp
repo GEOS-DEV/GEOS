@@ -435,14 +435,6 @@ CommunicationTools::
   findMatchedPartitionBoundaryObjects( ObjectManagerBase & objectManager,
                                        stdVector< NeighborCommunicator > & allNeighbors )
 {
-  // //CC : debugging
-  // string msg = "";
-  // for( integer i = 0; i < LvArray::integerConversion< integer >( allNeighbors.size() ); ++i )
-  // {
-  //   msg += std::to_string(allNeighbors[i].neighborRank()) + ", ";
-  // }
-  // GEOS_LOG_RANK(msg);
-
   GEOS_MARK_FUNCTION;
   this->buildNeighborPartitionBoundaryObjects( objectManager, allNeighbors );
 }
