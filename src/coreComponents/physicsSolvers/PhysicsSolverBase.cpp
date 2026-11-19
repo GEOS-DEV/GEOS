@@ -36,6 +36,8 @@
 #include "python/PySolverType.hpp"
 #endif
 
+#include <cmath>
+
 namespace geos
 {
 
@@ -367,14 +369,20 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                        getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
-  GEOS_ERROR_IF( dtRemaining > 0.0,
-                 GEOS_FMT( "Maximum allowed number of sub-steps ({}) reached at time {} s: {} s of the {} s requested by the "
-                           "event are still to be covered (last sub-step {} s). The time step was cut repeatedly. Increase "
-                           "maxSubSteps in NonlinearSolverParameters, or lower maxEventDt of the event that runs this solver, "
-                           "and check the convergence history above.",
-                           maxSubSteps, time_n + ( dt - dtRemaining ), dtRemaining, dt,
-                           numOfSubSteps > 0 ? subStepDts[numOfSubSteps - 1] : 0.0 ),
-                 getDataContext() );
+  if( dtRemaining > 0.0 )
+  {
+    real64 const lastSubStepDt = numOfSubSteps > 0 ? subStepDts[numOfSubSteps - 1] : 0.0;
+    real64 const lastSubStepStart = time_n + ( dt - dtRemaining ) - lastSubStepDt;
+    // number of sub-steps still needed at the size of the last one
+    integer const subStepsLeft = lastSubStepDt > 0.0 ? static_cast< integer >( std::ceil( dtRemaining / lastSubStepDt ) ) : 0;
+    GEOS_ERROR( GEOS_FMT( "Reached maximum allowed number of sub-steps ({}):\n"
+                          "  - last sub-step:  started at {} s, {} s delta time\n"
+                          "  - sub-steps left: {} ({} s of {} s)\n\n"
+                          "Consider increasing maxSubSteps in NonlinearSolverParameters, or lowering maxEventDt of the event "
+                          "that runs this solver.",
+                          maxSubSteps, lastSubStepStart, lastSubStepDt, subStepsLeft, dtRemaining, dt ),
+                getDataContext() );
+  }
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
