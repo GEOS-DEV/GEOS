@@ -450,7 +450,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
     globalIndex numElems = 0;
   };
   PoreVolumeStats bulkPoreVolumes;
-  std::map< string, PoreVolumeStats > fracturePoreVolumes;
+  stdMap< string, PoreVolumeStats > fracturePoreVolumes;
   // ratio of the bulk mean pore volume to the fracture minimum pore volume above which a warning is issued
   real64 constexpr maxBulkToFracturePoreVolumeRatio = 1.0e6;
 

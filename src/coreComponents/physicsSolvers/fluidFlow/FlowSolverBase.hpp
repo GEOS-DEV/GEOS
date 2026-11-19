@@ -219,6 +219,12 @@ public:
    */
   void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
 
+  /**
+   * @brief Helper function to compute/report the elements with small pore volumes
+   * @param[in] domain the domain partition
+   */
+  virtual void validatePoreVolumes( DomainPartition const & domain ) const;
+
 protected:
 
   /**
@@ -256,12 +262,6 @@ protected:
    * @param[in] subRegion the element subRegion
    */
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
-
-  /**
-   * @brief Helper function to compute/report the elements with small pore volumes
-   * @param[in] domain the domain partition
-   */
-  virtual void validatePoreVolumes( DomainPartition const & domain ) const;
 
   virtual void precomputeData( MeshLevel & mesh,
                                string_array const & regionNames );
