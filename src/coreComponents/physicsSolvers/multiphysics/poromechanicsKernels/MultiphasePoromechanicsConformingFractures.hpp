@@ -360,17 +360,17 @@ public:
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF >;
-      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
-      typename kernelType::FractureApertureAccessors fractureApertureAccessors( elemManager, solverName );
+        using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF >;
+        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
+        typename kernelType::FractureApertureAccessors fractureApertureAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors, fracPermAccessors,
-                         fractureApertureAccessors, dt, localMatrix, localRhs, kernelFlags, dR_dAper );
+        kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
+                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors, fracPermAccessors,
+                           fractureApertureAccessors, dt, localMatrix, localRhs, kernelFlags, dR_dAper );
 
         kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       }
