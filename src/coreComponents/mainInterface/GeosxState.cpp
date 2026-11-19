@@ -29,7 +29,6 @@
 #endif
 
 // System includes
-#include <exception>
 #include <ostream>
 
 namespace geos
@@ -113,16 +112,6 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 GeosxState::~GeosxState()
 {
-#if defined( GEOS_USE_CALIPER )
-  // The flush of the MPI-aggregated reports (spot, runtime-report) is collective. When the state is
-  // destroyed while an exception propagates, which may happen on some ranks only, the other ranks never
-  // reach it: the run would hang instead of printing the error and aborting. Skip the flush then.
-  if( std::uncaught_exceptions() == 0 )
-  {
-    m_caliperManager->flush();
-  }
-#endif
-
   GEOS_ERROR_IF( currentGlobalState != this, "This shouldn't be possible." );
   currentGlobalState = nullptr;
 }
@@ -179,20 +168,32 @@ void GeosxState::applyInitialConditions()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void GeosxState::run()
 {
-  GEOS_MARK_FUNCTION;
-  Timer timer( m_runTime );
-
-  GEOS_THROW_IF_NE( m_state, State::READY_TO_RUN, geos::LogicError );
-
-  if( getCommandLineOptions().onlyValidateInput )
   {
-    m_state = State::COMPLETED;
-    GEOS_LOG( "Input validation completed, terminating GEOS..." );
+    GEOS_MARK_FUNCTION;
+    Timer timer( m_runTime );
+
+    GEOS_THROW_IF_NE( m_state, State::READY_TO_RUN, geos::LogicError );
+
+    if( getCommandLineOptions().onlyValidateInput )
+    {
+      m_state = State::COMPLETED;
+      GEOS_LOG( "Input validation completed, terminating GEOS..." );
+    }
+    else if( !getProblemManager().runSimulation() )
+    {
+      m_state = State::COMPLETED;
+    }
   }
-  else if( !getProblemManager().runSimulation() )
+
+#if defined( GEOS_USE_CALIPER )
+  // Write the Caliper reports once the simulation has completed (pygeosx calls run() until then), outside the
+  // region of this function. The flush is collective, so it must not run from the destructor while an exception
+  // thrown on some ranks only unwinds the stack: the other ranks never reach it and the run hangs.
+  if( m_state == State::COMPLETED )
   {
-    m_state = State::COMPLETED;
+    m_caliperManager->flush();
   }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
