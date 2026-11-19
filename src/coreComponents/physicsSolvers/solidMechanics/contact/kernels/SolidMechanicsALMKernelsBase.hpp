@@ -109,12 +109,15 @@ struct AdaptRelaxationKernel
    * @param[in] normalTractionTolerance Check tolerance (normal traction)
    * @param[in] condConv the convergence flag of the current configuration check
    * @param[in] minRelaxation the lowest relaxation factor omega_min
-   * @param[inout] previousNormalFlag the last nonzero normal flag (+1: gN > 0 on a closed element, -1: compenetration)
+   * @param[inout] previousNormalFlag sign of the last nonzero normal flag (+: gN > 0 on a closed element,
+   * -: compenetration) times the number of consecutive checks with that flag
    * @param[inout] relaxation the per-element relaxation factor
    * @return the number of (locally owned) elements with a relaxation factor lower than 1
    *
    * @detail An element starts each time step with omega = 1. Each time its normal flag reverses (small opening on a
    * closed element <-> compenetration), the augmentation has overshot: its factor is halved, down to omega_min.
+   * Once the flag has stayed on the same side for two more checks in a row, the update undershoots: the factor is
+   * doubled at each further same-side check, up to 1. An element that keeps flipping stays damped.
    * Elements that approach the constraint from one side keep the full augmentation.
    */
   template< typename POLICY >
@@ -140,11 +143,24 @@ struct AdaptRelaxationKernel
       integer const normalFlag = ( condConv[k] == 1 && !isTensile ) ? 1 : ( condConv[k] == 2 ? -1 : 0 );
       if( normalFlag != 0 )
       {
-        if( normalFlag == -previousNormalFlag[k] )
+        // previousNormalFlag = sign( last flag ) * number of consecutive checks with that flag
+        integer const previous = previousNormalFlag[k];
+        integer streak = 1;
+        if( normalFlag * previous < 0 )
         {
+          // reversal: the augmentation has overshot
           relaxation[k] = LvArray::math::max( minRelaxation, 0.5 * relaxation[k] );
         }
-        previousNormalFlag[k] = normalFlag;
+        else if( normalFlag * previous > 0 )
+        {
+          streak = LvArray::math::min( LvArray::math::abs( previous ) + 1, 1000 );
+          if( streak >= 3 )
+          {
+            // two more checks in a row on the same side: the update undershoots, let the augmentation recover
+            relaxation[k] = LvArray::math::min( 1.0, 2.0 * relaxation[k] );
+          }
+        }
+        previousNormalFlag[k] = normalFlag * streak;
       }
       if( relaxation[k] < 1.0 )
       {
