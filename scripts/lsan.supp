@@ -1,0 +1,15 @@
+# External MPI-runtime initialization allocations retained until process exit.
+# These are the same OpenMPI/Caliper startup cases covered by LvArray's
+# valgrind.supp. Do not suppress GEOS, Hypre, or other application frames.
+leak:ompi_
+leak:orte_
+leak:hwloc_
+leak:event_base_loop
+leak:MPI_Init
+leak:caliper
+
+# HDF5 1.14.6's parallel MPIO driver leaves tiny MPI-IO request bookkeeping
+# allocations behind after collective writes. Keep the suppression at the
+# HDF5 driver boundary; do not suppress generic MPI or GEOS allocations.
+leak:H5FD__mpio_write_vector
+leak:H5FD__mpio_write_selection

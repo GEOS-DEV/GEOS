@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverUtilities.hpp"
 
 namespace geos
 {
@@ -155,7 +156,8 @@ public:
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                              stdMap< string, localIndex > const * const dR_dAperOffsets ) override final;
 
   virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup ) const override;
@@ -228,7 +230,7 @@ protected:
   } m_dbcParams;
 
   /// Solution scaling type
-  compositionalMultiphaseUtilities::ScalingType m_scalingType;
+  flowSolverUtilities::ScalingType m_scalingType;
 
   /// scheme for density treatment in gravity
   GravityDensityScheme m_gravityDensityScheme;

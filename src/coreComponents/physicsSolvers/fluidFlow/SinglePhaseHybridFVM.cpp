@@ -384,9 +384,9 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( faceBcLogMessage,
-                                                  this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, targetGroup.getName(), numTargetFaces ),
+                                        GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                          this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, targetGroup.getName(), numTargetFaces ),
                                         fs );
       }
 

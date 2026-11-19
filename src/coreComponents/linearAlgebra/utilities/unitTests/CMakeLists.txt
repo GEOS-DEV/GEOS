@@ -7,6 +7,13 @@ set( parallel_tests
 
 set( nranks 2 )
 
+# HYPRE's HIP device assembly is not safe when multiple MPI ranks share one
+# visible GPU. Keep the two-rank coverage for CPU builds, but run this test
+# with one rank in the single-GPU HIP configuration.
+if( ENABLE_HIP )
+  set( nranks 1 )
+endif()
+
 set( dependencyList mainInterface gtest ${parallelDeps} )
 
 foreach(test ${parallel_tests})

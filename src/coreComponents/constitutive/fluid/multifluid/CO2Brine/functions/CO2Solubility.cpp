@@ -57,13 +57,20 @@ TableFunction const * makeTable( string const & tableName,
 
 std::pair< TableFunction const *, TableFunction const * >
 makeSolubilityTables( string const & functionName,
-                      string_array const & inputParams,
-                      constitutive::PVTProps::CO2Solubility::SolubilityModel const & solubilityModel )
+                      constitutive::PVTProps::BrineFluidParameters const & brineFluidParameters )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
   constitutive::PVTProps::PTTableCoordinates tableCoords;
+
+  auto const & solubilityModel = brineFluidParameters.m_solubilityModel;
+
+  // The solubility models and user tables give mol CO2 per kg H2O, but the "water" component of the
+  // CO2-brine fluids is the brine (H2O + NaCl): the solubility is converted to mol CO2 per kg of brine
+  real64 constexpr saltMolarWeight = 58.44e-3;
+  real64 const solventPerWater = 1.0 + brineFluidParameters.m_salinity * saltMolarWeight;
+
   // Check solubility model for explicit table input
-  if( solubilityModel == constitutive::PVTProps::CO2Solubility::SolubilityModel::Tables )
+  if( solubilityModel == constitutive::PVTProps::BrineFluidParameters::SolubilityModel::Tables )
   {
     // The default table is a table with all zeros unless the name is explicitly provided
     // The pressure and temperature values below will be used only to create the zero table so they
@@ -72,12 +79,13 @@ makeSolubilityTables( string const & functionName,
       .appendTemperature( 0.0 ).appendTemperature( 800.0 );
 
     TableFunction const * tables[2] = { nullptr, nullptr };
+    auto const & solubilityTables = brineFluidParameters.m_solubilityTables;
     for( integer tableIndex : { 0, 1 } )
     {
       array1d< real64 > values( 4 );
       values.zero();
 
-      string inputTableName = inputParams[2 + tableIndex];
+      string inputTableName = tableIndex < static_cast< integer >(solubilityTables.size()) ? solubilityTables[tableIndex] : "";
       if( inputTableName.empty() )
       {
         inputTableName = GEOS_FMT( "{}_zeroDissolution_table", constitutive::PVTProps::CO2Solubility::catalogName() );
@@ -88,6 +96,36 @@ makeSolubilityTables( string const & functionName,
         GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( inputTableName ),
                        GEOS_FMT( "{}: Could not find TableFunction with name {}", functionName, inputTableName ),
                        InputError );
+        if( tableIndex == 0 && brineFluidParameters.m_salinity > 0.0 )
+        {
+          // convert the user CO2 table into a derived table (the user's table may serve fluids of other salinity)
+          functionManager.getGroup< TableFunction >( inputTableName ).initializeFunction();
+          TableFunction const & userTable = functionManager.getGroup< TableFunction >( inputTableName );
+          string const convertedName = GEOS_FMT( "{}_{}_brineBasis", functionName, inputTableName );
+          if( !functionManager.hasGroup< TableFunction >( convertedName ) )
+          {
+            ArrayOfArraysView< real64 const > const userCoords = userTable.getCoordinates();
+            array1d< real64_array > coords( userCoords.size() );
+            for( localIndex d = 0; d < userCoords.size(); ++d )
+            {
+              coords[d].resize( userCoords.sizeOfArray( d ) );
+              for( localIndex k = 0; k < userCoords.sizeOfArray( d ); ++k )
+              {
+                coords[d][k] = userCoords[d][k];
+              }
+            }
+            real64_array convertedValues( userTable.getValues().size() );
+            for( localIndex k = 0; k < convertedValues.size(); ++k )
+            {
+              convertedValues[k] = userTable.getValues()[k] / solventPerWater;
+            }
+            TableFunction * converted = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", convertedName ) );
+            converted->setTableCoordinates( coords, { userTable.getDimUnit( 0 ), userTable.getDimUnit( 1 ) } );
+            converted->setTableValues( convertedValues, units::Solubility );
+            converted->setInterpolationMethod( userTable.getInterpolationMethod() );
+          }
+          inputTableName = convertedName;
+        }
       }
       tables[tableIndex] = makeTable( inputTableName, tableCoords, std::move ( values ), functionManager );
     }
@@ -106,27 +144,10 @@ makeSolubilityTables( string const & functionName,
   }
 
   // Initialize the (p,T) coordinates
-  constitutive::PVTProps::PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+  constitutive::PVTProps::BrineFluidParameters::initializePropertyTable( brineFluidParameters, tableCoords );
 
-  // Initialize salinity and tolerance
-  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                        InputError );
-
-  real64 tolerance = 1e-9;
-  real64 salinity = 0.0;
-  try
-  {
-    salinity = stod( inputParams[8] );
-    if( inputParams.size() >= 10 )
-    {
-      tolerance = stod( inputParams[9] );
-    }
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-  }
+  real64 const tolerance = brineFluidParameters.m_tolerance;
+  real64 const salinity = brineFluidParameters.m_salinity;
 
   integer const nPressures = tableCoords.nPressures();
   integer const nTemperatures = tableCoords.nTemperatures();
@@ -134,7 +155,7 @@ makeSolubilityTables( string const & functionName,
   array1d< real64 > co2Solubility( nPressures * nTemperatures );
   array1d< real64 > h2oSolubility( nPressures * nTemperatures );
 
-  if( solubilityModel == constitutive::PVTProps::CO2Solubility::SolubilityModel::DuanSun )
+  if( solubilityModel == constitutive::PVTProps::BrineFluidParameters::SolubilityModel::DuanSun )
   {
     constitutive::PVTProps::CO2SolubilityDuanSun::populateSolubilityTables(
       functionName,
@@ -144,7 +165,7 @@ makeSolubilityTables( string const & functionName,
       co2Solubility,
       h2oSolubility );
   }
-  else if( solubilityModel == constitutive::PVTProps::CO2Solubility::SolubilityModel::SpycherPruess )
+  else if( solubilityModel == constitutive::PVTProps::BrineFluidParameters::SolubilityModel::SpycherPruess )
   {
     constitutive::PVTProps::CO2SolubilitySpycherPruess::populateSolubilityTables(
       functionName,
@@ -153,6 +174,12 @@ makeSolubilityTables( string const & functionName,
       tolerance,
       co2Solubility,
       h2oSolubility );
+  }
+
+  // convert the model's mol CO2 per kg H2O to mol CO2 per kg of the water (brine) component
+  for( localIndex k = 0; k < co2Solubility.size(); ++k )
+  {
+    co2Solubility[k] /= solventPerWater;
   }
 
   // Truncate negative solubility and warn
@@ -223,7 +250,7 @@ namespace PVTProps
 {
 
 CO2Solubility::CO2Solubility( string const & name,
-                              string_array const & inputParams,
+                              BrineFluidParameters const & brineFluidParameters,
                               string_array const & phaseNames,
                               string_array const & componentNames,
                               array1d< real64 > const & componentMolarWeight,
@@ -251,17 +278,7 @@ CO2Solubility::CO2Solubility( string const & name,
   string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
-  SolubilityModel solubilityModel = SolubilityModel::DuanSun;   // Default solubility model
-  if( inputParams[1] == EnumStrings< SolubilityModel >::toString( SolubilityModel::Tables ) )
-  {
-    solubilityModel = SolubilityModel::Tables;
-  }
-  else if( 11 <= inputParams.size() )
-  {
-    solubilityModel = EnumStrings< SolubilityModel >::fromString( inputParams[10] );
-  }
-
-  std::tie( m_CO2SolubilityTable, m_WaterVapourisationTable ) = makeSolubilityTables( m_modelName, inputParams, solubilityModel );
+  std::tie( m_CO2SolubilityTable, m_WaterVapourisationTable ) = makeSolubilityTables( m_modelName, brineFluidParameters );
 
   m_CO2SolubilityTable->outputTableData( pvtOutputOpts );
   m_WaterVapourisationTable->outputTableData( pvtOutputOpts );

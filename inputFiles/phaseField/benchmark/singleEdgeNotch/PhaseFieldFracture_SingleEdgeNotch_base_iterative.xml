@@ -1,0 +1,98 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"
+        subcycling="0"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="SolidMechSolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        lineSearchAction="None"
+        newtonTol="1.0e-5"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1e-5"
+        preconditionerType="amg"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      irreversibilityFlag="1"
+      damageUpperBound="0.95"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        lineSearchAction="None"
+        newtonTol="1.0e-8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"/>
+    </PhaseFieldDamageFEM>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Region1 }"
+      initialRockToughness="0"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ * }"
+      materialList="{ concrete }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      defaultAperture="1e-6"
+      materialList="{ concrete }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageSpectralElasticIsotropic
+      name="concrete"
+      defaultDensity="1.0"
+      defaultBulkModulus="1.75e5"
+      defaultShearModulus="8.077e4"
+      lengthScale="0.0075"
+      degradationLowerLimit="1e-6"
+      defaultCriticalFractureEnergy="2.7"
+      criticalStrainEnergy="0.0"
+      fractureModelType="Brittle"
+      localDissipationOption="Quadratic"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="loadRamp"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1600.0 }"
+      values="{ 0.0, 1600.0 }"/>
+  </Functions>
+</Problem>

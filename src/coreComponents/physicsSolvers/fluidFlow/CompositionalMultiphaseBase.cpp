@@ -345,6 +345,11 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
     m_numPhases = referenceFluid.numFluidPhases();
     m_numComponents = referenceFluid.numFluidComponents();
+    GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_MAX_FLUID_COMPONENTS,
+                          GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
+                                    "Rebuild with GEOS_MAX_FLUID_COMPONENTS >= {}.",
+                                    m_numComponents, GEOS_MAX_FLUID_COMPONENTS, m_numComponents ),
+                          InputError, getDataContext() );
     m_isThermal = referenceFluid.isThermal();
   }
 
@@ -1844,9 +1849,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 

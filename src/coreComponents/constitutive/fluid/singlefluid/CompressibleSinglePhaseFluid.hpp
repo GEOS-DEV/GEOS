@@ -75,7 +75,7 @@ public:
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
-                        real64 & dViscosity_dPressure ) const override
+                        real64 & dViscosity_dPressure ) const override final
   {
     m_densRelation.compute( pressure, density, dDensity_dPressure );
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
@@ -96,7 +96,7 @@ public:
                         real64 & GEOS_UNUSED_PARAM( dInternalEnergy_dTemperature ),
                         real64 & GEOS_UNUSED_PARAM( enthalpy ),
                         real64 & GEOS_UNUSED_PARAM( dEnthalpy_dPressure ),
-                        real64 & GEOS_UNUSED_PARAM( dEnthalpy_dTemperature ) ) const override
+                        real64 & GEOS_UNUSED_PARAM( dEnthalpy_dTemperature ) ) const override final
   {
     m_densRelation.compute( pressure, density, dDensity_dPressure );
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
@@ -107,7 +107,7 @@ public:
   GEOS_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       real64 const pressure ) const override
+                       real64 const pressure ) const override final
   {
     compute( pressure,
              m_density[k][q],
@@ -121,7 +121,7 @@ public:
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
-                       real64 const GEOS_UNUSED_PARAM( temperature ) ) const override
+                       real64 const GEOS_UNUSED_PARAM( temperature ) ) const override final
   {
     compute( pressure,
              m_density[k][q],
@@ -136,7 +136,7 @@ public:
                        localIndex const q,
                        real64 const pressure,
                        real64 const GEOS_UNUSED_PARAM( temperature ),
-                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override final
   {
     compute( pressure,
              m_density[k][q],

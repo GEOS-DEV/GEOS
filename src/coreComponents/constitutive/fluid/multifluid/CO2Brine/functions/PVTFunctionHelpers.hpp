@@ -178,63 +178,6 @@ findName( InputRange const & input,
   return static_cast< integer >( std::distance( begin( input ), it ) );
 }
 
-/**
- * @brief Populate the coordinate table with pressure and temperature
- * @param[in] inputParameters the strings reads in the file provided by the user
- * @param[inout] tableCoords the (p,T) coordinates of the table
- */
-inline void
-initializePropertyTable( string_array const & inputParameters,
-                         PTTableCoordinates & tableCoords )
-
-{
-  GEOS_THROW_IF( inputParameters.size() < 8,
-                 "Invalid property input!",
-                 InputError );
-
-  try
-  {
-    real64 const PStart = stod( inputParameters[2] );
-    real64 const PEnd = stod( inputParameters[3] );
-    real64 const dP = stod( inputParameters[4] );
-
-    GEOS_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
-                   InputError );
-
-    real64 const TStart = units::convertKToC( stod( inputParameters[5] ) );
-    real64 const TEnd = units::convertKToC( stod( inputParameters[6] ) );
-    real64 const dT = stod( inputParameters[7] );
-
-    real64 const minT = 10;
-    real64 const maxT = 200;
-    GEOS_THROW_IF( TStart < minT,
-                   GEOS_FMT( "Temperature {} must be in Kelvin and must be larger than {} K",
-                             units::convertCToK( TStart ),
-                             units::convertCToK( minT ) ),
-                   InputError );
-    GEOS_THROW_IF( TEnd > maxT,
-                   GEOS_FMT( "Temperature {} must be in Kelvin and must be smaller than {} K",
-                             units::convertCToK( TEnd ),
-                             units::convertCToK( maxT ) ),
-                   InputError );
-    GEOS_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
-                   InputError );
-
-    for( real64 P = PStart; P <= PEnd; P += dP )
-    {
-      tableCoords.appendPressure( P );
-    }
-    for( real64 T = TStart; T <= TEnd; T += dT )
-    {
-      tableCoords.appendTemperature( T );
-    }
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOS_THROW( "Invalid property argument:" + string( e.what() ), InputError );
-  }
-}
-
 } // namespace PVTFunctionHelpers
 
 } // namespace PVTProps

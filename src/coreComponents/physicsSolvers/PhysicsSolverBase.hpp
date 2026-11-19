@@ -1017,6 +1017,14 @@ protected:
   virtual void postInputInitialization() override;
 
   /**
+   * @brief Return optional near-null-space modes for the monolithic linear solver.
+   */
+  virtual arrayView1d< ParallelVector const > getLinearSolverNearNullKernel() const
+  {
+    return {};
+  }
+
+  /**
    * @brief Eisenstat-Walker adaptive tolerance
    *
    * This method enables an inexact-Newton method is which the linear solver

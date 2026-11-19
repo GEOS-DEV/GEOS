@@ -54,12 +54,14 @@
       solidInternalEnergyModelName="rockInternalEnergy"
     />
 
-    <ElasticIsotropic 
+    <!-- SPHINX_ELASTIC_SOLID -->
+    <ElasticIsotropic
       name="rockSolid"
       defaultDensity="2700"
       defaultBulkModulus="0.5e9"
       defaultShearModulus="0.3e9"
-      defaultDrainedLinearTEC="3e-7"/> 
+      defaultDrainedLinearTEC="3e-7"/>
+    <!-- SPHINX_ELASTIC_SOLID_END -->
 
     <BiotPorosity
       name="rockPorosity"

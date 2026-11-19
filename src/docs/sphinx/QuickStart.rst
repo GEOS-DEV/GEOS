@@ -4,146 +4,117 @@
 Quick Start Guide
 ###############################
 
-The goal of this page is to get you started as quickly as possible using GEOS.
-We will walk you through downloading the source, compiling the code, and testing the installation.
+This page takes you from zero to a first GEOS simulation:
 
-Before jumping to the installation process, we want to first address some frequently asked questions we get from new users.
-If you are itching to get started, feel free to jump ahead to the relevant sections.
+#. get the source code,
+#. obtain the third-party libraries (TPLs) GEOS depends on,
+#. configure and compile GEOS,
+#. run a first simulation and the unit tests.
 
-Frequently Asked Questions
-==========================
-
-Does GEOS have a graphical user interface?:
-------------------------------------------------
-Given the focus on rapid development and HPC environments, GEOS does not have a graphical user interface.
-This is consistent with many other high performance computing packages, but we recognize it can be a deal-breaker for certain users.
-For those who can get past this failing, we promise we still have a lot to offer.
-In a typical workflow, you will prepare an XML-based input file describing your problem.
-You may also prepare a mesh file containing geometric and property information describing, say, a reservoir you would like to simulate.
-There is no shortage of GUI tools that can help you in this model building stage.
-The resulting input deck is then consumed by GEOS to run the simulation and produce results.
-This may be done in a terminal of your local machine or by submitting a job to a remote server.
-The resulting output files can then be visualized by any number of graphical visualization programs (typically `VisIt <https://wci.llnl.gov/simulation/computer-codes/visit/>`_ or `paraview <https://www.paraview.org/>`_).
-Thus, while GEOS is GUI free, the typical workflow is not.
-
-Do I need to be a code developer to use GEOS?:
-------------------------------------------------
-For the moment, most users will
-need to download and compile the code from source, which we readily admit this requires
-a certain level of development expertise.  We try to make this process as easy as
-possible, and we are working on additional deployment options to make this process easier.
-Once installed, however, our goal is to make GEOS accessible to developers and non-developers alike.
-Our target audience includes engineers and scientists who want to solve tough application problems, but could care less about the insides of the tool.
-For those of you who *are* interested in scientific computing, however, GEOS is an open source project and we welcome external contributions.
-
-What are the system requirements?:
-------------------------------------------------
-GEOS is primarily written in C++, with a focus on standards compliance and platform-to-platform portability.
-It is designed to run on everything from commodity laptops to the world's most powerful supercomputers.
-We regularly test the code across a variety of operating systems and compilers.
-Most of these operating systems are Linux/UNIX based (e.g. Ubuntu, CentOS, Mac OSX).
-We do have developers working in Windows environments, but they use a Virtual Machine or work within a docker image rather than directly in the Windows environment.
-In the instructions below, we assume you have access to fairly standard development tools.
-Using advanced features of GEOS, like GPU-acceleration, will of course introduce additional hardware and software requirements.
-
-Help, I get errors while trying to download/compile/run!:
----------------------------------------------------------
-
-Unfortunately, no set of instructions is foolproof.
-It is simply impossible to anticipate every system configuration or user.
-If you run into problems during the installation, we recommend the following five-step process:
-
-#. Take a moment to relax, and then re-read the instructions carefully.
-   Perhaps you overlooked a key step?  Re-read the error message(s) closely.
-   Modern compilation tools are often quite helpful in reporting exactly why things fail.
-
-#. Type a few keywords from your error into a search engine.
-   It is possible someone else out there has encountered your problem before, and a well-chosen keyword can often produce an instant solution.
-   Note that when a compilation fails, you may get pages and pages of errors.  Try to identify the *first* one to occur and fix that.
-   One error will often trigger subsequent errors, and looking at the *last* error on the screen may not be so helpful.
-
-#. If you encounter problems building one of the third-party libraries we depend on, check out their support pages.
-   They may be able to help you more directly than we can.
-
-#. Still stuck? Check out our `issues tracker <https://github.com/GEOS-DEV/GEOS/issues>`_, searching current or closed issues that may address your problem.
-   Perhaps someone has had an identical issue, or something close.  The issue tracker has a convenient search bar where you can search for relevant keywords.
-   Remember to remove the default ``is:open`` keyword to search both open and closed issues.
-
-#. If you have exhausted the options above, it is time to seek help from the developers.
-   Post an issue on our issue tracker.
-   Be specific, providing as much information as possible about your system setup and the error you are encountering.
-   Please be patient in this process, as we may need to correspond a few times and ask you to run additional tests.
-   Most of the time, users have a slightly unusual system configuration that we haven't encountered yet, such as an older version of a particular library.
-   Other times there is a legitimate bug in GEOS to be addressed.
-   Take pride in the fact that you may be saving the next user from wasted time and frustration.
-
-Repository Organization
-==============================
-
-The source for GEOS and related tools are hosted on `Github <https://github.com>`_.
-We use `Git workflows <https://git-scm.com>`_ to version control our code and manage the entire development process.
-On Github, we have a `GEOS Organization <https://github.com/GEOS-DEV>`_ that hosts several related repositories.
-
-You should sign up for a free Github account, particularly if you are interested in posting issues to our issue tracker and communicating with the developers.
-The main repository of interest is obviously GEOS itself: `GEOS <https://github.com/GEOS-DEV/GEOS>`_
-
-We also rely on two types of dependencies: first-party and third-party.
-First-party dependencies are projects directly associated with the GEOS effort, but kept in separate repositories because they form stand-alone tools.
-For example, there is a chemical reactions package called `HPCReact <https://github.com/GEOS-DEV/HPCReact>`_ or the streamlined CMake-based foundation `BLT <https://github.com/LLNL/blt>`_ .
-These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.
-Most users will never have to worry that these modules are in fact separate projects from GEOS.
-
-We also rely on several open-source Third-Party Libraries (TPLs) (see `thirdPartyLibs <https://github.com/GEOS-DEV/thirdPartyLibs>`_).
-These are well-respected projects developed externally to GEOS.
-We have found, however, that many compilation issues stem from version incompatibilities between different packages.
-To address this, we provide a mirror of these TPLs, with version combinations we know play nicely together.
-We also provide a build script that conveniently and consistently builds those dependencies.
-
-Our build system will automatically use the mirror package versions by default.
-You are welcome to tune your configuration, however, to point to different versions installed on your system.
-If you work on an HPC platform, for example, common packages may already be available and optimized for platform hardware.
-For new users, however, it may be safer to begin with the TPL mirror.
+GEOS has no graphical user interface: you describe a problem in an XML input file (optionally together with a mesh file),
+run the ``geos`` executable from a terminal or a batch job, and visualize the results with
+`ParaView <https://www.paraview.org/>`_ or `VisIt <https://visit-dav.github.io/visit-website/>`_.
+GEOS is currently distributed as source code only, so you will need to compile it.
 
 .. note::
-   If you are working on an HPC platform with several other GEOS users, we often compile the TPLs in a shared location so individual users don't have to waste their storage quota.
-   Inquire with your institution's point-of-contact whether this option already exists.
-   For all LLNL systems, the answer is yes.
+   The executable is called ``geos``. The build directory contains it as ``bin/geosx``;
+   ``make install`` copies it to ``<install-dir>/bin/geosx`` and also creates an identical ``<install-dir>/bin/geos``.
+   Both names refer to the same program.
 
-Finally, there are also several private repositories only accessible to the core development team, which we use for behind-the-scene testing and maintenance of the code.
+At a glance
+===========
 
-Username and Authentication
-=============================
-New users should sign up for a free `Github account <https://github.com>`_.
-
-If you intend to develop in the GEOS codebase, you may benefit from setting up your git credentials (see :ref:`GitWorkflow`).
-
-
-Download
-======================
-
-It is possible to directly download the source code as a zip file.
-We strongly suggest, however, that users don't rely on this option.
-Instead, most users should use Git to either *clone* or *fork* the repository.
-This makes it much easier to stay up to date with the latest releases and bug fixes.
-If you are not familiar with the basics of Git, `here is a helpful resource <https://git-scm.com>`_ to get you started.
-
-The tutorial here assumes you will use a https clone with no specific credentials.
-Using an ssh connection pattern requires a very slight modification.
-See the **Additional Notes** at the end of this section for details.
-
-If you do not already have Git installed on your system, you will need to install it.
-We recommend using a relatively recent version of Git, as there have been some notable improvements over the past few years.
-You can check if Git is already available by opening a terminal and typing
+For an experienced user on a Linux workstation with the :ref:`Prerequisites` installed, the whole process is:
 
 .. code-block:: sh
 
-  git --version
+   mkdir codes && cd codes
+   git clone https://github.com/GEOS-DEV/GEOS.git
+   git clone https://github.com/GEOS-DEV/thirdPartyLibs.git
+   (cd GEOS && git submodule update --init --recursive)
+   (cd thirdPartyLibs && git submodule update --init --recursive)
 
-You'll also need the `git-lfs <https://git-lfs.github.com/>`_ large file extension.
+   # Write a host-config describing your compilers and libraries (see below)
+   cp GEOS/host-configs/quick-start-template.cmake GEOS/host-configs/my-machine.cmake
+   # ... edit GEOS/host-configs/my-machine.cmake ...
 
-The first task is to clone the ``GEOS`` and ``thirdPartyLibs`` repositories.
-If you do not tell it otherwise, the build system will expect the GEOS and thirdPartyLibs to be parallel to each other in the directory structure.
-For example,
+   # Third-party libraries (long: 30 minutes to a few hours)
+   cd thirdPartyLibs
+   python3 scripts/config-build.py -hc ../GEOS/host-configs/my-machine.cmake -bt Release
+   make -C build-my-machine-release
+
+   # GEOS
+   cd ../GEOS
+   python3 scripts/config-build.py -hc host-configs/my-machine.cmake -bt Release
+   make -C build-my-machine-release -j 8 install
+
+   # First run
+   install-my-machine-release/bin/geos -i inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml -o first_run
+
+The rest of this page explains each step.
+
+Choose how to get the third-party libraries
+===========================================
+
+GEOS relies on several open-source third-party libraries (hypre, VTK, RAJA, HDF5, ...) that must be built with
+compatible versions and options. There are three ways to get them:
+
+* **Use a Docker image or a GitHub Codespace (fastest).**
+  The GEOS team publishes Docker images with the TPLs already compiled, which are used by the continuous integration.
+  You only compile GEOS itself. See :ref:`QuickStartDocker`.
+* **Build the TPLs yourself (most common on workstations).**
+  The `thirdPartyLibs <https://github.com/GEOS-DEV/thirdPartyLibs>`_ repository builds every library with tested versions in a single command.
+  Follow the sections below, starting at :ref:`QuickStartDownload`.
+* **Use a shared TPL installation (HPC centers).**
+  On clusters with other GEOS users, the TPLs are often already installed in a shared location, and a matching host-config
+  is provided in ``GEOS/host-configs/`` (for example for LLNL, ORNL, Stanford Sherlock and TotalEnergies systems).
+  Ask your local GEOS contact, then skip directly to :ref:`QuickStartCompileGEOS`.
+
+.. _QuickStartDocker:
+
+Fastest path: Docker or GitHub Codespaces
+=========================================
+
+The images are named after their operating system and compiler, e.g. ``geosx/ubuntu24.04-gcc13``, and are hosted on
+`Docker Hub <https://hub.docker.com/u/geosx>`_. The image tag that matches your version of GEOS is stored in
+``.devcontainer/devcontainer.json`` (``build.args.GEOS_TPL_TAG``).
+
+.. important::
+   These images contain the compiled TPLs and the compilers, **not** a compiled ``geos`` executable.
+   You still need to build GEOS inside the container (about 10 to 30 minutes).
+
+**GitHub Codespaces / VS Code Dev Containers.**
+The repository contains a ready-to-use ``.devcontainer`` configuration.
+Open the GEOS repository on GitHub and choose *Code > Codespaces > Create codespace*,
+or open your local clone in VS Code and select *Reopen in Container*.
+The container comes with the CMake Tools extension preconfigured: configure and build from the VS Code CMake panel.
+
+**Plain Docker.** From your GEOS clone (see :ref:`QuickStartDownload`):
+
+.. code-block:: sh
+
+   cd GEOS
+   TAG=$(python3 -c "import json; print(json.load(open('.devcontainer/devcontainer.json'))['build']['args']['GEOS_TPL_TAG'])")
+   docker run -it --rm -v "$PWD":/workspace -w /workspace \
+              -e OMPI_ALLOW_RUN_AS_ROOT=1 -e OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
+              geosx/ubuntu24.04-gcc13:${TAG} bash
+
+   # Inside the container: the image provides a host-config at /spack-generated.cmake
+   git config --global --add safe.directory '*'
+   python3 scripts/config-build.py -hc /spack-generated.cmake -bt Release \
+           -bp /workspace/build-docker -ip /workspace/install-docker \
+           -DENABLE_HYPRE=ON -DENABLE_TRILINOS=OFF -DGEOS_LA_INTERFACE=Hypre
+   make -C /workspace/build-docker -j $(nproc) install
+
+The executable is then ``/workspace/install-docker/bin/geos``. Continue with :ref:`QuickStartFirstRun`.
+
+.. _QuickStartDownload:
+
+Download the source
+===================
+
+You need `git <https://git-scm.com>`_. Clone GEOS and thirdPartyLibs next to each other; the default
+configuration expects this layout:
 
 .. code-block:: sh
 
@@ -151,269 +122,242 @@ For example,
   ├── GEOS/
   └── thirdPartyLibs/
 
-where the toplevel ``codes`` directory can be re-named and located wherever you like.
-It is possible to customize the build system to expect a different structure, but for now let us assume you take the simplest approach.
-
-First, using a terminal, create the ``codes`` directory wherever you like.
-
 .. code-block:: sh
 
-  cd /insert/your/desired/path/
-  mkdir codes
-  cd codes
-
-Inside this directory, we can clone the GEOS repository.
-We will also use some Git commands to initialize and download the submodules (e.g. ``LvArray``).
-
-.. code-block:: sh
-
+   mkdir codes && cd codes
    git clone https://github.com/GEOS-DEV/GEOS.git
    cd GEOS
-   git lfs install
-   git submodule init
-   git submodule update
+   git submodule update --init --recursive
    cd ..
-
-If all goes well, you should have a complete copy of the GEOS source at this point.
-The most common errors people encounter here have to do with Github not recognizing their authentication settings and/or repository permissions.
-See the previous section for tips on ensuring your SSH is working properly.
-
-*Note*: Previous versions of GEOS also imported the integratedTests submodule, which is not publicly available (access is limited to the core development team).
-Previous versions also included the PVTPackage which is no longer required.
-This may cause the ``git submodule update`` command to fail.
-In that case, run ``git submodule deinit integratedTests`` and/or ``git submodule deinit src/coreComponents/constitutive/PVTPackage`` before ``git submodule update``.
-These submodules are not required for building GEOS.
-
-.. code-block:: sh
-
-   cd GEOS
-   git submodule update --init src/cmake/blt
-   git submodule update --init src/coreComponents/LvArray
-   git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
-   cd ..
-
-Once we have grabbed GEOS, we do the same for the thirdPartyLibs repository.  From the ``codes`` directory, type
-
-.. code-block:: sh
-
    git clone https://github.com/GEOS-DEV/thirdPartyLibs.git
    cd thirdPartyLibs
-   git lfs install
-   git pull
-   git submodule init
-   git submodule update
+   git submodule update --init --recursive
    cd ..
 
-Again, if all goes well you should now have a copy of all necessary TPL packages.
+The GEOS submodules are ``src/cmake/blt`` (build system), ``src/coreComponents/LvArray`` (array library),
+``src/coreComponents/fileIO/coupling/hdf5_interface`` and ``src/coreComponents/constitutive/HPCReact`` (chemistry package).
+The thirdPartyLibs repository contains the build scripts; the library sources themselves are downloaded from the internet
+when you build them, so the TPL build machine needs internet access.
 
-**Additional Notes:**
+.. note::
+   If you use SSH keys with GitHub, replace ``https://github.com/`` by ``git@github.com:`` in the clone commands.
+   ``git-lfs`` is not needed to build GEOS.
 
-#. ``git-lfs`` may not function properly (or may be very slow) if your version of git and git-lfs are not current.
-If you are using an older version, you may need to add ``git lfs pull`` after ``git pull`` in the above procedures.
+.. _QuickStartHostConfig:
 
-#. You can adapt the commands if you use an ssh connection instead.
-The clone ``https://github.com/GEOS-DEV/GEOS.git`` becomes ``git clone git@github.com:GEOS-DEV/GEOS.git``.
-You may also be willing to insert your credentials in the command line (less secure) ``git clone https://${USER}:${TOKEN}@github.com/GEOS-DEV/GEOS.git``.
+Write a host-config file
+========================
 
-Configuration 
-=============
-
-Before proceeding, make sure to have installed all the minimal prerequisites as described in :ref:`Prerequisites`
-Note that GEOS supports a variety of parallel computing models, depending on the hardware and software environment.
-Advanced users are referred to the :ref:`BuildGuide` for a discussion of the available configuration options.
-
-Before beginning, it is a good idea to have a clear idea of the flavor and version of the build tools you are using.
-If something goes wrong, the first thing the support team will ask you for is this information.
+Before you start, install the :ref:`Prerequisites` (compilers, MPI, CMake 3.24 or newer, BLAS/LAPACK, Python 3).
+It is useful to record the tools you use; this is the first thing the developers will ask for if something goes wrong:
 
 .. code-block:: sh
 
-  cpp --version
-  mpic++ --version
+  g++ --version
+  mpicxx --version
   cmake --version
 
-Here, you may need to replace ``cpp`` with the full path to the C++ compiler you would like to use, depending on how your path and any aliases are configured.
+GEOS and its TPLs are configured with a CMake *host-config* file: a short CMake script that tells the build system
+which compilers to use, where MPI and BLAS/LAPACK are, and which options to enable.
+**Use the same host-config for the TPLs and for GEOS**, since options such as ``ENABLE_MPI`` or ``ENABLE_CUDA`` must match.
 
-Defining a Host-Config File
----------------------------
-
-GEOS compilations are driven by a CMake ``host-config`` file, which informs the build system about the compilers you are using, where various packages reside, and what options you want to enable. 
-
-A template for creating a simple ``host-config`` is provided in ``host-configs/quick-start-template.cmake``.
+Start from ``host-configs/quick-start-template.cmake``:
 
 .. literalinclude:: ../../../host-configs/quick-start-template.cmake
-   :language: sh
+   :language: cmake
 
-The various ``set()`` commands are used to set variables that control the build. To begin, make a copy of the template file and modify the paths according to the installation locations on your system. 
+For example, on Ubuntu 24.04 (x86_64) with the packages listed in :ref:`Prerequisites`, copy the template to
+``host-configs/my-machine.cmake`` and change the following lines:
 
-We have created a number of default host-config files for common systems. You should browse them to see if any are close to your needs:
-We maintain host configuration files (ending in ``.cmake``) for HPC systems at various institutions, as well as for common personal systems. 
-If you cannot find one that matches your needs, we suggest starting with one of the shorter ones and modifying it as needed. 
+.. code-block:: cmake
 
-.. note::
-   If you develop a new ``host-config`` for a particular platform that may be useful for other users, please consider sharing it with the developer team.
+   set( CONFIG_NAME "my-machine" )
 
-Compilation
-===========
+   set( CMAKE_C_COMPILER "/usr/bin/gcc" CACHE PATH "" )
+   set( CMAKE_CXX_COMPILER "/usr/bin/g++" CACHE PATH "" )
 
-The configuration process for both the third-party libraries (TPLs) and GEOS is managed through a Python script called ``config-build.py``. This script simplifies and automates the setup by configuring the build and install directories and by running CMake based on the options set in the host-config file 
-which is passed as a command-lne argument. The ``config-build.py`` script has several command-line options. Here, we will only use some basic options and rely on default values for many others. During this build process there wil be automatically generated build and install directories for both the TPLs and the main code,
-with names consistent with the name specified in the host-config by the variable ``CONFIG_NAME``, i.e. ``build-your-platform-release`` and ``install-your-platform-release``. 
+   set( MPI_C_COMPILER "/usr/bin/mpicc" CACHE PATH "" )
+   set( MPI_CXX_COMPILER "/usr/bin/mpicxx" CACHE PATH "" )
+   set( MPIEXEC "/usr/bin/mpirun" CACHE PATH "" )
 
-All options can be visualized by running
+   set( BLAS_LIBRARIES "/usr/lib/x86_64-linux-gnu/libblas.so" CACHE PATH "" FORCE )
+   set( LAPACK_LIBRARIES "/usr/lib/x86_64-linux-gnu/liblapack.so" CACHE PATH "" FORCE )
 
-.. code-block:: sh
+.. warning::
+   Keep ``CONFIG_NAME`` identical to the host-config file name (without ``.cmake``).
+   ``config-build.py`` names the build and install directories after the *file name*
+   (``build-my-machine-release``, ``install-my-machine-release``), while the template locates the TPLs using ``CONFIG_NAME``
+   (``../thirdPartyLibs/install-${CONFIG_NAME}-release``). If the two differ, GEOS will not find the TPLs
+   and CMake prints ``'GEOS_TPL_DIR' does not exist``.
 
-   cd thirdPartyLibs
-   python scripts/config-build.py -h
+Ready-made host-configs are provided in ``host-configs/`` for macOS (``apple/``, see :ref:`AppleMacOS`) and for several HPC systems
+(``LLNL/``, ``ORNL/``, ``Stanford/``, ``TOTAL/``). Start from the closest one.
+If you write a host-config for a platform that may be useful to others, please consider contributing it.
 
-.. note::
-
-   It is strongly recommended that GEOS and TPLs be configured using the same host configuration file. Below, we assume that you keep this file in, for example, ``GEOS/host-configs/your-platform.cmake``, but the exact location is up to you.
-
-Compiling the TPLs
--------------------
-
-.. note::
-
-   If you are working on an HPC system with other GEOS developers, check with them to see if the TPLs have already been compiled in a shared directory. If this is the case, you can skip ahead to just compiling the main code.
-   If you are working on your own machine, you will need to configure and compile both the TPLs and the main code.
-
-We begin by configuring the third-party libraries (TPLs) using the ``config-build.py`` script. This script sets up the build directory and runs CMake to generate the necessary build files.
+Compile the third-party libraries
+=================================
 
 .. code-block:: sh
 
    cd thirdPartyLibs
-   python scripts/config-build.py -hc ../GEOS/host-configs/your-platform.cmake -bt Release
-
-The TPLs will be configured in a build directory named consistently with your host configuration file, i.e., ``build-your-platform-release``.
-
-.. code-block:: sh
-
-   cd build-your-platform-release
+   python3 scripts/config-build.py -hc ../GEOS/host-configs/my-machine.cmake -bt Release
+   cd build-my-machine-release
    make
 
+The libraries are installed in ``thirdPartyLibs/install-my-machine-release``.
+Depending on your machine, this takes from 30 minutes to a few hours.
+
 .. note::
+   Do not pass ``-j`` to this ``make``: the top-level build only launches the individual library builds, each of which already
+   uses all the cores of the machine. To limit the number of cores, add ``-DNUM_PROC=4`` to the ``config-build.py`` command.
 
-   Building all of the TPLs can take quite a while, so you may want to go get a cup of coffee at this point.
-   Also note that you should *not* use a parallel ``make -j N`` command to try and speed up the build time.
+   A warning ``'GEOS_TPL_DIR' does not exist`` during this step is expected: the TPLs are not installed yet.
 
-Compiling GEOS
--------------------
+.. _QuickStartCompileGEOS:
 
-Once the TPLs have been compiler, the next step is to compile the main code. The ``config-build.py`` script is used to configure the build directory. Before running the configuration script, ensure that the path to the TPLs is correctly set in the host configuration file by setting
-
-.. code-block:: sh
-
-   set(GEOS_TPL_DIR "/path/to/your/TPL/installation/dir" CACHE PATH "")
-
-If you have followed these instructions, the TPLs are installed at the default location, i.e. ``/path/to/your/TPL/thirdPartyLibs/install-your-platform-release``.
+Compile GEOS
+============
 
 .. code-block:: sh
 
    cd ../../GEOS
-   python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
+   python3 scripts/config-build.py -hc host-configs/my-machine.cmake -bt Release
+   cd build-my-machine-release
+   make -j 8
+   make install
 
-An alternative is to set the path ``GEOS_TPL_DIR`` via a cmake command line option, e.g.
+Adjust ``-j 8`` to the number of cores of your machine. A build takes 10 to 30 minutes.
+
+If your TPLs are not in the default location (for example a shared installation), pass their path explicitly
+(use a full path):
 
 .. code-block:: sh
 
-   python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release -D GEOS_TPL_DIR=/full/path/to/thirdPartyLibs
+   python3 scripts/config-build.py -hc host-configs/my-machine.cmake -bt Release -DGEOS_TPL_DIR=/full/path/to/tpl/install
+
+``config-build.py`` accepts other options (build type, build and install directories, Ninja generator, ...),
+and any ``-D`` option is passed to CMake. See ``python3 scripts/config-build.py -h`` and :ref:`BuildProcess`.
 
 .. note::
+   Running ``config-build.py`` again **deletes** the existing build directory before configuring.
+   To change a single option in an existing build, run ``cmake -D<OPTION>=<value> .`` in the build directory instead.
 
-   We highly recommend using full paths, rather than relative paths, whenever possible.
-
-Once the configuration process is completed, we proceed with the compilation of the main code and the instalation of geos.  
-
-.. code-block:: sh
-
-   cd build-your-platform-release
-   make -j4
-   make install   
-
-The parallel ``make -j 4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.
-You can adjust this value to match the number of processors available on your machine.
-The ``make install`` command then installs GEOS to a default location unless otherwise specified.
-
-If all goes well, a ``geosx`` executable should now be available
+If all goes well, the executable is available at
 
 .. code-block:: sh
 
-  GEOS/install-your-platform-release/bin/geosx
+  GEOS/install-my-machine-release/bin/geos
 
-Running
-=================
-
-We can do a quick check that the geosx executable is working properly by calling the executable with our help flag
+Check the executable
+====================
 
 .. code-block:: sh
 
-  ./bin/geosx --help
+  cd GEOS/install-my-machine-release
+  ./bin/geos --help
 
-This should print out a brief summary of the available command line arguments:
+This prints the available command-line options:
 
-.. code-block:: sh
+.. code-block:: none
 
-    USAGE: geosx -i input.xml [options]
-           geosx -s schema-output.xml
+    USAGE: geos -i input.xml [options]
+           geos -s schema-output.xml
 
     Options:
     -?, --help
     -i, --input,             Input xml filename (required)
     -r, --restart,           Target restart filename
-    -x, --x-partitions,      Number of partitions in the x-direction
-    -y, --y-partitions,      Number of partitions in the y-direction
-    -z, --z-partitions,      Number of partitions in the z-direction
+    -x, --xpartitions,       Number of partitions in the x-direction
+    -y, --ypartitions,       Number of partitions in the y-direction
+    -z, --zpartitions,       Number of partitions in the z-direction
     -s, --schema,            Name of the output schema
-    -v, --validate-input,    only do the loading phase, and not actual simulation. Useful to validate 'input'.
+    -v, --validate-input,    Only do the loading phase, and not actual simulation. Useful to validate 'input'.
     -b, --use-nonblocking,   Use non-blocking MPI communication
     -n, --name,              Name of the problem, used for output
-    -s, --suppress-pinned,   Suppress usage of pinned memory for MPI communication buffers
+    --suppress-pinned,       Suppress usage of pinned memory for MPI communication buffers
     -o, --output,            Directory to put the output files
     -t, --timers,            String specifying the type of timer output
     --trace-data-migration,  Trace host-device data migration
     -m, --memory-usage,      Minimum threshold for printing out memory allocations in a member of the data repository.
-    --pause-for,             Pause geosx for a given number of seconds before starting execution
+    --pause-for,             Pause geos for a given number of seconds before starting execution
+    -e, --errorsOutput,      Output path for the errors file (".yaml" supported)
 
-    Rank 0: No XML input file nor schema specified. Exiting...
+.. _QuickStartFirstRun:
 
-Obviously this doesn't do much interesting, but it will at least confirm that the executable runs.
-In typical usage, an input XML must be provided describing the problem to be run, e.g.
+Run your first simulation
+=========================
 
-.. code-block:: sh
-
-    ./bin/geosx -i your-problem.xml
-
-.. note::
-    To validate inputs without executing a full simulation, use the ``-v`` or ``--validate-only`` option
-    (useful before running a heavy simulation).
-
-In a parallel setting, the command might look something like
+The repository contains many ready-to-run input files in ``inputFiles/``. From the ``GEOS`` directory, run a small
+single-phase flow problem (a 10x10x10 mesh, a few seconds on a laptop):
 
 .. code-block:: sh
 
-    mpirun -np 8 ./bin/geosx -i your-problem.xml -x 2 -y 2 -z 2
+   cd GEOS
+   install-my-machine-release/bin/geos -i inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml -o first_run
 
-Note that we provide a series of :ref:`Tutorials` to walk you through the actual usage of the code, with several input examples.
-Once you are comfortable the build is working properly, we suggest new users start working through these tutorials.
+GEOS prints a summary of the problem, then one block per time step with the nonlinear (Newton) and linear solver iterations,
+and ends with timing information. The results are written to the directory given with ``-o`` (here ``first_run``;
+the default is the current directory). This input file requests Silo output, written to ``first_run/siloFiles``
+and readable with VisIt; most other examples write VTK files (``.pvd``) that open directly in ParaView.
 
-Testing
-=================
+To check an input file without running the simulation, use ``-v`` (``--validate-input``).
 
-It is wise to run our unit test suite as an additional check that everything is working properly.
-You can run them in the build folder you just created.
+To run in parallel with MPI, split the domain into ``-x``, ``-y`` and ``-z`` partitions. The product of the three
+numbers must equal the number of MPI ranks:
 
 .. code-block:: sh
 
-  cd GEOS/build-your-platform-release
-  ctest -V
+   mpirun -np 8 install-my-machine-release/bin/geos -i inputFiles/singlePhaseFlow/3D_10x10x10_compressible_smoke.xml \
+          -x 2 -y 2 -z 2 -o first_run_parallel
 
-This will run a large suite of simple tests that check various components of the code.
-If you have access, you may also consider running the integrated tests.
-Please refer to :ref:`IntegratedTests` for further information.
+See :ref:`RunningGEOS` for all command-line options, parallel runs, restarts and reading the log.
 
-.. note::
-   If *all* of the unit tests fail, there is likely something wrong with your installation.
-   Refer to the FAQs above for how best to proceed in this situation.
-   If only a few tests fail, it is possible that your platform configuration has exposed some issue that our existing platform tests do not catch.
-   If you suspect this is the case, please consider posting an issue to our issue tracker (after first checking whether other users have encountered a similar issue).
+Run the unit tests
+==================
+
+Running the unit tests is a good check of your build:
+
+.. code-block:: sh
+
+  cd GEOS/build-my-machine-release
+  ctest --output-on-failure -j 8
+
+The full suite takes several minutes. If *all* tests fail, something is likely wrong with your installation
+(see the troubleshooting section below). If only a few fail, your platform may have exposed an issue that our continuous
+integration does not cover: please report it on the issue tracker. Developers can also run the integrated tests, see :ref:`IntegratedTests`.
+
+Next steps
+==========
+
+* Work through the :ref:`Tutorials`, starting with :ref:`TutorialSinglePhaseFlowWithInternalMesh`: they explain the
+  structure of an input file step by step.
+* Browse the :ref:`BasicExamples` organized by physics (multiphase flow, wells, CO\ :sub:`2` injection, poromechanics, hydraulic fracturing).
+* Look up any XML element or attribute in the :ref:`UserGuide` and in the complete input schema (:doc:`Datastructure Index </docs/sphinx/datastructure/CompleteXMLSchema>`).
+
+Frequently asked questions
+==========================
+
+**Do I need to be a code developer to use GEOS?**
+You need to be comfortable with compiling software from source, but not with C++ development.
+Once installed, GEOS is driven entirely by XML input files.
+GEOS is an open-source project, and contributions are welcome (see the :ref:`Contributing` section of the developer guide).
+
+**What are the system requirements?**
+GEOS runs on Linux and macOS, from laptops to the largest supercomputers, on CPUs and on NVIDIA or AMD GPUs.
+On Windows, use a virtual machine, WSL, or a Docker container (see :ref:`InstallWin`).
+GPU builds require additional software (CUDA or ROCm), see the :ref:`BuildGuide`.
+
+**Where is the source code?**
+All repositories are hosted in the `GEOS-DEV GitHub organization <https://github.com/GEOS-DEV>`_:
+`GEOS <https://github.com/GEOS-DEV/GEOS>`_ itself, `thirdPartyLibs <https://github.com/GEOS-DEV/thirdPartyLibs>`_ (TPL build scripts),
+first-party libraries included as git submodules (`LvArray <https://github.com/GEOS-DEV/LvArray>`_, `HPCReact <https://github.com/GEOS-DEV/HPCReact>`_, ...),
+and `geosPythonPackages <https://github.com/GEOS-DEV/geosPythonPackages>`_ (Python tools for pre- and post-processing).
+
+**I get errors while downloading, compiling or running.**
+Unfortunately, no set of instructions is foolproof. We recommend:
+
+#. Re-read the instructions and the error message. When a compilation fails, look for the *first* error: later ones are often consequences.
+#. Search for the error message online; a library-specific build problem may be answered by that library's support pages.
+#. Search the `GEOS issue tracker <https://github.com/GEOS-DEV/GEOS/issues>`_, including closed issues (remove the default ``is:open`` filter).
+#. If you are still stuck, open a new issue with your operating system, compiler, MPI and CMake versions, your host-config,
+   and the full error message. We may ask you to run additional tests.

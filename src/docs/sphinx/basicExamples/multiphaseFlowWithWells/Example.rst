@@ -27,11 +27,15 @@ This example is based on the XML file located at
 
 .. code-block:: console
 
-  ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_benchmark.xml
+  inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_benchmark.xml
 
 The mesh file corresponding to the Egg model is stored in the GEOSDATA repository.
-Therefore, you must first download the GEOSDATA repository in the same folder
-as the GEOS repository to run this test case.
+Therefore, you must first clone the GEOSDATA repository next to the GEOS repository
+(the input file reads ``../../../../../GEOSDATA/DataSets/Egg/egg.vtu``, relative to the XML file) to run this test case:
+
+.. code-block:: console
+
+  git clone https://github.com/GEOS-DEV/GEOSDATA.git
 
 .. note::
         `GEOSDATA <https://github.com/GEOS-DEV/GEOSDATA>`_ is a separate repository in which we store large mesh files in order to keep the main GEOS repository lightweight.
@@ -87,14 +91,14 @@ Any solver information specified in the single-physics XML blocks will not be ta
 .. note::
         It is worth repeating the ``logLevel="1"`` parameter at the level of the well solver to make sure that a notification is issued when the well control is switched (from rate control to BHP control, for instance).
 
-Here, we instruct GEOS to perform at most ``newtonMaxIter = "10"`` Newton iterations. 
+Here, we instruct GEOS to perform at most ``newtonMaxIter="25"`` Newton iterations.
 GEOS will adjust the time step size as follows:
 
-- if the Newton solver converges in ``timeStepIncreaseIterLimit x newtonMaxIter = 5`` iterations or fewer, GEOS will double the time step size for the next time step,
-- if the Newton solver converges in ``timeStepDecreaseIterLimit x newtonMaxIter = 8`` iterations or more, GEOS will reduce the time step size for the next time step by a factor ``timestepCutFactor = 0.1``,
-- if the Newton solver fails to converge in ``newtonMaxIter = 10``, GEOS will cut the time step size by a factor ``timestepCutFactor = 0.1`` and restart from the previous converged time step.
+- if the Newton solver converges in fewer than ``timeStepIncreaseIterLimit x newtonMaxIter = 0.6 x 25 = 15`` iterations, GEOS will multiply the time step size for the next time step by ``timeStepIncreaseFactor`` (2 by default),
+- if the Newton solver needs more than ``timeStepDecreaseIterLimit x newtonMaxIter = 0.9 x 25 = 22.5`` iterations, GEOS will multiply the time step size for the next time step by ``timeStepDecreaseFactor`` (0.5 by default),
+- if the Newton solver fails to converge in ``newtonMaxIter = 25`` iterations, GEOS will cut the time step size by a factor ``timeStepCutFactor = 0.1`` and restart from the previous converged time step.
 
-The maximum number of time step cuts is specified by the attribute ``maxTimeStepCuts``.
+The maximum number of time step cuts is specified by the attribute ``maxTimeStepCuts`` (here 10).
 Note that a backtracking line search can be activated by setting the attribute ``lineSearchAction`` to ``Attempt`` or ``Require``.
 If ``lineSearchAction = "Attempt"``, we accept the nonlinear iteration even if the line search does not reduce the residual norm.
 If ``lineSearchAction = "Require"``, we cut the time step if the line search does not reduce the residual norm. 
@@ -109,6 +113,26 @@ If ``lineSearchAction = "Require"``, we cut the time step if the line search doe
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS_END -->
 
 	       
+
+.. _EggWellControls:
+
+-------------------------------------------------
+Well controls
+-------------------------------------------------
+
+The **WellManager** contains one **CompositionalMultiphaseWell** element per well.
+Its ``name`` (for instance ``wellControls1``) is referenced by the well geometry in the **Mesh** block through ``wellControlsName``.
+Each element sets the well ``type`` (``producer`` or ``injector``) and lists the operating constraints of the well as sub-elements.
+In this example, each producer has:
+
+- a **MinimumBHPConstraint**: the bottom-hole pressure may not drop below ``targetBHP`` (here 39 MPa), measured at ``referenceElevation``,
+- a **ProductionPhaseVolumeRateConstraint**: the volumetric rate of the phase ``phaseName`` (here oil) may not exceed ``phaseRate``.
+
+Injectors use injection constraints instead (for instance **MaximumBHPConstraint** and **InjectionVolumeRateConstraint**, with the composition of the injected fluid given by ``injectionStream``).
+The ``control`` attribute selects the constraint that is active at the start of the simulation (here, ``BHP`` for the producers).
+At each time step, GEOS checks whether another constraint is violated and, if so, switches the well to that constraint.
+Rates are positive numbers for both injectors and producers; the well ``type`` sets the direction of the flow.
+Other constraint types (mass rates, total volume rates, liquid rates) are listed in the :doc:`Datastructure Index </docs/sphinx/datastructure/CompleteXMLSchema>`.
 
 .. _Mesh_tag_dead_oil_egg_model:
 
@@ -146,7 +170,7 @@ needed in the XML file to define them.
 
 Each well is defined internally (i.e., not imported from a file) in a separate **InternalWell**
 XML sub-block. An **InternalWell** sub-block must point to the region corresponding to this well using the attribute
-``wellRegionName``, and to the control of this well using the attribute ``control``.
+``wellRegionName``, and to the controls of this well (a **CompositionalMultiphaseWell** element of the **WellManager**, see :ref:`EggWellControls`) using the attribute ``wellControlsName``.
 
 Each well is defined using a vertical polyline going through the seven layers of the
 mesh with a perforation in each layer.
@@ -166,7 +190,7 @@ internally using the Peaceman formulation.
 
 Each well is loaded from a file in a separate **VTKWell**
 XML sub-block. A **VTKWell** sub-block must point to the region corresponding to this well using the attribute
-``wellRegionName``, and to the control of this well using the attribute ``wellControl``.
+``wellRegionName``, and to the controls of this well using the attribute ``wellControlsName``.
 
 Each well is defined using a vertical VTK polyline going through the seven layers of the
 mesh with a perforation in each layer.
@@ -345,82 +369,15 @@ All elements are now in place to run GEOS.
 Running GEOS
 ------------------------------------
 
-The first few lines appearing to the console are indicating that the XML elements are read and registered correctly:
+After cloning GEOSDATA (see above), the simulation can be launched from the root of the repository with:
 
 .. code-block:: console
 
-  Adding Mesh: VTKMesh, mesh
-  Adding Mesh: InternalWell, wellProducer1
-  Adding Mesh: InternalWell, wellProducer2
-  Adding Mesh: InternalWell, wellProducer3
-  Adding Mesh: InternalWell, wellProducer4
-  Adding Mesh: InternalWell, wellInjector1
-  Adding Mesh: InternalWell, wellInjector2
-  Adding Mesh: InternalWell, wellInjector3
-  Adding Mesh: InternalWell, wellInjector4
-  Adding Mesh: InternalWell, wellInjector5
-  Adding Mesh: InternalWell, wellInjector6
-  Adding Mesh: InternalWell, wellInjector7
-  Adding Mesh: InternalWell, wellInjector8
-  Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
-  Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFlow
-  Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
-  Adding Event: PeriodicEvent, vtk
-  Adding Event: PeriodicEvent, timeHistoryOutput1
-  Adding Event: PeriodicEvent, timeHistoryOutput2
-  Adding Event: PeriodicEvent, timeHistoryOutput3
-  Adding Event: PeriodicEvent, timeHistoryOutput4
-  Adding Event: PeriodicEvent, solverApplications
-  Adding Event: PeriodicEvent, timeHistoryCollection1
-  Adding Event: PeriodicEvent, timeHistoryCollection2
-  Adding Event: PeriodicEvent, timeHistoryCollection3
-  Adding Event: PeriodicEvent, timeHistoryCollection4
-  Adding Event: PeriodicEvent, restarts
-  Adding Output: VTK, vtkOutput
-  Adding Output: TimeHistory, timeHistoryOutput1
-  Adding Output: TimeHistory, timeHistoryOutput2
-  Adding Output: TimeHistory, timeHistoryOutput3
-  Adding Output: TimeHistory, timeHistoryOutput4
-  Adding Output: Restart, restartOutput
-  Adding Object CellElementRegion named reservoir from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion1 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion2 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion3 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion4 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion5 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion6 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion7 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion8 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion9 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion10 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion11 from ObjectManager::Catalog.
-  Adding Object WellElementRegion named wellRegion12 from ObjectManager::Catalog.
-                
-This is followed by the creation of the 18553 hexahedral cells of the imported mesh.
-At this point, we are done with the case set-up and
-the code steps into the execution of the simulation itself:
+  geos -i inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_benchmark.xml
 
-.. code-block:: console
-
-  Time: 0s, dt:10000s, Cycle: 0
-      Attempt:  0, ConfigurationIter:  0, NewtonIter:  0
-      ( Rflow ) = ( 1.01e+01 ) ;     ( Rwell ) = ( 4.96e+00 ) ;     ( R ) = ( 1.13e+01 ) ; 
-      Attempt:  0, ConfigurationIter:  0, NewtonIter:  1
-      ( Rflow ) = ( 1.96e+00 ) ;     ( Rwell ) = ( 8.07e-01 ) ;     ( R ) = ( 2.12e+00 ) ; 
-      Last LinSolve(iter,res) = (  44, 8.96e-03 ) ; 
-      Attempt:  0, ConfigurationIter:  0, NewtonIter:  2
-      ( Rflow ) = ( 4.14e-01 ) ;     ( Rwell ) = ( 1.19e-01 ) ;     ( R ) = ( 4.31e-01 ) ; 
-      Last LinSolve(iter,res) = (  44, 9.50e-03 ) ; 
-      Attempt:  0, ConfigurationIter:  0, NewtonIter:  3
-      ( Rflow ) = ( 1.77e-02 ) ;     ( Rwell ) = ( 9.38e-03 ) ;     ( R ) = ( 2.00e-02 ) ; 
-      Last LinSolve(iter,res) = (  47, 8.69e-03 ) ; 
-      Attempt:  0, ConfigurationIter:  0, NewtonIter:  4
-      ( Rflow ) = ( 1.13e-04 ) ;     ( Rwell ) = ( 5.09e-05 ) ;     ( R ) = ( 1.24e-04 ) ; 
-      Last LinSolve(iter,res) = (  50, 9.54e-03 ) ; 
-      Attempt:  0, ConfigurationIter:  0, NewtonIter:  5
-      ( Rflow ) = ( 2.17e-08 ) ;     ( Rwell ) = ( 1.15e-07 ) ;     ( R ) = ( 1.17e-07 ) ; 
-      Last LinSolve(iter,res) = (  55, 2.71e-04 ) ; 
-  coupledFlowAndWells: Newton solver converged in less than 15 iterations, time-step required will be doubled.
+GEOS first reads the input files, imports the 18553 hexahedral cells of the Egg mesh, and creates the twelve wells.
+For each time step, the coupled solver then prints the Newton iterations with the residual norms of the reservoir equations (``Rflow``) and of the well equations (``Rwell``).
+With ``logLevel="1"`` on the well solver, a message is printed whenever a well switches from one constraint to another.
 
 ------------------------------------
 Visualization

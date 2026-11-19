@@ -741,6 +741,11 @@ public:
     /// string key for the enable iso thermal estimator flag
     static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
 
+    /// string key for the maximum absolute pressure change in a Newton iteration
+    static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
+    /// string key for the maximum absolute temperature change in a Newton iteration
+    static constexpr char const * maxAbsoluteTempChangeString() { return "maxAbsoluteTemperatureChange"; }
+
     // control data (not registered on the mesh)
     static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
 
@@ -857,6 +862,20 @@ public:
 
 protected:
   virtual void postRestartInitialization( )override;
+
+  void updateNumDofPerElement();
+
+  void shutClosedSegments( WellElementSubRegion & subRegion,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
+
+  void shutEntireWell( WellElementSubRegion & subRegion,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs );
+
+  virtual void resetShutInControlState() = 0;
 
   /**
    * @brief Logs the state and values of a specific well constraint.
@@ -1012,6 +1031,12 @@ protected:
   integer m_estimateSolution;
   integer m_enableIsoThermalEstimator;
   bool m_thermalEffectsEnabled;
+
+  /// maximum (absolute) change in pressure between two Newton iterations
+  real64 m_maxAbsolutePresChange;
+
+  /// maximum (absolute) change in temperature between two Newton iterations
+  real64 m_maxAbsoluteTempChange;
 
   WellNewtonSolver m_wellNewtonSolver;
 

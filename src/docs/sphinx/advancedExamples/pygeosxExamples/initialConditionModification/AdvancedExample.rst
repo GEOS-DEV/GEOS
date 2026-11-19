@@ -92,21 +92,29 @@ Running the Problem
 ---------------------------------
 
 To run the problem, you must use the specific version of python where pygeosx is installed.
-This is likeley located here:
+This is likely located here:
 
 .. code-block:: console
 
    GEOS/[build_dir]/lib/PYGEOSX/bin/python
 
-Note that you may need to manually install the pygeosx_tools package (and its pre-requisites) into this python distribution.
-To do so, you can run the following:
+Note that you may need to install the GEOS python tools (in particular the ``pygeos-tools`` and ``geos-xml-tools`` packages
+from the `geosPythonPackages <https://github.com/GEOS-DEV/geosPythonPackages>`_ repository) into this python distribution.
+When GEOS is configured with ``ENABLE_PYGEOSX=ON``, the following target installs them into the pygeosx environment:
 
 .. code-block:: console
 
-   cd GEOS/[build_dir]/lib/PYGEOSX/bin
-   pip install --upgrade ../../../../src/coreComponents/python/modules/pygeosx_tools_package/
+   cd GEOS/[build_dir]
+   make geosx_python_tools
 
-To run the code, you will call the pygeosx run script with python, and supply the typical geosx command-line arguments and any parallel arguments.
+Alternatively, you can install them manually from a clone of the geosPythonPackages repository:
+
+.. code-block:: console
+
+   git clone https://github.com/GEOS-DEV/geosPythonPackages.git
+   GEOS/[build_dir]/lib/PYGEOSX/bin/python -m pip install --upgrade geosPythonPackages/geos-utils geosPythonPackages/geos-xml-tools geosPythonPackages/pygeos-tools
+
+To run the code, you will call the pygeosx run script with python, and supply the typical geos command-line arguments and any parallel arguments.
 For example:
 
 .. code-block:: console

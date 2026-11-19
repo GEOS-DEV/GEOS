@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./compressible_2d_2fluids_hybrid_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseHybridFVM
+      name="flowSolver"
+      discretization="singlePhaseHybridMimetic"
+      targetRegions="{ Region1, Region2 }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </SinglePhaseHybridFVM>
+  </Solvers>
+
+</Problem>

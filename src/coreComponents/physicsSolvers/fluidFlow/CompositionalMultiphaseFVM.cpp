@@ -69,7 +69,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace compositionalMultiphaseUtilities; // for ScalingType
+using namespace flowSolverUtilities; // for ScalingType
 
 CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
@@ -613,6 +613,14 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
+  // In a coupled run the coupled solver's NonlinearSolverParameters overwrite the flow subsolver,
+  // so the lineSearchAction / scalingType compatibility is checked here at run time.
+  // A better fix is to check it at input time in CoupledSolver.
+  GEOS_ERROR_IF( m_scalingType == ScalingType::Local &&
+                 m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None,
+                 "line search is not supported for scalingType = Local; set lineSearchAction to None, including in the coupled solver",
+                 getDataContext() );
+
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     return scalingForSystemSolutionZFormulation( domain, dofManager, localSolution );
@@ -651,6 +659,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                      createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                                                 m_maxAbsolutePresChange,
                                                                                 m_maxRelativeTempChange,
+                                                                                m_maxAbsoluteTempChange,
                                                                                 m_maxCompFracChange,
                                                                                 m_maxRelativeCompDensChange,
                                                                                 pressure,
@@ -1439,9 +1448,9 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( faceBcLogMessage,
-                                                  getName(), time+dt, bc.getCatalogName(), bc.getName(),
-                                                  setName, faceManager.getName(), bc.getScale(), numTargetFaces ),
+                                        GEOS_FMT_RUNTIME( faceBcLogMessage,
+                                                          getName(), time+dt, bc.getCatalogName(), bc.getName(),
+                                                          setName, faceManager.getName(), bc.getScale(), numTargetFaces ),
                                         bc );
       }
 
@@ -1495,9 +1504,13 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
                                                              DofManager const & dofManager,
                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs,
-                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                                             CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                                                             stdMap< string, localIndex > const * const dR_dAperOffsets )
 {
   GEOS_MARK_FUNCTION;
+
+  GEOS_ERROR_IF( dR_dAperOffsets != nullptr,
+                 "CompositionalMultiphaseFVM does not support mesh-specific dR/dAperture row offsets." );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

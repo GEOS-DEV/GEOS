@@ -47,7 +47,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   {
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4,
                           GEOS_FMT( "{}{}",
-                                    GEOS_FMT( nodeCountError, N, faceNum ),
+                                    GEOS_FMT_RUNTIME( nodeCountError, N, faceNum ),
                                     generalMeshErrorAdvice ) );
     faceNodes[0] = elemNodes[0];
     faceNodes[1] = elemNodes[1];
@@ -59,7 +59,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   {
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), N,
                           GEOS_FMT( "{}{}",
-                                    GEOS_FMT( nodeCountError, N, faceNum ),
+                                    GEOS_FMT_RUNTIME( nodeCountError, N, faceNum ),
                                     generalMeshErrorAdvice ) );
     faceNodes[0] = elemNodes[0];
     for( localIndex i = 1; i <  N; ++i )
@@ -72,7 +72,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   {
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4,
                           GEOS_FMT( "{}{}",
-                                    GEOS_FMT( nodeCountError, N, faceNum ),
+                                    GEOS_FMT_RUNTIME( nodeCountError, N, faceNum ),
                                     generalMeshErrorAdvice ) );
     faceNodes[0] = elemNodes[0];
     faceNodes[1] = elemNodes[N];
@@ -84,7 +84,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   {
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4,
                           GEOS_FMT( "{}{}",
-                                    GEOS_FMT( nodeCountError, N, faceNum ),
+                                    GEOS_FMT_RUNTIME( nodeCountError, N, faceNum ),
                                     generalMeshErrorAdvice ) );
     faceNodes[0] = elemNodes[faceNum-2];
     faceNodes[1] = elemNodes[faceNum-1];
@@ -96,7 +96,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   {
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), N,
                           GEOS_FMT( "{}{}",
-                                    GEOS_FMT( nodeCountError, N, faceNum ),
+                                    GEOS_FMT_RUNTIME( nodeCountError, N, faceNum ),
                                     generalMeshErrorAdvice ) );
     for( localIndex i = 0; i <  N; ++i )
     {

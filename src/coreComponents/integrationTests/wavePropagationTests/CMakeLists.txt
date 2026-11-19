@@ -23,6 +23,13 @@ geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
 # Add gtest C++ based tests
+if( ENABLE_HIP )
+  # The wave solvers currently select no HIP finite-element types
+  # (WaveSolverTypeDefSEM/DG.hpp), and their setup consequently reaches
+  # explicitly unsupported finite-element dispatch paths. Do not register
+  # tests that cannot execute on HIP until those element formulations exist.
+  message( STATUS "Skipping wave propagation integration tests for HIP: finite-element HIP support is unavailable." )
+else()
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}
@@ -43,6 +50,7 @@ foreach(test ${gtest_geosx_tests})
                    COMMAND ${test_name} )
 
 endforeach()
+endif()
 
 # For some reason, BLT is not setting CUDA language for these source files
 if ( ENABLE_CUDA )

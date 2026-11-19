@@ -140,17 +140,11 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
       well.registerWellDataOnMesh( subRegion );
       m_numFluidPhases = well.numFluidPhases();
       m_numFluidComponents = well.numFluidComponents();
+      m_numDofPerWellElement = well.numDofPerWellElement();
+      m_numDofPerResElement = well.numDofPerResElement();
 
     } );
   } );
-  // 1. Set key dimensions of the problem
-  // Empty check needed to avoid errors when running in schema generation mode.
-
-  // 1 pressure + NC compositions + 1 connectionRate + temp if thermal
-  m_numDofPerWellElement = isThermal() ? m_numFluidComponents + 3 : m_numFluidComponents + 2;
-  // 1 pressure + NC compositions + temp if thermal
-  m_numDofPerResElement = isThermal() ? m_numFluidComponents + 2 : m_numFluidComponents + 1;
-
 }
 
 WellControls & WellManager::getWell( WellElementSubRegion const & subRegion )
@@ -672,16 +666,16 @@ WellManager::scalingForSystemSolution( DomainPartition & domain,
                                                                      WellElementSubRegion & subRegion )
 
       {
-        CompositionalMultiphaseWell * wellControls = dynamic_cast< CompositionalMultiphaseWell * >(&getWellControls ( subRegion ));
-        localScalingFactor = wellControls->scalingForLocalSystemSolution( subRegion,
-                                                                          dofManager,
-                                                                          localMaxDeltaPres,
-                                                                          localMaxDeltaCompDens,
-                                                                          localMaxDeltaTemp,
-                                                                          localMinPresScalingFactor,
-                                                                          localMinCompDensScalingFactor,
-                                                                          localMinTempScalingFactor,
-                                                                          localSolution );
+        CompositionalMultiphaseWell & wellControls = dynamicCast< CompositionalMultiphaseWell & >( getWellControls( subRegion ) );
+        localScalingFactor = wellControls.scalingForLocalSystemSolution( subRegion,
+                                                                         dofManager,
+                                                                         localMaxDeltaPres,
+                                                                         localMaxDeltaCompDens,
+                                                                         localMaxDeltaTemp,
+                                                                         localMinPresScalingFactor,
+                                                                         localMinCompDensScalingFactor,
+                                                                         localMinTempScalingFactor,
+                                                                         localSolution );
         maxDeltaPres = LvArray::math::max( localMaxDeltaPres, maxDeltaPres );
         maxDeltaCompDens = LvArray::math::max( localMaxDeltaCompDens, maxDeltaCompDens );
         maxDeltaTemp = LvArray::math::max( localMaxDeltaTemp, maxDeltaTemp );
@@ -733,8 +727,61 @@ WellManager::scalingForSystemSolution( DomainPartition & domain,
   }
   else
   {
-    // Single phase well scaling- not implemented yet
-    scalingFactor=1.0;
+    real64 maxDeltaPres = 0.0, maxDeltaTemp = 0.0;
+    real64 minPresScalingFactor = 1.0, minTempScalingFactor = 1.0;
+    real64 localMaxDeltaPres = 0.0, localMaxDeltaTemp = 0.0;
+    real64 localMinPresScalingFactor = 1.0, localMinTempScalingFactor = 1.0;
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     WellElementSubRegion & subRegion )
+
+      {
+        SinglePhaseWell & wellControls = dynamicCast< SinglePhaseWell & >( getWellControls( subRegion ) );
+        localScalingFactor = wellControls.scalingForLocalSystemSolution( subRegion,
+                                                                         dofManager,
+                                                                         localMaxDeltaPres,
+                                                                         localMaxDeltaTemp,
+                                                                         localMinPresScalingFactor,
+                                                                         localMinTempScalingFactor,
+                                                                         localSolution );
+        maxDeltaPres = LvArray::math::max( localMaxDeltaPres, maxDeltaPres );
+        maxDeltaTemp = LvArray::math::max( localMaxDeltaTemp, maxDeltaTemp );
+        minPresScalingFactor = LvArray::math::min( localMinPresScalingFactor, minPresScalingFactor );
+        minTempScalingFactor = LvArray::math::min( localMinTempScalingFactor, minTempScalingFactor );
+        scalingFactor = LvArray::math::min( localScalingFactor, scalingFactor );
+
+      } );
+    } );
+
+    scalingFactor = MpiWrapper::min( scalingFactor );
+    maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
+    minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max well pressure change: {} Pa (before scaling)",
+                                     getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Min well pressure scaling factor: {}",
+                                     getName(), minPresScalingFactor ) );
+
+    if( m_isThermal )
+    {
+      maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+      minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Max well temperature change: {} K (before scaling)",
+                                       getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Min well temperature scaling factor: {}",
+                                       getName(), minTempScalingFactor ) );
+    }
   }
   return LvArray::math::max( scalingFactor, m_minScalingFactor );
 

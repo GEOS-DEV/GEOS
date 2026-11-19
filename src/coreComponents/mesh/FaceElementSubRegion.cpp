@@ -236,7 +236,7 @@ void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
 
-  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=, this] ( localIndex const k )
   {
     calculateSingleElementGeometricQuantities( k, faceArea );
   } );
@@ -497,7 +497,7 @@ void fixNeighborMappingsInconsistency( GEOS_MAYBE_UNUSED string const & fracture
         }
         else
         {
-          GEOS_ERROR_IF( !matchStraight, GEOS_FMT( mappingInconsistency, fractureName ) );
+          GEOS_ERROR_IF( !matchStraight, GEOS_FMT_RUNTIME( mappingInconsistency, fractureName ) );
         }
       }
     }

@@ -225,8 +225,10 @@ real64 computeDiameter( POINT_COORDS_TYPE points,
  * @param[out] normal normal to the face
  * @param[in] areaTolerance tolerance used in the geometric computations
  * @return area of the convex 3D polygon
- * @details if area < - areaTolerance, this function will throw an error,
- *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
+ * @details The returned center is the area centroid (exact for planar polygons), computed from a
+ *          triangle fan anchored at the vertex average so it is independent of the node ordering.
+ *          If area < - areaTolerance, this function will throw an error,
+ *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero.
  */
 template< typename CENTER_TYPE, typename NORMAL_TYPE >
 GEOS_HOST_DEVICE
@@ -247,6 +249,12 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
 
   real64 current[ 3 ], next[ 3 ], origin[ 3 ], crossProduct[ 3 ];
 
+  // first moments of the fan triangles, accumulated in one pass; the projection on the
+  // normal and the shift of the fan anchor to the vertex average are applied after the loop
+  real64 pairSum[ 3 ], edgeDiff[ 3 ];
+  real64 crossMoment[ 3 ][ 3 ] = {{ 0 }};
+  real64 diffMoment[ 3 ][ 3 ] = {{ 0 }};
+
   LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ numberOfPoints - 1 ] ] );
   LvArray::tensorOps::copy< 3 >( origin, points[ pointsIndices[ 0 ]] );
 
@@ -261,16 +269,34 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
 
     LvArray::tensorOps::add< 3 >( normal, crossProduct );
     LvArray::tensorOps::add< 3 >( center, next );
+
+    // crossMoment += (v_a + v_b) (x) (v_a x v_b), diffMoment += (v_a + v_b) (x) (v_a - v_b)
+    LvArray::tensorOps::copy< 3 >( pairSum, current );
+    LvArray::tensorOps::add< 3 >( pairSum, next );
+    LvArray::tensorOps::copy< 3 >( edgeDiff, current );
+    LvArray::tensorOps::subtract< 3 >( edgeDiff, next );
+    LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( crossMoment, pairSum, crossProduct );
+    LvArray::tensorOps::Rij_add_AiBj< 3, 3 >( diffMoment, pairSum, edgeDiff );
   }
 
   area = LvArray::tensorOps::l2Norm< 3 >( normal );
   LvArray::tensorOps::scale< 3 >( center, 1.0 / numberOfPoints );
-  LvArray::tensorOps::scaledAdd< 3 >( center, origin, 1. );
 
   if( area > areaTolerance )
   {
     LvArray::tensorOps::normalize< 3 >( normal );
     area *= 0.5;
+
+    // area centroid (exact for planar polygons), fan anchored at the vertex average G = origin + d:
+    // center = origin + d/3 + ( crossMoment . n + diffMoment . (n x d) ) / (6 area)
+    real64 nxd[ 3 ], firstMoment[ 3 ] = { 0.0 };
+    LvArray::tensorOps::crossProduct( nxd, normal, center );
+    LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( firstMoment, crossMoment, normal );
+    LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( firstMoment, diffMoment, nxd );
+
+    LvArray::tensorOps::scale< 3 >( center, 1.0 / 3.0 );
+    LvArray::tensorOps::scaledAdd< 3 >( center, firstMoment, 1.0 / ( 6.0 * area ) );
+    LvArray::tensorOps::scaledAdd< 3 >( center, origin, 1. );
   }
   else if( area < -areaTolerance )
   {

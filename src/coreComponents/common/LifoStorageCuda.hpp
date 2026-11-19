@@ -165,7 +165,7 @@ private:
   {
     LIFO_MARK_FUNCTION;
     // The copy to host will only start when the data is copied on device buffer
-    baseLifo::m_hostDeque.getStream().wait_for( const_cast< camp::resources::Event * >( &m_pushToDeviceEvents[id] ) );
+    baseLifo::m_hostDeque.getStream().wait_for( m_pushToDeviceEvents[id] );
     baseLifo::m_hostDeque.emplaceFrontFromBack( m_deviceDeque );
 
     if( baseLifo::m_maxNumberOfBuffers - id > (int)(m_deviceDeque.capacity() + baseLifo::m_hostDeque.capacity()) )

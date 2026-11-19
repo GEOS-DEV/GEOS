@@ -103,14 +103,18 @@ jobs:
       # frozen at the time the workflow was first triggered, so labels
       # added after that first run are invisible to re-runs. The curl
       # call below always returns current state, which is required for
-      # CI re-runs to pick up newly added labels (e.g. "ci: run CUDA
+      # CI re-runs to pick up newly added labels (e.g. "ci: run device
       # builds"). Do not replace with github.event.pull_request.labels.
       # The Authorization header is required for private repos/forks;
       # GITHUB_TOKEN is provided automatically to every workflow run.
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
+        # The device jobs query the same PR endpoint concurrently. Retry
+        # transient GitHub API throttling so an optional build does not turn a
+        # healthy matrix into a failure before compilation starts.
         pr_json=$(curl --fail --silent --show-error \
+          --retry 5 --retry-all-errors --retry-delay 5 --retry-max-time 90 \
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
@@ -131,7 +135,7 @@ jobs:
         ls -la ./
 
     - name: Checkout Repository
-      uses: actions/checkout@v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
@@ -139,7 +143,7 @@ jobs:
 
     - id: 'auth'
       if: ${{ (inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET) || (inputs.USE_SCCACHE && !startsWith(inputs.RUNS_ON, 'streak2')) }}
-      uses: 'google-github-actions/auth@v2.1.10'
+      uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
@@ -158,11 +162,12 @@ jobs:
 
     - name: 'Set up Cloud SDK'
       if: inputs.UPLOAD_TO_GCP && inputs.GCP_BUCKET
-      uses: 'google-github-actions/setup-gcloud@v2.1.4'
+      uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
       with:
         version: '>= 363.0.0'
 
     - name: Build, test, deploy.
+      id: build_test_deploy
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
@@ -188,6 +193,11 @@ jobs:
         script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
         if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -z "${{ inputs.GCP_BUCKET }}" ]]; then
+          echo "::group::Baseline and log uploads"
+          echo "Status: configuration error"
+          echo "Google Cloud configuration: bucket=not set, project=${GCP_PROJECT:-not set}"
+          echo "No files were uploaded."
+          echo "::endgroup::"
           echo "::error::UPLOAD_TO_GCP=true requires GCP_BUCKET to be set."
           exit 1
         fi
@@ -264,7 +274,7 @@ jobs:
         # Trilinos
         ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }}
         docker_args+=(-e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF})
-        docker_args+=(-e ENABLE_HYPREDRV=${ENABLE_HYPREDRV:-ON})
+        docker_args+=(-e ENABLE_HYPREDRV=${ENABLE_HYPREDRV:-OFF})
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
         docker_args+=(-e GEOS_BUILD_SHARED_LIBS=${{ inputs.BUILD_SHARED_LIBS }})
@@ -366,13 +376,36 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
 
+        echo "exit_status=${EXIT_STATUS}" >> "${GITHUB_OUTPUT}"
+        echo "data_basename=${DATA_BASENAME}" >> "${GITHUB_OUTPUT}"
+        echo "data_exchange_dir=${DATA_EXCHANGE_DIR}" >> "${GITHUB_OUTPUT}"
+
+        exit ${EXIT_STATUS}
+
+    - name: Baseline and log uploads
+      if: ${{ always() && steps.build_test_deploy.outputs.data_basename != '' }}
+      env:
+        GEOS_BUILD_EXIT_STATUS: ${{ steps.build_test_deploy.outputs.exit_status }}
+        GEOS_DATA_BASENAME: ${{ steps.build_test_deploy.outputs.data_basename }}
+        GEOS_DATA_EXCHANGE_DIR: ${{ steps.build_test_deploy.outputs.data_exchange_dir }}
+      run: |
+        EXIT_STATUS=${GEOS_BUILD_EXIT_STATUS:-1}
+        DATA_BASENAME=${GEOS_DATA_BASENAME}
+        DATA_BASENAME_WE=${DATA_BASENAME%%.*}
+        DATA_EXCHANGE_DIR=${GEOS_DATA_EXCHANGE_DIR}
+        UPLOAD_HEADER_PRINTED=false
+        GCP_CREDENTIALS_STATUS="not set"
+        if [[ -n "${GOOGLE_APPLICATION_CREDENTIALS:-}" ]]; then
+          GCP_CREDENTIALS_STATUS=configured
+        fi
+
         if [[ -n "${DATA_BASENAME}" ]]; then
           if [ -f "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" ]; then
             echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
           fi
 
-          if [ -f "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" ]; then
-            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+          if [ -f "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz" ]; then
+            echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz"
           fi
 
           if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
@@ -381,8 +414,8 @@ jobs:
             mkdir -p "${TARGET_DIR}"
 
             for file in \
-              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz" \
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz"
             do
               if [ -f "${file}" ]; then
                 cp "${file}" "${TARGET_DIR}"
@@ -391,31 +424,58 @@ jobs:
             done
           fi
 
-          if [ ! -f "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" ]; then
+          if [ ! -f "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz" ]; then
             echo "No new baseline archive was generated."
           fi
         fi
-
         if [[ "${{ inputs.UPLOAD_TO_GCP }}" == "true" && -n "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
-            CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
+            if ! CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True; then
+              echo "Status: upload configuration failed"
+              echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}"
+              exit 1
+            fi
 
             for file in \
               "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" \
-              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}"
+              "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz" \
+              "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME_WE}.tar.gz"
             do
               if [ -f "${file}" ]; then
-                CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "${file}" gs://${{ inputs.GCP_BUCKET }}/
-                echo "Uploaded https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
+                case "$(basename "${file}")" in
+                  baseline_*)
+                    UPLOAD_LABEL=baselines
+                    ;;
+                  test_logs_*)
+                    UPLOAD_LABEL=logs
+                    ;;
+                  *)
+                    UPLOAD_LABEL=artifact
+                    ;;
+                esac
+
+                if ! CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "${file}" gs://${{ inputs.GCP_BUCKET }}/; then
+                  echo "Status: upload failed"
+                  echo "Google Cloud configuration: bucket=gs://${{ inputs.GCP_BUCKET }}, project=${GCP_PROJECT:-not set}, credentials=${GCP_CREDENTIALS_STATUS}, access=publicRead"
+                  echo
+                  echo "Failed upload:"
+                  echo "  ${UPLOAD_LABEL}: gs://${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
+                  exit 1
+                fi
+
+                if [[ "${UPLOAD_HEADER_PRINTED}" != "true" ]]; then
+                  echo
+                  echo "Users can download uploaded files at:"
+                  UPLOAD_HEADER_PRINTED=true
+                fi
+                echo "  ${UPLOAD_LABEL}:"
+                echo "    https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/$(basename "${file}")"
               fi
             done
           fi
         else
           echo "GCP upload disabled."
         fi
-
-        exit ${EXIT_STATUS}
 
     - name: Prepare pip for Codecov
       if: inputs.CODE_COVERAGE
@@ -434,7 +494,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v7.0.0
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       with:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true

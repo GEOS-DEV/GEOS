@@ -23,30 +23,8 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 
-
 using namespace geos;
 
-void writeTableToFile( string const & filename, char const * str )
-{
-  std::ofstream os( filename );
-  ASSERT_TRUE( os.is_open() );
-  os << str;
-  os.close();
-}
-
-void removeFile( string const & filename )
-{
-  int const ret = std::remove( filename.c_str() );
-  ASSERT_TRUE( ret == 0 );
-}
-char const * co2flash = "FlashModel CO2Solubility  1e6 7.5e7 5e5 299.15 369.15 10 0";
-char const * pvtLiquid = "DensityFun PhillipsBrineDensity 1e6 7.5e7 5e5 299.15 369.15 10 0\n"
-                         "ViscosityFun PhillipsBrineViscosity 0\n"
-                         "EnthalpyFun BrineEnthalpy 1e6 7.5e7 5e5 299.15 369.15 10 0\n";
-
-char const * pvtGas = "DensityFun SpanWagnerCO2Density 1e6 7.5e7 5e5 299.15 369.15 10\n"
-                      "ViscosityFun FenghourCO2Viscosity 1e6 7.5e7 5e5 299.15 369.15 10\n"
-                      "EnthalpyFun CO2Enthalpy 1e6 7.5e7 5e5 299.15 369.15 10\n";
 char const * xmlInput =
   R"xml(
 
@@ -206,8 +184,10 @@ char const * xmlInput =
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt"/>
+      pressureCoordinates="{1e6, 7.5e7}"
+      pressureInterval="5e5"
+      temperatureCoordinates="{299.15, 369.15}"
+      temperatureInterval="10" />
 
     <BrooksCoreyRelativePermeability
       name="relperm"
@@ -293,7 +273,8 @@ TEST( testTableFunctionsOutput, testOutputFiles )
   std::filesystem::path f2{"fluid_phaseModel2_SpanWagnerCO2Density_table.csv"};
   std::filesystem::path f3{"fluid_phaseModel2_FenghourCO2Viscosity_table.csv"};
   std::filesystem::path f4{ "fluid_CO2Solubility_co2Dissolution_table.csv" };
-  std::filesystem::path f5{ "fluid_phaseModel1_PhillipsBrineViscosity_table.csv" };
+  std::filesystem::path f5{ "fluid_CO2Solubility_waterVaporization_table.csv" };
+  std::filesystem::path f6{ "fluid_phaseModel1_PhillipsBrineViscosity_table.csv" };
   // setup
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
@@ -305,20 +286,18 @@ TEST( testTableFunctionsOutput, testOutputFiles )
   EXPECT_TRUE( std::filesystem::exists( f2 ));
   EXPECT_TRUE( std::filesystem::exists( f3 ));
   EXPECT_TRUE( std::filesystem::exists( f4 ));
-  EXPECT_FALSE( std::filesystem::exists( f5 ));
+  EXPECT_TRUE( std::filesystem::exists( f5 ));
+  EXPECT_FALSE( std::filesystem::exists( f6 ));
 
-  std::filesystem::remove( "fluid_phaseModel1_PhillipsBrineDensity_table.csv" );
-  std::filesystem::remove( "fluid_phaseModel2_SpanWagnerCO2Density_table.csv" );
-  std::filesystem::remove( "fluid_phaseModel2_FenghourCO2Viscosity_table.csv" );
-  std::filesystem::remove( "fluid_CO2Solubility_co2Dissolution_table.csv" );
-  std::filesystem::remove( "fluid_phaseModel1_PhillipsBrineViscosity_table.csv" );
+  std::filesystem::remove( f1 );
+  std::filesystem::remove( f2 );
+  std::filesystem::remove( f3 );
+  std::filesystem::remove( f4 );
+  std::filesystem::remove( f5 );
 }
 
 int main( int argc, char * * argv )
 {
-  writeTableToFile( "co2flash.txt", co2flash );
-  writeTableToFile( "pvtliquid.txt", pvtLiquid );
-  writeTableToFile( "pvtgas.txt", pvtGas );
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
 

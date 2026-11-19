@@ -26,13 +26,23 @@ struct DurationCase
   string m_expectedString;
   SystemClock::duration m_systemDuration;
   double m_simDuration;
+  bool m_systemDurationIsRepresentable;
 
   template< class DURATION >
   DurationCase( string_view expectedString, DURATION durationValue ):
     m_expectedString( expectedString ),
-    m_systemDuration( std::chrono::duration_cast< SystemClock::duration >( durationValue ) ),
-    m_simDuration( std::chrono::duration_cast< std::chrono::duration< double > >( durationValue ).count() )
-  {}
+    m_systemDuration( SystemClock::duration::zero() ),
+    m_simDuration( std::chrono::duration_cast< std::chrono::duration< double > >( durationValue ).count() ),
+    m_systemDurationIsRepresentable( false )
+  {
+    double const maxSystemTime = std::chrono::duration_cast< std::chrono::duration< double > >( SystemClock::duration::max() ).count();
+    double const minSystemTime = std::chrono::duration_cast< std::chrono::duration< double > >( SystemClock::duration::min() ).count();
+    m_systemDurationIsRepresentable = minSystemTime <= m_simDuration && m_simDuration <= maxSystemTime;
+    if( m_systemDurationIsRepresentable )
+    {
+      m_systemDuration = std::chrono::duration_cast< SystemClock::duration >( durationValue );
+    }
+  }
 };
 
 TEST( Units, SystemDurationFormatTest )
@@ -140,15 +150,13 @@ TEST( Units, SystemDurationFormatTest )
                                      duration_cast< seconds >( maxDuration ).count() );
 
   // Duration with more than 292 years are not supported by the SystemClock type.
-  double maxSystemTime = duration_cast< seconds, double, std::ratio< 1 > >( SystemClock::duration::max() ).count();
-
   for( DurationCase const & durationCase : durationCases )
   {
     // testing "double" typed time (which has a limit that is way higher than the tests cases)
     EXPECT_STREQ( durationCase.m_expectedString.c_str(),
                   TimeFormatInfo::fromSeconds( durationCase.m_simDuration ).toString().c_str() ) << errorInfo;
 
-    if( 0.0 < durationCase.m_simDuration && durationCase.m_simDuration <= maxSystemTime )
+    if( durationCase.m_systemDurationIsRepresentable && 0.0 < durationCase.m_simDuration )
     {
       EXPECT_STREQ( durationCase.m_expectedString.c_str(),
                     TimeFormatInfo::fromDuration( durationCase.m_systemDuration ).toString().c_str() ) << errorInfo;
