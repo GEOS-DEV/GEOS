@@ -33,6 +33,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/FaceManager.hpp"
+#include "mesh/SurfaceElementSubRegion.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
@@ -185,6 +186,8 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.1 ).
     setDescription( "Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check" );
+
+  addLogLevel< logInfo::SolverInitialization >();
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< physicsSolverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
@@ -437,6 +440,20 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
   globalIndex numElemsBelowPoreVolumeThreshold = 0;
   globalIndex numElemsAbovePorosityThreshold = 0;
 
+  // Pore volume statistics over the owned elements: bulk cells together, each fracture region separately.
+  // The pore volume is porosity * ( volume + deltaVolume ), so that the hydraulic aperture of the fractures is accounted for
+  struct PoreVolumeStats
+  {
+    real64 sum = 0.0;
+    real64 min = LvArray::NumericLimits< real64 >::max;
+    real64 max = 0.0;
+    globalIndex numElems = 0;
+  };
+  PoreVolumeStats bulkPoreVolumes;
+  std::map< string, PoreVolumeStats > fracturePoreVolumes;
+  // ratio of the bulk mean pore volume to the fracture minimum pore volume above which a warning is issued
+  real64 constexpr maxBulkToFracturePoreVolumeRatio = 1.0e6;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & regionNames )
@@ -451,6 +468,31 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView1d< real64 const > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
+      RAJA::ReduceSum< parallelDeviceReduce, real64 > poreVolumeSum( 0.0 );
+      RAJA::ReduceMin< parallelDeviceReduce, real64 > poreVolumeMin( LvArray::NumericLimits< real64 >::max );
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > poreVolumeMax( 0.0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > numOwnedElems( 0 );
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          real64 const poreVolume = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] );
+          poreVolumeSum += poreVolume;
+          poreVolumeMin.min( poreVolume );
+          poreVolumeMax.max( poreVolume );
+          numOwnedElems += 1;
+        }
+      } );
+
+      PoreVolumeStats & stats = ( dynamicCast< SurfaceElementSubRegion const * >( &subRegion ) != nullptr )
+                                ? fracturePoreVolumes[ subRegion.getParent().getParent().getName() ]
+                                : bulkPoreVolumes;
+      stats.sum += poreVolumeSum.get();
+      stats.min = LvArray::math::min( stats.min, poreVolumeMin.get() );
+      stats.max = LvArray::math::max( stats.max, poreVolumeMax.get() );
+      stats.numElems += numOwnedElems.get();
 
       real64 minPoreVolumeInSubRegion = 0.0;
       real64 maxPorosityInSubRegion = 0.0;
@@ -495,6 +537,52 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
                       GEOS_FMT( "\nWarning! The mesh contains {} elements with a porosity above 1."
                                 "\nThe maximum porosity is {}.\n",
                                 numElemsAbovePorosityThreshold, maxPorosity ) );
+
+  // the region structure is replicated on every rank, so the map keys (and their order) are the same on all ranks
+  auto const reduceStats = []( PoreVolumeStats const & local )
+  {
+    PoreVolumeStats global;
+    global.sum = MpiWrapper::sum( local.sum );
+    global.min = MpiWrapper::min( local.min );
+    global.max = MpiWrapper::max( local.max );
+    global.numElems = MpiWrapper::sum( local.numElems );
+    return global;
+  };
+
+  PoreVolumeStats const bulk = reduceStats( bulkPoreVolumes );
+  real64 const bulkMean = ( bulk.numElems > 0 ) ? bulk.sum / bulk.numElems : 0.0;
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SolverInitialization,
+                         GEOS_FMT( "{}: pore volume of the bulk cells: mean = {:.4e} m^3, min = {:.4e} m^3, max = {:.4e} m^3 ({} elements)",
+                                   getName(), bulkMean, bulk.min, bulk.max, bulk.numElems ) );
+  for( auto const & [regionName, localStats] : fracturePoreVolumes )
+  {
+    PoreVolumeStats const fracture = reduceStats( localStats );
+    if( fracture.numElems == 0 )
+    {
+      continue;
+    }
+    real64 const fractureMean = fracture.sum / fracture.numElems;
+    GEOS_LOG_LEVEL_RANK_0( logInfo::SolverInitialization,
+                           GEOS_FMT( "{}: pore volume of the fracture region '{}': mean = {:.4e} m^3, min = {:.4e} m^3, max = {:.4e} m^3 ({} elements)",
+                                     getName(), regionName, fractureMean, fracture.min, fracture.max, fracture.numElems ) );
+
+    // A large contrast makes the fracture mass balance rows badly scaled with respect to the bulk ones
+    // (fracture pressure slaved to the neighboring cells, poor control of these rows by the linear solver tolerance).
+    // The fracture minimum is used (it is <= the mean), so that a few very small fracture cells are not hidden by the mean
+    GEOS_LOG_RANK_0_IF( bulk.numElems > 0 && fracture.min * maxBulkToFracturePoreVolumeRatio < bulkMean,
+                        GEOS_FMT( "\nWarning! The ratio of the mean pore volume of the bulk cells to the minimum pore volume "
+                                  "of the fracture region '{}' is {:.2e}, above {:.0e} (mean-to-mean ratio: {:.2e})."
+                                  "\n  bulk cells:     mean = {:.4e} m^3, min = {:.4e} m^3, max = {:.4e} m^3"
+                                  "\n  fracture cells: mean = {:.4e} m^3, min = {:.4e} m^3, max = {:.4e} m^3"
+                                  "\nThis contrast may make the nonlinear and linear solvers struggle: "
+                                  "consider increasing the fracture hydraulic aperture and/or porosity.\n",
+                                  regionName,
+                                  ( fracture.min > 0.0 ) ? bulkMean / fracture.min : LvArray::NumericLimits< real64 >::max,
+                                  maxBulkToFracturePoreVolumeRatio,
+                                  ( fractureMean > 0.0 ) ? bulkMean / fractureMean : LvArray::NumericLimits< real64 >::max,
+                                  bulkMean, bulk.min, bulk.max,
+                                  fractureMean, fracture.min, fracture.max ) );
+  }
 }
 
 void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
