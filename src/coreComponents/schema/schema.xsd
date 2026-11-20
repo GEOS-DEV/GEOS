@@ -5046,6 +5046,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
+		<!--maxAbsoluteTemperatureChange => Maximum (absolute) temperature change in a Newton iteration-->
+		<xsd:attribute name="maxAbsoluteTemperatureChange" type="real64" default="-1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
 		<!--maxSequentialTemperatureChange => Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check-->
