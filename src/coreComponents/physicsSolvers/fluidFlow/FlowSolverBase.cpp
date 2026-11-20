@@ -487,7 +487,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
       } );
 
       PoreVolumeStats & stats = ( dynamicCast< SurfaceElementSubRegion const * >( &subRegion ) != nullptr )
-                                ? fracturePoreVolumes[ subRegion.getParent().getParent().getName() ]
+                                ? fracturePoreVolumes.get_inserted( subRegion.getParent().getParent().getName() )
                                 : bulkPoreVolumes;
       stats.sum += poreVolumeSum.get();
       stats.min = LvArray::math::min( stats.min, poreVolumeMin.get() );
