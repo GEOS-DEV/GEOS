@@ -21,6 +21,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 #define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSAUGMENTEDLAGRANGIANCONTACT_HPP_
 
+#include "common/format/Format.hpp"
+#include "common/logger/Logger.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
 
 namespace geos
@@ -29,6 +31,9 @@ namespace geos
 class SolidMechanicsAugmentedLagrangianContact : public ContactSolverBase
 {
 public:
+  /// The contact is stabilized with face bubble functions, which carry their own (bubble displacement) DOFs
+  static constexpr bool hasFaceBubbles = true;
+
   SolidMechanicsAugmentedLagrangianContact( const string & name,
                                             Group * const parent );
 
@@ -75,6 +80,14 @@ public:
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
                                      DomainPartition & domain ) override final;
+
+  /**
+   * @brief Rewind the contact state to the beginning of the time step (e.g. on a time-step cut):
+   *        nodal and bubble displacements, tractions, iterative penalty coefficients,
+   *        displacement jumps and fracture states.
+   * @param domain the domain partition
+   */
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
@@ -209,6 +222,17 @@ public:
    */
   void createBubbleCellList( DomainPartition & domain ) const;
 
+  /**
+   * @brief Recompute face and element geometric quantities (normals, areas, centers, volumes) after mesh
+   * topology changes, and reorder kf1 fracture nodes to match kf0 for the conforming contact kernels.
+   * @param domain The physical domain object
+   *
+   * This is called from setupSystem() for the standalone contact solver. Coupled solvers built on top of this
+   * contact solver (e.g. poromechanics conforming fractures) that do not route through setupSystem() must call
+   * this explicitly before assembling contact-dependent sparsity/terms.
+   */
+  void updateFractureGeometry( DomainPartition & domain );
+
 private:
 
   /**
@@ -216,6 +240,17 @@ private:
    * @param meshBodies the group containing the mesh bodies
    */
   void validateTetrahedralQuadrature( Group & meshBodies );
+
+  /**
+   * @brief Validate the solid model of every target cell region for the face-bubble kernels.
+   *        These kernels (Abb/Abu/Aub and the bubble residual built from the stored stress) are dispatched on
+   *        ElasticIsotropic and assume a linear isotropic elastic response of the bubble enrichment:
+   *        - a model not derived from ElasticIsotropic cannot be dispatched: input error;
+   *        - a derived model (e.g. plasticity, damage) is accepted with a warning, the bubble enrichment being then
+   *          exact only while the cells along the fracture stay elastic.
+   * @param meshBodies the group containing the mesh bodies
+   */
+  void validateFaceBubbleSolidModel( Group & meshBodies );
 
   /**
    * @brief add the number of non-zero elements induced by the coupling between nodal and bubble displacement.
@@ -277,6 +312,8 @@ private:
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
     constexpr static char const * dispJumpUpdPenaltyString() { return "dispJumpUpdPenalty"; }
+
+    constexpr static char const * iterativePenalty_nString() { return "iterativePenalty_n"; }
 
     constexpr static char const * simultaneousString() { return "simultaneous"; }
 

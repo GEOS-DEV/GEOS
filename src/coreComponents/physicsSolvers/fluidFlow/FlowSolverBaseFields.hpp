@@ -177,6 +177,14 @@ DECLARE_FIELD( hydraulicAperture,
                WRITE_AND_READ,
                "Hydraulic aperture" );
 
+DECLARE_FIELD( dHydraulicAperture_dNormalJump,
+               "dHydraulicAperture_dNormalJump",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Derivative of the hydraulic aperture with respect to the normal displacement jump" );
+
 DECLARE_FIELD( gravityCoefficient,
                "gravityCoefficient",
                array1d< real64 >,

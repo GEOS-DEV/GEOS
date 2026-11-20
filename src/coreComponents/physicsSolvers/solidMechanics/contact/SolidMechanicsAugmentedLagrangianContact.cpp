@@ -19,6 +19,9 @@
 
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
+#include "common/logger/Logger.hpp"
+#include "constitutive/solid/SolidBase.hpp"
+#include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "linearAlgebra/utilities/SparsityPatternUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -183,6 +186,16 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
         setDescription( "An array that stores the displacement jumps used to update the penalty coefficients." ).
         reference().resizeDimension< 1 >( 3 );
 
+      // Traction and penalty coefficients at the beginning of the time step, restored on a time-step cut
+      subRegion.registerField< contact::traction_n >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
+
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( getName()).
+        setDescription( "An array that stores the penalty coefficients at the beginning of the time step." ).
+        reference().resizeDimension< 1 >( 5 );
+
       // Register pressure fields for sequential poromechanics coupling and stress initialization
       // In coupled poromechanics, the flow solver will overwrite these with actual values
       subRegion.registerField< flow::pressure >( getName() ).
@@ -202,6 +215,41 @@ void SolidMechanicsAugmentedLagrangianContact::initializePostInitialConditionsPr
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   validateTetrahedralQuadrature( domain.getMeshBodies() );
+  validateFaceBubbleSolidModel( domain.getMeshBodies() );
+}
+
+void SolidMechanicsAugmentedLagrangianContact::validateFaceBubbleSolidModel( Group & meshBodies )
+{
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
+                                                   MeshLevel const & mesh,
+                                                   string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             CellElementSubRegion const & subRegion )
+    {
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+      constitutive::ConstitutiveBase const & solid = subRegion.getConstitutiveModel( solidName );
+
+      string const & regionName = subRegion.getParent().getParent().getName();
+
+      // The face-bubble kernels are dispatched on ElasticIsotropic: other models cannot be handled at all
+      GEOS_THROW_IF( dynamicCast< ElasticIsotropic const * >( &solid ) == nullptr,
+                     GEOS_FMT( "{}: the face-bubble contributions of the augmented Lagrangian contact are only implemented "
+                               "for {} solids and the models derived from it, but region '{}' uses '{}' of type {}.",
+                               getName(), ElasticIsotropic::catalogName(), regionName, solidName, solid.getCatalogName() ),
+                     InputError );
+
+      // Derived (e.g. plastic or damage) models pass the dispatch, but the bubble enrichment then responds elastically
+      if( solid.getCatalogName() != ElasticIsotropic::catalogName() )
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: region '{}' uses '{}' of type {}. The face-bubble enrichment of the augmented "
+                                   "Lagrangian contact uses the elastic stiffness and a linear elastic response, so it is exact "
+                                   "only while the cells along the fracture stay elastic (no plastic flow or damage there).",
+                                   getName(), regionName, solidName, solid.getCatalogName() ) );
+      }
+    } );
+  } );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::validateTetrahedralQuadrature( Group & meshBodies )
@@ -284,6 +332,15 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
   GEOS_MARK_FUNCTION;
 
+  updateFractureGeometry( domain );
+
+  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+}
+
+void SolidMechanicsAugmentedLagrangianContact::updateFractureGeometry( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
   // Recompute geometric quantities (face normals, areas) after mesh topology changes.
   // This is critical for distorted/non-axis-aligned meshes and after fracture events.
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -327,8 +384,6 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
   // Create the list of cell elements that they are enriched with bubble functions.
   createBubbleCellList( domain );
-
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
@@ -500,6 +555,117 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                                          true );
   } );
 
+  // Store the traction, the penalty coefficients, the displacement jumps and the fracture states
+  // the step starts with, see resetStateToBeginningOfStep (oldFractureState is not in restart files,
+  // so it cannot be left to the previous implicitStepComplete)
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    arrayView2d< real64 const > const traction = subRegion.getField< contact::traction >();
+    arrayView2d< real64 > const traction_n = subRegion.getField< contact::traction_n >();
+    arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >();
+    arrayView2d< real64 > const iterativePenalty_n =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() );
+    arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+    arrayView2d< real64 > const dispJump_n = subRegion.getField< contact::dispJump_n >();
+    arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      LvArray::tensorOps::copy< 3 >( traction_n[kfe], traction[kfe] );
+      LvArray::tensorOps::copy< 5 >( iterativePenalty_n[kfe], iterativePenalty[kfe] );
+      LvArray::tensorOps::copy< 3 >( dispJump_n[kfe], dispJump[kfe] );
+      LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
+      LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
+      oldFractureState[kfe] = fractureState[kfe];
+    } );
+  } );
+
+}
+
+void SolidMechanicsAugmentedLagrangianContact::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+
+  // nodal displacements
+  SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    // bubble displacements, rewound like the nodal ones
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    arrayView2d< real64 > const totalBubbleDisp = faceManager.getField< contact::totalBubbleDisplacement >();
+    arrayView2d< real64 > const incrBubbleDisp = faceManager.getField< contact::incrementalBubbleDisplacement >();
+
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+    {
+      for( integer i = 0; i < 3; ++i )
+      {
+        totalBubbleDisp[kf][i] -= incrBubbleDisp[kf][i];
+        incrBubbleDisp[kf][i] = 0.0;
+      }
+    } );
+
+    // contact state: tractions, penalty coefficients, displacement jumps and fracture states
+    // as stored by implicitStepSetup
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
+    arrayView2d< real64 const > const traction_n = subRegion.getField< contact::traction_n >();
+    arrayView2d< real64 > const iterativePenalty = subRegion.getField< contact::iterativePenalty >();
+    arrayView2d< real64 const > const iterativePenalty_n =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::iterativePenalty_nString() );
+    arrayView2d< real64 > const dispJumpUpdPenalty =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpUpdPenaltyString() );
+    arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
+    arrayView2d< real64 const > dispJump_n = subRegion.getField< contact::dispJump_n >();
+    arrayView2d< real64 > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
+    arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer const > const oldFractureState = subRegion.getField< contact::oldFractureState >();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+    {
+      LvArray::tensorOps::copy< 3 >( traction[kfe], traction_n[kfe] );
+      LvArray::tensorOps::copy< 5 >( iterativePenalty[kfe], iterativePenalty_n[kfe] );
+      LvArray::tensorOps::copy< 3 >( dispJump[kfe], dispJump_n[kfe] );
+      LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
+      LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[kfe], 0.0 );
+      fractureState[kfe] = oldFractureState[kfe];
+    } );
+
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Face,
+                              { contact::incrementalBubbleDisplacement::key(),
+                                contact::totalBubbleDisplacement::key() } );
+    fieldsToBeSync.addElementFields( { contact::traction::key(),
+                                       contact::iterativePenalty::key(),
+                                       contact::dispJump::key(),
+                                       contact::deltaDispJump::key() },
+                                     { getUniqueFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
+
+  synchronizeFractureState( domain );
+
+  // the lists of stick and slip elements follow the (restored) fracture state
+  updateStickSlipList( domain );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time,
@@ -804,6 +970,21 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
 {
 
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
+
+  // The averages computed above only carry the nodal strain - add the face bubble enrichment (output only)
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    solidMechanicsConformingContactKernels::FaceBubbleAverageStressStrainFactory kernelFactory;
+
+    finiteElement::regionBasedKernelApplication< parallelDevicePolicy< >, ElasticIsotropic, CellElementSubRegion >( mesh,
+                                                                                                                    regionNames,
+                                                                                                                    getDiscretizationName(),
+                                                                                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::
+                                                                                                                      solidMaterialNamesString(),
+                                                                                                                    kernelFactory );
+  } );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1129,6 +1310,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               traction,
                                               dispJump,
                                               deltaDispJump,
+                                              fractureState,
                                               traction_new_v );
         }
         else
@@ -1140,6 +1322,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               traction,
                                               dispJump,
                                               deltaDispJump,
+                                              fractureState,
                                               traction_new_v );
         }
       } );
@@ -1156,6 +1339,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                             frictionWrapper,
                                             ghostRank,
                                             traction,
+                                            traction_new_v,
                                             dispJump,
                                             deltaDispJump,
                                             normalTractionTolerance,
@@ -2107,14 +2291,17 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
   } );
 }
 
+
+
 void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCellStress( DomainPartition & domain ) const
 {
   GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                string_array const & )
+                                                                string_array const & regionNames )
   {
+    NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -2124,15 +2311,15 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     arrayView2d< localIndex const > const faceToElemSubRegion = faceToElem.m_toElementSubRegion;
     arrayView2d< localIndex const > const faceToElemIndex = faceToElem.m_toElementIndex;
 
-    arrayView2d< real64 > totalBubbleDisplacement = faceManager.getField< contact::totalBubbleDisplacement >();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
+    arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
 
-    // Get stress accessor
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const
-    avgElementStress = elemManager.constructViewAccessor< array2d< real64, cells::RANK2_TENSOR_PERM >,
-                                                          arrayView2d< real64 const, cells::RANK2_TENSOR_USD > >( solidMechanics::averageStress::key() );
-
-    ElementRegionManager::ElementViewConst< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const
-    avgElementStressView = avgElementStress.toNestedViewConst();
+    // Quadrature-point stress of the solid model ([k][q][voigt]). The cell-averaged averageStress is not used:
+    // it is an output reconstruction (only filled at implicitStepComplete, hence zero at the first initialization)
+    // that also carries the face bubble enrichment, which must not enter the initial traction or the tensile check.
+    ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, geos::solid::STRESS_USD > > const
+    qpStress = elemManager.constructMaterialFieldAccessor< SolidBase, fields::solid::stress >( true );
+    auto const qpStressView = qpStress.toNestedViewConst();
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -2141,9 +2328,105 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         arrayView3d< real64 const > const faceRotationMatrix = subRegion.getField< contact::rotationMatrix >().toViewConst();
         arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
         arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
-        arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
-        arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >().toViewConst();
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+        // Stress of each adjacent cell, averaged over its layer of quadrature points nearest to the fracture face:
+        // [kfe][side][voigt]. A tensor-product rule has several equidistant points (4 on a 2x2x2 hexahedron face),
+        // hence a layer rather than a single point. faceSideNq = 0 when no solid stress is available on that side.
+        array3d< real64 > faceSideStress( subRegion.size(), 2, 6 );
+        array2d< integer > faceSideNq( subRegion.size(), 2 );
+        arrayView3d< real64 > const faceSideStress_v = faceSideStress.toView();
+        arrayView2d< integer > const faceSideNq_v = faceSideNq.toView();
+
+        elemManager.forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
+                                                                          [&]( localIndex const,
+                                                                               localIndex const er,
+                                                                               localIndex const esr,
+                                                                               ElementRegionBase const &,
+                                                                               CellElementSubRegion const & cellSubRegion )
+        {
+          if( qpStressView[er].empty() || qpStressView[er][esr].empty() )
+          {
+            return;
+          }
+
+          arrayView3d< real64 const, geos::solid::STRESS_USD > const sigma = qpStressView[er][esr];
+          auto const elemsToNodes = cellSubRegion.nodeList().toViewConst();
+          finiteElement::FiniteElementBase const & subRegionFE =
+            cellSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+          // Lagrange elements only: the VEM calcN needs a stack
+          finiteElement::FiniteElementDispatchHandler< FE_1_TYPES >::dispatch3D( subRegionFE, [&]( auto const finiteElement )
+          {
+            using FE_TYPE = TYPEOFREF( finiteElement );
+            constexpr localIndex numNodes = FE_TYPE::numNodes;
+            constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+
+            forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+            {
+              // Only locally owned fracture elements are consumed below (traction is then synchronized);
+              // a ghost fracture element may reference adjacent cells that are not present on this rank.
+              if( ghostRank[kfe] >= 0 )
+              {
+                return;
+              }
+
+              real64 const n[3]{ faceRotationMatrix( kfe, 0, 0 ), faceRotationMatrix( kfe, 1, 0 ), faceRotationMatrix( kfe, 2, 0 ) };
+
+              for( integer side = 0; side < 2; ++side )
+              {
+                localIndex const faceIndex = elemsToFaces( kfe, side );
+                if( faceToElemRegion( faceIndex, 0 ) != er || faceToElemSubRegion( faceIndex, 0 ) != esr )
+                {
+                  continue; // the cell on this side belongs to another subregion
+                }
+                localIndex const ei = faceToElemIndex( faceIndex, 0 );
+
+                // distance of each quadrature point x_q = sum_a N_a(q) X_a to the face plane
+                real64 dist[numQuadraturePoints];
+                real64 dMin = LvArray::NumericLimits< real64 >::max;
+                real64 dMax = 0.0;
+                for( localIndex q = 0; q < numQuadraturePoints; ++q )
+                {
+                  real64 N[numNodes];
+                  FE_TYPE::calcN( q, N );
+                  real64 xq[3]{};
+                  for( localIndex a = 0; a < numNodes; ++a )
+                  {
+                    LvArray::tensorOps::scaledAdd< 3 >( xq, X[ elemsToNodes( ei, a ) ], N[a] );
+                  }
+                  LvArray::tensorOps::subtract< 3 >( xq, faceCenter[faceIndex] );
+                  dist[q] = LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( xq, n ) );
+                  dMin = LvArray::math::min( dMin, dist[q] );
+                  dMax = LvArray::math::max( dMax, dist[q] );
+                }
+
+                // nearest layer: below the mid-distance (all the points when equidistant, e.g. one-point tetrahedra)
+                real64 const threshold = 0.5 * ( dMin + dMax );
+                integer nq = 0;
+                for( localIndex q = 0; q < numQuadraturePoints; ++q )
+                {
+                  if( dist[q] <= threshold )
+                  {
+                    for( integer c = 0; c < 6; ++c )
+                    {
+                      faceSideStress_v( kfe, side, c ) += sigma( ei, q, c );
+                    }
+                    ++nq;
+                  }
+                }
+                for( integer c = 0; c < 6; ++c )
+                {
+                  faceSideStress_v( kfe, side, c ) /= nq;
+                }
+                faceSideNq_v( kfe, side ) = nq;
+              }
+            } );
+          } );
+        } );
+
+        arrayView3d< real64 const > const faceSideStressConst = faceSideStress.toViewConst();
+        arrayView2d< integer const > const faceSideNqConst = faceSideNq.toViewConst();
 
         // Get friction law parameters for Coulomb check
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
@@ -2164,17 +2447,12 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
                                                           faceRotationMatrix,
                                                           elemsToFaces,
-                                                          faceToElemRegion,
-                                                          faceToElemSubRegion,
-                                                          faceToElemIndex,
                                                           traction,
-                                                          dispJump,
-                                                          iterativePenalty,
-                                                          totalBubbleDisplacement,
                                                           hasCoulombParams,
                                                           cohesion,
                                                           frictionCoefficient,
-                                                          avgElementStressView] ( localIndex const kfe )
+                                                          faceSideStressConst,
+                                                          faceSideNqConst] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -2190,24 +2468,20 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
             // Loop over both faces of the fracture element
             for( localIndex faceIdx = 0; faceIdx < 2; ++faceIdx )
             {
-              localIndex const faceIndex = elemsToFaces( kfe, faceIdx );
-
-              // Get the adjacent volume element for this face
-              localIndex const er = faceToElemRegion( faceIndex, 0 );
-              localIndex const esr = faceToElemSubRegion( faceIndex, 0 );
-              localIndex const ei = faceToElemIndex( faceIndex, 0 );
-
               // Skip if no valid stress data available
-              if( avgElementStressView[er].empty() || avgElementStressView[er][esr].empty() )
+              if( faceSideNqConst( kfe, faceIdx ) == 0 )
               {
                 continue;
               }
+
+              // Stress of the adjacent volume element, at its quadrature points nearest to the face
+              arraySlice1d< real64 const > const sideStress = faceSideStressConst[kfe][faceIdx];
 
               // Check principal stress components in 3D elements adjecent to the fracture element.
               // If the maximun principal stress is tensile, issue an error. Principal stresses are
               // sorted in ascending order
               real64 principalStresses[3];
-              LvArray::tensorOps::symEigenvalues< 3 >( principalStresses, avgElementStressView[er][esr][ei] );
+              LvArray::tensorOps::symEigenvalues< 3 >( principalStresses, sideStress );
               GEOS_ERROR_IF( principalStresses[2] > 0.0,
                              GEOS_FMT(
                                "ERROR: Maximum principal stress is tensile in element adjacent to fracture element {} "
@@ -2215,10 +2489,10 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                kfe, faceIdx, principalStresses[0], principalStresses[1], principalStresses[2] ) );
 
               // Accumulate stress for averaging (for warning message)
-              LvArray::tensorOps::add< 6 >( avgSigma, avgElementStressView[er][esr][ei] );
+              LvArray::tensorOps::add< 6 >( avgSigma, sideStress );
 
               // Compute and accumulate traction in global coordinates: t = sigma * n
-              LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, avgElementStressView[er][esr][ei], n );
+              LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, sideStress, n );
 
               ++numValidCells;
             }
@@ -2234,40 +2508,9 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               real64 tLocal[3];
               LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( tLocal, faceRotationMatrix[kfe], tGlobalAvg );
 
-              // Store the traction
+              // Store the traction. In ALM the traction is the multiplier: the consistent closed state is
+              // g = 0, b = 0, so neither the displacement jump nor the bubble displacement is seeded.
               LvArray::tensorOps::copy< 3 >( traction[kfe], tLocal );
-
-              // Update displacement jump based on penalty stiffness
-              real64 const kn = iterativePenalty[kfe][0];
-              real64 const kt = iterativePenalty[kfe][1];
-              real64 dJump[3] = { 0.0, 0.0, 0.0 };
-
-              if( kn > LvArray::NumericLimits< real64 >::min )
-              {
-                dJump[0] = tLocal[0] / kn;
-              }
-              if( kt > LvArray::NumericLimits< real64 >::min )
-              {
-                dJump[1] = tLocal[1] / kt;
-                dJump[2] = tLocal[2] / kt;
-              }
-
-              dispJump[kfe][0] = dJump[0];
-              dispJump[kfe][1] = dJump[1];
-              dispJump[kfe][2] = dJump[2];
-
-              // Compute Global Bubble Displacement: b_global = R * [u]_local
-              real64 bGlobal[3];
-              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( bGlobal, faceRotationMatrix[kfe], dJump );
-
-              // Store to totalBubbleDisplacement for both faces
-              for( localIndex faceIdx = 0; faceIdx < 2; ++faceIdx )
-              {
-                localIndex const faceIndex = elemsToFaces( kfe, faceIdx );
-                totalBubbleDisplacement[faceIndex][0] = bGlobal[0];
-                totalBubbleDisplacement[faceIndex][1] = bGlobal[1];
-                totalBubbleDisplacement[faceIndex][2] = bGlobal[2];
-              }
 
               // Check Coulomb friction consistency if parameters are available
               if( hasCoulombParams )
@@ -2330,18 +2573,14 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     } );
   } );
 
-  // Synchronize the traction, displacement jump, and bubble displacement fields
+  // Synchronize the traction field
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { contact::traction::key(),
-                                       contact::dispJump::key() },
+    fieldsToBeSync.addElementFields( { contact::traction::key() },
                                      { getUniqueFractureRegionName() } );
-
-    fieldsToBeSync.addFields( FieldLocation::Face,
-                              { contact::totalBubbleDisplacement::key() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
