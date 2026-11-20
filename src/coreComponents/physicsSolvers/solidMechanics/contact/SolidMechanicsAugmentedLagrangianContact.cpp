@@ -90,6 +90,19 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
     setApplyDefaultValue( 0.1 ).
     setDescription( "Factor for tuning the iterative penalty coefficient for tangential traction" );
 
+  registerWrapper( viewKeyStruct::augmentationRelaxationString(), &m_augmentationRelaxation ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Relaxation factor omega in (0, 1] of the Lagrange multiplier update in the configuration loop: "
+                    "lambda <- lambda + omega * ( proj( lambda + k g ) - lambda ). 1: no relaxation" );
+
+  registerWrapper( viewKeyStruct::adaptiveRelaxationString(), &m_adaptiveRelaxation ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag for the per-element adaptive relaxation of the Lagrange multiplier update: each element starts "
+                    "the time step with omega = 1, halved (down to " + string( viewKeyStruct::augmentationRelaxationString() ) +
+                    ") each time its normal constraint flag reverses. 0: the same omega for all the elements" );
+
   registerWrapper( viewKeyStruct::tolJumpDispNFacString(), &m_tolJumpDispNFac ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.e-07 ).
@@ -164,6 +177,20 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
       // Register the penalty coefficients for the iterative procedure
       subRegion.registerField< contact::iterativePenalty >( getName() ).
         reference().resizeDimension< 1 >( 5 );
+
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::relaxationFactorString() ).
+        setApplyDefaultValue( 1.0 ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setRegisteringObjects( getName()).
+        setDescription( "An array that holds the relaxation factor of the multiplier update." );
+
+      subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::previousNormalFlagString() ).
+        setApplyDefaultValue( 0 ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setRegisteringObjects( getName()).
+        setDescription( "An array that holds the last nonzero normal constraint flag (adaptive relaxation)." );
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -390,6 +417,10 @@ void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
 {
   ContactSolverBase::postInputInitialization();
 
+  GEOS_ERROR_IF( m_augmentationRelaxation <= 0.0 || m_augmentationRelaxation > 1.0,
+                 GEOS_FMT( "{}: {} must be in (0, 1], got {}", getDataContext(),
+                           viewKeyStruct::augmentationRelaxationString(), m_augmentationRelaxation ) );
+
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteElementDiscretizationManager const & feDiscretizationManager =
@@ -589,6 +620,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     } );
   } );
 
+  resetRelaxationFactor( domain );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::resetStateToBeginningOfStep( DomainPartition & domain )
@@ -666,6 +698,33 @@ void SolidMechanicsAugmentedLagrangianContact::resetStateToBeginningOfStep( Doma
 
   // the lists of stick and slip elements follow the (restored) fracture state
   updateStickSlipList( domain );
+
+  resetRelaxationFactor( domain );
+}
+
+void SolidMechanicsAugmentedLagrangianContact::resetRelaxationFactor( DomainPartition & domain ) const
+{
+  real64 const initialRelaxation = m_adaptiveRelaxation ? 1.0 : m_augmentationRelaxation;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          FaceElementSubRegion & subRegion )
+    {
+      arrayView1d< real64 > const relaxation =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::relaxationFactorString() );
+      arrayView1d< integer > const previousNormalFlag =
+        subRegion.getReference< array1d< integer > >( viewKeyStruct::previousNormalFlagString() );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+      {
+        relaxation[kfe] = initialRelaxation;
+        previousNormalFlag[kfe] = 0;
+      } );
+    } );
+  } );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time,
@@ -1258,6 +1317,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   array1d< int > condConv;
   localIndex globalCondConv[5] = {0, 0, 0, 0, 0};
+  localIndex numRelaxed = 0;
 
   array2d< real64 > traction_new;
 
@@ -1350,6 +1410,24 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                             condConv_v );
       } );
 
+      if( m_adaptiveRelaxation )
+      {
+        arrayView1d< integer > const previousNormalFlag =
+          subRegion.getReference< array1d< integer > >( viewKeyStruct::previousNormalFlagString() );
+        arrayView1d< real64 > const relaxation =
+          subRegion.getReference< array1d< real64 > >( viewKeyStruct::relaxationFactorString() );
+
+        numRelaxed += solidMechanicsALMKernels::AdaptRelaxationKernel::
+                        launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                          ghostRank,
+                                                          traction_new_v.toViewConst(),
+                                                          normalTractionTolerance,
+                                                          condConv_v.toViewConst(),
+                                                          m_augmentationRelaxation,
+                                                          previousNormalFlag,
+                                                          relaxation );
+      }
+
       RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum[5] =
       { RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
         RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
@@ -1407,11 +1485,14 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   int hasConfigurationConvergedGlobally = (totCondNotConv == 0) ? true : false;
 
+  string const relaxedSummary = m_adaptiveRelaxation
+                                ? GEOS_FMT( " | relaxed:  {:6}", MpiWrapper::sum( numRelaxed ) )
+                                : string();
   GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
                          GEOS_FMT( "  ALM convergence summary:"
-                                   " converged: {:6} | stick & gn>0: {:6} | interpenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
+                                   " converged: {:6} | stick & gn>0: {:6} | interpenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}{}\n",
                                    globalCondConv[0], globalCondConv[1], globalCondConv[2],
-                                   globalCondConv[3], globalCondConv[4] ));
+                                   globalCondConv[3], globalCondConv[4], relaxedSummary ));
 
   if( hasConfigurationConvergedGlobally )
   {
@@ -1438,6 +1519,24 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
   }
   else
   {
+    // The relaxation factor is only adapted on owned elements: bring it to the ghosts, so that an element is updated
+    // consistently on all the ranks that hold it
+    if( m_adaptiveRelaxation )
+    {
+      forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                    MeshLevel & mesh,
+                                                                    string_array const & )
+      {
+        FieldIdentifiers fieldsToBeSync;
+        fieldsToBeSync.addElementFields( { viewKeyStruct::relaxationFactorString() },
+                                         { getUniqueFractureRegionName() } );
+        CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                             mesh,
+                                                             domain.getNeighbors(),
+                                                             true );
+      } );
+    }
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
                                                                   string_array const & regionNames )
@@ -1447,6 +1546,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [symmetric = m_symmetric]( localIndex const,
                                                                                                         FaceElementSubRegion & subRegion )
       {
+        arrayView1d< real64 const > const relaxation =
+          subRegion.getReference< array1d< real64 > >( viewKeyStruct::relaxationFactorString() );
 
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
@@ -1483,6 +1584,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               symmetric,
                                               normalTractionTolerance,
                                               traction,
+                                              relaxation,
                                               fractureState );
         } );
 
