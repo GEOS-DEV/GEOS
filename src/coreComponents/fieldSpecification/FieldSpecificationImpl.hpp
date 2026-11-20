@@ -642,6 +642,13 @@ FieldSpecificationImpl::
                        lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
+      // objects outside the solver target regions have no dof (dofMap < 0): skip them,
+      // otherwise dofMap + component may alias a valid row (e.g. -1 + 1 = 0)
+      if( dofMap[ a ] < 0 )
+      {
+        dof[ i ] = -1;
+        return;
+      }
       dof[ i ] = dofMap[ a ] + component;
       FIELD_OP::SpecifyFieldValue( dof[ i ],
                                    dofRankOffset,
@@ -673,6 +680,11 @@ FieldSpecificationImpl::
                        lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
+      if( dofMap[ a ] < 0 )
+      {
+        dof[ i ] = -1;
+        return;
+      }
       dof[ i ] = dofMap[ a ] + component;
       FIELD_OP::SpecifyFieldValue( dof[ i ],
                                    dofRankOffset,
