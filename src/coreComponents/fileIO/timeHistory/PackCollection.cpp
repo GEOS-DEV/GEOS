@@ -61,13 +61,14 @@ void PackCollection::initializePostSubGroups( )
   if( !m_initialized )
   {
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-    m_collectionCount = collectAll() ? 1 : m_setNames.size();
     // determine whether we're collecting from a mesh object manager
     Group const * const targetObject = this->getTargetObject( domain, m_objectPath );
     ObjectManagerBase const * const objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
     m_targetIsMeshObject = objectManagerTarget != nullptr;
     // update sets after we know whether to filter ghost indices ( m_targetIsMeshObject )
     updateSetsIndices( domain );
+    // one collection per existing set (missing sets are discarded by updateSetsIndices)
+    m_collectionCount = collectAll() ? 1 : m_existingSetNames.size();
     HistoryCollectionBase::initializePostSubGroups();
     // build any persistent meta collectors that are required
     buildMetaDataCollectors();
@@ -96,14 +97,14 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   }
   else
   {
-    GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= LvArray::integerConversion< localIndex >( m_setNames.size()), "Invalid collection index specified." );
+    GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= LvArray::integerConversion< localIndex >( m_existingSetNames.size()), "Invalid collection index specified." );
     localIndex collectionSize = m_setsIndices[collectionIdx].size();
     if( ( m_onlyOnSetChange != 0 ) && ( !m_setChanged ) ) // if we're only collecting when the set changes but the set hasn't changed
     {
       collectionSize = 0;
     }
     HistoryMetadata metadata = targetField.getHistoryMetadata( collectionSize );
-    metadata.setName( metadata.getName() + " " + m_setNames[collectionIdx] );
+    metadata.setName( metadata.getName() + " " + m_existingSetNames[collectionIdx] );
     return metadata;
   }
 }
@@ -112,7 +113,8 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
  * @brief Extracts the wrapper names that exist in the @p sets group of @p group.
  * @param setNames The candidate wrapper names.
  * @param omb The  @p ObjectManagerBase instance holding the @p sets from which we'll extract the @p setNames.
- * @return The set names, guarantied to be unique.
+ * @return The set names, guarantied to be unique, in the order of @p setNames
+ *   (the output labels are attached in that order).
  * @note This function simply discards requested sets which are not available. No warning or error is provided...
  */
 stdVector< string > getExistingWrapperNames( string_array const & setNames, ObjectManagerBase const * omb )
@@ -121,14 +123,18 @@ stdVector< string > getExistingWrapperNames( string_array const & setNames, Obje
   std::set< string > available;
   omb->sets().forWrappers( [&]( WrapperBase const & w ) { available.insert( w.getName() ); } );
 
-  // Convert input `setNames` to a `std::set` to allow set intersection computation.
-  std::set< string > const requested( setNames.begin(), setNames.end() );
+  // Keep the requested names that are available, without duplicates, in the requested order (the output labels follow that order).
+  stdVector< string > existing;
+  std::set< string > seen;
+  for( string const & name : setNames )
+  {
+    if( available.count( name ) > 0 && seen.insert( name ).second )
+    {
+      existing.push_back( name );
+    }
+  }
 
-  // Compute the intersection of requested and available.
-  stdVector< string > intersection;
-  std::set_intersection( requested.cbegin(), requested.cend(), available.cbegin(), available.cend(), std::back_inserter( intersection ) );
-
-  return intersection;
+  return existing;
 }
 
 
@@ -172,7 +178,8 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // This is questionable but lets me define `setNames` as `const` variable.
   // Note that the third operator will be evaluated iff `collectAll` is `false` (C++ paragraph 6.5.15).
   // So the `asOMB` function will not be called inappropriately and kill the simulation.
-  stdVector< string > const setNames = collectAll ? stdVector< string >{} : getExistingWrapperNames( m_setNames, asOMB( targetGrp ) );
+  m_existingSetNames = collectAll ? stdVector< string >{} : getExistingWrapperNames( m_setNames, asOMB( targetGrp ) );
+  stdVector< string > const & setNames = m_existingSetNames;
 
   std::size_t const numSets = collectAll ? 1 : setNames.size();
   m_setsIndices.resize( numSets );
@@ -322,7 +329,10 @@ void PackCollection::collect( DomainPartition const & domain,
   {
     targetField.pack< true >( buffer, false, true, events );
   }
-  m_setChanged = false;
+  if( collectionIdx == numCollectors() - 1 )
+  {
+    m_setChanged = false;
+  }
   GEOS_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
