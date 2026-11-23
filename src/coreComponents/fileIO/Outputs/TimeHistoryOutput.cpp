@@ -121,12 +121,13 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
     string const outputDirectory = getOutputDirectory();
+    string const outputFile = joinPath( outputDirectory, m_filename );
     if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
     {
-      makeDirsForPath( outputDirectory );
+      // the filename may contain sub-directories (e.g. "history/fault"): create the directory of the file itself
+      makeDirsForPath( splitPath( outputFile ).first );
     }
     MpiWrapper::barrier( MPI_COMM_GEOS );
-    string const outputFile = joinPath( outputDirectory, m_filename );
     HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOS );
   }
 
