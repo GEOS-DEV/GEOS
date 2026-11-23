@@ -1444,10 +1444,10 @@ void HypreMatrix::write( string const & filename,
       {
         // Copy distributed parcsr matrix in a local CSR matrix on every process with at least one row
         // Warning: works for a parcsr matrix that is smaller than 2^31-1
-        // On GPU builds the parcsr data may live on device: gather from a host clone.
-        bool const onHost = hypre_ParCSRMatrixMemoryLocation( m_parcsr_mat ) == HYPRE_MEMORY_HOST;
+        // A logical device location may map to host memory, depending on hypre's memory model.
+        bool const onHost = hypre_GetActualMemLocation( hypre_ParCSRMatrixMemoryLocation( m_parcsr_mat ) ) == hypre_MEMORY_HOST;
         hypre_ParCSRMatrix * const hostMat = onHost ? m_parcsr_mat
-                                                    : hypre_ParCSRMatrixClone_v2( m_parcsr_mat, 1, HYPRE_MEMORY_HOST );
+                                                 : hypre_ParCSRMatrixClone_v2( m_parcsr_mat, 1, HYPRE_MEMORY_HOST );
         hypre_CSRMatrix * const fullMatrix = hypre_ParCSRMatrixToCSRMatrixAll( hostMat );
         if( !onHost )
         {
