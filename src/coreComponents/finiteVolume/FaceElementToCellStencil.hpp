@@ -166,7 +166,35 @@ public:
   GEOS_HOST_DEVICE
   void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
 
+  /**
+   * @brief Compute the weight and its logarithmic derivative w.r.t. the fracture-side half-transmissibility
+   *        t1 = weight_1 * coefficient_1, i.e. t1 / weight * d(weight)/d(t1) = t0 / ( t0 + t1 ).
+   *        The fracture-side weight depends on the hydraulic aperture (see addHydraulicApertureContribution).
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[out] weight the weight of the connection (entry [0], the one of the cell)
+   * @param[out] dLogWeight_dLogFractureTrans the logarithmic derivative of the weight w.r.t. t1
+   */
+  GEOS_HOST_DEVICE
+  void computeWeightAndFractureLogDerivative( localIndex const iconn,
+                                              CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                              real64 & weight,
+                                              real64 & dLogWeight_dLogFractureTrans ) const;
+
 private:
+
+  /**
+   * @brief Compute the half-transmissibilities of the cell (t0) and of the fracture element (t1) of a connection
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[out] t0 the cell-side half-transmissibility
+   * @param[out] t1 the fracture-side half-transmissibility
+   */
+  GEOS_HOST_DEVICE
+  void computeHalfTransmissibilities( localIndex const iconn,
+                                      CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                      real64 & t0,
+                                      real64 & t1 ) const;
 
   /// Face normal vector
   arrayView2d< real64 > m_faceNormal;
@@ -267,21 +295,8 @@ inline void FaceElementToCellStencilWrapper::
   localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 faceConormal[3];
-
-  // Will change when implementing collocation points.
-  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  real64 t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
-  if( t0 < 0.0 )
-  {
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
-                                              coefficient[er0][esr0][ei0][0],
-                                              m_cellToFaceVec[iconn] );
-    t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
-  }
-
-  // We consider the 3rd component of the permeability which is the normal one.
-  real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
+  real64 t0, t1;
+  computeHalfTransmissibilities( iconn, coefficient, t0, t1 );
 
   real64 const sumOfTrans = t0+t1;
   real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
@@ -337,20 +352,8 @@ FaceElementToCellStencilWrapper::
   localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 faceConormal[3];
-
-  // Will change when implementing collocation points.
-  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  real64 t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
-  if( t0 < 0.0 )
-  {
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
-                                              coefficient[er0][esr0][ei0][0],
-                                              m_cellToFaceVec[iconn] );
-    t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
-  }
-  // We consider the 3rd component of the permeability which is the normal one.
-  real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
+  real64 t0, t1;
+  computeHalfTransmissibilities( iconn, coefficient, t0, t1 );
 
   real64 const sumOfTrans = t0+t1;
   real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
@@ -369,6 +372,56 @@ FaceElementToCellStencilWrapper::
 
   dWeight_dVar2[0][0] = m_transMultiplier[iconn] * ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
   dWeight_dVar2[0][1] = m_transMultiplier[iconn] * ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+}
+
+GEOS_HOST_DEVICE
+inline void
+FaceElementToCellStencilWrapper::
+  computeHalfTransmissibilities( localIndex const iconn,
+                                 CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                 real64 & t0,
+                                 real64 & t1 ) const
+{
+  localIndex const er0  =  m_elementRegionIndices[iconn][0];
+  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
+  localIndex const ei0  =  m_elementIndices[iconn][0];
+
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
+
+  real64 faceConormal[3];
+
+  // Will change when implementing collocation points.
+  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  if( t0 < 0.0 )
+  {
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
+                                              coefficient[er0][esr0][ei0][0],
+                                              m_cellToFaceVec[iconn] );
+    t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  }
+
+  // We consider the 3rd component of the permeability which is the normal one.
+  t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
+}
+
+GEOS_HOST_DEVICE
+inline void
+FaceElementToCellStencilWrapper::
+  computeWeightAndFractureLogDerivative( localIndex const iconn,
+                                         CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                         real64 & weight,
+                                         real64 & dLogWeight_dLogFractureTrans ) const
+{
+  real64 t0, t1;
+  computeHalfTransmissibilities( iconn, coefficient, t0, t1 );
+
+  real64 const sumOfTrans = t0+t1;
+  weight = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
+  // weight = m * t0 * t1 / ( t0 + t1 ), hence t1 / weight * d(weight)/d(t1) = t0 / ( t0 + t1 )
+  dLogWeight_dLogFractureTrans = sumOfTrans > 0.0 ? t0 / sumOfTrans : 0.0;
 }
 
 GEOS_HOST_DEVICE

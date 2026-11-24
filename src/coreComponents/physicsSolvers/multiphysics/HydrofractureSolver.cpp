@@ -717,8 +717,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
                                             dofManager,
                                             localMatrix,
                                             localRhs,
-                                            getDerivativeFluxResidual_dNormalJump(),
-                                            nullptr );
+                                            getDerivativeFluxResidual_dNormalJump() );
 
   // Read-only on the host from here on: do not touch, or the next iteration
   // has to re-upload the whole matrix.

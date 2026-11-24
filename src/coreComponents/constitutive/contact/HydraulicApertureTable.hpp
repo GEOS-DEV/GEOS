@@ -40,8 +40,10 @@ class HydraulicApertureTableUpdates
 {
 public:
 
-  HydraulicApertureTableUpdates( TableFunction const & apertureTable )
-    : m_apertureTable( apertureTable.createKernelWrapper() )
+  HydraulicApertureTableUpdates( TableFunction const & apertureTable,
+                                 integer const clampNegativeNormalJump )
+    : m_apertureTable( apertureTable.createKernelWrapper() ),
+    m_clampNegativeNormalJump( clampNegativeNormalJump )
   {}
 
   /// Default copy constructor
@@ -76,6 +78,9 @@ protected:
 
   /// The aperture table function wrapper
   TableFunction::KernelWrapper m_apertureTable;
+
+  /// Flag to evaluate the table at max( normal jump, 0 ): the hydraulic aperture is then frozen at table(0) for g_N <= 0
+  integer m_clampNegativeNormalJump;
 };
 
 
@@ -124,6 +129,9 @@ public:
 
     /// string/key for aperture table name
     static constexpr char const * apertureTableNameString() { return "apertureTableName"; }
+
+    /// string/key for the flag clamping the negative normal jumps
+    static constexpr char const * clampNegativeNormalJumpString() { return "clampNegativeNormalJump"; }
   };
 
 
@@ -143,6 +151,9 @@ protected:
   /// The name of the aperture table, if any
   string m_apertureTableName;
 
+  /// Flag to evaluate the table at max( normal jump, 0 )
+  integer m_clampNegativeNormalJump;
+
   /// Pointer to the function that limits the model aperture to a physically admissible value.
   TableFunction const * m_apertureTable;
 };
@@ -156,6 +167,18 @@ real64 HydraulicApertureTableUpdates::computeHydraulicAperture( real64 const ape
                                                                 real64 & dHydraulicAperture_dNormalStress ) const
 {
   GEOS_UNUSED_VAR( normalTraction, dHydraulicAperture_dNormalStress, fractureState );
+
+  // A non-positive normal jump of a closed fracture is the regularization overlap of the contact enforcement
+  // (e.g. the augmented Lagrangian), not a physical closure: evaluate the table at max( g_N, 0 ), i.e. freeze the
+  // hydraulic aperture at table(0) with a zero derivative. This is continuous in g_N (and independent of the
+  // fracture state), so the volume does not jump when the fracture opens or closes.
+  if( m_clampNegativeNormalJump && aperture <= 0.0 )
+  {
+    real64 const zero = 0.0;
+    real64 dummy = 0.0;
+    dHydraulicAperture_dAperture = 0.0;
+    return m_apertureTable.compute( &zero, &dummy );
+  }
   return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
 }
 

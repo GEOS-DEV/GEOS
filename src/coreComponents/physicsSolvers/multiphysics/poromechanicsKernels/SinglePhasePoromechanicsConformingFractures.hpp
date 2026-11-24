@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP
 
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ConformingFracturesFluxKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -31,7 +32,9 @@ namespace singlePhasePoromechanicsConformingFracturesKernels
 {
 
 template< integer NUM_EQN, integer NUM_DOF >
-class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
+class ConnectorBasedAssemblyKernel
+  : public poromechanicsConformingFracturesKernels::
+    ConformingFracturesFluxKernelBase< singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >
 {
 public:
 
@@ -49,8 +52,6 @@ public:
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
-                                                                  fields::permeability::dPerm_dDispJump >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -66,7 +67,10 @@ public:
   using AbstractBase::m_dDens;
 
 
-  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using Base = poromechanicsConformingFracturesKernels::
+                 ConformingFracturesFluxKernelBase< singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper > >;
+  using FracturePermeabilityAccessors = typename Base::FracturePermeabilityAccessors;
+  using FractureApertureAccessors = typename Base::FractureApertureAccessors;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -76,6 +80,7 @@ public:
   using Base::m_seri;
   using Base::m_sesri;
   using Base::m_sei;
+  using Base::m_dR_dAper;
 
   ConnectorBasedAssemblyKernel( globalIndex const rankOffset,
                                 SurfaceElementStencilWrapper const & stencilWrapper,
@@ -84,12 +89,15 @@ public:
                                 SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
                                 PermeabilityAccessors const & permeabilityAccessors,
                                 FracturePermeabilityAccessors const & fracturePermeabilityAccessors,
+                                FractureApertureAccessors const & fractureApertureAccessors,
                                 real64 const & dt,
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
-                                CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                localIndex const dR_dAperOffset )
-    : Base( rankOffset,
+                                CRSMatrixView< real64, localIndex const > const & dR_dAper )
+    : Base( fracturePermeabilityAccessors,
+            fractureApertureAccessors,
+            dR_dAper,
+            rankOffset,
             stencilWrapper,
             flowDofNumberAccessor,
             singlePhaseFlowAccessors,
@@ -97,10 +105,7 @@ public:
             permeabilityAccessors,
             dt,
             localMatrix,
-            localRhs ),
-    m_dR_dAper( dR_dAper ),
-    m_dR_dAperOffset( dR_dAperOffset ),
-    m_dPerm_dDispJump( fracturePermeabilityAccessors.get( fields::permeability::dPerm_dDispJump {} ) )
+            localRhs )
   {}
 
 
@@ -120,38 +125,11 @@ public:
     GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
-      localColIndices( numElems ),
       dFlux_dAperture( numElems, size )
     {}
 
-    stackArray1d< localIndex, maxNumElems > localColIndices;
-
     stackArray2d< real64, maxNumElems * maxStencilSize > dFlux_dAperture;
-
-    /// Derivatives of transmissibility with respect to the dispJump
-    real64 dTrans_dDispJump[maxNumConns][2][3]{};
   };
-
-  /**
-   * @brief Performs the setup phase for the kernel.
-   * @param[in] iconn the connection index
-   * @param[in] stack the stack variables
-   */
-  GEOS_HOST_DEVICE
-  void setup( localIndex const iconn,
-              StackVariables & stack ) const
-  {
-    // set degrees of freedom indices for this face
-    for( integer i = 0; i < stack.stencilSize; ++i )
-    {
-      globalIndex const offset = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
-      for( integer jdof = 0; jdof < numDof; ++jdof )
-      {
-        stack.dofColIndices[i * numDof + jdof] = offset + jdof;
-      }
-      stack.localColIndices[ i ] = m_dR_dAperOffset + m_sei( iconn, i );
-    }
-  }
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
@@ -167,15 +145,7 @@ public:
                     FUNC && kernelOp = NoOpFunc{} ) const
 
   {
-
-    m_stencilWrapper.computeWeights( iconn,
-                                     m_permeability,
-                                     m_dPerm_dPres,
-                                     m_dPerm_dDispJump,
-                                     stack.transmissibility,
-                                     stack.dTrans_dPres,
-                                     stack.dTrans_dDispJump );
-
+    Base::computeTransmissibilityAndApertureDerivatives( iconn, stack );
 
     localIndex k[2];
     localIndex connectionIndex = 0;
@@ -215,21 +185,19 @@ public:
         stack.localFlux[k[0]* numDof] += m_dt * fluxVal;
         stack.localFlux[k[1]* numDof] -= m_dt * fluxVal;
 
-        real64 dFlux_dAper[2] = {0.0, 0.0};
-        dFlux_dAper[0] =  m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][0][0];
-        dFlux_dAper[1] = -m_dt * dFlux_dTrans * stack.dTrans_dDispJump[connectionIndex][1][0];
-
         stack.localFluxJacobian[k[0]*numEqn][k[0]* numDof] += dFlux_dP[0] * m_dt;
         stack.localFluxJacobian[k[0]*numEqn][k[1]* numDof] += dFlux_dP[1] * m_dt;
         stack.localFluxJacobian[k[1]*numEqn][k[0]* numDof] -= dFlux_dP[0] * m_dt;
         stack.localFluxJacobian[k[1]*numEqn][k[1]* numDof] -= dFlux_dP[1] * m_dt;
 
-        stack.dFlux_dAperture[k[0]][k[0]] += dFlux_dAper[0];
-        stack.dFlux_dAperture[k[0]][k[1]] += dFlux_dAper[1];
-        stack.dFlux_dAperture[k[1]][k[0]] -= dFlux_dAper[0];
-        stack.dFlux_dAperture[k[1]][k[1]] -= dFlux_dAper[1];
+        // dFlux/dNormalJump_j for every element j of the stencil (at a junction, also those this connection does not link)
+        real64 dFlux_dAper[maxNumElems]{};
+        Base::accumulateFluxApertureDerivative( stack, k, connectionIndex, dFlux_dTrans, stack.dFlux_dAperture, dFlux_dAper );
 
-        kernelOp( k, regionIndex, subRegionIndex, elementIndex, iconn, alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP );
+        // per-connection quantities (incl. this connection's aperture derivative of the flux, before it is
+        // accumulated over the connections of the stencil), e.g. for the thermal terms at fracture junctions
+        kernelOp( k, regionIndex, subRegionIndex, elementIndex, iconn, connectionIndex,
+                  alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP, dFlux_dAper );
         connectionIndex++;
       }
     }
@@ -252,23 +220,17 @@ public:
                                         localIndex const localRow )
     {
 
-      localIndex const row = m_dR_dAperOffset + LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
+      localIndex const row = LvArray::integerConversion< localIndex >( m_sei( iconn, i ) );
 
-      m_dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( row,
-                                                               stack.localColIndices.data(),
-                                                               stack.dFlux_dAperture[i].dataIfContiguous(),
-                                                               stack.stencilSize );
+      m_dR_dAper.template addToRowBinarySearch< parallelDeviceAtomic >( row,
+                                                                        stack.localColIndices.data(),
+                                                                        stack.dFlux_dAperture[i].dataIfContiguous(),
+                                                                        stack.stencilSize );
       // call the lambda to assemble additional terms, such as thermal terms
       kernelOp( i, localRow );
     } );
   }
 
-private:
-
-  CRSMatrixView< real64, localIndex const > m_dR_dAper;
-  localIndex const m_dR_dAperOffset;
-
-  ElementViewConst< arrayView4d< real64 const > > const m_dPerm_dDispJump;
 };
 
 
@@ -303,8 +265,7 @@ public:
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
-                   CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                   localIndex const dR_dAperOffset = 0 )
+                   CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {
     integer constexpr NUM_DOF = 1; // pressure
     integer constexpr NUM_EQN = 1;
@@ -318,10 +279,11 @@ public:
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
     typename kernelType::FracturePermeabilityAccessors fracPermAccessors( elemManager, solverName );
+    typename kernelType::FractureApertureAccessors fractureApertureAccessors( elemManager, solverName );
 
     kernelType kernel( rankOffset, stencilWrapper, flowDofNumberAccessor,
-                       flowAccessors, fluidAccessors, permAccessors, fracPermAccessors,
-                       dt, localMatrix, localRhs, dR_dAper, dR_dAperOffset );
+                       flowAccessors, fluidAccessors, permAccessors, fracPermAccessors, fractureApertureAccessors,
+                       dt, localMatrix, localRhs, dR_dAper );
 
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }

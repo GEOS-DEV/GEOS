@@ -48,6 +48,15 @@ HydraulicApertureTable::HydraulicApertureTable( string const & name,
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the aperture table" );
+
+  registerWrapper( viewKeyStruct::clampNegativeNormalJumpString(), &m_clampNegativeNormalJump ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag (0 or 1) to evaluate the aperture table at max( normal jump, 0 ). "
+                    "When set, the hydraulic aperture of a fracture with a non-positive normal jump is frozen at "
+                    "its value at zero jump (with a zero derivative), i.e. the closure branch of the table is ignored. "
+                    "Intended for contact enforcements that regularize the normal constraint (e.g. augmented Lagrangian), "
+                    "whose non-positive normal jump of a closed fracture is a numerical overlap." );
 }
 
 void HydraulicApertureTable::postInputInitialization()
@@ -149,7 +158,7 @@ void HydraulicApertureTable::validateApertureTable( TableFunction const & apertu
 
 HydraulicApertureTableUpdates HydraulicApertureTable::createKernelWrapper() const
 {
-  return HydraulicApertureTableUpdates( *m_apertureTable );
+  return HydraulicApertureTableUpdates( *m_apertureTable, m_clampNegativeNormalJump );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, HydraulicApertureTable, string const &, Group * const )
