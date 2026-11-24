@@ -48,9 +48,9 @@ The following is an example XML ``<mesh>`` block, which will generate a vertical
 
 - ``name`` the name of the mesh body
 - ``elementTypes`` the type of the elements that will be generated.
-- ``xCoord`` List of ``x`` coordinates of the boundaries of the ``CellBlocks``
-- ``yCoord`` List of ``y`` coordinates of the boundaries of the ``CellBlocks``
-- ``zCoord`` List of ``z`` coordinates of the boundaries of the ``CellBlocks``
+- ``xCoords`` List of ``x`` coordinates of the boundaries of the ``CellBlocks``
+- ``yCoords`` List of ``y`` coordinates of the boundaries of the ``CellBlocks``
+- ``zCoords`` List of ``z`` coordinates of the boundaries of the ``CellBlocks``
 - ``nx`` List containing the number of cells in ``x`` direction within the ``CellBlocks``
 - ``ny`` List containing the number of cells in ``y`` direction within the ``CellBlocks``
 - ``nz`` List containing the number of cells in ``z`` direction within the ``CellBlocks``
@@ -183,7 +183,7 @@ Importing regions
 *****************
 
 Several blocks are involved to import an external mesh into GEOS, defined in the XML input file.
-These are the ``<Mesh>`` block and the ``<CellElementRegions>`` block.
+These are the ``<Mesh>`` block and the ``<ElementRegions>`` block.
 
 The mesh block has the following syntax:
 
@@ -197,11 +197,12 @@ The mesh block has the following syntax:
       regionAttribute="myAttribute" />
   </Mesh>
 
-..note::
-  We advise users to use absolute path to the mesh file, and recommend the use of a ``logLevel``
+.. note::
+  Relative paths to the mesh file are interpreted relative to the location of the XML input file,
+  which keeps input decks portable (see :ref:`InputFiles`). We recommend the use of a ``logLevel``
   of 1 or more to obtain some information about the mesh import, including the list of regions that
   are imported with their names, which is particularly useful to fill the field of the
-  ``CellElementRegions`` block (see below). Some information about the imported surfaces is also provided.
+  ``ElementRegions`` block (see below). Some information about the imported surfaces is also provided.
 
 GEOS uses ``ElementRegions`` to support different physics or to define different constitutive properties.
 The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion``
@@ -212,7 +213,8 @@ The naming of cell-blocks depends on if the mesh contains a data array which has
 same value as the ``regionAttribute`` of the ``VTKMesh`` (which is ``attribute`` by default).
 This attribute is used to define regions in the vtu file and assign the cells to a given region.
 
-For now, loaded regions has the following limitations:
+For now, loaded regions have the following limitations:
+
 - The ``regionAttribute`` can only refer to integer values (no texts),
 - Each element can belong to only one region.
 
@@ -240,7 +242,7 @@ In the example presented above, the mesh is is composed of two regions. Each reg
 
 - If the vtu file contains an attribute equals to the ``regionAttribute`` of the ``VTKMesh``,
   then all ``cellBlock`` are named with this convention: ``regionAttribute_elementType``. Let's assume that
-  the top region of the exemple above has ``myAttribute`` to 1, and that the bottom region has ``myAttribute`` to 2,
+  the top region of the example above has ``myAttribute`` to 1, and that the bottom region has ``myAttribute`` to 2,
 
   * If we want the ``CellElementRegion`` to contain all the cells, we write:
 
@@ -313,7 +315,7 @@ In the example presented above, the mesh is is composed of two regions. Each reg
 
 - If the vtu file does not contain any region attribute field, then all the cells are grouped in a single
   region, and cellBlock names consist of just the cell types (hexahedra, wedges, tetrahedra, etc).
-  Then in the exemple above, the ``ElementRegions`` can be defined as bellow:
+  Then in the example above, the ``ElementRegions`` can be defined as below:
 
 .. code-block:: xml
 
@@ -383,7 +385,7 @@ impose a Dirichlet boundary condition of 0 on it, it can be easily done using th
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="Velocity"
+      fieldName="velocity"
       component="2"
       scale="0.0"
       setNames="{ Bottom }"/>

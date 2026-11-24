@@ -568,6 +568,14 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
 
       real64 diagonal = 0;
       real64 const minDiagonal = 1e-15;
+      // a degenerate diagonal is reset to max(||row||_inf, minDiagonal), the infinity norm
+      // of the row before replacement, so the constraint keeps the scale of the equation it replaces
+      real64 rowNormInf = 0;
+      for( localIndex j = 0; j < numEntries; ++j )
+      {
+        rowNormInf = LvArray::math::max( rowNormInf, LvArray::math::abs( entries[ j ] ) );
+      }
+      real64 const diagonalScale = LvArray::math::max( rowNormInf, minDiagonal );
       for( localIndex j = 0; j < numEntries; ++j )
       {
         if( columns[ j ] == dof )
@@ -577,11 +585,11 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
           // check that the entry is large enough to enforce the boundary condition
           if( entry >= 0 && entry < minDiagonal )
           {
-            entries[ j ] = minDiagonal;
+            entries[ j ] = diagonalScale;
           }
           else if( entry < 0 && entry > -minDiagonal )
           {
-            entries[ j ] = -minDiagonal;
+            entries[ j ] = -diagonalScale;
           }
           diagonal = entries[ j ];
         }

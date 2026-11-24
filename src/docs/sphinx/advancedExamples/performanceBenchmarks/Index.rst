@@ -10,7 +10,7 @@ Wellbore problem scaling on Frontier
 .. _wellboreProblemScaling:
 
 The wellbore problem described here was used to test the weak scaling of GEOS on the
-`Frontier supercomputer <https://www.olcf.ornl.gov/frontier/>` at Oak Ridge National
+`Frontier supercomputer <https://www.olcf.ornl.gov/frontier/>`_ at Oak Ridge National
 Laboratory. The hardware details of the Frontier system are described in the `Frontier
 User Guide <https://docs.olcf.ornl.gov/systems/frontier_user_guide.html>`_.
 
@@ -35,14 +35,6 @@ degrees of freedom in the problem changes.
 +-------+------+------+-------+----------------+
 | 6     |  528 | 1024 | 50000 | 27,033,600,000 |
 +-------+------+------+-------+----------------+
-
-An image of the wellbore geometry is give below:
-
-.. .. figure:: /coreComponents/physics/docs/Wellbore.png
-..    :align: center
-..    :width: 500
-..    :figclass: align-center
-
 
 The scaling results for the wellbore problem applied to different physics models on the
 Frontier supercomputer are shown below:

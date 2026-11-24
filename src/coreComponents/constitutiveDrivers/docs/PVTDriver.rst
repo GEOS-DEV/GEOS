@@ -15,7 +15,7 @@ The driver itself is launched like any other GEOS simulation, but with a particu
 
 .. code-block:: sh
 
-   ./bin/geosx -i myFluidTest.xml
+   geos -i myFluidTest.xml
 
 This driver will work for any multi-phase fluid model (e.g. black-oil, co2-brine, compositional multiphase) enabled within GEOS.    
 

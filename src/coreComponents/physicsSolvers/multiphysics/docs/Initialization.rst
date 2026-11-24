@@ -1,9 +1,11 @@
 .. _PoromechanicalInitialization:
 
-Poromechanical Models Intialization
+Poromechanical Models Initialization
 ===========================================
 
-This section demonstrates the intializaton of poromechanical models in GEOS.
+This section demonstrates the initialization of poromechanical models in GEOS: before the main simulation starts,
+an initialization task (e.g. ``SinglePhasePoromechanicsInitialization``, see :ref:`TasksManager`) runs the coupled solver once
+to compute the stress field in equilibrium with the initial pressure and the gravity or user-defined stress gradients.
 
 
 .. toctree::

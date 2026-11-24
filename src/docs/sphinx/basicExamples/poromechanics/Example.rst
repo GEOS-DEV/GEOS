@@ -203,9 +203,11 @@ Therefore, as shown in the ``Events`` section, we run this simulation for 90 sec
 Running GEOS 
 --------------
 
-To run the case, use the following command:
+To run the case, use the following command from the root of the repository:
 
-``path/to/geosx -i inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml``
+.. code-block:: console
+
+  geos -i inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml
 
 Here, we see for instance the ``RSolid`` and ``RFluid`` at a representative timestep
 (residual values for solid and fluid mechanics solvers, respectively)

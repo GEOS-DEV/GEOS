@@ -299,6 +299,7 @@ struct LinearSolverParameters
       singlePhaseReservoirFVM,                        ///< finite volume single-phase flow with wells
       thermalSinglePhaseReservoirFVM,                 ///< finite volume thermal single-phase flow with wells
       singlePhaseHybridFVM,                           ///< hybrid finite volume single-phase flow
+      singlePhaseMixedMFD,                            ///< mixed mimetic finite difference single-phase flow
       singlePhaseReservoirHybridFVM,                  ///< hybrid finite volume single-phase flow with wells
       singlePhasePoromechanics,                       ///< single phase poromechanics with finite volume single phase flow
       thermalSinglePhasePoromechanics,                ///< thermal single phase poromechanics with finite volume single phase flow
@@ -334,6 +335,9 @@ struct LinearSolverParameters
     integer separateComponents = false;               ///< Apply a separate displacement component (SDC) filter before AMG construction
     integer areWellsShut = false;                     ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the
                                                       ///< well block
+    array1d< integer > customPointMarkers;            ///< Optional solver-provided per-local-dof labels overriding the field-component
+                                                      ///< labels (empty = use the DofManager field labels); used by strategies whose
+                                                      ///< reduction is finer-grained than the dof fields (e.g. adaptive mixed MFD)
   }
   mgr;                                                ///< Multigrid reduction (MGR) parameters
 
@@ -581,6 +585,7 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "singlePhaseReservoirFVM",
               "thermalSinglePhaseReservoirFVM",
               "singlePhaseHybridFVM",
+              "singlePhaseMixedMFD",
               "singlePhaseReservoirHybridFVM",
               "singlePhasePoromechanics",
               "thermalSinglePhasePoromechanics",

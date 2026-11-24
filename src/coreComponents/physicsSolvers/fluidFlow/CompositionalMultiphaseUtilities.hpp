@@ -49,19 +49,6 @@ namespace compositionalMultiphaseUtilities
 {
 
 /**
- * @brief Solution scaling type, used in CompositionalMultiphaseFVM
- */
-enum class ScalingType : integer
-{
-  Global,         ///< Scale the Newton update with a unique scaling factor
-  Local            ///< Scale the Newton update locally (modifies the Newton direction)
-};
-
-ENUM_STRINGS( ScalingType,
-              "Global",
-              "Local" );
-
-/**
  * @brief In each block, shift the elements from 0 to numRowsToShift-1 one position ahead and replaces the first element
  * with the sum of all elements from 0 to numRowsToShift-1 of the input block one-dimensional array of values.
  *
@@ -182,8 +169,11 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numR
     {
       work[j] = mat[ind][j];
     }
-    for( integer i = ind; i > firstRow; --i )
+    integer const numIters = numRowsToShift - 1;
+    for( integer step = 0; step < numIters; ++step )
     {
+      integer const i = ind - step;
+
       for( integer j = 0; j < numColsInBlock; ++j )
       {
         mat[i][j] = mat[i-1][j];

@@ -57,6 +57,15 @@ using namespace constitutive;
 using namespace fields;
 
 
+/// Return the cell sub-region referenced by a node-to-element map entry, or nullptr if the entry
+/// points to a non-3D element (e.g. well elements, which also register themselves in the node maps).
+static CellElementSubRegion const * getCellSubRegion( ElementRegionManager const & elemManager,
+                                                      localIndex const er,
+                                                      localIndex const esr )
+{
+  return dynamic_cast< CellElementSubRegion const * >( &elemManager.getRegion( er ).getSubRegion( esr ) );
+}
+
 /// Return the other edge of a face given one edge.
 static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
                                     const localIndex thisFace, const localIndex thisEdge )
@@ -1076,7 +1085,11 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
       localIndex const er  = nodeToRegionMap[k];
       localIndex const esr = nodeToSubRegionMap[k];
       localIndex const ei  = nodeToElementMap[k];
-      CellElementSubRegion const * subRegion = &elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
+      CellElementSubRegion const * subRegion = getCellSubRegion( elemManager, er, esr );
+      if( subRegion == nullptr )
+      {
+        continue;
+      }
       std::pair< CellElementSubRegion const *, localIndex > const p( subRegion, ei );
 
       // Keep pairs unique (small N — linear search is fine).
@@ -1099,6 +1112,12 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
   stdVector< std::pair< CellElementSubRegion const *, localIndex > > const
   nodeToElementMaps( buildNodeToElementMaps() );
+
+  // A node attached only to non-3D elements (e.g. a well node) cannot be split.
+  if( nodeToElementMaps.empty() )
+  {
+    return false;
+  }
 
   arrayView1d< integer const > const & isEdgeExternal = edgeManager.isExternal();
 
@@ -2725,9 +2744,11 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
       {
         if( nodeToRegionMap[a][k]!=-1 && nodeToSubRegionMap[a][k]!=-1 && nodeToElementMap[a][k]!=-1 )
         {
-          nodeToElements.emplace( &elementManager.getRegion( nodeToRegionMap( a, k ) ).
-                                    getSubRegion< CellElementSubRegion >( nodeToSubRegionMap( a, k ) ),
-                                  nodeToElementMap( a, k ) );
+          CellElementSubRegion const * const subRegion = getCellSubRegion( elementManager, nodeToRegionMap( a, k ), nodeToSubRegionMap( a, k ) );
+          if( subRegion != nullptr )
+          {
+            nodeToElements.emplace( subRegion, nodeToElementMap( a, k ) );
+          }
         }
       }
 
@@ -3142,7 +3163,12 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
               localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
               localIndex const ei  = nodeToElementMap[nodeIndex][k];
 
-              CellElementSubRegion const & elementSubRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
+              CellElementSubRegion const * const cellSubRegion = getCellSubRegion( elementManager, er, esr );
+              if( cellSubRegion == nullptr )
+              {
+                continue;
+              }
+              CellElementSubRegion const & elementSubRegion = *cellSubRegion;
 
               arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion.nodeList();
               arrayView2d< real64 const > const & elementCenter = elementSubRegion.getElementCenter().toViewConst();
@@ -3243,11 +3269,18 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
             {
               real64 averageYoungModulus( 0 ), averagePoissonRatio( 0 );
               localIndex nodeID = i == 0 ? tralingNodeID : theOtherTrailingNodeID;
+              localIndex numCellElements = 0;
               for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
               {
-                localIndex const er  = nodeToRegionMap[nodeIndex][k];
-                localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
-                localIndex const ei  = nodeToElementMap[nodeIndex][k];
+                localIndex const er  = nodeToRegionMap[nodeID][k];
+                localIndex const esr = nodeToSubRegionMap[nodeID][k];
+                localIndex const ei  = nodeToElementMap[nodeID][k];
+
+                if( getCellSubRegion( elementManager, er, esr ) == nullptr )
+                {
+                  continue;
+                }
+                ++numCellElements;
 
                 real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
                 real64 G = shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
@@ -3255,8 +3288,12 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
                 averagePoissonRatio += ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
               }
 
-              averageYoungModulus /= nodeToRegionMap.sizeOfArray( nodeID );
-              averagePoissonRatio /= nodeToRegionMap.sizeOfArray( nodeID );
+              GEOS_ERROR_IF( numCellElements == 0,
+                             GEOS_FMT( "node {} is not connected to any cell element, cannot compute the average elastic moduli", nodeID ),
+                             getDataContext() );
+
+              averageYoungModulus /= numCellElements;
+              averagePoissonRatio /= numCellElements;
 
               LvArray::tensorOps::copy< 3 >( fExternal[i], fext[nodeID] );
               LvArray::tensorOps::scale< 3 >( fExternal[i], averageYoungModulus / (1 - averagePoissonRatio * averagePoissonRatio) );
@@ -3933,7 +3970,12 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
       localIndex const esr = nodeToSubRegionMap[nodeID][k];
       localIndex const ei  = nodeToElementMap[nodeID][k];
 
-      CellElementSubRegion const & elementSubRegion = elementManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
+      CellElementSubRegion const * const cellSubRegion = getCellSubRegion( elementManager, er, esr );
+      if( cellSubRegion == nullptr )
+      {
+        continue;
+      }
+      CellElementSubRegion const & elementSubRegion = *cellSubRegion;
 
       real64 xEle[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[er][esr][ei] );
 
