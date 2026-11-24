@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 
 #include "LvArray/src/math.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
 
@@ -63,7 +64,7 @@ public:
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
                        integer const allowNegativePressure,
-                       compositionalMultiphaseUtilities::ScalingType const scalingType,
+                       flowSolverUtilities::ScalingType const scalingType,
                        real64 const scalingFactor,
                        arrayView1d< real64 const > const pressure,
                        arrayView2d< real64 const, compflow::USD_COMP > const compDens,
@@ -232,7 +233,7 @@ public:
                              StackVariables & stack,
                              FUNC && kernelOp = NoOpFunc{} ) const
   {
-    bool const localScaling = m_scalingType == compositionalMultiphaseUtilities::ScalingType::Local;
+    bool const localScaling = m_scalingType == flowSolverUtilities::ScalingType::Local;
 
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
     if( newPres < 0.0 && !m_allowNegativePressure )
@@ -306,7 +307,7 @@ protected:
   real64 const m_scalingFactor;
 
   /// scaling type (global or local)
-  compositionalMultiphaseUtilities::ScalingType const m_scalingType;
+  flowSolverUtilities::ScalingType const m_scalingType;
 
   ElementsReporterCollector const m_negPressureIds;
 
@@ -338,7 +339,7 @@ public:
   static SolutionCheckKernel::KernelStats
   createAndLaunch( integer const allowCompDensChopping,
                    integer const allowNegativePressure,
-                   compositionalMultiphaseUtilities::ScalingType const scalingType,
+                   flowSolverUtilities::ScalingType const scalingType,
                    real64 const scalingFactor,
                    arrayView1d< real64 const > const pressure,
                    arrayView2d< real64 const, compflow::USD_COMP > const compDens,

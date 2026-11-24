@@ -20,7 +20,7 @@ A test folder can contain any number of *.ats* configuration files, *.xml* input
 .. code-block:: sh
 
   - inputFiles/
-    - main.ats/
+    - main.ats
     - solidMechanics/
       - sedov.ats
       - sedov.xml
@@ -88,7 +88,7 @@ The log will provide instructions on where to download the test results and a ba
 
 
 
-. code-block:: sh
+.. code-block:: sh
 
   Download the bundle at https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3044-4400-e6359ca.tar.gz
   New baseline ID: baseline_integratedTests-pr3044-4400-e6359ca
@@ -131,12 +131,12 @@ After building GEOS, the integrated tests can be triggered in the GEOS build dir
 
 .. note::
   We forward any arguments included in the `ATS_ARGUMENTS` cmake variable to the testing system.
-  For example, on LLNL Lassen builds we select a couple of runtime options:
-  set(ATS_ARGUMENTS "--ats jsrun_omp --ats jsrun_bind=packed"  CACHE STRING "")
+  For example, the following line in a host-config file selects the `openmpi` machine definition (see :ref:`Machine Definitions <machine-definitions>`):
+  set(ATS_ARGUMENTS "--machine openmpi --ats openmpi_numnodes 32"  CACHE STRING "")
 
 
 .. note::
-  When running test or creating new baselines on LC systems, we recommend that you use the *quartz-gcc-12-release* configuration
+  When running tests or creating new baselines on LC systems, we recommend that you use one of the *dane* configurations found in *host-configs/LLNL*.
 
 
 .. _overrideTestBehavior:
@@ -154,10 +154,12 @@ Common options for this script include:
 * --ats : Pass an argument to the underlying ats framework.  Running `geos_ats.sh --ats help` will show you a list of available options for your current machine.
 
 
+.. _machine-definitions:
+
 Machine Definitions
 ------------------------
 
-On many machines, ATS will automatically identify your machine's configuration and optimize it's performance.
+On many machines, ATS will automatically identify your machine's configuration and optimize its performance.
 If the tests fail to run or to properly leverage your machine's resources, you may need to manually configure the machine.
 If you know the appropriate name for your machine in ATS (or the geos_ats package), then you can run `./geos_ats.sh --machine machine_name --ats help` to see a list of potential configuration options.
 
@@ -242,7 +244,7 @@ Using the serial beam bending test as an example, key output files include:
 * *totalDisplacement_trace.png* : A figure displaying the results of the curve check step.
 * *beamBending.geos.out* : Contains the standard output for only the geos run step.
 * *beamBending_restart_000000010.restartcheck* which holds all of the standard output for only the *restartcheck* step.
-* *beamBending_restart_000000010.0.diff.hdf5* which mimmics the hierarchy of the restart file and has links to the
+* *beamBending_restart_000000010.0.diff.hdf5* which mimics the hierarchy of the restart file and has links to the differing datasets (see below).
 
 See :ref:`Restart Check <restart-check>` and :ref:`Curve Check <curve-check>` for further details on the test checks and output files.
 
@@ -253,7 +255,7 @@ Restart Check
 =================================
 
 This check compares a restart file output at the end of a run against a baseline.
-The python script that evaluates the diff is included in the `geos_ats` package, and is located here: *integratedTests/scripts/geos_ats_package/geos_ats/helpers/restart_check.py*.
+The python script that evaluates the diff is included in the `geos_ats` package, and is located here: the ``geos.ats.helpers.restart_check`` module (it can be run directly with ``python -m geos.ats.helpers.restart_check``).
 The script compares the two restart files and writes out a *.restart_check* file with the results, as well as exiting with an error code if the files compare differently.
 This script takes two positional arguments and a number of optional keyword arguments:
 
@@ -265,7 +267,6 @@ This script takes two positional arguments and a number of optional keyword argu
 * -w/-Werror : Force warnings to be treated as errors, default is false.
 * -m/--skip-missing : Ignore values that are missing from either the baseline or target file.
 
-The  itself starts off with a summary of the arguments.
 The script begins by recording the arguments to the *.restart_check* file header, and then compares the *.root* restart files to their baseline.
 If these match, the script will compare the linked *.hdf5* data files to their baseline.
 If the script encounters any differences it will output an error message, and record a summary to the *.restart_check* file.
@@ -274,7 +275,7 @@ The restart check step can be run in parallel using mpi via
 
 .. code-block:: sh
 
-  mpirun -n NUM_PROCESSES python -m mpi4py restartcheck.py ...
+  mpirun -n NUM_PROCESSES python -m mpi4py -m geos.ats.helpers.restart_check ...
 
 In this case rank zero reads in the restart root file and then each rank parses a subset of the data files creating a *.$RANK.restartcheck* file. Rank zero then merges the output from each of these files into the main *.restartcheck* file and prints it to standard output.
 
@@ -336,7 +337,7 @@ An sample error message is
 The *.diff.hdf5* File
 ---------------------------------
 
-Each error generated in the *restartcheck* step creates a group with three children in the *_diff.df5* file.
+Each error generated in the *restartcheck* step creates a group with three children in the *_diff.hdf5* file.
 For example the error given above will generate a hdf5 group
 
 .. code-block:: sh
@@ -344,24 +345,25 @@ For example the error given above will generate a hdf5 group
   /FILENAME/datagroup_0000000/sidre/external/ProblemManager/domain/MeshBodies/mesh1/Level0/nodeManager/TotalDisplacement
 
 with datasets *baseline*, *run* and *message* where *FILENAME* is the name of the restart data file being compared.
-The *message* dataset contains a copy of the error message while *baseline* is a symbolic link to the baseline dataset and *run* is a sumbolic link to the dataset genereated by the run.
+The *message* dataset contains a copy of the error message while *baseline* is a symbolic link to the baseline dataset and *run* is a symbolic link to the dataset generated by the run.
 This allows for easy access to the raw data underlying the diff without data duplication. For example if you want to extract the datasets into python you could do this:
 
 .. code-block:: python
 
   import h5py
+  import numpy as np
   file_path = "beamBending_restart_000000003_diff.hdf5"
   path_to_data = "/beamBending_restart_000000011_0000000.hdf5/datagroup_0000000/sidre/external/ProblemManager/domain/MeshBodies/mesh1/Level0/nodeManager/TotalDisplacement"
-  f = h5py.File("file_path", "r")
-  error_message = f["path_to_data/message"]
-  run_data = f["path_to_data/run"][:]
-  baseline_data = f["path_to_data/baseline"][:]
+  f = h5py.File(file_path, "r")
+  error_message = f[path_to_data + "/message"]
+  run_data = f[path_to_data + "/run"][:]
+  baseline_data = f[path_to_data + "/baseline"][:]
 
   # Now run_data and baseline_data are numpy arrays that you may use as you see fit.
   rtol = 1e-10
   atol = 1e-15
   absolute_diff = np.abs(run_data - baseline_data) < atol
-  hybrid_diff = np.close(run_data, baseline_data, rtol, atol)
+  hybrid_diff = np.isclose(run_data, baseline_data, rtol, atol)
 
 When run in parallel each rank creates a *.$RANK.diff.hdf5* file which contains the diff of each data file processed by that rank.
 
@@ -373,7 +375,7 @@ Curve Check
 
 This check compares time history (*.hdf5*) curves generated during GEOS execution against baseline and/or analytic solutions.
 In contrast to restart checks, curve checks are designed to be flexible with regards to things like mesh construction, time stepping, etc.
-The python script that evaluates the diff is included in the `geos_ats` package, and is located here: *integratedTests/scripts/geos_ats_package/geos_ats/helpers/curve_check.py*.
+The python script that evaluates the diff is included in the `geos_ats` package, and is located here: the ``geos.ats.helpers.curve_check`` module.
 The script renders the curve check results as a figure, and will throw an error if curves are out of tolerance.
 This script takes two positional arguments and a number of optional keyword arguments:
 
@@ -418,7 +420,7 @@ The following error would indicate that the requested baseline file was not foun
   baseline file not found: /path/to/baseline/file
 
 
-This type of error can occur if you are adding a new test, or if you time history output failed.
+This type of error can occur if you are adding a new test, or if your time history output failed.
 
 
 
@@ -447,9 +449,9 @@ Adding and Modifying Tests
 ATS Configuration File
 ---------------------------------
 
-Files with the *.ats* extension are used to configure the integratedTests.
+Files with the *.ats* extension are used to configure the integrated tests.
 They use a Python 3.x syntax, and have a set of ATS-related methods loaded into the scope (TestCase, geos, source, etc.).
-The root configuration file (*integratedTests/tests/allTests/main.ats*) finds and includes any test definitions in its subdirectories.
+The root configuration file (*inputFiles/main.ats*) finds and includes any test definitions in its subdirectories.
 The remaining configuration files typically add one or more tests with varying partitioning and input xml files to ATS.
 
 The *inputFiles/solidMechanics/sedov.ats* file shows how to add three groups of tests.
@@ -554,7 +556,7 @@ The rules that make this work:
   On batch systems export the variable in the job script so it reaches the compute nodes.
 * Restart checks compare solution fields only, so a solver-quality regression (more
   iterations, same answer) passes them silently. The hypredrive CI job therefore
-  harvests every ``_iterative`` geosx log after the hypredrive pass and after
+  harvests every ``_iterative`` GEOS log after the hypredrive pass and after
   ``GEOS_HYPREDRV_FORCE_LEGACY=1``, then runs
   ``scripts/compareLinearSolverIterations.py`` with ``--iterative`` /
   ``--exact-sequence``. That check covers **all** per-solve iteration counts in
@@ -604,7 +606,7 @@ Tips
 -----
 
 
-**Parallel Tests**: On some development machines geosxats won't run parallel tests by default (e.g. on an linux laptop or workstation), and as a result many baselines will be skipped.
+**Parallel Tests**: On some development machines ATS won't run parallel tests by default (e.g. on a linux laptop or workstation), and as a result many baselines will be skipped.
 We highly recommend running tests and rebaselining on an MPI-aware platform.
 
 **Filtering Checks**: A common reason for rebaselining is that you have changed the name of an XML node in the input files.

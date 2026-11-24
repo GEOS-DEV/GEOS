@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+
+<!-- Same problem as incompressible_hybridMesh_mixed_smoke.xml, solved with GMRES and the MGR strategy of the mixed MFD system:
+     the fluxes are eliminated by relaxation and one AMG cycle is applied to the pressure Schur complement. -->
+
+<Problem>
+  <Included>
+    <File name="./incompressible_hybridMesh_mixed_base.xml"/>
+  </Included>
+
+  <Solvers>
+    <SinglePhaseMixedMFD
+      name="mixedMFDFlow"
+      logLevel="1"
+      discretization="mixedMFD"
+      targetRegions="{ domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-10"
+        logLevel="1"/>
+    </SinglePhaseMixedMFD>
+  </Solvers>
+
+  <NumericalMethods>
+    <MixedMimetic>
+      <MixedMimeticDiscretization
+        name="mixedMFD"
+        innerProductType="RT"
+        adaptiveConsistency="1"
+        consistencyTolerance="0.1"
+        nominalGradient="{ 1.0, 1.0, 1.0 }"/>
+    </MixedMimetic>
+  </NumericalMethods>
+</Problem>
