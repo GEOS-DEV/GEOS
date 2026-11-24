@@ -1011,6 +1011,10 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
       // elements of the same type are adjacent in the vals list.
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
+      // RAJA sorts receive raw pointers: CHAI does not migrate these views automatically.
+      // Make sure the sort operates on the device copies written by the kernel above.
+      keys_v.move( parallelDeviceMemorySpace, true );
+      vals_v.move( parallelDeviceMemorySpace, true );
       RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
 
       stickList.resize( nStick );
@@ -1030,8 +1034,10 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
-      this->m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
-      this->m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
+      // The lists were filled on device. Copy-assignment would deep-copy through host pointers
+      // (stale without unified memory); move-assignment transfers the CHAI buffers instead.
+      this->m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = std::move( stickList );
+      this->m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = std::move( slipList );
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
@@ -1105,6 +1111,9 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
     // elements of the same type are adjacent in the vals list.
     // This arrangement allows for efficient copying into the container
     // by leveraging parallelism.
+    // Make sure the sort operates on the device copies written by the kernel above.
+    keys_v.move( parallelDeviceMemorySpace, true );
+    vals_v.move( parallelDeviceMemorySpace, true );
     RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
 
     quadList.resize( nQuad );
@@ -1122,8 +1131,8 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
 
-    this->m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
-    this->m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
+    this->m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = std::move( quadList );
+    this->m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = std::move( triList );
   } );
 
 }
@@ -1165,6 +1174,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
     }
 
     // Sort indexes to enable efficient searching using binary search.
+    tmpSpace_v.move( parallelDeviceMemorySpace, true );
     RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
     // Move data back to host: after the device sort the buffer lives on the GPU,
     // but SortedArray::insert is a host-only operation that dereferences the iterators.
@@ -1223,6 +1233,8 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
       localIndex nBubElems = static_cast< localIndex >(nBubElems_r.get());
+      keys_v.move( parallelDeviceMemorySpace, true );
+      perms_v.move( parallelDeviceMemorySpace, true );
       RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, perms_v );
 
       array1d< localIndex > bubbleElemsList;
@@ -1239,6 +1251,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
       {
         bubbleElemsList_v[k] = keys_v[k];
       } );
+      bubbleElemsList.move( hostMemorySpace, false );
       cellElementSubRegion.setBubbleElementsList( bubbleElemsList.toViewConst());
 
       forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
@@ -1259,6 +1272,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
         faceElemsList_v[k][1] = keys_v[k];
       } );
+      faceElemsList.move( hostMemorySpace, false );
       cellElementSubRegion.setFaceElementsList( faceElemsList.toViewConst());
 
     } );
