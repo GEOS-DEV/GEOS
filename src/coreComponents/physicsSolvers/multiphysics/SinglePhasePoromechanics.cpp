@@ -75,6 +75,15 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
                                                                              ParallelVector & solution,
                                                                              bool const setSparsity )
 {
+  // If the current solver is sequentially coupled and a subsolver of a sequentially coupled parent solver:
+  // set up the linear systems of the flow and mechanics subsolvers sequentially instead of monolithically
+  // Note: no current solver or example uses this path. It is kept for future nested sequential coupling
+  if( this->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    Base::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+    return;
+  }
+
   if( this->m_precond )
   {
     this->m_precond->clear();
