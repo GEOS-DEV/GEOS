@@ -637,7 +637,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   string( "FreeSurface" ),
-                                  [&]( FieldSpecificationBase const & bc,
+                                  [&]( FieldSpecification const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
                                        FaceManager &,

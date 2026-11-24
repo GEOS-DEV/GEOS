@@ -38,21 +38,24 @@ public:
   DamageVolDevUpdates( arrayView2d< real64 > const & inputNewDamage,
                        arrayView2d< real64 > const & inputOldDamage,
                        arrayView3d< real64 > const & inputDamageGrad,
-                       arrayView2d< real64 > const & inputStrainEnergyDensity,
+                       arrayView2d< real64 > const & inputCrackDrivingForce,
+                       arrayView2d< real64 > const & inputOldCrackDrivingForce,
                        arrayView2d< real64 > const & inputVolumetricStrain,
                        arrayView2d< real64 > const & inputExtDrivingForce,
                        real64 const & inputLengthScale,
                        arrayView1d< real64 > const & inputCriticalFractureEnergy,
                        real64 const & inputcriticalStrainEnergy,
                        real64 const & inputDegradationLowerLimit,
-                       int const & inputExtDrivingForceFlag,
+                       FractureModelType const & inputFractureModelType,
+                       LocalDissipationOption const & inputLocalDissipationOption,
                        arrayView1d< real64 > const & inputTensileStrength,
                        arrayView1d< real64 > const & inputCompressiveStrength,
                        arrayView1d< real64 > const & inputDeltaCoefficient,
                        arrayView1d< real64 > const & inputBiotCoefficient,
                        PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
+    DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputCrackDrivingForce, inputOldCrackDrivingForce, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputFractureModelType,
+                                  inputLocalDissipationOption,
                                   inputTensileStrength, inputCompressiveStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
@@ -63,11 +66,9 @@ public:
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
 
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
-  using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
-  using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
-  using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
 
-  using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
+  using DamageUpdates< UPDATE_BASE >::m_crackDrivingForce;
+  using DamageUpdates< UPDATE_BASE >::m_oldCrackDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_volStrain;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
@@ -76,7 +77,8 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_newDamage;
   using DamageUpdates< UPDATE_BASE >::m_oldDamage;
   using DamageUpdates< UPDATE_BASE >::m_damageGrad;
-  using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
+  using DamageUpdates< UPDATE_BASE >::m_fractureModelType;
+  using DamageUpdates< UPDATE_BASE >::m_localDissipationOption;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
   using DamageUpdates< UPDATE_BASE >::m_compressiveStrength;
   using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
@@ -138,7 +140,6 @@ public:
                                        stress );
 
     // update strain energy density
-    // TODO: refactor as a proper history variable update.  the code below doesn't allow for rewinds.
 
     real64 sed = 0.5 * (stressQ * devStrain) / factor;
 
@@ -147,18 +148,7 @@ public:
       sed += 0.5 * (stressP * volStrain) / factor;
     }
 
-    if( sed > m_strainEnergyDensity( k, q ) )
-    {
-      m_strainEnergyDensity( k, q ) = sed;
-    }
-  }
-
-
-  GEOS_HOST_DEVICE
-  virtual real64 getStrainEnergyDensity( localIndex const k,
-                                         localIndex const q ) const override final
-  {
-    return m_strainEnergyDensity( k, q );
+    m_crackDrivingForce( k, q ) = fmax( sed, m_oldCrackDrivingForce( k, q ) );
   }
 
 };
@@ -174,14 +164,16 @@ public:
   using Damage< BASE >::m_newDamage;
   using Damage< BASE >::m_oldDamage;
   using Damage< BASE >::m_damageGrad;
-  using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_crackDrivingForce;
+  using Damage< BASE >::m_oldCrackDrivingForce;
   using Damage< BASE >::m_volStrain;
   using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
   using Damage< BASE >::m_degradationLowerLimit;
-  using Damage< BASE >::m_extDrivingForceFlag;
+  using Damage< BASE >::m_fractureModelType;
+  using Damage< BASE >::m_localDissipationOption;
   using Damage< BASE >::m_tensileStrength;
   using Damage< BASE >::m_compressiveStrength;
   using Damage< BASE >::m_deltaCoefficient;
@@ -193,20 +185,23 @@ public:
   static string catalogName() { return string( "DamageVolDev" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void postInputInitialization() override;
 
   KernelWrapper createKernelUpdates() const
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
                                                                        m_oldDamage.toView(),
                                                                        m_damageGrad.toView(),
-                                                                       m_strainEnergyDensity.toView(),
+                                                                       m_crackDrivingForce.toView(),
+                                                                       m_oldCrackDrivingForce.toView(),
                                                                        m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy.toView(),
                                                                        m_criticalStrainEnergy,
                                                                        m_degradationLowerLimit,
-                                                                       m_extDrivingForceFlag,
+                                                                       m_fractureModelType,
+                                                                       m_localDissipationOption,
                                                                        m_tensileStrength.toView(),
                                                                        m_compressiveStrength.toView(),
                                                                        m_deltaCoefficient.toView(),

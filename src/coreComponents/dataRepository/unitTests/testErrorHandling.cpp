@@ -26,6 +26,7 @@
 
 #include <gtest/gtest.h>
 #include <filesystem>
+#include <signal.h>
 
 using namespace geos;
 using namespace dataRepository;
@@ -65,7 +66,7 @@ void beginLocalLoggerTest( ErrorLogger & errorLogger, string_view filename )
  * @param expectedFileBits reference file parts that must be in the logger file output
  */
 void endLocalLoggerTest( ErrorLogger & errorLogger,
-                         std::vector< string > expectedFileBits )
+                         stdVector< string > expectedFileBits )
 {
   auto const readFile = [] ( string_view filename ) {
     if( !fs::exists( filename ))
@@ -414,6 +415,10 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
 
 TEST( ErrorHandling, VerifySignalHandlerLogs )
 {
+#if defined(__APPLE__)
+  GTEST_SKIP() << "Returning from a signal handler is not supported on macOS.";
+#endif
+
   ErrorLogger testErrorLogger;
 
   beginLocalLoggerTest( testErrorLogger, "errors.yaml" );

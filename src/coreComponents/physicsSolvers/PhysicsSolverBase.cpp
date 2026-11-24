@@ -28,10 +28,15 @@
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 #include "common/Units.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
 #endif
+
+#include <cmath>
 
 namespace geos
 {
@@ -135,6 +140,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
+  if( m_linearSolverParameters.getLogLevel() < getLogLevel() )
+  {
+    m_linearSolverParameters.setLogLevel( getLogLevel() );
+    m_linearSolverParameters.get().logLevel = m_linearSolverParameters.getLogLevel();
+  }
+
   m_solverStatistics.setOutputFilesName( getName() );
 
   m_solverStatistics.makeDir( m_writeStatisticsCSV !=  StatsOutputType::none );
@@ -358,9 +369,20 @@ bool PhysicsSolverBase::execute( real64 const time_n,
                                        getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
-  GEOS_ERROR_IF( dtRemaining > 0.0,
-                 "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
-                 getDataContext() );
+  if( dtRemaining > 0.0 )
+  {
+    real64 const lastSubStepDt = numOfSubSteps > 0 ? subStepDts[numOfSubSteps - 1] : 0.0;
+    real64 const lastSubStepStart = time_n + ( dt - dtRemaining ) - lastSubStepDt;
+    // number of sub-steps still needed at the size of the last one
+    integer const subStepsLeft = lastSubStepDt > 0.0 ? static_cast< integer >( std::ceil( dtRemaining / lastSubStepDt ) ) : 0;
+    GEOS_ERROR( GEOS_FMT( "Reached maximum allowed number of sub-steps ({}):\n"
+                          "  - last sub-step:  started at {} s, {} s delta time\n"
+                          "  - sub-steps left: {} ({} s of {} s)\n\n"
+                          "Consider increasing maxSubSteps in NonlinearSolverParameters, or lowering maxEventDt of the event "
+                          "that runs this solver.",
+                          maxSubSteps, lastSubStepStart, lastSubStepDt, subStepsLeft, dtRemaining, dt ),
+                getDataContext() );
+  }
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( time_n + dt, nextDt, domain );
@@ -581,7 +603,8 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
 
     debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
-    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution,
+                       cycleNumber, 0 );
   }
 
   getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
@@ -1119,7 +1142,8 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 
       // Solve the linear system
-      solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+      solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution,
+                         cycleNumber, newtonIter );
 
       // Increment the solver statistics for reporting purposes
       getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
@@ -1237,6 +1261,15 @@ void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )
   std::ostringstream oss;
   m_dofManager.printFieldInfo( oss );
   GEOS_LOG_LEVEL( logInfo::Fields, oss.str());
+}
+
+bool PhysicsSolverBase::deferLinearSolverParametersPrint() const
+{
+#ifdef GEOS_USE_HYPREDRV
+  return hypre::hypredrive::shouldUse( getLinearSolverParameters() );
+#else
+  return false;
+#endif
 }
 
 std::unique_ptr< PreconditionerBase< LAInterface > >
@@ -1378,7 +1411,9 @@ PhysicsSolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
                                            ParallelMatrix & matrix,
                                            ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                           ParallelVector & solution,
+                                           integer const cycleNumber,
+                                           integer const nonlinearIteration )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1413,6 +1448,16 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
     {
       m_linearSolver = LAInterface::createSolver( params );
     }
+
+    LinearSolverExecutionContext executionContext;
+    executionContext.solverName = getName();
+    executionContext.cycleNumber = cycleNumber;
+    executionContext.timeStepAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
+    executionContext.configurationAttempt = m_nonlinearSolverParameters.m_numConfigurationAttempts;
+    executionContext.nonlinearIteration = nonlinearIteration;
+    executionContext.systemSetupTimestamp = getSystemSetupTimestamp();
+    m_linearSolver->setExecutionContext( executionContext );
+    m_linearSolver->setNearNullKernel( getLinearSolverNearNullKernel() );
 
     if( isSetupNeeded )
     {
@@ -1620,16 +1665,17 @@ Timestamp PhysicsSolverBase::getMeshModificationTimestamp( DomainPartition & dom
 
 R1Tensor const PhysicsSolverBase::gravityVector() const
 {
-  R1Tensor rval;
-  if( dynamicCast< PhysicsSolverManager const * >( &getParent() ) != nullptr )
+  // Avoid dynamic_cast< PhysicsSolverManager const * > here: it would force the
+  // base library (physicsSolversBase) to link against PhysicsSolverManager's
+  // typeinfo, which lives in the dependent physicsSolvers library — circular
+  // on macOS dylibs. Probe by wrapper presence; the gravityVector wrapper is
+  // only ever registered by PhysicsSolverManager.
+  auto const key = PhysicsSolverManager::viewKeyStruct::gravityVectorString();
+  if( getParent().hasWrapper( key ) )
   {
-    rval = getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() );
+    return getParent().getReference< R1Tensor >( key );
   }
-  else
-  {
-    rval = {0.0, 0.0, -9.81};
-  }
-  return rval;
+  return { 0.0, 0.0, -9.81 };
 }
 
 bool PhysicsSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const

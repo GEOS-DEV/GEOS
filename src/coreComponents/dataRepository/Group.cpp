@@ -86,6 +86,8 @@ void Group::deregisterWrapper( string const & name )
 
 void Group::resize( indexType const newSize )
 {
+  GEOS_MARK_FUNCTION;
+
   forWrappers( [newSize] ( WrapperBase & wrapper )
   {
     if( wrapper.sizedFromParent() == 1 )
@@ -123,7 +125,7 @@ void Group::reserve( indexType const newSize )
   {
     if( subGroup.sizedFromParent() == 1 )
     {
-      subGroup.resize( newSize );
+      subGroup.reserve( newSize );
     }
   } );
 

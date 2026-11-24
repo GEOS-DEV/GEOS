@@ -52,6 +52,27 @@ void ConstantDiffusion::allocateConstitutiveData( Group & parent, localIndex con
   }
 }
 
+void ConstantDiffusion::initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const
+{
+  DiffusionBase::initializeTemperatureState( initialTemperature );
+
+  localIndex const numE = m_diffusivity.size( 0 );
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+
+  auto diffusivityView = m_diffusivity.toView();
+  auto const diffusivityComponentsView = m_diffusivityComponents.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      diffusivityView[ei][q][0] = diffusivityComponentsView[0];
+      diffusivityView[ei][q][1] = diffusivityComponentsView[1];
+      diffusivityView[ei][q][2] = diffusivityComponentsView[2];
+    }
+  } );
+}
+
 void ConstantDiffusion::postInputInitialization()
 {
   GEOS_THROW_IF( m_diffusivityComponents.size() != 3,

@@ -65,6 +65,23 @@ partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
            MPI_Comm comm,
            int const numRefinements );
 
+/**
+ * @brief Partition a graph with vertex weights
+ * @param graph The adjacency graph
+ * @param vertexWeights The vertex weights for load balancing
+ * @param vertDist The element distribution
+ * @param numParts The number of partitions
+ * @param comm The MPI communicator
+ * @param numRefinements Number of refinement passes
+ * @return Partition assignment for each vertex
+ */
+array1d< pmet_idx_t >
+partitionWeighted( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
+                   arrayView1d< pmet_idx_t const > const & vertexWeights,
+                   arrayView1d< pmet_idx_t const > const & vertDist,
+                   pmet_idx_t const numParts,
+                   MPI_Comm comm,
+                   int const numRefinements );
 } // namespace parmetis
 } // namespace geos
 

@@ -34,9 +34,6 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      fieldName="Damage"
-      
-      localDissipation="Quadratic"
       logLevel="1"
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
@@ -114,18 +111,12 @@
       defaultShearModulus="3.00e5"
       lengthScale="0.2"
       defaultCriticalFractureEnergy="2.7"
-      criticalStrainEnergy="0"/>
+      criticalStrainEnergy="0"
+      fractureModelType="Brittle"
+      localDissipationOption="Quadratic"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-       name="Gc"
-       initialCondition="1"
-       setNames="{ all }"
-       objectPath="ElementRegions/Region1"
-       fieldName="shale_criticalFractureEnergy"
-       scale="2.7"/>
-
     <FieldSpecification
       name="xtraction"
       fieldName="totalDisplacement"
@@ -158,7 +149,7 @@
 
     <FieldSpecification
       name="pointSource"
-      fieldName="Damage"
+      fieldName="damage"
       objectPath="nodeManager"
       scale="1"
       setNames="{ middle }"/>

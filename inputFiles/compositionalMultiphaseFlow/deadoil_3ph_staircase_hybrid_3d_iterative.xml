@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./deadoil_3ph_staircase_hybrid_3d_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <CompositionalMultiphaseHybridFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidHM"
+      targetRegions="{ mesh/Channel }"
+      temperature="300"
+      maxCompFractionChange="0.5">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        newtonMaxIter="10"
+        lineSearchAction="None"/>
+      <LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-8"/>
+    </CompositionalMultiphaseHybridFVM>
+  </Solvers>
+
+</Problem>

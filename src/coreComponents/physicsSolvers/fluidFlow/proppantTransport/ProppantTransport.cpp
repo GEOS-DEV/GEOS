@@ -29,6 +29,7 @@
 #include "constitutive/fluid/singlefluid/ParticleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -361,7 +362,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
       arrayView1d< real64 > const excessPackVolume = subRegion.getField< proppant::proppantExcessPackVolume >();
       arrayView2d< real64 > const cellBasedFlux = subRegion.getField< proppant::cellBasedFlux >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         for( localIndex c = 0; c < m_numComponents; ++c )
         {
@@ -661,7 +662,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
                                              proppant::proppantConcentration::key(),
-                                             [&]( FieldSpecificationBase const & fs,
+                                             [&]( FieldSpecification const & fs,
                                                   string const &,
                                                   SortedArrayView< localIndex const > const & lset,
                                                   ElementSubRegionBase & subRegion,
@@ -673,15 +674,16 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       arrayView1d< real64 const > const
       proppantConc = subRegion.getReference< array1d< real64 > >( proppant::proppantConcentration::key() );
 
-      fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy<> >( lset,
-                                                                   time_n + dt,
-                                                                   subRegion,
-                                                                   dofNumber,
-                                                                   rankOffset,
-                                                                   localMatrix,
-                                                                   localRhs,
-                                                                   proppantConc );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                                              parallelDevicePolicy<> >( fs,
+                                                                                        lset,
+                                                                                        time_n + dt,
+                                                                                        subRegion,
+                                                                                        dofNumber,
+                                                                                        rankOffset,
+                                                                                        localMatrix,
+                                                                                        localRhs,
+                                                                                        proppantConc );
     } );
 
     //  Apply Dirichlet BC for component concentration
@@ -692,7 +694,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
                                                proppant::proppantConcentration::key(),
-                                               [&]( FieldSpecificationBase const &,
+                                               [&]( FieldSpecification const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
                                                     ElementSubRegionBase & subRegion,
@@ -711,7 +713,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
                                                proppant::componentConcentration::key(),
-                                               [&] ( FieldSpecificationBase const & fs,
+                                               [&] ( FieldSpecification const & fs,
                                                      string const & setName,
                                                      SortedArrayView< localIndex const > const & targetSet,
                                                      ElementSubRegionBase & subRegion,
@@ -729,10 +731,11 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                        getDataContext() );
         bcStatusMap[subRegionName][setName][comp] = true;
 
-        fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
-                                                       time_n + dt,
-                                                       subRegion,
-                                                       proppant::bcComponentConcentration::key() );
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual >( fs,
+                                                                            targetSet,
+                                                                            time_n + dt,
+                                                                            subRegion,
+                                                                            proppant::bcComponentConcentration::key() );
 
       } );
 
@@ -760,7 +763,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
                                                proppant::proppantConcentration::key(),
-                                               [&] ( FieldSpecificationBase const &,
+                                               [&] ( FieldSpecification const &,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
                                                      ElementSubRegionBase & subRegion,
@@ -775,7 +778,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         arrayView2d< real64 const > const bcCompConc =
           subRegion.getReference< array2d< real64 > >( proppant::bcComponentConcentration::key() );
 
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const a )
         {
           localIndex const ei = targetSet[a];
           if( ghostRank[ei] >= 0 )

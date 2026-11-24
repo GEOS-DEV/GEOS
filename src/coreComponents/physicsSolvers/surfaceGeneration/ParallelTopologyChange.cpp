@@ -296,8 +296,6 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * const neighbor,
                                                      MeshLevel * const mesh,
                                                      int const commID,
-//                                          array1d<array1d< std::set<localIndex> > > & allNewElements,
-//                                          array1d<array1d< std::set<localIndex> > > & allModifiedElements,
                                                      ModifiedObjectLists & receivedObjects )
 {
   GEOS_MARK_FUNCTION;
@@ -373,7 +371,6 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   unpackedSize += nodeManager.unpack( receiveBufferPtr, modifiedLocalNodes, 0, false, events );
   unpackedSize += edgeManager.unpack( receiveBufferPtr, modifiedLocalEdges, 0, false, events );
   unpackedSize += faceManager.unpack( receiveBufferPtr, modifiedLocalFaces, 0, false, events );
-//    unpackedSize += elemManager.Unpack( receiveBufferPtr, modifiedElements );
 
   waitAllDeviceEvents( events );
 

@@ -119,7 +119,7 @@ public:
     /**
      * @return The view on each cell line.
      */
-    std::vector< string_view > & getLines()
+    stdVector< string_view > & getLines()
     { return m_lines; }
 
     /**

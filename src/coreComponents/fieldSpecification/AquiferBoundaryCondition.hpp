@@ -21,7 +21,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP
 #define GEOS_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos
@@ -31,7 +31,7 @@ namespace geos
  * @class AquiferBoundaryCondition
  * Holds data and methods to apply a traction boundary condition
  */
-class AquiferBoundaryCondition : public FieldSpecificationBase
+class AquiferBoundaryCondition : public FieldSpecification
 {
 public:
 
@@ -118,7 +118,7 @@ private:
 
   };
 
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecification(string const &, dataRepository::Group *)
   AquiferBoundaryCondition( string const & name, Group * parent );
 
   /// deleted default constructor
@@ -202,7 +202,7 @@ private:
   /**
    * @brief View keys
    */
-  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
   {
 
     // aquifer geological properties

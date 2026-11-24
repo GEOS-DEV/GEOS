@@ -22,6 +22,7 @@
 
 #include "FlashModelBase.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionBase.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
@@ -104,16 +105,8 @@ protected:
 class CO2Solubility : public FlashModelBase
 {
 public:
-  enum class SolubilityModel : integer
-  {
-    DuanSun,
-    SpycherPruess,
-    Tables
-  };
-
-public:
   CO2Solubility( string const & name,
-                 string_array const & inputParams,
+                 BrineFluidParameters const & brineFluidParameters,
                  string_array const & phaseNames,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight,
@@ -346,11 +339,6 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     }
   }
 }
-
-ENUM_STRINGS( CO2Solubility::SolubilityModel,
-              "DuanSun",
-              "SpycherPruess",
-              "Tables" );
 
 } // end namespace PVTProps
 

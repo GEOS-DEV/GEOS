@@ -43,7 +43,7 @@ class ThermalCompressibleSinglePhaseUpdate : public SingleFluidBaseUpdate
 public:
 
   using DensRelationType      = ExponentialRelation< real64, DENS_EAT, 3 >;
-  using ViscRelationType      = ExponentialRelation< real64, VISC_EAT >;
+  using ViscRelationType      = ExponentialRelation< real64, VISC_EAT, 3 >;
   using IntEnergyRelationType = ExponentialRelation< real64, INTENERGY_EAT >;
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
 
@@ -91,7 +91,7 @@ public:
                         real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
-                        real64 & dViscosity_dPressure ) const override
+                        real64 & dViscosity_dPressure ) const override final
   {
     m_densRelation.compute( pressure, density, dDensity_dPressure );
     m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
@@ -112,12 +112,11 @@ public:
                         real64 & dInternalEnergy_dTemperature,
                         real64 & enthalpy,
                         real64 & dEnthalpy_dPressure,
-                        real64 & dEnthalpy_dTemperature ) const override
+                        real64 & dEnthalpy_dTemperature ) const override final
   {
-    m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
-    dViscosity_dTemperature = 0.0;
-
     m_densRelation.compute( pressure, temperature, density, dDensity_dPressure, dDensity_dTemperature );
+
+    m_viscRelation.compute( pressure, temperature, viscosity, dViscosity_dPressure, dViscosity_dTemperature );
 
     /// Compute the internal energy (only sensitive to temperature)
     m_intEnergyRelation.compute( temperature, internalEnergy, dInternalEnergy_dTemperature );
@@ -126,14 +125,13 @@ public:
     enthalpy = internalEnergy - m_refIntEnergy;
     dEnthalpy_dPressure = 0.0;
     dEnthalpy_dTemperature = dInternalEnergy_dTemperature;
-
   }
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       real64 const pressure ) const override
+                       real64 const pressure ) const override final
   {
     compute( pressure,
              m_density[k][q],
@@ -147,7 +145,7 @@ public:
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
-                       real64 const temperature ) const override
+                       real64 const temperature ) const override final
   {
     compute( pressure,
              temperature,
@@ -171,7 +169,7 @@ public:
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature,
-                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override final
   {
     compute( pressure,
              temperature,
@@ -240,6 +238,7 @@ public:
   struct viewKeyStruct : public CompressibleSinglePhaseFluid::viewKeyStruct
   {
     static constexpr char const * thermalExpansionCoeffString() { return "thermalExpansionCoeff"; }
+    static constexpr char const * temperatureViscosityCoefficient() { return "temperatureViscosityCoefficient"; }
     static constexpr char const * specificHeatCapacityString() { return "specificHeatCapacity"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
@@ -254,6 +253,9 @@ private:
 
   /// scalar fluid thermal expansion coefficient
   real64 m_thermalExpansionCoeff;
+
+  /// scalar fluid temperature-viscosity coefficient
+  real64 m_temperatureViscosityCoefficient;
 
   /// scalar fluid volumetric heat capacity coefficient
   real64 m_specificHeatCapacity;

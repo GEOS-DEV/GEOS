@@ -22,6 +22,7 @@
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -195,6 +196,16 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
                         GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0",
                                   m_maxCompFracChange ),
                         InputError, getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
+
+  GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_OBL_COMPONENT_CAP,
+                        GEOS_FMT( "OBL table interpolation supports at most {} components.", GEOS_OBL_COMPONENT_CAP ),
+                        InputError, getWrapperDataContext( viewKeyStruct::numComponentsString() ) );
+
+  GEOS_THROW_IF_GT_MSG( m_numComponents, MAX_NUM_COMPONENTS,
+                        GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
+                                  "Rebuild with GEOS_MAX_FLUID_COMPONENTS >= {}.",
+                                  m_numComponents, MAX_NUM_COMPONENTS, m_numComponents ),
+                        InputError, getWrapperDataContext( viewKeyStruct::numComponentsString() ) );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
 
@@ -819,9 +830,9 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 
@@ -843,17 +854,18 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -923,7 +935,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const &,
+                                             [&]( FieldSpecification const &,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const &,
                                                   ElementSubRegionBase & subRegion,
@@ -947,7 +959,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              flow::globalCompFraction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const & setName,
                                                    SortedArrayView< localIndex const > const &,
                                                    ElementSubRegionBase & subRegion,
@@ -995,7 +1007,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       fsManager.apply< ElementSubRegionBase >( time,
                                                mesh,
                                                flow::temperature::key(),
-                                               [&]( FieldSpecificationBase const &,
+                                               [&]( FieldSpecification const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
                                                     ElementSubRegionBase & subRegion,
@@ -1082,7 +1094,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
                                              flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const & fs,
+                                             [&]( FieldSpecification const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   ElementSubRegionBase & subRegion,
@@ -1092,39 +1104,43 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                             time + dt,
-                                                                             subRegion,
-                                                                             flow::bcPressure::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time + dt,
+                                                                         subRegion,
+                                                                         flow::bcPressure::key() );
     } );
 
     // 2. Apply composition BC (global component fraction), store in a separate field
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
                                              flow::globalCompFraction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                             time + dt,
-                                                                             subRegion,
-                                                                             flow::bcGlobalCompFraction::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time + dt,
+                                                                         subRegion,
+                                                                         flow::bcGlobalCompFraction::key() );
     } );
 
     // 3. Apply temperature Dirichlet BCs, store in a separate field
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
                                              flow::temperature::key(),
-                                             [&]( FieldSpecificationBase const & fs,
+                                             [&]( FieldSpecification const & fs,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   ElementSubRegionBase & subRegion,
@@ -1134,16 +1150,18 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-                                        GEOS_FMT( bcLogMessage,
-                                                  getName(), time+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                        GEOS_FMT_RUNTIME( bcLogMessage,
+                                                          getName(), time+dt, fs.getCatalogName(), fs.getName(),
+                                                          setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                         fs );
       }
 
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                             time + dt,
-                                                                             subRegion,
-                                                                             flow::bcTemperature::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelDevicePolicy<> >( fs,
+                                                                         targetSet,
+                                                                         time + dt,
+                                                                         subRegion,
+                                                                         flow::bcTemperature::key() );
     } );
 
     globalIndex const rankOffset = dofManager.rankOffset();
@@ -1154,7 +1172,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
     fsManager.apply< ElementSubRegionBase >( time + dt,
                                              mesh,
                                              flow::pressure::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,

@@ -2191,9 +2191,9 @@ void SiloFile::writeDataField( string const & meshName,
       castedField[i].resize( nels );
       vars[i] = static_cast< void * >( (castedField[i]).data() );
       forAll< serialPolicy >( nels, [=, &castedField] GEOS_HOST ( localIndex const k )
-        {
-          castedField[i][k] = siloFileUtilities::CastField< OUTTYPE >( field[k], i );
-        } );
+      {
+        castedField[i][k] = siloFileUtilities::CastField< OUTTYPE >( field[k], i );
+      } );
     }
   }
 

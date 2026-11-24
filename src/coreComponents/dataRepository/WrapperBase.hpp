@@ -21,6 +21,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/Span.hpp"
+#include "dataRepository/WrapperLimits.hpp"
 #include "InputFlags.hpp"
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
@@ -202,6 +203,13 @@ public:
    * @return A string representing the default value.
    */
   virtual string getDefaultValueString() const = 0;
+
+  /**
+   * @brief Return a string representing the allowed value range.
+   * @return A string of the form "[min, max]" using standard interval notation, or
+   *         an empty string if no limits are set.
+   */
+  virtual string getLimitsString() const = 0;
 
   /**
    * @brief Initialize the wrapper from the input xml node.
@@ -530,6 +538,15 @@ public:
   }
 
   /**
+   * @brief Get the enforcement mode of the (optional) attribute limits
+   * @return the wrapperLimits::LimitsMode of the wrapper
+   */
+  wrapperLimits::LimitsMode getLimitsMode() const
+  {
+    return m_limitsMode;
+  }
+
+  /**
    * @brief Get the list of names of groups that registered this wrapper.
    * @return vector of object names
    */
@@ -698,6 +715,9 @@ protected:
 
   /// A string description of the wrapped object
   string m_description;
+
+  /// Enforcement mode of the (optional) attribute limits
+  wrapperLimits::LimitsMode m_limitsMode;
 
   /// A string regex to validate the input values string to parse for the wrapped object
   string m_rtTypeName;

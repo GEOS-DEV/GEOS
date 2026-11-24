@@ -637,7 +637,7 @@ void HypreMatrix::multiply( HypreMatrix const & src,
   GEOS_LAI_ASSERT_EQ( numLocalCols(), src.numLocalRows() );
 
   // Compute product
-  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParMatmul( m_parcsr_mat, src.m_parcsr_mat );
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatMat( m_parcsr_mat, src.m_parcsr_mat );
 
   // Create IJ layer (with matrix closed)
   dst.parCSRtoIJ( dst_parcsr );
@@ -651,7 +651,7 @@ void HypreMatrix::leftMultiplyTranspose( HypreMatrix const & src,
   GEOS_LAI_ASSERT_EQ( numLocalRows(), src.numLocalRows() );
 
   // Compute product
-  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParTMatmul( m_parcsr_mat, src.m_parcsr_mat );
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRTMatMat( m_parcsr_mat, src.m_parcsr_mat );
 
   // Create IJ layer (with matrix closed)
   dst.parCSRtoIJ( dst_parcsr );
@@ -1361,8 +1361,8 @@ void HypreMatrix::print( std::ostream & os ) const
   int const numProcs = MpiWrapper::commSize( comm() );
   char str[77];
 
-  constexpr char const lineFormat[] = "{:>11}{:>18}{:>18}{:>28.16e}\n";
-  constexpr char const headFormat[] = "{:>11}{:>18}{:>18}{:>28}\n";
+  static constexpr char const lineFormat[] = "{:>11}{:>18}{:>18}{:>28.16e}\n";
+  static constexpr char const headFormat[] = "{:>11}{:>18}{:>18}{:>28}\n";
 
   if( myRank == 0 )
   {
@@ -1568,14 +1568,17 @@ void HypreMatrix::computeScalingVector( HypreVector & scaling ) const
   array1d< HYPRE_Int > pointMarkers( numLocalRows() );
   m_dofManager->getLocalDofComponentLabels( pointMarkers );
 
-  // Create scaling vector
-  scaling.create( numLocalRows(), comm() );
-  HYPRE_ParVector hypre_vec = scaling.unwrapped();
-  HYPRE_ParVector *hypre_vec_ptr = &hypre_vec;
-
-  // Compute scaling vector
+  // Let hypre own the temporary vector so tagged scaling is free to resize
+  // and attach metadata without mutating GEOS-managed vector storage.
+  HYPRE_ParVector tempScaling = nullptr;
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixComputeScalingTagged( m_parcsr_mat, 1, HYPRE_MEMORY_HOST, num_tags,
-                                                                pointMarkers.data(), hypre_vec_ptr ) );
+                                                                pointMarkers.data(), &tempScaling ) );
+
+  // Copy the computed values back into the wrapped GEOS vector.
+  scaling.create( numLocalRows(), comm() );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorCopy( tempScaling, scaling.unwrapped() ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorDestroy( tempScaling ) );
+  scaling.touch();
 }
 
 }// end namespace geos

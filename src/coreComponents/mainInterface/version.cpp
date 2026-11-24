@@ -16,6 +16,9 @@
 #include "common/GeosxConfig.hpp"
 #include "common/logger/Logger.hpp"
 #include "mainInterface/GeosxVersion.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include <HYPREDRV_config.h>
+#endif
 
 namespace geos
 {
@@ -144,6 +147,18 @@ void outputVersionInfo()
 
 #if defined(hypre_VERSION)
   GEOS_LOG_RANK_0( "  - hypre version: " << STRINGIZE( hypre_VERSION ) );
+#endif
+
+#ifdef GEOS_USE_HYPREDRV
+#if defined(HYPREDRV_RELEASE_VERSION)
+  GEOS_LOG_RANK_0( "  - hypredrive version: " << HYPREDRV_RELEASE_VERSION );
+#elif defined(HYPREDRV_DEVELOP_STRING)
+  GEOS_LOG_RANK_0( "  - hypredrive version: " << HYPREDRV_DEVELOP_STRING );
+#elif defined(HYPREDRV_GIT_SHA)
+  GEOS_LOG_RANK_0( "  - hypredrive version: " << HYPREDRV_GIT_SHA );
+#else
+  GEOS_LOG_RANK_0( "  - hypredrive version: unknown" );
+#endif
 #endif
 
 #if defined(trilinos_VERSION)

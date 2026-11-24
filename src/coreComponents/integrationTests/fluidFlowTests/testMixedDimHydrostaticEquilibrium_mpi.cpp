@@ -1,0 +1,55 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file testMixedDimHydrostaticEquilibrium_mpi.cpp
+ *
+ * MPI (multi-rank) variant of the mixed-dimensional hydrostatic equilibrium test.
+ * Test fixture and TEST_P body live in testMixedDimHydrostaticEquilibriumFixture.hpp.
+ */
+
+#include "testMixedDimHydrostaticEquilibriumFixture.hpp"
+
+CommandLineOptions g_commandLineOptions;
+
+// ---------------------------------------------------------------------------
+// Test suite instantiation
+//
+// All 28 fractured mesh variants x 6 domain partitions = 168 test cases
+// (run with 4 MPI ranks)
+// ---------------------------------------------------------------------------
+INSTANTIATE_TEST_SUITE_P(
+  MixedDimHydrostaticEquilibriumCases,
+  MixedDimHydrostaticEquilibriumTest,
+  ::testing::Combine(
+    ::testing::Values(
+      // Full span hex meshes - single and triple fracture only
+      "fractured_full_span_mesh_hex_DFN_1.vtu",
+      "fractured_full_span_mesh_hex_DFN_123.vtu",
+
+      // Full span tet meshes - single and triple fracture only
+      "fractured_full_span_mesh_tet_DFN_1.vtu",
+      "fractured_full_span_mesh_tet_DFN_123.vtu"
+      ),
+    ::testing::Values( 4 )
+    )
+  );
+
+int main( int argc, char * argv[] )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv, false );
+  int result = RUN_ALL_TESTS();
+  geos::basicCleanup();
+  return result;
+}

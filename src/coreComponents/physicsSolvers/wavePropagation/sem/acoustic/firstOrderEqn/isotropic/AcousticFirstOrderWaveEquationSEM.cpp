@@ -379,7 +379,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                   WaveSolverBase::viewKeyStruct::freeSurfaceString(),
-                                  [&]( FieldSpecificationBase const & bc,
+                                  [&]( FieldSpecification const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
                                        FaceManager &,

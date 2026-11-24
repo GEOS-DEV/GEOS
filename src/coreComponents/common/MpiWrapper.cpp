@@ -155,6 +155,7 @@ void internal::ManagedResources::finalize()
 void MpiWrapper::finalize()
 {
 #ifdef GEOS_USE_MPI
+  MpiWrapper::commFree( MPI_COMM_GEOS );
   internal::getManagedResources().finalize();
   MPI_CHECK_ERROR( MPI_Finalize() );
 #endif
@@ -460,6 +461,26 @@ int MpiWrapper::nodeCommSize()
   MPI_Comm_split( MPI_COMM_WORLD, color, -1, &nodeComm );
   MPI_Comm_size( nodeComm, &nodeCommSize );
   return nodeCommSize;
+}
+
+void MpiWrapper::gatherStringOnRank0( string_view rankStr, std::function< void(string_view) > && func )
+{
+  std::vector< buffer_unit_type > localbuffer;
+  localbuffer.reserve( rankStr.size());
+  localbuffer.insert( localbuffer.end(), rankStr.begin(), rankStr.end());
+  auto [globalLogRecords, counts, offsets] =
+    MpiWrapper::gatherBufferRank0< std::vector< buffer_unit_type > >( localbuffer );
+  if( MpiWrapper::commRank() == 0 )
+  {
+    for( integer rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
+    {
+      if( counts[rankId] > 0 )
+      {
+        func( string( globalLogRecords.begin() + offsets[rankId],
+                      globalLogRecords.begin() + offsets[rankId]+ counts[rankId] ) );
+      }
+    }
+  }
 }
 
 namespace internal

@@ -22,8 +22,6 @@ public:
 
   static constexpr bool isThermalType() { return false; }
 
-  using exec_policy = parallelDevicePolicy<>;
-
   virtual integer getWaterPhaseIndex() const override;
 
   void checkTablesParameters( real64 pressure, real64 temperature ) const override;

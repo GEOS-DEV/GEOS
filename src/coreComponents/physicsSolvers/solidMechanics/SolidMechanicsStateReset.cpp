@@ -20,6 +20,7 @@
 #include "SolidMechanicsStateReset.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -106,6 +107,23 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
         subRegion.getField< solidMechanics::averageStrain >().zero();
         subRegion.getField< solidMechanics::averagePlasticStrain >().zero();
       } );
+
+
+      elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        ElementSubRegionBase & subRegion )
+      {
+        subRegion.getField< contact::dispJump >().zero();
+        subRegion.getField< contact::slip >().zero();
+      } );
+
+
+      FaceManager & faceManager = mesh.getFaceManager();
+      if( faceManager.hasField< contact::totalBubbleDisplacement >() )
+      {
+        faceManager.getField< contact::totalBubbleDisplacement >().zero();
+        faceManager.getField< contact::incrementalBubbleDisplacement >().zero();
+      }
 
     }
 

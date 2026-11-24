@@ -123,6 +123,12 @@ public:
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
                                 localIndex const faceIndices[2] );
 
+  /**
+   * @brief This function updates the face/surface mesh entries for the faces that are part of the surface region.
+   * @param faceManager pointer to the FaceManager object.
+   */
+  void updateSets( FaceManager const & faceManager );
+
   ///@}
 
 

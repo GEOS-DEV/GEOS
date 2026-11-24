@@ -1,0 +1,55 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <TriaxialDriver
+      name="triaxialDriver"
+      material="MCC"
+      mode="strainControl"
+      axialControl="strainFunction"
+      radialControl="strainFunction"
+      initialStress="-1.0"
+      steps="50"
+      logLevel="1"
+      output="testTriaxial_modifiedCamClayVolumetric.txt" />
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+  
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="triaxialDriver"
+      target="/Tasks/triaxialDriver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>  
+  </Events>
+
+  <Constitutive>
+    <ModifiedCamClay
+      name="MCC"
+      defaultDensity="2700"
+      defaultRefPressure="-1.0"
+      defaultRefStrainVol="0"
+      defaultShearModulus="200.0"
+      defaultPreConsolidationPressure="-1.1"
+      defaultCslSlope="1.2"
+      defaultVirginCompressionIndex="0.003"
+      defaultRecompressionIndex="0.002"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="strainFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0, -0.005 }"/>
+  </Functions>
+</Problem>

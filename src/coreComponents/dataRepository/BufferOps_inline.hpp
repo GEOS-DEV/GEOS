@@ -53,8 +53,11 @@ Pack( buffer_unit_type * & buffer, T const * const GEOS_RESTRICT var, INDEX_TYPE
   sizeOfPackedChars += length * sizeof(T);
   if( DO_PACKING )
   {
-    memcpy( buffer, var, length * sizeof(T) );
-    buffer += length * sizeof(T);
+    if( length > 0 )
+    {
+      memcpy( buffer, var, length * sizeof(T) );
+      buffer += length * sizeof(T);
+    }
   }
 
   return sizeOfPackedChars;
@@ -71,9 +74,12 @@ Unpack( buffer_unit_type const * & buffer, T * const GEOS_RESTRICT var, INDEX_TY
                    GEOS_FMT( "expectedLength != length: {} != {}", expectedLength, length ) );
   GEOS_DEBUG_VAR( expectedLength );
 
-  memcpy( var, buffer, length * sizeof(T) );
+  if( length > 0 )
+  {
+    memcpy( var, buffer, length * sizeof(T) );
+    buffer += length * sizeof(T);
+  }
   sizeOfUnpackedChars += length * sizeof(T);
-  buffer += length * sizeof(T);
 
   return sizeOfUnpackedChars;
 }
@@ -214,8 +220,11 @@ PackPointer( buffer_unit_type * & buffer, T const * const GEOS_RESTRICT var, IND
   sizeOfPackedChars += length * sizeof(T);
   if( DO_PACKING )
   {
-    memcpy( buffer, var, length * sizeof(T) );
-    buffer += length * sizeof(T);
+    if( length > 0 )
+    {
+      memcpy( buffer, var, length * sizeof(T) );
+      buffer += length * sizeof(T);
+    }
   }
   return sizeOfPackedChars;
 }
@@ -530,9 +539,12 @@ UnpackPointer( buffer_unit_type const * & buffer,
   GEOS_ASSERT_MSG( length == expectedLength,
                    GEOS_FMT( "expectedLength != length: {} != {}", expectedLength, length ) );
   GEOS_DEBUG_VAR( expectedLength );
-  memcpy( var, buffer, length * sizeof(T) );
+  if( length > 0 )
+  {
+    memcpy( var, buffer, length * sizeof(T) );
+    buffer += length * sizeof(T);
+  }
   sizeOfUnpackedChars += length * sizeof(T);
-  buffer += length * sizeof(T);
   return sizeOfUnpackedChars;
 }
 
@@ -983,17 +995,18 @@ localIndex Pack( buffer_unit_type * & buffer,
 
   if( DO_PACKING )
   {
-    globalIndex * const buffer_GI = reinterpret_cast< globalIndex * >(buffer);
     for( localIndex a=0; a<length; ++a )
     {
+      globalIndex value;
       if( var[a] != unmappedLocalIndexValue )
       {
-        buffer_GI[a] = localToGlobalMap[var[a]];
+        value = localToGlobalMap[var[a]];
       }
       else
       {
-        buffer_GI[a] = unmappedGlobalIndices[a];
+        value = unmappedGlobalIndices[a];
       }
+      memcpy( buffer + a * sizeof( globalIndex ), &value, sizeof( globalIndex ) );
     }
 
     buffer += length * sizeof(globalIndex);

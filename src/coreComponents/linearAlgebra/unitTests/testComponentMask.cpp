@@ -27,21 +27,21 @@
 using namespace geos;
 
 template< int N >
-void compare( ComponentMask< N > const & mask, std::vector< int > const & expected )
+void compare( ComponentMask< N > const & mask, stdVector< int > const & expected )
 {
   EXPECT_EQ( mask.empty(), expected.empty() );
   EXPECT_EQ( mask.size(), expected.size() );
-  EXPECT_EQ( std::vector< int >( mask.begin(), mask.end() ), expected );
+  EXPECT_EQ( stdVector< int >( mask.begin(), mask.end() ), expected );
 }
 
-std::vector< int > make_range( int lo, int const hi, int const step = 1 )
+stdVector< int > make_range( int lo, int const hi, int const step = 1 )
 {
-  std::vector< int > r( hi - lo );
+  stdVector< int > r( hi - lo );
   std::generate( r.begin(), r.end(), [&lo, step] { int const ret = lo; lo += step; return ret; } );
   return r;
 }
 
-std::vector< int > join_range( std::vector< int > lhs, std::vector< int > const & rhs )
+stdVector< int > join_range( stdVector< int > lhs, stdVector< int > const & rhs )
 {
   lhs.insert( lhs.end(), rhs.begin(), rhs.end() );
   return lhs;
@@ -173,7 +173,7 @@ TYPED_TEST( ComponentMaskTest, Set_EveryOtherComp )
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
   Mask mask( N );
-  std::vector< int > expected;
+  stdVector< int > expected;
   for( int i = 0; i < N; i += 2 )
   {
     mask.set( i );
@@ -187,7 +187,7 @@ TYPED_TEST( ComponentMaskTest, Set_EveryComp )
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
   Mask mask( N );
-  std::vector< int > expected;
+  stdVector< int > expected;
   for( int i = 0; i < N; i += 1 )
   {
     mask.set( i );
@@ -213,7 +213,7 @@ TYPED_TEST( ComponentMaskTest, Unset_EveryOtherComp )
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
   Mask mask( N, true );
-  std::vector< int > expected;
+  stdVector< int > expected;
   for( int i = 0; i < N; i += 2 )
   {
     mask.unset( i );

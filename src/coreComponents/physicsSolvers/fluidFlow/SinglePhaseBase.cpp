@@ -29,6 +29,7 @@
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
@@ -43,6 +44,7 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/HydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalHydrostaticPressureKernel.hpp"
@@ -60,7 +62,8 @@ using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ),
+  m_scalingType( flowSolverUtilities::ScalingType::Global )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
     setApplyDefaultValue( 0.0 ).
@@ -102,9 +105,12 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< flow::mass_n >( getName() );
       subRegion.registerField< flow::dMass >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
 
+      subRegion.registerField< flow::pressureScalingFactor >( getName() );
+
       if( m_isThermal )
       {
         subRegion.registerField< flow::dEnergy >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
+        subRegion.registerField< flow::temperatureScalingFactor >( getName() );
       }
     } );
 
@@ -164,12 +170,12 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       {
         string const fluidModelName = castedFluid.getCatalogName();
         GEOS_THROW_IF( m_isThermal && ((fluidModelName != "ThermalCompressibleSinglePhaseFluid") && (fluidModelName != "ReactiveThermalCompressibleSinglePhaseFluid")),
-                       GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
-                                 fluid.getName() ),
+                       GEOS_FMT_RUNTIME( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
+                                         fluid.getName() ),
                        InputError, getDataContext(), fluid.getDataContext() );
         GEOS_THROW_IF( !m_isThermal && ((fluidModelName == "ThermalCompressibleSinglePhaseFluid") || (fluidModelName == "ReactiveThermalCompressibleSinglePhaseFluid")),
-                       GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
-                                 fluid.getName() ),
+                       GEOS_FMT_RUNTIME( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
+                                         fluid.getName() ),
                        InputError, getDataContext(), fluid.getDataContext() );
       } );
     } );
@@ -600,7 +606,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
     RAJA::ReduceMin< parallelHostReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-    forAll< parallelHostPolicy >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    forAll< parallelHostPolicy >( targetSet.size(), [=, this] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
@@ -894,18 +900,19 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
   fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                            mesh,
                                            fieldKey,
-                                           [&]( FieldSpecificationBase const & fs,
+                                           [&]( FieldSpecification const & fs,
                                                 string const &,
                                                 SortedArrayView< localIndex const > const & lset,
                                                 ElementSubRegionBase & subRegion,
                                                 string const & )
   {
     // Specify the bc value of the field
-    fs.applyFieldValue< FieldSpecificationEqual,
-                        parallelDevicePolicy<> >( lset,
-                                                  time_n + dt,
-                                                  subRegion,
-                                                  boundaryFieldKey );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                             parallelDevicePolicy<> >( fs,
+                                                                       lset,
+                                                                       time_n + dt,
+                                                                       subRegion,
+                                                                       boundaryFieldKey );
 
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
     arrayView1d< globalIndex const > const dofNumber =
@@ -1053,19 +1060,21 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       localIndex const rankOffset = dofManager.rankOffset();
 
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > elementCount( 0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time_n + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time_n + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -1093,7 +1102,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                              rhsContributionArrayView,
                                                              localRhs,
                                                              localMatrix,
-                                                             massProd] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             massProd,
+                                                             elementCount] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1108,6 +1118,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
           localRhs[massRowIndex] += rhsValue;
           massProd += rhsValue;
+          elementCount += 1;
           //add the value to the energy balance equation if the flux is positive (i.e., it's a producer)
           if( rhsContributionArrayView[a] > 0.0 )
           {
@@ -1135,7 +1146,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                              dofNumber,
                                                              rhsContributionArrayView,
                                                              localRhs,
-                                                             massProd] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             massProd,
+                                                             elementCount] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1149,6 +1161,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;
           localRhs[rowIndex] += rhsValue;
           massProd += rhsValue;
+          elementCount += 1;
         } );
       }
 
@@ -1158,7 +1171,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         // set the new sub-region statistics for this timestep
         array1d< real64 > massProdArr{ 1 };
         massProdArr[0] = massProd.get();
-        wrapper.gatherTimeStepStats( time_n, dt, massProdArr.toViewConst(), targetSet.size() );
+        // Owned-cell count on this rank (ghosts excluded). finalizePeriod() MPI-sums it.
+        wrapper.gatherTimeStepStats( time_n, dt, massProdArr.toViewConst(), elementCount.get() );
       } );
     } );
   } );
@@ -1291,36 +1305,108 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
+  // In a coupled run the coupled solver's NonlinearSolverParameters overwrite the flow subsolver,
+  // so the lineSearchAction / scalingType compatibility is checked here at run time.
+  // A better fix is to check it at input time in CoupledSolver.
+  GEOS_ERROR_IF( m_scalingType == flowSolverUtilities::ScalingType::Local &&
+                 m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None,
+                 "line search is not supported for scalingType = Local; set lineSearchAction to None, including in the coupled solver",
+                 getDataContext() );
+
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
   real64 maxDeltaPres = 0.0;
+  real64 maxDeltaTemp = 0.0;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               string_array const & regionNames )
+  real64 minPresScalingFactor = 1.0, minTempScalingFactor = 1.0;
+
+  if( m_isThermal )
   {
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase & subRegion )
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
     {
-      globalIndex const rankOffset = dofManager.rankOffset();
-      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase & subRegion )
+      {
+        globalIndex const rankOffset = dofManager.rankOffset();
+        arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-      auto const subRegionData =
-        singlePhaseBaseKernels::SolutionScalingKernel::
-          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
+        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
+        arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
 
-      scalingFactor = std::min( scalingFactor, subRegionData.first );
-      maxDeltaPres  = std::max( maxDeltaPres, subRegionData.second );
+        integer const tempDofOffset = 1;
+        auto const subRegionData = thermalSinglePhaseBaseKernels::
+                                     SolutionScalingKernel::
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, tempDofOffset, dofNumber, ghostRank,
+                                                                       m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
+                                                                       pressureScalingFactor, temperatureScalingFactor );
+
+        if( m_scalingType == flowSolverUtilities::ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        }
+        maxDeltaPres  = std::max( maxDeltaPres, subRegionData.maxDeltaPres );
+        maxDeltaTemp  = std::max( maxDeltaTemp, subRegionData.maxDeltaTemp );
+
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.minPresScalingFactor );
+        minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.minTempScalingFactor );
+      } );
     } );
-  } );
+  }
+  else
+  {
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase & subRegion )
+      {
+        globalIndex const rankOffset = dofManager.rankOffset();
+        arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
+
+        auto const subRegionData = singlePhaseBaseKernels::
+                                     SolutionScalingKernel::
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
+                                                                       m_maxAbsolutePresChange, pressureScalingFactor );
+
+        if( m_scalingType == flowSolverUtilities::ScalingType::Global )
+        {
+          scalingFactor = std::min( scalingFactor, subRegionData.scalingFactor );
+        }
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.minPresScalingFactor );
+        maxDeltaPres  = std::max( maxDeltaPres, subRegionData.maxDeltaPres );
+      } );
+    } );
+  }
 
   scalingFactor = MpiWrapper::min( scalingFactor );
+  minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
   maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
                                                       getName(), fmt::format( "{:.{}f}", maxDeltaPres, 3 ) ) );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
+
+  if( m_isThermal )
+  {
+    minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+    maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
+                                                        getName(), fmt::format( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
+  }
 
   return scalingFactor;
 }
@@ -1349,6 +1435,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      arrayView1d< real64 const > const pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
       auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
       auto const statistics = singlePhaseBaseKernels::SolutionCheckKernel::
@@ -1357,7 +1444,9 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
                                                                   dofNumber,
                                                                   ghostRank,
                                                                   pres,
-                                                                  scalingFactor,
+                                                                  m_scalingType,
+                                                                  scalingFactor, // global scaling factor
+                                                                  pressureScalingFactor, // per-element scaling factors
                                                                   negPresCollector );
 
       minPressure = std::min( minPressure, statistics.minNegPres );
@@ -1377,17 +1466,6 @@ void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) con
   arrayView1d< real64 const > const mass = subRegion.template getField< flow::mass >();
   arrayView1d< real64 > const mass_n = subRegion.template getField< flow::mass_n >();
   mass_n.setValues< parallelDevicePolicy<> >( mass );
-}
-
-void SinglePhaseBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
-{
-  arrayView1d< real64 > const dVol = subRegion.template getField< flow::deltaVolume >();
-  arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString());
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-  {
-    vol[ei] += dVol[ei];
-    dVol[ei] = 0.0;
-  } );
 }
 
 } /* namespace geos */

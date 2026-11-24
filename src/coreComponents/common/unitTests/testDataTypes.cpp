@@ -59,7 +59,7 @@ TEST( testDataTypes, testBoundChecking )
   }, std::out_of_range );
 
 
-  internal::StdMapWrapper< std::unordered_map< integer, integer >, true > unorderedMapBoundsChecking{{0, 1}};
+  internal::StdMapWrapper< stdUnorderedMap< integer, integer >, true > unorderedMapBoundsChecking{{0, 1}};
   EXPECT_THROW( {
     try
     {

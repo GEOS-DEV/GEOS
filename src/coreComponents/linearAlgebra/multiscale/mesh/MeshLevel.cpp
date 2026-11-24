@@ -123,7 +123,7 @@ void populateNodeManager( string const & localIndexKey,
                                                              numLocalNodes );
 
   // Setup neighbor data
-  std::vector< int > const neighborRanks = domain.getNeighborRanks();
+  stdVector< int > const neighborRanks = domain.getNeighborRanks();
   for( int const rank : neighborRanks )
   {
     msNodeManager.addNeighbor( rank );
@@ -255,7 +255,7 @@ void populateCellManager( string const & localIndexKey,
                                                              numLocalCells );
 
   // Setup neighbor data
-  std::vector< int > const neighborRanks = domain.getNeighborRanks();
+  stdVector< int > const neighborRanks = domain.getNeighborRanks();
   for( int const rank : neighborRanks )
   {
     msCellManager.addNeighbor( rank );
@@ -424,7 +424,7 @@ void MeshLevel::buildCoarseMesh( multiscale::MeshLevel & fineMesh,
   coarsening::buildCoarseMesh( fineMesh, *this, coarse_params, boundaryNodeSets );
 }
 
-void MeshLevel::writeCellData( std::vector< string > const & fieldNames, int depth ) const
+void MeshLevel::writeCellData( stdVector< string > const & fieldNames, int depth ) const
 {
   if( m_fineMesh )
   {
@@ -436,7 +436,7 @@ void MeshLevel::writeCellData( std::vector< string > const & fieldNames, int dep
   }
 }
 
-void MeshLevel::writeNodeData( std::vector< string > const & fieldNames, int depth ) const
+void MeshLevel::writeNodeData( stdVector< string > const & fieldNames, int depth ) const
 {
   if( m_fineMesh )
   {
@@ -448,7 +448,7 @@ void MeshLevel::writeNodeData( std::vector< string > const & fieldNames, int dep
   }
 }
 
-void MeshLevel::writeCellDataFine( std::vector< string > const & fieldNames, int depth ) const
+void MeshLevel::writeCellDataFine( stdVector< string > const & fieldNames, int depth ) const
 {
   geos::MeshLevel & sourceMesh = m_domain->getMeshBody( m_support.meshBodyName ).getMeshLevel( m_support.meshLevelName );
   arrayView1d< localIndex const > const origRegion    = m_cellManager.getField< fields::multiscale::OrigElementRegion >();
@@ -492,13 +492,13 @@ void MeshLevel::writeCellDataFine( std::vector< string > const & fieldNames, int
   }
 }
 
-void MeshLevel::writeCellDataCoarse( std::vector< string > const & fieldNames, int depth ) const
+void MeshLevel::writeCellDataCoarse( stdVector< string > const & fieldNames, int depth ) const
 {
   GEOS_ASSERT( m_fineMesh != nullptr );
   arrayView1d< localIndex const > const coarseCellIndex =
     m_fineMesh->cellManager().getField< fields::multiscale::CoarseCellLocalIndex >();
 
-  std::vector< string > fineFieldNames;
+  stdVector< string > fineFieldNames;
   for( string const & fieldName : fieldNames )
   {
     WrapperBase const & wrapper = m_cellManager.getWrapperBase( fieldName );
@@ -534,7 +534,7 @@ void MeshLevel::writeCellDataCoarse( std::vector< string > const & fieldNames, i
   m_fineMesh->writeCellData( fineFieldNames, depth + 1 );
 }
 
-void MeshLevel::writeNodeDataFine( std::vector< string > const & fieldNames, int depth ) const
+void MeshLevel::writeNodeDataFine( stdVector< string > const & fieldNames, int depth ) const
 {
   geos::MeshLevel & sourceMesh = m_domain->getMeshBody( m_support.meshBodyName ).getMeshLevel( m_support.meshLevelName );
   arrayView1d< localIndex const > const origNodeIndex = m_nodeManager.getField< fields::multiscale::OrigNodeIndex >();
@@ -570,12 +570,12 @@ void MeshLevel::writeNodeDataFine( std::vector< string > const & fieldNames, int
   }
 }
 
-void MeshLevel::writeNodeDataCoarse( std::vector< string > const & fieldNames, int depth ) const
+void MeshLevel::writeNodeDataCoarse( stdVector< string > const & fieldNames, int depth ) const
 {
   GEOS_ASSERT( m_fineMesh != nullptr );
   arrayView1d< localIndex const > const fineNodeIndex = m_nodeManager.getField< fields::multiscale::FineNodeLocalIndex >();
 
-  std::vector< string > fineFieldNames;
+  stdVector< string > fineFieldNames;
   for( string const & fieldName : fieldNames )
   {
     WrapperBase const & wrapper = m_nodeManager.getWrapperBase( fieldName );

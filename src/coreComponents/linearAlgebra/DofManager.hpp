@@ -360,6 +360,12 @@ public:
   array1d< integer > numComponentsPerField() const;
 
   /**
+   * @brief Return field names sorted by field registration order.
+   * @return field names
+   */
+  stdVector< string > fieldNames() const;
+
+  /**
    * @brief Fill a container with unique dof labels for each local dof.
    * @tparam CONTAINER type of container to fill
    * @param labels the container to fill

@@ -116,7 +116,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
 }
 
 bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
-                               WellSolverBase const * const wellSolver,
+                               WellManager const * const wellSolver,
                                DomainPartition const & domain )
 {
   std::pair< string, string > badPerforation;

@@ -199,10 +199,10 @@ void setupAndPlayWrongBC( string const & xml )
   problem.applyInitialConditions();
 }
 
-std::vector< string > splitStringByDelimiter( string const & s, string const & delimiter )
+stdVector< string > splitStringByDelimiter( string const & s, string const & delimiter )
 {
   string cpyTokens = s;
-  std::vector< string > tokens;
+  stdVector< string > tokens;
   size_t pos = 0;
   string token;
   while((pos = cpyTokens.find( delimiter )) != string::npos )
@@ -283,7 +283,7 @@ TEST( testIncorrectFieldSpecification, testRightFieldNames )
                                   "ghostRank, localToGlobalMap, mass, pressure, rockPorosity_initialPorosity, rockPorosity_porosity, "
                                   "rockPorosity_referencePorosity, temperature, water_dDensity, water_dEnthalpy, water_dInternalEnergy, "
                                   "water_dViscosity, water_density, water_enthalpy, water_internalEnergy, water_viscosity";
-  std::vector< string > const splitToken = splitStringByDelimiter( tokens, "," );
+  stdVector< string > const splitToken = splitStringByDelimiter( tokens, "," );
   for( auto const & token : splitToken )
   {
     string const xmlTemplate = R"xml(

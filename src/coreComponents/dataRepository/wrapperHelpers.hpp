@@ -135,7 +135,7 @@ public:
   {
     GEOS_ERROR_IF_LT( dim, 0 );
     GEOS_ERROR_IF_GE( dim, NDIM );
-    return { m_values[dim].begin(), m_values[dim].end() };
+    return { m_values[dim].data(), m_values[dim].size() };
   }
 
 private:
@@ -238,10 +238,46 @@ numElementsFromByteSize( localIndex const byteSize )
 }
 
 
+/// @cond DO_NOT_DOCUMENT
+namespace detail
+{
+template< typename T >
+std::enable_if_t< traits::HasMemberFunction_reserveValues< T const > >
+reserveValuesIfAvailable( T & value, localIndex const newCapacity )
+{
+  localIndex const oldCapacity = value.size();
+  double const oldValueCapacity = value.valueCapacity();
+  localIndex const newValueCapacity = oldValueCapacity * newCapacity / oldCapacity;
+  value.reserveValues( newValueCapacity );
+}
+
+template< typename T >
+std::enable_if_t< !traits::HasMemberFunction_reserveValues< T const > >
+reserveValuesIfAvailable( T &, localIndex const )
+{}
+}
+/// @endcond
+
 template< typename T >
 std::enable_if_t< traits::HasMemberFunction_reserve< T > >
 reserve( T & value, localIndex const newCapacity )
-{ value.reserve( newCapacity ); }
+{
+  value.reserve( newCapacity );
+  detail::reserveValuesIfAvailable( value, newCapacity );
+}
+
+template< typename T,
+          int NDIM,
+          typename PERMUTATION >
+void reserve( Array< T, NDIM, PERMUTATION > & value, localIndex newCapacity )
+{
+  localIndex const * const dims = value.dims();
+  for( int i=1; i<NDIM; ++i )
+  {
+    newCapacity *= dims[ i ];
+  }
+  value.reserve( newCapacity );
+}
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_reserve< T > >
@@ -484,7 +520,10 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
   localIndex numBytesFromArray =  var.size() * sizeof( T );
   GEOS_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
-  std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
+  if( numBytesFromArray > 0 )
+  {
+    std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
+  }
 }
 
 
@@ -609,7 +648,10 @@ pullDataFromConduitNode( ArrayOfArrays< T, INDEX_TYPE > & var,
   // copy the values
   localIndex numBytesFromArray =  allocatedSize * sizeof( T );
   GEOS_ERROR_IF_NE( numBytesFromArray, valuesDataType.strided_bytes() );
-  std::memcpy( const_cast< T * >(varView.getValues()), valuesNode.data_ptr(), numBytesFromArray );
+  if( numBytesFromArray > 0 )
+  {
+    std::memcpy( const_cast< T * >(varView.getValues()), valuesNode.data_ptr(), numBytesFromArray );
+  }
 }
 
 

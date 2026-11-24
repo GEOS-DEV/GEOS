@@ -290,7 +290,11 @@ public:
         real64 stepSize = 1.0;
         if( epsilon < LvArray::math::abs( dS ))
         {
-          real64 const phaseStepSize = LvArray::math::max((minSaturation[phase0] - saturation[phase0])/dS, (maxSaturation[phase0] - saturation[phase0])/dS );
+          real64 phaseStepSize = LvArray::math::max((minSaturation[phase0] - saturation[phase0])/dS, (maxSaturation[phase0] - saturation[phase0])/dS );
+          if( phaseStepSize < 1.0 )
+          {
+            phaseStepSize *= (1.0 - STEP_TOLERANCE);
+          }
           stepSize = LvArray::math::min( stepSize, phaseStepSize );
         }
 

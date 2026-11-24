@@ -88,6 +88,29 @@ void DiffusionBase::allocateConstitutiveData( Group & parent, localIndex const n
   }
 }
 
+void DiffusionBase::initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const
+{
+  GEOS_UNUSED_VAR( initialTemperature );
+
+  localIndex const numE = m_phaseDiffusivityMultiplier.size( 0 );
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+  integer const numPhases = numFluidPhases();
+
+  auto phaseDiffusivityMultiplierView = m_phaseDiffusivityMultiplier.toView();
+  auto const defaultPhaseDiffusivityMultiplierView = m_defaultPhaseDiffusivityMultiplier.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        phaseDiffusivityMultiplierView[ei][q][ip] = defaultPhaseDiffusivityMultiplierView[ip];
+      }
+    }
+  } );
+}
+
 } // namespace constitutive
 
 } // namespace geos

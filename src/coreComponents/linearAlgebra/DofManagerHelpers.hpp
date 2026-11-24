@@ -295,7 +295,8 @@ struct MeshVisitor< LOC, LOC, VISIT_GHOSTS >
         for( localIndex a = 0; a < locList.size(); ++a )
         {
           localIndex const locIdx = locList[a];
-          if( VISIT_GHOSTS || ghostRank[locIdx] < 0 )
+          // Skip invalid indices
+          if( locIdx >= 0 && ( VISIT_GHOSTS || ghostRank[locIdx] < 0 ) )
           {
             RAJA::atomicInc< parallelHostAtomic >( &visited[locIdx] );
           }

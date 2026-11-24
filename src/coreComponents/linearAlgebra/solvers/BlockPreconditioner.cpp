@@ -81,7 +81,7 @@ void BlockPreconditioner< LAI >::setupBlock( localIndex const blockIndex,
 
 template< typename LAI >
 void BlockPreconditioner< LAI >::setupBlock( localIndex const blockIndex,
-                                             std::vector< DofManager::SubComponent > blockDofs,
+                                             stdVector< DofManager::SubComponent > blockDofs,
                                              PreconditionerBase< LAI > * const solver,
                                              real64 const scaling )
 {

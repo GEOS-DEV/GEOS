@@ -139,6 +139,14 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
       } );
     }
   } );
+
+  if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+  {
+    std::ofstream outputFile( m_csvFilename );
+    TableCSVFormatter const tableStatFormatter( m_csvLayout );
+    outputFile << tableStatFormatter.headerToString();
+    outputFile.close();
+  }
 }
 
 void SourceFluxStatsAggregator::gatherStatsForLog( bool logLevelActive,
@@ -215,9 +223,9 @@ void SourceFluxStatsAggregator::outputStatsToCSV( TableData & csvData )
 {
   if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
-    std::ofstream outputFile( m_csvFilename );
+    std::ofstream outputFile( m_csvFilename, std::ios::app );
     TableCSVFormatter const tableStatFormatter( m_csvLayout );
-    outputFile << tableStatFormatter.toString( csvData );
+    outputFile << tableStatFormatter.dataToString( csvData );
     outputFile.close();
     csvData.clear();
   }
@@ -241,30 +249,31 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
   {
     TableData logData;
     TableData csvData;
-    meshLevelStats.stats() = StatData();
+    meshLevelStats.stats().reset();
     forAllFluxStatsWrappers( meshLevel,
                              [&] ( MeshLevel &, WrappedStats & fluxStats )
     {
-      fluxStats.stats() = StatData();
+      fluxStats.stats().reset();
       forAllRegionStatsWrappers( meshLevel, fluxStats.getFluxName(),
                                  [&] ( ElementRegionBase & region, WrappedStats & regionStats )
       {
-        regionStats.stats() = StatData();
+        regionStats.stats().reset();
 
         forAllSubRegionStatsWrappers( region, regionStats.getFluxName(),
                                       [&] ( ElementSubRegionBase &, WrappedStats & subRegionStats )
         {
+          subRegionStats.stats().reset();
           subRegionStats.finalizePeriod();
-          regionStats.stats().combine( subRegionStats.stats() );
+          regionStats.combine( subRegionStats );
         } );
-        fluxStats.stats().combine( regionStats.stats() );
+        fluxStats.combine( regionStats );
 
         gatherStatsForLog( regionsStatsOn,
                            fluxStats.getFluxName(), region.getName(), logData, regionStats );
         gatherStatsForCSV( fluxStats.getFluxName(), region.getName(), csvData, regionStats );
       } );
 
-      meshLevelStats.stats().combine( fluxStats.stats() );
+      meshLevelStats.combine( fluxStats );
 
       gatherStatsForLog( fluxesStatsOn,
                          fluxStats.getFluxName(), allRegionsStr, logData, fluxStats );
@@ -370,7 +379,10 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 
   // produce the period stats of this rank
   m_stats.m_elementCount = m_periodStats.m_elementCount;
-  m_statsPeriodStart = m_periodStats.m_periodStart;
+  // Ranks with an empty targetSet never call gatherTimeStepStats(), so m_periodStart
+  // stays at the -max sentinel. min() would return that sentinel; max() keeps the time
+  // from ranks that collected. Participating ranks share the same currentTime.
+  m_statsPeriodStart = MpiWrapper::max( m_periodStats.m_periodStart );
   m_statsPeriodDT = m_periodStats.m_timeStepDeltaTime + m_periodStats.m_periodPendingDeltaTime;
 
   real64 const timeDivisor = m_statsPeriodDT > 0.0 ? 1.0 / m_statsPeriodDT : 0.0;
@@ -386,6 +398,13 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 
   // start a new timestep
   m_periodStats.reset();
+}
+void SourceFluxStatsAggregator::WrappedStats::combine( WrappedStats const & other )
+{
+  stats().combine( other.stats() );
+  // Region/flux/mesh wrappers are never finalizePeriod()'d, so their start stays at -max
+  // until a child is folded in. This is not an MPI reduction (that already happened).
+  m_statsPeriodStart = LvArray::math::max( m_statsPeriodStart, other.m_statsPeriodStart );
 }
 void SourceFluxStatsAggregator::WrappedStats::PeriodStats::allocate( integer phaseCount )
 {

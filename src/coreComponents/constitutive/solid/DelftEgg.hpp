@@ -449,8 +449,6 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
   smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
 
-
-
 /**
  * @class DelftEgg
  *

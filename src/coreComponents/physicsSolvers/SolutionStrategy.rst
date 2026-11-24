@@ -60,32 +60,50 @@ requirements. In particular, in case of fast convergence indicated by a small nu
 Newton iterations, i.e.
 
 .. math::
-     \text{numIterations} < \text{dtIncIterLimit} \cdot \text{newtonMaxIter},
+     \text{numIterations} < \text{timeStepIncreaseIterLimit} \cdot \text{newtonMaxIter},
 
-the physics solver will require to double the timestep size. On the other hand,
-if a large number of nonlinear iterations are necessary to
+the physics solver will request the next timestep to be multiplied by ``timeStepIncreaseFactor``
+(default: 2). On the other hand, if a large number of nonlinear iterations are necessary to
 find the solution at timestep :math:`n`
 
 .. math::
-     \text{numIterations} > \text{dtCutIterLimit} \cdot \text{newtonMaxIter},
+     \text{numIterations} > \text{timeStepDecreaseIterLimit} \cdot \text{newtonMaxIter},
 
-the physics solver will request the next timestep, :math:`n+1`, to be half the size of timestep :math:`n`.
-Here,
+the physics solver will request the next timestep, :math:`n+1`, to be the size of timestep :math:`n`
+multiplied by ``timeStepDecreaseFactor`` (default: 0.5).
+The defaults are ``timeStepIncreaseIterLimit = 0.4`` and ``timeStepDecreaseIterLimit = 0.7``.
+After a timestep cut, the timestep is not increased again until at least ``minTimeStepIncreaseInterval``
+(default: 10) timesteps have been completed.
 
 Additionally, in case the nonlinear solver fails to converge with the timestep provided by the
 event manager, the timestep size is cut, i.e.
 
 .. math::
-     \text{dt} = \text{timestepCutFactor} \cdot \text{dt},
+     \text{dt} = \text{timeStepCutFactor} \cdot \text{dt},
 
-and the nonlinear loop is repeated with the new timestep size.
+and the nonlinear loop is repeated with the new timestep size. The parameter ``maxTimeStepCuts``
+(default: 2) limits the number of attempts for a given timestep; if the nonlinear solver still
+fails, the simulation stops with an error, unless ``allowNonConverged="1"`` is set.
 
 
 Parameters
 ============================
 
 All parameters defining the behavior of the nonlinear solver and determining the
-timestep size requested by the physics solver are defined in the NonlinearSolverParameters
-and are presented in the following table.
+timestep size requested by the physics solver are defined in the ``NonlinearSolverParameters``
+block, a child of the solver block, and are presented in the following table. For example:
+
+.. code-block:: xml
+
+  <CompositionalMultiphaseFVM name="compflow"
+                              discretization="fluidTPFA"
+                              targetRegions="{ reservoir }">
+    <NonlinearSolverParameters newtonTol="1.0e-6"
+                               newtonMaxIter="10"
+                               maxTimeStepCuts="5" />
+    <LinearSolverParameters solverType="gmres"
+                            preconditionerType="mgr" />
+  </CompositionalMultiphaseFVM>
+
 
 .. include:: /docs/sphinx/datastructure/NonlinearSolverParameters.rst

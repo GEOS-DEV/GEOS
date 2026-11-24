@@ -419,8 +419,10 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
   arrayView2d< real64 const > faceCenter = faceManager.faceCenter();
   arrayView2d< real64 const > faceNormal = faceManager.faceNormal();
 
-  arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
+  string const transMultName = m_coeffName + viewKeyStruct::transMultiplierString();
+  arrayView1d< real64 const > const transMultiplier = faceManager.hasWrapper( transMultName )
+                                                    ? faceManager.getReference< array1d< real64 > >( transMultName )
+                                                    : arrayView1d< real64 const >{};
 
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
@@ -528,7 +530,8 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
                                  stencilWeights,
                                  connectorIndex );
 
-          faceToCellStencil.addVectors( transMultiplier[faceIndex], faceNormalVector, cellToFaceVec );
+          real64 const transMult = !transMultiplier.empty() ? transMultiplier[faceIndex] : 1.0;
+          faceToCellStencil.addVectors( transMult, faceNormalVector, cellToFaceVec );
         }
       }
     }

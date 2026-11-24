@@ -102,14 +102,14 @@ void ElementsReporterOutput::outputTooLowValues( string_view linesPrefix,
           }
         }
 
-        TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
+        TableTextMpiFormatter const formatter = TableTextMpiFormatter( layout, mpiLayout );
         formatter.toStream( std::cout, data );
         GEOS_LOG_RANK_0( '\n' );
       }
       else
       {
-        GEOS_LOG( GEOS_FMT( "{}Increase the log level to enable a reporting of the {} values.",
-                            string( linesPrefix.size(), ' ' ), valueNaming ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}Increase the log level to enable a reporting of the {} values.",
+                                   string( linesPrefix.size(), ' ' ), valueNaming ) );
       }
     }
   }
