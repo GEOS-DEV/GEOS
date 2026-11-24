@@ -14,10 +14,10 @@
  */
 
 /**
- * @file ReactivePorosity.cpp
+ * @file ReactivePorosityBase.cpp
  */
 
-#include "ReactivePorosity.hpp"
+#include "ReactivePorosityBase.hpp"
 
 namespace geos
 {
@@ -27,7 +27,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ReactivePorosity::ReactivePorosity( string const & name, Group * const parent ):
+ReactivePorosityBase::ReactivePorosityBase( string const & name, Group * const parent ):
   PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultInitialVolumeFractionsString(), &m_defaultInitialVolumeFractions ).
@@ -56,20 +56,49 @@ ReactivePorosity::ReactivePorosity( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::mineralDensitiesString(), &m_mineralDensities ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Mineral densities" );
+
+  registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
+    setApplyDefaultValue( 1e-6 ).
+    setDescription( "Solid bulk modulus" );
+
+  registerWrapper( viewKeyStruct::meanEffectiveStressIncrement_kString(), &m_meanEffectiveStressIncrement_k ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Mean effective stress increment at quadrature points at the previous sequential iteration" );
+
+  registerWrapper( viewKeyStruct::fixedPorosityString(), &m_fixedPorosity ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to update volume fractions without changing porosity (0 = update porosity, 1 = fixed porosity)" );
+
+  registerWrapper( viewKeyStruct::intactPorosityString(), &m_intactPorosity ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Damage-free (reactive/poromechanical) porosity; equals the porosity without damage" );
+
+  registerWrapper( viewKeyStruct::intactPorosity_nString(), &m_intactPorosity_n ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Damage-free porosity at the previous converged step" );
+
+  registerWrapper( viewKeyStruct::crackPorosityString(), &m_crackPorosity ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Porosity phi_c of the fully damaged material (used with a damage solid): the porosity becomes "
+                    "max( phi_f, phi_f + ( phi_c - phi_f ) d ), with phi_f the damage-free porosity, for the fluid storage, "
+                    "the permeability and the diffusive flux. Default 0 disables it." );
 }
 
-std::unique_ptr< ConstitutiveBase > ReactivePorosity::deliverClone( string const & name, Group * const parent ) const
+std::unique_ptr< ConstitutiveBase > ReactivePorosityBase::deliverClone( string const & name, Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
 
-  ReactivePorosity & newConstitutiveRelation = dynamicCast< ReactivePorosity & >( *clone );
+  ReactivePorosityBase & newConstitutiveRelation = dynamicCast< ReactivePorosityBase & >( *clone );
 
   newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
 
   return clone;
 }
 
-void ReactivePorosity::postInputInitialization()
+void ReactivePorosityBase::postInputInitialization()
 {
   PorosityBase::postInputInitialization();
 
@@ -86,8 +115,8 @@ void ReactivePorosity::postInputInitialization()
   m_numKineticReactions = m_defaultInitialVolumeFractions.size();
 }
 
-void ReactivePorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
+void ReactivePorosityBase::allocateConstitutiveData( dataRepository::Group & parent,
+                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
@@ -95,23 +124,37 @@ void ReactivePorosity::allocateConstitutiveData( dataRepository::Group & parent,
 
 }
 
-void ReactivePorosity::resizeFields( localIndex const size, localIndex const numPts )
+void ReactivePorosityBase::resizeFields( localIndex const size, localIndex const numPts )
 {
   integer const numKineticReactions = this->numKineticReactions();
 
   m_initialVolumeFractions.resize( size, numPts, numKineticReactions );
   m_volumeFractions.resize( size, numPts, numKineticReactions );
   m_volumeFractions_n.resize( size, numPts, numKineticReactions );
+
+  m_meanEffectiveStressIncrement_k.resize( 0, numPts );
+  m_intactPorosity.resize( size, numPts );
+  m_intactPorosity_n.resize( size, numPts );
 }
 
-void ReactivePorosity::saveConvergedState() const
+void ReactivePorosityBase::saveConvergedState() const
 {
   PorosityBase::saveConvergedState();
 
   m_volumeFractions_n.setValues< parallelDevicePolicy<> >( m_volumeFractions.toViewConst() );
+  m_intactPorosity_n.setValues< parallelDevicePolicy<> >( m_intactPorosity.toViewConst() );
+  m_meanEffectiveStressIncrement_k.zero();
 }
 
-void ReactivePorosity::initializeState() const
+void ReactivePorosityBase::ignoreConvergedState() const
+{
+  PorosityBase::ignoreConvergedState();
+  m_intactPorosity.setValues< parallelDevicePolicy<> >( m_intactPorosity_n.toViewConst() );
+  m_meanEffectiveStressIncrement_k.zero();
+}
+
+
+void ReactivePorosityBase::initializeState() const
 {
   integer const numKineticReactions = this->numKineticReactions();
 
@@ -124,6 +167,9 @@ void ReactivePorosity::initializeState() const
   }
 
   PorosityBase::initializeState();
+
+  m_intactPorosity.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
+  m_intactPorosity_n.setValues< parallelDevicePolicy<> >( m_newPorosity.toViewConst() );
 
   for( localIndex ei = 0; ei < m_volumeFractions.size( 0 ); ++ei )
   {
@@ -139,6 +185,6 @@ void ReactivePorosity::initializeState() const
   }
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactivePorosity, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactivePorosityBase, string const &, Group * const )
 }
 } /* namespace geos */

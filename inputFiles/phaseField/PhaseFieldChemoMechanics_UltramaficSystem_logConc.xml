@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- LOG CONCENTRATIONS AT SOURCE -->
+    <FieldSpecification
+      name="log_H_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-19.2052"/>
+
+    <FieldSpecification
+      name="log_HCO3_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-2.9774"/>
+    
+    <FieldSpecification
+      name="log_Mg_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-9.1905377447"/>
+
+    <FieldSpecification
+      name="log_SiO2_aq_source"
+      setNames="{ source }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="3"
+      scale="-10.6458249773"/>
+  </FieldSpecifications>
+</Problem>

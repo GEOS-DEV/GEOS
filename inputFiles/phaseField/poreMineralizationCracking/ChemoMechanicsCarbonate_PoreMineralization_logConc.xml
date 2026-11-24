@@ -1,0 +1,83 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+    <!-- INITIAL LOG (NATURAL) PRIMARY SPECIES CONCENTRATIONS IN BULK -->
+    <FieldSpecification
+      name="initialLog_H_bulk"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-18.4207"/>
+
+    <FieldSpecification
+      name="initialLog_Ca_bulk"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-7.2644302229"/>
+
+    <FieldSpecification
+      name="initialLog_HCO3_bulk"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-7.2644302229"/>
+
+    <!-- FIXED LOG CONCENTRATIONS AT SOURCE -->
+    <FieldSpecification
+      name="log_H_source"
+      setNames="{ source1 }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-18.4207"/>
+
+    <FieldSpecification
+      name="log_Ca_source"
+      setNames="{ source1 }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-7.2644302229"/>
+
+    <FieldSpecification
+      name="log_HCO3_source"
+      setNames="{ source1 }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-2.9957322736"/>
+
+    <!-- FIXED LOG CONCENTRATIONS AT SINK (equilibrium, undersaturated relative to source) -->
+    <!-- <FieldSpecification
+      name="log_H_sink"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="0"
+      scale="-18.4207"/>
+
+    <FieldSpecification
+      name="log_Ca_sink"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="1"
+      scale="-7.2644302229"/>
+
+    <FieldSpecification
+      name="log_HCO3_sink"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Rock"
+      fieldName="logPrimarySpeciesConcentration"
+      component="2"
+      scale="-7.2644302229"/> -->
+  </FieldSpecifications>
+</Problem>
