@@ -263,9 +263,16 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT ENABLE_CUDA AND NOT ENABL
                      COMMENT "Generating schema-dependent RST files"
                      )
 
+  # Without mathpresso (e.g. on non-x86 processors), SymbolicFunction and CompositeFunction are not in the schema:
+  # skip the files that use them instead of reporting them as invalid.
+  set( XML_VALIDATION_SKIP "" )
+  if( NOT ENABLE_MATHPRESSO )
+    set( XML_VALIDATION_SKIP --skip-element SymbolicFunction --skip-element CompositeFunction )
+  endif()
+
   add_custom_target( geosx_validate_all_xml_files
                      ALL
-                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash ${SCHEMA_DIR}/schema.xsd ${SOURCE_DIR}/examples ${SOURCE_DIR}/inputFiles
+                     COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash ${XML_VALIDATION_SKIP} ${SCHEMA_DIR}/schema.xsd ${SOURCE_DIR}/examples ${SOURCE_DIR}/inputFiles
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_generate_schema
                      COMMENT "Validating all XML files in the repository against the schema"
