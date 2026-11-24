@@ -1916,13 +1916,6 @@ void HypredriveSolver::setup( HypreMatrix const & mat )
     resetHypredriveState();
     setupLegacy( mat );
   }
-  else if( m_params.krylov.useAdaptiveTol && !m_reportedAdaptiveToleranceIgnored )
-  {
-    GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: krylovAdaptiveTol is on, but the hypredrive input file '{}' sets the "
-                               "Krylov relative tolerance; the adaptive tolerance is not applied",
-                               solverNameForLogs(), string( m_params.hypredriveInputFile ) ) );
-    m_reportedAdaptiveToleranceIgnored = true;
-  }
 }
 
 bool HypredriveSolver::createHypredrive( HypreMatrix const & mat,
@@ -2263,6 +2256,13 @@ void HypredriveSolver::applyHypredrive( HypreVector const & rhs,
     // exceptions while solving (e.g. norms of empty local blocks on ranks that own no
     // rows), so they must be masked here as well.
     LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
+    if( m_params.krylov.useAdaptiveTol )
+    {
+      // The tolerance changes every nonlinear iteration while the solver is reused:
+      // it overrides the one from the hypredrive input.
+      checkHypredriveCall( HYPREDRV_LinearSolverSetRelativeTol( m_hypredrive, m_params.krylov.relTolerance ),
+                           "HYPREDRV_LinearSolverSetRelativeTol" );
+    }
     checkHypredriveCall( HYPREDRV_LinearSolverApply( m_hypredrive ), "HYPREDRV_LinearSolverApply" );
   }
 
