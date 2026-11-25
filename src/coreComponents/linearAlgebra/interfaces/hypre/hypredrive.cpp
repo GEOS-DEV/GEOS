@@ -1660,11 +1660,6 @@ bool shouldUse( LinearSolverParameters const & params )
     return true;
   }
 
-  if( params.krylov.useAdaptiveTol )
-  {
-    return false;
-  }
-
   return getSolverName( params.solverType ) != nullptr &&
          supportsGeneratedPreconditioner( params.preconditionerType );
 }
