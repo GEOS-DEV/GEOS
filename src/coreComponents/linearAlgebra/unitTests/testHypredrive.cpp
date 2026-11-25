@@ -980,6 +980,16 @@ TEST( HypredriveSolverSelection, UsesAdapterWhenAvailable )
   EXPECT_NE( dynamic_cast< HypredriveSolver * >( solver.get() ), nullptr );
 }
 
+TEST( HypredriveSolverSelection, UsesAdapterWithAdaptiveKrylovTolerance )
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.krylov.useAdaptiveTol = true;
+
+  EXPECT_TRUE( hypre::hypredrive::shouldUse( params ) );
+}
+
 TEST( HypredriveSolverSelection, HonorsLegacyOverride )
 {
   ScopedEnvVar legacyOverride( "GEOS_HYPREDRV_FORCE_LEGACY", "1" );
@@ -1156,30 +1166,9 @@ TEST( HypredriveNumerics, UpdatedKrylovToleranceIsUsedByReusedSolver )
 {
   // The solver object is reused across nonlinear iterations while the adaptive
   // (Eisenstat-Walker) scheme changes the tolerance: the new value must reach hypredrive.
-  // The adaptive tolerance reaches hypredrive only through a user-supplied input file
-  // (generated YAML with adaptive tolerance runs on the legacy solver).
-  std::string const inputFile = "/tmp/geos-hypredrive-adaptive-tol-test.yml";
-  {
-    std::ofstream output( inputFile );
-    ASSERT_TRUE( output.good() );
-    output << "general:\n"
-           << "  exec_policy: host\n"
-           << "solver:\n"
-           << "  bicgstab:\n"
-           << "    max_iter: 300\n"
-           << "    relative_tol: 1.0e-2\n"
-           << "    print_level: 0\n"
-           << "preconditioner:\n"
-           << "  ilu:\n"
-           << "    type: bj-iluk\n"
-           << "    fill_level: 0\n";
-    ASSERT_TRUE( output.good() );
-  }
-
   LinearSolverParameters params;
-  params.hypredriveInputFile = Path( inputFile.c_str() );
-  params.solverType = LinearSolverParameters::SolverType::bicgstab;
-  params.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
   params.krylov.relTolerance = 1e-2;
   params.krylov.useAdaptiveTol = true;
   params.krylov.maxIterations = 300;
@@ -1221,7 +1210,6 @@ TEST( HypredriveNumerics, UpdatedKrylovToleranceIsUsedByReusedSolver )
   EXPECT_LE( relativeResidual(), 2.0 * 1e-10 );
   EXPECT_LT( relativeResidual(), looseResidual );
 
-  ASSERT_EQ( std::remove( inputFile.c_str() ), 0 );
 }
 
 TEST( HypredriveLogging, WarnsOnceWhenGeneratedYamlFallsBackToLegacy )
