@@ -961,6 +961,19 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
   // So accumulation needs to multiply by area to cancel the 1/area in dAperturedU
   arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
+  // The loop below runs on host and captures by reference, so CHAI does not move the views.
+  // Without unified memory, stage everything it reads on host and mark the matrix entries as
+  // modified on host so that they are copied back before the next device access.
+  faceToNodeMap.move( hostMemorySpace, false );
+  dispDofNumber.move( hostMemorySpace, false );
+  bubbleDofNumber.move( hostMemorySpace, false );
+  presDofNumber.move( hostMemorySpace, false );
+  density.move( hostMemorySpace, false );
+  elemsToFaces.move( hostMemorySpace, false );
+  fractureState.move( hostMemorySpace, false );
+  area.move( hostMemorySpace, false );
+  localMatrix.move( hostMemorySpace, true );
+
   forAll< serialPolicy >( numElems, [&]( localIndex const kfe )
   {
     localIndex const kf0 = elemsToFaces[kfe][0];

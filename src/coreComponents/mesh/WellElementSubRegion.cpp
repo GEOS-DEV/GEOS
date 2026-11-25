@@ -1129,7 +1129,8 @@ void WellElementSubRegion::setElementStatus( arrayView1d< integer > const & loca
   {
     sortedPerfsPerElem[i]=activePerfsPerElement[indices[i]];
   }
-  // Set segment status
+  // Set segment status (updated on host; make sure the host copy is current and flagged as modified)
+  m_wellElementStatus.move( hostMemorySpace, true );
   std::fill( m_wellElementStatus.begin(), m_wellElementStatus.end(), 0 );
   if( numElements > 0 )
   {

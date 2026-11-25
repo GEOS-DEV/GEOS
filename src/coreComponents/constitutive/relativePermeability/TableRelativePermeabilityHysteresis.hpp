@@ -271,19 +271,19 @@ private:
     arrayView1d< real64 const > m_landParam;
 
     /// Parameter a introduced by Jerauld in the Land model
-    real64 const & m_jerauldParam_a;
+    real64 const m_jerauldParam_a;
 
     /// Parameter b introduced by Jerauld in the Land model
-    real64 const & m_jerauldParam_b;
+    real64 const m_jerauldParam_b;
 
     /// Curvature parameter introduced for wetting phase hysteresis in Killough
-    real64 const & m_killoughCurvatureParamRelPerm;
+    real64 const m_killoughCurvatureParamRelPerm;
 
     /// The wetting phase hysteretic curve
-    KilloughHysteresis::HysteresisCurve const & m_wettingCurve;
+    KilloughHysteresis::HysteresisCurve const m_wettingCurve;
 
     /// The non-wetting phase hysteretic curve
-    KilloughHysteresis::HysteresisCurve const & m_nonWettingCurve;
+    KilloughHysteresis::HysteresisCurve const m_nonWettingCurve;
 
     /// Minimum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMinHistoricalVolFraction;

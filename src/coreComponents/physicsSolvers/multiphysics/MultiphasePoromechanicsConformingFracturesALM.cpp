@@ -57,7 +57,14 @@ void MultiphasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem( 
 
   GEOS_MARK_FUNCTION;
 
-  GEOS_UNUSED_VAR( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  // If the current solver is sequentially coupled and a subsolver of a sequentially coupled parent solver:
+  // set up the linear systems of the flow and mechanics subsolvers sequentially instead of monolithically
+  // Note: no current solver or example uses this path. It is kept for future nested sequential coupling
+  if( this->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    Base::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+    return;
+  }
 
   GEOS_ERROR( "MultiphasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
 
