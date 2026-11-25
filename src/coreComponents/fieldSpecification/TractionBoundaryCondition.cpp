@@ -336,20 +336,21 @@ void TractionBoundaryCondition::launch( real64 const time,
   TractionType const tractionType = m_tractionType;
   R2SymTensor inputStress = m_inputStress;
 
+  real64 const scale = this->getScale();
   real64 tractionMagnitude0;
   array1d< real64 > tractionMagnitudeArray( targetSet.size() );
   bool spatialFunction = false;
 
   if( functionName.empty() )
   {
-    tractionMagnitude0 = this->getScale();
+    tractionMagnitude0 = scale;
   }
   else
   {
     FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
     if( function.isFunctionOfTime() == 2 )
     {
-      tractionMagnitude0 = this->getScale() * function.evaluate( &time );
+      tractionMagnitude0 = scale * function.evaluate( &time );
     }
     else
     {
@@ -373,7 +374,7 @@ void TractionBoundaryCondition::launch( real64 const time,
 
       real64 const nodalScale = ( nodalScaleFlag == 1 ) ? scaleSet[i] : 1.0;
 
-      real64 const tractionMagnitude = spatialFunction ? tractionMagnitudeArrayView[i] : (tractionMagnitude0 * nodalScale);
+      real64 const tractionMagnitude = ( spatialFunction ? scale * tractionMagnitudeArrayView[i] : tractionMagnitude0 ) * nodalScale;
 
       real64 traction[3] = { 0 };
       if( tractionType == TractionType::vector )
