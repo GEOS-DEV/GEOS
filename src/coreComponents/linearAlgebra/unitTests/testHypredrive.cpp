@@ -1152,6 +1152,78 @@ TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceBicgstabIlu )
   compareHypredriveAndLegacySolutions( params );
 }
 
+TEST( HypredriveNumerics, UpdatedKrylovToleranceIsUsedByReusedSolver )
+{
+  // The solver object is reused across nonlinear iterations while the adaptive
+  // (Eisenstat-Walker) scheme changes the tolerance: the new value must reach hypredrive.
+  // The adaptive tolerance reaches hypredrive only through a user-supplied input file
+  // (generated YAML with adaptive tolerance runs on the legacy solver).
+  std::string const inputFile = "/tmp/geos-hypredrive-adaptive-tol-test.yml";
+  {
+    std::ofstream output( inputFile );
+    ASSERT_TRUE( output.good() );
+    output << "general:\n"
+           << "  exec_policy: host\n"
+           << "solver:\n"
+           << "  bicgstab:\n"
+           << "    max_iter: 300\n"
+           << "    relative_tol: 1.0e-2\n"
+           << "    print_level: 0\n"
+           << "preconditioner:\n"
+           << "  ilu:\n"
+           << "    type: bj-iluk\n"
+           << "    fill_level: 0\n";
+    ASSERT_TRUE( output.good() );
+  }
+
+  LinearSolverParameters params;
+  params.hypredriveInputFile = Path( inputFile.c_str() );
+  params.solverType = LinearSolverParameters::SolverType::bicgstab;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::iluk;
+  params.krylov.relTolerance = 1e-2;
+  params.krylov.useAdaptiveTol = true;
+  params.krylov.maxIterations = 300;
+  params.logLevel = 0;
+
+  HypreMatrix matrix;
+  testing::compute2DLaplaceOperator( MPI_COMM_GEOS, 100, matrix );
+
+  HypreVector rhs;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+
+  HypreVector sol;
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+
+  HypredriveSolver solver( params );
+  solver.setup( matrix );
+  ASSERT_TRUE( HypredriveSolverTestPeer::usesHypredrive( solver ) );
+
+  auto const relativeResidual = [&]()
+  {
+    HypreVector residual( rhs );
+    matrix.residual( sol, rhs, residual );
+    return residual.norm2() / rhs.norm2();
+  };
+
+  sol.zero();
+  solver.solve( rhs, sol );
+  ASSERT_TRUE( solver.result().success() );
+  integer const looseIterations = solver.result().numIterations;
+  real64 const looseResidual = relativeResidual();
+  EXPECT_LE( looseResidual, 2.0 * 1e-2 );
+
+  solver.setKrylovRelativeTolerance( 1e-10 );
+  sol.zero();
+  solver.solve( rhs, sol );
+  ASSERT_TRUE( solver.result().success() );
+  EXPECT_GT( solver.result().numIterations, looseIterations );
+  EXPECT_LE( relativeResidual(), 2.0 * 1e-10 );
+  EXPECT_LT( relativeResidual(), looseResidual );
+
+  ASSERT_EQ( std::remove( inputFile.c_str() ), 0 );
+}
+
 TEST( HypredriveLogging, WarnsOnceWhenGeneratedYamlFallsBackToLegacy )
 {
   // AMG with rigid-body-mode near null space is not representable in generated
