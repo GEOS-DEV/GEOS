@@ -23,10 +23,8 @@
         lineSearchMaxCuts="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="direct"
-        directParallel="1"
+        solverType="gmres"
         preconditionerType="mgr"
-        reuseFactorization="1"
         logLevel="0"/>
     </SolidMechanicsLagrangeContactBubbleStab>
     
