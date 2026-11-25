@@ -1660,11 +1660,6 @@ bool shouldUse( LinearSolverParameters const & params )
     return true;
   }
 
-  if( params.krylov.useAdaptiveTol )
-  {
-    return false;
-  }
-
   return getSolverName( params.solverType ) != nullptr &&
          supportsGeneratedPreconditioner( params.preconditionerType );
 }
@@ -1887,6 +1882,15 @@ void HypredriveSolver::reportGeneratedYamlFailure( char const * const reason )
   GEOS_LOG_RANK_0( GEOS_FMT( "Warning: {}: {}; falling back to the legacy hypre solver",
                              solverNameForLogs(), reason ) );
   m_reportedGeneratedYamlFailure = true;
+}
+
+void HypredriveSolver::setKrylovRelativeTolerance( real64 const tolerance )
+{
+  Base::setKrylovRelativeTolerance( tolerance );
+  if( m_legacySolver )
+  {
+    m_legacySolver->setKrylovRelativeTolerance( tolerance );
+  }
 }
 
 void HypredriveSolver::setup( HypreMatrix const & mat )
@@ -2247,6 +2251,13 @@ void HypredriveSolver::applyHypredrive( HypreVector const & rhs,
     // exceptions while solving (e.g. norms of empty local blocks on ranks that own no
     // rows), so they must be masked here as well.
     LvArray::system::FloatingPointExceptionGuard guard( FE_ALL_EXCEPT );
+    if( m_params.krylov.useAdaptiveTol )
+    {
+      // The tolerance changes every nonlinear iteration while the solver is reused:
+      // it overrides the one from the hypredrive input.
+      checkHypredriveCall( HYPREDRV_LinearSolverSetRelativeTol( m_hypredrive, m_params.krylov.relTolerance ),
+                           "HYPREDRV_LinearSolverSetRelativeTol" );
+    }
     checkHypredriveCall( HYPREDRV_LinearSolverApply( m_hypredrive ), "HYPREDRV_LinearSolverApply" );
   }
 

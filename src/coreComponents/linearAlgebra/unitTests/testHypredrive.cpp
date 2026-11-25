@@ -980,6 +980,16 @@ TEST( HypredriveSolverSelection, UsesAdapterWhenAvailable )
   EXPECT_NE( dynamic_cast< HypredriveSolver * >( solver.get() ), nullptr );
 }
 
+TEST( HypredriveSolverSelection, UsesAdapterWithAdaptiveKrylovTolerance )
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.krylov.useAdaptiveTol = true;
+
+  EXPECT_TRUE( hypre::hypredrive::shouldUse( params ) );
+}
+
 TEST( HypredriveSolverSelection, HonorsLegacyOverride )
 {
   ScopedEnvVar legacyOverride( "GEOS_HYPREDRV_FORCE_LEGACY", "1" );
@@ -1150,6 +1160,56 @@ TEST( HypredriveNumerics, MatchesLegacyHypreSolverOnLaplaceBicgstabIlu )
   params.logLevel = 0;
 
   compareHypredriveAndLegacySolutions( params );
+}
+
+TEST( HypredriveNumerics, UpdatedKrylovToleranceIsUsedByReusedSolver )
+{
+  // The solver object is reused across nonlinear iterations while the adaptive
+  // (Eisenstat-Walker) scheme changes the tolerance: the new value must reach hypredrive.
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.krylov.relTolerance = 1e-2;
+  params.krylov.useAdaptiveTol = true;
+  params.krylov.maxIterations = 300;
+  params.logLevel = 0;
+
+  HypreMatrix matrix;
+  testing::compute2DLaplaceOperator( MPI_COMM_GEOS, 100, matrix );
+
+  HypreVector rhs;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+
+  HypreVector sol;
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+
+  HypredriveSolver solver( params );
+  solver.setup( matrix );
+  ASSERT_TRUE( HypredriveSolverTestPeer::usesHypredrive( solver ) );
+
+  auto const relativeResidual = [&]()
+  {
+    HypreVector residual( rhs );
+    matrix.residual( sol, rhs, residual );
+    return residual.norm2() / rhs.norm2();
+  };
+
+  sol.zero();
+  solver.solve( rhs, sol );
+  ASSERT_TRUE( solver.result().success() );
+  integer const looseIterations = solver.result().numIterations;
+  real64 const looseResidual = relativeResidual();
+  EXPECT_LE( looseResidual, 2.0 * 1e-2 );
+
+  solver.setKrylovRelativeTolerance( 1e-10 );
+  sol.zero();
+  solver.solve( rhs, sol );
+  ASSERT_TRUE( solver.result().success() );
+  EXPECT_GT( solver.result().numIterations, looseIterations );
+  EXPECT_LE( relativeResidual(), 2.0 * 1e-10 );
+  EXPECT_LT( relativeResidual(), looseResidual );
+
 }
 
 TEST( HypredriveLogging, WarnsOnceWhenGeneratedYamlFallsBackToLegacy )

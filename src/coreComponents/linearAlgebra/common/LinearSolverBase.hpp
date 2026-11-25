@@ -94,6 +94,17 @@ public:
   }
 
   /**
+   * @brief Update the relative convergence tolerance of the Krylov solver.
+   * @param tolerance the new relative tolerance
+   * @note The linear solver holds its own copy of the parameters, so the new value must be passed on explicitly.
+   *       It takes effect at the next setup or solve.
+   */
+  virtual void setKrylovRelativeTolerance( real64 const tolerance )
+  {
+    m_params.krylov.relTolerance = tolerance;
+  }
+
+  /**
    * @brief Supply near-null-space vectors used to construct physics-aware preconditioners.
    * @param nearNullKernel Distributed vectors spanning the near null space.
    */

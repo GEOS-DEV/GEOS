@@ -1448,6 +1448,12 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
     {
       m_linearSolver = LAInterface::createSolver( params );
     }
+    else if( params.krylov.useAdaptiveTol )
+    {
+      // The solver object is reused across nonlinear iterations and holds its own copy of the
+      // parameters: pass on the tolerance just computed by the adaptive (Eisenstat-Walker) scheme.
+      m_linearSolver->setKrylovRelativeTolerance( params.krylov.relTolerance );
+    }
 
     LinearSolverExecutionContext executionContext;
     executionContext.solverName = getName();
