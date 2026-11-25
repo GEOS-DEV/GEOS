@@ -69,6 +69,8 @@ public:
     m_porosityUpdate.updateFixedStress( k, q,
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n );
+
+    updatePermeabilityFromPorosity( k, q, pressure, false );
   }
 
   GEOS_HOST_DEVICE
@@ -129,6 +131,8 @@ public:
       dPorosity_dTemperature = 0.0;
     }
 
+    updateMatrixPermeability( k, q, pressure, strainIncrement, performStressInitialization );
+
     // Save the derivative of solid density wrt pressure for the computation of the body force
     dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure( k );
   }
@@ -172,6 +176,24 @@ public:
     real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
                                             - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
     m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
+  }
+
+  /**
+   * @brief Update the strain-dependent permeability models from the strain increment (fixed-stress scheme).
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] strainIncrement the strain increment since the last converged state
+   * @note The porosity-dependent permeability models are updated by the flow solver (see updateStateFixedStress).
+   */
+  GEOS_HOST_DEVICE
+  void updateStrainDependentPermeability( localIndex const k,
+                                          localIndex const q,
+                                          real64 const ( &strainIncrement )[6] ) const
+  {
+    m_permUpdate.updateFromVolumetricStrainIncrement( k,
+                                                      q,
+                                                      m_porosityUpdate.getInitialPorosity( k, q ),
+                                                      LvArray::tensorOps::symTrace< 3 >( strainIncrement ) );
   }
 
   /**
@@ -242,6 +264,58 @@ private:
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
     m_porosityUpdate.updateThermalExpansionCoefficient( k, thermalExpansionCoefficient );
+  }
+
+  GEOS_HOST_DEVICE
+  void updateMatrixPermeability( localIndex const k,
+                                 localIndex const q,
+                                 real64 const & pressure,
+                                 real64 const ( &strainIncrement )[6],
+                                 integer const performStressInitialization ) const
+  {
+    // the strain of the stress initialization step does not modify the permeability
+    real64 const volStrainIncrement = performStressInitialization ? 0.0 : LvArray::tensorOps::symTrace< 3 >( strainIncrement );
+
+    // strain-dependent permeability models
+    m_permUpdate.updateFromVolumetricStrainIncrement( k,
+                                                      q,
+                                                      m_porosityUpdate.getInitialPorosity( k, q ),
+                                                      volStrainIncrement );
+
+    // porosity-dependent permeability models (e.g., Carman-Kozeny)
+    updatePermeabilityFromPorosity( k, q, pressure, performStressInitialization );
+  }
+
+  /**
+   * @brief Update the porosity-dependent permeability models (e.g., Carman-Kozeny).
+   * @param[in] k the element index
+   * @param[in] q the quadrature point index
+   * @param[in] pressure the pressure in element k
+   * @param[in] useInitialPorosity flag to use the initial porosity (e.g., during the stress initialization)
+   * @note The permeability is cell-centered (one value per element): it is computed from the element-averaged
+   *       porosity once all the quadrature points of element k have been updated. This assumes the quadrature
+   *       points of an element are visited in order.
+   */
+  GEOS_HOST_DEVICE
+  void updatePermeabilityFromPorosity( localIndex const k,
+                                       localIndex const q,
+                                       real64 const & pressure,
+                                       integer const useInitialPorosity ) const
+  {
+    localIndex const numQuad = m_porosityUpdate.numGauss();
+    if( q != numQuad - 1 )
+    {
+      return;
+    }
+
+    real64 avgPorosity = 0.0;
+    for( localIndex iq = 0; iq < numQuad; ++iq )
+    {
+      avgPorosity += useInitialPorosity ? m_porosityUpdate.getInitialPorosity( k, iq ) : m_porosityUpdate.getPorosity( k, iq );
+    }
+    avgPorosity /= numQuad;
+
+    m_permUpdate.updateFromPressureAndPorosity( k, 0, pressure, avgPorosity );
   }
 
   GEOS_HOST_DEVICE

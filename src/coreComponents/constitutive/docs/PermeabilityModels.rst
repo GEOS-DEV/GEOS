@@ -16,4 +16,6 @@ Permeability models
 
    SlipDependentPermeability
 
+   StrainDependentPermeability
+
    WillisRichardsPermeability
