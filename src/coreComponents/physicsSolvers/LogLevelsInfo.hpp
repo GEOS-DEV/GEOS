@@ -126,6 +126,12 @@ struct Statistics
   static constexpr std::string_view getDescription() { return "Print statistics"; }
 };
 
+struct StatisticsPerRegion
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Print per region statistics"; }
+};
+
 struct SurfaceGenerator
 {
   static constexpr int getMinLogLevel() { return 1; }

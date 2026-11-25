@@ -137,7 +137,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
-  m_maxAbsolutePresChange( -1 ), // disabled by default
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
 {
@@ -163,12 +162,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (relative) change in pressure between two Newton iterations (recommended with rate control)" );
-
-  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1.0 ).       // disabled by default
-    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
     setSizedFromParent( 0 ).
@@ -231,6 +224,11 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
     MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
     m_numPhases = fluid0.numFluidPhases();
     m_numComponents = fluid0.numFluidComponents();
+    GEOS_THROW_IF_GT_MSG( m_numComponents, GEOS_MAX_FLUID_COMPONENTS,
+                          GEOS_FMT( "This solver requires {} components, but this build supports at most {}. "
+                                    "Rebuild with GEOS_MAX_FLUID_COMPONENTS >= {}.",
+                                    m_numComponents, GEOS_MAX_FLUID_COMPONENTS, m_numComponents ),
+                          InputError, getDataContext() );
   }
 
   WellControls::registerWellDataOnMesh( subRegion );
@@ -1610,6 +1608,7 @@ CompositionalMultiphaseWell::scalingForLocalSystemSolution( WellElementSubRegion
       createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                  m_maxAbsolutePresChange,
                                                  m_maxRelativeTempChange,
+                                                 m_maxAbsoluteTempChange,
                                                  m_maxCompFracChange,
                                                  m_maxRelativeCompDensChange,
                                                  pressure,
@@ -1764,7 +1763,7 @@ CompositionalMultiphaseWell::checkWellSystemSolution( WellElementSubRegion & sub
   integer localCheck = 1;
 
   integer constexpr allowNegativePressure = 0;
-  compositionalMultiphaseUtilities::ScalingType constexpr scalingType = compositionalMultiphaseUtilities::ScalingType::Global;
+  flowSolverUtilities::ScalingType constexpr scalingType = flowSolverUtilities::ScalingType::Global;
 
   arrayView1d< real64 const > const pressure = subRegion.getField< well::pressure >();
   arrayView1d< real64 const > const temperature = subRegion.getField< well::temperature >();

@@ -23,6 +23,7 @@
 #include "dataRepository/Group.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
+#include "mixedMimetic/MixedMimeticDiscretizationManager.hpp"
 
 namespace geos
 {
@@ -69,6 +70,9 @@ public:
 
     /// @return Name for the finite volume manager.
     static constexpr char const * finiteVolumeManagerString() { return "FiniteVolume"; }
+
+    /// @return Name for the mixed mimetic discretization manager.
+    static constexpr char const * mixedMimeticManagerString() { return "MixedMimetic"; }
   };
 
   /**
@@ -91,6 +95,16 @@ public:
    */
   FiniteVolumeManager const & getFiniteVolumeManager() const { return m_finiteVolumeManager; }
 
+  /**
+   * @brief @return Returns reference to MixedMimeticDiscretizationManager m_mixedMimeticDiscretizationManager.
+   */
+  MixedMimeticDiscretizationManager & getMixedMimeticDiscretizationManager()       { return m_mixedMimeticDiscretizationManager; }
+
+  /**
+   * @brief @return Returns reference to const MixedMimeticDiscretizationManager m_mixedMimeticDiscretizationManager.
+   */
+  MixedMimeticDiscretizationManager const & getMixedMimeticDiscretizationManager() const { return m_mixedMimeticDiscretizationManager; }
+
 private:
 
   /// Contains the finite element discretizations
@@ -98,6 +112,9 @@ private:
 
   /// Contains the finite volume discretizations.
   FiniteVolumeManager m_finiteVolumeManager;
+
+  /// Contains the mixed mimetic discretizations.
+  MixedMimeticDiscretizationManager m_mixedMimeticDiscretizationManager;
 
 };
 

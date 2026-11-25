@@ -465,6 +465,16 @@ TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
     }
     hypre::hypredrive::InputArgsParseTarget target;
 
+    if( strategy == StrategyType::singlePhaseMixedMFD )
+    {
+      // solver-provided point markers have no field-label form: this strategy stays on legacy hypre
+      EXPECT_FALSE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( strategy ),
+                                                                  strategyFieldNames,
+                                                                  strategyNumComponentsPerField,
+                                                                  target ) );
+      continue;
+    }
+
     try
     {
       EXPECT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( strategy ),
@@ -1030,7 +1040,7 @@ void compareHypredriveAndLegacySolutions( LinearSolverParameters const & params,
     // selects the settings needed by the test HYPRE build on gfx1100.
     hypre::hypredrive::InputArgsParseTarget target;
     ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
-    std::string const reorderingLine = "    reordering: 1\n";
+    std::string const reorderingLine = "    reordering: 0\n";
     std::string::size_type const reordering = target.argument.find( reorderingLine );
     ASSERT_NE( reordering, std::string::npos );
     target.argument.replace( reordering,

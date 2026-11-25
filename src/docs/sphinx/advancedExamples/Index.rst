@@ -11,8 +11,6 @@ Advanced Examples
 
    performanceBenchmarks/Index
 
-   applicationStudies/Index
-
    pygeosxExamples/Index
 
 

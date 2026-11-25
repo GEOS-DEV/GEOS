@@ -182,7 +182,7 @@ real64 getTotalFluidMass( ProblemManager & problem,
                        .getMeshBody( 0 )
                        .getMeshLevel( solver.getDiscretizationName() );
   auto const & statsAggregator = statsTask.getStatisticsAggregator();
-  auto const & stats = statsAggregator.getRegionsStatistics( mesh );
+  auto const & stats = statsAggregator.getMeshLevelStatistics( mesh );
   return stats.m_totalMass;
 }
 

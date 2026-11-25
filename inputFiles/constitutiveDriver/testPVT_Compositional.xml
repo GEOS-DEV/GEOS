@@ -1,0 +1,92 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <PVTDriver
+      name="testComp01"
+      fluid="comp01"
+      feedComposition="{ 0.5, 0.5 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="11"
+      outputMassDensity="1"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      output="testPVT_ThreePhaseCompositional_comp01.txt"
+      logLevel="1"/>
+    <PVTDriver
+      name="testComp02"
+      fluid="comp02"
+      feedComposition="{ 0.5, 0.5 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="11"
+      outputMassDensity="1"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      output="testPVT_ThreePhaseCompositional_comp02.txt"
+      logLevel="1"/>
+  </Tasks>
+
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="eventtestComp01"
+      target="/Tasks/testComp01"/>
+
+    <SoloEvent
+      name="eventtestComp02"
+      target="/Tasks/testComp02"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>      
+  </Events>
+
+  <Constitutive>
+    <CompositionalTwoPhaseFluid
+      name="comp01"
+      phaseNames="{ water, gas }"
+      equationsOfState="{ PengRobinson, PengRobinson }"
+      componentNames="{ CH4, H2O }"
+      componentCriticalPressure="{ 46.0421e5, 220.50e5 }"
+      componentCriticalTemperature="{ 190.6, 647.0 }"
+      componentAcentricFactor="{ 0.013, 0.344 }"
+      componentMolarWeight="{ 16.04e-3, 18.01e-3 }"
+      componentVolumeShift="{ -0.1486264, 0.0 }"
+      constantPhaseViscosity="{ 1.0016e-3, 1.10e-5 }" />
+    <CompositionalTwoPhaseFluid
+      name="comp02"
+      phaseNames="{ gas, water }"
+      equationsOfState="{ PengRobinson, PengRobinson }"
+      componentNames="{ CH4, H2O }"
+      componentCriticalPressure="{ 46.0421e5, 220.50e5 }"
+      componentCriticalTemperature="{ 190.6, 647.0 }"
+      componentAcentricFactor="{ 0.013, 0.344 }"
+      componentMolarWeight="{ 16.04e-3, 18.01e-3 }"
+      componentVolumeShift="{ -0.1486264, 0.0 }"
+      constantPhaseViscosity="{ 1.10e-5, 1.0016e-3 }" />
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="pressureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0, 2.0 }"
+      values="{ 3.5e+07, 1.0e+07, 1.0e+05 }"/>
+
+    <TableFunction
+      name="temperatureFunction"
+      inputVarNames="{ time }"
+      interpolation="lower"
+      coordinates="{ 0.0, 1.0, 2.0 }"
+      values="{ 293.15, 293.15, 293.15 }"/>
+  </Functions>
+</Problem>

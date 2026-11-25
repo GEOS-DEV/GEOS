@@ -49,7 +49,9 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
+#include <chrono>
 #include <filesystem>
+#include <system_error>
 
 #include <fenv.h>
 
@@ -215,10 +217,19 @@ private:
       namespace fs = std::filesystem;
 
       fs::path const folder = fs::temp_directory_path();
-      srand( (unsigned) time( nullptr ) );
-      string const subFolder = "tmp-geos-vtk-" + std::to_string( rand() );
-      m_vtkFolder = folder / subFolder;
-      ASSERT_TRUE( fs::create_directory( m_vtkFolder ) );
+      auto const timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+      bool created = false;
+      for( unsigned int attempt = 0; attempt < 1000 && !created; ++attempt )
+      {
+        m_vtkFolder = folder / ( "tmp-geos-vtk-" + std::to_string( timestamp ) + "-" + std::to_string( attempt ) );
+        std::error_code error;
+        created = fs::create_directory( m_vtkFolder, error );
+        if( error )
+        {
+          FAIL() << "Could not create temporary VTK directory " << m_vtkFolder << ": " << error.message();
+        }
+      }
+      ASSERT_TRUE( created ) << "Could not find an unused temporary VTK directory name";
 
       m_vtkFile = createFractureMesh( m_vtkFolder );
     }

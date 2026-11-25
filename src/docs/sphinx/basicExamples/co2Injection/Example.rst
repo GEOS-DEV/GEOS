@@ -59,8 +59,17 @@ They consist of three blocks **CompositionalMultiphaseFVM**, **CompositionalMult
 
 In the **CompositionalMultiphaseFVM** (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver with a TPFA discretization is described.
 
-The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilEgg` for detailed example). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag.
-This sub-tag specifies the CO :sub:`2` injector control mode: the well is initially rate-controlled, with a rate specified in ``targetTotalRate`` and a maximum pressure specified in ``targetBHP``. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture (here, pure CO :sub:`2`).
+The **WellManager** (:ref:`CompositionalMultiphaseWell`) is the well solver, applied to the well region (see :ref:`TutorialDeadOilEgg` for a detailed example).
+It contains one **CompositionalMultiphaseWell** element per well, whose ``name`` (here ``wellControls``) is referenced by the ``wellControlsName`` attribute of the well geometry in the **Mesh** block.
+Each well element defines the well ``type`` (``injector`` or ``producer``) and a set of constraints, given as sub-elements:
+
+- **MaximumBHPConstraint**: the bottom-hole pressure may not exceed ``targetBHP`` (here 50 MPa), measured at ``referenceElevation``.
+- **InjectionVolumeRateConstraint**: the injected volumetric rate may not exceed ``volumeRate`` (in m\ :sup:`3`/s, at surface conditions since ``useSurfaceConditions="1"``).
+  The ``injectionStream`` attribute describes the composition of the injected mixture (here, pure CO :sub:`2`), and ``injectionTemperature`` its temperature.
+
+The ``control`` attribute selects the initial control mode, here ``totalVolRate``: the well starts rate-controlled.
+During the simulation, GEOS checks the other constraints and switches control when one of them is violated,
+for instance to BHP control if the bottom-hole pressure reaches ``targetBHP``.
 
 The **CompositionalMultiphaseReservoir** coupling section describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed example on coupling physics in GEOS). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solver attributes). 
 
@@ -116,12 +125,9 @@ Finally, the time history collection and output events are used to trigger the m
 Numerical methods
 -----------------
 
-The **TwoPointFluxApproximation** is chosen for the fluid equation discretization. The tag specifies:
-
-- A primary field to solve for as ``fieldName``. For a flow problem, this field is pressure. 
-- A set of target regions in ``targetRegions``. 
-- A ``coefficientName`` pointing to the field used for TPFA transmissibilities construction.
-- A ``coefficientModelNames`` used to specify the permeability constitutive model(s).
+The **TwoPointFluxApproximation** is chosen for the fluid equation discretization.
+It only needs a ``name``, used by the flow solver's ``discretization`` attribute:
+transmissibilities are computed from the permeability model of each region.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
@@ -150,12 +156,14 @@ The keyword "all" is used here to automatically select all cells of the mesh.
 Constitutive laws
 -----------------
 
-Under the **Constitutive** tag, four items can be found:
+Under the **Constitutive** tag, the following models can be found:
 
 - **CO2BrinePhillipsFluid** : this tag defines phase names, component molar weights, and fluid behaviors such as CO :sub:`2` solubility in brine and viscosity/density dependencies on pressure and temperature. 
+- **CompressibleSolidConstantPermeability** : the rock model listed in the regions. It combines a solid model, a porosity model, and a permeability model, referenced by name (see :ref:`TutorialSinglePhaseFlowWithInternalMesh`).
+- **NullModel** : the solid (mechanical) model of the rock. Mechanics is not solved in this example.
 - **PressurePorosity** : this tag contains all the data needed to model rock compressibility.
 - **BrooksCoreyRelativePermeability** : this tag defines the relative permeability model for each phase, its end-point values, residual volume fractions (saturations), and the Corey exponents.
-- **ConstantPermeability** : this tag defines the permeability model that is set to a simple constant diagonal tensor, whose values are defined in ``permeabilityComponent``. Note that these values will be overwritten by the permeability field imported in **FieldSpecifications**.
+- **ConstantPermeability** : this tag defines the permeability model that is set to a simple constant diagonal tensor, whose values are defined in ``permeabilityComponents``. Note that these values will be overwritten by the permeability field imported in **FieldSpecifications**.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
@@ -238,30 +246,26 @@ The details of the history collection mechanism can be found in :ref:`TasksManag
 Running GEOS
 ------------------------------------
 
-The simulation can be launched with 4 cores using MPI-parallelism:
+The simulation can be launched with 4 MPI processes from the root of the repository:
 
 .. code-block:: console
 
-  mpirun -np 4 geosx -i simpleCo2InjTutorial_smoke.xml -x 2 -y 1 -z 2
+  mpirun -np 4 geos -i inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml -x 2 -y 1 -z 2
 
-A restart from a checkpoint file `simpleCo2InjTutorial_restart_000000024.root` is always available thanks to the following command line :
+The ``-x``, ``-y`` and ``-z`` flags set the number of mesh partitions in each direction; their product must equal the number of MPI processes (here 2 x 1 x 2 = 4).
+See :ref:`RunningGEOS` for more details.
+
+The ``restarts`` event writes a checkpoint every 5 x :math:`10^7` seconds.
+Each checkpoint is a ``.root`` file and a directory of HDF5 files (one per MPI process),
+named after the input file and the cycle number, for instance ``simpleCo2InjTutorial_smoke_restart_000000024.root``.
+To restart the simulation from a checkpoint, pass its name (without the ``.root`` extension) to ``-r``,
+with the same number of MPI processes and partitions:
 
 .. code-block:: console
 
-  mpirun -np 4 geosx -i simpleCo2InjTutorial_smoke.xml -r simpleCo2InjTutorial_restart_000000024 -x 2 -y 1 -z 2
+  mpirun -np 4 geos -i inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml -r simpleCo2InjTutorial_smoke_restart_000000024 -x 2 -y 1 -z 2
 
-The output then shows the loading of HDF5 restart files by each core. 
-
-.. code-block:: console
-
-        Loading restart file simpleCo2InjTutorial_restart_000000024
-        Rank 0: rankFilePattern = simpleCo2InjTutorial_restart_000000024/rank_%07d.hdf5
-        Rank 0: Reading in restart file at simpleCo2InjTutorial_restart_000000024/rank_0000000.hdf5
-        Rank 1: Reading in restart file at simpleCo2InjTutorial_restart_000000024/rank_0000001.hdf5
-        Rank 3: Reading in restart file at simpleCo2InjTutorial_restart_000000024/rank_0000003.hdf5
-        Rank 2: Reading in restart file at simpleCo2InjTutorial_restart_000000024/rank_0000002.hdf5
-
-and the simulation restarts from this point in time. 	
+GEOS then reads the restart files and continues the simulation from this point in time.
 
 -------------
 Visualization
