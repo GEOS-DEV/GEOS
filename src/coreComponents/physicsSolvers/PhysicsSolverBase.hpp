@@ -208,6 +208,15 @@ public:
   /**@{*/
 
   /**
+   * @brief Finalize initial derived fields after every solver has initialized its state.
+   * @param domain the physical domain
+   * @details Called by PhysicsSolverManager before the first output. Derived
+   * solvers can use initialized state from other solvers without depending on
+   * the input order. This does not advance time or perform a solver step.
+   */
+  virtual void finalizeInitialState( DomainPartition & domain ) { GEOS_UNUSED_VAR( domain ); }
+
+  /**
    * @brief entry function to perform a solver step
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep

@@ -485,6 +485,34 @@ void WellManager::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 }
+
+void WellManager::finalizeInitialState( DomainPartition & domain )
+{
+  // Reservoir fluid state and all well separators are now initialized.
+  // Populate initially open wells before time-zero output, using the same
+  // initialization path as the first coupled step. Closed wells still wait
+  // until their first opening, and restart data is restored afterwards.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                              MeshLevel & mesh,
+                                                              string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                      [&]( localIndex const,
+                                                                           WellElementSubRegion & subRegion )
+    {
+      WellControls & controls = getWellControls( subRegion );
+      controls.setPerforationStatus( 0.0, subRegion );
+      if( controls.isWellOpen() && !controls.getWellState() )
+      {
+        // Phase-rate constraints need their fluid phase indices before rate
+        // initialization. The first coupled step performs this validation too.
+        controls.validateWellConstraints( 0.0, 0.0, subRegion );
+        controls.initializeWell( domain, domain.getMeshBodies(), meshBodyName, mesh, subRegion, 0.0 );
+      }
+    } );
+  } );
+}
+
 void WellManager::setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
