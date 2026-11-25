@@ -76,7 +76,7 @@ public:
               StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( dt );
-    stack.rhs = evalRhs( k , m_slipRate[k]);
+    stack.rhs = evalRhs( k, m_slipRate[k] );
     stack.jacobian = -m_shearImpedance - m_normalTraction[k] * m_frictionLaw.dFrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] );
   }
 
@@ -90,15 +90,15 @@ public:
     // If so, fall back to bisection.
     real64 const lowerBound = m_slipRateBounds[k][0];
     real64 const upperBound = m_slipRateBounds[k][1];
-    if (m_slipRate[k] < lowerBound || m_slipRate[k] > upperBound)
+    if( m_slipRate[k] < lowerBound || m_slipRate[k] > upperBound )
     {
       // Outside of bracket! Use middle value for slip rate instead
-      m_slipRate[k] =  0.5 * (lowerBound + upperBound); 
+      m_slipRate[k] =  0.5 * (lowerBound + upperBound);
       // Update brackets
-      real64 const rhsMid = evalRhs( k , m_slipRate[k]);
-      real64 const rhsLower = evalRhs( k , lowerBound);
-      if (rhsMid * rhsLower > 0) // check signs
-      { 
+      real64 const rhsMid = evalRhs( k, m_slipRate[k] );
+      real64 const rhsLower = evalRhs( k, lowerBound );
+      if( rhsMid * rhsLower > 0 ) // check signs
+      {
         // rhsMid and rhsLower has same signs. Root is in upper bracket. Update lower bound
         m_slipRateBounds[k][0] = m_slipRate[k]; // Set lower bound to intermediate value
       }
@@ -123,7 +123,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  real64 evalRhs( localIndex const k , real64 const slipRate) const
+  real64 evalRhs( localIndex const k, real64 const slipRate ) const
   {
     real64 const shearTractionMagnitude = LvArray::tensorOps::l2Norm< 2 >( m_shearTraction[k] );
     return shearTractionMagnitude - m_shearImpedance * slipRate - m_normalTraction[k] * m_frictionLaw.frictionCoefficient( k, slipRate, m_stateVariable[k] );
@@ -177,7 +177,7 @@ public:
       kernel.initializeSlipRateBounds( k );
     } );
     bool converged = newtonSolve< POLICY >( subRegion, kernel, dt, maxNewtonIter, newtonTol );
-    if ( converged )
+    if( converged )
     {
       forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {

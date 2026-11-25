@@ -141,12 +141,12 @@ public:
     m_deltaSlip[k][0] = dt * deltaSlipIncrement[0];
     m_deltaSlip[k][1] = dt * deltaSlipIncrement[1];
     m_stateVariable[k] = m_stateVariable_n[k] + dt * stateVariableIncrement;
-    
+
     // if( m_stateVariable[k] < 0)
     // {
     //   std::cout << "stateVariable " << m_stateVariable[k] << std::endl;
     // }
-    
+
   }
 
   /**
@@ -180,7 +180,7 @@ public:
     // Slip accumulated over time step
     m_deltaSlip[k][0]  = dt * deltaSlipIncrement[0];
     m_deltaSlip[k][1]  = dt * deltaSlipIncrement[1];
-    
+
     // Total slip accumulated
     m_totalSlip[k][0] = m_totalSlip_n[k][0] + dt * deltaSlipIncrement[0];
     m_totalSlip[k][1] = m_totalSlip_n[k][1] + dt * deltaSlipIncrement[1];
@@ -216,12 +216,12 @@ public:
       deltaSlipIncrementLowOrder[1]   += m_butcherTable.bStar[i] * m_stageRates[k][i][1];
       stateVariableIncrementLowOrder  += m_butcherTable.bStar[i] * m_stageRates[k][i][2];
     }
-    
+
     // Update total slip accumulated using delta slip from stage value updates.
-    m_totalSlip[k][0] = m_totalSlip_n[k][0] + m_deltaSlip[k][0]; 
+    m_totalSlip[k][0] = m_totalSlip_n[k][0] + m_deltaSlip[k][0];
     m_totalSlip[k][1] = m_totalSlip_n[k][1] + m_deltaSlip[k][1];
 
-    
+
     real64 const totalSlipLowOrder[2]  = { m_totalSlip_n[k][0] +  dt * deltaSlipIncrementLowOrder[0],
                                            m_totalSlip_n[k][1] +  dt * deltaSlipIncrementLowOrder[1]};
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
@@ -287,11 +287,11 @@ void createAndlaunchStepRateStateODESubstage( SurfaceElementSubRegion & subRegio
                                               BUTCHER_TABLE_TYPE const & butcherTable,
                                               integer const stageIndex,
                                               real64 const dt,
-                                              bool const successfulStep)
+                                              bool const successfulStep )
 {
 
   rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, frictionLaw, butcherTable );
-  if( butcherTable.FSAL && successfulStep && stageIndex == 0)
+  if( butcherTable.FSAL && successfulStep && stageIndex == 0 )
   {
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {

@@ -103,8 +103,9 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         real64 const normalStressPerturbation = normalStressPerturbationRate[k] * ( time_n + dt );
-        
-        normalTraction[k] = backgroundNormalStress[k] - traction[k][0] - normalStressPerturbation; // compressive traction is negative in geos
+
+        normalTraction[k] = backgroundNormalStress[k] - traction[k][0] - normalStressPerturbation; // compressive traction is negative in
+                                                                                                   // geos
         for( int i = 0; i < 2; ++i )
         {
           shearTraction( k, i ) = backgroundShearStress( k, i ) + perturbation( k, i ) + traction( k, i+1 );
@@ -133,16 +134,18 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::applyBackGroundStress( real64 cons
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
                                                key,
-                                               [&] ( FieldSpecificationBase const & fs,
+                                               [&] ( FieldSpecification const & fs,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
                                                      ElementSubRegionBase & subRegion,
                                                      string const & )
       {
-        fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                               time_n+dt,
-                                                                               subRegion,
-                                                                               key );
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                                 parallelDevicePolicy<> >( fs,
+                                                                           targetSet,
+                                                                           time_n + dt,
+                                                                           subRegion,
+                                                                           key );
       } );
     }
   } );

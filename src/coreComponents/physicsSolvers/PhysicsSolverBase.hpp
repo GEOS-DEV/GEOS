@@ -666,13 +666,11 @@ public:
    */
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain );
-  
+
   /**
-   * @brief 
-   * 
-   * @param domain
-   * 
-   * @note This is needed solely for the Earthquake simulations in which we want to compute changes w.r.t. to a zero configuration
+   * @brief Set all the variables of the solver to zero.
+   * @param domain the domain partition
+   * @note Used by the earthquake solvers, which compute changes with respect to a zero configuration.
    */
   virtual void
   setAllVariablesToZero( DomainPartition & domain ) const { GEOS_UNUSED_VAR( domain );}

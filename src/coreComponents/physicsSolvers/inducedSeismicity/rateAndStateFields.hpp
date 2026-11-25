@@ -186,12 +186,12 @@ DECLARE_FIELD( totalSlip_n,
                "totalSlip at time n." );
 
 DECLARE_FIELD( slipRateBounds,
-                "slipRateBounds",
-                array2d< real64 >,
-                0.0,
-                NOPLOT,
-                WRITE_AND_READ,
-                "Slip rate lower bound" ); 
+               "slipRateBounds",
+               array2d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Slip rate lower bound" );
 
 }
 

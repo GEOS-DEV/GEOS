@@ -49,11 +49,11 @@ ExplicitQDRateAndState::ExplicitQDRateAndState( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-6 ).
     setDescription( "Absolute error tolerance for explicit adaptive time stepping" );
-    this->registerWrapper( viewKeyStruct::relTimeStepTol(), &m_relTimeStepTol ).
+  this->registerWrapper( viewKeyStruct::relTimeStepTol(), &m_relTimeStepTol ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-6 ).
     setDescription( "Relative error tolerance for explicit adaptive time stepping" );
-    this->registerWrapper( viewKeyStruct::timeStepAcceptSafety(), &m_timeStepAcceptSafety ).
+  this->registerWrapper( viewKeyStruct::timeStepAcceptSafety(), &m_timeStepAcceptSafety ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.81 ).
     setDescription( "Acceptance safety factor for explicit adaptive time stepping" );
@@ -106,7 +106,7 @@ real64 ExplicitQDRateAndState::solverStep( real64 const & time_n,
 
     //
     // Runge-Kutta time stepping for substages. Evolves delta slip and state variable
-    // computing the stage rates required for the high-order update. 
+    // computing the stage rates required for the high-order update.
     // In each stage, stress and slip velocity is computed using the stage values for delta slip and state
     //
     for( integer stageIndex = 0; stageIndex < m_butcherTable.numStages-1; stageIndex++ )
@@ -168,7 +168,7 @@ void ExplicitQDRateAndState::stepRateStateODESubstage( integer const stageIndex,
       ConstitutiveBase & frictionLaw = subRegion.getConstitutiveModel< ConstitutiveBase >( frictionLawName );
       ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
       {
-        rateAndStateKernels::createAndlaunchStepRateStateODESubstage( subRegion, castedFrictionLaw, m_butcherTable, stageIndex, dt , m_successfulStep);
+        rateAndStateKernels::createAndlaunchStepRateStateODESubstage( subRegion, castedFrictionLaw, m_butcherTable, stageIndex, dt, m_successfulStep );
       } );
     } );
   } );

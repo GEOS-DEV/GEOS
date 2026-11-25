@@ -209,7 +209,7 @@ public:
    * @brief set all variables to zero (needed for earthquake models)
    * @param domain The domain partition object
    */
-  virtual void setAllVariablesToZero( DomainPartition & domain ) const override final; 
+  virtual void setAllVariablesToZero( DomainPartition & domain ) const override final;
 
 private:
   /**
