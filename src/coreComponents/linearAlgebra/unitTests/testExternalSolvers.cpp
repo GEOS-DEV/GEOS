@@ -180,7 +180,7 @@ public:
       return false;
     }
 
-    std::string const reorderingLine = "    reordering: 1\n";
+    std::string const reorderingLine = "    reordering: 0\n";
     std::string::size_type const reordering = target.argument.find( reorderingLine );
     if( reordering == std::string::npos )
     {

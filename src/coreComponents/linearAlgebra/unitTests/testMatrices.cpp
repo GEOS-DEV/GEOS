@@ -21,6 +21,16 @@
 
 #include <gtest/gtest.h>
 
+#ifdef GEOS_USE_HYPRE
+#include <_hypre_parcsr_mv.h>
+
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <set>
+#include <unistd.h>
+#endif
+
 using namespace geos;
 
 template< typename LAI >
@@ -289,6 +299,91 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, MatrixTest, TrilinosInterface, );
 
 #ifdef GEOS_USE_HYPRE
 INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, MatrixTest, HypreInterface, );
+
+class HypreMatrixOutputTest : public ::testing::TestWithParam< bool >
+{};
+
+TEST_P( HypreMatrixOutputTest, MatrixMarket )
+{
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
+  localIndex const localRows = GetParam() && numRanks > 1 && rank == 0 ? 0 : 3;
+  globalIndex const numRows = MpiWrapper::sum( globalIndex( localRows ), MPI_COMM_GEOS );
+
+  HypreMatrix matrix;
+  matrix.createWithLocalSize( localRows, 2 * localRows, 2, MPI_COMM_GEOS );
+  matrix.open();
+  for( globalIndex i = matrix.ilower(); i < matrix.iupper(); ++i )
+  {
+    matrix.insert( i, i, real64( i ) + 0.25 );
+    matrix.insert( i, numRows + i, -real64( i ) - 0.5 );
+  }
+  matrix.close();
+
+  HYPRE_MemoryLocation const initialLocation = hypre_ParCSRMatrixMemoryLocation( matrix.unwrapped() );
+
+  string filename;
+  if( rank == 0 )
+  {
+    char path[] = "hypre_matrix_market_XXXXXX";
+    int const fd = mkstemp( path );
+    if( fd >= 0 )
+    {
+      close( fd );
+      filename = path;
+    }
+  }
+  MpiWrapper::broadcast( filename, 0, MPI_COMM_GEOS );
+  ASSERT_FALSE( filename.empty() );
+
+  // Exercise both the device clone and the host path in a HIP build. Include
+  // off-process columns, and optionally leave the header-writing rank empty.
+  for( HYPRE_MemoryLocation const location : { HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST } )
+  {
+    ASSERT_EQ( hypre_ParCSRMatrixMigrate( matrix.unwrapped(), location ), 0 );
+    HYPRE_MemoryLocation const originalLocation = hypre_ParCSRMatrixMemoryLocation( matrix.unwrapped() );
+    matrix.write( filename, LAIOutputFormat::MATRIX_MARKET );
+    EXPECT_EQ( hypre_ParCSRMatrixMemoryLocation( matrix.unwrapped() ), originalLocation );
+
+    MpiWrapper::barrier( MPI_COMM_GEOS );
+    if( rank == 0 )
+    {
+      std::ifstream input( filename );
+      string header;
+      std::getline( input, header );
+      EXPECT_EQ( header, "%%MatrixMarket matrix coordinate real general" );
+      globalIndex rows = -1, cols = -1, nonzeros = -1;
+      input >> rows >> cols >> nonzeros;
+      EXPECT_EQ( rows, numRows );
+      EXPECT_EQ( cols, 2 * numRows );
+      EXPECT_EQ( nonzeros, 2 * numRows );
+
+      std::set< std::pair< globalIndex, globalIndex > > entries;
+      globalIndex row, col;
+      real64 value;
+      while( input >> row >> col >> value )
+      {
+        EXPECT_GE( row, 1 );
+        EXPECT_LE( row, numRows );
+        EXPECT_TRUE( col == row || col == numRows + row );
+        EXPECT_DOUBLE_EQ( value, col == row ? real64( row - 1 ) + 0.25 : -real64( row - 1 ) - 0.5 );
+        EXPECT_TRUE( entries.emplace( row, col ).second );
+      }
+      EXPECT_EQ( entries.size(), 2 * numRows );
+      EXPECT_TRUE( input.eof() );
+    }
+    MpiWrapper::barrier( MPI_COMM_GEOS );
+  }
+
+  if( rank == 0 )
+  {
+    EXPECT_EQ( std::remove( filename.c_str() ), 0 );
+  }
+  ASSERT_EQ( hypre_ParCSRMatrixMigrate( matrix.unwrapped(), initialLocation ), 0 );
+  EXPECT_DOUBLE_EQ( matrix.normInf(), 2 * real64( numRows ) - 1.25 );
+}
+
+INSTANTIATE_TEST_SUITE_P( Hypre, HypreMatrixOutputTest, ::testing::Values( false, true ) );
 #endif
 
 #ifdef GEOS_USE_PETSC

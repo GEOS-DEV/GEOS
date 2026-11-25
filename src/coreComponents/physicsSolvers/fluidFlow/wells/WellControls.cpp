@@ -73,6 +73,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_estimateSolution( 0 ),
   m_enableIsoThermalEstimator( 0 ),
   m_thermalEffectsEnabled( false ),
+  m_maxAbsolutePresChange( -1.0 ), // disabled by default
+  m_maxAbsoluteTempChange( -1.0 ), // disabled by default
   /// Nonlinear solver parameters
   m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
@@ -152,6 +154,18 @@ WellControls::WellControls( string const & name, Group * const parent )
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable isothermal estimator prior to coupled reservoir and well solve." );
+
+  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
+
+  this->registerWrapper( viewKeyStruct::maxAbsoluteTempChangeString(), &m_maxAbsoluteTempChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) temperature change in a Newton iteration" );
 
   registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -825,6 +839,9 @@ void WellControls::setPerforationStatus( real64 const & time_n, WellElementSubRe
   PerforationData & perforationData = *subRegion.getPerforationData();
   string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
   arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
+  // The status is updated on host but read by device kernels (perforation fluxes).
+  // Without unified memory, the host copy must be current and flagged as modified.
+  perfStatus.move( hostMemorySpace, true );
   // for now set to open
   for( integer i=0; i<perforationData.size(); i++ )
   {
@@ -871,7 +888,8 @@ void WellControls::setPerforationStatus( real64 const & time_n, WellElementSubRe
   numOpenElements>0 ?  setWellStatus( time_n, WellControls::Status::OPEN ) :  setWellStatus( time_n, WellControls::Status::CLOSED );
 
 
-  // Set local well element status array
+  // Set local well element status array (read by device kernels: stage and touch on host)
+  localElemStatus.move( hostMemorySpace, true );
   for( integer i=0; i<subRegion.size(); i++ )
   {
     integer gi = globalWellElementIndex[i];
