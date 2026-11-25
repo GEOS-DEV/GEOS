@@ -151,6 +151,9 @@ for key in "${!FORBIDDEN_CONTAINER_MAP[@]}"; do
     fi
 done
 
+# Check objects copied into GPU kernels without compiling or requiring a GPU.
+python3 "$(dirname "${BASH_SOURCE[0]}")/check_device_kernel_members.py" || exit $?
+
 echo $'\n'
 echo "No code rule violations found"
 exit 0

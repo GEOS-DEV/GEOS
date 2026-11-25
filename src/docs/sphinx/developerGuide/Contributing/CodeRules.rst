@@ -15,3 +15,5 @@ All contributors should familiarize themselves with these rules to maintain code
    CodingPractices.rst
 
    CodeGeosFeatures.rst
+
+   DeviceKernelDataMembers.rst
