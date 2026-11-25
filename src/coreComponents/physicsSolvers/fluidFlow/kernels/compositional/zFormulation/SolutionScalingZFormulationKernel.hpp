@@ -233,7 +233,7 @@ public:
 
     // compute pressure scaling factor
     real64 presScalingFactor = 1.0;
-    // when enabled, absolute change scaling has a priority over relative change
+    // the stricter of the absolute and relative change limits is applied
     if( m_maxAbsolutePresChange > 0.0 ) // maxAbsolutePresChange <= 0.0 means that absolute scaling is disabled
     {
       if( absPresChange > m_maxAbsolutePresChange )
@@ -241,12 +241,12 @@ public:
         presScalingFactor = m_maxAbsolutePresChange / absPresChange;
       }
     }
-    else if( pres > eps )
+    if( pres > eps )
     {
       real64 const relativePresChange = absPresChange / pres;
       if( relativePresChange > m_maxRelativePresChange )
       {
-        presScalingFactor = m_maxRelativePresChange / relativePresChange;
+        presScalingFactor = LvArray::math::min( presScalingFactor, m_maxRelativePresChange / relativePresChange );
       }
     }
     m_pressureScalingFactor[ei] = presScalingFactor;

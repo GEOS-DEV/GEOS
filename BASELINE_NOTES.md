@@ -9,6 +9,14 @@ PR #4149 (2026-11-10) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Add the thermal mixed MFD solver: new thermal tests and a `bcMassFlux` face field in the mixed MFD restart files.
 
+PR #4082 (2026-11-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4082-17987-544a26a.tar.gz>
+=====================
+Tutorial examples of a vertical fault using the ALM solver
+
+PR #3979 (2026-11-12) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3979-17960-b7217fe.tar.gz>
+=====================
+Solution scaling for thermal single phase
+
 PR #4172 (2026-11-06) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4172-17930-ffdaf0c.tar.gz>
 =====================
 Correct CO2-brine thermodynamic properties: CO2 enthalpy tables (Span–Wagner non-analytic terms, molar conversion), CO2 solubility on a brine basis, compositional phase-model mapping and flash restart.
