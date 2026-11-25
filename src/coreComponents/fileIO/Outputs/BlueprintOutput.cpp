@@ -47,7 +47,7 @@ string toBlueprintShape( ElementType const elementType )
     case ElementType::Hexahedron: return "hex";
     default:
     {
-      GEOS_ERROR( "No Blueprint type for element type: " << elementType );
+      GEOS_ERROR( GEOS_FMT( "No Blueprint type for element type: {}", elementType ) );
       return {};
     }
   }

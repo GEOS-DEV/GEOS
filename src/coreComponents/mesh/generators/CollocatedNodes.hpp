@@ -35,9 +35,12 @@ public:
    * @brief Build a convenience wrapper around the raw vtk collocated nodes information.
    * @param faceBlockName The face block name.
    * @param faceMesh The face mesh for which the collocated nodes structure will be fed.
+   * @param performGlobalCheck Whether to check across all MPI ranks if field is missing (default: true).
+   *        Set to false when only calling on a subset of ranks.
    */
   CollocatedNodes( string const & faceBlockName,
-                   vtkSmartPointer< vtkDataSet > faceMesh );
+                   vtkSmartPointer< vtkDataSet > faceMesh,
+                   bool performGlobalCheck = true );
 
   /**
    * @brief For node @p i of the face block, returns all the duplicated global node indices in the main 3d mesh.

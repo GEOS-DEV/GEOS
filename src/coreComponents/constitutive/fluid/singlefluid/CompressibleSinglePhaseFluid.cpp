@@ -92,8 +92,8 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LT_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
   checkNonnegative( m_compressibility, viewKeyStruct::compressibilityString() );
   checkNonnegative( m_viscosibility, viewKeyStruct::viscosibilityString() );
@@ -101,8 +101,8 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkPositive = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LE_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
   checkPositive( m_referenceDensity, viewKeyStruct::referenceDensityString() );
   checkPositive( m_referenceViscosity, viewKeyStruct::referenceViscosityString() );
@@ -111,9 +111,9 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkModelType = [&]( ExponentApproximationType const value, ExponentApproximationType const expectedValue, auto const & attribute )
   {
     GEOS_THROW_IF( value != expectedValue,
-                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only {} currently supported)",
-                             getFullName(), attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
-                   InputError );
+                   GEOS_FMT( "invalid model type in attribute '{}' (only {} currently supported)",
+                             attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
+                   InputError, getDataContext() );
   };
   checkModelType( m_densityModelType, ExponentApproximationType::Full, viewKeyStruct::densityModelTypeString() );
   checkModelType( m_viscosityModelType, ExponentApproximationType::Linear, viewKeyStruct::viscosityModelTypeString() );

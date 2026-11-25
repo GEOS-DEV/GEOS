@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="test_2_phase_residual"
+      relperm="2_phase_residual"
+      steps="10"
+      output="testRelperm_Table_2_phase_2_phase_residual.txt"
+      phaseNames="{ gas }"
+      saturationControls="{ LINEAR.SATURATION }"
+      logLevel="1" />
+    <RelpermDriver
+      name="test_2_phase"
+      relperm="2_phase"
+      steps="15"
+      output="testRelperm_Table_2_phase_2_phase.txt"
+      phaseNames="{ water }"
+      saturationControls="{ LINEAR.SATURATION }"
+      logLevel="1" />
+    <RelpermDriver
+      name="test_2_phase_hysteresis"
+      relperm="2_phase_hysteresis"
+      steps="15"
+      output="testRelperm_Table_2_phase_2_phase_hysteresis.txt"
+      phaseNames="{ water }"
+      saturationControls="{ LINEAR.SATURATION }"
+      logLevel="1" />
+    <RelpermDriver
+      name="test_2_phase_hysteresis_historical"
+      relperm="2_phase_hysteresis"
+      steps="15"
+      phaseNames="{ gas }"
+      saturationControls="{ LINEAR.SATURATION }"
+      logLevel="1" />
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="event_2_phase_residual"
+      target="/Tasks/test_2_phase_residual" />
+    <SoloEvent
+      name="event_2_phase"
+      target="/Tasks/test_2_phase" />
+    <SoloEvent
+      name="event_2_phase_hysteresis"
+      target="/Tasks/test_2_phase_hysteresis" />
+    <SoloEvent
+      name="event_2_phase_hysteresis_historical"
+      target="/Tasks/test_2_phase_hysteresis_historical" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />      
+  </Events>
+
+  <Constitutive>
+    <TableRelativePermeability
+      name="2_phase_residual"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ KRW_D1, KRG_D1 }" />
+    <TableRelativePermeability
+      name="2_phase"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ KRW_D0, KRG_D0 }" />
+    <TableRelativePermeabilityHysteresis
+      name="2_phase_hysteresis"
+      phaseNames="{ gas, water }"
+      drainageWettingNonWettingRelPermTableNames="{ KRW_D1, KRG_D1 }"
+      imbibitionNonWettingRelPermTableName="KRG_I1"      
+      imbibitionWettingRelPermTableName="KRW_I1" />
+  </Constitutive>
+
+  <Included>
+    <File name="testRelperm_data/relperm_tables.xml" />
+  </Included>
+</Problem>

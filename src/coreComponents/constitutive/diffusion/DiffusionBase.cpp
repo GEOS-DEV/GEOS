@@ -51,16 +51,19 @@ void DiffusionBase::postInputInitialization()
 
   integer const numPhases = numFluidPhases();
   GEOS_THROW_IF_LT_MSG( numPhases, 2,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
 
   GEOS_THROW_IF( numPhases != m_defaultPhaseDiffusivityMultiplier.size(),
-                 GEOS_FMT( "{}: the arrays in `{}` and `{}` must have the same size",
-                           getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
-                 InputError, getDataContext() );
+                 GEOS_FMT( "the arrays in `{}` and `{}` must have the same size",
+                           viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
+                 InputError,
+                 getWrapperDataContext( viewKeyStruct::phaseNamesString()),
+                 getWrapperDataContext( viewKeyStruct::defaultPhaseDiffusivityMultiplierString()),
+                 getDataContext() );
 }
 
 void DiffusionBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
@@ -83,6 +86,29 @@ void DiffusionBase::allocateConstitutiveData( Group & parent, localIndex const n
       }
     }
   }
+}
+
+void DiffusionBase::initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const
+{
+  GEOS_UNUSED_VAR( initialTemperature );
+
+  localIndex const numE = m_phaseDiffusivityMultiplier.size( 0 );
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+  integer const numPhases = numFluidPhases();
+
+  auto phaseDiffusivityMultiplierView = m_phaseDiffusivityMultiplier.toView();
+  auto const defaultPhaseDiffusivityMultiplierView = m_defaultPhaseDiffusivityMultiplier.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        phaseDiffusivityMultiplierView[ei][q][ip] = defaultPhaseDiffusivityMultiplierView[ip];
+      }
+    }
+  } );
 }
 
 } // namespace constitutive

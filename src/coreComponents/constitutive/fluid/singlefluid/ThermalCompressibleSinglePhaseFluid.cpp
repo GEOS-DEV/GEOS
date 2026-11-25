@@ -32,11 +32,17 @@ namespace constitutive
 ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   CompressibleSinglePhaseFluid( name, parent )
 {
-  m_numDOF=2;
+  m_numDOF = 2;
+
   registerWrapper( viewKeyStruct::thermalExpansionCoeffString(), &m_thermalExpansionCoeff ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fluid thermal expansion coefficient. Unit: 1/K" );
+
+  registerWrapper( viewKeyStruct::temperatureViscosityCoefficient(), &m_temperatureViscosityCoefficient ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Fluid viscosity thermal expansion coefficient at the reference temperature. Unit: 1/K" );
 
   registerWrapper( viewKeyStruct::specificHeatCapacityString(), &m_specificHeatCapacity ).
     setApplyDefaultValue( 0.0 ).
@@ -75,11 +81,12 @@ void ThermalCompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LT_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
 
   checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() );
+  checkNonnegative( m_temperatureViscosityCoefficient, viewKeyStruct::temperatureViscosityCoefficient() );
   checkNonnegative( m_specificHeatCapacity, viewKeyStruct::specificHeatCapacityString() );
   checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() );
 
@@ -87,8 +94,8 @@ void ThermalCompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkModelType = [&]( ExponentApproximationType const value, ExponentApproximationType const expectedValue, auto const & attribute )
   {
     GEOS_THROW_IF( value != expectedValue,
-                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only {} currently supported)",
-                             getFullName(), attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
+                   GEOS_FMT( "invalid model type in attribute '{}' (only {} currently supported)",
+                             attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
                    InputError, getDataContext() );
   };
   checkModelType( m_internalEnergyModelType, ExponentApproximationType::Linear, viewKeyStruct::internalEnergyModelTypeString() );
@@ -98,7 +105,7 @@ ThermalCompressibleSinglePhaseFluid::KernelWrapper
 ThermalCompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceTemperature, m_referenceDensity, m_compressibility, -m_thermalExpansionCoeff ),
-                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
+                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceTemperature, m_referenceViscosity, m_viscosibility, -m_temperatureViscosityCoefficient ),
                         KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_specificHeatCapacity/m_referenceInternalEnergy ),
                         m_density.value,
                         m_density.derivs,

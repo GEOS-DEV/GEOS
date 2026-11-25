@@ -18,6 +18,7 @@
 
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
+#include "common/DataTypes.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
@@ -71,9 +72,9 @@ TEST_P( ElementRegionTestFixture, testVTKImportRegionSyntaxes )
         </ElementRegions>
       </Problem>
     )xml";
-  string const xmlInput = GEOS_FMT( pattern,
-                                    testMeshDir + "/box_hybrid_mesh.vtu",
-                                    testCase.xmlRegions );
+  string const xmlInput = GEOS_FMT_RUNTIME( pattern,
+                                            testMeshDir + "/box_hybrid_mesh.vtu",
+                                            testCase.xmlRegions );
 
   ProblemManager & problem = getGlobalState().getProblemManager();
   problem.parseInputString( xmlInput );
@@ -102,13 +103,16 @@ TEST_P( ElementRegionTestFixture, testVTKImportRegionSyntaxes )
     }
     catch( InputError const & e )
     {
-      string const expStr = e.what();
-      for( auto const & str : testCase.stringsToMention )
+      std::vector< string > strEq{
+        "***** Rank 0: No cellBlock name is satisfying the qualifier 'helloWorld'."
+        "Available cellBlock list: { 1, 2, 5, 6 }"
+        "Available region attribute list: { 1_hexahedra, 1_pyramids, 1_tetrahedra, 2_hexahedra, 2_pyramids, 2_tetrahedra, 5_hexahedra, 5_pyramids, 5_tetrahedra, 6_hexahedra, 6_pyramids, 6_tetrahedra }"
+      };
+      for( auto const & str : strEq )
       {
-        bool isExceptionContainingStr = expStr.find( str ) != string::npos;
-        EXPECT_TRUE( isExceptionContainingStr ) << GEOS_FMT( "Test case '{}' exception did not mention the string '{}'. Exception string:\n{}",
-                                                             testCase.name, str, e.what() );
+        EXPECT_TRUE( string( e.what()).find( str ) );
       }
+
     }
     catch( std::exception const & e )
     {

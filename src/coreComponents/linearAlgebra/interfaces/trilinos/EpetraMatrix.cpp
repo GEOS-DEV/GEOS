@@ -581,8 +581,18 @@ void EpetraMatrix::computeScalingVector( EpetraVector & scaling ) const
   // Compute the scaling weights
   for( integer c = 0; c < numComp; ++c )
   {
-    // TODO: consider digit truncation like hypre does
-    weights[c] = LvArray::math::sqrt( LvArray::math::invSqrt( weights[c] ) );
+    // Guard against zero or very small weights to avoid floating point errors
+    // If a component has zero weight, it means no contribution to the matrix,
+    // so we set scaling to 1.0 (no scaling)
+    if( weights[c] > std::numeric_limits< real64 >::epsilon() )
+    {
+      // TODO: consider digit truncation like hypre does
+      weights[c] = LvArray::math::sqrt( LvArray::math::invSqrt( weights[c] ) );
+    }
+    else
+    {
+      weights[c] = 1.0;
+    }
   }
 
   // Populate the scaling vector
@@ -1032,7 +1042,8 @@ void rescaleRow( Epetra_CrsMatrix & mat,
   double * vals;
   mat.ExtractMyRowView( localRow, numEntries, vals );
   double const scale = std::accumulate( vals, vals + numEntries, 0.0, reducer );
-  GEOS_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << mat.GRID64( localRow ) );
+  GEOS_ASSERT_MSG( !isZero( scale ),
+                   GEOS_FMT( "Zero row sum in row {}", mat.GRID64( localRow ) ) );
   std::transform( vals, vals + numEntries, vals, [scale]( double const v ){ return v / scale; } );
 }
 

@@ -143,7 +143,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
           fsManager.apply< FaceManager >( 0.0, // time = 0
                                           mesh,
                                           fieldName,
-                                          [&] ( FieldSpecificationBase const &,
+                                          [&] ( FieldSpecification const &,
                                                 string const & setName,
                                                 SortedArrayView< localIndex const > const & faceSet,
                                                 FaceManager const &,

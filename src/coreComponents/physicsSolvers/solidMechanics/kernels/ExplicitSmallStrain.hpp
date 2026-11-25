@@ -131,13 +131,8 @@ public:
     /// C-array stack storage for element local primary variable values.
     real64 varLocal[ numNodesPerElem ][ numDofPerTestSupportPoint ];
 
-#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
-    /// Dummy
-    int xLocal;
-#else
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ numNodesPerElem ][ 3 ];
-#endif
   };
   //***************************************************************************
 

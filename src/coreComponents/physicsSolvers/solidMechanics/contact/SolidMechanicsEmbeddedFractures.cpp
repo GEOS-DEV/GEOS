@@ -22,6 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -61,6 +62,13 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
 
 void SolidMechanicsEmbeddedFractures::postInputInitialization()
 {
+  // Assign the MGR strategy before the base class checks it: the base implementation
+  // downgrades preconditionerType from `mgr` when no strategy has been set.
+  if( !m_useStaticCondensation )
+  {
+    setMGRStrategy();
+  }
+
   ContactSolverBase::postInputInitialization();
 
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
@@ -70,10 +78,6 @@ void SolidMechanicsEmbeddedFractures::postInputInitialization()
     linearSolverParameters.isSymmetric = true;
     linearSolverParameters.amg.separateComponents = true;
     linearSolverParameters.dofsPerNode = 3;
-  }
-  else
-  {
-    setMGRStrategy();
   }
 }
 
@@ -528,16 +532,18 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n+ dt,
                                              mesh,
                                              contact::traction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
-                                                                         time_n+dt,
-                                                                         subRegion,
-                                                                         contact::traction::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelHostPolicy >( fs,
+                                                                     targetSet,
+                                                                     time_n+dt,
+                                                                     subRegion,
+                                                                     contact::traction::key() );
     } );
   } );
 }
@@ -798,7 +804,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
-            frictionWrapper.updateFractureState( dispJump[kfe], traction[kfe], fractureState[kfe] );
+            frictionWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe] );
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
           }
         } );

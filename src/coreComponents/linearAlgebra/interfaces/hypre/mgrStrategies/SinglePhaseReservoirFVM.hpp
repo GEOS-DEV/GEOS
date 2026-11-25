@@ -60,12 +60,26 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxType[0]          = MGRFRelaxationType::gsElimWInverse;
+    m_levelFRelaxType[0]         = MGRFRelaxationType::gsElimWInverse;
     m_levelFRelaxIters[0]        = 1;
     m_levelInterpType[0]         = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
+  }
+
+  /**
+   * @brief Apply MGR parameters that affect the reduction hierarchy.
+   * @param mgrParams MGR configuration parameters
+   */
+  void configure( LinearSolverParameters::MGR const & mgrParams )
+  {
+    // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
+    // in that case, we just use Jacobi
+    if( mgrParams.areWellsShut )
+    {
+      m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
+    }
   }
 
   /**
@@ -78,13 +92,7 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-    // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
-    // in that case, we just use Jacobi
-    if( mgrParams.areWellsShut )
-    {
-      m_levelFRelaxType[0] = MGRFRelaxationType::jacobi;
-    }
-
+    configure( mgrParams );
     setReduction( precond, mgrData );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system

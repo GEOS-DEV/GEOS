@@ -50,6 +50,11 @@ MemoryInfos::MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceTy
     case umpire::MemoryResourceTraits::resource_type::um:
       #if defined( GEOS_USE_CUDA )
       cudaMemGetInfo( &m_availableMemory, &m_totalMemory );
+      #elif defined( GEOS_USE_HIP )
+      {
+        hipError_t const err = hipMemGetInfo( &m_availableMemory, &m_totalMemory );
+        GEOS_WARNING_IF( err != hipSuccess, GEOS_FMT( "HIP error found: {} at {}:{}", hipGetErrorString( err ), __FILE__, __LINE__ ) );
+      }
       #else
       GEOS_WARNING( "Unknown device physical memory size getter for this compiler." );
       m_physicalMemoryHandled = 0;
@@ -139,7 +144,7 @@ void MemoryLogging::memoryStatsReport() const
   MPI_Comm_size( MPI_COMM_WORLD, &size );
   size_t nbRank = (std::size_t)size;
   // Get a list of all the allocators and sort it so that it's in the same order on each rank.
-  std::vector< string > allocatorNames = rm.getAllocatorNames();
+  stdVector< string > allocatorNames = rm.getAllocatorNames();
   std::sort( allocatorNames.begin(), allocatorNames.end() );
 
   // If each rank doesn't have the same number of allocators you can't aggregate them.
@@ -171,7 +176,8 @@ void MemoryLogging::memoryStatsReport() const
     MpiWrapper::allReduce( allocatorNameFixedSize, allocatorNameMinChars, MpiWrapper::Reduction::Min, MPI_COMM_GEOS );
     if( allocatorNameFixedSize != allocatorNameMinChars )
     {
-      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
+      GEOS_WARNING( GEOS_FMT( "Not all ranks have an allocator named {}, cannot compute high water mark.",
+                              allocatorNameFixedSize ) );
       continue;
     }
 

@@ -1,0 +1,183 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <SinglePhaseFVM
+      name="singleFlow"
+      logLevel="1"
+      discretization="tpfaFlow"
+      temperature="0"
+      isThermal="1"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 20 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 20 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ region }">
+    </InternalMesh>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ region }"
+      materialList="{ rock, fluid, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy" />
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="3.0e-11"/>
+
+	<!-- SPHINX_SolidInternalEnergy_linear -->
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="1.0e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+	<!-- SPHINX_SolidInternalEnergy_linearEnd -->
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }"/>
+
+	<!-- SPHINX_ThermalCompressibleSinglePhaseFluid -->
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      referenceTemperature="293.15"
+      compressibility="5e-10"
+      thermalExpansionCoeff="3e-4"
+      viscosibility="0.0"
+      temperatureViscosityCoefficient="6.21e-4"
+      specificHeatCapacity="1"
+      referenceInternalEnergy="0.99"/>
+	<!-- SPHINX_ThermalCompressibleSinglePhaseFluidEnd -->
+
+    <!-- SPHINX_SinglePhaseThermalConductivity_linear -->
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"
+      thermalConductivityGradientComponents="{ 0, 0, 0 }"
+      referenceTemperature="293.15" />
+    <!-- SPHINX_SinglePhaseThermalConductivity_linearEnd -->    
+  </Constitutive>
+
+  <FieldSpecifications>
+
+	<!-- SPHINX_FieldSpecificationImposedPressure -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region"
+      fieldName="pressure"
+      scale="0e6"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ xpos }"       
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="sourcePressure"
+      setNames="{ xneg }"     
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="-1e6"/>
+	<!-- SPHINX_FieldSpecificationImposedPressureEnd -->
+
+	<!-- SPHINX_FieldSpecificationImposedTemperature -->
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/region"
+      fieldName="temperature"
+      scale="373.15"/>
+
+    <FieldSpecification
+      name="sinkTemperature"
+      setNames="{ xpos }"       
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="373.15"/>
+
+    <FieldSpecification
+      name="sourceTemperature"
+      setNames="{ xneg }"     
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="293.15"/>
+	<!-- SPHINX_FieldSpecificationImposedTemperatureEnd -->
+
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events 
+    maxTime="8640000">
+    
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="5"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0"
+      maxEventDt="864000"
+      target="/Solvers/singleFlow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="5"
+      target="/Outputs/restartOutput"/>
+
+  </Events>
+
+</Problem>

@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/BrineFluidParameters.hpp"
 
 namespace geos
 {

@@ -181,12 +181,12 @@ void ElasticOrthotropic::postInputInitialization()
     }
     else
     {
-      GEOS_ERROR( getFullName() << ": Invalid specification for default elastic constants." );
+      GEOS_ERROR( "Invalid specification for default elastic constants.", getDataContext());
     }
   }
   else if( c11 <= 0.0 || c22 <= 0.0 || c33 <= 0.0 || c44 <= 0.0 || c55 <= 0.0 || c66 <= 0.0 )
   {
-    GEOS_ERROR( getFullName() << ": Invalid specification for default elastic stiffnesses." );
+    GEOS_ERROR( "Invalid specification for default elastic stiffnesses.", getDataContext());
   }
 
   // TODO merge in one

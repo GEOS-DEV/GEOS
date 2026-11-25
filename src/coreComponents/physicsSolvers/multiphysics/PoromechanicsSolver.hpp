@@ -114,20 +114,19 @@ public:
   {
     Base::postInputInitialization();
 
-    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
-                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
-                             this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
-                   InputError );
-
     GEOS_THROW_IF( this->solidMechanicsSolver()->timeIntegrationOption() != SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic,
-                   GEOS_FMT( "{} {}: The attribute `{}` of solid mechanics solver `{}` must be `{}`",
-                             this->getCatalogName(), this->getName(),
+                   GEOS_FMT( "The attribute `{}` of solid mechanics solver `{}` must be `{}`",
                              SolidMechanicsLagrangianFEM::viewKeyStruct::timeIntegrationOptionString(),
                              this->solidMechanicsSolver()->getName(),
                              EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
-                   InputError );
+                   InputError, this->solidMechanicsSolver()->getDataContext() );
 
-    setMGRStrategy();
+    // Sequential coupling uses the subsolver linear systems directly, so the
+    // coupled solver does not need a top-level MGR strategy.
+    if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      setMGRStrategy();
+    }
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
@@ -152,9 +151,14 @@ public:
   {
     Base::initializePreSubGroups();
 
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
+                             this->flowSolver()->getName() ),
+                   InputError, this->flowSolver()->getDataContext() );
+
     GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
-                   this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
-                   ": Local stabilization has been temporarily disabled",
+                   GEOS_FMT( "{}: Local stabilization has been temporarily disabled",
+                             this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) ),
                    InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -475,15 +479,14 @@ protected:
       GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
                                 poromechanicsTargetRegionNames[i] )
                      == solidMechanicsTargetRegionNames.end(),
-                     GEOS_FMT( "{} {}: region {} must be a target region of {}",
-                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
-                               this->solidMechanicsSolver()->getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "Region {} must be a target region of {}",
+                               poromechanicsTargetRegionNames[i], this->solidMechanicsSolver()->getName() ),
+                     InputError, this->getDataContext(), this->solidMechanicsSolver()->getDataContext());
       GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                      == flowTargetRegionNames.end(),
-                     GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "Region `{}` must be a target region of `{}`",
+                               poromechanicsTargetRegionNames[i], this->flowSolver()->getCatalogName() ),
+                     InputError, this->getDataContext(), this->flowSolver()->getDataContext() );
     }
   }
 
@@ -544,7 +547,9 @@ protected:
         constitutive::CoupledSolidBase & solid =
           this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, solidName );
 
-        arrayView1d< const real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+        arrayView1d< real64 const > const averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+        // The average is computed on device; without unified memory the view may hold a device pointer.
+        averageMeanTotalStressIncrement_k.move( hostMemorySpace, false );
         for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size()); k++ )
         {
           averageMeanTotalStressIncrement.emplace_back( averageMeanTotalStressIncrement_k[k] );
@@ -568,11 +573,13 @@ protected:
         string const & solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
         constitutive::CoupledSolidBase & solid =
           this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, solidName );
-        auto & porosityModel = dynamic_cast< constitutive::BiotPorosity const & >( solid.getBasePorosityModel());
-        arrayView1d< real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+        arrayView1d< real64 > const averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+        // Write on host through a view moved (and touched) on host so that CHAI copies the
+        // updated values back to device before the next kernel (no unified memory).
+        averageMeanTotalStressIncrement_k.move( hostMemorySpace, true );
         for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size()); k++ )
         {
-          porosityModel.updateAverageMeanTotalStressIncrement( k, averageMeanTotalStressIncrement[i] );
+          averageMeanTotalStressIncrement_k[k] = averageMeanTotalStressIncrement[i];
           i++;
         }
       } );

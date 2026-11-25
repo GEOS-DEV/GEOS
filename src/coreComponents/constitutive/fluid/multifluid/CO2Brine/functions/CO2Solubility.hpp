@@ -22,6 +22,7 @@
 
 #include "FlashModelBase.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionBase.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
@@ -104,16 +105,8 @@ protected:
 class CO2Solubility : public FlashModelBase
 {
 public:
-  enum class SolubilityModel : integer
-  {
-    DuanSun,
-    SpycherPruess,
-    Tables
-  };
-
-public:
   CO2Solubility( string const & name,
-                 string_array const & inputParams,
+                 BrineFluidParameters const & brineFluidParameters,
                  string_array const & phaseNames,
                  string_array const & componentNames,
                  array1d< real64 > const & componentMolarWeight,
@@ -192,8 +185,16 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
   real64 const determinant = 1.0 - co2Solubility*watSolubility;
 
-  GEOS_ERROR_IF_LT_MSG ( LvArray::math::abs( determinant ), minForDivision,
-                         GEOS_FMT( "Failed to calculate solubility at pressure {} Pa and temperature {} C.", pressure, temperature ) );
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_THROW_IF( LvArray::math::abs( determinant ) < minForDivision,
+                 "Failed to calculate solubility (device).",
+                 geos::InputError );
+#else
+  GEOS_THROW_IF( LvArray::math::abs( determinant ) < minForDivision,
+                 GEOS_FMT( "Failed to calculate solubility at pressure {} Pa and temperature {} C.",
+                           pressure, temperature ),
+                 geos::InputError );
+#endif
 
   real64 invDeterminant = 0.0;
   real64 invDeterminantDeriv[2]{ 0.0, 0.0 };
@@ -338,11 +339,6 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     }
   }
 }
-
-ENUM_STRINGS( CO2Solubility::SolubilityModel,
-              "DuanSun",
-              "SpycherPruess",
-              "Tables" );
 
 } // end namespace PVTProps
 

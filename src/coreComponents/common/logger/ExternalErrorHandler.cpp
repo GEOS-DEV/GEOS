@@ -267,4 +267,10 @@ void ExternalErrorHandler::defaultErrorHandling( std::string_view errorMsg,
   std::cout << "External error, detected" << detectionLocation << ": " << errorMsg << std::endl;
 }
 
+bool ExternalErrorHandler::isNotAnErrorMsg( string_view errorMsg )
+{
+  return errorMsg.find( "INFO|" ) != string_view::npos || // VTK info messages
+         errorMsg.find( "[HYPREDRV]" ) == 0; // hypredrive debug traces are informational
+}
+
 } /* namespace geos */

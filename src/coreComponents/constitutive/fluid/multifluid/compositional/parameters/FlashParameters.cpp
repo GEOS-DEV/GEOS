@@ -86,22 +86,23 @@ void FlashParameters::registerParametersImpl( MultiFluidBase * fluid )
 void FlashParameters::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                    ComponentProperties const & componentProperties )
 {
+  GEOS_UNUSED_VAR( fluid );
   GEOS_UNUSED_VAR( componentProperties );
 
   auto const checkLowerBound = [&]( auto const & value, auto const & bound, string const & attribute )
   {
     GEOS_THROW_IF_LT_MSG( value, bound,
-                          GEOS_FMT( "{}: invalid number of value in attribute '{}'. Should be greater than {}",
-                                    fluid->getFullName(), bound, attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of value in attribute '{}'. Should be greater than {}",
+                                    bound, attribute ),
+                          InputError, fluid->getDataContext() );
   };
 
   auto const checkUpperBound = [&]( auto const & value, auto const & bound, string const & attribute )
   {
     GEOS_THROW_IF_GT_MSG( value, bound,
-                          GEOS_FMT( "{}: invalid number of value in attribute '{}'. Should be less than {}",
-                                    fluid->getFullName(), bound, attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of value in attribute '{}'. Should be less than {}",
+                                    bound, attribute ),
+                          InputError, fluid->getDataContext());
   };
 
   real64 constexpr epsilon = MultiFluidConstants::epsilon;

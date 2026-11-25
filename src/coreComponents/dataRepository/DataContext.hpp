@@ -63,22 +63,22 @@ public:
 
   /**
    * @brief Returns contextual information, including the file name and the line number
-   * @return ErrorLogger::ErrorContext
+   * @return ErrorContext
    */
-  virtual ErrorLogger::ErrorContext getContextInfo() const = 0;
+  virtual ErrorContext getContextInfo() const = 0;
 
   /**
-   * @brief Conversion operator to ErrorLogger::ErrorContext
-   * @return ErrorLogger::ErrorContext
+   * @brief Conversion operator to ErrorContext
+   * @return ErrorContext
    */
-  explicit operator ErrorLogger::ErrorContext() const {
+  explicit operator ErrorContext() const {
     return getContextInfo();
   }
 
   /**
    * @return Get the target object name
    */
-  string getTargetName() const
+  string const & getTargetName() const
   { return m_targetName; }
   /**
    * @brief Insert contextual information in the provided stream.
@@ -172,20 +172,20 @@ public:
 
   /**
    * @brief Return contextual information (file and line of the input file where the error occured)
-   * @return ErrorLogger::ErrorContext ErrorLogger instance updated with context information
+   * @return ErrorContext ErrorLogger instance updated with context information
    */
-  ErrorLogger::ErrorContext getContextInfo() const override;
+  ErrorContext getContextInfo() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).
    */
-  string getTypeName() const
+  string const & getTypeName() const
   { return m_typeName; }
 
   /**
    * @return the source file path where the target object has been declared.
    */
-  string getFilePath() const
+  string const & getFilePath() const
   { return m_filePath; }
 
   /**

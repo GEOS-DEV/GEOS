@@ -31,8 +31,17 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
+#include "mesh/FaceManager.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+#include "constitutive/permeability/ExponentialDecayPermeability.hpp"
+#include "constitutive/permeability/ParallelPlatesPermeability.hpp"
+#include "constitutive/permeability/SlipDependentPermeability.hpp"
+#include "constitutive/permeability/WillisRichardsPermeability.hpp"
+
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
 
@@ -104,6 +113,35 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
   } );
 }
 
+template< typename POROUSWRAPPER_TYPE >
+void updatePorosityAndPermeabilityFromPressureApertureJumpAndTraction( POROUSWRAPPER_TYPE porousWrapper,
+                                                                       SurfaceElementSubRegion & subRegion,
+                                                                       arrayView1d< real64 const > const & pressure,
+                                                                       arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                                       arrayView1d< real64 const > const & newHydraulicAperture,
+                                                                       arrayView1d< real64 const > const & dHydraulicAperture_dNormalJump,
+                                                                       arrayView2d< real64 const > const & dispJump,
+                                                                       arrayView2d< real64 const > const & fracTraction )
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
+      real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fracTraction[k] );
+      porousWrapper.updateStateFromPressureApertureJumpAndTraction( k, q,
+                                                                    pressure[k],
+                                                                    oldHydraulicAperture[k],
+                                                                    newHydraulicAperture[k],
+                                                                    dHydraulicAperture_dNormalJump[k],
+                                                                    jump,
+                                                                    traction
+                                                                    );
+    }
+  } );
+
+}
+
 FlowSolverBase::FlowSolverBase( string const & name,
                                 Group * const parent ):
   PhysicsSolverBase( name, parent ),
@@ -129,6 +167,12 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( -1.0 ).       // disabled by default
     setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
+
+  this->registerWrapper( viewKeyStruct::maxAbsoluteTempChangeString(), &m_maxAbsoluteTempChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) temperature change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::maxSequentialPresChangeString(), &m_maxSequentialPresChange ).
     setSizedFromParent( 0 ).
@@ -369,15 +413,17 @@ void FlowSolverBase::checkDiscretizationName() const
 
     if( !discretizationMethods.empty())
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
-                            getDataContext(), m_discretizationName, discretizationMethods,
-                            stringutilities::join( discretizationMethods, ", " )));
+      GEOS_ERROR( GEOS_FMT( "can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
+                            m_discretizationName, discretizationMethods,
+                            stringutilities::join( discretizationMethods, ", " )),
+                  getDataContext());
     }
     else
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\n" \
+      GEOS_ERROR( GEOS_FMT( "can not find discretization named '{}' in 'FiniteVolume'.\n" \
                             "No discretization found, check that you have correctly entered a numerical method",
-                            getDataContext(), m_discretizationName ));
+                            m_discretizationName ),
+                  getDataContext());
     }
   }
 }
@@ -579,6 +625,17 @@ void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, string_array
   } );
 }
 
+void FlowSolverBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
+{
+  arrayView1d< real64 > const dVol = subRegion.template getField< flow::deltaVolume >();
+  arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    vol[ei] += dVol[ei];
+    dVol[ei] = 0.0;
+  } );
+}
+
 void FlowSolverBase::saveInitialPressureAndTemperature( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
@@ -603,7 +660,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
-  constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+  constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion, this] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
     if( m_isFixedStressPoromechanicsUpdate )
@@ -636,7 +693,33 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-    updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+
+    if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::ParallelPlatesPermeability >)  {
+      updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    }
+    else if constexpr ( std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::SlipDependentPermeability > ||
+                        std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::WillisRichardsPermeability > ||
+                        std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::ExponentialDecayPermeability > )
+    {
+      if( subRegion.hasField< fields::contact::dispJump >() && subRegion.hasField< fields::contact::traction >() )
+      {
+        arrayView2d< real64 const > const dispJump = subRegion.getField< fields::contact::dispJump >();
+        arrayView2d< real64 const > const fractureTraction = subRegion.getField< fields::contact::traction >();
+        /*dHydraulicAperture_dNormalJump dummy entry*/
+        arrayView1d< real64 const > const unusedDeriv = subRegion.getField< flow::aperture0 >();
+        updatePorosityAndPermeabilityFromPressureApertureJumpAndTraction( porousWrapper,
+                                                                          subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, unusedDeriv,
+                                                                          dispJump, fractureTraction );
+      }
+      else
+      {
+        updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+      }
+    }
+    else
+    {
+      updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    }
 
   } );
 }
@@ -1007,5 +1090,58 @@ string FlowSolverBase::BCMessage::notAppliedOnRegion( int componentIndex, string
                                     componentName, componentIndex, regionName, subRegionName, setName ),
                           fieldName, setName );
 }
+
+template< typename OBJECT_TYPE >
+void FlowSolverBase::applyFieldValue( real64 const & time_n,
+                                      real64 const & dt,
+                                      MeshLevel & mesh,
+                                      char const logMessage[],
+                                      string const fieldKey,
+                                      string const boundaryFieldKey ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply< OBJECT_TYPE >( time_n + dt,
+                                  mesh,
+                                  fieldKey,
+                                  [&]( FieldSpecification const & fs,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & lset,
+                                       OBJECT_TYPE & targetGroup,
+                                       string const & )
+  {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+      GEOS_LOG_RANK_0( GEOS_FMT_RUNTIME( logMessage,
+                                         getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                         setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
+    }
+
+    // Specify the bc value of the field
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                             parallelDevicePolicy<> >( fs,
+                                                                       lset,
+                                                                       time_n + dt,
+                                                                       targetGroup,
+                                                                       boundaryFieldKey );
+  } );
+}
+
+template void
+FlowSolverBase::applyFieldValue< ElementSubRegionBase >( real64 const & time_n,
+                                                         real64 const & dt,
+                                                         MeshLevel & mesh,
+                                                         char const logMessage[],
+                                                         string const fieldKey,
+                                                         string const boundaryFieldKey ) const;
+
+template void
+FlowSolverBase::applyFieldValue< FaceManager >( real64 const & time_n,
+                                                real64 const & dt,
+                                                MeshLevel & mesh,
+                                                char const logMessage[],
+                                                string const fieldKey,
+                                                string const boundaryFieldKey ) const;
 
 } // namespace geos

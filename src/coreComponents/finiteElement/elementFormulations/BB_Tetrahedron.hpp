@@ -30,6 +30,12 @@ namespace geos
 namespace finiteElement
 {
 
+namespace
+{
+template< int ORDER >
+constexpr int BB_Tetrahedron_NumNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( ORDER + 3 ) / 6;
+}
+
 /**
  * This class contains the kernel accessible functions specific to the
  * Bernstein-Bézier (BB) modal any-order tetrahedron finite element with
@@ -42,33 +48,41 @@ namespace finiteElement
  * by 0<=l1,l2,l3,l3<=1, l1+l2+l3+l4=1
  */
 template< int ORDER >
-class BB_Tetrahedron final : public FiniteElementBase
+class BB_Tetrahedron_impl : public FiniteElementBase_impl< BB_Tetrahedron_NumNodes< ORDER >,
+                                                           4,
+                                                           BB_Tetrahedron_NumNodes< ORDER > >
 {
 public:
+  /// Convenience alias for base class type.
+  using Base = FiniteElementBase_impl< BB_Tetrahedron_NumNodes< ORDER >,
+                                       4,
+                                       BB_Tetrahedron_NumNodes< ORDER > >;
+
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
+
+  /// Mesh data structure for the element.
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
+
+  /// The number of shape functions per element.
+  using Base::numNodes;
+
+  /// The number of quadrature points per element.
+  using Base::numQuadraturePoints;
+
+  /// The maximum number of support points per element.
+  using Base::maxSupportPoints;
 
   /// The order of the finite element.
   static constexpr int order = ORDER;
 
-  /// The number of shape functions per element.
-  constexpr static localIndex numNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( ORDER + 3 ) / 6;
-
   /// The number of shape functions per face
   constexpr static localIndex numNodesPerFace = ( ORDER + 1 ) * ( ORDER + 2 ) / 2;
 
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = numNodes;
-
-  /** @cond Doxygen_Suppress */
-  USING_FINITEELEMENTBASE
-  /** @endcond Doxygen_Suppress */
-
-  virtual ~BB_Tetrahedron() = default;
-
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -86,16 +100,18 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -122,7 +138,6 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static real64 jacobianDeterminant( real64 const (&X)[4][3] )
-
   {
     real64 m[3][3] = {};
     for( int i = 0; i < 3; i++ )
@@ -396,6 +411,57 @@ public:
     }
   }
 
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcJacobian( localIndex const q,
+                              real64 const (&X)[numNodes][3],
+                              real64 (& J)[3][3] )
+  {
+    GEOS_UNUSED_VAR( q );
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        J[i][j] = 0;
+      }
+    }
+    real64 m[3][3] = {};
+    for( int i = 0; i < 3; i++ )
+    {
+      for( int j = 0; j < 3; j++ )
+      {
+        m[ i ][ j ] = X[ i + 1 ][ j ] - X[ 0 ][ j ];
+      }
+    }
+    real64 const detJ = LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( m ) );
+    return detJ;
+  }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcJacobian( localIndex const q,
+                              real64 const (&X)[numNodes][3],
+                              StackVariables const & stack,
+                              real64 (& J)[3][3] )
+  {
+    GEOS_UNUSED_VAR( stack );
+    return calcJacobian( q, X, J );
+  }
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -1320,20 +1386,71 @@ public:
 
 };
 
-/**
- *  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
- */
+/// @copydoc BB_Tetrahedron_impl
+template< int ORDER >
+class BB_Tetrahedron final : public BB_Tetrahedron_impl< ORDER >, public FiniteElementBase
+{
+public:
+
+  /// The Implementation type
+  using ImplType = BB_Tetrahedron_impl< ORDER >;
+
+  BB_Tetrahedron():
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
+  { }
+
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
+  GEOS_HOST_DEVICE
+  virtual ~BB_Tetrahedron() override final = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  ImplType * getImpl()
+  {
+    return static_cast< ImplType * >(this);
+  }
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  ImplType const * getImpl() const
+  {
+    return static_cast< ImplType const * >(this);
+  }
+
+};
+
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
 using BB1_Tetrahedron = BB_Tetrahedron< 1 >;
-/**
- *  Tetrahedron element with Bernstein-Bézier basis functions of order 2.
- */
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 2.
 using BB2_Tetrahedron = BB_Tetrahedron< 2 >;
-/**
- *  Tetrahedron element with Bernstein-Bézier basis functions of order 3.
- */
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 3.
 using BB3_Tetrahedron = BB_Tetrahedron< 3 >;
+
 //using BB4_Tetrahedron = BB_Tetrahedron< 4 >;
 //using BB5_Tetrahedron = BB_Tetrahedron< 5 >;
+
+
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
+using BB1_Tetrahedron_impl = BB_Tetrahedron_impl< 1 >;
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 2.
+using BB2_Tetrahedron_impl = BB_Tetrahedron_impl< 2 >;
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 3.
+using BB3_Tetrahedron_impl = BB_Tetrahedron_impl< 3 >;
+
+// using BB2_Tetrahedron_impl = BB_Tetrahedron_impl< 4 >;
+// using BB3_Tetrahedron_impl = BB_Tetrahedron_impl< 5 >;
 
 }
 }

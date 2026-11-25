@@ -21,8 +21,9 @@
 #ifndef GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
 #define GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 #include "mesh/FaceManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 namespace geos
 {
@@ -33,10 +34,10 @@ class TableFunction;
  * @class TractionBoundaryCondition
  * Holds data and methods to apply a traction boundary condition
  */
-class TractionBoundaryCondition : public FieldSpecificationBase
+class TractionBoundaryCondition : public FieldSpecification
 {
 public:
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecification(string const &, dataRepository::Group *)
   TractionBoundaryCondition( string const & name, Group * parent );
 
   /// deleted default constructor
@@ -71,6 +72,7 @@ public:
    * @param blockLocalDofNumber Array of block local DOF numbers for the displacement.
    * @param dofRankOffset The rank offset for the DOF.
    * @param faceManager Reference to the face manager (Tractions are applied on faces)
+   * @param nodePositions The reference position of all nodes (used for proper FEM integration on faces)
    * @param targetSet The set of faces to apply the BC to.
    * @param localRhs The RHS of the system to add contributions to.
    */
@@ -78,6 +80,7 @@ public:
                arrayView1d< globalIndex const > const blockLocalDofNumber,
                globalIndex const dofRankOffset,
                FaceManager const & faceManager,
+               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions,
                SortedArrayView< localIndex const > const & targetSet,
                arrayView1d< real64 > const & localRhs ) const;
 
@@ -95,7 +98,7 @@ public:
   /**
    * @brief View keys
    */
-  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
   {
     /// @return The key for tractionType
     constexpr static char const * tractionTypeString() { return "tractionType"; }

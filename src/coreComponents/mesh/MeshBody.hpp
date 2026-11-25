@@ -96,8 +96,7 @@ public:
    * @param[in] level The lookup key of the MeshLevel
    * @return const reference to the MeshLevel
    */
-  template< typename T, std::enable_if_t< std::is_same< T, string >::value ||
-                                          std::is_same< T, const char * >::value, bool > = false >
+  template< typename T >
   MeshLevel & getMeshLevel( T const & level ) const
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
@@ -108,8 +107,7 @@ public:
    * @param[in] level The lookup key of the MeshLevel
    * @return Reference to the MeshLevel
    */
-  template< typename T, std::enable_if_t< std::is_same< T, string >::value ||
-                                          std::is_same< T, const char * >::value, bool > = false >
+  template< typename T >
   MeshLevel & getMeshLevel( T const & level )
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 

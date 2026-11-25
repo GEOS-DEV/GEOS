@@ -26,6 +26,7 @@
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
+#include "finiteVolume/mimeticInnerProducts/RTInnerProduct.hpp"
 #include "LvArray/src/system.hpp"
 
 namespace geos
@@ -49,6 +50,8 @@ struct MimeticInnerProductTypeStrings
   static constexpr auto Simple    = "simple";
   /// string for the inner product of Beirao da Veiga, Lipnikov, Manzini
   static constexpr auto BdVLM     = "beiraoDaVeigaLipnikovManzini";
+  /// string for the Raviart-Thomas inner product (exact RT0 on simplices)
+  static constexpr auto RT        = "RT";
 };
 
 /**
@@ -82,9 +85,14 @@ mimeticInnerProductDispatch( MimeticInnerProductBase const & input,
   {
     lambda( *ptr5 );
   }
+  else if( auto const * const ptr6 = dynamic_cast< RTInnerProduct const * >(&input) )
+  {
+    lambda( *ptr6 );
+  }
   else
   {
-    GEOS_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( GEOS_FMT( "mimeticInnerProductDispatch() is not implemented for input of {}",
+                          LvArray::system::demangleType( input ) ) );
   }
 }
 
@@ -119,9 +127,14 @@ mimeticInnerProductDispatch( MimeticInnerProductBase & input,
   {
     lambda( *ptr5 );
   }
+  else if( auto * const ptr6 = dynamic_cast< RTInnerProduct * >(&input) )
+  {
+    lambda( *ptr6 );
+  }
   else
   {
-    GEOS_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( GEOS_FMT( "mimeticInnerProductDispatch() is not implemented for input of {}",
+                          LvArray::system::demangleType( input ) ) );
   }
 }
 
@@ -152,7 +165,8 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase const & input,
   }
   else
   {
-    GEOS_ERROR( "mimeticInnerProductReducedDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( GEOS_FMT( "mimeticInnerProductReducedDispatch() is not implemented for input of {}",
+                          LvArray::system::demangleType( input ) ) );
   }
 }
 
@@ -183,7 +197,8 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase & input,
   }
   else
   {
-    GEOS_ERROR( "mimeticInnerProductReducedDispatch() is not supported for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( GEOS_FMT( "mimeticInnerProductReducedDispatch() is not supported for input of {}",
+                          LvArray::system::demangleType( input ) ) );
   }
 }
 

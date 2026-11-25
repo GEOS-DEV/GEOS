@@ -87,9 +87,9 @@ protected:
     size_t const numPhase = fluid->numFluidPhases();
 
     GEOS_THROW_IF_NE_MSG( m_equationsOfStateNames.size(), numPhase,
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(),
+                          GEOS_FMT( "invalid number of values in attribute '{}'",
                                     viewKeyStruct::equationsOfStateString() ),
-                          InputError );
+                          InputError, fluid->getDataContext() );
 
     // If any value is invalid conversion will throw
     for( string const & eos : m_equationsOfStateNames )

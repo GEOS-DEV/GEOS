@@ -38,10 +38,11 @@ string WrapperContext::toString() const
          GEOS_FMT( "{}/{}", m_group.getDataContext().toString(), m_typeName );
 }
 
-ErrorLogger::ErrorContext WrapperContext::getContextInfo() const
+ErrorContext WrapperContext::getContextInfo() const
 {
-  ErrorLogger::ErrorContext ctxInfo{
-    { { ErrorLogger::ErrorContext::Attribute::DataPath, toString() } } // m_attributes
+  ErrorContext ctxInfo{
+    toString(),
+    {{ ErrorContext::Attribute::DataPath, GEOS_FMT( "{}/{}", m_group.getPath(), m_typeName ) } },
   };
   return ctxInfo;
 }

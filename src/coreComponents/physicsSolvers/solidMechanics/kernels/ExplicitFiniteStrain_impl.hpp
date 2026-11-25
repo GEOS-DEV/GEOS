@@ -67,9 +67,7 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( 
     localIndex const nodeIndex = m_elemsToNodes( k, a );
     for( int i=0; i<numDofPerTrialSupportPoint; ++i )
     {
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
-#endif
       stack.uLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
       stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ];
     }
@@ -86,7 +84,7 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
                                                                                                 StackVariables & stack ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
-  real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+  real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
 
   real64 dUhatdX[3][3] = { {0} };
   real64 dUdX[3][3] = { {0} };
@@ -94,8 +92,8 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   real64 Ldt[3][3] = { {0} };
   real64 fInv[3][3] = { {0} };
 
-  FE_TYPE::gradient( dNdX, stack.varLocal, dUhatdX );
-  FE_TYPE::gradient( dNdX, stack.uLocal, dUdX );
+  finiteElement::feOps::gradient( dNdX, stack.varLocal, dUhatdX );
+  finiteElement::feOps::gradient( dNdX, stack.uLocal, dUdX );
 
   LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
 
@@ -127,7 +125,7 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
   LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
-  FE_TYPE::plusGradNajAij( dNdX, P, stack.fLocal );
+  finiteElement::feOps::plusGradNajAij( dNdX, P, stack.fLocal );
 }
 
 

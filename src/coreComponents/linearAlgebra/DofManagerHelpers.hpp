@@ -295,7 +295,8 @@ struct MeshVisitor< LOC, LOC, VISIT_GHOSTS >
         for( localIndex a = 0; a < locList.size(); ++a )
         {
           localIndex const locIdx = locList[a];
-          if( VISIT_GHOSTS || ghostRank[locIdx] < 0 )
+          // Skip invalid indices
+          if( locIdx >= 0 && ( VISIT_GHOSTS || ghostRank[locIdx] < 0 ) )
           {
             RAJA::atomicInc< parallelHostAtomic >( &visited[locIdx] );
           }
@@ -609,7 +610,7 @@ localIndex countMeshObjects( FieldLocation const location,
     FieldLocation constexpr LOC = decltype(loc)::value;
     count = countMeshObjects< LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh, regions );
   } );
-  GEOS_ERROR_IF( !success, "Invalid location type: " << static_cast< int >( location ) );
+  GEOS_ERROR_IF( !success, GEOS_FMT( "Invalid location type: {}", static_cast< int >( location ) ) );
   return count;
 }
 

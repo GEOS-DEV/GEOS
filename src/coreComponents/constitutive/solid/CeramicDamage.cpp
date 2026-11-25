@@ -68,10 +68,10 @@ void CeramicDamage::postInputInitialization()
 {
   ElasticIsotropic::postInputInitialization();
 
-  GEOS_THROW_IF( m_tensileStrength < 0.0, "Tensile strength must be a positive number.", InputError );
-  GEOS_THROW_IF( m_compressiveStrength < m_tensileStrength, "Compressive strength must be greater than tensile strength.", InputError );
-  GEOS_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError );
-  GEOS_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError );
+  GEOS_THROW_IF( m_tensileStrength < 0.0, "Tensile strength must be a positive number.", InputError, getDataContext() );
+  GEOS_THROW_IF( m_compressiveStrength < m_tensileStrength, "Compressive strength must be greater than tensile strength.", InputError, getDataContext() );
+  GEOS_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError, getDataContext() );
+  GEOS_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError, getDataContext() );
 }
 
 

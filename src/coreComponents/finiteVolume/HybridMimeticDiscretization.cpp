@@ -90,7 +90,9 @@ HybridMimeticDiscretization::factory( string const & mimeticInnerProductType ) c
   }
   else
   {
-    GEOS_ERROR( getDataContext() << ": Key value of "<< mimeticInnerProductType <<" does not have an associated mimetic inner product." );
+    GEOS_ERROR( GEOS_FMT( "Key value of {} does not have an associated mimetic inner product.",
+                          mimeticInnerProductType ),
+                getDataContext()  );
   }
   return rval;
 }

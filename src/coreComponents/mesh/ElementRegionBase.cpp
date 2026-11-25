@@ -81,8 +81,9 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
       }
     } );
     GEOS_THROW_IF( !meshBodyFound,
-                   "There are multiple MeshBodies in this problem, but the "
-                   "specified MeshBody name "<<meshBodyName<<" was not found",
+                   GEOS_FMT( "There are multiple MeshBodies in this problem, but the specified MeshBody name {} "
+                             "was not found",
+                             meshBodyName ),
                    InputError );
   }
 

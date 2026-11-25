@@ -59,7 +59,7 @@ void createTrilinosKrylovSolver( LinearSolverParameters const & params, AztecOO 
     }
     default:
     {
-      GEOS_ERROR( "Solver type not supported in Trilinos interface: " << params.solverType );
+      GEOS_ERROR( GEOS_FMT( "Solver type not supported in Trilinos interface: {}", params.solverType ) );
     }
   }
 

@@ -247,7 +247,7 @@ public:
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.X, dNdX );
+    real64 const detJ = FE_TYPE::calcGradN( q, stack.X, dNdX );
 
     constexpr int nUdof = numNodesPerElem*3;
 

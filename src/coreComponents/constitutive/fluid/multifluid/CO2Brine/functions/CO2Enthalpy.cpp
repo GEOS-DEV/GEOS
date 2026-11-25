@@ -180,13 +180,15 @@ real64 helmholtzCO2Enthalpy( real64 const & T,
 
   }
 
+  // exponents a_i of Span & Wagner (1996) Table 31 for the non-analytic terms
+  static const real64 aExp[3] = {3.5, 3.5, 3.0};
   for( localIndex i=39; i<42; i++ )
   {
 
     theta = (1.0 - rt) + Ai[i] * pow( pow( rd - 1.0, 2.0 ), (1.0 / (2.0 * betai[i])));
-    delta = pow( theta, 2.0 ) + Bi[i] * pow( rd - 1.0, 2.0*alphai[i] );
+    delta = pow( theta, 2.0 ) + Bi[i] * pow( pow( rd - 1.0, 2.0 ), aExp[i-39] );
     R = exp( -Ci[i] * pow( rd - 1.0, 2.0 ) - Di[i] * pow( rt - 1.0, 2.0 ));
-    deltard = (rd - 1.0) * (Ai[i] * theta * 2.0 / betai[i] * pow( pow( rd - 1.0, 2.0 ), 0.5 / betai[i] - 1.0 ) + 2.0 * Bi[i] * alphai[i] * pow( pow( rd - 1.0, 2.0 ), alphai[i] - 1.0 ));
+    deltard = (rd - 1.0) * (Ai[i] * theta * 2.0 / betai[i] * pow( pow( rd - 1.0, 2.0 ), 0.5 / betai[i] - 1.0 ) + 2.0 * Bi[i] * aExp[i-39] * pow( pow( rd - 1.0, 2.0 ), aExp[i-39] - 1.0 ));
 
     phird += ni[i] * (pow( delta, bi[i] ) * (R + rd *(-2.0 *Ci[i] * (rd - 1.0) * R)) + bi[i] * pow( delta, bi[i] - 1.0 ) * deltard * rd * R);
 
@@ -200,7 +202,7 @@ real64 helmholtzCO2Enthalpy( real64 const & T,
 
 
 
-TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
+TableFunction const * makeCO2EnthalpyTable( constitutive::PVTProps::BrineFluidParameters const & brineFluidParameters,
                                             string const & functionName,
                                             FunctionManager & functionManager )
 {
@@ -218,21 +220,9 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
   {
     // initialize the (p,T) coordinates
     PTTableCoordinates tableCoords;
-    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+    constitutive::PVTProps::BrineFluidParameters::initializePropertyTable( brineFluidParameters, tableCoords );
 
-    real64 tolerance = 1e-10;
-
-    try
-    {
-      if( inputParams.size() >= 10 )
-      {
-        tolerance = stod( inputParams[9] );
-      }
-    }
-    catch( const std::invalid_argument & e )
-    {
-      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-    }
+    real64 const tolerance = brineFluidParameters.m_tolerance;
 
     array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
     array1d< real64 > enthalpies( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -254,7 +244,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 } // namespace
 
 CO2Enthalpy::CO2Enthalpy( string const & name,
-                          string_array const & inputParams,
+                          BrineFluidParameters const & brineFluidParameters,
                           string_array const & componentNames,
                           array1d< real64 > const & componentMolarWeight,
                           TableFunction::OutputOptions const pvtOutputOpts ):
@@ -265,7 +255,7 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
-  m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_CO2EnthalpyTable = makeCO2EnthalpyTable( brineFluidParameters, m_functionName, FunctionManager::getInstance() );
 
   m_CO2EnthalpyTable->outputTableData( pvtOutputOpts );
 }

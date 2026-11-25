@@ -22,6 +22,8 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverUtilities.hpp"
+#include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
 
 namespace geos
 {
@@ -33,34 +35,46 @@ namespace singlePhaseBaseKernels
 
 struct SolutionCheckKernel
 {
-  template< typename POLICY >
-  static std::pair< integer, real64 > launch( arrayView1d< real64 const > const & localSolution,
-                                              globalIndex const rankOffset,
-                                              arrayView1d< globalIndex const > const & dofNumber,
-                                              arrayView1d< integer const > const & ghostRank,
-                                              arrayView1d< real64 const > const & pres,
-                                              real64 const scalingFactor )
+
+  struct KernelStats
   {
-    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
+    real64 minNegPres;
+  };
+
+  template< typename POLICY >
+  static KernelStats launch( arrayView1d< real64 const > const & localSolution,
+                             globalIndex const rankOffset,
+                             arrayView1d< globalIndex const > const & dofNumber,
+                             arrayView1d< integer const > const & ghostRank,
+                             arrayView1d< real64 const > const & pres,
+                             flowSolverUtilities::ScalingType const scalingType,
+                             real64 const scalingFactor,
+                             arrayView1d< real64 const > const & perElementScaling,
+                             ElementsReporterCollector const & negPressureIds )
+  {
+    using reducePolicy = ReducePolicy< POLICY >;
+    using atomicPolicy = AtomicPolicy< POLICY >;
+    RAJA::ReduceMin< reducePolicy, real64 > minNegPres( 0.0 );
+
+    bool const localScaling = scalingType == flowSolverUtilities::ScalingType::Local;
 
     forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
       {
         localIndex const lid = dofNumber[ei] - rankOffset;
-        real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
+        real64 const newPres = pres[ei] + ( localScaling ? perElementScaling[ei] : scalingFactor ) * localSolution[lid];
 
-        if( newPres < 0.0 )
+        if( newPres <= 0.0 )
         {
-          numNegativePressures += 1;
-          minPres.min( newPres );
+          minNegPres.min( newPres );
+          negPressureIds.collectElement( atomicPolicy{}, { ei, newPres } );
         }
       }
 
     } );
 
-    return { numNegativePressures.get(), minPres.get() };
+    return KernelStats{ minNegPres.get() };
   }
 
 };

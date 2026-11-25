@@ -48,6 +48,14 @@ DECLARE_FIELD( dEffectiveConductivity_dT,
                WRITE_AND_READ,
                "Derivative of effective conductivity w.r.t. temperature" );
 
+DECLARE_FIELD( referenceThermalConductivity,
+               "referenceThermalConductivity",
+               array3d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Reference thermal conductivity" );
+
 DECLARE_FIELD( rockThermalConductivity,
                "rockThermalConductivity",
                array3d< real64 >,

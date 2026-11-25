@@ -66,18 +66,19 @@ ReactiveBrineFluid< PHASE > ::
 ReactiveBrineFluid( string const & name, Group * const parent ):
   ReactiveMultiFluid( name, parent )
 {
-  registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Names of the files defining the parameters of the viscosity and density models" );
-
-  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+  registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, write PVT tables into a CSV file.\n"
                     "If the table is requested to be output in the log, and it is too large,"
                     "a CSV file will be generated even if `writeCSV` is set to 0." );
+
+  registerWrapper( viewKeyStruct::salinityString(), &m_salinity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "The salinity of brine" ).
+    setDefaultValue( m_salinity );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -95,11 +96,10 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
 }
 
 template< typename PHASE >
-bool ReactiveBrineFluid< PHASE > ::isThermal() const
+bool ReactiveBrineFluid< PHASE >::isThermal() const
 {
-  return ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
+  return isThermalType();
 }
-
 
 template< typename PHASE >
 std::unique_ptr< ConstitutiveBase >
@@ -132,15 +132,18 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-  GEOS_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 1,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
+
+  // Salinity must not be negative
+  GEOS_THROW_IF_LT_MSG( m_salinity, 0.0,
+                        GEOS_FMT( "{}: invalid salinity {}. "
+                                  "Value must not be negative", getFullName(), viewKeyStruct::salinityString() ),
                         InputError );
 
   createPVTModels();
 }
 
 template< typename PHASE >
-void ReactiveBrineFluid< PHASE > ::createPVTModels()
+void ReactiveBrineFluid< PHASE >::createPVTModels()
 {
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
@@ -159,7 +162,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
       if( !strs.empty() )
       {
         GEOS_THROW_IF( strs.size() < 2,
-                       GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                       GEOS_FMT( "missing PVT model in line '{}'", str ),
                        InputError, getDataContext() );
 
         if( strs[0] == "DensityFun" )
@@ -185,7 +188,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
         }
         else
         {
-          GEOS_THROW( GEOS_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+          GEOS_THROW( GEOS_FMT( "invalid PVT function type '{}'", strs[0] ), InputError, getDataContext() );
         }
       }
     }
@@ -194,15 +197,15 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
   // at this point, we have read the file and we check the consistency of non-thermal models
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE::Density::catalogName() ),
                  InputError, getDataContext() );
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE::Viscosity::catalogName() ),
                  InputError, getDataContext() );
   // we also detect any inconsistency arising in the enthalpy models
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
                  ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
+                 GEOS_FMT( "PVT model {} not found in input files", PHASE::Enthalpy::catalogName() ),
                  InputError, getDataContext() );
 
   bool const isClone = this->isClone();
@@ -211,8 +214,14 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
     !isClone && isLogLevelActive< logInfo::TableLogOutput >( this->getLogLevel()) // writeInLog
   };
 
+  BrineFluidParameters parameters;
+  parameters.m_salinity = m_salinity;
+
   // then, we are ready to instantiate the phase models
-  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
+  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1",
+                                       parameters,
+                                       m_componentNames,
+                                       m_componentMolarWeight,
                                        pvtOutputOpts );
 }
 
@@ -235,7 +244,7 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
   {
     string const errorMsg = GEOS_FMT( "Table input error (in table from {}).\n",
                                       stringutilities::join( m_phasePVTParaFiles ) );
-    ErrorLogger::global().currentErrorMsg()
+    ErrorLogger::global().modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw SimulationError( ex, errorMsg );

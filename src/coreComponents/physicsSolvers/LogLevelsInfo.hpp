@@ -91,6 +91,12 @@ struct Solution
   static constexpr std::string_view getDescription() { return "Solution information (scaling, maximum changes, quality check)"; }
 };
 
+struct SolutionDetails
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Solution details (incoherent negative values ids)"; }
+};
+
 struct SolverInitialization
 {
   static constexpr int getMinLogLevel() { return 1; }
@@ -118,6 +124,12 @@ struct Statistics
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Print statistics"; }
+};
+
+struct StatisticsPerRegion
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Print per region statistics"; }
 };
 
 struct SurfaceGenerator

@@ -98,6 +98,7 @@ public:
                         timeIncrement,
                         pressure,
                         deltaTemperature,
+                        deltaTemperatureFromLastStep,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -150,11 +151,13 @@ public:
 
     // Compute total stress increment and its derivative
     real64 const deltaTemperature = temperature - referenceTemperature;
+    real64 const deltaTemperatureFromLastStep = temperature - temperature_n;
     computeTotalStress( k,
                         q,
                         timeIncrement,
                         pressure,
                         deltaTemperature,
+                        deltaTemperatureFromLastStep,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure, // To pass something here
@@ -275,29 +278,41 @@ private:
                            real64 const & timeIncrement,
                            real64 const & pressure,
                            real64 const & deltaTemperature,
+                           real64 const & deltaTemperatureFromLastStep,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
                            real64 ( & dTotalStress_dTemperature )[6],
                            DiscretizationOps & stiffness ) const
   {
+    GEOS_UNUSED_VAR( deltaTemperature );
+
     updateBiotCoefficientAndAssignModuli( k );
 
-    // Compute total stress increment and its derivative w.r.t. pressure
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+
+    real64 strainIncrementNoThermalStrain[6]{};
+    strainIncrementNoThermalStrain[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    strainIncrementNoThermalStrain[3] = strainIncrement[3];
+    strainIncrementNoThermalStrain[4] = strainIncrement[4];
+    strainIncrementNoThermalStrain[5] = strainIncrement[5];
+
+    // Compute total stress increment and its derivative w.r.t. pressure and temperature
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
                                      timeIncrement,
-                                     strainIncrement,
-                                     totalStress, // first effective stress increment accumulated
+                                     strainIncrementNoThermalStrain,
+                                     totalStress,
                                      stiffness );
+
+    stiffness.computeTemperatureDerivative( thermalExpansionCoefficient, dTotalStress_dTemperature );
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
-    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
-    real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure );
 
     // Compute derivatives of total stress
     dTotalStress_dPressure[0] = -biotCoefficient;
@@ -306,13 +321,6 @@ private:
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
-
-    dTotalStress_dTemperature[0] = -3 * thermalExpansionCoefficientTimesBulkModulus;
-    dTotalStress_dTemperature[1] = -3 * thermalExpansionCoefficientTimesBulkModulus;
-    dTotalStress_dTemperature[2] = -3 * thermalExpansionCoefficientTimesBulkModulus;
-    dTotalStress_dTemperature[3] = 0;
-    dTotalStress_dTemperature[4] = 0;
-    dTotalStress_dTemperature[5] = 0;
 
   }
 

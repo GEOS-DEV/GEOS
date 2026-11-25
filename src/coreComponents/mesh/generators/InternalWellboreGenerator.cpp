@@ -116,21 +116,21 @@ void InternalWellboreGenerator::postInputInitialization()
 {
 
   GEOS_ERROR_IF( m_nElems[1].size() > 1,
-                 getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
-                 ": Only one block in the theta direction is currently supported. ",
+                 GEOS_FMT( "{}: Only one block in the theta direction is currently supported.",
+                           getWrapperDataContext( viewKeyStruct::yElemsString() ) ),
                  getWrapperDataContext( viewKeyStruct::yElemsString() ) );
 
   GEOS_ERROR_IF( m_nElems[2].size() > 1,
-                 getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
-                 ": Only one block in the z direction is currently supported. ",
+                 GEOS_FMT( "{}: Only one block in the z direction is currently supported.",
+                           getWrapperDataContext( viewKeyStruct::yElemsString() ) ),
                  getWrapperDataContext( viewKeyStruct::yElemsString() ) );
 
 
 
   GEOS_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
-                 getWrapperDataContext( viewKeyStruct::trajectoryString() ) <<
-                 ": Input for trajectory should be specified in the form of "
-                 "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }.",
+                 GEOS_FMT( "{}: Input for trajectory should be specified in the form of "
+                           "{{ {{ xbottom, ybottom, zbottom }}, {{ xtop, ytop, ztop }} }}.",
+                           getWrapperDataContext( viewKeyStruct::trajectoryString() ) ),
                  getWrapperDataContext( viewKeyStruct::trajectoryString() ) );
 
   // Project trajectory to bottom and top of the wellbore

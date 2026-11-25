@@ -119,7 +119,7 @@
 #define GEOS_LAI_CHECK_ERROR( call ) \
   do { \
     auto const ierr = call; \
-    GEOS_ERROR_IF_NE_MSG( ierr, 0, "Error in call to " << #call ); \
+    GEOS_ERROR_IF_NE_MSG( ierr, 0, "Error in call to " #call ); \
   } while( false )
 
 /**
@@ -129,7 +129,7 @@
 #define GEOS_LAI_CHECK_ERROR_NNEG( call ) \
   do { \
     auto const ierr = call; \
-    GEOS_ERROR_IF_GT_MSG( 0, ierr, "Error in call to " << #call ); \
+    GEOS_ERROR_IF_GT_MSG( 0, ierr, "Error in call to " #call ); \
   } while( false )
 
 namespace geos

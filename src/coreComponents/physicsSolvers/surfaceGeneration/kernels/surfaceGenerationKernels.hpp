@@ -41,8 +41,7 @@ public:
   NodalForceKernel( ElementRegionManager const & elemManager,
                     constitutive::ConstitutiveManager const & constitutiveManager,
                     string const solidMaterialKey ):
-    m_dNdX( elemManager.constructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( dataRepository::keys::dNdX ) ),
-    m_detJ( elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( dataRepository::keys::detJ ) ),
+    m_elementRegionManager( elemManager ),
     m_bulkModulus( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager ) ),
     m_shearModulus( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager ) ),
     m_stress( elemManager.constructFullMaterialViewAccessor< array3d< real64, geos::solid::STRESS_PERMUTATION >,
@@ -68,15 +67,44 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    localIndex const numQuadraturePoints = m_detJ[er][esr].size( 1 );
+    NodeManager const & nodeManager = m_elementRegionManager.getParent().template getGroup< NodeManager >( MeshLevel::groupStructKeys::nodeManagerString() );
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-    // Loop over quadrature points
-    for( localIndex q = 0; q < numQuadraturePoints; ++q )
+    CellElementRegion const & region = m_elementRegionManager.getRegion< CellElementRegion >( er );
+    CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
+    CellElementSubRegion::NodeMapType const & toNodesRelation = subRegion.nodeList();
+
+    // ASSUMPTION(?): subregions only have one registered element type
+    finiteElement::FiniteElementBase const * finiteElement = nullptr;
+    subRegion.forWrappers< finiteElement::FiniteElementBase >( [&]( auto const & fe )
     {
-      real64 const quadratureStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
-      real64 const dNdX[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( m_dNdX[er][esr][ei][q][targetNode] );
-      surfaceGenerationKernelsHelpers::computeNodalForce( quadratureStress, dNdX, m_detJ[er][esr][ei][q], force );
-    }
+      finiteElement = &fe.reference();
+    } );
+
+    finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( *finiteElement, [ & ]( auto const & fe )
+    {
+      using FE_TYPE = TYPEOFREF( fe );
+      typename FE_TYPE::StackVariables feStack;
+      constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+      real64 xLocal[numNodesPerElement][3] = { { 0 } };
+
+      localIndex const numSupportPoints = finiteElement->getNumSupportPoints( );
+      for( localIndex a = 0; a < numSupportPoints; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( xLocal[a], X[toNodesRelation( ei, a )] );
+      }
+
+      for( localIndex q = 0; q < numQuadraturePoints; ++q )
+      {
+        real64 const quadratureStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
+        real64 dNdX[numNodesPerElement][3] = {{0}};
+        real64 J[3][3] = {{0}};
+        real64 const detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+        FE_TYPE::calcGradN( q, xLocal, feStack, dNdX );
+        surfaceGenerationKernelsHelpers::computeNodalForce( quadratureStress, dNdX[targetNode], detJxW, force );
+      }
+    } );
 
     //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
     surfaceGenerationKernelsHelpers::scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
@@ -84,9 +112,7 @@ public:
 
 protected:
 
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const m_dNdX;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const m_detJ;
+  ElementRegionManager const & m_elementRegionManager;
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const m_bulkModulus;
 
@@ -131,18 +157,47 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    localIndex const numQuadraturePoints = m_detJ[er][esr].size( 1 );
+    NodeManager const & nodeManager = m_elementRegionManager.getParent().template getGroup< NodeManager >( MeshLevel::groupStructKeys::nodeManagerString() );
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-    // Loop over quadrature points
-    for( localIndex q = 0; q < numQuadraturePoints; ++q )
+    CellElementRegion const & region = m_elementRegionManager.getRegion< CellElementRegion >( er );
+    CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
+    CellElementSubRegion::NodeMapType const & toNodesRelation = subRegion.nodeList();
+
+    // ASSUMPTION(?): subregions only have one registered element type
+    finiteElement::FiniteElementBase const * finiteElement = nullptr;
+    subRegion.forWrappers< finiteElement::FiniteElementBase >( [&]( auto const & fe )
     {
-      real64 totalStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
-      real64 const dNdX[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( m_dNdX[er][esr][ei][q][targetNode] );
-      /// TODO: make it work for the thermal case as well
-      LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -m_biotCoefficient[er][esr][m_porosityMaterialFullIndex[er]][ei] * m_pressure[er][esr][ei] );
+      finiteElement = &fe.reference();
+    } );
 
-      surfaceGenerationKernelsHelpers::computeNodalForce( totalStress, dNdX, m_detJ[er][esr][ei][q], force );
-    }
+    finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( *finiteElement, [ & ]( auto const & fe )
+    {
+      using FE_TYPE = TYPEOFREF( fe );
+      typename FE_TYPE::StackVariables feStack;
+      constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+      constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+      real64 xLocal[numNodesPerElement][3] = {{0}};
+
+      localIndex const numSupportPoints = finiteElement->getNumSupportPoints( );
+      for( localIndex a = 0; a < numSupportPoints; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( xLocal[a], X[toNodesRelation( ei, a )] );
+      }
+
+      for( localIndex q = 0; q < numQuadraturePoints; ++q )
+      {
+        real64 totalStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
+        /// TODO: make it work for the thermal case as well
+        LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -m_biotCoefficient[er][esr][m_porosityMaterialFullIndex[er]][ei] * m_pressure[er][esr][ei] );
+
+        real64 dNdX[numNodesPerElement][3] = {{0}};
+        real64 J[3][3] = {{0}};
+        real64 const detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+        FE_TYPE::calcGradN( q, xLocal, feStack, dNdX );
+        surfaceGenerationKernelsHelpers::computeNodalForce( totalStress, dNdX[targetNode], detJxW, force );
+      }
+    } );
 
     //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
     surfaceGenerationKernelsHelpers::scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );

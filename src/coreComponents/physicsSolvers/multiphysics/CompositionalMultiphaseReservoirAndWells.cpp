@@ -27,6 +27,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
@@ -87,8 +88,9 @@ setMGRStrategy()
   {
     if( isThermal() )
     {
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for thermal {}/{}",
-                            this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()));
+      GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for thermal {}/{}",
+                            this->getCatalogName(), this->flowSolver()->getCatalogName()),
+                  getDataContext());
     }
     else
     {
@@ -126,8 +128,9 @@ setMGRStrategy()
 
   if( dynamic_cast< CompositionalMultiphaseHybridFVM * >( this->flowSolver() ) )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}/{}",
-                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName() ) );
+    GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for {}/{}",
+                          this->getCatalogName(), this->flowSolver()->getCatalogName() ),
+                getDataContext() );
   }
   else
   {
@@ -145,24 +148,58 @@ initializePreSubGroups()
 {
   Base::initializePreSubGroups();
 
-  CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
+  CompositionalMultiphaseBase * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
-
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-  bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  bool const useMassWell = Base::wellSolver()->template getReference< integer >( WellManager::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,
-                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 GEOS_FMT( "The input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                           Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
                  InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
 
   bool const isThermalFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::isThermalString() );
-  bool const isThermalWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::isThermalString() );
+  bool const isThermalWell = Base::wellSolver()->template getReference< integer >( WellManager::viewKeyStruct::isThermalString() );
   GEOS_THROW_IF( isThermalFlow != isThermalWell,
-                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::isThermalString(),
-                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 GEOS_FMT( "The input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           CompositionalMultiphaseBase::viewKeyStruct::isThermalString(),
+                           Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
                  InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
+  DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  Group & meshBodies = domain.getMeshBodies();
+  this->template forDiscretizationOnMeshTargets<>( meshBodies, [&] ( string const &,
+                                                                     MeshLevel & mesh,
+                                                                     string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion const & subRegion )
+    {
+      WellControls & wellControls = Base::wellSolver()->getWellControls( subRegion );
+      CompositionalMultiphaseWell & compositionalMultiphaseWell = dynamic_cast< CompositionalMultiphaseWell & >( wellControls );
+      wellControls.setFlowSolverName( flowSolver->getName() );
+      wellControls.setDiscretizationName( flowSolver->getDiscretizationName() );
+
+      if( !wellControls.useSurfaceConditions() )
+      {
+        string_view refRegionName = wellControls.referenceReservoirRegion();
+        bool const useSegmentValues = refRegionName.empty();
+        if( !useSegmentValues )
+        {
+          if( !compositionalMultiphaseWell.getStatsAggregator() )
+          { // lazily initialize the region statistics aggregator
+            auto aggregator = std::make_unique< compositionalMultiphaseStatistics::StatsAggregator >( compositionalMultiphaseWell.getDataContext(),
+                                                                                                      meshBodies,
+                                                                                                      false );
+            aggregator->initStatisticsAggregation( *flowSolver );
+            aggregator->enableRegionStatisticsAggregation();
+            compositionalMultiphaseWell.setReservoirStatsAggregator( std::move( aggregator ) );
+          }
+        }
+      }
+    } );
+  } );
 }
 
 template< typename RESERVOIR_SOLVER >
@@ -289,9 +326,8 @@ assembleCouplingTerms( real64 const time_n,
   using namespace compositionalMultiphaseUtilities;
 
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
-                 GEOS_FMT( "{} {}: The well transmissibility has not been computed yet",
-                           this->getCatalogName(), this->getName() ),
-                 std::runtime_error );
+                 "The well transmissibility has not been computed yet",
+                 geos::RuntimeError, Base::getDataContext());
 
   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
   if( Base::wellSolver()->useTotalMassEquation() )
@@ -301,8 +337,6 @@ assembleCouplingTerms( real64 const time_n,
                                                                                  MeshLevel const & mesh,
                                                                                  string_array const & regionNames )
   {
-    integer areWellsShut = 1;
-
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     integer const numComps = Base::wellSolver()->numFluidComponents();
@@ -327,6 +361,13 @@ assembleCouplingTerms( real64 const time_n,
         ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
         getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
 
+      // Only update the shut-well flag for a well this callback actually
+      // assembles. An all-shut system returns before this point; forcing Jacobi
+      // F-relaxation in that case changes the Krylov update enough to miss the
+      // integrated-test baselines and, for the dome models, drives a well
+      // element total density through zero.
+      integer areWellsShut = 1;
+
       if( !wellControls.isWellOpen() )
       {
         return;
@@ -344,6 +385,7 @@ assembleCouplingTerms( real64 const time_n,
         coupledReservoirAndWellKernels::
           ThermalCompositionalMultiPhaseFluxKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( numComps,
+                                                     wellControls.thermalEffectsEnabled( ),
                                                      wellControls.isProducer(),
                                                      dt,
                                                      rankOffset,
@@ -389,8 +431,9 @@ assembleCouplingTerms( real64 const time_n,
         }
       }
 
-
-      // update dynamically the MGR recipe to optimize the linear solve if all wells are shut
+      // Update the MGR recipe from wells that contribute coupling terms.
+      // Shut wells return above, so this reduction does not switch an all-shut
+      // system onto Jacobi F-relaxation.
       areWellsShut = MpiWrapper::min( areWellsShut );
       m_linearSolverParameters.get().mgr.areWellsShut = areWellsShut;
     } );
@@ -406,9 +449,10 @@ assembleHydrofracFluxTerms( real64 const time_n,
                             DofManager const & dofManager,
                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                             arrayView1d< real64 > const & localRhs,
-                            CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                            CRSMatrixView< real64, localIndex const > const & dR_dAper,
+                            stdMap< string, localIndex > const * const dR_dAperOffsets )
 {
-  flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );
+  flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper, dR_dAperOffsets );
 }
 
 template< typename RESERVOIR_SOLVER >

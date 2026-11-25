@@ -234,7 +234,7 @@ void buildCoarseCells( multiscale::MeshLevel & fineMesh,
   fillBasicCellData( fineCellManager, coarseCellManager );
 
   // Populate neighbor data and sets
-  std::vector< int > neighborRanks = fineMesh.domain()->getNeighborRanks();
+  stdVector< int > neighborRanks = fineMesh.domain()->getNeighborRanks();
   for( int const rank : neighborRanks )
   {
     coarseCellManager.addNeighbor( rank );
@@ -375,7 +375,7 @@ void buildCoarseNodes( multiscale::MeshLevel & fineMesh,
   fillBasicNodeData( fineNodeManager, coarseNodeManager );
 
   // Populate neighbor data and sets
-  std::vector< int > neighborRanks = fineMesh.domain()->getNeighborRanks();
+  stdVector< int > neighborRanks = fineMesh.domain()->getNeighborRanks();
   for( int const rank : neighborRanks )
   {
     coarseNodeManager.addNeighbor( rank );

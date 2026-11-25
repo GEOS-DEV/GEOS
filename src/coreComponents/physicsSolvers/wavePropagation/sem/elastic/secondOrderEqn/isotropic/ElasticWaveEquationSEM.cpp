@@ -297,9 +297,8 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
   {
 
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   getDataContext() << ": Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
-                   InputError, getDataContext(),
-                   elementSubRegion.getDataContext().getContextInfo().setPriority( -1 ) );
+                   "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
+                   InputError, getDataContext(), elementSubRegion.getDataContext().getContextInfo().setPriority( -1 ) );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -680,7 +679,7 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     }
     while (counter < 10 && numberIter < nIterMax);
 
-    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
+    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", geos::RuntimeError );
 
     //We use 1.99 instead of 2 to have a 5% margin error
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
@@ -730,7 +729,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    WaveSolverBase::viewKeyStruct::freeSurfaceString(),
-                   [&]( FieldSpecificationBase const & bc,
+                   [&]( FieldSpecification const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group &,
@@ -767,7 +766,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": This option is not supported yet" );
+      GEOS_ERROR( "This option is not supported yet", getDataContext() );
     }
   } );
 }
@@ -792,7 +791,7 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( getDataContext() << ": Backward propagation for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "Backward propagation for the elastic wave propagator not yet implemented", getDataContext() );
   real64 dtOut = explicitStepInternal( time_n, dt, domain );
   return dtOut;
 }
@@ -1097,12 +1096,12 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
 
 void ElasticWaveEquationSEM::initializePML()
 {
-  GEOS_ERROR( getDataContext() << ": PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the elastic wave propagator not yet implemented", getDataContext() );
 }
 
 void ElasticWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( getDataContext() << ": PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the elastic wave propagator not yet implemented", getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )

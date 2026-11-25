@@ -277,11 +277,11 @@ protected:
     arrayView2d< real64 > const & elementCenters = m_elementCenter;
     auto const e2n = toNodesRelation.toViewConst();
 
-    forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
+    forAll< parallelHostPolicy >( size(), [=, this]( localIndex const k )
     {
       // collect node coordinates for element k
       localIndex const numNodes = this->numNodesPerElement( k );
-      std::vector< std::array< real64, 3 > > nodes;
+      stdVector< std::array< real64, 3 > > nodes;
       nodes.reserve( numNodes );
       for( localIndex a = 0; a < numNodes; ++a )
       {

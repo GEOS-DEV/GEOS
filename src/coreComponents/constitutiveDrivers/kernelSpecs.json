@@ -1,0 +1,70 @@
+{
+  "doc" :
+  {
+    "comment" : "All kernel template instantiation specs need all dict keys except 'comment' and 'explicit'",
+    "vars" :
+    [
+      "This is a list of the keys in the combinations dict (keys aren't queryable in cmake)",
+      "they are also the names of the CMAKE variables which will be set to one of the values specified",
+      "in the combinations dict just prior to cmake calling configure_file() on the template file"
+    ],
+    "constants" :
+    [
+      [ "key", "value" ],
+      [ "note", "All constants will be set for cmake to configure_file() for every instantiation." ]
+    ],
+    "combinations" :
+    {
+      "vars" : [ "each value in this list will be used to generate kernel template files",
+                 "combinatorially with all other value lists" ]
+    },
+    "explicit" : [ "specify a specific combination of the variables to generate",
+                   "specify by choosing one value from each variable you want generated",
+                   "and concatenating them with '#' (this can be modified internally at the",
+                   "generation call). Duplicate entries are unified internally" ]
+  },
+
+  "PVTDriverRunTestFluid": {
+    "vars": [
+      "FLUID"
+    ],
+    "constants": [],
+    "combinations": {
+      "FLUID": [
+        "BlackOilFluid",
+        "CO2BrineEzrokhiFluid",
+        "CO2BrineEzrokhiThermalFluid",
+        "CO2BrinePhillipsFluid",
+        "CO2BrinePhillipsThermalFluid",
+        "CompositionalKValuePhillipsBrine",
+        "CompositionalKValueLohrenzBrayClarkViscosity",
+        "CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "CompositionalTwoPhaseConstantViscosity",
+        "CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "CompositionalTwoPhasePhillipsBrine",
+        "DeadOilFluid",
+        "InvariantImmiscibleFluid"
+      ]
+    },
+    "explicit": []
+  },
+
+  "RelpermDriverRunTestRelPerm": {
+    "vars": [
+      "RELPERM"
+    ],
+    "constants": [],
+    "combinations": {
+      "RELPERM": [
+        "BrooksCoreyBakerRelativePermeability",
+        "BrooksCoreyRelativePermeability",
+        "BrooksCoreyStone2RelativePermeability",
+        "TableRelativePermeabilityHysteresis",
+        "TableRelativePermeability",
+        "VanGenuchtenBakerRelativePermeability",
+        "VanGenuchtenStone2RelativePermeability"
+      ]
+    },
+    "explicit": []
+  }
+}

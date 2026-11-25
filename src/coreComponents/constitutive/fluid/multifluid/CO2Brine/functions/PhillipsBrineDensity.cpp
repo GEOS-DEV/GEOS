@@ -74,7 +74,8 @@ void calculateBrineDensity( PTTableCoordinates const & tableCoords,
 
 void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
                                 string const & functionName,
-                                array1d< real64 > const & densities )
+                                array1d< real64 > const & densities,
+                                real64 const waterCompressibility )
 {
   // if no salinity, we fall back to the standard approach in three steps
   // 1- Get the saturation density as a function of temperature
@@ -102,15 +103,12 @@ void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
       // Step 2: get the saturation pressure
       real64 const waterSatPressure = waterSatPressureTable->evaluate( &T );
       // Step 3: get the pure water density
-      // Note: for now, we keep a constant water compressibility for consistency with the Ezrokhi model
-      // In the future, we should query the water compressibility as a function of pressure and temperature in a table
-      real64 const waterCompressibility = 4.5e-10; // Pa-1 // TODO: consolidate to a unique file as Dick started doing
       densities[j*nPressures+i] = waterSatDensity * exp( waterCompressibility * ( P - waterSatPressure ) );
     }
   }
 }
 
-TableFunction const * makeDensityTable( string_array const & inputParams,
+TableFunction const * makeDensityTable( BrineFluidParameters const & brineFluidParameters,
                                         string const & functionName,
                                         FunctionManager & functionManager )
 {
@@ -126,24 +124,12 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   else
   {
-    GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                          GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                          InputError );
-
     // initialize the (p,T) coordinates
     PTTableCoordinates tableCoords;
-    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+    BrineFluidParameters::initializePropertyTable( brineFluidParameters, tableCoords );
 
     // initialize salinity
-    real64 salinity;
-    try
-    {
-      salinity = stod( inputParams[8] );
-    }
-    catch( std::invalid_argument const & e )
-    {
-      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-    }
+    real64 const salinity = brineFluidParameters.m_salinity;
 
     array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
     if( !isZero( salinity ) )
@@ -159,7 +145,8 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
     {
       // the Phillips correlation is inaccurate in the absence of salinity.
       // since this is a very frequent case, we implement an alternate (more accurate) method below
-      calculatePureWaterDensity( tableCoords, functionName, densities );
+      real64 const waterCompressibility = brineFluidParameters.m_waterCompressibility;
+      calculatePureWaterDensity( tableCoords, functionName, densities, waterCompressibility );
     }
 
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
@@ -174,7 +161,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 } // namespace
 
 PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
-                                            string_array const & inputParams,
+                                            BrineFluidParameters const & brineFluidParameters,
                                             string_array const & componentNames,
                                             array1d< real64 > const & componentMolarWeight,
                                             TableFunction::OutputOptions const pvtOutputOpts ):
@@ -188,7 +175,7 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   string const expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
-  m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_brineDensityTable = makeDensityTable( brineFluidParameters, m_functionName, FunctionManager::getInstance() );
 
   m_brineDensityTable->outputTableData( pvtOutputOpts );
 }

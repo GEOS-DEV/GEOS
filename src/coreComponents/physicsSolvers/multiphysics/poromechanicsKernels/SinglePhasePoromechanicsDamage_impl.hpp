@@ -260,12 +260,12 @@ quadraturePointKernel( localIndex const k,
   real64 N[numNodesPerElem]{};
   real64 dNdX[numNodesPerElem][3]{};
   FE_TYPE::calcN( q, stack.feStack, N );
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
-                                                                           stack.feStack, dNdX );
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal,
+                                            stack.feStack, dNdX );
 
   // Step 2: compute strain increment
   LvArray::tensorOps::fill< 6 >( stack.strainIncrement, 0.0 );
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
+  finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
   // using quantities returned by the PorousSolid constitutive model.

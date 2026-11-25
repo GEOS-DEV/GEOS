@@ -18,10 +18,10 @@
  * @file TableFormatter.cpp
  */
 
-#include "TableFormatter.hpp"
 #include <numeric>
 #include "common/format/StringUtilities.hpp"
 #include "common/logger/Logger.hpp"
+#include "TableFormatter.hpp"
 
 namespace geos
 {
@@ -98,6 +98,8 @@ void toStream( std::ostream & outputStream, string_view content, string_view str
   {
     GEOS_WARNING( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
   }
+  // TODO: remove after implementing GEOS_ERROR for HIP
+  GEOS_UNUSED_VAR( streamName );
 }
 
 void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content ) const
@@ -157,7 +159,7 @@ string TableCSVFormatter::headerToString() const
 
 string TableCSVFormatter::dataToString( TableData const & tableData ) const
 {
-  RowsCellInput const rowsValues( tableData.getTableDataRows() );
+  RowsCellInput const rowsValues( tableData.getCellsData() );
   string result;
   size_t total_size = 0;
   for( auto const & row : rowsValues )
@@ -200,7 +202,7 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 {
   if( tableData.getErrorsList().hasErrors() )
   {
-    std::vector< string > cpyErrors  = tableData.getErrorsList().getErrors();
+    stdVector< string > cpyErrors  = tableData.getErrorsList().getErrors();
     getErrorsList().appendErrors( cpyErrors );
   }
 
@@ -225,31 +227,33 @@ template<>
 string TableTextFormatter::toString< TableData >( TableData const & tableData ) const
 {
   std::ostringstream tableOutput;
-  CellLayoutRows headerCellsLayout;
-  CellLayoutRows dataCellsLayout;
-  CellLayoutRows errorCellsLayout;
+  CellLayoutRows headerRows;
+  CellLayoutRows dataRows;
+  CellLayoutRows errorRows;
   size_t tableTotalWidth = 0;
 
   initalizeTableGrids( m_tableLayout, tableData,
-                       headerCellsLayout, dataCellsLayout, errorCellsLayout,
-                       tableTotalWidth );
-  outputTable( m_tableLayout, tableOutput,
-               headerCellsLayout, dataCellsLayout, errorCellsLayout,
-               tableTotalWidth );
+                       headerRows, dataRows, errorRows,
+                       tableTotalWidth, nullptr );
 
-  getErrorsList().clear();
+  string const sepLine = string( tableTotalWidth, m_horizontalLine );
+  outputTableHeader( tableOutput, m_tableLayout, headerRows, sepLine );
+  outputTableData( tableOutput, m_tableLayout, dataRows );
+  outputTableFooter( tableOutput, m_tableLayout, errorRows, sepLine, !dataRows.empty() );
+
   return tableOutput.str();
 }
 
 void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableLayout,
                                               TableData const & tableInputData,
-                                              CellLayoutRows & headerCellsLayout,
-                                              CellLayoutRows & dataCellsLayout,
-                                              CellLayoutRows & errorCellsLayout,
-                                              size_t & tableTotalWidth ) const
+                                              CellLayoutRows & headerRows,
+                                              CellLayoutRows & dataRows,
+                                              CellLayoutRows & errorRows,
+                                              size_t & tableTotalWidth,
+                                              ColumnWidthModifier columnWidthModifier ) const
 {
+  RowsCellInput const & inputDataValues( tableInputData.getCellsData() );
   bool const hasColumnLayout = tableLayout.getColumnLayersCount() > 0;
-  RowsCellInput const & inputDataValues( tableInputData.getTableDataRows() );
   size_t const inputDataRowsCount = !inputDataValues.empty() ? inputDataValues.front().size() : 0;
   size_t const nbVisibleColumns = std::max( size_t( 1 ), ( hasColumnLayout ?
                                                            tableLayout.getVisibleLowermostColumnCount() :
@@ -257,30 +261,33 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   // this array will store the displayed width of all columns (it will be scaled by data & headers width)
   stdVector< size_t > columnsWidth = stdVector< size_t >( nbVisibleColumns, 0 );
 
-  populateTitleCellsLayout( tableLayout, headerCellsLayout, nbVisibleColumns );
+  populateTitleCellsLayout( tableLayout, headerRows, nbVisibleColumns );
   if( hasColumnLayout )
   {
-    populateHeaderCellsLayout( tableLayout, headerCellsLayout, nbVisibleColumns );
-    populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues, nbVisibleColumns );
+    populateHeaderCellsLayout( tableLayout, headerRows, nbVisibleColumns );
+    populateDataCellsLayout( tableLayout, dataRows, inputDataValues, nbVisibleColumns );
   }
   else
   {
-    populateDataCellsLayout( tableLayout, dataCellsLayout, inputDataValues );
+    populateDataCellsLayout( tableLayout, dataRows, inputDataValues );
   }
 
   if( getErrorsList().hasErrors() || tableInputData.getErrorsList().hasErrors())
   {
-    populateErrorCellsLayout( tableLayout, errorCellsLayout, tableInputData.getErrorsList() );
+    populateErrorCellsLayout( tableLayout, errorRows, tableInputData.getErrorsList() );
   }
 
-  stretchColumnsByCellsWidth( columnsWidth, headerCellsLayout );
-  stretchColumnsByCellsWidth( columnsWidth, dataCellsLayout );
-  stretchColumnsByCellsWidth( columnsWidth, errorCellsLayout );
+  stretchColumnsByCellsWidth( columnsWidth, headerRows );
+  stretchColumnsByCellsWidth( columnsWidth, dataRows );
+  stretchColumnsByCellsWidth( columnsWidth, errorRows );
 
   // only after all cells that are not merge, we can process the merged cells.
-  stretchColumnsByMergedCellsWidth( columnsWidth, headerCellsLayout, tableLayout, false );
-  stretchColumnsByMergedCellsWidth( columnsWidth, dataCellsLayout, tableLayout, true );
-  stretchColumnsByMergedCellsWidth( columnsWidth, errorCellsLayout, tableLayout, true );
+  stretchColumnsByMergedCellsWidth( columnsWidth, headerRows, tableLayout, false );
+  stretchColumnsByMergedCellsWidth( columnsWidth, dataRows, tableLayout, true );
+  stretchColumnsByMergedCellsWidth( columnsWidth, errorRows, tableLayout, true );
+
+  if( columnWidthModifier )
+    columnWidthModifier( columnsWidth );
 
   // the columns width array is now sized after all the table, we can compute the total table width
   tableTotalWidth = tableLayout.getBorderMargin() * 2 + 2;
@@ -291,9 +298,9 @@ void TableTextFormatter::initalizeTableGrids( PreparedTableLayout const & tableL
   }
 
   // we can now propagate the columns width width to all cells
-  applyColumnsWidth( columnsWidth, headerCellsLayout, tableLayout );
-  applyColumnsWidth( columnsWidth, dataCellsLayout, tableLayout );
-  applyColumnsWidth( columnsWidth, errorCellsLayout, tableLayout );
+  applyColumnsWidth( columnsWidth, headerRows, tableLayout );
+  applyColumnsWidth( columnsWidth, dataRows, tableLayout );
+  applyColumnsWidth( columnsWidth, errorRows, tableLayout );
 }
 
 void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
@@ -494,8 +501,8 @@ void TableTextFormatter::populateDataCellsLayout( PreparedTableLayout const & ta
                           string_view( &m_horizontalLine, 1 ) :
                           string_view( inputCell.value );
       TableLayout::Alignment const alignment = inputCell.type == CellType::Header ?
-                                               tableLayout.defaultHeaderAlignment :
-                                               tableLayout.defaultValueAlignment;
+                                               tableLayout.getDefaultHeaderAlignment() :
+                                               tableLayout.getDefaultValueAlignment();
 
       TableLayout::CellLayout & outputCell = outputRow.cells[idxColumn];
       outputCell = TableLayout::CellLayout( inputCell.type, alignment );
@@ -518,8 +525,8 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
     {
       errorCellsLayout.push_back(
         {
-          std::vector< TableLayout::CellLayout >( nbCells,
-                                                  TableLayout::CellLayout( CellType::MergeNext ) ),
+          stdVector< TableLayout::CellLayout >( nbCells,
+                                                TableLayout::CellLayout( CellType::MergeNext ) ),
           1 // subLines count
         } );
       errorCellsLayout.back().cells.back().m_cellType = CellType::Value;
@@ -531,8 +538,8 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
 
   errorCellsLayout.push_back(
     {
-      std::vector< TableLayout::CellLayout >( nbCells,
-                                              TableLayout::CellLayout( CellType::Separator ) ),
+      stdVector< TableLayout::CellLayout >( nbCells,
+                                            TableLayout::CellLayout( CellType::Separator ) ),
       1 // subLines count
     } );
 
@@ -702,34 +709,44 @@ void TableTextFormatter::applyColumnsWidth( stdVector< size_t > const & columnsW
   }
 }
 
-void TableTextFormatter::outputTable( PreparedTableLayout const & tableLayout,
-                                      std::ostream & tableOutput,
-                                      CellLayoutRows const & headerCellsLayout,
-                                      CellLayoutRows const & dataCellsLayout,
-                                      CellLayoutRows & errorCellsLayout,
-                                      size_t const tableTotalWidth ) const
+void TableTextFormatter::outputTableHeader( std::ostream & tableOutput,
+                                            PreparedTableLayout const & tableLayout,
+                                            CellLayoutRows const & headerCellsLayout,
+                                            string_view sepLine ) const
 {
-  string const sepLine = string( tableTotalWidth, m_horizontalLine );
   if( tableLayout.isLineBreakEnabled())
   {
     tableOutput << '\n';
   }
-  tableOutput << sepLine << '\n';
+  tableOutput << tableLayout.getIndentationStr() << sepLine << '\n';
   outputLines( tableLayout, headerCellsLayout, tableOutput );
+}
 
-  if( !dataCellsLayout.empty())
+void TableTextFormatter::outputTableData( std::ostream & tableOutput,
+                                          PreparedTableLayout const & tableLayout,
+                                          CellLayoutRows const & dataCellsLayout ) const
+{
+  if( !dataCellsLayout.empty() )
   {
     outputLines( tableLayout, dataCellsLayout, tableOutput );
   }
+}
 
+void TableTextFormatter::outputTableFooter( std::ostream & tableOutput,
+                                            PreparedTableLayout const & tableLayout,
+                                            CellLayoutRows & errorCellsLayout,
+                                            string_view sepLine,
+                                            bool hasData ) const
+{
   if( !errorCellsLayout.empty())
   {
     outputErrors( tableLayout, errorCellsLayout, tableOutput );
   }
 
-  if( !dataCellsLayout.empty() || getErrorsList().hasErrors())
-    tableOutput << sepLine;
-
+  if( hasData || !errorCellsLayout.empty() )
+  {
+    tableOutput << tableLayout.getIndentationStr() << sepLine;
+  }
 
   if( tableLayout.isLineBreakEnabled())
   {
@@ -816,6 +833,7 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
           if( isLeftBorderCell )
           { // left table border
             isLeftBorderCell=false;
+            tableOutput << tableLayout.getIndentationStr();
             tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
           }
           else
@@ -845,4 +863,5 @@ void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
     idxRow++;
   }
 }
-}
+
+} /* namespace geos */

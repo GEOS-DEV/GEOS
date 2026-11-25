@@ -100,6 +100,12 @@ public:
   void calculateSingleElementGeometricQuantities( localIndex const k,
                                                   arrayView1d< real64 const > const & faceArea );
 
+  /**
+   * @brief Computes centroids for all face elements from node positions.
+   * @param[in] nodeManager Provides node reference positions.
+   */
+  void calculateElementCentersOnly( NodeManager const & nodeManager );
+
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
@@ -189,6 +195,18 @@ public:
    */
   void flipFaceMap( FaceManager & faceManager,
                     ElementRegionManager const & elemManager );
+
+  /**
+   * @brief Reorder the node list of the second face (kf1) of each fracture element so that
+   *        its nodes are paired with the corresponding collocated nodes of the first face (kf0).
+   * @param faceManager The face manager group
+   * @param nodeManager The node manager group
+   * @details After splitting, kf0 and kf1 have opposite winding.
+   *          The contact kernels assume node a of kf0 and kf1 are paired.
+   *          This function reorders kf1 to match kf0 based on reference coordinates.
+   */
+  void orderKf1NodesConsistentlyWithKf0( FaceManager & faceManager,
+                                         NodeManager const & nodeManager );
 
   /**
    * @brief Struct containing the keys to all face element views.

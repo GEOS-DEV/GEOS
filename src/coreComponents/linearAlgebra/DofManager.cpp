@@ -71,7 +71,7 @@ integer DofManager::getFieldIndex( string const & name ) const
 {
   auto const it = std::find_if( m_fields.begin(), m_fields.end(),
                                 [&]( FieldDescription const & f ) { return f.name == name; } );
-  GEOS_ERROR_IF( it == m_fields.end(), "DofManager: field does not exist: " << name );
+  GEOS_ERROR_IF( it == m_fields.end(), GEOS_FMT( "DofManager: field does not exist: {}", name ) );
   return std::distance( m_fields.begin(), it );
 }
 
@@ -135,6 +135,13 @@ array1d< integer > DofManager::numComponentsPerField() const
 {
   array1d< integer > ret( m_fields.size() );
   std::transform( m_fields.begin(), m_fields.end(), ret.begin(), std::mem_fn( &FieldDescription::numComponents ) );
+  return ret;
+}
+
+stdVector< string > DofManager::fieldNames() const
+{
+  stdVector< string > ret( m_fields.size() );
+  std::transform( m_fields.begin(), m_fields.end(), ret.begin(), std::mem_fn( &FieldDescription::name ) );
   return ret;
 }
 
@@ -1858,7 +1865,8 @@ void DofManager::printFieldInfo( std::ostream & os ) const
           }
           default:
           {
-            GEOS_ERROR( "Invalid connector type: " << static_cast< int >( m_coupling.at( {i, j} ).connector ) );
+            GEOS_ERROR( GEOS_FMT( "Invalid connector type: {}",
+                                  static_cast< int >( m_coupling.at( {i, j} ).connector ) ) );
           }
         }
         if( j < numFields - 1 )

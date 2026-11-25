@@ -25,8 +25,9 @@ Contains:
 set( fieldSpecification_headers
      DirichletBoundaryCondition.hpp
      EquilibriumInitialCondition.hpp
-     FieldSpecificationBase.hpp
+     FieldSpecification.hpp
      FieldSpecificationManager.hpp
+     FieldSpecificationImpl.hpp
      SourceFluxBoundaryCondition.hpp
      TractionBoundaryCondition.hpp
      AquiferBoundaryCondition.hpp
@@ -39,7 +40,7 @@ set( fieldSpecification_headers
 set( fieldSpecification_sources
      DirichletBoundaryCondition.cpp
      EquilibriumInitialCondition.cpp
-     FieldSpecificationBase.cpp
+     FieldSpecification.cpp
      FieldSpecificationManager.cpp
      SourceFluxBoundaryCondition.cpp
      TractionBoundaryCondition.cpp

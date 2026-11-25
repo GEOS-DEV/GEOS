@@ -31,7 +31,7 @@
 #else
 #define PORTABLE_EXPECT_EQ( L, R ) GEOS_ERROR_IF_NE( L, R )
 #define PORTABLE_EXPECT_NEAR( L, R, EPSILON ) GEOS_ERROR_IF_GE_MSG( math::abs( ( L ) -( R ) ), EPSILON, \
-                                                                    STRINGIZE( L ) " = " << ( L ) << "\n" << STRINGIZE( R ) " = " << ( R ) );
+                                                                    "Expected " STRINGIZE( L ) " and " STRINGIZE( R ) " to be within EPSILON." );
 #endif
 
 namespace geos
