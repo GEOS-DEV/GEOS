@@ -2,6 +2,7 @@
 
 <Problem>
   <Solvers>
+    <!-- SPHINX_DOME_COUPLED_SOLVER_BEGIN -->
     <CompositionalMultiphaseReservoir
       name="DOME"
       flowSolverName="FLOW.SOLVER"
@@ -27,7 +28,9 @@
         krylovWeakestTol="1e-2"
         logLevel="1"/>
     </CompositionalMultiphaseReservoir>
+    <!-- SPHINX_DOME_COUPLED_SOLVER_END -->
 
+    <!-- SPHINX_DOME_FLOW_SOLVER_BEGIN -->
     <CompositionalMultiphaseFVM
       name="FLOW.SOLVER"
       logLevel="0"
@@ -38,12 +41,14 @@
       targetPhaseVolFractionChangeInTimeStep="1.0"
       solutionChangeScalingFactor="1"
       useMass="0"/>
+    <!-- SPHINX_DOME_FLOW_SOLVER_END -->
 
     <WellManager
       name="WELL.SOLVER"
       targetRegions="{ WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
       logLevel="1"
       useMass="0">
+      <!-- SPHINX_DOME_WELL_WATER_INJECTOR_BEGIN -->
       <CompositionalMultiphaseWell
         name="WATER.INJECTOR.CONTROL"
         type="injector"
@@ -66,6 +71,8 @@
           injectionStream="{ 0.00, 0.00, 0.00, 1.00 }"
           injectionTemperature="344.15"/>
       </CompositionalMultiphaseWell>
+      <!-- SPHINX_DOME_WELL_WATER_INJECTOR_END -->
+      <!-- SPHINX_DOME_WELL_GAS_INJECTOR_BEGIN -->
       <CompositionalMultiphaseWell
         name="GAS.INJECTOR.CONTROL"
         control="totalVolRate"
@@ -88,6 +95,8 @@
           injectionStream="{ 0.15, 0.85, 0.00, 0.00 }"
           injectionTemperature="344.15"/>
       </CompositionalMultiphaseWell>
+      <!-- SPHINX_DOME_WELL_GAS_INJECTOR_END -->
+      <!-- SPHINX_DOME_WELL_PRODUCER_BEGIN -->
       <CompositionalMultiphaseWell
         name="PRODUCER.CONTROL"
         type="producer"
@@ -109,6 +118,7 @@
           targetBHP="1.0e+06"
           referenceElevation="-4235.0"/>
       </CompositionalMultiphaseWell>
+      <!-- SPHINX_DOME_WELL_PRODUCER_END -->
     </WellManager>
   </Solvers>
 
@@ -119,6 +129,7 @@
     </FiniteVolume>
   </NumericalMethods>
 
+  <!-- SPHINX_DOME_ELEMENT_REGIONS_BEGIN -->
   <ElementRegions>
     <CellElementRegion
       name="SAND"
@@ -147,8 +158,10 @@
       name="PRODUCER"
       materialList="{ FLUID, RELPERM.SAND }"/>
   </ElementRegions>
+  <!-- SPHINX_DOME_ELEMENT_REGIONS_END -->
 
   <Constitutive>
+    <!-- SPHINX_DOME_ROCK_BEGIN -->
     <NullModel
       name="NULL.SOLID"/>
 
@@ -167,7 +180,9 @@
       solidModelName="NULL.SOLID"
       porosityModelName="ROCK.POROSITY"
       permeabilityModelName="ROCK.PERMEABILITY"/>
+    <!-- SPHINX_DOME_ROCK_END -->
 
+    <!-- SPHINX_DOME_FLUID_BEGIN -->
     <CompositionalTwoPhaseKValueFluidPhillipsBrine
       name="FLUID"
       phaseNames="{ gas, water }"
@@ -185,7 +200,9 @@
       kValueTables="{ KV_CH4, KV_CO2, KV_H2S, KV_H2O }"
       waterCompressibility="4.1483E-10"
       salinity="2.3"/>
+    <!-- SPHINX_DOME_FLUID_END -->
 
+    <!-- SPHINX_DOME_RELPERM_BEGIN -->
     <TableRelativePermeability
       name="RELPERM.SAND"
       phaseNames="{ gas, water }"
@@ -195,7 +212,9 @@
       name="RELPERM.CLAY"
       phaseNames="{ gas, water }"
       wettingNonWettingRelPermTableNames="{ KRW.CLAY, KRG.CLAY }"/>
+    <!-- SPHINX_DOME_RELPERM_END -->
 
+    <!-- SPHINX_DOME_CAPPRES_BEGIN -->
     <TableCapillaryPressure
       name="CAPPRES.SAND"
       phaseNames="{ gas, water }"
@@ -207,9 +226,11 @@
       wettingNonWettingJFunctionTableName="PCGW.CLAY"
       wettingNonWettingSurfaceTension="13.86955e-3"
       permeabilityDirection="X"/>
+    <!-- SPHINX_DOME_CAPPRES_END -->
   </Constitutive>
 
   <FieldSpecifications>
+    <!-- SPHINX_DOME_EQUILIBRIUM_BEGIN -->
     <HydrostaticEquilibrium
       name="EQUILIBRIUM"
       objectPath="ElementRegions"
@@ -220,8 +241,10 @@
       componentNames="{ CH4, CO2, H2S, H2O }"
       componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
       temperatureVsElevationTableName="TEMP.VD"/>
+    <!-- SPHINX_DOME_EQUILIBRIUM_END -->
   </FieldSpecifications>
 
+  <!-- SPHINX_DOME_OUTPUTS_BEGIN -->
   <Outputs>
     <VTK
       name="VTK.OUTPUT"/>
@@ -229,7 +252,9 @@
     <Restart
       name="RESTART.OUTPUT"/>
   </Outputs>
+  <!-- SPHINX_DOME_OUTPUTS_END -->
 
+  <!-- SPHINX_DOME_STATISTICS_BEGIN -->
   <Tasks>
     <CompositionalMultiphaseStatistics
       name="FLOW.STATISTICS"
@@ -239,8 +264,10 @@
       computeCFLNumbers="0"
       computeRegionStatistics="1"/>
   </Tasks>
+  <!-- SPHINX_DOME_STATISTICS_END -->
 
   <Functions>
+    <!-- SPHINX_DOME_SATURATION_TABLES_BEGIN -->
     <TableFunction
       name="KRW.SAND"
       interpolation="linear"
@@ -276,7 +303,9 @@
       interpolation="linear"
       coordinates="{ 0.04000, 0.28000, 0.32312, 0.36625, 0.40938, 0.45250, 0.49562, 0.53875, 0.58188, 0.62500, 0.66812, 0.71125, 0.75438, 0.79750, 0.84062, 0.88000, 0.92688, 0.95000 }"
       values="{ 6.13141e+01, 5.91753e+01, 5.70544e+01, 5.46673e+01, 5.20482e+01, 4.92216e+01, 4.62081e+01, 4.30281e+01, 3.97023e+01, 3.62512e+01, 3.26953e+01, 2.89654e+01, 2.49159e+01, 2.04791e+01, 1.57120e+01, 1.11278e+01, 5.41541e+00, 0.00000e+00 }"/>
+    <!-- SPHINX_DOME_SATURATION_TABLES_END -->
 
+    <!-- SPHINX_DOME_KVALUE_TABLES_BEGIN -->
     <TableFunction
       name="KV_CH4"
       inputVarNames="{ pressure, temperature }"
@@ -304,7 +333,9 @@
       interpolation="linear"
       coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
       voxelFile="tables/kv_H2O.txt"/>
+    <!-- SPHINX_DOME_KVALUE_TABLES_END -->
 
+    <!-- SPHINX_DOME_INIT_TABLES_BEGIN -->
     <TableFunction
       name="TEMP.VD"
       coordinates="{ -5000.0, -4000.0 }"
@@ -329,7 +360,9 @@
       name="H2O.VD"
       coordinates="{ -5000.0, -4000.0 }"
       values="{ 0.9, 0.15 }"/>
+    <!-- SPHINX_DOME_INIT_TABLES_END -->
 
+    <!-- SPHINX_DOME_SCHEDULE_TABLES_BEGIN -->
     <TableFunction
       name="GAS.INJECTOR.RATE"
       interpolation="lower"
@@ -350,8 +383,10 @@
       inputVarNames="{ time }"
       coordinates="{ -31557600, 157788000, 252460800, 3155760000 }"
       values="{ 0, 0.2, 0, 0 }"/>
+    <!-- SPHINX_DOME_SCHEDULE_TABLES_END -->
   </Functions>
 
+  <!-- SPHINX_DOME_EVENTS_BEGIN -->
   <Events
     minTime="0"
     maxTime="632016000">
@@ -393,6 +428,7 @@
       maxEventDt="8640000"
       beginTime="158652000"/>
   </Events>
+  <!-- SPHINX_DOME_EVENTS_END -->
 
   <Included>
     <File
