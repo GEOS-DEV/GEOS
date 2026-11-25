@@ -293,7 +293,7 @@ public:
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": Invalid coupling type option." );
+      GEOS_ERROR( "Invalid coupling type option.", getDataContext() );
       return 0;
     }
   }
