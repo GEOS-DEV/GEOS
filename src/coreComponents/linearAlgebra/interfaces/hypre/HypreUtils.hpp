@@ -637,8 +637,7 @@ enum class MGRFRelaxationType : HYPRE_Int
   l1jacobi = 18,                    //!< \f$\ell_1\f$-scaled Jacobi
   ilu = 32,                         //!< incomplete LU factorization
   gsElimWPivoting = 99,             //!< Gaussian Elimination with pivoting direct solver (for small systems)
-  gsElimWInverse = 199,             //!< Direct Inversion with Gaussian Elimination (OK for larger systems)
-  blockJacobi = 0
+  gsElimWInverse = 199              //!< Direct Inversion with Gaussian Elimination (OK for larger systems)
 };
 
 /**

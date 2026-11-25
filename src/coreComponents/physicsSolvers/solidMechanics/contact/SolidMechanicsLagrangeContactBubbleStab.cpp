@@ -1039,7 +1039,7 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
       this->m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = std::move( stickList );
       this->m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = std::move( slipList );
 
-      GEOS_LOG_LEVEL_BY_RANK( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ));
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
