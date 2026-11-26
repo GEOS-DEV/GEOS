@@ -185,8 +185,8 @@ void HeatCapacityCoefficients::postInputInitializationImpl( MultiFluidBase const
                         InputError );
 
   // Follow the CO2 brine example and validate in the range [10,200] deg C
-  real64 const minTemperature = units::convertCToK( 10.0 ) - m_referenceTemperature;
-  real64 const maxTemperature = units::convertCToK( 200.0 ) - m_referenceTemperature;
+  real64 const minTemperature = LvArray::math::min( 0.0, units::convertCToK( 10.0 ) - m_referenceTemperature );
+  real64 const maxTemperature = LvArray::math::max( 0.0, units::convertCToK( 200.0 ) - m_referenceTemperature );
 
   real64 negT = 0.0;
   real64 negHT = 0.0;
