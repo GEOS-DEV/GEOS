@@ -451,6 +451,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="FiniteElements" type="FiniteElementsType" maxOccurs="1" />
 			<xsd:element name="FiniteVolume" type="FiniteVolumeType" maxOccurs="1" />
+			<xsd:element name="MixedMimetic" type="MixedMimeticType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementsType">
@@ -528,6 +529,12 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--targetRegions => List of regions to build the stencil for-->
 		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-false_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
+	<xsd:complexType name="MixedMimeticType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="MixedMimeticDiscretization" type="MixedMimeticDiscretizationType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="MixedMimeticDiscretizationType" />
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
@@ -594,6 +601,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SeismicityRate" type="SeismicityRateType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
+			<xsd:element name="SinglePhaseMixedMFD" type="SinglePhaseMixedMFDType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
 			<xsd:element name="SinglePhasePoromechanicsConformingFractures" type="SinglePhasePoromechanicsConformingFracturesType" />
 			<xsd:element name="SinglePhasePoromechanicsConformingFracturesALM" type="SinglePhasePoromechanicsConformingFracturesALMType" />
@@ -1184,6 +1192,15 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseHybridFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseMixedMFDType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
