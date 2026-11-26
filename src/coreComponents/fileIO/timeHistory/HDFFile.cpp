@@ -16,6 +16,8 @@
 #include "HDFFile.hpp"
 
 #include "common/MpiWrapper.hpp"
+#include "common/logger/Logger.hpp"
+#include "common/format/Format.hpp"
 
 #include <hdf5.h>
 
@@ -69,6 +71,9 @@ HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, 
   {
     m_fileId = H5Fcreate( m_filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, m_faplId );
   }
+  GEOS_ERROR_IF( m_fileId < 0,
+                 GEOS_FMT( "Unable to create or open the HDF5 file '{}': check that its directory exists and is writable.",
+                           m_filename ) );
 }
 
 HDFFile::~HDFFile()
