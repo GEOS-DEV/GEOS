@@ -43,7 +43,7 @@ namespace mgr
  * Laplacian S = C + D diag(M)^{-1} D^T: exact where both cells of a face use the diagonal
  * (TPFA) product, and spectrally equivalent to the pressure Schur complement elsewhere with
  * the constants of diag(M) ~ M. Being an M-matrix, S is what classical AMG is built for;
- * the F-relaxation is one symmetric Gauss-Seidel sweep on M and the coarse solve one BoomerAMG
+ * the F-relaxation is one symmetric Gauss-Seidel sweep on M (Jacobi on GPU) and the coarse solve one BoomerAMG
  * V-cycle.
  *
  * The solver provides custom point markers (LinearSolverParameters::MGR::customPointMarkers):
@@ -65,9 +65,14 @@ public:
     m_labels[0].push_back( 2 );
     setupLabels();
 
-    // l1-scaled relaxations are rejected by hypre here (the pressure rows have an empty C-C block
-    // without accumulation) and plain Jacobi has no weight in MGR: symmetric Gauss-Seidel instead
+    // Hybrid symmetric Gauss-Seidel (hypre type 6) is host-only. Use plain Jacobi on GPU:
+    // l1-scaled relaxations are rejected for empty pressure C-C blocks without accumulation.
+    // Retain symmetric Gauss-Seidel on CPU since plain Jacobi has no weight in MGR.
+  #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    m_levelFRelaxType[0]         = MGRFRelaxationType::jacobi;
+  #else
     m_levelFRelaxType[0]         = MGRFRelaxationType::hybridSymmetricGaussSeidel;
+  #endif
     m_levelFRelaxIters[0]        = 1;
     m_levelInterpType[0]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;

@@ -31,8 +31,8 @@ namespace mimeticInnerProduct
 /**
  * @class RTInnerProduct
  *
- * Provides the mimetic inner product that reproduces the lowest-order Raviart-Thomas mass matrix
- * exactly on simplices, and extends it consistently to general polyhedra
+ * Mimetic inner product that coincides with the mass matrix of the lowest-order Raviart-Thomas element on
+ * simplices and on rectangular parallelepipeds, and extends it consistently to general polyhedra
  */
 class RTInnerProduct : public MimeticInnerProductBase
 {
@@ -75,9 +75,11 @@ public:
    * @param[in] lengthTolerance the tolerance used in the trans calculations
    * @param[inout] M the output inner product matrix
    *
-   * @details M = C K^{-1} C^T / V + s ( I - Q Q^T ) with Q an orthonormal basis of the range of the
-   * K-weighted area normals; s = tr( C K^{-1} C^T / V ) / (d+2) is the unique scale matching the
-   * conforming RT0 element on simplices.
+   * @details M = M1 + P D P, with the consistency term M1 = C K^{-1} C^T / V, the projector P = I - Q Q^T, Q an
+   * orthonormal basis of the range of N K, and D a positive diagonal matrix. On a simplex D = tr( M1 ) / ( d + 2 ) I,
+   * the unique scaling for which M is the mass matrix of the RT0 element. On the other cells D = 2/3 diag( M1 ), for
+   * which M is the mass matrix of the RT[0] element on a rectangular parallelepiped with K diagonal in its axes,
+   * for every aspect ratio.
    */
   template< localIndex NF >
   GEOS_HOST_DEVICE
@@ -133,15 +135,35 @@ RTInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_U
   LvArray::tensorOps::Rij_add_AikAjk< NF, 3 >( P, Qmat );
   LvArray::tensorOps::scale< NF, NF >( P, -1.0 );
 
-  // 4) s = tr(M1)/(d+2), the unique RT0-matching stabilization scale on simplices (d = 3)
-  real64 const s = LvArray::tensorOps::trace< NF >( M1 ) / 5.0;
+  // 4) diagonal scaling D of the stabilization P D P: tr(M1)/(d+2) I on a simplex (d = 3), 2/3 diag(M1) otherwise
+  real64 D[ NF ];
+  if( NF == 4 )
+  {
+    real64 const s = LvArray::tensorOps::trace< NF >( M1 ) / 5.0;
+    for( localIndex i = 0; i < NF; ++i )
+    {
+      D[i] = s;
+    }
+  }
+  else
+  {
+    for( localIndex i = 0; i < NF; ++i )
+    {
+      D[i] = 2.0 / 3.0 * M1[i][i];
+    }
+  }
 
-  // 5) assemble M = M1 + s P
+  // 5) assemble M = M1 + P D P
   for( localIndex i = 0; i < NF; ++i )
   {
     for( localIndex j = 0; j < NF; ++j )
     {
-      M[i][j] = M1[i][j] + s * P[i][j];
+      real64 stab = 0.0;
+      for( localIndex k = 0; k < NF; ++k )
+      {
+        stab += P[i][k] * D[k] * P[k][j];
+      }
+      M[i][j] = M1[i][j] + stab;
     }
   }
 }

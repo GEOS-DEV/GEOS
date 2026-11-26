@@ -1,0 +1,208 @@
+<?xml version="1.0" ?>
+
+<!-- The problem of lapwoodConvection_base.xml with the cell-centred finite volume solver and the two-point flux
+     approximation: same domain, medium, fluid, initial state and events.
+
+     Difference in the thermal boundary condition. In SinglePhaseFVM a face Dirichlet condition prescribes the pressure
+     and the temperature together, so an impervious face of given temperature is not available. The conductive
+     temperature 320 - 0.2 z is imposed instead in the cells of the bottom and top layers, at their centres
+     z = dz_b / 2 and h - dz_b / 2: a condition of first order in the thickness dz_b of those layers.
+
+     The mesh is therefore graded towards z = 0 and z = h: dz = 10/3 m in [5, 95] as in the mixed deck, 5/6 m in the
+     next 10/3 m and dz_b = 5/24 m in the last 5/3 m. With dz_b = h / 480, n = 3.10e-10 1/s at Ra = 50 and
+     -7.86e-10 1/s at Ra = 30 (theory 3.10e-10 and -8.01e-10). With uniform layers dz_b = h / 30 the rates were
+     2.52e-10 and -8.39e-10. -->
+
+<Problem>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseFVM
+      name="flow"
+      logLevel="1"
+      isThermal="1"
+      discretization="tpfa"
+      temperature="310.0"
+      targetRegions="{ domain }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1.0e-7"
+        logLevel="1"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfa"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D4 }"
+      xCoords="{ 0, 200 }"
+      yCoords="{ 0, 200 }"
+      zCoords="{ 0, 1.6666666667, 5, 95, 98.3333333333, 100 }"
+      nx="{ 60 }"
+      ny="{ 30 }"
+      nz="{ 8, 4, 27, 4, 8 }"
+      cellBlockNames="{ block }"/>
+  </Mesh>
+
+  <Geometry>
+    <!-- cells of the bottom and top layers, dz = 5/24 m -->
+    <Box
+      name="bottomCells"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 200.01, 200.01, 0.21 }"/>
+
+    <Box
+      name="topCells"
+      xMin="{ -0.01, -0.01, 99.79 }"
+      xMax="{ 200.01, 200.01, 100.01 }"/>
+
+    <!-- cell at mid-height ( z = 50 ), at the maximum of the initial perturbation -->
+    <Box
+      name="probe"
+      xMin="{ -0.01, -0.01, 48.32 }"
+      xMax="{ 3.34, 6.68, 51.68 }"/>
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="domain"
+      cellBlocks="{ * }"
+      materialList="{ rock, fluid, thermalCond }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="1.0e7"
+      compressibility="0.0"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="2.0e6"
+      referenceTemperature="310.0"
+      referenceInternalEnergy="0.0"/>
+
+    <!-- k at Ra = 4 pi^2; the variants overwrite it -->
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 5.03038e-12, 5.03038e-12, 5.03038e-12 }"/>
+
+    <ThermalCompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="1.0e7"
+      referenceTemperature="310.0"
+      compressibility="4.5e-10"
+      thermalExpansionCoeff="2.0e-4"
+      viscosibility="0.0"
+      temperatureViscosityCoefficient="0.0"
+      specificHeatCapacity="4000"
+      referenceInternalEnergy="1.0e6"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 2.0, 2.0, 2.0 }"
+      thermalConductivityGradientComponents="{ 0, 0, 0 }"
+      referenceTemperature="310.0"/>
+  </Constitutive>
+
+  <!-- tabulated over the whole domain, independent of the mesh -->
+  <Functions>
+    <!-- 1.0e7 + rho g ( h - z ) -->
+    <TableFunction
+      name="hydrostaticPressure"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ lapwoodConvection_tables/xMid.geos, lapwoodConvection_tables/y.geos, lapwoodConvection_tables/z.geos }"
+      voxelFile="lapwoodConvection_tables/pressure.geos"/>
+
+    <!-- 320 - 0.2 z + 0.01 sin( pi z / h ) cos( pi x / h ) cos( pi y / h ), tabulated every 5 m -->
+    <TableFunction
+      name="disturbedTemperature"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ lapwoodConvection_tables/x3D.geos, lapwoodConvection_tables/y3D.geos, lapwoodConvection_tables/z3D.geos }"
+      voxelFile="lapwoodConvection_tables/temperature3D.geos"/>
+
+    <!-- 320 - 0.2 z -->
+    <TableFunction
+      name="conductiveTemperature"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ lapwoodConvection_tables/xMid.geos, lapwoodConvection_tables/y.geos, lapwoodConvection_tables/z.geos }"
+      voxelFile="lapwoodConvection_tables/conduction.geos"/>
+  </Functions>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      functionName="hydrostaticPressure"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      functionName="disturbedTemperature"
+      scale="1.0"/>
+
+    <!-- conductive temperature in the bottom and top cell layers; no flow condition: every boundary is impervious -->
+    <FieldSpecification
+      name="boundaryTemperature"
+      setNames="{ bottomCells, topCells }"
+      objectPath="ElementRegions"
+      fieldName="temperature"
+      functionName="conductiveTemperature"
+      scale="1.0"/>
+  </FieldSpecifications>
+
+  <!-- the disturbance is temperature - ( 320 - 0.2 z ) in the probe cell, z stored with the history -->
+  <Tasks>
+    <PackCollection
+      name="probeTemperature"
+      objectPath="ElementRegions/domain/block"
+      fieldName="temperature"
+      setNames="{ probe }"/>
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      fieldNames="{ pressure, temperature }"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{ /Tasks/probeTemperature }"
+      filename="lapwoodProbe"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

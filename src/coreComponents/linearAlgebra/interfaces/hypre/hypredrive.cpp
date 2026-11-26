@@ -23,6 +23,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ReactiveCompositionalMultiphaseOBL.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseMixedMFD.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhaseMixedMFD.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFracturesALM.hpp"
@@ -446,6 +447,7 @@ bool strategyUsesCompositionalSemanticLabels( LinearSolverParameters::MGR::Strat
     case StrategyType::thermalSinglePhaseReservoirFVM:
     case StrategyType::singlePhaseHybridFVM:
     case StrategyType::singlePhaseMixedMFD:
+    case StrategyType::thermalSinglePhaseMixedMFD:
     case StrategyType::singlePhaseReservoirHybridFVM:
     case StrategyType::singlePhasePoromechanics:
     case StrategyType::thermalSinglePhasePoromechanics:
@@ -1094,6 +1096,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     case StrategyType::singlePhaseReservoirFVM:
     case StrategyType::singlePhaseHybridFVM:
     case StrategyType::singlePhaseMixedMFD:
+    case StrategyType::thermalSinglePhaseMixedMFD:
     case StrategyType::singlePhaseReservoirHybridFVM:
     case StrategyType::compositionalMultiphaseFVM:
     case StrategyType::compositionalMultiphaseHybridFVM:
@@ -1434,7 +1437,8 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
   // custom point markers use more blocks than dof fields: no field-name representation, skip the YAML
   if( strategy.m_numBlocks > LvArray::integerConversion< HYPRE_Int >( labelNames.size() ) )
   {
-    GEOS_ERROR_IF( params.mgr.strategy != LinearSolverParameters::MGR::StrategyType::singlePhaseMixedMFD,
+    GEOS_ERROR_IF( params.mgr.strategy != LinearSolverParameters::MGR::StrategyType::singlePhaseMixedMFD &&
+                   params.mgr.strategy != LinearSolverParameters::MGR::StrategyType::thermalSinglePhaseMixedMFD,
                    GEOS_FMT( "hypredrive: the MGR strategy {} has {} blocks for {} dof labels",
                              params.mgr.strategy, strategy.m_numBlocks, labelNames.size() ) );
     return false;
@@ -1556,6 +1560,7 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
     GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhaseReservoirFVM, ThermalSinglePhaseReservoirFVM );
     GEOS_HYPREDRIVE_MGR_CASE( singlePhaseHybridFVM, SinglePhaseHybridFVM );
     GEOS_HYPREDRIVE_MGR_CASE( singlePhaseMixedMFD, SinglePhaseMixedMFD );
+    GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhaseMixedMFD, ThermalSinglePhaseMixedMFD );
     GEOS_HYPREDRIVE_MGR_CASE( singlePhaseReservoirHybridFVM, SinglePhaseReservoirHybridFVM );
     GEOS_HYPREDRIVE_MGR_CASE( singlePhasePoromechanics, SinglePhasePoromechanics );
     GEOS_HYPREDRIVE_MGR_CASE( thermalSinglePhasePoromechanics, ThermalSinglePhasePoromechanics );

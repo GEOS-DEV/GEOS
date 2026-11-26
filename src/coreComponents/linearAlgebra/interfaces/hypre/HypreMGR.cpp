@@ -35,6 +35,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ReactiveCompositionalMultiphaseOBL.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseHybridFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhaseMixedMFD.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhaseMixedMFD.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp"
@@ -195,6 +196,13 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
                      "The singlePhaseMixedMFD MGR strategy requires solver-provided point markers "
                      "splitting the face-flux dofs by the TPFA/MFD classification" );
       setStrategy< SinglePhaseMixedMFD >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::thermalSinglePhaseMixedMFD:
+    {
+      GEOS_ERROR_IF( params.mgr.customPointMarkers.empty(),
+                     "The thermalSinglePhaseMixedMFD MGR strategy requires solver-provided point markers" );
+      setStrategy< ThermalSinglePhaseMixedMFD >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics:

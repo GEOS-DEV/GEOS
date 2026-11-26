@@ -41,6 +41,142 @@ DECLARE_FIELD( faceMassFlux,
                WRITE_AND_READ,
                "Face mass flux unknown of the mixed mimetic formulation (positive in the direction of the global face normal)" );
 
+DECLARE_FIELD( faceHeatFlux,
+               "faceHeatFlux",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Face conductive heat flux unknown of the mixed mimetic formulation (positive in the direction of the global face normal)" );
+
+DECLARE_FIELD( faceHeatFlux_n,
+               "faceHeatFlux_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Face conductive heat flux at the previous converged time step" );
+
+DECLARE_FIELD( enthalpy,
+               "enthalpy",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Cell specific enthalpy unknown h, closed by h - h_eos(p, T) = 0" );
+
+DECLARE_FIELD( enthalpy_n,
+               "enthalpy_n",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Cell specific enthalpy at the previous converged time step" );
+
+DECLARE_FIELD( bcEnthalpy,
+               "bcEnthalpy",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Specific enthalpy of the fluid entering through a boundary face (used where the Darcy flux enters the domain)" );
+
+DECLARE_FIELD( bcHeatFlux,
+               "bcHeatFlux",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Neumann condition: prescribed outward conductive heat flux per unit area of a boundary face" );
+
+DECLARE_FIELD( bcHeatTransferCoefficient,
+               "bcHeatTransferCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Robin condition: heat transfer coefficient h_c of a boundary face, q . n = h_c (T - T_inf)" );
+
+DECLARE_FIELD( bcAmbientTemperature,
+               "bcAmbientTemperature",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Robin condition: ambient temperature T_inf of a boundary face" );
+
+DECLARE_FIELD( bcMassFlux,
+               "bcMassFlux",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Neumann condition: prescribed outward mass flux per unit area of a boundary face" );
+
+DECLARE_FIELD( flowBoundaryType,
+               "flowBoundaryType",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Condition of the flow operator on a face: 0 = interior, 1 = Dirichlet (bcPressure), 2 = Neumann (bcMassFlux, 0 = no flow), 3 = Robin" );
+
+DECLARE_FIELD( flowBoundaryValue,
+               "flowBoundaryValue",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Value g of the flow condition: the pressure trace (Dirichlet, Robin) or the outward mass flux per unit area (Neumann)" );
+
+DECLARE_FIELD( flowBoundaryCoefficient,
+               "flowBoundaryCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Coefficient alpha of a Robin flow condition, sigma m = alpha |f| (pi_f - g)" );
+
+DECLARE_FIELD( heatBoundaryType,
+               "heatBoundaryType",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Condition of the heat operator on a face: 0 = interior, 1 = Dirichlet (bcTemperature), 2 = Neumann (bcHeatFlux, 0 = adiabatic), 3 = Robin" );
+
+DECLARE_FIELD( heatBoundaryValue,
+               "heatBoundaryValue",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Value g of the heat condition: the temperature trace (Dirichlet), the ambient temperature (Robin) or the outward heat flux per unit area (Neumann)" );
+
+DECLARE_FIELD( heatBoundaryCoefficient,
+               "heatBoundaryCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Coefficient alpha of a Robin heat condition, the heat transfer coefficient h_c" );
+
+DECLARE_FIELD( isEnthalpyBcFace,
+               "isEnthalpyBcFace",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "1 on a boundary face carrying a prescribed inlet enthalpy (bcEnthalpy)" );
+
+DECLARE_FIELD( faceHeatDofScale,
+               "faceHeatDofScale",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Characteristic scale of the face heat flux unknown, T_scale / |M_ff|, used by the residual-norm weights" );
+
 DECLARE_FIELD( faceMassFlux_n,
                "faceMassFlux_n",
                array1d< real64 >,
