@@ -15,5 +15,7 @@ Carbon Storage
 
    isothermalHystInjection/Example
 
+   jouleThomsonCooling/Example
+
    spe11b/Example
 

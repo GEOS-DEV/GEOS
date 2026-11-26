@@ -47,7 +47,6 @@ class CompositionalEnthalpyUpdate final : public FunctionBaseUpdate
 public:
   CompositionalEnthalpyUpdate( integer const phaseIndex,
                                integer const vapourIndex,
-                               PhaseType const phaseType,
                                EquationOfStateType const equationOfState,
                                real64 const refTemperature,
                                arrayView2d< real64 const > const & referenceEnthalpy,
@@ -102,13 +101,11 @@ public:
                                          real64 const & temperature,
                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                          real64 & enthalpy,
-                                         arraySlice1d< real64, USD2 > const & dEnthalpy,
-                                         PhaseType const & phaseType ) const;
+                                         arraySlice1d< real64, USD2 > const & dEnthalpy ) const;
 
 private:
   integer const m_phaseIndex{-1};
   integer const m_vapourIndex{-1};
-  PhaseType const m_phaseType;
   EquationOfStateType const m_equationOfState;
   real64 const m_refTemperature;
   arrayView2d< real64 const > const m_referenceEnthalpy;
@@ -145,7 +142,6 @@ public:
 private:
   integer m_phaseIndex{-1};
   integer m_vapourIndex{-1};
-  PhaseType m_phaseType;
   EquationOfStateType m_equationOfState;
   arrayView1d< real64 const > m_criticalTemperature;
   HeatCapacityCoefficients const * const m_heatCapacityCoefficients{nullptr};
@@ -208,8 +204,7 @@ void CompositionalEnthalpyUpdate::compute(
                                                     temperature,
                                                     phaseComposition,
                                                     hEosEnthalpy,
-                                                    dhEosEnthalpy.toSlice(),
-                                                    m_phaseType );
+                                                    dhEosEnthalpy.toSlice() );
   } );
 
   // 3. Combine the 2 values for the actual fluid enthalpy
@@ -271,8 +266,7 @@ void CompositionalEnthalpyUpdate::calculateEquationOfStateEnthalpy(
   real64 const & temperature,
   arraySlice1d< real64 const, USD1 > const & phaseComposition,
   real64 & enthalpy,
-  arraySlice1d< real64, USD2 > const & dEnthalpy,
-  PhaseType const & phaseType ) const
+  arraySlice1d< real64, USD2 > const & dEnthalpy ) const
 {
   integer sizes[2] = {0, 0};
   arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
@@ -280,8 +274,7 @@ void CompositionalEnthalpyUpdate::calculateEquationOfStateEnthalpy(
                                                        componentProperties.m_componentBinaryCoeff.toSliceConst(),
                                                        derivs.toSliceConst() );
 
-  typename EOS::SelectedRoot const root = phaseType == PhaseType::LIQUID ?
-                                          EOS::SelectedRoot::MINIMUM : EOS::SelectedRoot::MAXIMUM;
+  typename EOS::SelectedRoot constexpr root = EOS::SelectedRoot::AUTO;
 
   EOS::initialiseStack( numComps, pressure, temperature, componentProperties, stack );
   EOS::computeMixtureCoefficients( numComps, phaseComposition, stack );

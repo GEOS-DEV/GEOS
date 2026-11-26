@@ -39,6 +39,7 @@ decks = [
     create_pvt_test("testPVT_PhaseComposition", "PVT Driver test with composition output"),
     create_pvt_test("testPVT_Compositional", "PVT Driver test for compositional models"),
     create_pvt_test("testPVT_ThreePhaseCompositional", "PVT Driver test for three phase compositional models"),
+    create_pvt_test("testPVT_ThermalCompositional", "PVT Driver test for thermal compositional models"),
     create_pvt_test("testPVT_docExample", "PVT Driver documentation example"),   
     create_relperm_test("testRelperm_Table_2_phase", "Relperm driver for 2 phase tables"),
     create_relperm_test("testRelperm_Table_3_phase", "Relperm driver for 3 phase tables"),

@@ -1047,19 +1047,25 @@ MultiFluidBase::KernelWrapper::
   {
 
     bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
+    if( phaseExists )
     {
-      continue;
+      real64 const densInv = 1.0 / phaseMassDens.value[ip];
+      real64 const densInvSquared = densInv * densInv;
+      phaseInternalEnergy.value[ip] = phaseEnthalpy.value[ip] - pressure * densInv;
+      for( integer idof = 0; idof < numDOF; ++idof )
+      {
+        phaseInternalEnergy.derivs[ip][idof] = phaseEnthalpy.derivs[ip][idof] + pressure * phaseMassDens.derivs[ip][idof] * densInvSquared;
+      }
+      phaseInternalEnergy.derivs[ip][multifluid::DerivativeOffset::dP] -= densInv;
     }
-
-    real64 const densInv = 1.0 / phaseMassDens.value[ip];
-    real64 const densInvSquared = densInv * densInv;
-    phaseInternalEnergy.value[ip] = phaseEnthalpy.value[ip] - pressure * densInv;
-    for( integer idof = 0; idof < numDOF; ++idof )
+    else
     {
-      phaseInternalEnergy.derivs[ip][idof] = phaseEnthalpy.derivs[ip][idof] + pressure * phaseMassDens.derivs[ip][idof] * densInvSquared;
+      phaseInternalEnergy.value[ip] = 0.0;
+      for( integer idof = 0; idof < numDOF; ++idof )
+      {
+        phaseInternalEnergy.derivs[ip][idof] = 0.0;
+      }
     }
-    phaseInternalEnergy.derivs[ip][multifluid::DerivativeOffset::dP] -= densInv;
   }
 }
 
