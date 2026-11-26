@@ -1561,6 +1561,8 @@ When set to "error", output a throw.
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
+		<!--injectionTemperature => Temperature of the injected stream [K], used by the thermal compositional flow solvers. When it is set, each cell where this SourceFlux injects receives, in its energy balance, the enthalpy of the injected component at the cell pressure and this temperature. Production (a positive rate) is not affected. When it is not set, the injected mass carries no energy.-->
+		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Multiplier of the functionName value. If no functionName is provided, this value is used directly.-->
