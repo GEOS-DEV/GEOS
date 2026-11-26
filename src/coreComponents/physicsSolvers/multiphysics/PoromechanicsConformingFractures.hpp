@@ -178,7 +178,9 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    integer const numComp = numFluidComponents();
+    // number of rows a fracture element occupies in the flow block: the mass balance equations, plus
+    // the energy balance equation when thermal
+    integer const numComp = numFluidComponents() + ( this->m_isThermal ? 1 : 0 );
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                         MeshLevel const & mesh,
@@ -251,7 +253,9 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    integer const numComp = numFluidComponents();
+    // number of rows a fracture element occupies in the flow block: the mass balance equations, plus
+    // the energy balance equation when thermal
+    integer const numComp = numFluidComponents() + ( this->m_isThermal ? 1 : 0 );
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
@@ -349,7 +353,9 @@ protected:
    */
   void setUpDflux_dApertureMatrix( DomainPartition & domain )
   {
-    integer const numComp = numFluidComponents();
+    // number of rows a fracture element occupies in the flow block: the mass balance equations, plus
+    // the energy balance equation when thermal
+    integer const numComp = numFluidComponents() + ( this->m_isThermal ? 1 : 0 );
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->flowSolver()->getDiscretizationName() );

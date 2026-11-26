@@ -132,7 +132,11 @@ struct DeformationUpdateKernel
   }
 };
 
-struct FluidMassResidualDerivativeAssemblyKernel
+/**
+ * @brief Assembles the derivatives of the fracture flow residuals with respect to the nodal
+ *        displacements: the mass balance, and the energy balance when the flow solver is thermal.
+ */
+struct FluidResidualDerivativeAssemblyKernel
 {
   template< typename HYDRAULICAPERTURE_WRAPPER >
   GEOS_HOST_DEVICE
@@ -148,8 +152,11 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  real64 const & aperture,
                                  real64 const & dens,
                                  integer const & fractureState,
+                                 integer const isThermal,
+                                 real64 const & intEnergy,
                                  globalIndex (& nodeDOF)[8 * 3],
-                                 arraySlice1d< real64 > const dRdU )
+                                 arraySlice1d< real64 > const dRdU,
+                                 arraySlice1d< real64 > const dEnergyRdU )
   {
     real64 dHydraulicAperture_dNormalJump = 0.0;
     real64 dHydraulicAperture_dTraction = 0.0;
@@ -174,7 +181,15 @@ struct FluidMassResidualDerivativeAssemblyKernel
           real64 const dHydraulicAperture_dDisplacement = dHydraulicAperture_dNormalJump * dNormalJump_dDisplacement;
           real64 const dVolume_dDisplacement = area * dHydraulicAperture_dDisplacement;
 
+          // mass accumulation: mass = dens * volume ( unit fracture porosity )
           dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * dVolume_dDisplacement;
+
+          if( isThermal )
+          {
+            // energy accumulation: energy = dens * intEnergy * volume ( unit fracture porosity, so the
+            // ( 1 - poro ) * rockIntEnergy contribution drops out )
+            dEnergyRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * intEnergy * dVolume_dDisplacement;
+          }
         }
       }
     }
@@ -230,6 +245,8 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens,
+          integer const isThermal,
+          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const intEnergy,
           CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dNormalJump,
           CRSMatrixView< real64, globalIndex const > const & localMatrix )
   {
@@ -242,8 +259,11 @@ struct FluidMassResidualDerivativeAssemblyKernel
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
       globalIndex const rowNumber = presDofNumber[ei] - rankOffset;
+      // the energy balance sits in the row right after the mass balance
+      globalIndex const energyRowNumber = rowNumber + 1;
       globalIndex nodeDOF[8 * 3];
       stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
+      stackArray1d< real64, 24 > dEnergyRdU( 2 * numNodesPerFace * 3 );
 //
       computeAccumulationDerivative( hydraulicApertureWrapper,
                                      numNodesPerFace,
@@ -255,8 +275,11 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                      aperture[ei],
                                      dens[ei][0],
                                      fractureState[ei],
+                                     isThermal,
+                                     intEnergy[ei][0],
                                      nodeDOF,
-                                     dRdU );
+                                     dRdU,
+                                     dEnergyRdU );
 
       if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
       {
@@ -265,32 +288,50 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                                                           dRdU.data(),
                                                                           2 * numNodesPerFace * 3 );
       }
+
+      if( isThermal && energyRowNumber >= 0 && energyRowNumber < localMatrix.numRows() )
+      {
+        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( energyRowNumber,
+                                                                          nodeDOF,
+                                                                          dEnergyRdU.data(),
+                                                                          2 * numNodesPerFace * 3 );
+      }
 //
       if( useQuasiNewton == 0 ) // when Quasi Newton is not enabled - add flux derivatives
       {
-        localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( ei );
-        arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( ei );
-        arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( ei );
+        // for single phase flow an element owns one flow equation, or two when thermal, and it owns
+        // that many consecutive rows of both dFluxResidual_dNormalJump and the system matrix
+        integer const numFlowEqn = isThermal ? 2 : 1;
 
-        for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
+        for( integer ie = 0; ie < numFlowEqn; ++ie )
         {
-          computeFluxDerivative( kfe2,
-                                 numNodesPerFace,
-                                 columns,
-                                 values,
-                                 elemsToFaces,
-                                 faceToNodeMap,
-                                 dispDofNumber,
-                                 Nbar,
-                                 nodeDOF,
-                                 dRdU );
+          localIndex const fluxRow = ei * numFlowEqn + ie;
+          globalIndex const fluxRowNumber = rowNumber + ie;
 
-          if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
+          localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( fluxRow );
+          arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( fluxRow );
+          arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( fluxRow );
+
+          for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
           {
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                              nodeDOF,
-                                                                              dRdU.data(),
-                                                                              2 * numNodesPerFace * 3 );
+            computeFluxDerivative( kfe2,
+                                   numNodesPerFace,
+                                   columns,
+                                   values,
+                                   elemsToFaces,
+                                   faceToNodeMap,
+                                   dispDofNumber,
+                                   Nbar,
+                                   nodeDOF,
+                                   dRdU );
+
+            if( fluxRowNumber >= 0 && fluxRowNumber < localMatrix.numRows() )
+            {
+              localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( fluxRowNumber,
+                                                                                nodeDOF,
+                                                                                dRdU.data(),
+                                                                                2 * numNodesPerFace * 3 );
+            }
           }
         }
       }
