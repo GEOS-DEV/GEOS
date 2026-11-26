@@ -122,6 +122,8 @@ private:
   string m_fieldName;
   /// The names of the sets to collect history info from
   string_array m_setNames;
+  /// The requested sets that exist, in input order: one collection (and one output label) per entry
+  stdVector< string > m_existingSetNames;
   /// Whether any of the collected set(s) have changed since the last collection
   bool m_setChanged;
   /// Whether to only pack when the collected set(s) change size (mostly used for collecting metadata)
