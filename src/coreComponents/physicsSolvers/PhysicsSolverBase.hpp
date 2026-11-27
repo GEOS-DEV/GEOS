@@ -668,6 +668,14 @@ public:
   resetStateToBeginningOfStep( DomainPartition & domain );
 
   /**
+   * @brief Set all the variables of the solver to zero.
+   * @param domain the domain partition
+   * @note Used by the earthquake solvers, which compute changes with respect to a zero configuration.
+   */
+  virtual void
+  setAllVariablesToZero( DomainPartition & domain ) const { GEOS_UNUSED_VAR( domain );}
+
+  /**
    * @brief perform cleanup for implicit timestep
    * @param time the time at the beginning of the step
    * @param dt the desired timestep

@@ -81,10 +81,23 @@ public:
     real64 const dFriction[2] = { -normalTraction * m_frictionLaw.dFrictionCoefficient_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ),
                                   -m_shearImpedance - normalTraction * m_frictionLaw.dFrictionCoefficient_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) };
 
+    // std::cout << "elem: " << k << " shearTractionMagnitude: " << shearTractionMagnitude << std::endl;
+    // std::cout << "elem: " << k << " m_shearImpedance: " << m_shearImpedance << std::endl;
+    // std::cout << "elem: " << k << " m_slipRate[k]: " << m_slipRate[k] << std::endl;
+    // std::cout << "elem: " << k << " normalTraction: " << normalTraction  << std::endl;
+    // std::cout << "elem: " << k << " frictionCoefficient: " << m_frictionLaw.frictionCoefficient( k, m_slipRate[k], m_stateVariable[k] )
+    // << std::endl;
+
+
     // Eq 2: slip law
     stack.rhs[1] = (m_stateVariable[k] - m_stateVariable_n[k]) / dt - m_frictionLaw.stateEvolution( k, m_slipRate[k], m_stateVariable[k] );
     real64 const dStateEvolutionLaw[2] = { 1.0 / dt - m_frictionLaw.dStateEvolution_dStateVariable( k, m_slipRate[k], m_stateVariable[k] ),
                                            -m_frictionLaw.dStateEvolution_dSlipRate( k, m_slipRate[k], m_stateVariable[k] ) };
+
+    // std::cout << "elem: " << k << " m_stateVariable[k]: " << m_stateVariable[k] << std::endl;
+    // std::cout << "elem: " << k << " m_stateVariable_n[k]: " << m_stateVariable_n[k] << std::endl;
+    // std::cout << "elem: " << k << " stateEvolution: " << m_frictionLaw.stateEvolution( k, m_slipRate[k], m_stateVariable[k] ) <<
+    // std::endl;
 
     // Assemble Jacobian matrix
     stack.jacobian[0][0] = dFriction[0];          // derivative of Eq 1 w.r.t. stateVariable
@@ -187,7 +200,7 @@ public:
       else
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "  Attempt {} failed. Halving dt and retrying.", attempt ) );
-        dt *= 0.5;
+        dt *= 0.1;
       }
     }
     if( !converged )

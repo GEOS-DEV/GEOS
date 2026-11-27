@@ -3945,6 +3945,8 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--absTimeStepTol => Absolute error tolerance for explicit adaptive time stepping-->
+		<xsd:attribute name="absTimeStepTol" type="real64" default="1e-06" />
 		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -3966,12 +3968,16 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--relTimeStepTol => Relative error tolerance for explicit adaptive time stepping-->
+		<xsd:attribute name="relTimeStepTol" type="real64" default="1e-06" />
 		<!--shearImpedance => Shear impedance.-->
 		<xsd:attribute name="shearImpedance" type="real64" use="required" />
 		<!--stressSolverName => Name of solver for computing stress.-->
 		<xsd:attribute name="stressSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--timeStepAcceptSafety => Acceptance safety factor for explicit adaptive time stepping-->
+		<xsd:attribute name="timeStepAcceptSafety" type="real64" default="0.81" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -3988,6 +3994,8 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--absTimeStepTol => Absolute error tolerance for explicit adaptive time stepping-->
+		<xsd:attribute name="absTimeStepTol" type="real64" default="1e-06" />
 		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -4009,10 +4017,14 @@ Information output from lower logLevels is added with the desired log level
 2
  - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--relTimeStepTol => Relative error tolerance for explicit adaptive time stepping-->
+		<xsd:attribute name="relTimeStepTol" type="real64" default="1e-06" />
 		<!--shearImpedance => Shear impedance.-->
 		<xsd:attribute name="shearImpedance" type="real64" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--timeStepAcceptSafety => Acceptance safety factor for explicit adaptive time stepping-->
+		<xsd:attribute name="timeStepAcceptSafety" type="real64" default="0.81" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->

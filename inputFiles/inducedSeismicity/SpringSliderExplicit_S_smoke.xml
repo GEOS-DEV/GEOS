@@ -53,6 +53,12 @@
       targetExactTimestep="0"
       target="/Tasks/stateVariableCollection"/>    
 
+    <PeriodicEvent
+      name="deltaSlipCollection"
+      cycleFrequency="1"
+      targetExactTimestep="0"
+      target="/Tasks/deltaSlipCollection"/>     
+
     <!-- Time history output -->
    <PeriodicEvent
       name="timeHistoryOutput"

@@ -1281,6 +1281,78 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
 
 }
 
+void SolidMechanicsLagrangeContactBubbleStab::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 > const & traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 > const & deltaTraction = subRegion.getField< contact::deltaTraction >();
+      arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 const > const & oldDispJump = subRegion.getField< contact::oldDispJump >();
+
+      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const & oldFractureState = subRegion.getField< contact::oldFractureState >();
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      {
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          traction[kfe][i] -= deltaTraction[kfe][i];
+          deltaTraction[kfe][i] = 0.0;
+
+          dispJump[kfe][i] = oldDispJump[kfe][i];
+        }
+        fractureState[kfe] = oldFractureState[kfe];
+      } );
+    } );
+  } );
+}
+
+void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainPartition & domain ) const
+{
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    nodeManager.getField< solidMechanics::totalDisplacement >().zero();
+    nodeManager.getField< solidMechanics::incrementalDisplacement >().zero();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      subRegion.getField< solidMechanics::averageStrain >().zero();
+      subRegion.getField< solidMechanics::averagePlasticStrain >().zero();
+      string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+      SolidBase & solidModel = subRegion.getConstitutiveModel< constitutive::SolidBase >( solidName );
+      solidModel.getStress().zero();
+      solidModel.getOldStress().zero();
+    } );
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      subRegion.getField< contact::traction >().zero();
+      // subRegion.getField< contact::traction_n >().zero();
+      subRegion.getField< contact::deltaTraction >().zero();
+      subRegion.getField< contact::dispJump >().zero();
+      subRegion.getField< contact::dispJump_n >().zero();
+      subRegion.getField< contact::oldDispJump >().zero();
+    } );
+  } );
+}
+
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SolidMechanicsLagrangeContactBubbleStab, string const &, Group * const )
 
 } /* namespace geos */

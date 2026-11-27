@@ -1,0 +1,242 @@
+<?xml version="1.0" ?>
+<Problem>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1105, 1105 }"
+      yCoords="{ -1105, 1105 }"
+      zCoords="{ -800, -500, -50, 50, 500, 800 }"
+      nx="{ 221 }"
+      ny="{ 221 }"
+      nz="{ 2, 10, 10, 10, 2 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+   <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock }"/>
+
+    <SurfaceElementRegion
+      name="Fault"
+      materialList="{frictionLaw}"
+      defaultAperture="1e-3"/>  
+    </ElementRegions>
+
+  <Geometry>    
+    <Box
+      name="faultPlane"
+      xMin="{ -1000.01, -1000.01, -0.01 }"
+      xMax="{  1000.01,  1000.01, 0.01 }"/>
+
+    <Box
+      name="pressurizedRegion"
+      xMin="{ -100.01, -100.01, -0.01 }"
+      xMax="{  100.01,  100.01, 0.01 }"/>
+
+    <Cylinder
+      name="01_faultStation"
+      firstFaceCenter="{ 0.0, 0.0, -805.01 }"
+      secondFaceCenter="{ 0.0, 0.0, 805.01 }"
+      outerRadius="8"/> 
+
+    <Cylinder
+      name="02_faultStation"
+      firstFaceCenter="{ 100.0, 0.0, -805.01 }"
+      secondFaceCenter="{ 100.0, 0.0, 805.01 }"
+      outerRadius="8"/> 
+
+    <Cylinder
+      name="03_faultStation"
+      firstFaceCenter="{ 200.0, 0.0, -805.01 }"
+      secondFaceCenter="{ 200.0, 0.0, 805.01 }"
+      outerRadius="8"/> 
+
+    <Cylinder
+      name="04_faultStation"
+      firstFaceCenter="{ 300.0, 0.0, -805.01 }"
+      secondFaceCenter="{ 300.0, 0.0, 805.01 }"
+      outerRadius="8"/> 
+
+    <Cylinder
+      name="05_faultStation"
+      firstFaceCenter="{ 100.0, 100.0, -805.01 }"
+      secondFaceCenter="{ 100.0, 100.0, 805.01 }"
+      outerRadius="8"/> 
+
+    <Cylinder
+      name="06_faultStation"
+      firstFaceCenter="{ 200.0, 200.0, -805.01 }"
+      secondFaceCenter="{ 200.0, 200.0, 805.01 }"
+      outerRadius="8"/> 
+
+    <Cylinder
+      name="07_faultStation"
+      firstFaceCenter="{ 300.0, 300.0, -805.01 }"
+      secondFaceCenter="{ 300.0, 300.0, 805.01 }"
+      outerRadius="8"/> 
+
+  </Geometry>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{rock}"/>
+
+    <SurfaceElementRegion
+      name="Fault"
+      materialList="{frictionLaw}"
+      defaultAperture="1e-3"/>  
+    </ElementRegions>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="fault"
+      fieldName="ruptureState"
+      initialCondition="1"
+      objectPath="faceManager"
+      scale="1"
+      setNames="{ faultPlane }"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ ypos, yneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zpos, zneg }"/>
+
+  <!-- Shear stress -->
+    <FieldSpecification
+      name="initial_backgroundShearStress_t1"
+      fieldName="backgroundShearStress"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="19174153.523993615"
+      setNames="{all}"
+      initialCondition="1"/>
+
+    <FieldSpecification
+      name="initial_backgroundShearStress_t2"
+      fieldName="backgroundShearStress"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="60.46761056044498"
+      setNames="{all}"
+      initialCondition="1"/>        
+
+    <FieldSpecification
+      name="backGroundNormalStress"
+      fieldName="backgroundNormalStress"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      scale="30.0e6"
+      setNames="{all}"/>
+
+    <FieldSpecification
+      name="normalStressPerturbationRate"
+      fieldName="normalStressPerturbationRate"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      scale="1.5854896e4"
+      initialCondition="1"
+      setNames="{pressurizedRegion}"/>
+
+<!-- Initial conditions -->
+    <FieldSpecification
+      name="initialStateVariable"
+      objectPath="ElementRegions/Fault"
+      fieldName="stateVariable"
+      scale="0.6782769016059297"
+      setNames="{ all }"
+      initialCondition="1"/>  
+      
+    <FieldSpecification
+      name="slipVelocity1"
+      fieldName="slipVelocity"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="3.170979198E-15"
+      setNames="{all}"/>
+
+    <FieldSpecification
+      name="slipVelocity2"
+      fieldName="slipVelocity"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="1.0e-20"
+      setNames="{all}"/>
+
+    <FieldSpecification
+      name="backSlipRate1"
+      fieldName="backSlipRate"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="0"
+      scale="3.170979198E-15"
+      setNames="{all}"/>
+
+    <FieldSpecification
+      name="backSlipRate2"
+      fieldName="backSlipRate"
+      initialCondition="1"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      component="1"
+      scale="0.0"
+      setNames="{all}"/>                          
+  </FieldSpecifications>
+
+  <Tasks>
+    <PackCollection
+      name="slipVelocityCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="slipVelocity"
+      setNames="{01_faultStation, 02_faultStation, 03_faultStation, 04_faultStation, 05_faultStation, 06_faultStation, 07_faultStation}"/>
+
+    <PackCollection
+      name="slipCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="totalSlip"
+      setNames="{01_faultStation, 02_faultStation, 03_faultStation, 04_faultStation, 05_faultStation, 06_faultStation, 07_faultStation}"/>
+
+    <PackCollection
+      name="shearTractionCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="shearTraction"
+      setNames="{01_faultStation, 02_faultStation, 03_faultStation, 04_faultStation, 05_faultStation, 06_faultStation, 07_faultStation}"/>
+
+    <PackCollection
+      name="stateCollection"
+      objectPath="ElementRegions/Fault/FractureSubRegion"
+      fieldName="stateVariable"
+      setNames="{01_faultStation, 02_faultStation, 03_faultStation, 04_faultStation, 05_faultStation, 06_faultStation, 07_faultStation}"/>
+   </Tasks>
+</Problem>
