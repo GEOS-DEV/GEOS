@@ -812,6 +812,31 @@ protected:
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
                    InputError, getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ) );
 
+    // The SolutionIncrements criterion compares the sub-solver fields with the state saved after each inner solve, which
+    // is only saved by sub-solvers that are themselves in sequential mode (see sequentiallyCoupledSolverStep).
+    // Otherwise the comparison reads a state that was never saved.
+    bool const usesSolutionIncrements = getNonlinearSolverParameters().sequentialConvergenceCriterion() ==
+                                        NonlinearSolverParameters::SequentialConvergenceCriterion::SolutionIncrements;
+    if( isSequential && usesSolutionIncrements )
+    {
+      forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+      {
+        GEOS_THROW_IF( solver->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential,
+                       GEOS_FMT( "{}: {} is set to `{}`, which requires every sub-solver to be in sequential mode, but "
+                                 "sub-solver `{}` is not. Please set {}=\"{}\" in the NonlinearSolverParameters of `{}`.",
+                                 getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::sequentialConvergenceCriterionString() ),
+                                 NonlinearSolverParameters::viewKeysStruct::sequentialConvergenceCriterionString(),
+                                 EnumStrings< NonlinearSolverParameters::SequentialConvergenceCriterion >::toString(
+                                   NonlinearSolverParameters::SequentialConvergenceCriterion::SolutionIncrements ),
+                                 solver->getName(),
+                                 NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
+                                 EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
+                                 solver->getName() ),
+                       InputError,
+                       getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::sequentialConvergenceCriterionString() ) );
+      } );
+    }
+
     if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
     {
       validateNonlinearAcceleration();
