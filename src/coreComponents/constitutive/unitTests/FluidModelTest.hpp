@@ -21,7 +21,7 @@
 #define GEOS_CORECOMPONENTS_CONSTITUTIVE_UNITTESTS_FLUIDMODELTEST_HPP_
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "TestFluid.hpp"
+#include "TestFluids.hpp"
 
 #include <conduit.hpp>
 #include <gtest/gtest.h>
@@ -259,6 +259,44 @@ protected:
   conduit::Node m_node;
   dataRepository::Group m_parent;
 };
+
+/**
+ * @brief Populate the component properties of a compositional fluid model from a named test fluid
+ * @tparam FLUID_MODEL the type of the compositional fluid model
+ * @tparam FLUID the name of the test fluid
+ * @param fluid the fluid model group to populate
+ */
+template< typename FLUID_MODEL, TestFluidName FLUID >
+void fillTestFluidComponentProperties( dataRepository::Group & fluid )
+{
+  using Keys = typename FLUID_MODEL::viewKeyStruct;
+  constexpr integer numComps = getNumberOfComponents< FLUID >;
+  using TestFluidType = TestFluid< numComps >;
+
+  auto const testFluid = createTestFluid< FLUID >();
+
+  string_array & componentNames = fluid.getReference< string_array >( Keys::componentNamesString() );
+  componentNames = testFluid->componentNames;
+
+  array1d< real64 > & molarWeight = fluid.getReference< array1d< real64 > >( Keys::componentMolarWeightString() );
+  TestFluidType::createArray( molarWeight, testFluid->molecularWeight );
+  array1d< real64 > & criticalPressure = fluid.getReference< array1d< real64 > >( Keys::componentCriticalPressureString() );
+  TestFluidType::createArray( criticalPressure, testFluid->criticalPressure );
+  array1d< real64 > & criticalTemperature = fluid.getReference< array1d< real64 > >( Keys::componentCriticalTemperatureString() );
+  TestFluidType::createArray( criticalTemperature, testFluid->criticalTemperature );
+  array1d< real64 > & acentricFactor = fluid.getReference< array1d< real64 > >( Keys::componentAcentricFactorString() );
+  TestFluidType::createArray( acentricFactor, testFluid->acentricFactor );
+
+  array2d< real64 > & binaryCoeff = fluid.getReference< array2d< real64 > >( Keys::componentBinaryCoeffString() );
+  binaryCoeff.resize( numComps, numComps );
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      binaryCoeff( ic, jc ) = testFluid->binaryCoeff( ic, jc );
+    }
+  }
+}
 
 } // namespace testing
 } // namespace geos
