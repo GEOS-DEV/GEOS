@@ -300,7 +300,9 @@ The computation of the brine density involves a tabulated correlation presented 
 The user specifies the (constant) salinity and defines the pressure and temperature axis of the brine density table in the form:
 
 The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
-The temperature must be in Kelvin and must be between 283.15 and 623.15 Kelvin.
+The temperature must be in Kelvin. The Phillips correlation covers 283.15 to 623.15 Kelvin, but GEOS restricts the
+temperature coordinates of all CO2-brine fluids (``temperatureCoordinates``) to 283.15 to 473.15 Kelvin (10 to 200 °C)
+and stops with an error outside this range.
 Using these parameters, GEOS performs a preprocessing step to construct a two-dimensional table storing the brine density, :math:`\rho_{\ell,table}` for the specified salinity as a function of pressure and temperature using the expression:
 
 .. math::

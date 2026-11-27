@@ -49,6 +49,14 @@ to provide a reduced residual norm:
 
 2. reject the solution and request a timestep cut;
 
+.. note::
+   The line search compares global residual norms, and the norm can rise for one iteration even when the full Newton
+   step is converging. This happens for instance in thermal compositional simulations with wells, where the well
+   energy residual can dominate the norm right after a full step. The line search then shortens steps that would have
+   converged, and the time step is cut. In a basin-scale thermal CO2-brine model with five thermal injectors, 30 days
+   took 1319 Newton iterations and two time-step cuts with ``lineSearchAction="Attempt"``, against 25 iterations and
+   no cut with ``lineSearchAction="None"``. If a run with a line search converges slowly, try it without.
+
 Timestepping Strategy
 ==================================
 
