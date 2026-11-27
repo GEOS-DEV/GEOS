@@ -20,6 +20,7 @@
 #include "SolverStatistics.hpp"
 
 #include "fileIO/Outputs/OutputBase.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -145,6 +146,16 @@ void IterationsStatistics::writeIterationStatsToTable()
   if( m_numTimeSteps == 0 || !m_logOutputRequest )
     return;
 
+  // linear solver timings are reported per row, so they are reset on every rank, even when no CSV is written.
+  // Timings of attempts made before the first converged time step are accumulated into the first row.
+  real64 const setupTime = m_setupTime;
+  real64 const solveTime = m_solveTime;
+  resetSolverLinearTime();
+
+  // only rank 0 writes the CSV file
+  if( !m_CSVOutputRequest || MpiWrapper::commRank() != 0 )
+    return;
+
   m_iterationData.addRow( m_numTimeSteps,
                           m_numTimeStepCuts,
                           m_numSuccessfulConfigIterations,
@@ -153,22 +164,20 @@ void IterationsStatistics::writeIterationStatsToTable()
                           m_numDiscardedConfigIterations,
                           m_numDiscardedNonlinearIterations,
                           m_numDiscardedLinearIterations,
-                          m_setupTime,
-                          m_solveTime );
+                          setupTime,
+                          solveTime );
 
   if( !m_CSVOutputOpened )
   {
-    m_logStream.open( m_iterationsFilename );
+    m_csvStream.open( m_iterationsFilename );
     m_iterationCSVFormatter = std::make_unique< TableCSVFormatter >( m_iterationCSVLayout );
-    m_logStream << m_iterationCSVFormatter->headerToString( );
-    m_CSVOutputOpened  = true;
+    m_csvStream << m_iterationCSVFormatter->headerToString( );
+    m_CSVOutputOpened = true;
   }
 
-  m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
-  m_logStream.flush();
+  m_csvStream << m_iterationCSVFormatter->dataToString( m_iterationData );
+  m_csvStream.flush();
   m_iterationData.clear();
-
-  resetSolverLinearTime();
 }
 
 void IterationsStatistics::outputStatistics() const
@@ -204,8 +213,10 @@ ConvergenceStatistics::ConvergenceStatistics():
 
 void ConvergenceStatistics::writeConvergenceStatsToTable()
 {
-  if( !m_CSVOutputRequest )
+  // residual norms are global quantities: only rank 0 writes the CSV file
+  if( !m_CSVOutputRequest || MpiWrapper::commRank() != 0 )
     return;
+
   stdVector< TableData::CellData > residualsNormCells;
 
   residualsNormCells.emplace_back( TableData::CellData( {CellType::Value,
@@ -237,14 +248,14 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
     }
     m_convergenceLayout.addColumns( header );
 
-    m_logStream.open( m_convergenceFilename );
+    m_csvStream.open( m_convergenceFilename );
     m_convergenceFormatter = std::make_unique< TableCSVFormatter >( m_convergenceLayout );
-    m_logStream << m_convergenceFormatter->headerToString( );
+    m_csvStream << m_convergenceFormatter->headerToString( );
     m_CSVOutputOpened  = true;
   }
 
-  m_logStream << m_convergenceFormatter->dataToString( m_convergenceData );
-  m_logStream.flush();
+  m_csvStream << m_convergenceFormatter->dataToString( m_convergenceData );
+  m_csvStream.flush();
   m_convergenceData.clear();
 }
 

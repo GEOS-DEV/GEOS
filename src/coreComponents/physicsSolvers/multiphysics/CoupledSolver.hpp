@@ -651,6 +651,7 @@ protected:
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->getIterationStats().iterateTimeStepStatistics();
+          solver->getIterationStats().writeIterationStatsToTable();
         } );
         // get out of the time loop
         break;
@@ -664,9 +665,11 @@ protected:
 
         // notify the solver statistics counter that this is a time step cut
         getIterationStats().updateTimeStepCut();
+        getIterationStats().writeIterationStatsToTable();
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->getIterationStats().updateTimeStepCut();
+          solver->getIterationStats().writeIterationStatsToTable();
         } );
       }
     }

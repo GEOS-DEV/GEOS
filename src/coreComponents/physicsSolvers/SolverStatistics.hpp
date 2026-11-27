@@ -182,7 +182,7 @@ public:
    * @brief Close the stream output file if a file was created
    */
   void closeFile()
-  { if( m_CSVOutputOpened ) { m_logStream.close(); m_CSVOutputOpened = false; } }
+  { if( m_CSVOutputOpened ) { m_csvStream.close(); m_CSVOutputOpened = false; } }
 
   /**
    * @brief Get the number of time steps
@@ -238,7 +238,7 @@ private:
   /// A boolean indicating whether the iteration CSV file was opened or not
   bool m_CSVOutputOpened  = false;
   /// Stream output for the iteration statistics
-  std::ofstream m_logStream;
+  std::ofstream m_csvStream;
   /// Table Layout contenaning header for both CSV and log
   TableLayout m_iterationCSVLayout;
   /// Contain the iteration data for both CSV and log output
@@ -337,7 +337,7 @@ public:
    * @brief Close the stream output file if a file was created
    */
   void closeFile()
-  { if( m_CSVOutputOpened ) { m_logStream.close(); m_CSVOutputOpened = false; } }
+  { if( m_CSVOutputOpened ) { m_csvStream.close(); m_CSVOutputOpened = false; } }
 
 private:
   /// The time at the beginning of the step
@@ -360,7 +360,7 @@ private:
   /// A boolean indicating whether the CSV file was opened or not
   bool m_CSVOutputOpened  = false;
   /// Stream output for the convergence statistics
-  std::ofstream m_logStream;
+  std::ofstream m_csvStream;
   /// Contain the layout for both the CSV and log output.
   /// For a solver, output all residuals residuals name available
   TableLayout m_convergenceLayout;
