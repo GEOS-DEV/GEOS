@@ -60,6 +60,18 @@ public:
    */
   virtual real64 getEventTypeDtRequest( real64 const time ) override;
 
+  /**
+   * @brief Cleanup at the end of the simulation. The event loop stops when the time reaches maxTime, so a solo event
+   * whose target time (or cycle) is that final time is never executed by it. As PeriodicEvent does at the final time,
+   * call the cleanup of the target (which, for an output, writes it) when this event is due now and has not run yet.
+   * @copydoc ExecutableGroup::cleanup()
+   */
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
