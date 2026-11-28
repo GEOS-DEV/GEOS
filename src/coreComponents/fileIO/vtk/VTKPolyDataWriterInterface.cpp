@@ -1328,7 +1328,8 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
                                         globalValues.end(),
                                         []( int x ) { return x == -1; } ),
                         globalValues.end());
-    m_targetProcessesId.insert( {region.getName(), globalValues} );
+    // The ranks holding data change between outputs (e.g. a growing fracture): replace the list.
+    m_targetProcessesId.insert_or_assign( region.getName(), globalValues );
   }
 }
 
