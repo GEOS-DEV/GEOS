@@ -510,7 +510,14 @@ endif()
 ################################
 # MATHPRESSO
 ################################
-if(DEFINED MATHPRESSO_DIR)
+# mathpresso JIT-compiles expressions to x86 machine code only (asmjit x86 backend). On other processors (e.g. arm64,
+# Apple silicon) the compiled function crashes with a segmentation fault in mpCompileFunction, so it is disabled there.
+if(DEFINED MATHPRESSO_DIR AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64|i[3-6]86|x86)$")
+    message(WARNING "mathpresso generates x86 code only and is disabled on ${CMAKE_SYSTEM_PROCESSOR}: "
+                    "SymbolicFunction and CompositeFunction are not available (use TableFunction instead).")
+    set(ENABLE_MATHPRESSO OFF CACHE BOOL "" FORCE)
+    message(STATUS "Not using mathpresso.")
+elseif(DEFINED MATHPRESSO_DIR)
     message(STATUS "MATHPRESSO_DIR = ${MATHPRESSO_DIR}")
 
     find_and_import(NAME mathpresso
